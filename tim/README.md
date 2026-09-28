@@ -213,6 +213,78 @@ its reason. The result is `{green, rungs, stack}` and the command exits 1
 unless every rung passed. gates.json refuses any rung that names a remote or
 CDP script.
 
+### `tim jira create|attach|link|epics` — the Jira write surface
+
+`tim jira ticket`/`comments` are read-only. Creating, attaching, linking and
+listing epics writes to Jira, so all four follow one rule: **dry run by
+default, a real write needs an explicit `--confirm`** (or, for `create`, a
+matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
+allowlist stops `tim jira *`, so this contract — not the allowlist — is what
+keeps a skill from creating something nobody agreed to.
+
+```bash
+tim jira create --from ticket.json --json          # dry run: prints the plan (fields, attachments with sizes, warnings) and a planId
+tim jira create --from ticket.json --confirm <planId> --json   # creates the issue, attaches every file, links every `relates`, writes ticket.created.json
+tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be attached
+tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
+tim jira link EUDPA-200 relates EUDPA-100          # dry run
+tim jira link EUDPA-200 relates EUDPA-100 --confirm  # creates the link, then GETs the ticket back to verify it landed
+tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
+```
+
+`tim jira create --from <path>` reads a `tim-ticket/1` manifest (project,
+type, summary, `descriptionFile`, parent, labels, priority, attachments,
+relates) from the given JSON file, resolving `descriptionFile` and every
+attachment path relative to the manifest's own directory. The dry run's
+`planId` is a hash of the exact payload plus every attachment's own content
+hash, so `--confirm <planId>` only succeeds when the plan it names is still
+the plan on disk — edit the manifest after a dry run and the old `planId` is
+refused, naming the mismatch, rather than silently creating something
+different from what was shown. A manifest that already has a
+`ticket.created.json` receipt beside it refuses to create again, naming the
+key it already created. `create` and `attach` also exit `PARTIAL_FAILURE`
+(not `ERROR`) when some but not all attachments fail, so the receipt still
+gets written for what did succeed. The `ticket-creator` skill and the
+`prototype` skill's hand-off both build a manifest and call this surface
+rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
+
+### Workspace safety for repos outside the branch-parity contract
+
+Not every repo under `repos/` follows the workspace's cross-repo
+branch-parity rule (`CLAUDE.md` rule 2) — `trade-imports-plants-prototype`
+has no Docker stack image to keep in step with. `repos.json` marks such a
+repo `"workspaceBranchSync": false`, and `tim workspace reset|branch|update`
+skip it by default, printing one plain skip line and listing it under
+`skipped` in `--json`:
+
+```bash
+tim workspace update                                           # skips trade-imports-plants-prototype, updates every other repo
+tim workspace update --include trade-imports-plants-prototype  # names it explicitly, so it updates too
+tim workspace install --repo trade-imports-plants-prototype    # installs just this repo, using its own pinned npm version if `packageManager` differs from the one running
+```
+
+`tim workspace setup` also gives such a repo its own fetch-only `upstream`
+remote from `repos.json` (name, url, `push: "DISABLED"`) — idempotent, so
+running setup again reports "already set up" rather than erroring.
+
+### `tim prototype setup`
+
+Onboards a Claude Code session at the workspace root for a designer working
+on the plants prototype, in one idempotent command:
+
+```bash
+tim prototype setup          # add the CLAUDE.local.md designer note, the upstream remote, install, and check Jira/GitHub readiness
+tim prototype setup --remove # take the designer note back out of CLAUDE.local.md, leaving everything else in the file untouched
+```
+
+It writes a marker-delimited block into a gitignored `CLAUDE.local.md` at
+the workspace root (running it again replaces the block with the same text
+rather than duplicating it), reuses the `workspace setup`/`install` building
+blocks scoped to just `trade-imports-plants-prototype`, and reports
+Jira/GitHub auth readiness via the same probes `tim auth` uses — without
+failing the command when Jira isn't configured yet. It never touches Jira
+and never pushes.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

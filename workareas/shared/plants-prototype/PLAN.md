@@ -1,5 +1,11 @@
 # Plants prototype — plan
 
+> **Superseded in two places (Sam, 28 September 2026).**
+> - The deployed prototype signs in with stub sign-in, exactly like `npm run dev`: no Defra ID and no Defra ID stub (`isStubMode()` honours `STUB_MODE` in production).
+> - The header's "Address book" link is deliberately dead everywhere: `TRADE_IMPORTS_INS_FRONTEND_URL` is ignored.
+>
+> The CDP draft in `cdp-app-config-draft/` is current. Lines below that say otherwise are history.
+
 `repos/trade-imports-plants-prototype` is a copy of `trade-imports-plants-frontend` for designers. It should:
 
 - start with `npm start` and nothing else running

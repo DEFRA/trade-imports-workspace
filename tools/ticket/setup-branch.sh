@@ -4,7 +4,7 @@
 # Usage: setup-branch.sh EUDPA-XXXXX --repo REPO --slug SLUG [--base BRANCH] [--json]
 #
 # Does the four-step branch dance (fetch / checkout base / pull / checkout
-# -b feature/EUDPA-X-<slug>) in one allowlisted dispatch so the parent
+# -b feat/EUDPA-X-<slug>) in one allowlisted dispatch so the parent
 # session doesn't type four sequential `git -C` calls.
 #
 # Per feedback_keep_ticket_prefix_on_split_branches.md the EUDPA-* prefix
@@ -62,7 +62,7 @@ if [[ ! -d "$REPO_DIR/.git" ]]; then
     exit 1
 fi
 
-BRANCH="feature/${TICKET}-${SLUG}"
+BRANCH="feat/${TICKET}-${SLUG}"
 
 log() {
     if [[ "$JSON_OUTPUT" == "false" ]]; then

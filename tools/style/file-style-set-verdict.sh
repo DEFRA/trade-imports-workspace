@@ -1,6 +1,9 @@
 #!/bin/bash
 # Set verdict + reason on a per-file style review JSON. Stamps reviewed_at.
-# Usage: file-style-set-verdict.sh EUDPA-X --repo R --file F --verdict V [--reason "..."]
+# Usage: file-style-set-verdict.sh ID --repo R --file F --verdict V [--reason "..."]
+#
+# ID is the ticket (EUDPA-X) or, in local mode, the composite
+# local/<repo>/<branch> id — any non-flag first argument is accepted.
 
 set -e
 
@@ -8,12 +11,12 @@ TICKET=""; REPO=""; FILE=""; VERDICT=""; REASON=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        EUDPA-*) TICKET="$1"; shift ;;
         --repo) REPO="$2"; shift 2 ;;
         --file) FILE="$2"; shift 2 ;;
         --verdict) VERDICT="$2"; shift 2 ;;
         --reason) REASON="$2"; shift 2 ;;
-        *) echo "Unknown arg: $1" >&2; exit 1 ;;
+        -*) echo "Unknown arg: $1" >&2; exit 1 ;;
+        *) TICKET="$1"; shift ;;
     esac
 done
 

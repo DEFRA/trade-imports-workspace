@@ -1,6 +1,6 @@
 ---
 name: code-style
-description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 17-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
+description: 'Multi-language code-style/lint review (formatting, conventions, style rules) and remediation for EUDP trade-imports PRs (EUDPA-*). Reviews Java, GDS/Nunjucks (.njk), Playwright specs, k6 and Node source files, each against its context-appropriate best-practices bundle (Java modern-java + Javadoc; GDS components/styles/patterns; Playwright; k6; Node 16-rule style guide + JSDoc). Supports fresh review, refresh review (re-review after new commits), interactive walker that triages findings one item at a time, and batched implementor that applies queued style fixes. Fans out per-file review and per-file implementation to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user asks for code style/lint review or to apply agreed style fixes (triggers: "style review EUDPA-", "code style review", "re-style review", "style refresh", "style review this branch", "walk style EUDPA-", "triage style", "fix style EUDPA-", "implement style fixes", "lint review"). Also runs in Local mode against a `REPO:BRANCH` pair with no ticket and no PR, including when invoked programmatically by another skill. NOT for correctness/design review across languages or for test-quality review — use the `review` skill for those.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
@@ -46,8 +46,65 @@ by name via the Task tool.
 | User intent | What to follow |
 |---|---|
 | "style review EUDPA-X" / "re-style review" / "style refresh" | this SKILL.md — FRESH + REFRESH (start-style.sh dispatches) |
+| "style review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-style.sh dispatches on `--local` |
 | "walk style EUDPA-X" / "triage style" | `Follow references/STYLE_WALKER.md` |
 | "fix style EUDPA-X" / "implement style fixes" | IMPLEMENTATION section below (or `Follow references/STYLE_IMPLEMENTOR.md` per group) |
+
+## Local mode (no ticket, no PR)
+
+Triggered by "style review this branch", "style review `REPO:BRANCH`", or
+another skill invoking this one (see "Called by another skill" below).
+Reviews a repo checkout under `repos/<repo>/` directly — no Jira ticket,
+no GitHub PR, no `gh` call of any kind.
+
+```bash
+~/git/defra/trade-imports-workspace/tools/style/start-style.sh --local REPO BRANCH
+```
+
+This always runs `prepare-style-local.sh` (there is no separate refresh
+pipeline for local mode — re-running IS the refresh: the changed-file
+list is recomputed from git every call, and files with a verdict already
+set are left alone). State lands under
+`~/git/defra/trade-imports-workspace/workareas/code-style-reviews/local/REPO/BRANCH/`
+and the paired
+`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
+(changed-file discovery) — same shape as the ticket flow, same
+`.style-meta.json`, same per-(repo,topic) `style-rules.{repo}.{topic}.md`
+bundles.
+
+The changed-file list is `git -C <repo> diff --name-only <merge-base with
+origin/main>...HEAD` plus anything staged or unstaged, unless the caller
+passes `--files F1,F2,...` to name the exact files itself.
+
+Everything from here on (Step 2's spawn prompts, Step 3's coverage gate,
+Step 4's aggregation, `## Items` rendering) is the **same FRESH flow**
+described below — substitute the local id (`local/REPO/BRANCH`) for
+`EUDPA-XXXXX` everywhere, and the local snapshot path
+(`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/repos/{repo}/`
+is not populated in local mode — read the file straight from
+`~/git/defra/trade-imports-workspace/repos/{repo}/{file}` instead, since
+there is no PR-commit snapshot to clone). The STYLE_FILE_REVIEWER and
+STYLE_IMPLEMENTOR personas are **unchanged** — only the id and the
+snapshot-vs-live-repo read path differ, and both are supplied in the spawn
+prompt, not hardcoded in the persona file.
+
+## Called by another skill
+
+A skill (e.g. `prototype`, working on a designer's branch) can drive a
+local-mode style check without a human ever saying "style review":
+
+- **Inputs**: `repo` (folder under `repos/`), `branch`, optional `files`
+  (an explicit list — when given, scope is exactly those files, not the
+  whole branch's git diff), `fix` (`true` — also run the IMPLEMENTATION
+  flow on any Fix-disposition items found; `false` — report only).
+- **Call shape**: run Local mode above (`start-style.sh --local REPO
+  BRANCH [--files ...]`) through Steps 2-6; when `fix: true`, continue
+  into IMPLEMENTATION for the files just reviewed.
+- **One-line return** to the calling skill:
+  - `fix: false` → `style review: {N} files, {M} issues ({repo}:{branch})`
+  - `fix: true`, issues found → `tidied to house style ({N} changes) ({repo}:{branch})`
+  - `fix: true`, nothing to fix → `already house style ({repo}:{branch})`
+  - nothing changed on the branch → `no changed files to review ({repo}:{branch})`
 
 ## Worker references
 
@@ -488,8 +545,9 @@ All under `~/git/defra/trade-imports-workspace/tools/style/`:
 
 | Script | Purpose |
 |---|---|
-| `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
+| `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
 | `prepare-style.sh` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles |
+| `prepare-style-local.sh` | Local mode setup — no Jira/GitHub; reuses `prepare-review-local.sh` for changed-file discovery |
 | `file-topics.sh` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
 | `bake-rules-bundle.sh` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
 | `aggregate-file-reviews.sh` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |

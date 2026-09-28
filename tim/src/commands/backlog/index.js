@@ -191,6 +191,14 @@ const renderRegistryList = (result) =>
 
 const collect = (value, previous) => previous.concat([value])
 
+const collectCommaSeparated = (value, previous) =>
+  previous.concat(
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  )
+
 const standardsOptsSchema = z
   .object({
     files: z.array(z.string()).default([]),
@@ -568,8 +576,8 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--files <repoKey:path>',
-      'A file to resolve standards for, as <repoKey>:<path>. Repeatable.',
-      collect,
+      'A file to resolve standards for, as <repoKey>:<path>. Repeat it, or give several separated by commas.',
+      collectCommaSeparated,
       []
     )
     .option(

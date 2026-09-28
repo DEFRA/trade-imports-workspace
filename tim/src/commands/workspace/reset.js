@@ -1,6 +1,11 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath } from '../../constants/repos.js'
+import {
+  REPOS,
+  repoPath,
+  isWorkspaceBranchSynced,
+  workspaceSyncSkipLine
+} from '../../constants/repos.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { run } from '../../exec/exec.js'
 import { runAcross } from '../../exec/parallel.js'
@@ -13,6 +18,27 @@ import {
 } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 import { lastLines, renderTaskText, renderTaskJson } from './_task-output.js'
+
+const collect = (value, previous) => previous.concat([value])
+
+/**
+ * Split the repo roster into the ones this run should touch and the ones
+ * it should leave alone — a repo opts out via `workspaceBranchSync: false`
+ * (see `isWorkspaceBranchSynced`) unless `include` names it explicitly.
+ *
+ * @param {string[]} [include]
+ * @returns {{targets: string[], skipped: string[]}}
+ */
+export const partitionSyncTargets = (include = []) => {
+  const included = new Set(include)
+  const targets = []
+  const skipped = []
+  for (const repo of REPOS) {
+    if (isWorkspaceBranchSynced(repo) || included.has(repo)) targets.push(repo)
+    else skipped.push(repo)
+  }
+  return { targets, skipped }
+}
 
 const SCHEMA_VERSION = 1
 
@@ -71,11 +97,19 @@ const resetTask = (workspaceRoot, repo) => {
   return task
 }
 
-export const buildResetTasks = (workspaceRoot) =>
-  REPOS.map((repo) => resetTask(workspaceRoot, repo))
+export const buildResetTasks = (workspaceRoot, { include = [] } = {}) =>
+  partitionSyncTargets(include).targets.map((repo) =>
+    resetTask(workspaceRoot, repo)
+  )
 
-export const resetAll = (workspaceRoot) =>
-  runAcross(buildResetTasks(workspaceRoot), (task) => task.run())
+export const resetAll = async (workspaceRoot, { include = [] } = {}) => {
+  const { targets, skipped } = partitionSyncTargets(include)
+  const results = await runAcross(
+    targets.map((repo) => resetTask(workspaceRoot, repo)),
+    (task) => task.run()
+  )
+  return { results, skipped }
+}
 
 const promptYes = async () => {
   if (!process.stdin.isTTY) return false
@@ -92,6 +126,18 @@ const promptYes = async () => {
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
+const emitResultsWithSkips = ({ results, skipped, json, timVersion }) => {
+  if (json) {
+    const payload = JSON.parse(renderTaskJson(results, timVersion))
+    payload.skipped = skipped
+    emit(JSON.stringify(payload))
+    return
+  }
+  const lines = [renderTaskText(results)]
+  for (const repo of skipped) lines.push(workspaceSyncSkipLine(repo))
+  emit(lines.join('\n'))
+}
+
 export const register = (parent, { timVersion }) => {
   parent
     .command('reset')
@@ -101,6 +147,12 @@ export const register = (parent, { timVersion }) => {
     .option(
       '--yes',
       'Skip the interactive confirmation (required in --json mode)'
+    )
+    .option(
+      '--include <repo>',
+      'Also reset a repo that normally sits out of workspace-wide resets (such as the plants prototype). Repeatable.',
+      collect,
+      []
     )
     .action(async function resetAction(opts) {
       const globalOpts = this.optsWithGlobals()
@@ -132,9 +184,15 @@ export const register = (parent, { timVersion }) => {
           process.exit(USER_ABORT)
         }
 
-        const results = await resetAll(workspaceRoot)
-        if (globalOpts.json) emit(renderTaskJson(results, timVersion))
-        else emit(renderTaskText(results))
+        const { results, skipped } = await resetAll(workspaceRoot, {
+          include: opts.include
+        })
+        emitResultsWithSkips({
+          results,
+          skipped,
+          json: globalOpts.json,
+          timVersion
+        })
         const someFailed = results.some((r) => !r.ok)
         process.exit(someFailed ? PARTIAL_FAILURE : OK)
       } catch (error) {

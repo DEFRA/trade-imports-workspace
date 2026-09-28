@@ -1,0 +1,311 @@
+# Run the prototype
+
+You are helping an interaction or content designer run the prototype on their
+own computer. They know HTML, Nunjucks and the GOV.UK Design System. They are
+not JavaScript developers. Reply in GDS plain English: short sentences,
+active voice, no jargon without a plain explanation.
+
+Say "the prototype", "your design release" and "the prototypes page" (the
+page at `http://localhost:3103/` that lists every set), not "server", "set
+plugin" or "chooser".
+
+The prototype runs standalone: its `dev` script (or `designer:fresh`) inside
+`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/`,
+on its own stubs. **The docker stack is never needed to see a change** — do
+not start it, wait on it, or mention it unless the designer asks about a CDP
+deploy. It would not help the address-book link either (see below).
+
+## Guard rails
+
+- **Never stop a program without asking.** If port 3103 is in use, say which
+  program holds it and ask before stopping anything. Never run `kill`,
+  `pkill` or `lsof ... | xargs kill`.
+- **Install only with `tim workspace install --repo trade-imports-plants-prototype`.**
+  Never `npm install` or a bare `npm ci`: a newer npm can refuse this
+  project's lock file.
+- **One Bash command per call.** No `&&`, `;` or `|`.
+- **This reference changes no files.** It runs, installs and explains. If the
+  designer then asks for a change, follow the reference for that change.
+  Before editing any file, that reference runs
+  `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`
+  and checks `overrides.json`: anything not in its `ours` list belongs to the
+  real service and is never edited on a `design/*` branch.
+
+## New here
+
+When the designer says they are new, or asks "what can I do here?", "where do
+I start?" or "how does this work?":
+
+1. Run `tim prototype setup` (once per new designer, or whenever a fresh
+   checkout has not been set up yet): it writes the designer marker, checks
+   the fetch-only `upstream` remote, installs, and prints a `tim auth`
+   readiness summary. If it says the marker is already there, carry on.
+2. Run steps 1 to 5 below: check the computer, fix what needs doing, start
+   the prototype and give the links. If it is already running, say so and go
+   on.
+3. Run:
+
+   ```bash
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list
+   ```
+
+   When any release's "Real journey changed since" column is above 0, say so
+   in one line, for example: "plants-dr2 is 4 pages behind the real journey.
+   Say 'I want the latest' to catch it up." Say nothing about it when every
+   figure is 0 or the column is not there.
+
+4. Print this table as it is. Never add reference names, file names or
+   commands to it: the designer only needs the words.
+
+   | You want to                                   | Say something like                                                |
+   | ---------------------------------------------- | -------------------------------------------------------------------- |
+   | Have your own copy to change                  | "start a new design release"                                      |
+   | Change words, hints, labels or errors         | "change the hint on the arrival page to …"                        |
+   | Make a page look like your Figma              | "make this page match the Figma"                                  |
+   | Add a question or page, or change the order   | "add a question asking whether the plants were grown under glass" |
+   | Show a feature the real service does not have | "importers should be able to save a vehicle they use a lot"       |
+   | Fill the dashboard with examples              | "show a few late notifications on the dashboard"                  |
+   | Get ready for a demo                          | "we've got a stakeholder demo on Thursday, get it ready"          |
+   | Get ready for user research                   | "get ready for research next week"                                |
+   | Work through notes from a crit                | "here are my notes from the crit, do all of these"                |
+   | See your change                               | "show me, before and after"                                       |
+   | Save, share or undo                           | "save my work", "make a pull request", "undo my last change"      |
+   | Give the developers a story to build from     | "write this up as a story the developers can pick up"             |
+   | Catch up with the real service                | "has the real service changed since I made my copy?"              |
+   | Make it real and build it properly            | "make this real and start building it on the real service"        |
+
+5. Mention they can see the whole prototype walked through without running
+   anything, once it is deployed: read `reportsUrl` from
+   `scripts/designer/prototype.json` and give
+   `<reportsUrl>main/#?q=@walkthrough`. Say nothing about it while
+   `reportsUrl` is not set.
+6. Then say: "You can also just describe what you want in your own words. If
+   I seem lost, say 'use the design skill'." Point at
+   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`
+   for a guided first hour.
+
+When a newcomer also asks for a change in the same message, do steps 1 to 3,
+then the change (with its own reference), and give the table and step 5 at
+the end of the report, before the hand-off line.
+
+## Step 1: Check the computer
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:preflight
+```
+
+It prints one line per check and changes nothing:
+
+| Line starts              | Means                                                                     |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| `OK - Node`              | The right Node version (same major version as `.nvmrc`)                   |
+| `OK - Packages`          | Installed packages match `package-lock.json`                              |
+| `OK - Browser`           | The browser used for pictures is installed                                |
+| `OK - Port 3103`         | Nothing is using the prototype's port                                     |
+| `Needs doing - ...`      | Something to fix first; the line says what to run                         |
+| `In use - Port 3103`     | Something holds port 3103; see step 3                                     |
+| `Before you share - ...` | The prototype runs, but saving, sharing or handing off needs this; step 2 |
+
+It exits with 1 only when something needs doing. `--json` gives the same
+results as data (a `todo` result with `commands` lists the exact commands).
+
+## Step 2: Fix what needs doing
+
+Do only what a `Needs doing` line asks, in this order:
+
+1. **Node.** Tell the designer the version the line names. If they use nvm,
+   they run `nvm install` in the prototype's folder and open a new terminal.
+   You cannot change their Node version for them. Stop until it is fixed.
+2. **Packages.** Tell the designer this takes a few minutes, then run:
+
+   ```bash
+   tim workspace install --repo trade-imports-plants-prototype
+   ```
+
+3. **Browser.** Only needed for pictures (`references/show-my-change.md`) and
+   walkthroughs, but do it now so the first picture works:
+
+   ```bash
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run playwright:install
+   ```
+
+   On Linux this can ask for a password to install system libraries. If it
+   fails for that reason, tell the designer to run it themselves.
+
+4. **Real service for hand-offs.** `tim prototype setup` already checks this
+   (fetch-only `upstream` remote), so this should already be done. If the
+   line still asks for it, tell the designer to run "I'm new" again so
+   `tim prototype setup` can fix it.
+5. **Git name and email, GitHub command line.** These are the designer's own
+   accounts: tell them what the line says and carry on. Nothing is needed to
+   run the prototype. Saving needs a git name and email; opening a pull
+   request works without `gh` (`references/share-my-change.md` gives a link
+   instead).
+
+Run `designer:preflight` again. Carry on when only `OK`, `In use` or
+`Before you share` lines are left.
+
+## Step 3: If port 3103 is in use
+
+The line names the program, for example "in use by node (process 4242)". When
+it says "It answers like the prototype", the prototype is almost certainly
+already running, in another terminal or an editor.
+
+Tell the designer: "The prototype is probably already running. Open
+http://localhost:3103." Then go to step 5.
+
+If they say it is not working, or they want a fresh start: first run
+`designer:preflight` again, straight before you ask, because the number
+changes. The prototype's dev server restarts its program on every saved
+file and every git switch or commit, so a number from a few minutes ago is
+usually out of date. Then ask with the number it just printed: "Shall I stop
+the program on port 3103 (process 4242) and start the prototype again?" Only
+if they say yes, stop that one process by its number:
+
+```bash
+kill 4242
+```
+
+If the preflight then names a different process on 3103, the dev watcher
+started a new copy: that means the dev server is still running in another
+terminal. Ask the designer to stop it there (Ctrl+C) rather than chasing
+process numbers. Then run `designer:preflight` again and go to step 4. Never
+stop a process the preflight did not name.
+
+For pictures, nothing needs stopping: `references/show-my-change.md` runs its
+own copy on a free port from 3203, whatever holds 3103.
+
+## Step 4: Start the prototype
+
+Start it in the background, so the conversation can carry on while it runs.
+In Claude Code, run this with the Bash tool's `run_in_background` option:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev
+```
+
+For a research session or a demo that must start from the examples after
+every restart, start `designer:fresh` instead: the same prototype, but design
+releases keep nothing across a restart.
+
+Then wait until it answers (up to two minutes):
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:preflight -- --wait
+```
+
+It prints `The prototype is running: http://localhost:3103`, or says it did
+not answer. If it did not answer, read the background output and find the
+first error:
+
+| You see in the output                                               | What it means                                          | What to do                                                    |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| `listen EADDRINUSE: address already in use 0.0.0.0:3103`            | Something else already has port 3103                   | Step 3                                                        |
+| `Starting inspector on 0.0.0.0:9229 failed: address already in use` | Another copy of the dev server is running somewhere     | Harmless on its own; if the prototype does not answer, step 3 |
+| `Server failed to start` with another message                       | The prototype itself has a problem                     | Use `references/check-my-change.md`; it explains start-up errors |
+| `[nodemon] app crashed - waiting for file changes`                  | It stopped on an error; it retries when a file changes | Fix the first error above it (use `references/check-my-change.md`) |
+| `Cannot find module` or `ERR_MODULE_NOT_FOUND` naming a package     | Packages are missing                                   | `tim workspace install --repo trade-imports-plants-prototype`, then start again |
+| `Access your frontend on http://localhost:3103`                     | It started                                             | Step 5                                                        |
+
+## Step 5: Give the designer the links
+
+Name the set they want. If they did not say, use their working release (the
+newest set under `src/server/app/sets/` other than `high-risk-plants` and
+`sample-journey`), or `high-risk-plants` if they have none.
+
+Print the example links:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- links <set-id>
+```
+
+Then give, as clickable links:
+
+- the prototypes page: `http://localhost:3103/`
+- the set: `http://localhost:3103/<set-id>`
+- every example link the command printed, with its label
+
+If npm says `Missing script: "designer:examples"`, give only the first two.
+
+**"Open the X page".** Most pages only exist inside a notification, so
+`http://localhost:3103/<set-id>/<page>` will not open. Give the example link
+that stops on that page (its label says where it stops). If none does, say
+so and offer `references/example-data.md`: "Say 'add an example stopped at
+the X page' and I will make one." The dashboard is always
+`http://localhost:3103/<set-id>`.
+
+The first visit asks nobody for a password: on your own computer the
+prototype signs you in straight away.
+
+## Step 6: Explain how data behaves (once per conversation)
+
+Say this once, in your own words, the first time the prototype starts or
+when the designer asks "where did my data go":
+
+- **Saving a file restarts the prototype.** Saving a page, copy or flow file
+  (any `.js`, `.json` or `.njk` under `src/`, except tests and
+  `src/client/`) restarts it. Refresh the page after a few seconds.
+- **The real journey forgets on restart.** In `high-risk-plants`, a restart
+  empties every notification. Its examples come back on your next visit.
+- **Design releases remember, on your computer.** A design release keeps its
+  notifications across restarts in `.cache/designer/data/` (git ignores that
+  folder, so it is never shared). The deployed prototype does not, and
+  neither does `designer:fresh`.
+- **Reset puts the examples back.** On the prototypes page, press "Reset this
+  prototype's data" under the set. It empties that set for everyone using
+  this copy of the prototype and makes the examples again.
+- **Example links keep working** after a restart or a Reset, even though the
+  reference numbers change.
+- **Signing in as another organisation.** On your computer, open
+  `http://localhost:3103/auth/stub-sign-in?organisationId=<organisation-id>`,
+  for example `example-organisation-b`. Examples made for one organisation
+  only show to people signed in to it. To go back, open
+  `http://localhost:3103/auth/sign-out`, then the prototypes page. The
+  deployed prototype signs in the same way: use the same paths on its
+  address.
+
+## The INS address-book link
+
+The header's "Address book" link is deliberately dead. The address book
+belongs to the Import Notification Service (`trade-imports-ins-frontend`),
+which this prototype does not include, and there is no setting — not an
+env var, not a CDP deploy config — that can point the link at a real one,
+locally or in CDP. This is a design gap for the designer to be aware of,
+not something to fix by starting the stack: never suggest starting the
+stack for this link.
+
+## Step 7: Verify
+
+Only say the prototype is running after `designer:preflight -- --wait`
+printed `The prototype is running`. If the designer reports a blank page,
+unstyled page or error in the browser, do not guess: ask what they see, or
+take a picture with `references/show-my-change.md`.
+
+## Step 8: Next steps and hand-off
+
+End with what they can do next:
+
+- "Make a change, then say 'check my changes'."
+- "Say 'show me' for pictures of your pages."
+- "Say 'record a walkthrough' for a report of every example, page by page."
+- "Say 'save my work' when you are happy."
+
+For a newcomer, print the table from "New here" instead.
+
+Then the hand-off line, word for word:
+
+"If this should become part of the real service, say 'hand this to the real
+team' and I will prepare a brief and a patch for the plants-frontend team."
+
+## References
+
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`:
+  the designer's own guide to this
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/example-data.md`:
+  example links, Reset, organisations
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/services-and-dashboards.md`:
+  what a design release keeps across restarts
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`:
+  start-up errors explained
+- `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/scripts/designer/preflight/checks.js`:
+  the preflight rules

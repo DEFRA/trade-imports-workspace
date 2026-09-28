@@ -1,26 +1,32 @@
 #!/bin/bash
 # Initialise a per-file review JSON placeholder.
-# Usage: file-review-init.sh EUDPA-X --repo R --file F --commit SHA --pr N --mode M
+# Usage: file-review-init.sh ID --repo R --file F --commit SHA [--pr N] --mode M
+#
+# ID is the ticket (EUDPA-X) or, in local mode, the composite
+# local/<repo>/<branch> id — any non-flag first argument is accepted, since
+# it only ever names a directory. --pr is optional (local mode has no PR;
+# the stored field is JSON null when omitted).
+#
 # Idempotent: overwrites any existing file at the placeholder path.
 # Prints the absolute path of the created file.
 
 set -e
 
-TICKET=""; REPO=""; FILE=""; COMMIT=""; PR=""; MODE=""
+TICKET=""; REPO=""; FILE=""; COMMIT=""; PR="null"; MODE=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        EUDPA-*) TICKET="$1"; shift ;;
         --repo) REPO="$2"; shift 2 ;;
         --file) FILE="$2"; shift 2 ;;
         --commit) COMMIT="$2"; shift 2 ;;
         --pr) PR="$2"; shift 2 ;;
         --mode) MODE="$2"; shift 2 ;;
-        *) echo "Unknown arg: $1" >&2; exit 1 ;;
+        -*) echo "Unknown arg: $1" >&2; exit 1 ;;
+        *) TICKET="$1"; shift ;;
     esac
 done
 
-for v in TICKET REPO FILE COMMIT PR MODE; do
+for v in TICKET REPO FILE COMMIT MODE; do
     [[ -z "${!v}" ]] && { echo "Missing $v" >&2; exit 1; }
 done
 

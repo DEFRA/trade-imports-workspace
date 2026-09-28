@@ -128,11 +128,14 @@ const upstreamRemoteIsCorrect = (state, url) =>
  * designer's prototype clone pulls upstream changes but never
  * accidentally pushes to the real service's repo. Idempotent: reads the
  * current config first and writes only what's wrong, so a
- * correctly-configured remote is left untouched.
+ * correctly-configured remote is left untouched. Shared by
+ * `tim workspace setup` and `tim prototype setup`.
  *
+ * @param {string} repo
+ * @param {string} dir - Absolute path to the cloned repo
  * @returns {Promise<{exitCode: 0, action: 'none'|'unchanged'|'added'|'corrected'} | ReturnType<typeof failure>>}
  */
-const ensureUpstreamRemote = async (repo, dir) => {
+export const ensureUpstreamRemote = async (repo, dir) => {
   const upstreamRepo = upstreamOf(repo)
   if (!upstreamRepo) return { exitCode: 0, action: 'none' }
 
@@ -278,7 +281,7 @@ export const register = (parent, { timVersion }) => {
   parent
     .command('setup')
     .description(
-      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once.'
+      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once. A repo that declares an upstream (such as the plants prototype) also gets a remote to it that fetches main only, carries no tags and cannot be pushed to.'
     )
     .action(makeTaskAction({ runTasks: setupAll, timVersion }))
 }

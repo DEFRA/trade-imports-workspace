@@ -28,7 +28,7 @@ export function createXClient ({ token, baseUrl } = {}) {
 
 ## Tests
 
-- Mock at the **network boundary** with `undici` MockAgent via `src/test-support/http-mock.js`.
+- Mock at the **network boundary** with `nock` via `src/test-support/http-mock.js` (`installHttpMocks`/`closeHttpMocks`).
 - Run the real client code; assert on the returned value or the thrown `TimError.code` and `.message`.
 - Never `vi.mock('./this-client.js')` — it untests the client and turns the test into a coupling check.
 - Cover at minimum: success-path data shape, auth failure, 404, rate-limit. Add more cases per actual behaviour.

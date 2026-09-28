@@ -30,12 +30,12 @@ FORCE=0
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        EUDPA-*) TICKET="$1"; shift ;;
         --repo) REPO="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --json) JSON=1; shift ;;
         --force) FORCE=1; shift ;;
-        *) echo "Unknown arg: $1" >&2; exit 1 ;;
+        -*) echo "Unknown arg: $1" >&2; exit 1 ;;
+        *) TICKET="$1"; shift ;;
     esac
 done
 

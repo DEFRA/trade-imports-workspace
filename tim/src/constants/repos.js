@@ -124,6 +124,33 @@ export const isNodeRepo = (repoName) => NODE_REPOS.includes(repoName)
 
 export const isJavaRepo = (repoName) => JAVA_REPOS.includes(repoName)
 
+const findRepo = (repoName) =>
+  manifest.repos.find((repo) => repo.name === repoName)
+
+/**
+ * Whether `tim workspace reset|branch|update` should touch this repo by
+ * default. A repo opts out with `"workspaceBranchSync": false` in
+ * `repos.json` — today that is the plants prototype, whose branch and
+ * working tree belong to whichever designer is using it. Defaults to
+ * true for every other repo.
+ *
+ * @param {string} repoName
+ * @returns {boolean}
+ */
+export const isWorkspaceBranchSynced = (repoName) =>
+  findRepo(repoName)?.workspaceBranchSync ?? true
+
+/**
+ * The plain-English line printed for a repo skipped by
+ * `isWorkspaceBranchSynced`, shared so `reset`, `branch` and `update`
+ * report it identically.
+ *
+ * @param {string} repoName
+ * @returns {string}
+ */
+export const workspaceSyncSkipLine = (repoName) =>
+  `Skipped ${repoName}: designers' work lives there. Add --include ${repoName} to include it.`
+
 export const GITHUB_ORG = manifest.githubOrg
 
 /**

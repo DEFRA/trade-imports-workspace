@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { REPOS } from '../../constants/repos.js'
+import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -61,6 +61,12 @@ const currentBranch = async (dir) => {
 }
 
 const repoDir = (workspace, index) => join(workspace, 'repos', REPOS[index])
+
+// seedWorkspace clones only the first three repos; any later repo the
+// workspace branch sync covers is reported as not cloned.
+const UNCLONED_SYNCED_REPO = REPOS.slice(3).find((repo) =>
+  isWorkspaceBranchSynced(repo)
+)
 
 let workspace
 let fixtures
@@ -242,15 +248,74 @@ describe('workspace branch', () => {
     expect(await currentBranch(repoDir(workspace, 0))).toBe('main')
   }, 60_000)
 
+  test('reports where a planned branch would need creating in dry-run mode, and changes nothing', async () => {
+    await seedWorkspace()
+
+    const { stdout, exitCode } = await runCli(workspace, [
+      'feat/NO_JIRA-planned',
+      '--dry-run',
+      '--json'
+    ])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result.planned).toBe(true)
+    expect(byRepo(payload)[REPOS[0]]).toMatchObject({
+      action: 'would-create',
+      target: 'feat/NO_JIRA-planned',
+      base: 'main'
+    })
+    expect(byRepo(payload)[UNCLONED_SYNCED_REPO].action).toBe('skipped')
+    expect(await currentBranch(repoDir(workspace, 0))).toBe('main')
+  }, 60_000)
+
+  test('still reports not found for an unknown branch name without dry-run', async () => {
+    await seedWorkspace()
+
+    const { exitCode } = await runCli(workspace, ['feat/NO_JIRA-planned'])
+
+    expect(exitCode).toBe(1)
+  }, 60_000)
+
   test('reports repos that are not cloned as skipped', async () => {
     await seedWorkspace()
 
     const { stdout } = await runCli(workspace, ['feat/EUDPA-1-alpha', '--json'])
 
-    expect(byRepo(JSON.parse(stdout.trim()))[REPOS[7]]).toMatchObject({
+    expect(
+      byRepo(JSON.parse(stdout.trim()))[UNCLONED_SYNCED_REPO]
+    ).toMatchObject({
       action: 'skipped',
       ok: true
     })
+  }, 60_000)
+
+  test('excludes a workspace-branch-sync-exempt repo from the report, and lists it as skipped', async () => {
+    await seedWorkspace()
+    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+
+    const { stdout, exitCode } = await runCli(workspace, ['--json'])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(byRepo(payload)[exempt]).toBeUndefined()
+    expect(payload.result.skipped).toEqual([exempt])
+  }, 60_000)
+
+  test('reports a workspace-branch-sync-exempt repo when --include names it', async () => {
+    await seedWorkspace()
+    const exempt = REPOS.find((repo) => !isWorkspaceBranchSynced(repo))
+
+    const { stdout, exitCode } = await runCli(workspace, [
+      '--include',
+      exempt,
+      '--json'
+    ])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(byRepo(payload)[exempt]).toMatchObject({ cloned: false })
+    expect(payload.result.skipped).toEqual([])
   }, 60_000)
 
   test('exits with a usage error for an unresolvable workspace', async () => {

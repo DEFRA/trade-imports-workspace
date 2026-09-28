@@ -4,8 +4,11 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS } from '../../constants/repos.js'
+import { REPOS, isWorkspaceBranchSynced } from '../../constants/repos.js'
 import { createBareRepo, pushCommit } from '../../test-support/git-fixtures.js'
+
+const syncedRepos = REPOS.filter(isWorkspaceBranchSynced)
+const exemptRepos = REPOS.filter((repo) => !isWorkspaceBranchSynced(repo))
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -38,7 +41,7 @@ describe('tim workspace reset CLI', () => {
     expect(payload.errors[0].code).toBe('USER_ABORT')
   })
 
-  test('with --yes on an empty workspace, reports every repo as skipped', async () => {
+  test('with --yes on an empty workspace, reports every synced repo as skipped', async () => {
     const { stdout, exitCode } = await execa(
       'node',
       [
@@ -55,10 +58,74 @@ describe('tim workspace reset CLI', () => {
     expect(exitCode).toBe(0)
     const payload = JSON.parse(stdout.trim())
     expect(payload.ok).toBe(true)
-    expect(payload.result).toHaveLength(REPOS.length)
+    expect(payload.result).toHaveLength(syncedRepos.length)
     for (const entry of payload.result) {
       expect(entry.label).toContain('(not cloned, skipping)')
     }
+  })
+
+  test('leaves a workspace-branch-sync-exempt repo out unless --include names it', async () => {
+    const exempt = exemptRepos[0]
+
+    const withoutInclude = await execa(
+      'node',
+      [
+        cliPath,
+        'workspace',
+        'reset',
+        '--workspace',
+        workspace,
+        '--yes',
+        '--json'
+      ],
+      { reject: false }
+    )
+    const withoutPayload = JSON.parse(withoutInclude.stdout.trim())
+    expect(withoutPayload.skipped).toEqual([exempt])
+    expect(withoutPayload.result.some((r) => r.repo === exempt)).toBe(false)
+
+    const withInclude = await execa(
+      'node',
+      [
+        cliPath,
+        'workspace',
+        'reset',
+        '--workspace',
+        workspace,
+        '--yes',
+        '--include',
+        exempt,
+        '--json'
+      ],
+      { reject: false }
+    )
+    const withPayload = JSON.parse(withInclude.stdout.trim())
+    expect(withPayload.skipped).toEqual([])
+    expect(withPayload.result.some((r) => r.repo === exempt)).toBe(true)
+  })
+
+  test('--help describes --include in plain English', async () => {
+    const { stdout } = await execa(
+      'node',
+      [cliPath, 'workspace', 'reset', '--help'],
+      { reject: false }
+    )
+    expect(stdout).toContain('--include <repo>')
+    expect(stdout).toContain('plants prototype')
+  })
+
+  test('prints a plain skip line in text mode', async () => {
+    const exempt = exemptRepos[0]
+
+    const { stdout } = await execa(
+      'node',
+      [cliPath, 'workspace', 'reset', '--workspace', workspace, '--yes'],
+      { reject: false }
+    )
+
+    expect(stdout).toContain(
+      `Skipped ${exempt}: designers' work lives there. Add --include ${exempt} to include it.`
+    )
   })
 
   test('hard-resets a gh-pages-excluded clone to origin/main without fetching gh-pages', async () => {

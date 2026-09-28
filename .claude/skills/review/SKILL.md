@@ -1,6 +1,6 @@
 ---
 name: review
-description: 'Code review for correctness, security, error handling, performance, best-practices and test coverage across all languages and repos (Java, Node.js, frontend, tests) for EUDP trade-imports tickets. Handles fresh first-pass review, refresh (re-review after further work, merge conflicts or coverage gaps), interactive walker that triages findings one item at a time, and batched implementor that applies queued fixes. Fans out per-file reviews, per-repo consistency analysis and per-item fixes to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user says "review EUDPA-XXX", "code review", "re-review EUDPA-XXX", "refresh review", "check fixes", "walk review EUDPA-XXX", "triage review", "implement review EUDPA-XXX", or "apply review fixes". NOT for JS lint/format/style findings — use the code-style skill for those.'
+description: 'Code review for correctness, security, error handling, performance, best-practices and test coverage across all languages and repos (Java, Node.js, frontend, tests) for EUDP trade-imports tickets. Handles fresh first-pass review, refresh (re-review after further work, merge conflicts or coverage gaps), interactive walker that triages findings one item at a time, and batched implementor that applies queued fixes. Fans out per-file reviews, per-repo consistency analysis and per-item fixes to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user says "review EUDPA-XXX", "code review", "re-review EUDPA-XXX", "refresh review", "check fixes", "review this branch", "walk review EUDPA-XXX", "triage review", "implement review EUDPA-XXX", or "apply review fixes". Also runs in Local mode against a `REPO:BRANCH` pair with no ticket and no PR, including when invoked programmatically by another skill. NOT for JS lint/format/style findings — use the code-style skill for those.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
@@ -45,11 +45,66 @@ schema and allowed Disposition/Status values.
 | Trigger | What to follow |
 |---------|----------------|
 | "review EUDPA-X" / "re-review EUDPA-X" / "refresh review" / "check fixes" | this SKILL.md — Fresh + Refresh sections |
+| "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-review.sh dispatches on `--local` |
 | "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` |
 | "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` |
 
 NOT for JavaScript lint/format/style findings — use the `code-style`
 skill.
+
+## Local mode (no ticket, no PR)
+
+Triggered by "review this branch", "review `REPO:BRANCH`", or another
+skill invoking this one (see "Called by another skill" below). Reviews a
+repo checkout under `repos/<repo>/` directly — no Jira ticket, no GitHub
+PR, no `gh` call of any kind.
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/start-review.sh --local REPO BRANCH
+```
+
+This always runs `prepare-review-local.sh` (there is no separate refresh
+pipeline for local mode — re-running IS the refresh: the changed-file
+list is recomputed from git every call, and files with a verdict already
+set are left alone). State lands under
+`~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
+— same shape as the ticket flow: `branch.md` in place of `ticket.md`,
+`.review-meta.json` (`"local": true`), `best-practices/{repo}.md` (via
+the same `detect-tech.sh` the ticket flow uses), and per-file
+`file-reviews/{repo}/{safe_path}.review.json` placeholders.
+
+The changed-file list is `git -C <repo> diff --name-only <merge-base with
+origin/main>...HEAD` plus anything staged or unstaged, unless the caller
+passes `--files F1,F2,...` to name the exact files itself.
+
+Everything from here on (Step 2's spawn prompts, coverage verification,
+Step 4's consistency review, `## Items` rendering) is the **same FRESH
+flow** described below — substitute the local id (`local/REPO/BRANCH`)
+for `EUDPA-XXXXX` everywhere, and read the file straight from
+`~/git/defra/trade-imports-workspace/repos/{repo}/{file}` (there is no
+PR-commit snapshot to clone in local mode — the repo checkout IS the
+source). The FILE_REVIEWER, CONSISTENCY_REVIEWER and REVIEW_ITEM_FIXER
+personas are **unchanged** — only the id and the snapshot-vs-live-repo
+read path differ, and both are supplied in the spawn prompt.
+
+## Called by another skill
+
+A skill (e.g. `prototype`, working on a designer's branch) can drive a
+local-mode review without a human ever saying "review":
+
+- **Inputs**: `repo` (folder under `repos/`), `branch`, optional `files`
+  (an explicit list — when given, scope is exactly those files, not the
+  whole branch's git diff), `fix` (`true` — also run
+  `BATCH_IMPLEMENTOR.md` on any Fix-disposition items found; `false` —
+  report only).
+- **Call shape**: run Local mode above (`start-review.sh --local REPO
+  BRANCH [--files ...]`) through the Fresh Review steps; when `fix:
+  true`, continue into `BATCH_IMPLEMENTOR.md` for the items just found.
+- **One-line return** to the calling skill:
+  - `fix: false` → `review: {N} files, {M} items ({repo}:{branch})`
+  - `fix: true`, items fixed → `applied {N} review fixes ({repo}:{branch})`
+  - `fix: true`, nothing to fix → `no open items ({repo}:{branch})`
+  - nothing changed on the branch → `no changed files to review ({repo}:{branch})`
 
 ## Worker references
 
@@ -573,8 +628,9 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 
 | Script | Purpose |
 |---|---|
-| `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
+| `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
 | `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
+| `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |

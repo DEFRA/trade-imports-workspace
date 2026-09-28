@@ -1,6 +1,11 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath } from '../../constants/repos.js'
+import {
+  REPOS,
+  repoPath,
+  isWorkspaceBranchSynced,
+  workspaceSyncSkipLine
+} from '../../constants/repos.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { run } from '../../exec/exec.js'
 import { runAcross } from '../../exec/parallel.js'
@@ -12,6 +17,27 @@ import { resolveBranch } from './branch-resolver.js'
 const SCHEMA_VERSION = 1
 const DEFAULT_BRANCH_FALLBACK = 'main'
 const REF_SEPARATOR = '\t'
+
+const collect = (value, previous) => previous.concat([value])
+
+/**
+ * Split the repo roster into the ones this run should touch and the ones
+ * it should leave alone — a repo opts out via `workspaceBranchSync: false`
+ * unless `include` names it explicitly.
+ *
+ * @param {string[]} [include]
+ * @returns {{targets: string[], skipped: string[]}}
+ */
+export const partitionSyncTargets = (include = []) => {
+  const included = new Set(include)
+  const targets = []
+  const skipped = []
+  for (const repo of REPOS) {
+    if (isWorkspaceBranchSynced(repo) || included.has(repo)) targets.push(repo)
+    else skipped.push(repo)
+  }
+  return { targets, skipped }
+}
 
 const nonEmptyLines = (stdout = '') =>
   stdout.split('\n').filter((line) => line.trim().length > 0)
@@ -122,8 +148,8 @@ const inspectRepo = async ({ repo, dir, cloned }, fetchFailed) => {
   }
 }
 
-const inspectAll = async (workspaceRoot, { withFetch }) => {
-  const repos = REPOS.map((repo) => {
+const inspectAll = async (workspaceRoot, { withFetch, repoNames }) => {
+  const repos = repoNames.map((repo) => {
     const dir = repoPath(workspaceRoot, repo)
     return { repo, dir, cloned: existsSync(join(dir, '.git')) }
   })
@@ -271,25 +297,63 @@ const toRepoResult = ({ item, durationMs, ...result }) =>
         ok: false
       }
 
+// A full branch name that exists in no repo yet: under --dry-run it is a
+// branch being planned, so report where it would need creating. A bare
+// ticket reference that matches nothing stays not-found.
+const isPlannedBranch = (resolution) =>
+  resolution.kind === 'not-found' && !resolution.ticket
+
+const plannedResult =
+  (branch) =>
+  ({ repo, cloned, current, uncommitted, defaultBranch }) => ({
+    repo,
+    from: current,
+    target: cloned ? branch : null,
+    action: cloned ? 'would-create' : 'skipped',
+    base: cloned ? defaultBranch : null,
+    fetchFailed: false,
+    uncommitted,
+    stashed: false,
+    worktreePath: null,
+    exitCode: 0,
+    stderrTail: null,
+    ok: true
+  })
+
 /**
  * Report every repo's current branch, or resolve `input` to a branch and
  * check it out across the workspace.
  *
  * @param {string} workspaceRoot
- * @param {{input?: string, dryRun?: boolean}} [options]
+ * @param {{input?: string, dryRun?: boolean, include?: string[]}} [options]
  * @returns {Promise<object>} A discriminated result — `report`, `applied`, `ambiguous` or `not-found`
  */
 export const runBranch = async (
   workspaceRoot,
-  { input, dryRun = false } = {}
+  { input, dryRun = false, include = [] } = {}
 ) => {
+  const { targets, skipped } = partitionSyncTargets(include)
   const inspections = await inspectAll(workspaceRoot, {
-    withFetch: Boolean(input)
+    withFetch: Boolean(input),
+    repoNames: targets
   })
 
-  if (!input) return { kind: 'report', repos: inspections.map(toReportRow) }
+  if (!input) {
+    return { kind: 'report', repos: inspections.map(toReportRow), skipped }
+  }
 
   const resolution = resolveBranch(input, namesByRepo(inspections))
+  if (dryRun && isPlannedBranch(resolution)) {
+    return {
+      kind: 'applied',
+      branch: input,
+      ticket: null,
+      dryRun,
+      planned: true,
+      repos: inspections.map(plannedResult(input)),
+      skipped
+    }
+  }
   if (resolution.kind !== 'resolved') return resolution
 
   const results = await runAcross(inspections, (inspection) =>
@@ -300,7 +364,8 @@ export const runBranch = async (
     branch: resolution.branch,
     ticket: resolution.ticket,
     dryRun,
-    repos: results.map(toRepoResult)
+    repos: results.map(toRepoResult),
+    skipped
   }
 }
 
@@ -327,14 +392,19 @@ const renderDrift = (rows) => {
   ].join('\n')
 }
 
-const renderReportText = ({ repos }) => {
+const renderSkipFooter = (skipped = []) =>
+  skipped.length === 0 ? [] : ['', ...skipped.map(workspaceSyncSkipLine)]
+
+const renderReportText = ({ repos, skipped }) => {
   const pad = padded(repos)
   const lines = repos.map(({ repo, cloned, branch, uncommitted }) => {
     if (!cloned) return `  ${pad(repo)}  (not cloned)`
     const dirt = uncommitted > 0 ? ` — ${uncommitted} uncommitted` : ''
     return `  ${pad(repo)}  ${branch ?? '(detached)'}${dirt}`
   })
-  return [...lines, '', renderDrift(repos)].join('\n')
+  return [...lines, '', renderDrift(repos), ...renderSkipFooter(skipped)].join(
+    '\n'
+  )
 }
 
 const ACTION_TEXT = {
@@ -346,7 +416,9 @@ const ACTION_TEXT = {
     `${target} is checked out at ${worktreePath}`,
   'stash-failed': () => 'FAILED to stash uncommitted work',
   'checkout-failed': ({ exitCode }) => `FAILED (exit ${exitCode})`,
-  failed: () => 'FAILED'
+  failed: () => 'FAILED',
+  'would-create': ({ target, base }) =>
+    `no ${target} yet — would need creating from ${base}`
 }
 
 const ACTION_TONE = {
@@ -357,7 +429,8 @@ const ACTION_TONE = {
   'in-worktree': 'yellow',
   'stash-failed': 'red',
   'checkout-failed': 'red',
-  failed: 'red'
+  failed: 'red',
+  'would-create': 'yellow'
 }
 
 const MOVING_ACTIONS = new Set(['switched', 'to-default'])
@@ -394,8 +467,11 @@ const renderRepoLine = (pad, result, dryRun) => {
 export const stashedRepos = (repos) =>
   repos.filter(({ stashed }) => stashed).map(({ repo }) => repo)
 
-export const appliedHeading = ({ branch, ticket, dryRun }) => {
+export const appliedHeading = ({ branch, ticket, dryRun, planned }) => {
   const named = `${branch}${ticket ? ` (${ticket})` : ''}`
+  if (planned) {
+    return `Dry run — ${branch} is not in any repo yet. Nothing changed.`
+  }
   return dryRun
     ? `Dry run — would switch to ${named}. Nothing changed.`
     : `Switched to ${named}`
@@ -411,13 +487,14 @@ const renderStashFooter = (repos) => {
 }
 
 const renderAppliedText = (outcome) => {
-  const { dryRun, repos } = outcome
+  const { dryRun, repos, skipped } = outcome
   const pad = padded(repos)
   return [
     appliedHeading(outcome),
     '',
     ...repos.map((result) => renderRepoLine(pad, result, dryRun)),
-    ...(dryRun ? [] : renderStashFooter(repos))
+    ...(dryRun ? [] : renderStashFooter(repos)),
+    ...renderSkipFooter(skipped)
   ].join('\n')
 }
 
@@ -451,7 +528,11 @@ const renderJson = (outcome, timVersion) => {
   if (outcome.kind === 'report') {
     return envelope(timVersion, {
       ok: true,
-      result: { mode: 'report', repos: outcome.repos }
+      result: {
+        mode: 'report',
+        repos: outcome.repos,
+        skipped: outcome.skipped ?? []
+      }
     })
   }
 
@@ -463,7 +544,9 @@ const renderJson = (outcome, timVersion) => {
         branch: outcome.branch,
         ticket: outcome.ticket,
         dryRun: outcome.dryRun,
-        repos: outcome.repos
+        planned: Boolean(outcome.planned),
+        repos: outcome.repos,
+        skipped: outcome.skipped ?? []
       }
     })
   }
@@ -522,6 +605,12 @@ export const register = (parent, { timVersion }) => {
       'Check out a matching branch in every repo. Repos without it move to their default branch.'
     )
     .option('--dry-run', 'Show what would change without touching any repo')
+    .option(
+      '--include <repo>',
+      'Also report or switch a repo that normally sits out of workspace-wide branch switches (such as the plants prototype). Repeatable.',
+      collect,
+      []
+    )
     .action(async function branchAction(nameOrTicket, opts) {
       const globalOpts = this.optsWithGlobals()
       try {
@@ -530,7 +619,8 @@ export const register = (parent, { timVersion }) => {
         })
         const outcome = await runBranch(workspaceRoot, {
           input: nameOrTicket,
-          dryRun: Boolean(opts.dryRun)
+          dryRun: Boolean(opts.dryRun),
+          include: opts.include
         })
 
         const unresolved =

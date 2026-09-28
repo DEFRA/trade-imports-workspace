@@ -22,6 +22,8 @@ import {
   isJavaRepo,
   GITHUB_ORG,
   repoUrl,
+  isWorkspaceBranchSynced,
+  workspaceSyncSkipLine,
   upstreamOf,
   assertValidUpstreams
 } from './repos.js'
@@ -138,6 +140,24 @@ describe('repo constants', () => {
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true })
     }
+  })
+
+  test('isWorkspaceBranchSynced defaults to true, and is false only for a manifest entry that opts out', () => {
+    const optedOut = manifest.repos
+      .filter((repo) => repo.workspaceBranchSync === false)
+      .map((repo) => repo.name)
+    for (const repo of manifest.repos) {
+      expect(isWorkspaceBranchSynced(repo.name)).toBe(
+        !optedOut.includes(repo.name)
+      )
+    }
+    expect(isWorkspaceBranchSynced('not-a-real-repo')).toBe(true)
+  })
+
+  test('workspaceSyncSkipLine names the repo and the flag that includes it', () => {
+    expect(workspaceSyncSkipLine('trade-imports-plants-prototype')).toBe(
+      "Skipped trade-imports-plants-prototype: designers' work lives there. Add --include trade-imports-plants-prototype to include it."
+    )
   })
 
   test('repoUrl honours the TIM_GITHUB_BASE_URL override', () => {

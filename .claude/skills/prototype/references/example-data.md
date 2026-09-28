@@ -31,13 +31,20 @@ All of these are the prototype's own. The weekly update never touches them.
 
 - **Replay, never write records.** An example is a list of page answers. Never
   create a record in code, never call the records store, never edit anything
-  under `src/server/app/engine/` or `src/server/app/services/`.
-- **Never edit a set's `happy-path.json` for an example.** In
-  `high-risk-plants` it belongs to the real service. Use `answers` or a named
-  fixture instead.
-- **Never edit the stub services' rows** (`src/server/app/services/*/stub*`).
-  They belong to the real service. Extra rows go in
-  `src/server/prototype-data/`.
+  under `src/server/app/engine/`, or under `src/server/app/services/` other
+  than a prototype-owned service's `stub.js` (below).
+- **Never edit `happy-path.json` just to make an example.** Use `answers`
+  or a named fixture instead. In `high-risk-plants` the file belongs to the
+  real service and is never edited. In a design release it is the
+  release's own, and it must change when the release's journey changes (a
+  new required page, a new walk step): `references/fake-a-service.md`, "Put
+  the page in the walk", and `.claude/rules/designer-sets.md` rule 4.
+- **Never edit a real service's stub rows** (`src/server/app/services/<name>/stub*`
+  for `address-book`, `countries`, `ports` and the other real services).
+  Extra rows for those go in `src/server/prototype-data/`. A prototype-owned
+  service's `stub.js` (its folder is on its own line in `ours`) is the
+  release's to change, through `references/fake-a-service.md` (its starter
+  rows, for example).
 - **Never rename a slug** someone may have shared. Add a new example instead.
 - **Never a frozen release.** If `src/server/app/sets/<set-id>/release.json`
   says `"frozen": true`, the release's examples are frozen too: start a

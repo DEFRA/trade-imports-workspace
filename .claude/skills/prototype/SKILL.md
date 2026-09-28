@@ -1,6 +1,6 @@
 ---
 name: prototype
-description: 'Front door for a designer working on the high-risk plants prototype from the trade-imports workspace: they say what they want in their own words — a demo, a research round, notes from a crit, "I''m new, what can I do here", a feature the real service lacks, a story for the developers, "has the real service changed since I made my copy", starting something from scratch, or "make this real and build it properly" — and this works out the outcome and routes to the right reference. Use whenever CLAUDE.local.md marks the person as a designer, or the request names the prototype, a design release, or a design/* branch. NOT for real-repo work on trade-imports-plants-frontend, trade-imports-plants-backend or any other service repo (use frontend-change, ticket, ticket-creator or the other developer skills), and NOT for a maintainer''s own change to the prototype''s repo contract on a maintain/* branch.'
+description: 'Front door for a designer working on the high-risk plants prototype from the trade-imports workspace: they say what they want in their own words — a demo, a research round, notes from a crit, "I''m new, what can I do here", a feature the real service lacks, a story for the developers, "has the real service changed since I made my copy", starting something from scratch, or "make this real and build it properly" — and this works out the outcome and routes to the right reference. Use whenever CLAUDE.local.md marks the person as a designer, or the request names the prototype, a design release, or a design/* branch. NOT for real-repo work on trade-imports-plants-frontend, trade-imports-plants-backend or any other service repo (use frontend-change, ticket, ticket-creator or the other developer skills), and NOT for a maintainer''s own change to the prototype''s repo contract on a chore/* branch.'
 ---
 
 # Prototype
@@ -90,9 +90,15 @@ Read these before any change, whatever the request:
     `src/client/**`, `webpack.config.js`, `vitest.config.js`,
     `src/server/app/{engine,model,bridge,flow,shared,services,lib}/**` or
     `src/server/app/shared/layout.njk` in the prototype, except on a
-    `handoff/*` or `maintain/*` branch. The one exception on `design/*`
-    branches is a prototype-owned service folder, through
-    `references/fake-a-service.md` only.
+    `handoff/*` branch (the upstream-bound route) or a maintainer's
+    `chore/*` branch. The one exception on `design/*` branches is a
+    prototype-owned service folder, made or changed only through
+    `references/fake-a-service.md`.
+11. **Work on a `design/*` branch.** Stay only on a `design/*` branch (or a
+    `handoff/*` branch for the upstream-bound route). From any other branch,
+    `main` or someone's `feat/*` or `chore/*` included, make
+    `design/<release>-<slug>` before the first change (`references/ROUTING.md`,
+    "Branches").
 
 ## Open `references/ROUTING.md`
 

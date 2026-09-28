@@ -51,6 +51,15 @@ the designer, add a `design-gaps.md` row for it
 | `ins-address-book`    | the INS frontend      | The Import Notification Service's own address book API: list, create, read, change and delete an address. The journey's pickers see every change. See `address-book-pages.md`.                                   |
 | `notification-search` | the plants backend    | Dashboard filters, tabs and counts. See `dashboard-filters-and-tabs.md`.                                                                                                                                         |
 
+**When one of these already fits, use it and never make a second.** To
+change what it does (a new starter row, a new field, a new operation, a
+check its `create…` makes), edit its folder in place through this
+reference, keeping the `index.js`/`client.js`/`stub.js` shape, its
+`contract.json` and its `<name>.test.js` in step (see "Making a new
+service", step 2, for how each file changes). `designer:service -- new` is
+only for a service that does not exist yet; it has no "change" verb and
+needs none.
+
 `transporters` and `templates` answer a search in the address book picker's
 shape, so any page built like the address book picker can use them:
 
@@ -160,8 +169,9 @@ designer's one change, even though it adds two pages):
 
 1. **A new journey page that stores an answer.** That is
    `references/change-the-journey.md` (the add-a-page recipe): a new
-   obligation named `transporter` (stored as `{ transporterId }`), the page,
-   and its place in `flow.js`. Do it first.
+   obligation named `transporter`, stored as a copy of the transporter's
+   fields (see "Store a reference or a copy?" below), the page, and its
+   place in `flow.js` and in the walk (below). Do it first.
 2. **The picker behind the page, and its "add a new one" page.** That is this
    reference.
 3. **The answer on check your answers.** Also this reference, below. The
@@ -200,11 +210,30 @@ The address book picker is the pattern. The consignor page
 
 3. Copy `features/consignor-select/` to `features/transporter-select/`. In the
    copy, import `chosenFor` and `renderPicker` from `../transporter-picker/render.js`,
-   store `{ transporterId: chosen.id }` where it stored
-   `{ addressId: chosen.id }`, and write the page's words in its `copy/` pair.
-   The consignor's name is written in more places than `CONSIGNOR`. Change
-   every one, or the picker never saves (the form posts a `consignor` field
-   the controller no longer reads):
+   and write the page's words in its `copy/` pair. Where the consignor
+   stored `{ addressId: chosen.id }`, store a copy of what the notification
+   shows, keeping the id only so the picker can tick the row again:
+
+   ```js
+   /**
+    * The transporter as the notification keeps it: a copy, so deleting or
+    * changing the saved transporter never changes a notification. The id
+    * only ticks the row when the trader comes back to this page.
+    */
+   const transporterAnswerOf = ({
+     id,
+     name,
+     address,
+     approvalNumber,
+     transporterType
+   }) => ({ transporterId: id, name, address, approvalNumber, transporterType })
+   ```
+
+   and commit `{ [TRANSPORTER]: transporterAnswerOf(chosen) }`. Rewrite the
+   copied controller's doc comment to say the answer is a copy (the
+   consignor's says the opposite). The consignor's name is written in more
+   places than `CONSIGNOR`. Change every one, or the picker never saves (the
+   form posts a `consignor` field the controller no longer reads):
 
    | File            | Was                                                                                | Becomes                                                                   |
    | --------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -251,10 +280,38 @@ report, even when they did not ask (these are known, not faults):
 - The add form is one page with a type question at the top, not the old
   type-first flow of two pages. Offer the two-page flow as a follow-up
   (`references/change-the-journey.md`, add-a-branch).
-- The real journey's pickers refuse Continue without a choice; the old page
-  let the user carry on. Keep the refusal unless the designer asks otherwise
-  (then it is `references/research-session.md`'s relax-a-save-rule, or a
-  design gap).
+- Required or optional (see "Required or optional?" below) decides what an
+  empty Continue does. **Required** (the real journey's pickers): keep the
+  copied refusal, `copy.errors.transporter` with a 400. **Optional** (the
+  old GB page let the user carry on): an empty Continue commits nothing and
+  moves on (`return h.redirect(await kit.nextTarget(request, page, current.scope))`
+  before `chosenFor`), and only a choice that is not in the list (a
+  transporter deleted since the page loaded) is refused, with
+  `copy.errors.transporterNotFound` ("Select a transporter from the list").
+  An optional page has no empty-Continue error state.
+
+### Put the page in the walk
+
+A new journey page must also go where the example walk and `--walk` look for
+it, or `designer:check -- --walk` fails on a page it never reaches:
+
+1. In the release's `journeys/linear/flow/run.js`, import the page and add
+   `{ id: transporterPage.id, target: flowPageTarget(transporterPage) }` to
+   `RUN_STEPS`, after the arrival details step (the same place as in
+   `flow.js`).
+2. In the release's `journeys/linear/flow/fixtures/happy-path.json`, add a
+   step to **every** scenario that reaches the page, after its
+   `arrival-details` step:
+
+   ```json
+   { "slug": "transporter-select", "fields": { "transporter": "harbourline-haulage-ltd" } }
+   ```
+
+   (the starter ids are in `STARTER_TRANSPORTERS` in
+   `src/server/app/services/transporters/stub.js`). For an optional page
+   in a scenario that skips it, the step posts `"fields": {}` (an empty
+   Continue). Check with
+   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <release>`.
 
 For "add a new one", add a page that is not a journey step. The add page in
 the saved transporters example (`add.njk`, and `renderAdd` and `add` in its
@@ -296,67 +353,23 @@ the saved transporters example (`add.njk`, and `renderAdd` and `add` in its
 
 ### Show the transporter on check your answers
 
-Check your answers looks up the address book for the consignor and the place
-of destination (`partiesFor` in its `controller.js`). A transporter lives in
-its own service, so give it a small lookup of its own, in a new file. Never
-add it to `partiesFor`: that function is already at the code rules'
-complexity limit, and one more branch fails `sonarjs/cyclomatic-complexity`.
+Check your answers already shows a party kept as a copy: `partiesFor` in its
+`controller.js` looks a saved answer up in the address book only when it
+holds an `addressId`, and otherwise shows the saved answer as it is. The
+transporter answer is a copy (step 3 above), so it needs no lookup and no
+new file:
 
-1. A new file, `features/check-answers/owned-parties.js`:
-
-   ```js
-   import * as transporters from '../../../../../../services/transporters/index.js'
-   import { organisationIdOf } from '../../../../../../../common/helpers/organisation-id.js'
-
-   /**
-    * Parties kept in prototype-owned services, not the address book: the
-    * answer field, the key its saved answer holds the id in, and the lookup.
-    * Needs a real service: see design-gaps.md.
-    */
-   const OWNED_PARTIES = [
-     {
-       field: 'transporter',
-       idKey: 'transporterId',
-       find: transporters.getTransporter
-     }
-   ]
-
-   const lookUp = async (request, saved, { idKey, find }) => {
-     const id = saved?.[idKey]
-     return id ? find(organisationIdOf(request), id) : undefined
-   }
-
-   /** Each party the notification has in a prototype-owned service, by answer field. */
-   export const ownedPartiesFor = async (request, source, scope) => {
-     const found = {}
-     for (const entry of OWNED_PARTIES) {
-       const party = scope.has(entry.field)
-         ? await lookUp(request, source[entry.field], entry)
-         : undefined
-       if (party && !party.deleted) {
-         found[entry.field] = party
-       }
-     }
-     return found
-   }
-   ```
-
-   Another party in a prototype-owned service is one more line in
-   `OWNED_PARTIES`.
-
-2. In `features/check-answers/controller.js`, import it and change only the
-   `parties` line in `render`:
+1. In `features/check-answers/controller.js`, add `'transporter'` to the
+   field list `partiesFor` loops over:
 
    ```js
-   import { ownedPartiesFor } from './owned-parties.js'
-   // …
-   const parties = {
-     ...(await partiesFor(request, source, current.scope)),
-     ...(await ownedPartiesFor(request, source, current.scope))
-   }
+   for (const field of ['placeOfDestination', 'consignor', 'contactAddress', 'transporter']) {
    ```
 
-3. In `features/check-answers/view-model/index.js`, add the card to
+   One more entry in the list adds no branch, so the function stays inside
+   the code rules' complexity limit.
+
+2. In `features/check-answers/view-model/index.js`, add the card to
    `partiesSection`, after the consignor card:
 
    ```js
@@ -377,15 +390,13 @@ complexity limit, and one more branch fails `sonarjs/cyclomatic-complexity`.
    so `partyCard` shows it as it is. Its Change link finds the
    `transporter-select` page by itself.
 
-4. Add `cards.transporter: 'Transporter'` to both check-answers copy files
+3. Add `cards.transporter: 'Transporter'` to both check-answers copy files
    (`'[Welsh needed] Transporter'` in the Welsh).
 
-5. Picture it: `--pages transporter-select,notification-view --url "notifications/{notification}/transporter-select/add" --errors --before`.
-   The example data (the release's `happy-path.json`) needs a
-   `transporter-select` step with `{ "transporter": "<a starter id>" }`
-   (the ids are in `STARTER_TRANSPORTERS` in
-   `src/server/app/services/transporters/stub.js`), so the examples reach the
-   page and check your answers shows the card.
+4. Picture it: `--pages transporter-select,notification-view --url "notifications/{notification}/transporter-select/add" --errors`
+   (add `--before` only once the release has a saved commit). The walk
+   steps from "Put the page in the walk" make the examples reach the page,
+   so check your answers shows the card.
 
 The design-gaps row:
 
@@ -484,6 +495,10 @@ on the page first (below) and the refusal never reaches the user.
      pageRoutePath
    } from '../../../../../../shared/paths.js'
    import { HTTP_STATUS_BAD_REQUEST } from '../../../../../../lib/http-status.js'
+   import {
+     requiredMaxText,
+     validate
+   } from '../../../../../../lib/validate/index.js'
    import * as kit from '../../../../../../shared/kit.js'
    import { copyFor } from '../../../../../../shared/copy.js'
    import { saveJourneyAsTemplate } from '../templates/from-template.js'
@@ -494,6 +509,12 @@ on the page first (below) and the refusal never reaches the user.
    const view = `${TEMPLATES}/features/save-as-template/template`
    const copy = copyFor({ en, cy })
    const FIELD = 'templateName'
+   const TEMPLATE_NAME_MAX_LENGTH = 100
+
+   const templateNameRules = requiredMaxText(FIELD, TEMPLATE_NAME_MAX_LENGTH, {
+     required: copy.errors.missing,
+     maxLength: copy.errors.tooLong
+   })
 
    const render = (h, errors = {}, value = '') =>
      h.view(view, {
@@ -507,16 +528,16 @@ on the page first (below) and the refusal never reaches the user.
    const get = (_request, h) => render(h)
 
    const post = async (request, h) => {
-     const name = String(request.payload?.[FIELD] ?? '').trim()
-     if (!name) {
-       return render(h, { [FIELD]: copy.errors.missing }, name).code(
+     const { value, errors } = validate(templateNameRules, request.payload)
+     if (errors) {
+       return render(h, errors, request.payload?.[FIELD] ?? '').code(
          HTTP_STATUS_BAD_REQUEST
        )
      }
      const saved = await saveJourneyAsTemplate(
        request,
        request.params.journeyId,
-       name
+       value[FIELD]
      )
      return h.redirect(
        saved ? `${dashboardPath()}?templateSaved=1` : dashboardPath()
@@ -542,7 +563,10 @@ on the page first (below) and the refusal never reaches the user.
    The template: the error summary include, an `h1` from `copy.title`, a
    `<form method="post" novalidate>` with the `crumb` hidden input, a
    `govukInput` named `templateName` with `errorMessage: fieldError`, and a
-   `govukButton`.
+   `govukButton`. The copy pair holds `errors.missing` ("Enter a name for
+   the template") and `errors.tooLong` ("Template name must be 100
+   characters or less"). `designer-rules/post-handler-validates` fails a
+   POST that reads `request.payload` without calling `validate(...)`.
 
 3. In `features/index.js`, import it
    (`import * as saveAsTemplate from './save-as-template/controller.js'`) and
@@ -561,6 +585,39 @@ on the page first (below) and the refusal never reaches the user.
    Plain paths like these are mounted under the release's address, so the
    page is `http://localhost:3103/<release>/templates`.
 
+   The `{templateId}` route needs a Joi `params` object whose `failAction`
+   throws `Boom.notFound()` (`designer-rules/route-params-validated` fails
+   without it), in its own `features/templates/template-id-params.js`, the
+   same shape as the saved transporters example's
+   `transporter-id-params.js` and ins-frontend's `address-id-params.js`:
+
+   ```js
+   import Boom from '@hapi/boom'
+   import Joi from 'joi'
+
+   import * as kit from '../../../../../../shared/kit.js'
+
+   /** The shape every template id takes: lower-case words and digits joined
+    * by hyphens. A well-shaped id that does not exist is the handler's to
+    * find out, by asking the service. */
+   const TEMPLATE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+   export const templateIdRouteOptions = {
+     ...kit.routeOptions,
+     validate: {
+       params: Joi.object({
+         templateId: Joi.string().pattern(TEMPLATE_ID_PATTERN).required()
+       }),
+       failAction: () => {
+         throw Boom.notFound()
+       }
+     }
+   }
+   ```
+
+   Check the pattern against the ids `createTemplate` makes in
+   `src/server/app/services/templates/stub.js` before you rely on it.
+
    ```js
    import { dashboardPath, hubPath } from '../../../../../../shared/paths.js'
    import * as kit from '../../../../../../shared/kit.js'
@@ -568,6 +625,7 @@ on the page first (below) and the refusal never reaches the user.
    import { organisationIdOf } from '../../../../../../../common/helpers/organisation-id.js'
    import { listTemplates } from '../../../../../../services/templates/index.js'
    import { startFromTemplate } from './from-template.js'
+   import { templateIdRouteOptions } from './template-id-params.js'
    import { TEMPLATES } from '../../config.js'
    import { copy as en } from './copy/copy.en.js'
    import { copy as cy } from './copy/copy.cy.js'
@@ -616,7 +674,7 @@ on the page first (below) and the refusal never reaches the user.
      {
        method: 'POST',
        path: '/templates/{templateId}/use',
-       options: kit.routeOptions,
+       options: templateIdRouteOptions,
        handler: use
      }
    ]
@@ -715,9 +773,10 @@ prototype's own.
 
 ### Store a reference or a copy?
 
-A journey answer that points at a saved record can hold its id
-(`{ transporterId }`, as worked example 1 does) or a copy of the fields the
-notification needs (`{ vehicleId, registration, haulier, trailerType }`).
+A journey answer that points at a saved record can hold its id alone
+(`{ vehicleId }`) or a copy of the fields the notification needs
+(`{ vehicleId, registration, haulier, trailerType }`, as worked example 1
+does for a transporter).
 
 - **A copy is the default for saved lists.** Deleting or changing a saved
   record then never changes a notification, which is how the journey's own

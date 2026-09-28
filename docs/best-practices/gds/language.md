@@ -62,6 +62,25 @@ Sentence case for all text except:
 - Time: 5:30pm, 10am to 11am
 - Use "midnight" and "midday"
 
+## Hint Text
+
+Source: https://design-system.service.gov.uk/components/text-input/#hint-text
+and https://design-system.service.gov.uk/components/date-input/
+
+- A hint says how to answer, or where to find the answer. It never repeats
+  the question or explains what the question means.
+- Keep it to one short sentence. No links, bullet lists or "please".
+- An example goes after "For example," and matches what the field accepts:
+  - the date input (day, month, year boxes): "For example, 27 3 2026"
+  - a single text box or date picker that takes a slash date: "For example,
+    27/3/2026"
+  - a time: the clock the service asks for, for example "14:30"
+- A hint whose words change with an earlier answer (a hint keyed by state)
+  is still one hint per state: change only the state the request names, and
+  keep the same pattern across the others.
+- Proper nouns keep their capitals in a hint as anywhere else (Great
+  Britain, Northern Ireland).
+
 ## Abbreviations
 
 **No explanation needed:** BBC, NHS, UK, VAT, PDF, URL

@@ -123,7 +123,9 @@ release. Start a working release from it instead." Offer
 `references/design-release.md`. Refuse `sample-journey`: it is a placeholder
 with no journey.
 
-If the branch is `main`, make a branch before editing:
+Unless the branch is a `design/*` branch (or `handoff/*` in upstream-bound
+mode), make one before editing — from `main`, a `feat/*`, `chore/*` or trial
+branch alike (`references/ROUTING.md`, "Branches"):
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
@@ -293,6 +295,15 @@ origin", "the button on arrival details"): run
 and pick the string from its list (hints are keys ending `.hint`, labels
 `.label`, errors sit under `errors`). Say which string you picked, quoting
 its English.
+
+**A hint or label keyed by state** (an object of strings such as
+`dateHints: { potatoes, 'not-yet-arrived', 'already-arrived' }` or a
+`labelByState`, one string per earlier answer): "the hint on the arrival
+date question" can mean one, some or all of them. Change the states whose
+situation matches the designer's words (a hint about potatoes that have
+already arrived is the `potatoes` state; "the hint" with no situation is
+every state that shows the same text). Say in one line which states you
+changed and which you left as they were, quoting each one left.
 
 **The designer names a group or heading that does not exist exactly** ("the
 Arrival group" when the task list says "2. Arrival and destination"): take

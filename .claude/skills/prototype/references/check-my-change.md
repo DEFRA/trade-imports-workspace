@@ -125,9 +125,22 @@ For each item under "What went wrong", in order:
 3. Name the reference that fixes it and offer it: "Say 'fix it' and I will",
    or "This needs `references/change-the-journey.md`: say 'use change the
    journey' to go on".
-4. If it is marked "Not caused by your change: tell the maintainer", say
-   exactly that. Explain that it still has to be fixed before anything can be
-   saved, and that the maintainer fixes it. Do not repair it.
+4. If it is marked "Not caused by your change: tell the maintainer", first
+   rule out the two cases below, which the check labels that way but which
+   the designer's change did cause. Only then say exactly what it says:
+   that it still has to be fixed before anything can be saved, and that the
+   maintainer fixes it. Do not repair it.
+   - **A walk that reached the wrong page** (the walk expected one address,
+     say `…/arrival-details`, and the browser was on another, often a page
+     this change added): the new page is missing from the release's
+     `journeys/linear/flow/run.js` `RUN_STEPS`, or a scenario in its
+     `journeys/linear/flow/fixtures/happy-path.json` has no step for it
+     (`references/fake-a-service.md`, "Put the page in the walk"). That is
+     the designer's change, so repair it (step 6).
+   - **A fresh release that fails before any change** (copied from
+     `high-risk-plants` and failing on files it copied unchanged): that one
+     really is the maintainer's. Say so, and do not work round it with
+     `--no-verify`.
 
 **A save that failed.** `designer:save` prints "Nothing was saved" and the
 last 60 lines of `.cache/designer/commit.log` (inside the prototype repo):

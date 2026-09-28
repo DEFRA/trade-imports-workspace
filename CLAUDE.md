@@ -50,7 +50,10 @@ A request about pages, words, examples or journeys goes to `prototype` when
 the person is a designer (see `CLAUDE.local.md`, set by `tim prototype
 setup`) or names the prototype, a design release or a `design/*` branch;
 otherwise the developer skills above apply. `frontend-change` and
-`ticket-creator` already say so in their own descriptions.
+`ticket-creator` already say so in their own descriptions. With no
+`CLAUDE.local.md` marker, a request that names only a page several services
+have ("the dashboard", "the address page") and no service or repo gets one
+plain question before any work: the prototype, or which service?
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
 

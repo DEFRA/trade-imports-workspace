@@ -253,7 +253,10 @@ it never sends anything anywhere by itself.
    `report.json`, name what is left. Tell the designer which placeholders
    remain, in one line, and ask for those words. When they answer, run step 3
    again with them: never type their words into the brief yourself, and never
-   fill a placeholder with words of your own.
+   fill a placeholder with words of your own. When the designer also asked
+   for a ticket, do not stop here: finish steps 5 and 6, go on to
+   `references/raise-the-story.md`, and ask for the missing words there,
+   beside the dry-run plan, in one message.
 
 5. Read `brief.md` in full. Look at the screenshots it links. Tell the
    designer, in plain words:
@@ -272,6 +275,10 @@ it never sends anything anywhere by itself.
      team's plants behaviour spec under
      `~/git/defra/trade-imports-workspace/openspec/specs/plants/`, which the
      brief names by path),
+   - any standing ruling that chose the words this change replaces ("Standing
+     ruling c-002 chose the words…" under "What cannot ship as it is"): name
+     the ruling and its reason, and say the product owner should confirm the
+     new words still meet it,
    - what cannot ship as it is, and why. A file that uses the prototype's own
      example data or stub plumbing is left out of the patch, and so is every
      file that imports it ("Imports …, which is left out"),

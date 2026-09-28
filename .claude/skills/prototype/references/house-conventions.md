@@ -110,6 +110,44 @@ before trusting it.
   — a prototype-owned service's `client.js` proposes the real logging shape
   even though the stub itself rarely logs.
 
+### Backend (owner repo)
+
+For a hand-off or story whose service needs a backend the real team builds
+or extends (`contract.json`'s `owner`: `plants-backend`, `ins`, `new-api`).
+The prototype builds none of this; the story's Tech Notes cite it so the
+developer or build loop does.
+
+- `~/git/defra/trade-imports-workspace/docs/best-practices/java/modern-java.md`
+  and `.../java/spring-boot.md` — records, and the null guards every record
+  constructor carries.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/java/spring-data-mongodb.md`
+  when it stores anything.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/java/testing/` —
+  integration tests run under `mvn verify` (Failsafe); `mvn test` skips them.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/rest-api/rest-api.md`
+  — noun endpoints, never an action path.
+- `~/git/defra/trade-imports-workspace/docs/best-practices/java/openapi-springdoc.md`
+  for the contract.
+- The exemplar:
+  `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-backend/src/main/java/uk/gov/defra/trade/imports/plants/notification/`
+  (controller, service, repository, records and their tests). For an INS
+  owner, `trade-imports-address-book`'s own controller and
+  `docs/openapi/api-contract.locked.yaml`.
+
+### Platform config
+
+- A new backend, or a new backend URL a frontend client reads, needs an
+  entry in cdp-app-config for each environment. No agent writes to
+  cdp-app-config or any CDP platform repo: draft the entry locally (in the
+  hand-off folder or the story's Tech Notes) for the product owner to
+  commit. `~/git/defra/trade-imports-workspace/workareas/shared/designer-prototyping/workspace-adapt/cdp-app-config-draft.md`
+  is the worked example.
+
+`designer:handoff` writes a "Backend house conventions" and a "Platform"
+line into the story's Tech Notes whenever a service names an owner backend,
+and names the branch for every repo the story reaches. Never edit those
+lines into `brief.md` by hand: a re-run overwrites them.
+
 ## Kept deliberately (recorded decisions)
 
 These look like deviations from house style. They are not: each was decided
@@ -123,11 +161,16 @@ being "fixed" on sight.
   Say "copy unchanged" is wrong for this file; say instead that the
   hand-off corrects the shape.
 - **Clients read `process.env` for the backend URL directly**, rather than
-  through a config module. Rung 2 beats rung 3 here: the real plants
-  clients do the same (see `services.md`'s services list), so a
-  prototype-owned client matches them rather than the generic Node
-  best-practice. The plants docs-vs-code conflict on this point is the
-  plants team's to resolve, not a prototype-owned service's to fix.
+  through a config module, because the real plants persistence client does
+  (`services/persistence/records/real/config.js` reads
+  `TRADE_IMPORTS_PLANTS_BACKEND_URL`). The real docs say otherwise:
+  plants-frontend's `src/server/app/docs/services.md` lists the convict key
+  `tradeImportsPlantsBackendApi.baseUrl` and names only the address book as
+  the `process.env` exception. So code and docs disagree, and neither is
+  "the house shape" yet. A prototype-owned client follows the code; every
+  hand-off names both (the convict key exists, the persistence client reads
+  the env var) and leaves the choice to the real team. Never state in a
+  brief or story that `process.env` is the house convention.
 - **Per-client HTTP helpers stay inlined**, not pulled into a shared
   helper. The real plants address-book client inlines its own fetch calls
   too, so each service folder is free to lift into

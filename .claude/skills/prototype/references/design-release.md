@@ -133,14 +133,15 @@ to stay as it is.
    `plants-research-oct` for October research. Check it is not taken with
    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`.
    Never use `examples`, `reset`, `auth`, `public` or `health`.
-3. **Get onto the designer's branch.** If on `main`, make one:
+3. **Get onto the designer's branch.** On a `design/*` branch, stay on it.
+   On any other branch (`main`, a `feat/*`, `chore/*` or trial branch), make
+   one:
 
    ```
    git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release-id>-start
    ```
 
-   On any other branch that does not start with `handoff/`, stay on it (the
-   one branch rule in `references/ROUTING.md`, "Branches"): the designer's
+   This is the one branch rule in `references/ROUTING.md`, "Branches": the designer's
    change and its save then land on the same branch as the release, and
    `references/share-my-change.md` stays there too. If there are unsaved
    changes, ask the designer to save or undo them first

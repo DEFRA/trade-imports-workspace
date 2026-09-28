@@ -242,6 +242,35 @@ describe('workspace branch', () => {
     expect(await currentBranch(repoDir(workspace, 0))).toBe('main')
   }, 60_000)
 
+  test('reports where a planned branch would need creating in dry-run mode, and changes nothing', async () => {
+    await seedWorkspace()
+
+    const { stdout, exitCode } = await runCli(workspace, [
+      'feat/NO_JIRA-planned',
+      '--dry-run',
+      '--json'
+    ])
+
+    expect(exitCode).toBe(0)
+    const payload = JSON.parse(stdout.trim())
+    expect(payload.result.planned).toBe(true)
+    expect(byRepo(payload)[REPOS[0]]).toMatchObject({
+      action: 'would-create',
+      target: 'feat/NO_JIRA-planned',
+      base: 'main'
+    })
+    expect(byRepo(payload)[REPOS[7]].action).toBe('skipped')
+    expect(await currentBranch(repoDir(workspace, 0))).toBe('main')
+  }, 60_000)
+
+  test('still reports not found for an unknown branch name without dry-run', async () => {
+    await seedWorkspace()
+
+    const { exitCode } = await runCli(workspace, ['feat/NO_JIRA-planned'])
+
+    expect(exitCode).toBe(1)
+  }, 60_000)
+
   test('reports repos that are not cloned as skipped', async () => {
     await seedWorkspace()
 

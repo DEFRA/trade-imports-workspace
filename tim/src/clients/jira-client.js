@@ -335,7 +335,9 @@ export const createJiraClient = ({
 
     /**
      * Open epics in a project, for a hand-off to offer as the default
-     * parent when no `parent` is set in the manifest.
+     * parent when no `parent` is set in the manifest. Uses the enhanced
+     * JQL search: Atlassian removed `/rest/api/{2,3}/search`, which now
+     * answers 410 Gone.
      *
      * @param {string} project - Project key, e.g. `'EUDPA'`
      * @returns {Promise<Array<{key: string, summary: string}>>}
@@ -343,7 +345,7 @@ export const createJiraClient = ({
     listOpenEpics: async (project) => {
       const jql = `project = ${project} AND issuetype = Epic AND statusCategory != Done`
       const data = await get(
-        `/rest/api/2/search?jql=${encodeURIComponent(jql)}&fields=summary`,
+        `/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary&maxResults=100`,
         `listOpenEpics(${project})`
       )
       return (data.issues ?? []).map((issue) => ({

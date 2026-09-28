@@ -51,7 +51,7 @@ describe('parseEpicsOptions', () => {
 describe('runEpics', () => {
   test('returns the project and its open epics', async () => {
     mockPool(BASE)
-      .get(/^\/rest\/api\/2\/search/)
+      .get(/^\/rest\/api\/3\/search\/jql/)
       .reply(200, {
         issues: [
           { key: 'EUDPA-100', fields: { summary: 'Designer prototyping' } }

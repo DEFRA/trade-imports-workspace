@@ -10,6 +10,14 @@ tables anywhere else — update them here and every route stays correct.
 Designers describe outcomes in their own words. They never need a reference
 name. For every request:
 
+0. **Make sure it is the prototype.** With no designer marker in the
+   workspace's `CLAUDE.local.md` (written by `tim prototype setup`) and a
+   request that names only a page several services have ("the dashboard",
+   "the address page") with no word for the prototype, a release or a
+   `design/*` branch, ask one plain question first: "Is this for the plants
+   prototype, or for one of the real services?" Offer `tim prototype setup`
+   once the answer is the prototype, so the next session knows.
+
 1. **Name the outcome.** Say to yourself, in one line, what the designer
    wants to be true when you finish ("a dashboard that shows which
    notifications are late", "a story the developers can build from").
@@ -151,33 +159,50 @@ Workflow({
 | --- | --- | --- |
 | `workflow/wording-sweep.js` | `references/change-the-words.md` | A wording change across more than 5 pages, or a pasted content document |
 | `workflow/port-kit-page.js` | `references/port-a-kit-page.md` | Every Prototype Kit page port |
-| `workflow/prepare-handoff.js` | `references/hand-off.md`, `references/build-it-for-real.md` route C1 | A change the real team needs with its tests, on a `handoff/<slug>` branch |
+| `workflow/prepare-handoff.js` | `references/hand-off.md`, `references/build-it-for-real.md` route C1 | A change the real team needs with its tests, on a `handoff/<slug>` branch (the upstream-bound route) |
 | `workflow/design-session.js` | this file (rule 6 in `SKILL.md`) | Any list of notes, however many, or four or more changes at once |
 
 See `workflow/README.md` for the args contract and how models are chosen.
 
 ## Branches
 
-- `design/<set>-<slug>`: a designer's work, made from `main` before the
+- `design/<release>-<slug>`: a designer's work, made from `main` before the
   first change. Prototype-only, `dockerStack: null`.
-- `handoff/<slug>`: work meant for the real service, made by `hand-off`
-  (route 2) or `build-it-for-real` (route C1). Never merged into the
-  prototype's own `main`.
-- `maintain/<slug>`: a maintainer's work on the prototype itself (not this
-  skill's concern).
-- One rule for every reference: **on `main`, make a `design/*` branch; on
-  any other branch, stay on it.** Starting a release, making the change and
-  saving it all happen on that one branch.
+- `handoff/<slug>`: the upstream-bound route only, where the real journey's
+  own files (`high-risk-plants`) are changed in the prototype to make a
+  checked `upstream.patch` for plants-frontend (`hand-off` route 2,
+  `build-it-for-real` route C1). Never merged into the prototype's own
+  `main`. A hand-off *folder* for a design release lands on the designer's
+  own `design/*` branch, not here.
+- `chore/NO_JIRA-<slug>` (or `chore/EUDPA-N-<slug>`): a maintainer's work on
+  the prototype itself, following the workspace branch-naming rule (not
+  this skill's concern).
+- One rule for every reference: **stay only on a `design/*` branch, or on a
+  `handoff/*` branch for the upstream-bound route. From any other branch —
+  `main`, a `feat/*`, `chore/*` or trial branch — make
+  `design/<release>-<slug>` before the first change**, from `main`; from the
+  current branch instead only when `main` does not yet have something the
+  release needs (the designer suite itself, a release saved elsewhere), and
+  say so in one line. Starting a release, making the change and saving it
+  all happen on that one branch, so nothing lands on someone else's branch.
 
 ## How every change ends
 
+0. Before the first edit, take a plain picture of the pages it will touch:
+   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages>`.
+   That is the "before" for a release with no saved commit yet (a new
+   release, or one a failed save never committed), where `--before` has
+   nothing to compare with.
 1. Check it:
    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:check -- --set <id>`
    and its plain-English result.
 2. Show it:
-   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages it is on> --before`,
-   the gallery path, and links to click. Open the key pictures yourself
-   before describing them.
+   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:show -- --set <id> --pages <the pages it is on>`,
+   adding `--before` only when the release has a saved commit
+   (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format=%h -- src/server/app/sets/<id>`
+   prints one); otherwise put step 0's picture beside it. Give the gallery
+   path and links to click. Open the key pictures yourself before
+   describing them.
 3. The hand-off line, word for word: "If this should become part of the
    real service, say 'hand this to the real team' and I will prepare a
    brief and a patch for the plants-frontend team."

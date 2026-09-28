@@ -303,10 +303,9 @@ const prepare = (slug) =>
       "   If it prints anything, stop: ready is false and reason is \"You have unsaved changes. Save them or undo them first (say 'save my work' or 'undo that'), then start the session again.\"",
       `2. Run: ${git('branch --show-current')}`,
       '   - If the branch starts with design/, stay on it.',
-      `   - If it is main, run: ${git(`switch -c design/${config.set}-${slug}`)}`,
-      '     If git says the branch already exists, stop: ready is false and reason names the branch and asks the designer to switch to it or pick another name.',
       '   - If it starts with handoff/, stop: ready is false and reason is "You are on <branch>, a hand-off branch for the real team. Switch back to your design branch (or main) and start the session again."',
-      '   - Any other branch (a feat/ or trial branch, say): stay on it. The session saves its commits there.',
+      `   - Any other branch (main, or a feat/, chore/ or trial branch): run: ${git(`switch -c design/${config.set}-${slug}`)}`,
+      '     The new branch starts from the current one. If git says the branch already exists, stop: ready is false and reason names the branch and asks the designer to switch to it or pick another name.',
       `3. Run: ${git('branch --show-current')}, and return the branch name in branch.`,
       GUARD_RAILS
     ].join('\n'),

@@ -350,7 +350,9 @@ describe('getIssueLinks', () => {
 describe('listOpenEpics', () => {
   test('returns key and summary for each open epic', async () => {
     mockPool(BASE)
-      .get(/^\/rest\/api\/2\/search\?jql=.*&fields=summary$/)
+      .get(
+        /^\/rest\/api\/3\/search\/jql\?jql=.*&fields=summary&maxResults=100$/
+      )
       .reply(200, loadFixture('list-open-epics.json'))
 
     const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
@@ -362,7 +364,7 @@ describe('listOpenEpics', () => {
 
   test('maps 429 to TimError(RATE_LIMIT)', async () => {
     mockPool(BASE)
-      .get(/\/rest\/api\/2\/search/)
+      .get(/\/rest\/api\/3\/search\/jql/)
       .reply(429, {})
     const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
     await expect(client.listOpenEpics('EUDPA')).rejects.toMatchObject({

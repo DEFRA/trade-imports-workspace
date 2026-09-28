@@ -97,14 +97,13 @@ Refuse, in plain English, and offer the safe route, when:
   `release.json` has `"frozen": true`). Say: "This is a frozen release. Start
   a working release from it instead." Offer `references/design-release.md`.
 
-If the branch is `main`, make a branch for the change before editing:
+On a `design/` branch (or `handoff/` in upstream-bound mode), stay on it.
+On any other branch (`main`, a `feat/`, `chore/` or trial branch), make a
+branch for the change before editing (`references/ROUTING.md`, "Branches"):
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>
 ```
-
-On any other branch that does not start with `handoff/` (a `design/` branch,
-or a `feat/` or trial branch), stay on it.
 
 ## Step 2: Pick the recipe
 

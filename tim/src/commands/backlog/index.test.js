@@ -1105,6 +1105,42 @@ describe('tim backlog standards', () => {
     ).toBe('ce013625030ba8dba906f756967f9e9ca394464a')
   })
 
+  test('reads several files given to one --files, separated by commas', async () => {
+    seedStandardsWorkspace()
+    writeRegistry({
+      programmes: {
+        'two-repo': {
+          profile: 'requirements-v2',
+          workarea: 'workareas/shared/two-repo'
+        }
+      }
+    })
+    writeJson('workareas/shared/two-repo/backlog.json', {
+      repos: { web: { path: 'repos/web' }, api: { path: 'repos/api' } }
+    })
+    writeStandardsFile('repos/web/src/a.js')
+    writeStandardsFile('repos/api/src/B.java')
+
+    const run = await runTim(
+      [
+        'backlog',
+        'standards',
+        '--programme',
+        'two-repo',
+        '--files',
+        'web:src/a.js,api:src/B.java',
+        '--json'
+      ],
+      workspace
+    )
+
+    expect(run.exitCode).toBe(0)
+    expect(resultOf(run).files.map((f) => f.topics)).toEqual([
+      ['node'],
+      ['java']
+    ])
+  })
+
   test('S-9 req-122 ac-2: succeeds with PATH empty, proving no subprocess routing step', async () => {
     seedStandardsWorkspace()
     writeStandardsFile('a.js')

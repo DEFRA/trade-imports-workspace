@@ -13,6 +13,19 @@ merges, and never launches a full build run on its own.** It stops with a
 local commit (or, for C2, a request document) and tells the designer exactly
 what to do next.
 
+## First: is there a hand-off yet?
+
+This route builds from a hand-off folder
+(`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<yyyy-mm-dd>-<slug>/`,
+with its `report.json` and `brief.md`). Look for one that matches the
+designer's words. When there is none — the design lives only in a stand-in
+service nobody built pages for, or the designer describes something that
+was never made — go to `references/hand-off.md` first. It makes the change
+with its own reference (`references/fake-a-service.md` for a new service,
+`references/change-the-journey.md` for pages), saves it on the designer's
+`design/*` branch and writes the folder. Then come back here. Say in one
+line that the design had to be made first.
+
 ## Which route
 
 - **C1** — words only, or up to three frontend-only elements (a field, a
@@ -42,14 +55,17 @@ purpose, say); when either points to C2, take C2.
 - **Records and restores the starting branch** of `trade-imports-plants-frontend`,
   so a designer session never leaves that checkout on the wrong branch for
   whoever uses it next.
-- **Same branch name everywhere**: `feat/<ticket>-<slug>` (or
-  `feat/NO_JIRA-<slug>` with no ticket) across `trade-imports-plants-frontend`,
-  `trade-imports-plants-backend` (when the change touches the backend
-  contract) and the tests repo. The workspace itself is never switched to
-  that branch under a running session — its own openspec update travels as a
-  patch file instead (below). Quote
-  `tim workspace branch` for the designer so they can see the parity rule for
-  themselves.
+- **Same branch name everywhere** (workspace `CLAUDE.md` rule 2):
+  `feat/<ticket>-<slug>` (or `feat/NO_JIRA-<slug>` with no ticket) in
+  `trade-imports-plants-frontend`, in `trade-imports-plants-backend` when
+  the change touches the backend contract, and in the workspace itself for
+  the openspec change. The workspace takes that branch name when the
+  developer applies `openspec.patch`, never under a designer session (a
+  designer session is running from the workspace checkout, so switching it
+  would move the ground under the session). Quote
+  `tim workspace branch feat/<ticket>-<slug> --dry-run --json` for the
+  designer: for a branch that exists nowhere yet it lists each repo that
+  would need it created, and from which default branch.
 - **Never edit `.claude/settings.json` or anything under `.claude/hooks/`**
   in any repo.
 - **One Bash command per call.**
@@ -78,6 +94,30 @@ touches nothing in any repo — check
 `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
 (and the backend and tests repos, if the plan names them) print nothing
 before and after.
+
+A brief-only hand-off (no `upstream.patch`) can only go the C2 way: C2
+needs no patch. The plan refuses it for an explicit `route: "C1"`.
+
+### With no Workflow tool: the same plan by hand
+
+When this session has no Workflow tool, make the same dry-run plan yourself,
+read-only, and show it to the designer before doing anything:
+
+1. Read `<handoff>/report.json` and `<handoff>/brief.md`. The slug is the
+   folder name without its date prefix.
+2. List the elements (one per page or service the hand-off touches), each
+   with its recipe (`add-a-field`, `add-a-page`, `add-a-section`, or none
+   for words only) and whether it needs a backend contract.
+3. Pick C1 or C2 by "Which route" above.
+4. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend status --porcelain`
+   (must print nothing) and
+   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend branch --show-current`
+   (the branch to come back to).
+5. `tim workspace branch feat/<ticket>-<slug> --dry-run --json` for the
+   parity quote.
+6. Tell the designer the branch name, the route, the recipe per element and
+   the repos it reaches. Then do "What C1 does" or "What C2 does" below step
+   by step, with the same guard rails.
 
 ## What C1 does
 
@@ -118,6 +158,11 @@ Writes `<handoff>/distil-request.md` naming:
   contract)
 - `~/git/defra/trade-imports-workspace/openspec/specs/plants` (the standing
   behaviour spec, so DISTIL reconciles against what is already promised)
+- the house conventions every increment must meet, from
+  `references/house-conventions.md`: its frontend reading list, and, when a
+  backend is named, its "Backend (owner repo)" and "Platform config"
+  sections (a REST noun endpoint, records with null guards, ITs under
+  `mvn verify`, a cdp-app-config entry drafted for the product owner)
 
 then stops. It touches no repo. Tell the designer plainly: "This is bigger
 than one direct change, so I've written a request a developer (or a build
@@ -144,7 +189,7 @@ next step for whoever picks this up."
 Once `trade-imports-plants-frontend` merges the change on its own pull
 request: for a feature that was a prototype-owned service, drop that
 service's line from the prototype's `overrides.json` `ours` list first (tell
-the maintainer, or do it on a `maintain/*` branch), so the next weekly sync
+the maintainer, or do it on a `chore/*` branch), so the next weekly sync
 brings the real service in and retires the prototype's stand-in cleanly
 rather than clashing with it. Nothing in a design release needs to change by
 hand: the sync does the rest.

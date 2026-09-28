@@ -20,18 +20,20 @@ with its `ticket.json`). If there is no hand-off folder yet, go there first.
   doubt, show the dry run again and ask plainly: "Shall I create this ticket
   in Jira?"
 - **Never fill a story placeholder yourself.** If `ticket.json` still has one
-  (square brackets, or a summary under 10 characters), stop and ask the
-  designer for those words; do not draft them.
+  (square brackets, or a summary under 10 characters), ask the designer for
+  those words; do not draft them. A placeholder never stops the dry run (it
+  sends nothing, and it is what shows the designer the exact ticket); it
+  only stops the `--confirm` create.
 - **One Bash command per call.**
 
-## Step 1: Check for placeholders
+## Step 1: Note any placeholders
 
 Read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/report.json`.
-If `story.placeholders` is not empty, stop here: tell the designer which
-words are still missing (in plain English, quoting the placeholder text), and
-go back to `references/hand-off.md` step 3 once they answer. Never raise a
-story with a placeholder still in it.
+`~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/handoffs/<folder>/report.json`
+and note `story.placeholders`. A designer's "change it, then raise a
+ticket" request rarely says who the story is for (As), what they need (I
+want) or why (So that), so expect some. Carry on to the dry run either way:
+the missing words are asked for together with the one question in step 4.
 
 ## Step 2: Check Jira access
 
@@ -56,6 +58,8 @@ the Summary line and the rest of `brief.jira.txt` to paste themselves.
    List the plants-related epics in plain words and ask the designer which
    one this story belongs under, unless there is exactly one obvious match
    (say which and why, and let them correct you).
+3. If `tim jira epics` fails, say so in one line and ask for the epic as one
+   of the missing words in step 4 (the dry run still runs with no parent).
 
 ## Step 4: Dry run
 
@@ -74,9 +78,19 @@ the designer, in plain words, not as raw JSON:
 - any warning the plan carries, in full
 - that nothing has been created yet
 
-Then ask the one question: "Shall I create this ticket in Jira?" Only the
-designer's own yes in their own message goes on to step 5. A "looks good" or
-silence is not a yes: ask again plainly if you are not sure.
+Then, in the same message:
+
+- **With placeholders** (step 1) or no parent epic: quote each missing line
+  in plain words ("Who is this for?", "What do they need to do?", "Why do
+  they need it?", "Which epic?") and ask: "Tell me these, and say yes, and I
+  will create the ticket." Once they answer, rewrite the folder with their
+  words (`references/hand-off.md` step 3), run step 4's dry run again for a
+  fresh `planId`, and show only what changed before creating.
+- **With none**: ask the one question, "Shall I create this ticket in Jira?"
+
+Only the designer's own yes in their own message goes on to step 5, and
+never while a placeholder remains. A "looks good" or silence is not a yes:
+ask again plainly if you are not sure.
 
 ## Step 5: Create it
 

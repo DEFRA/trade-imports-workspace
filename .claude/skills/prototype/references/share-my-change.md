@@ -32,8 +32,8 @@ pages that changed and give links.
   and follow it. On a `design/*` branch, never save a file that "belongs to
   the real service" or is "removed", and never save a change inside a frozen
   release. Check `overrides.json` if in doubt: only files matching its
-  `ours` list are the prototype's own. On `handoff/*` and `maintain/*`
-  branches every file may be saved.
+  `ours` list are the prototype's own. On a `handoff/*` branch, and a
+  maintainer's `chore/*` branch, every file may be saved.
 
 All git and npm commands below run against the prototype repo, with
 `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype`
@@ -86,20 +86,24 @@ The same rule as every other reference
 (`references/ROUTING.md`, "Branches"), so one request never ends up split
 across two branches:
 
-- On `main`: make a new branch named `design/<set-id>-<slug>`, where `<slug>`
-  is two to four words for the change, in lower case with hyphens:
+- On a `design/*` branch: stay on it. One branch can hold several saved
+  changes, and the release's own "Start design release" commit is usually
+  already there.
+- On a `handoff/*` branch: this is the upstream route. Save as below; the
+  `references/hand-off.md` reference says what comes next.
+- On any other branch (`main`, a `feat/*`, `chore/*` or trial branch): make
+  a new branch named `design/<set-id>-<slug>`, where `<slug>` is two to four
+  words for the change, in lower case with hyphens:
 
   ```
   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/plants-working-consignment-addresses
   ```
 
-  Unsaved changes come with it. Tell the designer the branch name.
-
-- On any other branch (`design/*`, a `feat/` or trial branch, `maintain/*`):
-  stay on it. One branch can hold several saved changes, and the release's
-  own "Start design release" commit is usually already there.
-- On a `handoff/*` branch: this is the upstream route. Save as below; the
-  `references/hand-off.md` reference says what comes next.
+  Unsaved changes come with it, so the new branch starts from the current
+  one. Tell the designer the branch name, and, when that was not `main`,
+  say in one line which branch it started from and why (usually: `main`
+  does not have the designer suite yet). Never save onto someone else's
+  `feat/*` or `chore/*` branch.
 
 ### 4. Format and check
 

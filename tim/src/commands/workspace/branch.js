@@ -297,6 +297,29 @@ const toRepoResult = ({ item, durationMs, ...result }) =>
         ok: false
       }
 
+// A full branch name that exists in no repo yet: under --dry-run it is a
+// branch being planned, so report where it would need creating. A bare
+// ticket reference that matches nothing stays not-found.
+const isPlannedBranch = (resolution) =>
+  resolution.kind === 'not-found' && !resolution.ticket
+
+const plannedResult =
+  (branch) =>
+  ({ repo, cloned, current, uncommitted, defaultBranch }) => ({
+    repo,
+    from: current,
+    target: cloned ? branch : null,
+    action: cloned ? 'would-create' : 'skipped',
+    base: cloned ? defaultBranch : null,
+    fetchFailed: false,
+    uncommitted,
+    stashed: false,
+    worktreePath: null,
+    exitCode: 0,
+    stderrTail: null,
+    ok: true
+  })
+
 /**
  * Report every repo's current branch, or resolve `input` to a branch and
  * check it out across the workspace.
@@ -320,6 +343,17 @@ export const runBranch = async (
   }
 
   const resolution = resolveBranch(input, namesByRepo(inspections))
+  if (dryRun && isPlannedBranch(resolution)) {
+    return {
+      kind: 'applied',
+      branch: input,
+      ticket: null,
+      dryRun,
+      planned: true,
+      repos: inspections.map(plannedResult(input)),
+      skipped
+    }
+  }
   if (resolution.kind !== 'resolved') return resolution
 
   const results = await runAcross(inspections, (inspection) =>
@@ -382,7 +416,9 @@ const ACTION_TEXT = {
     `${target} is checked out at ${worktreePath}`,
   'stash-failed': () => 'FAILED to stash uncommitted work',
   'checkout-failed': ({ exitCode }) => `FAILED (exit ${exitCode})`,
-  failed: () => 'FAILED'
+  failed: () => 'FAILED',
+  'would-create': ({ target, base }) =>
+    `no ${target} yet — would need creating from ${base}`
 }
 
 const ACTION_TONE = {
@@ -393,7 +429,8 @@ const ACTION_TONE = {
   'in-worktree': 'yellow',
   'stash-failed': 'red',
   'checkout-failed': 'red',
-  failed: 'red'
+  failed: 'red',
+  'would-create': 'yellow'
 }
 
 const MOVING_ACTIONS = new Set(['switched', 'to-default'])
@@ -430,8 +467,11 @@ const renderRepoLine = (pad, result, dryRun) => {
 export const stashedRepos = (repos) =>
   repos.filter(({ stashed }) => stashed).map(({ repo }) => repo)
 
-export const appliedHeading = ({ branch, ticket, dryRun }) => {
+export const appliedHeading = ({ branch, ticket, dryRun, planned }) => {
   const named = `${branch}${ticket ? ` (${ticket})` : ''}`
+  if (planned) {
+    return `Dry run — ${branch} is not in any repo yet. Nothing changed.`
+  }
   return dryRun
     ? `Dry run — would switch to ${named}. Nothing changed.`
     : `Switched to ${named}`
@@ -504,6 +544,7 @@ const renderJson = (outcome, timVersion) => {
         branch: outcome.branch,
         ticket: outcome.ticket,
         dryRun: outcome.dryRun,
+        planned: Boolean(outcome.planned),
         repos: outcome.repos,
         skipped: outcome.skipped ?? []
       }

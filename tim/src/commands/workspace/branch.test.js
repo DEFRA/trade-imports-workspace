@@ -62,6 +62,12 @@ const currentBranch = async (dir) => {
 
 const repoDir = (workspace, index) => join(workspace, 'repos', REPOS[index])
 
+// seedWorkspace clones only the first three repos; any later repo the
+// workspace branch sync covers is reported as not cloned.
+const UNCLONED_SYNCED_REPO = REPOS.slice(3).find((repo) =>
+  isWorkspaceBranchSynced(repo)
+)
+
 let workspace
 let fixtures
 
@@ -259,7 +265,7 @@ describe('workspace branch', () => {
       target: 'feat/NO_JIRA-planned',
       base: 'main'
     })
-    expect(byRepo(payload)[REPOS[7]].action).toBe('skipped')
+    expect(byRepo(payload)[UNCLONED_SYNCED_REPO].action).toBe('skipped')
     expect(await currentBranch(repoDir(workspace, 0))).toBe('main')
   }, 60_000)
 
@@ -276,7 +282,9 @@ describe('workspace branch', () => {
 
     const { stdout } = await runCli(workspace, ['feat/EUDPA-1-alpha', '--json'])
 
-    expect(byRepo(JSON.parse(stdout.trim()))[REPOS[7]]).toMatchObject({
+    expect(
+      byRepo(JSON.parse(stdout.trim()))[UNCLONED_SYNCED_REPO]
+    ).toMatchObject({
       action: 'skipped',
       ok: true
     })

@@ -100,7 +100,7 @@ export const runPrototypeSetup = async (
 
   const upstream = cloned
     ? await ensureUpstreamRemote(PROTOTYPE_REPO, dir)
-    : { status: 'not-cloned' }
+    : { exitCode: 0, action: 'not-cloned' }
 
   const install = cloned
     ? await installAll(workspaceRoot, { repo: [PROTOTYPE_REPO] })
@@ -108,7 +108,7 @@ export const runPrototypeSetup = async (
 
   const readiness = await readinessProbe()
 
-  const ok = upstream.status !== 'failed' && install.every((r) => r.ok)
+  const ok = upstream.exitCode === 0 && install.every((r) => r.ok)
 
   return { ok, note, upstream, install, readiness }
 }
@@ -121,11 +121,13 @@ const renderNoteLine = ({ note, remove }) => {
 }
 
 const UPSTREAM_LINES = {
-  'not-configured': 'Upstream remote: none declared for this repo',
+  none: 'Upstream remote: none declared for this repo',
   'not-cloned': `Upstream remote: skipped — ${PROTOTYPE_REPO} is not cloned`,
-  'already-set-up': 'Upstream remote: already set up',
-  added: 'Upstream remote: added (fetch-only)',
-  failed: 'Upstream remote: FAILED to add'
+  unchanged: 'Upstream remote: already set up',
+  added: 'Upstream remote: added (fetches main only, cannot be pushed to)',
+  corrected:
+    'Upstream remote: corrected (fetches main only, cannot be pushed to)',
+  failed: 'Upstream remote: FAILED to set up'
 }
 
 const renderInstallLine = (install) => {
@@ -140,7 +142,7 @@ const renderInstallLine = (install) => {
 const renderText = (result, { remove }) => {
   const lines = [renderNoteLine({ note: result.note, remove })]
   if (remove) return lines.join('\n')
-  lines.push(UPSTREAM_LINES[result.upstream.status])
+  lines.push(UPSTREAM_LINES[result.upstream.action])
   const installLine = renderInstallLine(result.install)
   if (installLine) lines.push(installLine)
   for (const entry of result.readiness) lines.push(readinessLine(entry))

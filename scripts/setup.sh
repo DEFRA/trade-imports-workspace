@@ -41,6 +41,42 @@ heal_if_unpinned() {
   git -C "$dir" gc --prune=now --quiet
 }
 
+UPSTREAM_FETCH_REFSPEC='+refs/heads/main:refs/remotes/upstream/main'
+
+# Idempotent: reads the current config first and only writes what's
+# wrong, so a repo whose upstream remote is already correct is left
+# untouched. A repo without an "upstream" manifest field is a no-op.
+ensure_upstream_remote() {
+  local name=$1
+  local dir=$2
+  local upstream_name
+  upstream_name="$(jq -r --arg name "$name" '.repos[] | select(.name == $name) | .upstream // empty' "$MANIFEST")"
+  [ -z "$upstream_name" ] && return
+
+  local url="https://github.com/${GITHUB_ORG}/${upstream_name}.git"
+  local current_url current_fetch current_tagopt current_pushurl
+  current_url="$(git -C "$dir" config --get remote.upstream.url 2>/dev/null || true)"
+  current_fetch="$(git -C "$dir" config --get-all remote.upstream.fetch 2>/dev/null || true)"
+  current_tagopt="$(git -C "$dir" config --get remote.upstream.tagOpt 2>/dev/null || true)"
+  current_pushurl="$(git -C "$dir" config --get remote.upstream.pushurl 2>/dev/null || true)"
+
+  if [ "$current_url" = "$url" ] && [ "$current_fetch" = "$UPSTREAM_FETCH_REFSPEC" ] \
+    && [ "$current_tagopt" = "--no-tags" ] && [ "$current_pushurl" = "DISABLED" ]; then
+    return
+  fi
+
+  if [ -z "$current_url" ]; then
+    git -C "$dir" remote add upstream "$url"
+    echo "  $name — upstream remote added"
+  elif [ "$current_url" != "$url" ]; then
+    git -C "$dir" remote set-url upstream "$url"
+    echo "  $name — upstream remote url corrected"
+  fi
+  git -C "$dir" config --replace-all remote.upstream.fetch "$UPSTREAM_FETCH_REFSPEC"
+  git -C "$dir" config --replace-all remote.upstream.tagOpt -- "--no-tags"
+  git -C "$dir" config --replace-all remote.upstream.pushurl -- "DISABLED"
+}
+
 clone_if_missing() {
   local name=$1
   local url="https://github.com/${GITHUB_ORG}/${name}.git"
@@ -50,6 +86,7 @@ clone_if_missing() {
     echo "  $name — cloning..."
     clone_light "$url" "$REPOS_DIR/$name"
   fi
+  ensure_upstream_remote "$name" "$REPOS_DIR/$name"
 }
 
 echo "Setting up trade-imports workspace..."

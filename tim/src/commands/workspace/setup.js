@@ -5,7 +5,7 @@ import {
   repoPath,
   repoUrl,
   REPOS_DIR,
-  upstreamFor
+  upstreamOf
 } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import {
@@ -90,77 +90,150 @@ const cloneLight = async (repo, label, dir) => {
   }
 }
 
+const UPSTREAM_REMOTE = 'upstream'
+const UPSTREAM_FETCH_REFSPEC = '+refs/heads/main:refs/remotes/upstream/main'
+const UPSTREAM_TAG_OPT = '--no-tags'
+const UPSTREAM_PUSH_URL = 'DISABLED'
+
+const readGitConfigAll = async (dir, key) => {
+  const result = await run('git', ['-C', dir, 'config', '--get-all', key])
+  return result.exitCode === 0 ? result.stdout.split('\n').filter(Boolean) : []
+}
+
+const readGitConfigLast = async (dir, key) => {
+  const values = await readGitConfigAll(dir, key)
+  return values.at(-1) ?? null
+}
+
+const setGitConfig = (dir, key, value) =>
+  run('git', ['-C', dir, 'config', '--replace-all', key, value])
+
+const upstreamRemoteState = async (dir) => ({
+  url: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.url`),
+  fetch: await readGitConfigAll(dir, `remote.${UPSTREAM_REMOTE}.fetch`),
+  tagOpt: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.tagOpt`),
+  pushurl: await readGitConfigLast(dir, `remote.${UPSTREAM_REMOTE}.pushurl`)
+})
+
+const upstreamRemoteIsCorrect = (state, url) =>
+  state.url === url &&
+  state.fetch.length === 1 &&
+  state.fetch[0] === UPSTREAM_FETCH_REFSPEC &&
+  state.tagOpt === UPSTREAM_TAG_OPT &&
+  state.pushurl === UPSTREAM_PUSH_URL
+
 /**
- * Ensure the read-only upstream remote a repo's `repos.json` entry
- * declares exists, adding it with a disabled push URL when it doesn't.
- * Idempotent — a repo that already has the remote is left untouched.
- * A `dir` that is not a working git checkout (nothing to list remotes on)
- * is left alone rather than treated as a failure.
+ * Ensure the repo's `upstream` remote (when `repos.json` declares one)
+ * fetches only `main`, carries no tags, and cannot be pushed to — a
+ * designer's prototype clone pulls upstream changes but never
+ * accidentally pushes to the real service's repo. Idempotent: reads the
+ * current config first and writes only what's wrong, so a
+ * correctly-configured remote is left untouched. Shared by
+ * `tim workspace setup` and `tim prototype setup`.
  *
  * @param {string} repo
  * @param {string} dir - Absolute path to the cloned repo
- * @returns {Promise<{status: 'not-configured'|'already-set-up'|'added'|'failed', name?: string, stderrTail?: string}>}
+ * @returns {Promise<{exitCode: 0, action: 'none'|'unchanged'|'added'|'corrected'} | ReturnType<typeof failure>>}
  */
 export const ensureUpstreamRemote = async (repo, dir) => {
-  const upstream = upstreamFor(repo)
-  if (!upstream) return { status: 'not-configured' }
-  const listing = await run('git', ['-C', dir, 'remote'])
-  if (listing.exitCode !== 0) return { status: 'not-configured' }
-  const existing = listing.stdout
-    .split('\n')
-    .map((name) => name.trim())
-    .filter(Boolean)
-  if (existing.includes(upstream.name)) {
-    return { status: 'already-set-up', name: upstream.name }
+  const upstreamRepo = upstreamOf(repo)
+  if (!upstreamRepo) return { exitCode: 0, action: 'none' }
+
+  const url = repoUrl(upstreamRepo)
+  const before = await upstreamRemoteState(dir)
+
+  if (before.url && upstreamRemoteIsCorrect(before, url)) {
+    return { exitCode: 0, action: 'unchanged' }
   }
-  const add = await run('git', [
-    '-C',
-    dir,
-    'remote',
-    'add',
-    upstream.name,
-    upstream.url
-  ])
-  if (add.exitCode !== 0) {
-    return {
-      status: 'failed',
-      name: upstream.name,
-      stderrTail: lastLines(add.stderr)
+
+  if (!before.url) {
+    const add = await run('git', [
+      '-C',
+      dir,
+      'remote',
+      'add',
+      UPSTREAM_REMOTE,
+      url
+    ])
+    if (add.exitCode !== 0) {
+      return failure(repo, `${repo} — add upstream remote`, add, 'failed')
     }
-  }
-  if (upstream.push === 'DISABLED') {
-    await run('git', [
+  } else if (before.url !== url) {
+    const setUrl = await run('git', [
       '-C',
       dir,
       'remote',
       'set-url',
-      '--push',
-      upstream.name,
-      'DISABLED'
+      UPSTREAM_REMOTE,
+      url
     ])
-  }
-  return { status: 'added', name: upstream.name }
-}
-
-const UPSTREAM_SUFFIX = {
-  'not-configured': '',
-  'already-set-up': '; upstream already set up',
-  added: '; upstream remote added (fetch-only)'
-}
-
-const withUpstreamCheck = async (repo, dir, base) => {
-  if (base.exitCode !== 0) return base
-  const upstream = await ensureUpstreamRemote(repo, dir)
-  if (upstream.status === 'failed') {
-    return {
-      ...base,
-      label: `${base.label}; FAILED to add upstream remote`,
-      exitCode: 1,
-      action: 'upstream-failed',
-      stderrTail: upstream.stderrTail
+    if (setUrl.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — correct upstream remote url`,
+        setUrl,
+        'failed'
+      )
     }
   }
-  return { ...base, label: `${base.label}${UPSTREAM_SUFFIX[upstream.status]}` }
+
+  if (before.fetch.length !== 1 || before.fetch[0] !== UPSTREAM_FETCH_REFSPEC) {
+    const fetch = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.fetch`,
+      UPSTREAM_FETCH_REFSPEC
+    )
+    if (fetch.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — set upstream fetch refspec`,
+        fetch,
+        'failed'
+      )
+    }
+  }
+
+  if (before.tagOpt !== UPSTREAM_TAG_OPT) {
+    const tagOpt = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.tagOpt`,
+      UPSTREAM_TAG_OPT
+    )
+    if (tagOpt.exitCode !== 0) {
+      return failure(repo, `${repo} — set upstream tagOpt`, tagOpt, 'failed')
+    }
+  }
+
+  if (before.pushurl !== UPSTREAM_PUSH_URL) {
+    const pushurl = await setGitConfig(
+      dir,
+      `remote.${UPSTREAM_REMOTE}.pushurl`,
+      UPSTREAM_PUSH_URL
+    )
+    if (pushurl.exitCode !== 0) {
+      return failure(
+        repo,
+        `${repo} — disable upstream pushurl`,
+        pushurl,
+        'failed'
+      )
+    }
+  }
+
+  return { exitCode: 0, action: before.url ? 'corrected' : 'added' }
+}
+
+const UPSTREAM_ACTION_NOTE = {
+  added: 'upstream remote added',
+  corrected: 'upstream remote corrected'
+}
+
+const withUpstreamRemote = async (repo, dir, base) => {
+  if (base.exitCode !== 0) return base
+  const upstream = await ensureUpstreamRemote(repo, dir)
+  if (upstream.exitCode !== 0) return upstream
+  const note = UPSTREAM_ACTION_NOTE[upstream.action]
+  return note ? { ...base, label: `${base.label}, ${note}` } : base
 }
 
 const cloneTask = (workspaceRoot, repo) => {
@@ -173,15 +246,21 @@ const cloneTask = (workspaceRoot, repo) => {
   task.needsNegativeRefspecs = async () =>
     alreadyCloned ? needsGhPagesExclusion(dir) : true
   task.run = async () => {
-    if (alreadyCloned) {
-      const base = (await needsGhPagesExclusion(dir))
-        ? await healTask(repo, dir)
-        : { repo, label, exitCode: 0, action: 'exists', stderrTail: null }
-      return withUpstreamCheck(repo, dir, base)
-    }
-    mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
-    const cloned = await cloneLight(repo, label, dir)
-    return withUpstreamCheck(repo, dir, cloned)
+    const base = await (async () => {
+      if (alreadyCloned) {
+        if (await needsGhPagesExclusion(dir)) return healTask(repo, dir)
+        return {
+          repo,
+          label,
+          exitCode: 0,
+          action: 'exists',
+          stderrTail: null
+        }
+      }
+      mkdirSync(join(workspaceRoot, REPOS_DIR), { recursive: true })
+      return cloneLight(repo, label, dir)
+    })()
+    return withUpstreamRemote(repo, dir, base)
   }
   return task
 }
@@ -202,7 +281,7 @@ export const register = (parent, { timVersion }) => {
   parent
     .command('setup')
     .description(
-      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once. A repo that declares an upstream (such as the plants prototype) also gets a fetch-only remote to it.'
+      'Clone any missing repos from github.com/DEFRA into repos/. Clones exclude the gh-pages branch; existing clones get the exclusion applied once. A repo that declares an upstream (such as the plants prototype) also gets a remote to it that fetches main only, carries no tags and cannot be pushed to.'
     )
     .action(makeTaskAction({ runTasks: setupAll, timVersion }))
 }

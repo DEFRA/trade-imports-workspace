@@ -116,7 +116,7 @@ describe('runPrototypeSetup', () => {
     expect(readFileSync(join(workspace, CLAUDE_LOCAL_MD), 'utf8')).toContain(
       'tim:designer-note'
     )
-    expect(result.upstream).toEqual({ status: 'not-cloned' })
+    expect(result.upstream).toEqual({ exitCode: 0, action: 'not-cloned' })
     expect(result.install).toEqual([])
     expect(result.readiness).toEqual(await fakeReadinessProbe())
   })
@@ -133,14 +133,14 @@ describe('runPrototypeSetup', () => {
       readinessProbe: fakeReadinessProbe
     })
     expect(first.ok).toBe(true)
-    expect(first.upstream.status).toBe('added')
+    expect(first.upstream.action).toBe('added')
     expect(first.install).toHaveLength(1)
     expect(first.install[0].ok).toBe(true)
 
     const second = await runPrototypeSetup(workspace, {
       readinessProbe: fakeReadinessProbe
     })
-    expect(second.upstream.status).toBe('already-set-up')
+    expect(second.upstream.action).toBe('unchanged')
     expect(second.note.changed).toBe(false)
   }, 60_000)
 

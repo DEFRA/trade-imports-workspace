@@ -58,6 +58,7 @@ Services started:
 | INS frontend | 3002 | `defradigital/trade-imports-ins-frontend:latest` |
 | INS backend | 8090 | `defradigital/trade-imports-ins-backend:latest` |
 | Plants frontend | 3003 | `defradigital/trade-imports-plants-frontend:latest` |
+| Plants prototype | 3103 | Not part of this stack — runs standalone with `npm start` |
 | Plants backend | 8091 | `defradigital/trade-imports-plants-backend:latest` |
 | Address book | 8089 | `defradigital/trade-imports-address-book:latest` |
 | Dynamics gateway | 8088 | `defradigital/trade-imports-dynamics-gateway:latest` |
@@ -191,6 +192,7 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | INS frontend | 3002 |
 | Plants frontend | 3003 |
 | Defra ID stub | 3007 |
+| Plants prototype | 3103 |
 | Animals backend | 8085 |
 | Reference data | 8086 |
 | Trade imports stub | 8087 |

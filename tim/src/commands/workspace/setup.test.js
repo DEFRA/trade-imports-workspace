@@ -10,7 +10,7 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import { REPOS, upstreamFor } from '../../constants/repos.js'
+import { REPOS, upstreamOf } from '../../constants/repos.js'
 import {
   createBareRepo,
   createFatClone
@@ -22,14 +22,17 @@ const cliPath = join(here, '..', '..', 'cli.js')
 let workspace
 let fixturesDir
 
-const fakeClone = (repo) => {
-  const dir = join(workspace, 'repos', repo, '.git')
-  mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'HEAD'), 'ref: refs/heads/main\n')
+// A real (if empty) repo, not a hand-rolled `.git` dir — so the upstream
+// remote checks this suite exercises can run genuine `git config`/`git
+// remote` commands against it, the same as against a real clone.
+const fakeClone = async (repo) => {
+  await execa('git', ['init', '--quiet', join(workspace, 'repos', repo)])
 }
 
-const fakeCloneAllExcept = (realRepo) => {
-  for (const repo of REPOS.filter((repo) => repo !== realRepo)) fakeClone(repo)
+const fakeCloneAllExcept = async (realRepo) => {
+  for (const repo of REPOS.filter((repo) => repo !== realRepo)) {
+    await fakeClone(repo)
+  }
 }
 
 const runSetup = (env = {}) =>
@@ -39,16 +42,40 @@ const runSetup = (env = {}) =>
     { reject: false, env }
   )
 
-const oldGitShim = () => {
+// Reports git 2.25.1 (too old for negative refspecs) but otherwise
+// proxies to the real git, so a scenario that shouldn't need a version
+// check at all can still exercise its other git reads/writes for real.
+const oldGitShim = async () => {
+  const { stdout: realGit } = await execa('which', ['git'])
   const shimDir = join(workspace, 'shim-bin')
   mkdirSync(shimDir)
   const shim = join(shimDir, 'git')
   writeFileSync(
     shim,
-    '#!/bin/sh\nif [ "$1" = "version" ]; then\n  echo "git version 2.25.1"\n  exit 0\nfi\nexit 1\n'
+    `#!/bin/sh\nif [ "$1" = "version" ]; then\n  echo "git version 2.25.1"\n  exit 0\nfi\nexec "${realGit.trim()}" "$@"\n`
   )
   chmodSync(shim, 0o755)
   return `${shimDir}:${process.env.PATH}`
+}
+
+const UPSTREAM_FETCH_REFSPEC = '+refs/heads/main:refs/remotes/upstream/main'
+
+const upstreamRemoteConfig = async (dir) => {
+  const read = (key) =>
+    execa('git', ['-C', dir, 'config', '--get', key], { reject: false })
+  const readAll = async (key) => {
+    const result = await execa('git', ['-C', dir, 'config', '--get-all', key], {
+      reject: false
+    })
+    return result.exitCode === 0 ? result.stdout.split('\n') : []
+  }
+  const url = await read('remote.upstream.url')
+  return {
+    url: url.exitCode === 0 ? url.stdout.trim() : null,
+    fetch: await readAll('remote.upstream.fetch'),
+    tagOpt: (await read('remote.upstream.tagOpt')).stdout.trim() || null,
+    pushurl: (await read('remote.upstream.pushurl')).stdout.trim() || null
+  }
 }
 
 const fetchRefspecs = async (dir) => {
@@ -81,7 +108,7 @@ afterEach(() => {
 
 describe('tim workspace setup CLI', () => {
   test('reports every repo as already-cloned when all are present', async () => {
-    for (const repo of REPOS) fakeClone(repo)
+    for (const repo of REPOS) await fakeClone(repo)
 
     const { stdout, exitCode } = await runSetup()
     expect(exitCode).toBe(0)
@@ -94,7 +121,7 @@ describe('tim workspace setup CLI', () => {
   test('clones with a fetch refspec that excludes gh-pages', async () => {
     const repo = REPOS[0]
     const { shas } = await createBareRepo(fixturesDir, repo)
-    fakeCloneAllExcept(repo)
+    await fakeCloneAllExcept(repo)
 
     const { stdout, exitCode } = await runSetup({
       TIM_GITHUB_BASE_URL: `file://${fixturesDir}`
@@ -130,7 +157,7 @@ describe('tim workspace setup CLI', () => {
   test('clones a repo whose remote has no gh-pages branch', async () => {
     const repo = REPOS[0]
     await createBareRepo(fixturesDir, repo, { withGhPages: false })
-    fakeCloneAllExcept(repo)
+    await fakeCloneAllExcept(repo)
 
     const { stdout, exitCode } = await runSetup({
       TIM_GITHUB_BASE_URL: `file://${fixturesDir}`
@@ -151,7 +178,7 @@ describe('tim workspace setup CLI', () => {
     const { barePath, shas } = await createBareRepo(fixturesDir, repo)
     const dir = join(workspace, 'repos', repo)
     await createFatClone(barePath, dir)
-    fakeCloneAllExcept(repo)
+    await fakeCloneAllExcept(repo)
 
     const { stdout, exitCode } = await runSetup()
 
@@ -173,57 +200,10 @@ describe('tim workspace setup CLI', () => {
     expect(ghPagesObject.exitCode).not.toBe(0)
   }, 60_000)
 
-  test('adds the fetch-only upstream remote for a repo that declares one, and is a no-op on a second run', async () => {
-    const repo = REPOS.find((candidate) => upstreamFor(candidate))
-    const upstream = upstreamFor(repo)
-    const { barePath } = await createBareRepo(fixturesDir, repo, {
-      withGhPages: false
-    })
-    const dir = join(workspace, 'repos', repo)
-    await createFatClone(barePath, dir)
-    fakeCloneAllExcept(repo)
-
-    const first = await runSetup()
-    expect(first.exitCode).toBe(0)
-    const firstEntry = JSON.parse(first.stdout.trim()).result.find(
-      (entry) => entry.repo === repo
-    )
-    expect(firstEntry.ok).toBe(true)
-    expect(firstEntry.label).toContain('upstream remote added (fetch-only)')
-
-    const remotes = await execa('git', ['-C', dir, 'remote'])
-    expect(remotes.stdout.split('\n')).toContain(upstream.name)
-    const fetchUrl = await execa('git', [
-      '-C',
-      dir,
-      'remote',
-      'get-url',
-      upstream.name
-    ])
-    expect(fetchUrl.stdout.trim()).toBe(upstream.url)
-    const pushUrl = await execa('git', [
-      '-C',
-      dir,
-      'remote',
-      'get-url',
-      '--push',
-      upstream.name
-    ])
-    expect(pushUrl.stdout.trim()).toBe('DISABLED')
-
-    const second = await runSetup()
-    expect(second.exitCode).toBe(0)
-    const secondEntry = JSON.parse(second.stdout.trim()).result.find(
-      (entry) => entry.repo === repo
-    )
-    expect(secondEntry.ok).toBe(true)
-    expect(secondEntry.label).toContain('upstream already set up')
-  }, 60_000)
-
   test('reports a clear error when git is older than 2.29', async () => {
-    fakeCloneAllExcept(REPOS[0])
+    await fakeCloneAllExcept(REPOS[0])
 
-    const { stdout, exitCode } = await runSetup({ PATH: oldGitShim() })
+    const { stdout, exitCode } = await runSetup({ PATH: await oldGitShim() })
 
     expect(exitCode).toBe(1)
     const payload = JSON.parse(stdout.trim())
@@ -233,11 +213,138 @@ describe('tim workspace setup CLI', () => {
   }, 60_000)
 
   test('does not need git 2.29 when every repo is already cloned and healed', async () => {
-    for (const repo of REPOS) fakeClone(repo)
+    for (const repo of REPOS) await fakeClone(repo)
 
-    const { stdout, exitCode } = await runSetup({ PATH: oldGitShim() })
+    const { stdout, exitCode } = await runSetup({ PATH: await oldGitShim() })
 
     expect(exitCode).toBe(0)
     expect(JSON.parse(stdout.trim()).ok).toBe(true)
   }, 60_000)
+
+  describe('upstream remote (repos.json "upstream" field)', () => {
+    const repoWithUpstream = REPOS.find((repo) => upstreamOf(repo))
+    const repoWithoutUpstream = REPOS.find((repo) => !upstreamOf(repo))
+    const upstreamTarget = upstreamOf(repoWithUpstream)
+
+    test('adds the upstream remote on a fresh clone', async () => {
+      await createBareRepo(fixturesDir, repoWithUpstream)
+      await fakeCloneAllExcept(repoWithUpstream)
+
+      const { stdout, exitCode } = await runSetup({
+        TIM_GITHUB_BASE_URL: `file://${fixturesDir}`
+      })
+
+      expect(exitCode).toBe(0)
+      const payload = JSON.parse(stdout.trim())
+      expect(payload.ok).toBe(true)
+      const entry = payload.result.find((r) => r.repo === repoWithUpstream)
+      expect(entry.label).toContain('upstream remote added')
+
+      const dir = join(workspace, 'repos', repoWithUpstream)
+      const config = await upstreamRemoteConfig(dir)
+      expect(config.url).toBe(`file://${fixturesDir}/${upstreamTarget}.git`)
+      expect(config.fetch).toEqual([UPSTREAM_FETCH_REFSPEC])
+      expect(config.tagOpt).toBe('--no-tags')
+      expect(config.pushurl).toBe('DISABLED')
+    }, 60_000)
+
+    test('corrects an upstream remote that is misconfigured', async () => {
+      const dir = join(workspace, 'repos', repoWithUpstream)
+      await execa('git', ['init', '--quiet', dir])
+      await execa('git', [
+        '-C',
+        dir,
+        'remote',
+        'add',
+        'upstream',
+        'https://example.invalid/wrong-repo.git'
+      ])
+      await execa('git', [
+        '-C',
+        dir,
+        'config',
+        '--replace-all',
+        'remote.upstream.fetch',
+        '+refs/heads/*:refs/remotes/upstream/*'
+      ])
+      await fakeCloneAllExcept(repoWithUpstream)
+
+      const { stdout, exitCode } = await runSetup({
+        TIM_GITHUB_BASE_URL: `file://${fixturesDir}`
+      })
+
+      expect(exitCode).toBe(0)
+      const payload = JSON.parse(stdout.trim())
+      expect(payload.ok).toBe(true)
+      const entry = payload.result.find((r) => r.repo === repoWithUpstream)
+      expect(entry.label).toContain('upstream remote corrected')
+
+      const config = await upstreamRemoteConfig(dir)
+      expect(config.url).toBe(`file://${fixturesDir}/${upstreamTarget}.git`)
+      expect(config.fetch).toEqual([UPSTREAM_FETCH_REFSPEC])
+      expect(config.tagOpt).toBe('--no-tags')
+      expect(config.pushurl).toBe('DISABLED')
+    }, 60_000)
+
+    test('leaves an already-correct upstream remote untouched', async () => {
+      const dir = join(workspace, 'repos', repoWithUpstream)
+      const url = `file://${fixturesDir}/${upstreamTarget}.git`
+      await execa('git', ['init', '--quiet', dir])
+      await execa('git', ['-C', dir, 'remote', 'add', 'upstream', url])
+      await execa('git', [
+        '-C',
+        dir,
+        'config',
+        '--replace-all',
+        'remote.upstream.fetch',
+        UPSTREAM_FETCH_REFSPEC
+      ])
+      await execa('git', [
+        '-C',
+        dir,
+        'config',
+        '--replace-all',
+        'remote.upstream.tagOpt',
+        '--no-tags'
+      ])
+      await execa('git', [
+        '-C',
+        dir,
+        'config',
+        '--replace-all',
+        'remote.upstream.pushurl',
+        'DISABLED'
+      ])
+      await fakeCloneAllExcept(repoWithUpstream)
+
+      const { stdout, exitCode } = await runSetup({
+        TIM_GITHUB_BASE_URL: `file://${fixturesDir}`
+      })
+
+      expect(exitCode).toBe(0)
+      const payload = JSON.parse(stdout.trim())
+      expect(payload.ok).toBe(true)
+      const entry = payload.result.find((r) => r.repo === repoWithUpstream)
+      expect(entry.label).not.toContain('upstream remote added')
+      expect(entry.label).not.toContain('upstream remote corrected')
+
+      const config = await upstreamRemoteConfig(dir)
+      expect(config.url).toBe(url)
+      expect(config.fetch).toEqual([UPSTREAM_FETCH_REFSPEC])
+      expect(config.tagOpt).toBe('--no-tags')
+      expect(config.pushurl).toBe('DISABLED')
+    }, 60_000)
+
+    test('adds no upstream remote for a repo the manifest declares none for', async () => {
+      for (const repo of REPOS) await fakeClone(repo)
+
+      const { stdout, exitCode } = await runSetup()
+
+      expect(exitCode).toBe(0)
+      expect(JSON.parse(stdout.trim()).ok).toBe(true)
+      const dir = join(workspace, 'repos', repoWithoutUpstream)
+      const config = await upstreamRemoteConfig(dir)
+      expect(config.url).toBeNull()
+    }, 60_000)
+  })
 })

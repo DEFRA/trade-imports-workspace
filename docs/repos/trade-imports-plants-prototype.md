@@ -23,25 +23,25 @@ Does NOT own:
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-plants-frontend | `upstream` remote (fetch-only; `repos.json`'s `workspaceBranchSync: false` keeps `tim workspace reset\|branch\|update` from touching this repo unless named), synced with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` | Weekly source sync: merges `upstream/main`, applies `overrides.json`'s rules (deleted paths stay deleted, `ours` paths always win, everything else merges normally), runs CI's checks, and opens a PR only with `--push` |
-| Runtime (stub) | trade-imports-defra-id-stub | OIDC, same as the real frontend | Sign-in when the prototype runs against real auth rather than `STUB_MODE`'s locally signed session |
-| Runtime (real, optional) | trade-imports-ins-frontend | `TRADE_IMPORTS_INS_FRONTEND_URL`, browser-visible deep link | The prototype's address-book link works whenever the INS frontend is running (stack, `tim docker`, or natively) — it is never needed to see a change |
-| None by default | trade-imports-plants-backend, trade-imports-reference-data | — | Both are stubbed (`isStubDataMode()`); the prototype has no backend behind it at all, in dev or on CDP |
+| Inbound | trade-imports-plants-frontend | `upstream` remote, declared by `"upstream": "trade-imports-plants-frontend"` in `repos.json` and set up by `tim workspace setup`, `scripts/setup.sh` and `tim prototype setup`: it fetches `main` only, carries no tags and cannot be pushed to (push URL `DISABLED`). `repos.json`'s `workspaceBranchSync: false` keeps `tim workspace reset\|branch\|update` from touching this repo unless named. Synced with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` | Weekly source sync: merges `upstream/main`, applies `overrides.json`'s rules (deleted paths stay deleted, `ours` paths always win, everything else merges normally), runs CI's checks, and opens a PR only with `--push` |
+| None | trade-imports-defra-id-stub, Defra ID | — | Not used, locally or deployed: every run signs in with stub sign-in (`STUB_MODE`), a locally signed session with no identity provider behind it |
+| None | trade-imports-ins-frontend | — | The header's "Address book" link is deliberately dead everywhere. The address book belongs to the Import Notification Service, which the prototype does not include; the link's base URL is fixed at `https://address-book.invalid` with no env binding, so `TRADE_IMPORTS_INS_FRONTEND_URL` is ignored and no setting, locally or on CDP, can point it at a real one |
+| None | trade-imports-plants-backend, trade-imports-reference-data | — | Both are stubbed (`isStubDataMode()`); the prototype has no backend behind it at all, in dev or on CDP |
 
 ## Stack
 
 - **Runtime:** Node.js >=24, npm pinned via `packageManager` (`npm@11.6.2`) — install only with `tim workspace install --repo trade-imports-plants-prototype`, never a bare `npm install`/`npm ci`.
 - **Web framework:** Hapi (Nunjucks via Vision, Yar sessions, Crumb CSRF), govuk-frontend, the same build toolchain (webpack, Sass) as `trade-imports-plants-frontend`.
-- **Port:** 3103 (`src/config/config.js`; `PORT` env var), distinct from the real frontend's 3003 so both can run side by side on one machine. `DEFRA_ID_REDIRECT_URL` and `DEFRA_ID_SIGN_OUT_REDIRECT_URL` default to `http://localhost:3103/auth/...`, not 3003.
+- **Port:** 3103 (`src/config/config.js`; `PORT` env var), its real twin's (`trade-imports-plants-frontend`, 3003) plus 100, so both can run side by side on one machine. `DEFRA_ID_REDIRECT_URL` and `DEFRA_ID_SIGN_OUT_REDIRECT_URL` default to `http://localhost:3103/auth/...`, not 3003; they only matter if someone sets `STUB_MODE=false`, which no supported run does.
 
-## Stub / stand-in data mode
+## Stub sign-in and stub data
 
 `src/server/common/services/mode.js` exports two switches:
 
-- `isStubMode()` — true when `STUB_MODE=true` and not production. Governs sign-in: a stub run signs in with a locally signed session and needs no Defra ID round trip. Never honoured in production.
-- `isStubDataMode()` — true when `STUB_MODE=true` **or** the app is running in production. Governs data: the records store, address book, countries and ports all serve stub data. This is deliberately different from `isStubMode()` — a CDP dev deploy runs production auth (real Defra ID) but still has no backend, address book or reference data behind it, so its data must stay stubbed even though sign-in is real.
+- `isStubMode()` — true when `STUB_MODE=true`, **production included**. Governs sign-in: a stub run hands any caller a locally signed session with no Defra ID round trip. Honouring `STUB_MODE` in production is a deliberate prototype-only decision, so the deployed prototype signs in exactly the way `npm run dev` does. Setting `STUB_MODE=false` would restore plants-frontend's own Defra ID sign-in, but no supported run does that.
+- `isStubDataMode()` — true when `STUB_MODE=true` **or** the app is running in production. Governs data: the records store, address book, countries and ports all serve stub data. The production half is a backstop: the prototype has no backend, address book or reference data behind it anywhere, so its data stays stubbed even if `STUB_MODE` were turned off.
 
-`src/prototype-defaults.js` sets `STUB_MODE=true` and `SESSION_CACHE_ENGINE=memory` before `config.js` reads `process.env`, unless either is already set — every way of starting the app (`npm start`, `npm run dev`, the Docker `CMD`, the FIT web server) imports it first.
+`src/prototype-defaults.js` sets `STUB_MODE=true` and `SESSION_CACHE_ENGINE=memory` before `config.js` reads `process.env`, unless either is already set — every way of starting the app (`npm start`, `npm run dev`, the Docker `CMD`, the FIT web server) imports it first. `PORT`, `STUB_MODE` and `SESSION_CACHE_ENGINE` still win when set.
 
 ## How to run
 
@@ -53,7 +53,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prot
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:fresh
 ```
 
-Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset); the chooser and every set sit behind it, exactly as the real service's pages do.
+It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or reference data. Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset) and the chooser and every set sit behind it, exactly as the real service's pages do, but stub sign-in signs you in straight away with no password. `/auth/stub-sign-in?organisationId=<id>` signs in as another organisation.
 
 A design release, once saved on its own `design/<set>-<slug>` branch, is data that lives locally at `.cache/designer/data/` (gitignored) — it survives a restart on the same machine and resets per-release via "Reset this prototype's data" on the chooser.
 
@@ -61,10 +61,9 @@ A design release, once saved on its own `design/<set>-<slug>` branch, is data th
 
 The prototype has its own multi-stage `Dockerfile` (development / production_build / production targets, `defradigital/node[-development]` parent images, `curl` added for the platform healthcheck), separate from the real frontend's. A CDP dev deploy needs:
 
-- The image built and run with `NODE_ENV=production` (`isStubDataMode()` then serves stub data on its own regardless of `STUB_MODE`).
-- `trade-imports-defra-id-stub` reachable for real sign-in (production ignores `STUB_MODE` for auth).
-- `SESSION_CACHE_ENGINE=memory` and a single running instance — the prototype was built for one instance with no Redis behind it, unlike the real frontend's production default.
-- `TRADE_IMPORTS_INS_FRONTEND_URL` set if the INS address-book deep link should resolve on that environment; it is optional and never blocks a design change from being seen.
+- The image built and run with `NODE_ENV=production`. `STUB_MODE` stays on (the `prototype-defaults.js` default), so the deployed prototype uses stub sign-in exactly like `npm run dev`: no `DEFRA_ID_*` settings, no Defra ID and no `trade-imports-defra-id-stub`. The same `/auth/stub-sign-in` and `/auth/sign-out` paths work on its address.
+- `SESSION_CACHE_ENGINE=memory` and a single running instance — the prototype was built for one instance with no Redis behind it, unlike the real frontend's production default. `SESSION_COOKIE_PASSWORD` is the only secret.
+- Nothing for the header's "Address book" link: it stays dead on CDP as everywhere else, and `TRADE_IMPORTS_INS_FRONTEND_URL` is ignored.
 
 ## Designer work vs. hand-off
 

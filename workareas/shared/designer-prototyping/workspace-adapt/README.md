@@ -259,13 +259,14 @@ suite passed (151 files, 1,894 tests).
    blocks an agent's on-disk `chmod`. Without it, the conventions pass's
    judgement layer falls back to its inline checklist.
 4. Run a local docker build and boot of the prototype image
-   (`NODE_ENV=production` with the Defra ID stub). This run cannot verify it.
-   The new CI boot job first runs on the branch's PR.
+   (`NODE_ENV=production` with stub sign-in — no Defra ID stub needed). This
+   run cannot verify it. The new CI boot job first runs on the branch's PR.
 5. CDP dev:
    - commit the prototype's cdp-app-config env from the local draft
      (`cdp-app-config-draft.md`)
-   - deploy `trade-imports-defra-id-stub` to dev with the prototype's redirect
-     URLs
+   - sign-in is stub sign-in, by Sam's decision: no Defra ID stub to deploy
+     alongside it, and the deployed prototype is temporarily unprotected
+     until CDP puts its own auth in front
    - pin the prototype to one instance, or use redis sessions
 6. Choose the default Jira epic for design hand-offs
    (`scripts/designer/prototype.json` `handOff.parentEpic`; EUDPA-407
@@ -282,8 +283,8 @@ suite passed (151 files, 1,894 tests).
    falls back to a line in each designer's `~/.claude/CLAUDE.md`.
 9. Review and merge the workspace and prototype
    `feat/NO_JIRA-designer-prototyping` branches. Nothing is pushed or merged
-   by this plan. This review's fixes are uncommitted in both repos, and the
-   workspace has a staged mode change.
+   by this plan. This review's fixes are committed in both repos (prototype
+   `b8ffb62`, workspace `3dea64d3`); both trees were clean.
 10. Pass two things to the plants team:
     - their `docs/services.md` says the backend URL comes from convict, but
       their code reads `process.env`

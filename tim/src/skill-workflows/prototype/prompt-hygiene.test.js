@@ -1,5 +1,4 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -15,8 +14,17 @@ const WORKSPACE_ROOT = join(
 )
 const SKILL_DIR = join(WORKSPACE_ROOT, '.claude', 'skills', 'prototype')
 
-const expandTilde = (path) =>
-  path.startsWith('~/') ? join(homedir(), path.slice(2)) : path
+const CANONICAL_ROOT = '~/git/defra/trade-imports-workspace/'
+
+// The canonical tilde path names this checkout wherever it lives (CI checks
+// the workspace out elsewhere), and repos/ is only there once cloned.
+const onDiskPath = (tildePath) =>
+  join(WORKSPACE_ROOT, tildePath.slice(CANONICAL_ROOT.length))
+
+const isInUnclonedRepo = (tildePath) => {
+  const [top, repo] = tildePath.slice(CANONICAL_ROOT.length).split('/')
+  return top === 'repos' && !existsSync(join(WORKSPACE_ROOT, 'repos', repo))
+}
 
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -124,7 +132,9 @@ describe('prototype skill: prompt hygiene', () => {
       )
     ]
     expect(paths.length).toBeGreaterThan(10)
-    const missing = paths.filter((path) => !existsSync(expandTilde(path)))
+    const missing = paths
+      .filter((path) => !isInUnclonedRepo(path))
+      .filter((path) => !existsSync(onDiskPath(path)))
     expect(missing).toEqual([])
   })
 

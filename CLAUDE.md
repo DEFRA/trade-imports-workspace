@@ -44,7 +44,7 @@ Skills live at `.claude/skills/<name>/SKILL.md` and are auto-discovered. Route b
 | `requirements-pipeline` | "distil requirements", "distil these sources", "turn these requirements into a backlog", "build a backlog from", "consolidate requirements", "re-distil", "orchestrate the build", "run the increment build loop", "build increments from", "build N increments", "resume the build run", "hand over the build" | Sources in, one backlog.json of full-stack requirement increments out (DISTIL), then built one increment at a time through the increment build loop (BUILD). The backlog shape, the loop and its Codex briefs live beside it. |
 | `spec-catchup` | "catch-up", "catch-up animals/plants/ins/admin", "catch-up and cover" | **The code does something the spec does not say** — runs one journey set's full suite, walks every `spec.md` in the prefix (not `tim spec gaps`) against the report and source, edits/adds/updates a coverage link/deletes as the evidence dictates. Drives "catch-up and cover" (this skill then `spec-cover`, per set). |
 | `spec-cover` | "cover", "cover animals/plants/ins/admin" | **The spec says something no test proves** — works `tim spec gaps --none` for that prefix, maps every Then to an assert, writes the test, proves it with an invert-red/restore-green probe, commits in the service repo on the same branch name. |
-| `prototype` | "the prototype", "my design release", "crit notes", "research session", "demo", "hand this to the real team", "make this real" | Front door for a designer working on the high-risk plants prototype (`trade-imports-plants-prototype`) from a Claude Code session opened at this workspace root. Holds no steps of its own beyond routing — every change is made by a `references/<name>.md` file it opens for you, read against the real `trade-imports-plants-frontend`, its recipes and `docs/best-practices/` so the result matches house conventions without the designer having to ask. |
+| `prototype` | "the prototype", "my design release", "crit notes", "research session", "demo the prototype", "hand this to the real team", "make this real" — or any request from a designer (`CLAUDE.local.md` marker) | Front door for a designer working on the high-risk plants prototype (`trade-imports-plants-prototype`) from a Claude Code session opened at this workspace root. Holds no steps of its own beyond routing — every change is made by a `references/<name>.md` file it opens for you, read against the real `trade-imports-plants-frontend`, its recipes and `docs/best-practices/` so the result matches house conventions without the designer having to ask. |
 
 A request about pages, words, examples or journeys goes to `prototype` when
 the person is a designer (see `CLAUDE.local.md`, set by `tim prototype
@@ -103,7 +103,8 @@ tim github prs EUDPA-X    # equivalent of tools/github/prs.sh
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
-tim jira attach|link|epics                     # the rest of the Jira write surface — also dry run by default
+tim jira attach|link                           # the rest of the Jira write surface — also dry run by default; --confirm to write
+tim jira epics                                 # list open epics (read-only)
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
 ```
 

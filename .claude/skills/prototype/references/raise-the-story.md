@@ -113,13 +113,14 @@ accidental second yes.
 1. Update the hand-off's status:
 
    ```bash
-   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- --set <set-id> --slug <slug> --status "Ticket: <EUDPA-N>" --status "Branch for the real work: feat/<EUDPA-N>-<slug>"
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:handoff -- status --dir handoffs/<folder> --json
    ```
 
-   This adds the two lines to the top of `brief.md` ("Keeping track" in
-   `handoffs/README.md`) without rewriting the rest of the folder. If
-   `designer:handoff` has no `--status` flag yet, add the two lines to
-   `brief.md`'s status section by hand instead, in the same words.
+   This reads `ticket.created.json` and writes `Ticket: <EUDPA-N>` and
+   `Branch: feat/<EUDPA-N>-<slug>` under `brief.md`'s heading, plus a row in
+   `handoffs/README.md`'s "Keeping track" table, without rewriting the rest
+   of the folder. Never add these lines by hand: a re-run of `status` would
+   disagree with them.
 
 2. Save it:
 

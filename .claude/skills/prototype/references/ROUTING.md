@@ -159,7 +159,7 @@ Workflow({
 | --- | --- | --- |
 | `workflow/wording-sweep.js` | `references/change-the-words.md` | A wording change across more than 5 pages, or a pasted content document |
 | `workflow/port-kit-page.js` | `references/port-a-kit-page.md` | Every Prototype Kit page port |
-| `workflow/prepare-handoff.js` | `references/hand-off.md`, `references/build-it-for-real.md` route C1 | A change the real team needs with its tests, on a `handoff/<slug>` branch (the upstream-bound route) |
+| `workflow/prepare-handoff.js` | `references/hand-off.md`, `references/build-it-for-real.md` route C1 | Building a hand-off for real: route C1 builds it in `trade-imports-plants-frontend` on a local `feat/EUDPA-N-<slug>` branch through `frontend-change` (never pushed); route C2 writes a `requirements-pipeline` DISTIL request. `dryRun: true` touches nothing |
 | `workflow/design-session.js` | this file (rule 6 in `SKILL.md`) | Any list of notes, however many, or four or more changes at once |
 
 See `workflow/README.md` for the args contract and how models are chosen.
@@ -170,8 +170,9 @@ See `workflow/README.md` for the args contract and how models are chosen.
   first change. Prototype-only, `dockerStack: null`.
 - `handoff/<slug>`: the upstream-bound route only, where the real journey's
   own files (`high-risk-plants`) are changed in the prototype to make a
-  checked `upstream.patch` for plants-frontend (`hand-off` route 2,
-  `build-it-for-real` route C1). Never merged into the prototype's own
+  checked `upstream.patch` for plants-frontend (`hand-off` route 2; the
+  patch is then the starting point `build-it-for-real` route C1 applies in
+  plants-frontend on `feat/EUDPA-N-<slug>`). Never merged into the prototype's own
   `main`. A hand-off *folder* for a design release lands on the designer's
   own `design/*` branch, not here.
 - `chore/NO_JIRA-<slug>` (or `chore/EUDPA-N-<slug>`): a maintainer's work on

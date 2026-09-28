@@ -61,3 +61,21 @@ Launch by `scriptPath`, never `name`:
   one in args: this workflow has no defaults`, and 0 agents.
 - **L4.** No args.
   Expected: the run fails naming `keys list, n`, and 0 agents.
+
+## `designer-prototyping-suite.js`
+
+Studies how designers change the old GB-notification-service Prototype Kit prototype
+(weighted to the last 3 months), then designs, builds, trials and reviews a designer
+suite (skills, docs, workflows, `designer:*` scripts) in `repos/trade-imports-plants-prototype`.
+Readers run on Fable; synthesis, design, building and trials inherit the session model.
+
+Before launching:
+
+- clone the old prototype into `workareas/designer-prototyping/GB-notification-service`
+  (so agents read it under allowlisted workspace paths)
+- create `branch` in the plants prototype
+
+Required args: `batches` (`{ recent: [{ id, window, commits: [sha] }], older: { id, window, commits } }`
+— the commit windows to read) and `branch` (the plants-prototype branch to build on).
+The 2026-09 run's batches are in `workareas/shared/designer-prototyping/batches.json`. Outputs go to
+`workareas/shared/designer-prototyping/` (notes, analysis, plan, trials, handover README).

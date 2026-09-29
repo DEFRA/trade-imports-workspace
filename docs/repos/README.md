@@ -19,6 +19,7 @@ and its stack — lives in the root [`CLAUDE.md`](../../CLAUDE.md).
 | `trade-imports-animals-admin` | [trade-imports-animals-admin.md](trade-imports-animals-admin.md) |
 | `trade-imports-ins-tests` | [trade-imports-ins-tests.md](trade-imports-ins-tests.md) |
 | `trade-imports-animals-tests` (deprecated) | [trade-imports-animals-tests.md](trade-imports-animals-tests.md) |
+| `trade-imports-performance-tests` | [trade-imports-performance-tests.md](trade-imports-performance-tests.md) |
 | `trade-imports-stub` | [trade-imports-stub.md](trade-imports-stub.md) |
 | `trade-imports-reference-data` | [trade-imports-reference-data.md](trade-imports-reference-data.md) |
 | `trade-imports-defra-id-stub` | [trade-imports-defra-id-stub.md](trade-imports-defra-id-stub.md) |

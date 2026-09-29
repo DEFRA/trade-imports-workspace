@@ -10,6 +10,7 @@ Local workspace aggregating the independent GitHub repos of the DEFRA trade impo
 | `repos/trade-imports-animals-backend` | [DEFRA/trade-imports-animals-backend](https://github.com/DEFRA/trade-imports-animals-backend) | API / business logic service | Java / Spring Boot |
 | `repos/trade-imports-ins-tests` | [DEFRA/trade-imports-ins-tests](https://github.com/DEFRA/trade-imports-ins-tests) | End-to-end, accessibility and security test suite, split by domain | Node.js |
 | `repos/trade-imports-animals-tests` | [DEFRA/trade-imports-animals-tests](https://github.com/DEFRA/trade-imports-animals-tests) | Deprecated: replaced by `trade-imports-ins-tests` | Node.js |
+| `repos/trade-imports-performance-tests` | [DEFRA/trade-imports-performance-tests](https://github.com/DEFRA/trade-imports-performance-tests) | k6 performance-test suite for INS, run against the stack | k6 / Node.js tooling |
 | `repos/trade-imports-animals-admin` | [DEFRA/trade-imports-animals-admin](https://github.com/DEFRA/trade-imports-animals-admin) | Internal admin interface | Node.js |
 | `repos/trade-imports-stub` | [DEFRA/trade-imports-stub](https://github.com/DEFRA/trade-imports-stub) | Stub of upstream trade-imports services | Java / Spring Boot |
 | `repos/trade-imports-reference-data` | [DEFRA/trade-imports-reference-data](https://github.com/DEFRA/trade-imports-reference-data) | Reference data service | Java / Spring Boot |

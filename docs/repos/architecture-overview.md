@@ -77,6 +77,7 @@ flowchart LR
 | stub | Fake Trade platform token endpoint and MDM countries and ports | Any real logic |
 | defra-id-stub | Fake Defra ID OIDC sign-in | Real identity; still a work in progress |
 | ins-tests | End-to-end, accessibility and security tests for the stack, one Playwright project per frontend | Application code |
+| performance-tests | k6 performance-test suites for the stack, run against it rather than in it | Application code |
 
 ## Data flows worth knowing
 

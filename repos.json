@@ -51,7 +51,7 @@
       "stack": "node",
       "dockerStack": { "service": "defra-id-stub", "buildsFromSource": false },
       "unitTestExempt": true,
-      "unitTestExemptReason": "Its unit tests need the env its docker:test compose harness provides (ENTRA_*, S3). Its own CI only runs `npm run docker:test`, so plain `npm test` is red by design and the workspace test loop must skip it.",
+      "unitTestExemptReason": "Plain `npm test` is what its CI runs — vitest.config.js sets the ENTRA_*/S3 env itself. But its S3 tests start their own Floci via Testcontainers on a dynamic port, which needs Docker, so the workspace test loop still skips it.",
       "npmUpgradeDefault": false
     },
     {
@@ -110,6 +110,13 @@
       "name": "trade-imports-plants-backend",
       "stack": "java",
       "dockerStack": { "service": "plants-backend", "buildsFromSource": true },
+      "unitTestExempt": false,
+      "npmUpgradeDefault": false
+    },
+    {
+      "name": "trade-imports-performance-tests",
+      "stack": "node",
+      "dockerStack": null,
       "unitTestExempt": false,
       "npmUpgradeDefault": false
     },

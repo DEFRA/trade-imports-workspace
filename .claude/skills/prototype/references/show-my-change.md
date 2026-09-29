@@ -132,18 +132,24 @@ so a plain `--before` pair would match.
 ## Record a walkthrough
 
 "record a walkthrough", "demo video", "walk every example through", "the
-walkthrough report" and "the Playwright report" all mean this, not
-`designer:show`. It makes a Playwright report: every example in the release
-walked through page by page, with a picture of each page, a video and a
-trace.
+walkthrough report", "the Playwright report" and "the demo page" all mean
+this, not `designer:show`. It walks every example in the release page by
+page, at a person's pace by default — enough to read each page and watch
+each answer typed in, so the videos are watchable, not a blur — and builds
+the demo page plus the full technical report underneath it.
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --no-open
 ```
 
-Tell the designer it takes a few minutes. When it finishes, read the summary
-lines it prints (for example "The real journey (high-risk-plants): 10 of 10
-stories walked to the end") and open a few of the step pictures under
+Tell the designer what the command itself says before it starts ("At a
+person's pace this takes about N minutes"): about two minutes per story,
+several at once, and never under three minutes (the real journey's ten
+stories take about four minutes on a laptop). Add `--fast` when the designer only
+needs to know the stories still reach the end, not to watch them — it runs
+at today's speed instead. When it finishes, read the summary lines it
+prints (for example "The real journey (high-risk-plants): 10 of 10 stories
+walked to the end") and open a few of the step pictures under
 `.cache/designer/walkthrough/test-results/` with the Read tool before saying
 anything about them. Name any red story and any "Sent directly" note in
 plain words: a red story is reported, never a reason to stop.
@@ -155,6 +161,10 @@ run it themselves when they want to look:
 npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --show
 ```
 
+It opens the local demo page, `.cache/designer/walkthrough/site/index.html`
+(inside the prototype repo), with the full technical report underneath it
+at `site/tests/index.html`.
+
 "Something I can share", "a link for stakeholders", "send stakeholders
 something before the show and tell": pick the first of these that holds.
 
@@ -165,28 +175,28 @@ something before the show and tell": pick the first of these that holds.
    ```
 
    A web address back means it is on. "Not Found" means it is off (or `gh`
-   cannot see it): no report link works yet, so go to 4 and tell the
+   cannot see it): no demo page link works yet, so go to 4 and tell the
    designer the prototype maintainer has to turn Pages on (Settings, Pages,
    Deploy from a branch, `gh-pages`, `/ (root)`).
 2. **The release is already on `main`** (merged, pushed straight there, or
-   the real journey): send `<siteUrl>#?q=@<set-id>` now, reading `siteUrl`
+   the real journey): send `<siteUrl>#set-<set-id>` now, reading `siteUrl`
    from `scripts/designer/prototype.json` in the prototype repo. Nothing to
    run.
 3. **The release has changes not on `main` yet, on a branch**: save and open
    a pull request (`references/share-my-change.md`, step 6). Its checks
-   publish the report within about ten minutes and comment the link:
-   `<siteUrl>reports/pr-<n>/#?q=@<set-id>` is the one to send. For a show
+   build the demo page within about ten minutes and comment the link:
+   `<siteUrl>reports/pr-<n>/#set-<set-id>` is the one to send. For a show
    and tell on a set day, push at least the day before, so a failed check
    has time to be fixed. (For work still only on the designer's own
    computer, pushing straight to `main` — route 2 above — is usually
    simpler than opening a pull request just to get a link.)
 4. **No web link yet** (Pages off, or no time for a pull request): zip the
-   local report folder,
-   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/walkthrough/report/`,
-   and send the zip. The person unzips it and opens `index.html` in a
-   browser: the steps, pictures and videos work; only the trace needs the
-   web link or `--show`. Or run `--show` on the designer's laptop and share
-   the screen.
+   local site folder,
+   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/walkthrough/site/`
+   (not `report/`), and send the zip. The person unzips it and opens
+   `index.html` in a browser: the demo page, and every step, picture and
+   video under `tests/`, work; only the trace needs the web link or
+   `--show`. Or run `--show` on the designer's laptop and share the screen.
 
 ## Step 3: Run it
 

@@ -76,8 +76,9 @@ the designer, in plain words, not as raw JSON:
 - the summary and the parent epic
 - the attachments it will add, by name, with sizes
 - the walkthrough link, if `scripts/designer/prototype.json` has a
-  `siteUrl` set (`[See it walked through|<url>]` in the description) —
-  say so plainly if it is missing rather than inventing one
+  `siteUrl` set (`[See it walked through|<url>]` in the description,
+  ending `#set-<id>` for this release, from `walkthroughLink`) — say so
+  plainly if it is missing rather than inventing one
 - any warning the plan carries, in full
 - that nothing has been created yet
 

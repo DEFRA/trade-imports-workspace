@@ -49,8 +49,10 @@ is merged.
 
 ## Checking it
 
-- The checks publish a walkthrough of every release on this branch. The
-  link appears in a comment on this pull request.
+- The checks build a demo page of every release on this branch, at
+  `reports/pr-<n>/`, plus the full technical report underneath it at
+  `reports/pr-<n>/tests/`. The demo page link appears in a comment on this
+  pull request.
 - The deployed prototype updates only after this is merged to `main`.
 ```
 

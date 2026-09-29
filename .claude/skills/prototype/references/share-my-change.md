@@ -222,7 +222,12 @@ any clash as in `references/design-release.md` section G) and push again.
 Read `siteUrl` from `scripts/designer/prototype.json` (in the prototype
 repo) and tell the designer: "This is on `main` now. The deployed prototype
 and its demo page at `<siteUrl>` update once the pipeline runs, usually
-within about ten minutes." Skip the rest of this section.
+within about ten minutes." When they plan to send the deployed prototype's
+own address to anyone, add: "The deployed prototype can ask for a shared
+password (the `PROTOTYPE_PASSWORD` secret the maintainer sets in CDP); send
+it separately from the link. Without it, anyone with the link can use the
+prototype. The demo page is never behind the password." Skip the rest of
+this section.
 
 **On a `design/*` branch** (made because the designer wanted to share
 without touching `main` — `references/ROUTING.md`, "Branches"): push the

@@ -28,6 +28,12 @@ artifacts that downstream `tools/` scripts consume.
 | `journey-builder` | `references/SPEC_RECONCILER.md` | One-shot — reconciles the extracts into `journey-spec.json` and `conflicts.json` |
 | `journey-builder` | `references/INCREMENT_PLANNER.md` | Per-increment plan into the build loop's shape, written through `backlog-plan-increment.sh` (ten at a time, in dependency order) |
 | `journey-builder` | `references/MODEL_EXTENDER.md` | One gated `model-extension` increment — grows the engine's obligation vocabulary |
+| `requirements-pipeline` | `workflow/distil/briefs/extract.md` + `extract-<kind>.md` | Per-source extraction into `distil/extract/<slug>.json`, one brief per source kind (run by `workflow/distil.js`, one per source, pipelined) |
+| `requirements-pipeline` | `references/TRACE_EXTRACTOR.md` | The trace method `extract-trace.md` points at: mine a trace corpus or read a mined set |
+| `requirements-pipeline` | `workflow/distil/briefs/verify.md` | Per-range refutation of one extract's claims into `distil/verify/<slug>.part<N>.json` (parallel within a source) |
+| `requirements-pipeline` | `workflow/distil/briefs/reconcile.md` | One-shot — the working set into `requirements.json` and `conflicts.json`, keeping every id on a re-distil |
+| `requirements-pipeline` | `workflow/distil/briefs/consolidate.md` | One-shot — requirements into `backlog.json` thin full-stack slices, `todo` and `blocked` rows rewritten to the latest rulings, every other row held fixed |
+| `requirements-pipeline` | `references/REPORT.md` | One-shot — drafts the decision-led DISTIL report, returned as text |
 | `spec-catchup` | `references/CAPABILITY_JUDGE.md` | Per-capability judgement against the suite report and source — `judge-<capability>.json` only, parent applies |
 | `spec-cover` | `references/GAP_JUDGE.md` | Per-gap Then-to-assert mapping and test proposal — `judge-<id>.json` only, parent writes and probes |
 

@@ -1,0 +1,36 @@
+{
+  "source": "repo:tests",
+  "extractHash": "7075984fe85548fa7b546e38f5b16cb924bc1509b6418406b8baf0607e977005",
+  "verdicts": [
+    {
+      "id": "tests-001",
+      "holds": true,
+      "reason": "grep across *.ts/*.md/*.json/*.yml confirms no k6/load/perf-test tooling; README.md hits are the unrelated 'perf-test' CDP environment name."
+    },
+    {
+      "id": "tests-002",
+      "holds": true,
+      "reason": "utils/playwright/shared-config.ts:26-73 matches quote exactly (four projects with the given testMatch/testIgnore globs)."
+    },
+    {
+      "id": "tests-005",
+      "holds": true,
+      "reason": "playwright.docker-compose.config.ts:8-13 matches the projectBaseUrls quote exactly."
+    },
+    {
+      "id": "tests-010",
+      "holds": false,
+      "reason": "Overreach: tests/e2e/features/promoted-lifecycle.spec.ts uses the notificationApi fixture directly in a test body, so its usages are not confined to fixtures/security.ts and fixtures/ui.ts."
+    }
+  ],
+  "missed": [
+    {
+      "id": "tests-001-m1",
+      "statement": "The suite already has a named, real CDP environment for performance testing: PLAYWRIGHT_ENVIRONMENT can be set to 'perf-test' (alongside dev and test), and playwright.config.ts wires up base URLs for it.",
+      "kind": "integration",
+      "ref": "README.md:244,248; playwright.config.ts:1-27",
+      "quote": "1. Set `PLAYWRIGHT_ENVIRONMENT` to one of `dev`, `test`, or `perf-test` in your `.env`.",
+      "confidence": "verbatim"
+    }
+  ]
+}

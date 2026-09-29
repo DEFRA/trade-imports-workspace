@@ -44,7 +44,7 @@ in the same JSON row.
 
 ## Tests-repo exception
 
-`trade-imports-animals-tests` has **no unit-test suite** — it IS the
+`trade-imports-ins-tests` has **no unit-test suite** — it IS the
 E2E suite (Playwright runner against the live stack). The per-package
 `npm test` baseline + post-upgrade checks are SKIPPED for this repo
 inside both `upgrade-one-package.sh` and `run-manual-upgrade.sh`.

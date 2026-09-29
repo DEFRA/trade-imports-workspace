@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One source's extract",
+  "description": "workareas/<workarea>/distil/extract/<source slug>.json: what one source says, one claim per observable fact, with provenance, written by the extract agent before any reconciling. `tim distil check --stage extract` validates it against this file, and also checks what a schema cannot: `source` names this file's source, `scopeHash` matches the source's kind, locator and scope today, claim ids are unique across every extract in the workarea, and no claim id ends in -m<N> (that suffix is kept for claims a verifier finds missing).",
+  "type": "object",
+  "required": ["source", "structure", "claims"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "description": "The source id from sources.json, such as \"confluence:6518997274\".",
+      "$ref": "#/$defs/text"
+    },
+    "structure": {
+      "description": "What the source is and how it is laid out, written before any claim: characterise first, extract second.",
+      "$ref": "#/$defs/text"
+    },
+    "scopeHash": {
+      "description": "The source's scope hash when it was extracted, as `tim distil status` reports it: the sha256, in hex, of its kind, locator and scope. `tim distil stamp` writes it. A different hash today means the source's scope changed, so the extract is stale. An extract with no hash (one written before the hash existed) is stale too, until `tim distil stamp` adopts it or the source is extracted again.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "claims": {
+      "description": "Every claim, in the order the source makes them.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "claim": {
+      "description": "One observable fact the source states: something a user, operator or other system can observe, never a file, class or function. It records what the source says, without reconciling it with other sources.",
+      "type": "object",
+      "required": ["id", "statement", "kind", "ref", "quote", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "A short prefix for the source and a number, such as \"conf-001\" or \"tests-014\". Unique across the whole workarea, because requirements cite claims by id alone.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "statement": {
+          "description": "The fact, in plain English. For an inferred claim, it says why it follows.",
+          "$ref": "#/$defs/text"
+        },
+        "kind": {
+          "description": "What sort of fact it is. A gap is a confidence, never a kind.",
+          "enum": [
+            "data",
+            "behaviour",
+            "rule",
+            "copy",
+            "integration",
+            "constraint",
+            "non-functional"
+          ]
+        },
+        "ref": {
+          "description": "Where in the source: a section, heading, table row, page file, or file and line for a repo.",
+          "$ref": "#/$defs/text"
+        },
+        "quote": {
+          "description": "The source's own words, verbatim. Only a gap, where the source says nothing, may leave it empty.",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "verbatim: the source says it. inferred: read between the lines, and the statement says why. gap: the source should say something here and does not.",
+          "enum": ["verbatim", "inferred", "gap"]
+        },
+        "note": {
+          "description": "Anything else the extractor wants the verifier or reconciler to know about this claim.",
+          "$ref": "#/$defs/text"
+        }
+      },
+      "if": {
+        "required": ["confidence"],
+        "properties": { "confidence": { "enum": ["verbatim", "inferred"] } }
+      },
+      "then": {
+        "description": "A verbatim or inferred claim quotes the words it rests on.",
+        "properties": { "quote": { "pattern": "\\S" } }
+      }
+    }
+  }
+}

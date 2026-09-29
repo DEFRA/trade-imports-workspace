@@ -216,9 +216,9 @@ task link once before the first participant." and the Reset line with
    then put each rule in `research-mode.md` back by hand, delete the file, and
    save one change titled `Research mode off for <set-id>`.
 
-   Link the walkthrough report in the write-up of the round too, so anyone
-   who was not there can see what participants saw: read `siteUrl` from
-   `scripts/designer/prototype.json` and give `<siteUrl>#?q=@<set-id>` once
+   Link the demo page in the write-up of the round too, so anyone who was
+   not there can see what participants saw: read `siteUrl` from
+   `scripts/designer/prototype.json` and give `<siteUrl>#set-<set-id>` once
    it is on `main` (merged, or pushed straight there).
 
 2. If the designer shares findings, draft them as a change list for the **next

@@ -53,7 +53,7 @@ jobs:
             --network host \
             --user root \
             --entrypoint npm \
-            defradigital/trade-imports-animals-tests:latest \
+            defradigital/trade-imports-ins-tests:latest \
             run _assert_stack
 
       - name: Assert the database is fresh
@@ -81,7 +81,7 @@ jobs:
             --user root \
             -v ${{ github.workspace }}/zap-report:/app/zap-report \
             --entrypoint npm \
-            defradigital/trade-imports-animals-tests:latest \
+            defradigital/trade-imports-ins-tests:latest \
             run _zap_clean
 
       - name: Prime ZAP context
@@ -91,7 +91,7 @@ jobs:
             --user root \
             -e PROFILE=security:active \
             --entrypoint npm \
-            defradigital/trade-imports-animals-tests:latest \
+            defradigital/trade-imports-ins-tests:latest \
             run _zap_prime_context
 
       - name: Run Playwright traffic-generation tests (@active)
@@ -104,7 +104,7 @@ jobs:
             -v ${{ github.workspace }}/zap-report:/app/zap-report \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             --entrypoint npm \
-            defradigital/trade-imports-animals-tests:latest \
+            defradigital/trade-imports-ins-tests:latest \
             run _test_docker_compose -- --grep '@active' --timeout=60000
 
       # always(): a real Playwright failure here still fails the job overall
@@ -124,7 +124,7 @@ jobs:
             -v ${{ github.workspace }}/zap-report:/app/zap-report \
             -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
             --entrypoint npm \
-            defradigital/trade-imports-animals-tests:latest \
+            defradigital/trade-imports-ins-tests:latest \
             run _zap_run_and_gate
 
       # security-scan.json and zap.log carry the same content as

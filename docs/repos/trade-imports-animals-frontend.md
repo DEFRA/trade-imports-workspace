@@ -18,7 +18,7 @@ User-facing web application that guides users through a multi-step form wizard f
 - **HTTP client:** Hapi Wreck
 - **Logging:** Pino (ECS-formatted, Defra CDP observability)
 - **Unit tests:** Vitest
-- **E2E tests:** Playwright (lives in the `trade-imports-animals-tests` repo)
+- **E2E tests:** Playwright (the `animals` project in the `trade-imports-ins-tests` repo)
 - **Linting:** ESLint (neostandard), Stylelint
 
 ## Infrastructure dependencies

@@ -50,8 +50,9 @@ make docker-compose-dev
 
 **Run the E2E tests:**
 ```bash
-cd repos/trade-imports-animals-tests
-npm run test:docker-compose
+cd repos/trade-imports-ins-tests
+npm run test:docker-compose             # every domain
+npm run test:docker-compose:animals     # one domain: animals, animals-admin, ins or plants
 ```
 
 **Run unit tests:**

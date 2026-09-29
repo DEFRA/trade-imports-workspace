@@ -62,10 +62,17 @@ export const exitCodeFor = (error) =>
  * never a raw stack trace on stderr with nothing on stdout
  * (`tim/.claude/rules/cli-patterns.md`).
  *
+ * A `TimError` that carries a list of scoped `problems` keeps it in the
+ * payload too, for a caller that routes each problem by its scope.
+ *
  * @param {Error} error
- * @returns {{code: string, message: string}}
+ * @returns {{code: string, message: string, problems?: {scope: string, message: string}[]}}
  */
-export const errorPayloadFor = (error) =>
-  isTimError(error)
-    ? { code: error.code, message: error.message }
-    : { code: 'UNKNOWN', message: error.message ?? String(error) }
+export const errorPayloadFor = (error) => {
+  if (!isTimError(error)) {
+    return { code: 'UNKNOWN', message: error.message ?? String(error) }
+  }
+  return Array.isArray(error.problems)
+    ? { code: error.code, message: error.message, problems: error.problems }
+    : { code: error.code, message: error.message }
+}

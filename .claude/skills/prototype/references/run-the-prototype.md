@@ -74,11 +74,10 @@ I start?" or "how does this work?":
    | Catch up with the real service                | "has the real service changed since I made my copy?"              |
    | Make it real and build it properly            | "make this real and start building it on the real service"        |
 
-5. Mention they can see the whole prototype walked through without running
+5. Mention they can see the whole prototype's demo page without running
    anything, once it is deployed: read `siteUrl` from
-   `scripts/designer/prototype.json` and give
-   `<siteUrl>#?q=@walkthrough`. Say nothing about it while `siteUrl` is not
-   set.
+   `scripts/designer/prototype.json` and give `<siteUrl>`. Say nothing
+   about it while `siteUrl` is not set.
 6. Then say: "You can also just describe what you want in your own words. If
    I seem lost, say 'use the design skill'." Point at
    `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`
@@ -263,6 +262,16 @@ when the designer asks "where did my data go":
   `http://localhost:3103/auth/sign-out`, then the prototypes page. The
   deployed prototype signs in the same way: use the same paths on its
   address.
+- **The deployed prototype's password.** The deployed prototype can ask for
+  one shared password before any page, when the maintainer sets the
+  `PROTOTYPE_PASSWORD` secret in CDP; with none set, it is open to anyone who
+  has its address. The designer enters it once and their browser remembers
+  it for 30 days; `/prototype-password/sign-out` forgets it. On their own
+  computer it only asks when started with one. To see the password page
+  before a session, the designer runs this in their own terminal (it sets
+  the password for that one start, so it is theirs to run, not yours):
+  `PROTOTYPE_PASSWORD=try-me npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev`
+  (or `run designer:fresh`).
 
 ## The INS address-book link
 
@@ -287,7 +296,8 @@ End with what they can do next:
 
 - "Make a change, then say 'check my changes'."
 - "Say 'show me' for pictures of your pages."
-- "Say 'record a walkthrough' for a report of every example, page by page."
+- "Say 'record a walkthrough' for a demo page of every example, page by
+  page, at a person's pace."
 - "Say 'save my work' when you are happy."
 
 For a newcomer, print the table from "New here" instead.

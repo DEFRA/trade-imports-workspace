@@ -26,7 +26,7 @@ Does NOT own:
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
 | Inbound | trade-imports-plants-frontend | REST, port 8091, `/notifications` (POST, PUT `/{ref}`, `/{ref}/copy`, `/submit`, `/amend`, `/cancel-amend`, `/soft-delete`, GET list, GET `/{ref}/fulfilments`, GET `/reference-numbers`, DELETE) | Notification CRUD and lifecycle |
-| Inbound | trade-imports-animals-tests | HTTP via workspace stack | End-to-end tests |
+| Inbound | trade-imports-ins-tests | HTTP via workspace stack | End-to-end tests (the `plants` project) |
 | Outbound | MongoDB | Spring Data, database `trade-imports-plants-backend` | `notifications` aggregate and `audit` collections |
 | Outbound | CloudWatch (EMF) | AWS embedded metrics to `AWS_EMF_AGENT_ENDPOINT` | Metrics |
 | Outbound | AWS STS | AWS SDK v2 client bean in `AwsConfig` | Credentials; other usage Unclear from code |

@@ -1,0 +1,47 @@
+{
+  "programme": "ins-performance-testing",
+  "generatedFrom": [
+    "ruling:sam-2026-09-29c",
+    "repo:tests",
+    "confluence:6608160092"
+  ],
+  "invariants": ["Every run is stubbed outside the INS product boundary."],
+  "repos": {
+    "tests": {
+      "path": "repos/trade-imports-animals-tests",
+      "github": "DEFRA/trade-imports-animals-tests"
+    }
+  },
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "A k6 smoke run against the local Docker stack, pointed at its environment by configuration",
+      "detail": "The walking skeleton: k6 joins the tests repo beside Playwright, and one run configuration chooses the environment.",
+      "acceptanceCriteria": [
+        "The environment a run targets is chosen by run configuration using the environment names the Playwright suites already use. (ruling:sam-2026-09-29c; repo:tests playwright.config.ts:1-27)",
+        "Systems outside the INS boundary answer from stubs. (confluence:6608160092 Decision)"
+      ],
+      "requirements": ["req-001", "req-006"],
+      "repos": ["tests"],
+      "kind": "feat",
+      "dependsOn": [],
+      "status": "todo"
+    },
+    {
+      "id": "inc-002",
+      "title": "The smoke run fails a pull request on a breached threshold",
+      "detail": "Tier 1 on every pull request, so a change that makes INS slower fails its check.",
+      "acceptanceCriteria": [
+        "A pull request whose smoke run breaches a threshold fails its check. (confluence:6608160092 Decision / 'Test tiers' table / row 1; conflict c-002 default)"
+      ],
+      "requirements": ["req-002", "req-004"],
+      "repos": ["tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-001"],
+      "status": "todo",
+      "openQuestions": [
+        "c-002: 'Which tiers and scenarios should run in each environment, and on what schedule?' Default, followed here: the tier-1 smoke run on every pull request."
+      ]
+    }
+  ]
+}

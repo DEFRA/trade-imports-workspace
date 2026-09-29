@@ -70,6 +70,17 @@ describe('errorPayloadFor', () => {
     })
   })
 
+  test('keeps the scoped problems a TimError carries', () => {
+    const error = new TimError('LINT', '1 problem in x:\none')
+    error.problems = [{ scope: 'backlog', message: 'one' }]
+
+    expect(errorPayloadFor(error)).toEqual({
+      code: 'LINT',
+      message: '1 problem in x:\none',
+      problems: [{ scope: 'backlog', message: 'one' }]
+    })
+  })
+
   test('EN3: a thrown non-Error value falls back to String(error) for the message', () => {
     expect(errorPayloadFor('boom')).toEqual({
       code: 'UNKNOWN',

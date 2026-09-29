@@ -166,20 +166,20 @@ manual classification).
 ## Step 4.5: End-of-batch E2E gate (tests repo only)
 
 If any `I`-keystroke implementor returned `DONE` for a package in
-`trade-imports-animals-tests`, run `npm run test:docker-compose` ONCE now as
+`trade-imports-ins-tests`, run `npm run test:docker-compose` ONCE now as
 the integration gate. Per-package `npm test` was skipped for this
 repo (it has no unit suite — it IS the E2E suite), so this is the
 first chance to confirm the upgrades didn't break the test runner.
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/test-docker-compose-$(date +%Y%m%d-%H%M%S).log 2>&1
 ```
 
 Read the log file you just created — summary line only. On failure,
 **do NOT grep the streaming output**. Find the structured artifacts:
 
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
+find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 Read each `error-context.md` to diagnose what broke. Surface the

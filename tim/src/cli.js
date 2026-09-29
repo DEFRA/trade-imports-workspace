@@ -24,6 +24,7 @@ import { register as registerGithub } from './commands/github/index.js'
 import { register as registerConfluence } from './commands/confluence/index.js'
 import { register as registerGha } from './commands/gha/index.js'
 import { register as registerBacklog } from './commands/backlog/index.js'
+import { register as registerDistil } from './commands/distil/index.js'
 import { register as registerBuild } from './commands/build/index.js'
 import { register as registerCapture } from './commands/capture/index.js'
 import { register as registerSpec } from './commands/spec/index.js'
@@ -158,6 +159,7 @@ export const buildProgram = () => {
   registerConfluence(program, { timVersion: pkg.version })
   registerGha(program, { timVersion: pkg.version })
   registerBacklog(program, { timVersion: pkg.version })
+  registerDistil(program, { timVersion: pkg.version })
   registerBuild(program, { timVersion: pkg.version })
   registerCapture(program, { timVersion: pkg.version })
   registerSpec(program, { timVersion: pkg.version })

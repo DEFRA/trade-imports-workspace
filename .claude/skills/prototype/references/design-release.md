@@ -179,11 +179,14 @@ to stay as it is.
    (`references/check-my-change.md` explains every message). At most 3
    repairs, then stop and explain.
 
-7. **Say the walkthrough is automatic.** The new release gets its own
-   walkthrough — every example walked through, page by page — made
-   automatically on every pull request and on `designer:walkthrough`.
-   There is nothing to write for it: the real journey's own walkthrough
-   sits beside it on the chooser as the baseline.
+7. **Say the walkthrough and its demo page are automatic.** The new release
+   gets its own walkthrough — every example walked through, page by page, at
+   a person's pace — made automatically on every pull request and on
+   `designer:walkthrough`. Its demo page comes with 3 featured journeys
+   (send, save and come back to, and amend) plus the error-messages story,
+   with nothing to write. The real journey's own walkthrough sits beside it
+   on the chooser as the baseline. To change what leads it, see
+   `references/example-data.md`, "Featured journeys".
 
 8. **Take its starting gallery:**
 

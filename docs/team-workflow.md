@@ -7,7 +7,7 @@ frontend, its backend and the matching test suite — for the animals service th
 
 - `repos/trade-imports-animals-frontend` — user-facing web application
 - `repos/trade-imports-animals-backend` — API / business logic service
-- `repos/trade-imports-animals-tests` — end-to-end / integration test suite
+- `repos/trade-imports-ins-tests` — end-to-end, accessibility and security test suite (its `animals` project)
 
 Other services in the workspace follow the same shape. A single ticket may span all three;
 coordinate cross-repo changes through the tests and workspace repos.
@@ -16,9 +16,9 @@ coordinate cross-repo changes through the tests and workspace repos.
 ## Ticket Lifecycle
 
 1. **Refinement** — Dev + QA agree acceptance criteria, edge cases, and test approach. Tickets that feel larger than ~3 days are split now. Tickets that would benefit from pairing are flagged here — see Pairing below. → marked **Ready for dev** and added to the JIRA board.
-2. **In Progress** — Try and keep to one feature ticket per person, or a pair on a flagged ticket. Branch named per [git-conventions.md](./git-conventions.md). Developers should update any tests in `trade-imports-animals-tests` that have broken as a result of their changes.
+2. **In Progress** — Try and keep to one feature ticket per person, or a pair on a flagged ticket. Branch named per [git-conventions.md](./git-conventions.md). Developers should update any tests in `trade-imports-ins-tests` that have broken as a result of their changes.
 3. **Code Review** — Aim for small PRs against `main`, clear description, tests added, CI green. See merge strategy under [Pull Requests heading of git-conventions.md](./git-conventions.md#pull-requests) 
-4. **QA Verification** — Verified against acceptance criteria either in docker or deployed environments. New tests added or updated in `trade-imports-animals-tests` as needed.  Bugs go back to In Progress.
+4. **QA Verification** — Verified against acceptance criteria either in docker or deployed environments. New tests added or updated in `trade-imports-ins-tests` as needed.  Bugs go back to In Progress.
    1. It's a developer's responsibility to add the automated tests to the ticket, where they've done the dev work. 
    2. QA to review the automated tests. QA could also pair with the developer on the creation of the tests, if needed.
 5. **Done** — Merged, deployed, criteria met, docs updated (if applicable).

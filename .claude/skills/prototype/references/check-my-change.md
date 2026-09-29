@@ -41,8 +41,9 @@ Read these before every run.
 - **Only repair files the designer owns.** Before editing any file, run
   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`.
   Repair only files it calls "Yours". A file that "Belongs to the real
-  service" is never edited on a `design/*` branch: explain, and offer "do it
-  in your design release" or "prepare it for the real team"
+  service" is never edited, whether the designer is on `main` or a
+  `design/*` branch: explain, and offer "do it in your design release" or
+  "prepare it for the real team"
   (`references/hand-off.md`). The list the weekly update follows is
   `overrides.json`: anything not in its `ours` list belongs to the real
   service.

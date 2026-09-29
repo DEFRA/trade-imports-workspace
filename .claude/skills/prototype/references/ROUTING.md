@@ -48,7 +48,7 @@ order.
 
 | They want | They say things like | Do this, in order |
 | --- | --- | --- |
-| A demo or stakeholder review | "we've got a demo on Thursday", "get it ready for the playback", "show and tell", "stakeholder review", "send this to stakeholders", "something I can share", "a link to the demo" | 1. Pick the release to show: the designer's working release, or `plants-working` made now (`references/design-release.md` section B) with a title such as "Stakeholder demo". 2. Examples on the pages to be shown, with links (`references/example-data.md`). 3. The walkthrough (`references/show-my-change.md`, "record a walkthrough") — every example walked through, page by page. 4. Where they also want before/after pictures, a review pack gallery (`references/show-my-change.md`, "make a review pack"), without `--before` when the release has no saved changes of its own yet. 5. The thing to send stakeholders: follow `references/show-my-change.md`, "Something I can share" — check GitHub Pages is on first, then the `reports/main/` link (release already on `main`), the pull request's report link (save and open one with `references/share-my-change.md`, pushed at least the day before), or the zipped local report when there is no web link yet. For the live session itself, demo from a laptop with `designer:fresh` until the release is deployed. |
+| A demo or stakeholder review | "we've got a demo on Thursday", "get it ready for the playback", "show and tell", "stakeholder review", "send this to stakeholders", "something I can share", "a link to the demo" | 1. Pick the release to show: the designer's working release, or `plants-working` made now (`references/design-release.md` section B) with a title such as "Stakeholder demo". 2. Examples on the pages to be shown, with links (`references/example-data.md`). 3. The walkthrough (`references/show-my-change.md`, "record a walkthrough") — every example walked through, page by page. 4. Where they also want before/after pictures, a review pack gallery (`references/show-my-change.md`, "make a review pack"), without `--before` when the release has no saved changes of its own yet. 5. The thing to send stakeholders: follow `references/show-my-change.md`, "Something I can share" — check GitHub Pages is on first, then the site-root link (release already on `main` — push straight there with `references/share-my-change.md` if it is not, unless the designer wants it reviewed first), the pull request's report link (`reports/pr-<n>/`, on a branch, pushed at least the day before), or the zipped local report when there is no web link yet. For the live session itself, demo from a laptop with `designer:fresh` until the release is deployed. |
 | A research round | "user testing next week", "get ready for research", "the researcher needs…" | `references/research-session.md`. It starts the research release and adds one example per task through the other references. |
 | Crit notes, feedback or any list of changes | "here are my notes from the crit", "work through this feedback", "do all of these" | The `design-session` workflow (see "Workflows"). |
 | I'm new, or what can I do here | "I'm new", "what can I do here?", "where do I start?", "how does this work?" | `references/run-the-prototype.md`, "New here": `tim prototype setup`, start the prototype, then show what they can ask for. |
@@ -160,32 +160,54 @@ Workflow({
 | `workflow/wording-sweep.js` | `references/change-the-words.md` | A wording change across more than 5 pages, or a pasted content document |
 | `workflow/port-kit-page.js` | `references/port-a-kit-page.md` | Every Prototype Kit page port |
 | `workflow/prepare-handoff.js` | `references/hand-off.md`, `references/build-it-for-real.md` route C1 | Building a hand-off for real: route C1 builds it in `trade-imports-plants-frontend` on a local `feat/EUDPA-N-<slug>` branch through `frontend-change` (never pushed); route C2 writes a `requirements-pipeline` DISTIL request. `dryRun: true` touches nothing |
-| `workflow/design-session.js` | this file (rule 6 in `SKILL.md`) | Any list of notes, however many, or four or more changes at once |
+| `workflow/design-session.js` | this file (rule 6 in `SKILL.md`) | Any list of notes, however many, or four or more changes at once. Stays on the current branch, `main` included; add `keepOffMain: true` to `args` only when the designer has asked this session to keep work off `main` |
 
 See `workflow/README.md` for the args contract and how models are chosen.
 
 ## Branches
 
-- `design/<release>-<slug>`: a designer's work, made from `main` before the
-  first change. Prototype-only, `dockerStack: null`.
+A branch is a tool the designer can pick up, never a rule they must follow.
+Two fully supported ways of working:
+
+- **On `main`.** The default, and just as valid as a branch. Run the
+  prototype, make a change, check it, show it, save it, and — when the
+  designer says so — push straight to `main`. The deployed prototype and its
+  report at `https://defra.github.io/trade-imports-plants-prototype/` update
+  once the pipeline runs. Nothing here ever needs a `design/*` branch.
+- **On a `design/<release>-<slug>` branch.** Use this only to share
+  in-progress work without it going to `main` — a review before merging, a
+  demo link that should not touch the deployed prototype yet, or the
+  designer says "keep this off `main`". Offer it, in one line, only when one
+  of those applies; never make one by default and never nag a designer who
+  is happily working on `main`. Once offered and accepted, saving, showing
+  and handing off all carry on as normal on that branch, and it is pushed
+  with a **draft** pull request (`references/share-my-change.md`) whose
+  checks publish a report at `reports/pr-<n>/` — the link to share while the
+  work is still in progress. A designer's stated preference ("I'd rather
+  work on a branch from now on", "just push straight to `main` from here
+  on") holds for the rest of the session: do not ask again.
+
+Other branches, unrelated to this choice:
+
 - `handoff/<slug>`: the upstream-bound route only, where the real journey's
   own files (`high-risk-plants`) are changed in the prototype to make a
   checked `upstream.patch` for plants-frontend (`hand-off` route 2; the
   patch is then the starting point `build-it-for-real` route C1 applies in
-  plants-frontend on `feat/EUDPA-N-<slug>`). Never merged into the prototype's own
-  `main`. A hand-off *folder* for a design release lands on the designer's
-  own `design/*` branch, not here.
+  plants-frontend on `feat/EUDPA-N-<slug>`). Never merged into the
+  prototype's own `main`. A hand-off *folder* for a design release lands on
+  the designer's own current branch (`main` or a `design/*` branch), not
+  here.
 - `chore/NO_JIRA-<slug>` (or `chore/EUDPA-N-<slug>`): a maintainer's work on
   the prototype itself, following the workspace branch-naming rule (not
   this skill's concern).
-- One rule for every reference: **stay only on a `design/*` branch, or on a
-  `handoff/*` branch for the upstream-bound route. From any other branch —
-  `main`, a `feat/*`, `chore/*` or trial branch — make
-  `design/<release>-<slug>` before the first change**, from `main`; from the
-  current branch instead only when `main` does not yet have something the
-  release needs (the designer suite itself, a release saved elsewhere), and
-  say so in one line. Starting a release, making the change and saving it
-  all happen on that one branch, so nothing lands on someone else's branch.
+- Someone else's `feat/*` or `chore/*` branch, or a trial branch left over
+  from an earlier session: never work here. Move to `main` (the default) or
+  a `design/<release>-<slug>` branch made from `main` before the first
+  change, and say so in one line.
+
+Starting a release, making the change and saving it all happen on the one
+branch the designer is already working on, so nothing lands split across two
+branches or on someone else's.
 
 ## How every change ends
 

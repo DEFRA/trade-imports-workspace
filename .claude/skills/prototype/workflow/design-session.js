@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Work through a list of design requests in one design release: split each into parts, route each part to its reference with references/ROUTING.md, build it, check it, show the whole session in one gallery, and save each landed part as its own commit',
   whenToUse:
-    'Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {set, requests}; both are required. Never pushes.',
+    'Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {set, requests}; both are required. Optional: keepOffMain (boolean) when the designer already asked to keep this session off main. Never pushes.',
   phases: [
     {
       title: 'Classify',
@@ -12,7 +12,8 @@ export const meta = {
     },
     {
       title: 'Prepare',
-      detail: 'no unsaved changes; a design/<set>-<slug> branch'
+      detail:
+        'no unsaved changes; stays on the current branch (main included) unless keepOffMain asks for a design/<set>-<slug> branch'
     },
     {
       title: 'Build',
@@ -298,13 +299,16 @@ const classify = () =>
 const prepare = (slug) =>
   agent(
     [
-      'Get the git branch of the prototype repository ready for a design session. Change no files.',
+      'Get the git branch of the prototype repository ready for a design session. Change no files. Branches are optional: stay on whatever branch this session is already on unless told otherwise below.',
       `1. Run: ${git('status --porcelain')}`,
       "   If it prints anything, stop: ready is false and reason is \"You have unsaved changes. Save them or undo them first (say 'save my work' or 'undo that'), then start the session again.\"",
       `2. Run: ${git('branch --show-current')}`,
+      config.keepOffMain === true
+        ? `   - If the branch is main: the designer asked to keep this session off main, so run: ${git(`switch -c design/${config.set}-${slug}`)} (the new branch starts from main). If git says the branch already exists, stop: ready is false and reason names the branch and asks the designer to switch to it or pick another name.`
+        : '   - If the branch is main, stay on it: main is a fully supported place to run this session. Never make a branch and never mention one.',
       '   - If the branch starts with design/, stay on it.',
       '   - If it starts with handoff/, stop: ready is false and reason is "You are on <branch>, a hand-off branch for the real team. Switch back to your design branch (or main) and start the session again."',
-      `   - Any other branch (main, or a feat/, chore/ or trial branch): run: ${git(`switch -c design/${config.set}-${slug}`)}`,
+      `   - Any other branch (a feat/, chore/ or trial branch that is not this designer's own): run: ${git(`switch -c design/${config.set}-${slug}`)}`,
       '     The new branch starts from the current one. If git says the branch already exists, stop: ready is false and reason names the branch and asks the designer to switch to it or pick another name.',
       `3. Run: ${git('branch --show-current')}, and return the branch name in branch.`,
       GUARD_RAILS

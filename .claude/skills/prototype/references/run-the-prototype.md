@@ -29,7 +29,7 @@ deploy. It would not help the address-book link either (see below).
   Before editing any file, that reference runs
   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`
   and checks `overrides.json`: anything not in its `ours` list belongs to the
-  real service and is never edited on a `design/*` branch.
+  real service and is never edited, on `main` or a `design/*` branch alike.
 
 ## New here
 
@@ -75,10 +75,10 @@ I start?" or "how does this work?":
    | Make it real and build it properly            | "make this real and start building it on the real service"        |
 
 5. Mention they can see the whole prototype walked through without running
-   anything, once it is deployed: read `reportsUrl` from
+   anything, once it is deployed: read `siteUrl` from
    `scripts/designer/prototype.json` and give
-   `<reportsUrl>main/#?q=@walkthrough`. Say nothing about it while
-   `reportsUrl` is not set.
+   `<siteUrl>#?q=@walkthrough`. Say nothing about it while `siteUrl` is not
+   set.
 6. Then say: "You can also just describe what you want in your own words. If
    I seem lost, say 'use the design skill'." Point at
    `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`

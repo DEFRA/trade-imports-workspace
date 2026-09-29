@@ -52,7 +52,7 @@ Read these before any change, whatever the request:
 1. **Ask whose file it is before any edit.** Run
    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <paths>`
    and follow the answer. A file that "Belongs to the real service" is
-   never edited on a `design/*` branch: offer "do it in your design
+   never edited, on `main` or a `design/*` branch alike: offer "do it in your design
    release" (the default) or "prepare it for the real team"
    (`references/hand-off.md`).
 2. **Never edit a frozen release.** Offer a working release made from it
@@ -91,14 +91,20 @@ Read these before any change, whatever the request:
     `src/server/app/{engine,model,bridge,flow,shared,services,lib}/**` or
     `src/server/app/shared/layout.njk` in the prototype, except on a
     `handoff/*` branch (the upstream-bound route) or a maintainer's
-    `chore/*` branch. The one exception on `design/*` branches is a
-    prototype-owned service folder, made or changed only through
+    `chore/*` branch. The one exception in a design release (on `main` or
+    a `design/*` branch alike) is a prototype-owned service folder, made or changed only through
     `references/fake-a-service.md`.
-11. **Work on a `design/*` branch.** Stay only on a `design/*` branch (or a
-    `handoff/*` branch for the upstream-bound route). From any other branch,
-    `main` or someone's `feat/*` or `chore/*` included, make
-    `design/<release>-<slug>` before the first change (`references/ROUTING.md`,
-    "Branches").
+11. **Branches are optional. `main` is a first-class place to work.** Stay on
+    whatever branch the designer is already on — `main` included — and never
+    make a `design/*` branch unless it helps them. A `handoff/*` branch is
+    still required for the upstream-bound route, and someone else's `feat/*`
+    or `chore/*` branch is never a place to work: move to a `design/*` branch
+    or `main` instead. Offer a `design/*` branch, in one line, only when it
+    helps the designer share in-progress work without it going to `main` (or
+    they ask to keep `main` clean); their own words are the yes, and a
+    preference they state for the session holds for the rest of it. Never
+    require one, and never nag about being on `main`
+    (`references/ROUTING.md`, "Branches").
 12. **Run `designer:walkthrough` with `--no-open`, always.** Serving the
     report blocks. Only the designer, never you, runs `-- --show` to watch
     it themselves.

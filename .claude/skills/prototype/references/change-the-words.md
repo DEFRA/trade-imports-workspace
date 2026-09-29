@@ -123,9 +123,10 @@ release. Start a working release from it instead." Offer
 `references/design-release.md`. Refuse `sample-journey`: it is a placeholder
 with no journey.
 
-Unless the branch is a `design/*` branch (or `handoff/*` in upstream-bound
-mode), make one before editing — from `main`, a `feat/*`, `chore/*` or trial
-branch alike (`references/ROUTING.md`, "Branches"):
+Branches are optional (`references/ROUTING.md`, "Branches"). On `main` or a
+`design/*` branch (or `handoff/*` in upstream-bound mode), stay on it. Only
+on someone else's branch (a `feat/*`, `chore/*` or trial branch) make one
+before editing:
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>

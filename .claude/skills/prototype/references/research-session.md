@@ -192,9 +192,10 @@ not deployed yet, so run the sessions from this laptop. Start it with
 task link once before the first participant." and the Reset line with
 "everyone using this laptop's prototype".
 
-- "The deployed prototype only changes after your work is merged to `main`.
-  Share it and get it merged the day before the session, then open each task
-  link on the deployed prototype once."
+- "The deployed prototype only changes once your work reaches `main`. Share
+  it the day before the session (pushed straight to `main`, or merged from
+  a pull request if you wanted a review first), then open each task link on
+  the deployed prototype once."
 - "Reset clears this release's data for everyone using the deployed prototype,
   including anyone in another session at the same time. Every participant opens
   the same example notification, so Reset between participants: on the
@@ -216,9 +217,9 @@ task link once before the first participant." and the Reset line with
    save one change titled `Research mode off for <set-id>`.
 
    Link the walkthrough report in the write-up of the round too, so anyone
-   who was not there can see what participants saw: read `reportsUrl` from
-   `scripts/designer/prototype.json` and give
-   `<reportsUrl>main/#?q=@<set-id>` once it is merged.
+   who was not there can see what participants saw: read `siteUrl` from
+   `scripts/designer/prototype.json` and give `<siteUrl>#?q=@<set-id>` once
+   it is on `main` (merged, or pushed straight there).
 
 2. If the designer shares findings, draft them as a change list for the **next
    working release**, not this research release. Write

@@ -32,6 +32,12 @@ Workflow({
 Pass `args` as a real object, not as a string of JSON. A string still works
 (the script parses it), but an object is clearer.
 
+`design-session.js` stays on whatever branch the session is already on —
+`main` included — by default. Pass `keepOffMain: true` only when the
+designer already asked to keep this session's work off `main` (they want to
+share it on a branch first): the workflow then makes
+`design/<set>-<slug>` from `main` before building anything.
+
 Every command a workflow's agent prompt runs is written in the tilde
 `--prefix`/`-C` form, because these scripts run from a session opened at the
 workspace root, never inside the prototype's own checkout: a bare `npm run`

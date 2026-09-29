@@ -33,7 +33,7 @@ describe('readEnvelopeRepos', () => {
       {
         repos: {
           frontend: { path: 'repos/trade-imports-plants-frontend' },
-          tests: { path: 'repos/trade-imports-animals-tests' }
+          tests: { path: 'repos/trade-imports-ins-tests' }
         }
       },
       (root) => {
@@ -45,8 +45,8 @@ describe('readEnvelopeRepos', () => {
           },
           {
             key: 'tests',
-            folder: 'trade-imports-animals-tests',
-            path: join(root, 'repos', 'trade-imports-animals-tests')
+            folder: 'trade-imports-ins-tests',
+            path: join(root, 'repos', 'trade-imports-ins-tests')
           }
         ])
       }

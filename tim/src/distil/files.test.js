@@ -40,7 +40,7 @@ describe('scopeHashOf', () => {
   const source = {
     id: 'repo:tests',
     kind: 'repo',
-    locator: 'repos/trade-imports-animals-tests',
+    locator: 'repos/trade-imports-ins-tests',
     scope: 'the plants specs',
     role: 'what is already proven end to end'
   }

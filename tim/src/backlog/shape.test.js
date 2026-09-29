@@ -221,8 +221,8 @@ describe('checkBacklog', () => {
         github: 'DEFRA/trade-imports-plants-frontend'
       },
       tests: {
-        path: 'repos/trade-imports-animals-tests',
-        github: 'DEFRA/trade-imports-animals-tests'
+        path: 'repos/trade-imports-ins-tests',
+        github: 'DEFRA/trade-imports-ins-tests'
       }
     }
 
@@ -246,8 +246,8 @@ describe('checkBacklog', () => {
         github: 'DEFRA/trade-imports-ins-frontend'
       },
       tests: {
-        path: 'repos/trade-imports-animals-tests',
-        github: 'DEFRA/trade-imports-animals-tests'
+        path: 'repos/trade-imports-ins-tests',
+        github: 'DEFRA/trade-imports-ins-tests'
       }
     }
     const syncBacklogOf = (...rows) => ({

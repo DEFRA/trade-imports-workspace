@@ -1,6 +1,7 @@
 {
   "programme": "ins-performance-testing",
   "generatedFrom": [
+    "ruling:sam-2026-09-29d",
     "ruling:sam-2026-09-29c",
     "ruling:sam-2026-09-29b",
     "ruling:sam-2026-09-29",
@@ -35,7 +36,7 @@
     "Every run's report says which environment it ran in and which stub profile each stubbed integration ran with."
   ],
   "repos": {
-    "tests": { "path": "repos/trade-imports-animals-tests", "github": "DEFRA/trade-imports-animals-tests" },
+    "perftests": { "path": "repos/trade-imports-performance-tests", "github": "DEFRA/trade-imports-performance-tests" },
     "stub": { "path": "repos/trade-imports-stub", "github": "DEFRA/trade-imports-stub" },
     "idstub": { "path": "repos/trade-imports-defra-id-stub", "github": "DEFRA/trade-imports-defra-id-stub" },
     "insfrontend": { "path": "repos/trade-imports-ins-frontend", "github": "DEFRA/trade-imports-ins-frontend" },
@@ -48,17 +49,17 @@
     {
       "id": "inc-001",
       "title": "A k6 smoke run of both journeys and the front door runs against the local Docker stack and fails the pull request on a breached threshold",
-      "detail": "The walking skeleton. Nothing performance-related exists in any repo today. This adds k6 to the tests repo as a third profile beside Playwright and the security scan, pointed at a target environment by configuration, and a tier-1 smoke run that signs in, opens the INS dashboard and creates, saves and reads back a notification on live animals and on high-risk plants — as a real browser session would, with cookies, CSRF crumbs and redirects. The run waits until the stack is functionally ready, judges itself against named interim thresholds, and runs on every pull request so a change that makes INS slower fails its check. Everything later builds on this.",
+      "detail": "The walking skeleton. Nothing performance-related exists in any repo today. This adds k6 to the new CDP performance-test suite repo, pointed at a target environment by configuration, and a tier-1 smoke run that signs in, opens the INS dashboard and creates, saves and reads back a notification on live animals and on high-risk plants — as a real browser session would, with cookies, CSRF crumbs and redirects. The run waits until the stack is functionally ready, judges itself against named interim thresholds, and runs on every pull request so a change that makes INS slower fails its check. Everything later builds on this.",
       "acceptanceCriteria": [
-        "The k6 suites run from the tests repo's image and entrypoint as their own profile beside the Playwright and security profiles, and publish their end-of-test summary with the run the same way those profiles publish theirs. (ruling:sam-2026-09-29c; repo:tests entrypoint.sh:191-197, Dockerfile:1-40; conflict c-005 default)",
-        "The environment a run targets — local Docker stack, CDP dev, CDP test or CDP perf-test — is chosen by run configuration using the environment names and service URL scheme the Playwright suites already use; this increment proves the local Docker target. (ruling:sam-2026-09-29; ruling:sam-2026-09-29b; repo:tests playwright.config.ts:1-27, playwright.docker-compose.config.ts:8-24; web:k6-docs using-k6/environment-variables/)",
+        "The k6 suites run as the CDP performance-test suite's own image, and each run publishes its end-of-test summary where CDP shows a suite's results. (ruling:sam-2026-09-29c; ruling:sam-2026-09-29d; conflict c-005)",
+        "The environment a run targets — local Docker stack, CDP dev, CDP test or CDP perf-test — is chosen by run configuration, using the same environment names and service URL scheme as the Playwright suites in trade-imports-animals-tests; this increment proves the local Docker target. (ruling:sam-2026-09-29; ruling:sam-2026-09-29b; repo:tests playwright.config.ts:1-27, playwright.docker-compose.config.ts:8-24; web:k6-docs using-k6/environment-variables/)",
         "Against the local Docker stack the smoke run — at most 5 virtual users, a few minutes — signs in, opens the INS dashboard, and on live animals and on high-risk plants creates a draft, saves a page and reads it back, each notification created through the frontend's own save route. (confluence:6608160092 Decision / 'Test tiers' table / row 1; ruling:sam-2026-09-29b; repo:tests flows/seeded-journey.ts:14-17)",
         "The smoke run also drives the live-animals and high-risk-plants backends directly, using only request bodies captured from those frontend saves, never hand-built ones. (confluence:6608160092 Decision / 'Test tiers' table / row 1; conflict c-013)",
         "The local stack a performance run uses has template caching on and no stub sign-in shortcut, so sign-in, address-book and reference-data are really called; SNS/SQS and the document store are the stack's own stand-ins. (ruling:sam-2026-09-29; repo:animalsfrontend src/config/nunjucks/nunjucks.js:10-27; repo:plantsfrontend src/config/config.js stubMode; repo:insfrontend src/config/nunjucks/nunjucks.js:24-25; conflict c-018 default)",
         "Each virtual user keeps its own cookies, reads the CSRF crumb from the page and returns it on every form POST, follows redirects and the journeys' entry guards, and a stale-concurrency redirect is counted as a handled outcome, not an error. (repo:animalsfrontend src/plugins/csrf.js:22-38, scripts/lighthouse/journey-client.js:1-60, .../flow/entry-guard.js:13-26; repo:plantsfrontend src/plugins/csrf.js:19-42, src/server/app/shared/kit.js redirectOnStaleAction)",
         "A run waits for functional readiness — a signed-in page, a backend read and a reference-data read succeed — rather than trusting the health endpoints, and the start-up window is excluded from measurement. (repo:animalsfrontend src/server/health/controller.js:1-11, src/auth/get-oidc-config-with-retry.js:5-29; repo:insfrontend src/auth/get-oidc-config-with-retry.js:5-30; repo:referencedata src/main/resources/application.yml:76-78)",
         "Every scenario carries named thresholds scoped per scenario and per endpoint tag — backend API P95 under 200ms and P99 under 1,200ms, frontend pages P95 under 2,000ms and P99 under 5,000ms, failure rate under 1% — failed checks feed a threshold, and a runaway run aborts on threshold failure after a short evaluation delay. (confluence:6604328622 §4.7 Response time targets; web:k6-docs using-k6/thresholds/, using-k6/checks/; conflict c-004 default)",
-        "The smoke run runs on every pull request through the workspace E2E workflow against the local stack, with the stubs answering without added delay, and the pull request's check fails when any threshold fails. (confluence:6608160092 Decision / 'Test tiers' table / row 1; repo:tests .github/workflows/workspace-e2e-tests.yml:1-46; web:k6-docs testing-guides/automated-performance-testing/; conflict c-003 default; conflict c-022 default)"
+        "The smoke run runs on every pull request against the local stack, with the performance suite's image run beside the E2E tests image in the workspace E2E workflow, with the stubs answering without added delay, and the pull request's check fails when any threshold fails. (confluence:6608160092 Decision / 'Test tiers' table / row 1; repo:tests .github/workflows/workspace-e2e-tests.yml:1-46; web:k6-docs testing-guides/automated-performance-testing/; conflict c-003 default; conflict c-022 default)"
       ],
       "requirements": ["req-001", "req-002", "req-003", "req-012", "req-027", "req-028", "req-043", "req-044"],
       "sources": [
@@ -75,12 +76,11 @@
         { "source": "confluence:6608160092", "ref": "Decision / 'Test tiers' table / row 1" },
         { "source": "web:k6-docs", "ref": "using-k6/environment-variables/; using-k6/thresholds/; using-k6/checks/; testing-guides/automated-performance-testing/" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": [],
       "status": "todo",
       "openQuestions": [
-        "c-005: 'Should the k6 suites live in trade-imports-animals-tests, or in a separate CDP performance-test-suite repo?' Default, followed here: 'The tests repo (trade-imports-animals-tests), as sources.json chose: a k6 profile beside the Playwright and ZAP profiles in the same Dockerfile and entrypoint.sh, reusing its environment URL resolution. Revisit only if CDP's perf-test runner cannot run it from there.'",
         "c-004: 'What response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own (open item 3)?' Default, followed here: 'Backend API endpoints: P95 under 200ms and P99 under 1,200ms (section 4.7), with P50 under 25ms reported but not failing the run. Frontend pages (form, dashboard, sign-in): interim P95 under 2,000ms, P99 under 5,000ms (5 seconds is the failure point). Upload pages including the scan: P99 under 60 seconds. Failure rate under 1% in sustained peak and endurance. P99 burst: 5xx under 1% and P95 no worse than twice the sustained-peak P95. Spike: P95 back within 10% of the pre-spike baseline within 60 seconds. Endurance: final-hour P95 no more than 1.2 times the first hour, and no pool-exhaustion errors.'",
         "c-003: 'Which tiers and scenarios should run in each environment, and on what schedule?' Default, followed here for the local part: 'Local Docker (stubs; local stand-ins for SNS/SQS and cdp-uploader): the tier-1 smoke run on every pull request via the workspace E2E workflow, and every scenario runnable on demand at compressed durations for script development.'",
         "c-018: 'In the local Docker stack, where no real AWS or CDP service exists, what counts as the real SNS, SQS and cdp-uploader?' Default, followed here: 'The stack's existing stand-ins take their place locally — floci for SNS/SQS and the local cdp-uploader container (over floci's S3 and SQS) for the document store and scanning — and results that depend on them carry the req-036 caveat.'",
@@ -91,7 +91,7 @@
         "Production-like local settings (template caching on, no STUB_MODE) are a matter of how the workspace stack is started for a performance run; that configuration lives in the workspace repo's docker/stack, not a backlog repo. If the plan finds a frontend cannot run with caching on outside development mode without a change of its own, add that frontend's key to this row's repos and say so.",
         "The existing correlation id (req-030) and the local emulator caveat (req-036) are already met and are not rebuilt."
       ],
-      "gate": "Look at the walking skeleton before anything builds on it: where the k6 profile sits in the tests repo's image and entrypoint, how a run is pointed at an environment, the smoke path through both journeys and the front door, the interim thresholds, and a pull-request run that fails on a deliberately breached threshold."
+      "gate": "Look at the walking skeleton before anything builds on it: how the performance suite repo is laid out and runs in CDP, how a run is pointed at an environment, the smoke path through both journeys and the front door, the interim thresholds, and a pull-request run that fails on a deliberately breached threshold."
     },
     {
       "id": "inc-002",
@@ -113,7 +113,7 @@
         { "source": "repo:insfrontend", "ref": "src/config/config.js:282-287; src/server/common/services/mode.js:1-5" },
         { "source": "repo:plantsfrontend", "ref": "src/config/config.js session.cookie; src/plugins/auth.js" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-001"],
       "status": "todo",
@@ -142,7 +142,7 @@
         { "source": "confluence:6608160092", "ref": "Decision / code block; Alternatives considered table / row 1" },
         { "source": "repo:tests", "ref": "README.md:244,248; playwright.config.ts:1-27" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-002"],
       "status": "blocked",
@@ -151,7 +151,7 @@
       ],
       "notes": [
         "Combines req-005 (the suites run in perf-test, stubbed outside the boundary) with req-071 (the early thin run): the thin run is the first observable proof of req-005, so separating them would be a layer split.",
-        "The suite side needs only the perf-test URL resolution that the tests repo already has; the work is the run and what it surfaces."
+        "The suite side needs only perf-test URL resolution, which inc-001 builds on the scheme trade-imports-animals-tests already uses; the work is the run and what it surfaces."
       ],
       "gate": "Look at what the first perf-test run surfaced — missing stub wiring, configuration gaps, anything that behaved differently from dev and test — before the breakpoint, sizing and conformance rows rely on perf-test."
     },
@@ -177,7 +177,7 @@
         { "source": "repo:insfrontend", "ref": "src/server/app/shared/paths.js; src/server/app/features/index.js" },
         { "source": "web:k6-docs", "ref": "using-k6/scenarios/concepts/open-vs-closed/; using-k6/scenarios/executors/" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-001"],
       "status": "todo",
@@ -215,7 +215,7 @@
         { "source": "repo:plantsfrontend", "ref": "src/server/app/services/address-book/client.js; obligations/sections/commodity.js" },
         { "source": "repo:referencedata", "ref": "CountriesController.java; PortsOfEntryController.java" }
       ],
-      "repos": ["tests", "idstub"],
+      "repos": ["perftests", "idstub"],
       "kind": "feat",
       "dependsOn": ["inc-004"],
       "status": "todo",
@@ -251,7 +251,7 @@
         { "source": "repo:insbackend", "ref": "src/main/resources/application.yml:34; AggregatedNotificationRepository.java:10" },
         { "source": "repo:addressbook", "ref": "src/main/resources/application.yml:12" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-005"],
       "status": "todo",
@@ -287,7 +287,7 @@
         { "source": "repo:stub", "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/** (trade/TradeAuthController, mdm/countries, mdm/poe); src/main/resources/application*.yml" },
         { "source": "repo:idstub", "ref": "src/routes/auth.js; src/routes/open-id.js; src/config/config.js" }
       ],
-      "repos": ["tests", "stub", "idstub"],
+      "repos": ["perftests", "stub", "idstub"],
       "kind": "feat",
       "dependsOn": ["inc-001"],
       "status": "todo",
@@ -325,7 +325,7 @@
         { "source": "web:grafana-load-testing-types", "ref": "section:5-breakpoint-test" },
         { "source": "web:k6-docs", "ref": "testing-guides/test-types/" }
       ],
-      "repos": ["tests", "stub", "idstub"],
+      "repos": ["perftests", "stub", "idstub"],
       "kind": "feat",
       "dependsOn": ["inc-007"],
       "status": "todo",
@@ -362,7 +362,7 @@
         { "source": "web:grafana-load-testing-types", "ref": "section:2-average-load-test; section:3-stress-test" },
         { "source": "web:k6-docs", "ref": "results-output/; using-k6/tags-and-groups/; testing-guides/running-large-tests/; javascript-api/k6-data/sharedarray/" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-004", "inc-005", "inc-006", "inc-007", "inc-008"],
       "status": "todo",
@@ -396,7 +396,7 @@
         { "source": "web:k6-docs", "ref": "testing-guides/test-types/" },
         { "source": "confluence:6604328622", "ref": "§4.1 Method; §4.2 T2; §4.3 Daily profile; §4.4 A1, A3" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-004", "inc-005", "inc-006", "inc-007", "inc-008"],
       "status": "todo",
@@ -428,7 +428,7 @@
         { "source": "repo:plantsfrontend", "ref": "src/server/common/helpers/session-cache/session-cache.js" },
         { "source": "web:grafana-load-testing-types", "ref": "section:4-spike-test; section:6-soak-test" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-009"],
       "status": "todo",
@@ -463,7 +463,7 @@
         { "source": "repo:animalsbackend", "ref": "OutboxPoller.java; OutboxPublishService.java; OutboxEvent.java" },
         { "source": "repo:plantsfrontend", "ref": "src/server/app/sets/high-risk-plants/docs/limits.md" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-010"],
       "status": "todo",
@@ -497,7 +497,7 @@
         { "source": "repo:animalsfrontend", "ref": "src/server/server.js:82-87; src/server/app/services/countries/index.js" },
         { "source": "repo:plantsfrontend", "ref": "src/server/common/helpers/session-cache/session-cache.js; src/server/app/services/countries/index.js" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-009"],
       "status": "todo",
@@ -529,7 +529,7 @@
         { "source": "repo:insfrontend", "ref": "src/plugins/auth.js; src/server/router.js:8-23" },
         { "source": "repo:insbackend", "ref": "whole package tree (no session, permissions or proxy component)" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-012"],
       "status": "blocked",
@@ -562,7 +562,7 @@
         { "source": "repo:referencedata", "ref": "src/main/resources/application.yml:85-101; service/EmfMetricsPublisher.java; client/MdmService.java:61-69" },
         { "source": "repo:gateway", "ref": "events/QueueMessageSender.java" }
       ],
-      "repos": ["tests", "insfrontend", "animalsfrontend", "plantsfrontend", "referencedata", "gateway"],
+      "repos": ["perftests", "insfrontend", "animalsfrontend", "plantsfrontend", "referencedata", "gateway"],
       "kind": "feat",
       "dependsOn": ["inc-007"],
       "status": "todo",
@@ -593,7 +593,7 @@
         { "source": "ruling:sam-2026-09-29b", "ref": "whole ruling" },
         { "source": "repo:animalsfrontend", "ref": "src/server/app/engine/write/submit.js; src/server/app/engine/journey.js:185-229" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-012", "inc-014"],
       "status": "todo",
@@ -625,7 +625,7 @@
         { "source": "web:grafana-load-testing-types", "ref": "section:5-breakpoint-test" },
         { "source": "web:k6-docs", "ref": "testing-guides/test-types/" }
       ],
-      "repos": ["tests"],
+      "repos": ["perftests"],
       "kind": "feat",
       "dependsOn": ["inc-003", "inc-008", "inc-012"],
       "status": "todo",
@@ -662,7 +662,7 @@
         { "source": "repo:animalsbackend", "ref": "RestClientConfig.java; AddressBookClient.java" },
         { "source": "repo:insbackend", "ref": "NotificationSqsListener.java; NotificationErrorHandler.java" }
       ],
-      "repos": ["tests", "stub", "idstub"],
+      "repos": ["perftests", "stub", "idstub"],
       "kind": "feat",
       "dependsOn": ["inc-009"],
       "status": "todo",
@@ -696,7 +696,7 @@
         { "source": "ruling:sam-2026-09-29b", "ref": "whole ruling" },
         { "source": "meeting:2026-09-29", "ref": "Transcript, Speaker 2, 'There is a bit of an exception to this.'" }
       ],
-      "repos": ["tests", "stub", "idstub"],
+      "repos": ["perftests", "stub", "idstub"],
       "kind": "feat",
       "dependsOn": ["inc-003", "inc-007"],
       "status": "todo",

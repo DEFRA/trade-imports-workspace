@@ -224,8 +224,7 @@ trusts it. Two extra checks, both `--severity Critical` on a mismatch:
 
 Flag Critical only when the file cannot be found at all, or is found and
 does not cover the scenario. Links routinely name tests in
-`trade-imports-ins-tests` (older links still say `trade-imports-animals-tests`,
-whose specs moved there), which often has no PR in the set — "not in
+`trade-imports-ins-tests`, which often has no PR in the set — "not in
 this PR's diff" is not on its own a finding.
 
 **Which checkout to read.** `prepare-review.sh` clones every repo in the

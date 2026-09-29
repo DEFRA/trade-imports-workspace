@@ -4,7 +4,7 @@
 
 ## Purpose
 
-End-to-end, accessibility and security (OWASP ZAP) test suite for the trade imports services. Tests run against a live stack from a user's perspective. It replaces `trade-imports-animals-tests`.
+End-to-end, accessibility and security (OWASP ZAP) test suite for the trade imports services. Tests run against a live stack from a user's perspective.
 
 ## Responsibilities
 

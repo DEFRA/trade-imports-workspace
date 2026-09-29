@@ -80,8 +80,8 @@ describe('tim workspace test CLI', () => {
     expect(payload.result).toHaveLength(0)
   }, 30_000)
 
-  test('skips trade-imports-animals-tests even when it has a test script', async () => {
-    seedNodeRepo('trade-imports-animals-tests', {
+  test('skips trade-imports-ins-tests even when it has a test script', async () => {
+    seedNodeRepo('trade-imports-ins-tests', {
       test: 'node -e "process.exit(3)"'
     })
     const { stdout, exitCode } = await execa(

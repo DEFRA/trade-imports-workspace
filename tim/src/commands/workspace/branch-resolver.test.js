@@ -81,7 +81,7 @@ const threeRepos = [
     names: ['main', 'spike/trace-to-requirements', 'feat/EUDPA-58-address-book']
   },
   {
-    repo: 'trade-imports-animals-tests',
+    repo: 'trade-imports-ins-tests',
     names: ['main', 'feat/EUDPA-58-address-book']
   }
 ]

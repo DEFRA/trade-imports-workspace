@@ -479,6 +479,8 @@ so and changes nothing.
 - For a new release,
   `designer:walkthrough -- --set <release-id> --no-open` says every story
   reached its end.
+- For a new release, its service map also builds with no problems:
+  `designer:service-map -- --set <release-id> --no-open`.
 - `designer:check -- --set <release-id> --full` passes. It includes every
   unit test, so "2 sets are mounted" never appears: no tests are copied.
 - The chooser shows the release's tag, its "Made from … on …" line, its

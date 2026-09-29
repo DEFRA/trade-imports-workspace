@@ -248,6 +248,19 @@ Run these one at a time. Each must pass before the next.
 
    The add-a-branch recipe adds the second example in the same run.
 
+5. For a branch or a move, rebuild the service map and confirm the new arrow
+   and its condition read the way you intended — the JSON is the check, the
+   page is the picture:
+
+   ```bash
+   npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <release> --json-only
+   ```
+
+   Read the `edges` for the pages you changed and their `condition.text`. If
+   it does not read as you meant, the gate or the recipe step is not quite
+   right yet: check `references/change-the-journey/errors-explained.md` or
+   the recipe again before showing the designer.
+
 Read the key screenshots in the gallery yourself before describing them.
 Never claim something looks right without looking.
 

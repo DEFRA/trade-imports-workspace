@@ -12,7 +12,9 @@ with
   (links and how to run it locally, plus `[See it walked through|<url>]`,
   the demo page's `#set-<id>` link for this release, once
   `scripts/designer/prototype.json` has a `siteUrl`), "Journey flow"
-  (page order before and after, and gate changes), "Validation" (one row per
+  (page order before and after, and gate changes, linking the release's
+  published service map and quoting each affected page's "Asked when"
+  line), "Validation" (one row per
   rule, with the English and Welsh error), "Service to build" for each new
   service, "Tests to add" and "For the developer or agent". Everything else
   follows under "Detail": each page with screenshots and a table of changed

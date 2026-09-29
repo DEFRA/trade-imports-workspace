@@ -1,39 +1,48 @@
 # Playwright — Best Practices
 
-Project baseline: Playwright with TypeScript, Allure reporting, multiple config files for different environments. Used in `trade-imports-animals-tests`.
+Project baseline: Playwright with TypeScript, Allure reporting, multiple config files for different environments. Used in `trade-imports-ins-tests`.
 
 ---
 
 ## 1. Project structure
 
 ```
-repos/trade-imports-animals-tests/
-├── playwright.config.ts        ← base config
-├── playwright.config.local.ts  ← local workspace-stack run
-├── playwright.config.local-fast.ts  ← local without Allure
+repos/trade-imports-ins-tests/
+├── playwright.config.ts                 ← CDP config
+├── playwright.docker-compose.config.ts  ← local workspace-stack config
+├── utils/playwright/shared-config.ts    ← projects, reporters, retries shared by both
 ├── tests/
-│   ├── journeys/               ← full user journey tests
-│   │   └── notification.spec.ts
-│   └── smoke/                  ← quick smoke tests
-├── page-objects/               ← Page Object Model classes
-│   ├── pages/
-│   │   ├── origin-page.ts
-│   │   ├── commodity-page.ts
-│   │   └── sign-in-page.ts
-│   └── journeys.ts             ← Journeys class composing page objects
-├── fixtures/
-│   └── index.ts                ← test.extend() with pages + journeys
-└── helpers/
-    └── ...
+│   └── <domain>/                        ← one Playwright project per domain:
+│       ├── a11y/                        ←   animals, animals-admin, ins, plants
+│       ├── e2e/
+│       │   ├── features/
+│       │   ├── journeys/
+│       │   ├── pages/
+│       │   └── visual/
+│       └── security/
+├── page-objects/<domain>/, shared/      ← Page Object Model classes
+├── flows/<domain>/, shared/             ← multi-step flows composing page objects
+├── domain/<domain>/, shared/            ← test data and domain types
+└── fixtures/
+    └── ui.ts                            ← test.extend() with animalsPages, plantsPages, animalsJourney, …
 ```
 
-Tags used in this project:
+Not every domain has every folder. Each domain has a local script per suite,
+`test:docker-compose:<domain>[:a11y|:security]`, and a CDP profile per suite,
+`<domain>:<suite>`.
+
+Tags used in this project. Tags select the suite; the project selects the domain.
 
 | Tag | Purpose |
 |-----|---------|
-| `@agent` | Agent-driven tests |
-| `@compose` | Requires full workspace stack |
-| `@integration` | Integration-level tests |
+| `@a11y` | Accessibility suite |
+| `@active` | ZAP active-scan suite (destructive, docker-compose only) |
+| `@compose` | Requires the full workspace stack |
+| `@visual` | Visual regression snapshots |
+
+The examples in the rest of this guide use a simplified `pages` / `journeys`
+fixture pair to show the patterns. The suite's real fixtures are named per
+domain, as in `fixtures/ui.ts`.
 
 ---
 
@@ -587,8 +596,9 @@ For `@compose` tagged tests, the full workspace stack must be running first:
 ```bash
 cd /path/to/workspace
 ./scripts/stack/run-stack.sh
-cd repos/trade-imports-animals-tests
-npm run test:docker-compose
+cd repos/trade-imports-ins-tests
+npm run test:docker-compose             # every domain
+npm run test:docker-compose:animals     # one domain
 ```
 
 ---

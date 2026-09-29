@@ -19,7 +19,7 @@
 #        failed, exit 0.
 #   6. git commit. Mark done with commit_sha. Exit 0.
 #
-# Tests-repo exception (trade-imports-animals-tests):
+# Tests-repo exception (trade-imports-ins-tests):
 # Steps 3 and 5 are SKIPPED. The tests repo has no unit-test suite
 # (it IS the test suite — a Playwright runner against the live stack).
 # Per-package installs commit straight through; the orchestrating
@@ -72,7 +72,7 @@ REPO_PATH=$(cd "$REPO_PATH" && pwd -P)
 # per-package npm-test gating; run-automated-upgrades.sh runs
 # `npm run test:docker-compose` once at the end of the batch instead.
 SKIP_NPM_TEST=0
-[[ "$REPO_NAME" == "trade-imports-animals-tests" ]] && SKIP_NPM_TEST=1
+[[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && SKIP_NPM_TEST=1
 
 echo "========================================="
 echo "Package: $PACKAGE | $CURRENT → $TARGET | classification: $CLASSIFICATION"

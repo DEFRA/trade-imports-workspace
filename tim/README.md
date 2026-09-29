@@ -182,6 +182,49 @@ idempotent (a replay returns the first result and writes nothing), and
 3 (`LOST_UPDATE`) on a stale `--expect-sha` and 4 (`LOCKED`) when another
 process holds the write lock after every retry.
 
+### `tim distil` — the DISTIL files in one workarea
+
+The deterministic steps of the requirements-pipeline skill's DISTIL phase, run
+by the distil workflow's agents instead of hand-written `jq`. The workflow is
+`.claude/skills/requirements-pipeline/workflow/distil.js`; its README lists
+which stage runs which command. Each command
+takes a workarea under `workareas/`, reads its `sources.json` and `distil/`
+files, and checks them against the schemas beside `backlog.schema.json` in
+`.claude/skills/requirements-pipeline/references/` (`sources`, `extract`,
+`verify`, `requirements` and `conflicts`), read from the workspace at runtime.
+
+```bash
+tim distil status shared/my-programme --json        # every source's state and what it needs next: the work list
+tim distil check shared/my-programme --source repo:tests --stage extract --chunk 150 --json   # one source's extract, with its verify ranges
+tim distil check shared/my-programme --stage all --json                                     # every source, both stages
+tim distil check shared/my-programme --source repo:tests --stage extract --clear-parts --json   # and, once it passes, remove old verify parts
+tim distil stamp shared/my-programme --source repo:tests --json          # record the source's scope hash in its extract
+tim distil merge-verify shared/my-programme --source repo:tests --json   # join verify parts into one file with the extract's hash, then remove them
+tim distil adopt shared/my-programme --source repo:tests --json          # take on a source distilled by hand: record both hashes
+tim distil working-set shared/my-programme --write --json   # held plus missed claims, to distil/working-set.json
+tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, and the backlog
+tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids and the rows built or set aside
+tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, and rows built or set aside that changed, since
+tim distil trace shared/my-programme --source trace:ched-p --out actions.txt --json -- actions   # playwright trace, in the source's .work folder
+```
+
+A source's state is `pending` (no extract), `extracted` (no verification),
+`verified`, `stale` (its kind, locator or scope changed since it was
+extracted, the extract records no scope hash, or its claims changed after they
+were verified) or `invalid` (a file out of shape). `next` says what it needs:
+`extract`, `verify` or nothing. A relaunch skips every verified source whose
+scope hash and extract hash are unchanged.
+
+`check`, `merge-verify`, `adopt` and `coverage` exit 1 (`LINT`) and name every
+problem when anything is out of shape; `merge-verify` and `adopt` then write
+nothing. With `--json`, `coverage` also lists each problem in
+`errors[0].problems` with its scope, `reconcile` or `backlog`, so the workflow
+routes it to the step that can fix it.
+
+`trace` takes tim's options first, then `--`, then the `playwright trace`
+subcommand. It runs the Playwright tim installs, in
+`distil/extract/<slug>.work/`, so a trace opened there belongs to that source.
+
 ### `tim build` — the build loop's deterministic steps
 
 The build loop's branch and gate steps, run the same way every time. Both read

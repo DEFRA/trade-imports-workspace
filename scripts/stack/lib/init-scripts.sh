@@ -142,7 +142,7 @@ stage_init_scripts() {
 
   # Tests-repo-owned: ZAP Automation Framework plans (security profile)
   if [ "$stage_zap" -eq 1 ]; then
-    stage_repo trade-imports-animals-tests "$ref" \
+    stage_repo trade-imports-ins-tests "$ref" \
       "zap/automation-context.yaml:$STAGED_DIR/zap" \
       "zap/automation-passive.yaml:$STAGED_DIR/zap" \
       "zap/automation-active.yaml:$STAGED_DIR/zap" &

@@ -4,9 +4,9 @@ Deterministic multi-agent orchestration scripts. Point the `Workflow` tool at th
 by `scriptPath` with an `args` object — see the canary launches below. Launching by `name`
 runs a stale snapshot rather than what is on disk.
 
-**The increment build loop lives with the skill that drives it**, at
-[`.claude/skills/requirements-pipeline/workflow/`](../skills/requirements-pipeline/workflow/README.md),
-beside its Codex briefs and the backlog shape it reads.
+**The distil workflow and the increment build loop live with the skill that drives them**, at
+[`.claude/skills/requirements-pipeline/workflow/`](../skills/requirements-pipeline/workflow/README.md)
+(`distil.js`, `increment-build-loop.js`), beside their briefs and the shapes they read and write.
 
 **The designer prototyping workflows live with their skill too**, at
 [`.claude/skills/prototype/workflow/`](../skills/prototype/workflow/README.md)

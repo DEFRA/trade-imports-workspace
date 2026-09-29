@@ -99,8 +99,9 @@ make docker-logs                  # tail frontend + admin + backend logs (Ctrl-C
 After the stack is up, run the E2E tests against it:
 
 ```bash
-cd repos/trade-imports-animals-tests
-npm run test:docker-compose
+cd repos/trade-imports-ins-tests
+npm run test:docker-compose             # every domain
+npm run test:docker-compose:animals     # one domain: animals, animals-admin, ins or plants
 ```
 
 ### Frontend / admin changes

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The reconciled requirements",
+  "description": "workareas/<workarea>/distil/requirements.json: what the programme must do, reconciled across every source's working set (held claims plus missed claims), written by the reconcile agent. On a re-distil, every existing id is kept. `tim distil coverage` validates it against this file, and also checks what a schema cannot: ids are unique, every cited claim is in the working set, every cited conflict is in conflicts.json, a question requirement cites a question conflict, an adopted change or exists requirement says how in `deltaNote`, and, once backlog.json exists, every adopted requirement that is not `exists` sits in exactly one increment.",
+  "type": "object",
+  "required": ["requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "requirements": {
+      "description": "Every requirement, in id order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/requirement" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "requirement": {
+      "description": "One requirement: what must be true, why, and the claims that back it. Claims from different sources that say the same thing merge into one requirement that cites them all.",
+      "type": "object",
+      "required": [
+        "id",
+        "statement",
+        "why",
+        "claims",
+        "status",
+        "delta",
+        "deltaNote",
+        "conflicts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "`req-NNN`. Stable: never renumber, because increments, the report and rulings cite it.",
+          "type": "string",
+          "pattern": "^req-[0-9]{3,}$"
+        },
+        "statement": {
+          "description": "What must be true, as something a user, operator or other system can observe.",
+          "$ref": "#/$defs/text"
+        },
+        "why": {
+          "description": "Why it matters. For an out-of-scope requirement, why the goal excludes it.",
+          "$ref": "#/$defs/text"
+        },
+        "claims": {
+          "description": "The claim ids that back it, from the working set: held extract claims and missed claims. Never a refuted claim. An adopted or question requirement never rests on a claim a precedence conflict overruled: the conflict records it instead.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "status": {
+          "description": "adopted: it will be built (or is already met). question: it waits on an open question, and its conflict carries the default that will be built. out-of-scope: the goal excludes it.",
+          "enum": ["adopted", "question", "out-of-scope"]
+        },
+        "delta": {
+          "description": "Against what the target repos do today: new (not there), change (there but different) or exists (already true, so it goes in the report and never in an increment).",
+          "enum": ["new", "change", "exists"]
+        },
+        "deltaNote": {
+          "description": "For change: how today's behaviour differs. For exists: the target claim that already meets it. May be empty for new.",
+          "type": "string"
+        },
+        "conflicts": {
+          "description": "The conflict ids from conflicts.json that touch it. [] when none does.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        }
+      },
+      "if": {
+        "required": ["status", "delta"],
+        "properties": {
+          "status": { "const": "adopted" },
+          "delta": { "enum": ["change", "exists"] }
+        }
+      },
+      "then": {
+        "description": "An adopted change says how today differs, and an adopted exists names what already meets it.",
+        "properties": { "deltaNote": { "pattern": "\\S" } }
+      }
+    }
+  }
+}

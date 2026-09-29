@@ -103,6 +103,34 @@ describe('runWorkflowSource', () => {
     expect(run.result).toEqual([1, 2])
   })
 
+  test('runs each pipeline item through every stage with its item and index', async () => {
+    const run = await runWorkflowSource(
+      "return await pipeline(['a', 'b'], (item) => item + '1', (previous, item, index) => previous + item + index)"
+    )
+
+    expect(run.result).toEqual(['a1a0', 'b1b1'])
+  })
+
+  test('drops a pipeline item to null when a stage throws, and keeps the others', async () => {
+    const run = await runWorkflowSource(
+      "return await pipeline([1, 2], (item) => { if (item === 1) throw new Error('x'); return item }, (previous) => previous * 10)"
+    )
+
+    expect(run.result).toEqual([null, 20])
+  })
+
+  test('answers each agent from a function of its prompt and options', async () => {
+    const source =
+      "const first = await agent('p1', {label:'a'})\nconst second = await agent('p2', {label:'b'})\nreturn [first, second]"
+
+    const run = await runWorkflowSource(source, {
+      answers: (prompt, options) =>
+        options.label === 'b' ? { from: prompt } : undefined
+    })
+
+    expect(run.result).toEqual([null, { from: 'p2' }])
+  })
+
   test('refuses a child workflow', async () => {
     const run = await runWorkflowSource("await workflow('x')\nreturn null")
 

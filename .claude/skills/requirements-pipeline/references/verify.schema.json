@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One source's verification",
+  "description": "workareas/<workarea>/distil/verify/<source slug>.json: a verdict on every claim in the source's extract, written by agents that did not write the extract, plus any claim the extract missed. A long extract is verified in parts: each verify agent takes a range of claim ids and writes verify/<source slug>.part<N>.json in this same shape, and `tim distil merge-verify` joins the parts into the one file. `tim distil check --stage verify` validates it against this file, and also checks what a schema cannot: `source` names this file's source, `extractHash` matches the extract as it stands, the verdict ids are exactly the extract's claim ids, each once, and every missed id is <claim id>-m<N> for a claim in the extract, each once.",
+  "type": "object",
+  "required": ["source", "verdicts", "missed"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "description": "The source id from sources.json, such as \"confluence:6518997274\".",
+      "$ref": "#/$defs/text"
+    },
+    "extractHash": {
+      "description": "The sha256, in hex, of the extract's claims array as canonical JSON (compact, every object's keys sorted), which ties the verification to the extract it judged. `tim distil merge-verify` writes it into the merged file; a part file leaves it out. `tim distil status` and `check --stage verify` need it in the merged file and count the source stale when it is missing or the extract's claims have changed since, even under the same ids. `tim distil adopt` records it for a verification written before extract hashes existed.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verdicts": {
+      "description": "One verdict per claim in the extract (or, in a part file, per claim in the part's range).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/verdict" }
+    },
+    "missed": {
+      "description": "Claims the source makes that the extract left out, each in the extract's claim shape. [] when nothing was missed.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/claim" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "verdict": {
+      "description": "Whether one claim survives an attempt to refute it. The default is refuted, unless the quote is in the source and the statement follows from it.",
+      "type": "object",
+      "required": ["id", "holds", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "The claim id from the extract.",
+          "$ref": "#/$defs/text"
+        },
+        "holds": {
+          "description": "true keeps the claim in the working set. false drops it.",
+          "type": "boolean"
+        },
+        "reason": {
+          "description": "Why it holds or does not, such as where the quote was found or what the statement overreaches.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "claim": {
+      "description": "A missed claim, in the extract's claim shape (extract.schema.json). Its id is the nearest extract claim's id plus -m1, -m2 and so on, such as \"conf-005-m1\".",
+      "type": "object",
+      "required": ["id", "statement", "kind", "ref", "quote", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "The nearest extract claim's id plus -m<N>, such as \"conf-005-m1\".",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "statement": {
+          "description": "The fact, in plain English. For an inferred claim, it says why it follows.",
+          "$ref": "#/$defs/text"
+        },
+        "kind": {
+          "description": "What sort of fact it is. A gap is a confidence, never a kind.",
+          "enum": [
+            "data",
+            "behaviour",
+            "rule",
+            "copy",
+            "integration",
+            "constraint",
+            "non-functional"
+          ]
+        },
+        "ref": {
+          "description": "Where in the source: a section, heading, table row, page file, or file and line for a repo.",
+          "$ref": "#/$defs/text"
+        },
+        "quote": {
+          "description": "The source's own words, verbatim. Only a gap, where the source says nothing, may leave it empty.",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "verbatim: the source says it. inferred: read between the lines, and the statement says why. gap: the source should say something here and does not.",
+          "enum": ["verbatim", "inferred", "gap"]
+        },
+        "note": {
+          "description": "Anything else the verifier wants the reconciler to know about this claim.",
+          "$ref": "#/$defs/text"
+        }
+      },
+      "if": {
+        "required": ["confidence"],
+        "properties": { "confidence": { "enum": ["verbatim", "inferred"] } }
+      },
+      "then": {
+        "description": "A verbatim or inferred claim quotes the words it rests on.",
+        "properties": { "quote": { "pattern": "\\S" } }
+      }
+    }
+  }
+}

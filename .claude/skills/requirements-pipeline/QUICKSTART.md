@@ -8,7 +8,9 @@ Name the goal and the sources. The skill works out which repos to build in and w
 
 > Distil requirements for high-risk plants origin and commodity. Goal: an importer gives where the goods come from and what they are. Sources: Confluence page 6518997274, and the CHED-PP trace set limited to the country-of-origin and commodity pages.
 
-Read `workareas/shared/<programme>/report.md`. It starts with the repos and precedence the skill chose, then the questions for you, each with a default. To answer them:
+The session writes `sources.json`, then runs the distil workflow, which does the rest and hands back the report.
+
+Read `workareas/shared/<programme>/report.md`. It starts with a summary, then any step needed before building, then the repos and precedence the skill chose, then the questions for you, each with a default. To answer them, or to add a source, say so. The session writes your answer up as a ruling, adds it to `sources.json` and runs the workflow again. Only the new or changed sources are read again, and every existing id is kept:
 
 > Re-distil hrp-origin-and-commodity. Q1: use the nine statutory categories.
 

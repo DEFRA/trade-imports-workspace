@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The DISTIL sources file",
+  "description": "workareas/<workarea>/sources.json: what a DISTIL run is for and what it reads. The main session writes it at intake and edits it to fold in a new source or a ruling; the distil workflow reads it, and `tim distil status` turns it into the workflow's work list. `tim distil` checks what a schema cannot: source ids and file slugs are unique, every precedence entry names a source and every source is ranked, and every repo in `repos` is also a `repo:<key>` source.",
+  "type": "object",
+  "required": ["goal", "repos", "reposWhy", "precedence", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "programme": {
+      "description": "The programme's name, such as \"hrp-origin-and-commodity\". Derived from the goal when nobody names one.",
+      "$ref": "#/$defs/text"
+    },
+    "goal": {
+      "description": "One sentence: what is being built, and for whom.",
+      "$ref": "#/$defs/text"
+    },
+    "repos": {
+      "description": "Where the programme builds: each repo key mapped to its workspace-relative folder, such as { \"frontend\": \"repos/trade-imports-plants-frontend\" }. The tests repo is always one of them. The consolidator copies it into backlog.json's `repos`, adding each GitHub slug.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/repoKey" },
+      "additionalProperties": { "$ref": "#/$defs/text" }
+    },
+    "reposWhy": {
+      "description": "One line saying why these repos, so the report can show the choice and a wrong guess is caught.",
+      "$ref": "#/$defs/text"
+    },
+    "precedence": {
+      "description": "Every source id, from most to least authoritative. It decides conflicts: the reconciler adopts the higher-ranked source's position.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/sourceId" }
+    },
+    "sources": {
+      "description": "Every source the run distils. One extract agent and one or more verify agents run per source.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "repoKey": {
+      "description": "A lower-case repo key, such as \"frontend\", \"tests\" or \"insbackend\".",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "sourceId": {
+      "description": "A source id: a lower-case prefix, a colon, then a name with no spaces, such as \"repo:tests\", \"confluence:6518997274\" or \"ruling:sam-2026-09-29\". Its file slug is the id with every character other than a letter, digit, dot or hyphen turned into a hyphen, such as \"repo-tests\".",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[^\\s]+$"
+    },
+    "source": {
+      "description": "One source. Its scope hash is the sha256 of its kind, locator and scope: change any of them and `tim distil status` marks the source stale, so the next launch extracts it again.",
+      "type": "object",
+      "required": ["id", "kind", "locator", "scope", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "The source's id, used in precedence, in every claim's provenance and in conflict positions.",
+          "$ref": "#/$defs/sourceId"
+        },
+        "kind": {
+          "description": "What sort of source it is. It picks the extract brief: repo (a repo in the workspace, read for what it does today and what has been ruled), confluence (a page fetched to <workarea>/sources/<page-id>.json), web (a public page or site), document (a file under <workarea>/sources/, such as a docx, PDF, text or meeting notes), trace (a directory of Playwright trace zips, or a set already mined under workareas/trace-requirements/), ruling (a decision from the owner of the work, written up as a file under <workarea>/sources/) or image (a design or screenshot, read one at a time).",
+          "enum": [
+            "repo",
+            "confluence",
+            "web",
+            "document",
+            "trace",
+            "ruling",
+            "image"
+          ]
+        },
+        "locator": {
+          "description": "Where the source is: a workspace-relative path (repos/..., workareas/...), a Confluence page file, or a URL for a web source.",
+          "$ref": "#/$defs/text"
+        },
+        "scope": {
+          "description": "Which part of the source to distil, such as \"whole page\" or \"the origin and commodity pages, spec/decisions.json\". Distil a slice of a big source well rather than all of it thinly.",
+          "$ref": "#/$defs/text"
+        },
+        "role": {
+          "description": "What the source is authoritative for, such as \"what exists today and what has already been ruled\" or \"policy: what data must be captured\".",
+          "$ref": "#/$defs/text"
+        }
+      }
+    }
+  }
+}

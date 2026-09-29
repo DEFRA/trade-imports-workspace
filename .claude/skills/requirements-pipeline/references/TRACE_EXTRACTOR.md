@@ -1,15 +1,15 @@
 # TRACE_EXTRACTOR — one trace source → one extract file
 
-The method for a source whose `kind` is `trace`. Read it with `SOURCE_EXTRACTOR.md`, which covers
-documents, Confluence pages, images and repos: the ground rules there hold here too, and this file
-adds what a Playwright trace needs.
+The method for a source whose `kind` is `trace`. Read it with the distil workflow's shared extract
+brief, `../workflow/distil/briefs/extract.md`: the rules there hold here too, and this file adds what
+a Playwright trace needs.
 
 A trace is a recording of a real browser session against a running service. It is the strongest
 evidence there is of what a service actually does, because it holds the rendered DOM, not somebody's
 account of it. It is also only ever a lower bound: a page nobody exercised leaves no trace.
 
 Your output is the same as every other extractor's — `<workarea>/distil/extract/<source-slug>.json`,
-with `source`, `structure` and `claims` in the shape DISTIL step 1 defines. The verify step that
+with `source`, `structure` and `claims` in the shape `extract.schema.json` beside this file defines. The verify step that
 follows treats your extract like any other, so nothing downstream needs to know the source was a
 trace.
 
@@ -40,14 +40,12 @@ possible. Their per-page specs are the evidence; read them as the record of what
 - **Traces carry secrets.** A `fill` value can be a password or a token. Write `[REDACTED]` in place
   of anything credential-shaped, and never copy one into a claim.
 - **Record what the source shows.** Do not reconcile with other sources and do not resolve
-  ambiguity; DISTIL steps 2 and 3 do that.
+  ambiguity; the verify and reconcile steps do that.
 
 ## The trace CLI
 
-`npx playwright trace` reads a trace zip without opening a browser. The workspace's
-`playwright-trace` skill documents every subcommand — read it before you start. Run it as
-`npx --package @playwright/test playwright trace …` so npx resolves the scoped package; the commands
-below are written in the short form for readability.
+`playwright trace` reads a trace zip without opening a browser. The workspace's
+`playwright-trace` skill documents every subcommand — read it before you start.
 
 Two things about it shape how you work:
 
@@ -55,20 +53,26 @@ Two things about it shape how you work:
 and opening another replaces it.
 
 **It is scoped to the working directory.** `open` extracts into `.playwright-cli/` under the
-directory you run it from. Make yourself a private one — `<workarea>/distil/extract/<source-slug>.work/`
-— so a second trace source running beside you cannot overwrite your extracted trace.
+directory it runs from. Each trace source needs a private one —
+`<workarea>/distil/extract/<source-slug>.work/` — so a second trace source running beside you cannot
+overwrite your extracted trace.
 
-Your working directory resets between Bash calls, so each trace command carries its own:
+So you never run the CLI yourself. `tim distil trace` runs it for you, with the Playwright version tim
+installs, in your source's working folder:
 
 ```bash
-cd <workarea>/distil/extract/<source-slug>.work; npx playwright trace actions > actions.txt
+tim distil trace <workarea> --source <source id> --out actions.txt --workspace <workspace> --json -- actions
 ```
 
-One call, a semicolon, never `&&`. **This is the only command that may carry a `cd`** — every other
-command you run keeps the rails you were given.
+tim's own options come first, then `--`, then the subcommand and its arguments, exactly as the
+`playwright-trace` skill writes them. Your prompt gives the full command. No command needs a `cd` or a
+`;`, and you never run `npx` or `playwright` directly.
 
-Output is text, not JSON. Redirect anything long to a file in your working directory and read it
-with the Read tool, paging with `offset`/`limit`, rather than slicing it through repeated Bash calls.
+Output is text. `--out <file name>` writes it to that file in your working folder: do that for anything
+long, then read it with the Read tool, paging with `offset`/`limit`. Without `--out`, the output comes
+back in the envelope's `result.stdout`.
+
+The commands below show only the part after `--`.
 
 Working files under `.work/` are yours. Only the extract file is read downstream.
 
@@ -102,9 +106,9 @@ messages and error states actually rendered. Mine them for that copy.
 
 For each trace worth mining, `open` it and take the full action list. Do not sample it.
 
-```bash
-cd <your .work dir>; npx playwright trace open <locator>/<hash>.zip
-cd <your .work dir>; npx playwright trace actions > actions.txt
+```
+-- open <locator>/<hash>.zip
+-- actions            (with --out actions.txt)
 ```
 
 Transcribe every action: the kind (navigate, click, check, fill, select, assert), the verbatim
@@ -134,8 +138,8 @@ conditional. Do not give it a file of its own.
 
 For each page in the inventory, open a pointer trace and confirm you are where you think you are:
 
-```bash
-cd <your .work dir>; npx playwright trace action <id>
+```
+-- action <id>
 ```
 
 If the action turns out to be on a different page, run `actions`, find one that is on your page by
@@ -145,20 +149,20 @@ knowing about.
 Then take the accessibility snapshot, which gives you the page title, the headings and every control
 with its accessible name:
 
-```bash
-cd <your .work dir>; npx playwright trace snapshot <id> --name before
+```
+-- snapshot <id> --name before
 ```
 
 The accessibility tree omits hint text, `name` attributes, full option lists and hidden error
-summaries. Go after those with `eval`, one Bash call each. Every `eval` in this step carries the same
-`cd` prefix as the two commands above; it is left off below so the evals read:
+summaries. Go after those with `eval`, one Bash call each. The snapshot subcommand takes its own `--`
+before `eval`, after tim's:
 
-```bash
-npx playwright trace snapshot <id> -- eval "document.querySelector('main').innerText"
-npx playwright trace snapshot <id> -- eval "Array.from(document.querySelectorAll('input,select,textarea')).map(e=>e.tagName+'|'+e.type+'|'+e.name+'|'+e.id+'|'+(e.required||false)).join('\n')"
-npx playwright trace snapshot <id> -- eval "Array.from(document.querySelectorAll('select')).map(s=>s.name+' :: '+s.options.length+' :: '+Array.from(s.options).slice(0,40).map(o=>o.value+'='+o.text).join(' | ')).join('\n\n')"
-npx playwright trace snapshot <id> -- eval "Array.from(document.querySelectorAll('.govuk-hint')).map(e=>e.id+' :: '+e.innerText).join('\n')"
-npx playwright trace snapshot <id> -- eval "document.querySelector('.govuk-error-summary')?.innerText || 'none'"
+```
+-- snapshot <id> -- eval "document.querySelector('main').innerText"
+-- snapshot <id> -- eval "Array.from(document.querySelectorAll('input,select,textarea')).map(e=>e.tagName+'|'+e.type+'|'+e.name+'|'+e.id+'|'+(e.required||false)).join('\n')"
+-- snapshot <id> -- eval "Array.from(document.querySelectorAll('select')).map(s=>s.name+' :: '+s.options.length+' :: '+Array.from(s.options).slice(0,40).map(o=>o.value+'='+o.text).join(' | ')).join('\n\n')"
+-- snapshot <id> -- eval "Array.from(document.querySelectorAll('.govuk-hint')).map(e=>e.id+' :: '+e.innerText).join('\n')"
+-- snapshot <id> -- eval "document.querySelector('.govuk-error-summary')?.innerText || 'none'"
 ```
 
 Where an option list runs to hundreds — countries, commodity codes, ports — record the count and the
@@ -168,9 +172,9 @@ The accessibility tree does not show which design-system components a page uses,
 service that is load-bearing: it says what the rebuild can do inside the govuk-frontend toolbox and
 where the old service went outside it. Read it from the classes:
 
-```bash
-npx playwright trace snapshot <id> -- eval "Array.from(new Set(Array.from(document.querySelectorAll('main [class]')).flatMap(e=>Array.from(e.classList)))).sort().join('\n')"
-npx playwright trace snapshot <id> -- eval "Array.from(new Set(Array.from(document.querySelectorAll('main [class]')).flatMap(e=>Array.from(e.classList)).filter(c=>!c.startsWith('govuk-')))).sort().join('\n')"
+```
+-- snapshot <id> -- eval "Array.from(new Set(Array.from(document.querySelectorAll('main [class]')).flatMap(e=>Array.from(e.classList)))).sort().join('\n')"
+-- snapshot <id> -- eval "Array.from(new Set(Array.from(document.querySelectorAll('main [class]')).flatMap(e=>Array.from(e.classList)).filter(c=>!c.startsWith('govuk-')))).sort().join('\n')"
 ```
 
 Map each root class to its component — `govuk-radios` to Radios, `govuk-date-input` to Date input,
@@ -181,12 +185,12 @@ claim: what it does, and whether a standard component could replace it.
 For the page skeleton in order, read the headings, paragraphs, labels, legends, captions, buttons
 and tables out of `main`. Where anything surprises you, dump the raw HTML to a file and read it:
 
-```bash
-npx playwright trace snapshot <id> -- eval "document.querySelector('main').outerHTML" --filename=main.html
+```
+-- snapshot <id> -- eval "document.querySelector('main').outerHTML" --filename=main.html
 ```
 
-Where the page has an error state, `npx playwright trace errors` names the actions that failed and
-`npx playwright trace console --errors-only` shows what the browser said. Snapshot the failing
+Where the page has an error state, `-- errors` names the actions that failed and
+`-- console --errors-only` shows what the browser said. Snapshot the failing
 action and read the error summary: that is the only place the real validation copy exists.
 
 Skip the platform chrome — cookie banner, service header, phase banner, footer, skip link, account
@@ -198,9 +202,9 @@ page. Keep a page to around twenty Bash calls; if an eval errors, adjust it and 
 A journey does not stand alone. It looks values up, uploads files and hands its result onward, and
 the rebuild needs to know what it touches. The network log says what actually went over the wire:
 
-```bash
-cd <your .work dir>; npx playwright trace requests > requests.txt
-cd <your .work dir>; npx playwright trace request <id>
+```
+-- requests           (with --out requests.txt)
+-- request <id>
 ```
 
 `requests` takes `--grep <pattern>`, `--method` and `--failed`; let the CLI narrow the log rather

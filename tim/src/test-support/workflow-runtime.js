@@ -63,28 +63,57 @@ export const toScriptBody = (source) => {
   return applyCuts(source, cuts)
 }
 
-const createFakeRuntime = (answers) => {
-  const logs = []
-  const agents = []
+// A list answers agents in call order, then null once exhausted. A function
+// answers each call from its prompt and options, so a script that runs agents
+// concurrently can be answered by label rather than by arrival order.
+const answerSource = (answers) => {
+  if (typeof answers === 'function') return answers
   let nextAnswerIndex = 0
-
-  // Returns each scripted answer in call order, then null once exhausted.
-  const agent = async (prompt, options) => {
-    agents.push({ prompt, options })
+  return () => {
     const answer =
       nextAnswerIndex < answers.length ? answers[nextAnswerIndex] : null
     nextAnswerIndex += 1
     return answer
   }
+}
+
+// Like the Workflow runtime's pipeline: each item runs through every stage on
+// its own, each stage gets (previous result, item, index), and a stage that
+// throws drops that item to null and skips its later stages.
+const runPipeline = async (items, ...stages) =>
+  Promise.all(
+    items.map(async (item, index) => {
+      try {
+        let previous = item
+        for (const stage of stages) {
+          previous = await stage(previous, item, index)
+        }
+        return previous
+      } catch {
+        return null
+      }
+    })
+  )
+
+const createFakeRuntime = (answers) => {
+  const logs = []
+  const agents = []
+  const nextAnswer = answerSource(answers)
+
+  const agent = async (prompt, options) => {
+    agents.push({ prompt, options })
+    return nextAnswer(prompt, options) ?? null
+  }
 
   const log = (line) => logs.push(line)
   const phase = () => {}
   const parallel = async (thunks) => Promise.all(thunks.map((thunk) => thunk()))
+  const pipeline = runPipeline
   const workflow = async () => {
     throw new Error('child workflows are not supported by the test runtime')
   }
 
-  return { logs, agents, agent, log, phase, parallel, workflow }
+  return { logs, agents, agent, log, phase, parallel, pipeline, workflow }
 }
 
 /**
@@ -97,7 +126,7 @@ const createFakeRuntime = (answers) => {
  * can never be mistaken for one that ran and stopped cleanly.
  *
  * @param {string} source
- * @param {{args?: unknown, answers?: unknown[]}} [options]
+ * @param {{args?: unknown, answers?: unknown[] | ((prompt: string, options: unknown) => unknown)}} [options]
  * @returns {Promise<{status: 'returned', result: unknown, logs: string[], agents: {prompt: string, options: unknown}[]} | {status: 'threw', error: Error, logs: string[], agents: {prompt: string, options: unknown}[]}>}
  */
 export const runWorkflowSource = async (
@@ -105,7 +134,7 @@ export const runWorkflowSource = async (
   { args, answers = [] } = {}
 ) => {
   const body = toScriptBody(source)
-  const { logs, agents, agent, log, phase, parallel, workflow } =
+  const { logs, agents, agent, log, phase, parallel, pipeline, workflow } =
     createFakeRuntime(answers)
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
   const run = new AsyncFunction(
@@ -114,12 +143,21 @@ export const runWorkflowSource = async (
     'log',
     'phase',
     'parallel',
+    'pipeline',
     'workflow',
     body
   )
 
   try {
-    const result = await run(args, agent, log, phase, parallel, workflow)
+    const result = await run(
+      args,
+      agent,
+      log,
+      phase,
+      parallel,
+      pipeline,
+      workflow
+    )
     return { status: 'returned', result, logs, agents }
   } catch (error) {
     return { status: 'threw', error, logs, agents }

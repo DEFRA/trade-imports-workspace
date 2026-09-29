@@ -98,7 +98,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'requireApproval',
     'approvalWaitMinutes'
   ],
-  'args-canary.js': ['list', 'n']
+  'args-canary.js': ['list', 'n'],
+  'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
 }
 
 const JIRA_AND_CI_KEYS = [
@@ -164,11 +165,15 @@ const withoutKeys = (object, keys) =>
 const withoutKey = (object, key) => withoutKeys(object, [key])
 
 describe('every workflow script', () => {
-  test('finds at least the build loop and the canary', () => {
+  test('finds at least the build loop, the distil workflow and the canary', () => {
     const names = workflowScripts().map((script) => script.name)
 
     expect(names).toEqual(
-      expect.arrayContaining(['increment-build-loop.js', 'args-canary.js'])
+      expect.arrayContaining([
+        'increment-build-loop.js',
+        'distil.js',
+        'args-canary.js'
+      ])
     )
   })
 
@@ -1914,5 +1919,1021 @@ describe('increment-build-loop', () => {
         })
       })
     })
+  })
+})
+
+describe('distil', () => {
+  const scriptPath = join(buildLoopDir, 'distil.js')
+
+  const DISTIL_ARGS = {
+    workspace: '~/ws',
+    workarea: 'shared/demo',
+    only: null,
+    tim: 'tim',
+    models: {},
+    verifyChunk: 2
+  }
+
+  const VERIFY_DIR = '/ws/workareas/shared/demo/distil/verify'
+  const PENDING_SOURCE = {
+    id: 'repo:tests',
+    kind: 'repo',
+    slug: 'repo-tests',
+    state: 'pending',
+    next: 'extract',
+    reason: 'no extract yet'
+  }
+  const VERIFIED_SOURCE = {
+    id: 'ruling:sam',
+    kind: 'ruling',
+    slug: 'ruling-sam',
+    state: 'verified',
+    next: 'none',
+    reason: 'verified',
+    claims: 2
+  }
+  const statusWith = (sources) => ({
+    ok: true,
+    abs: '/ws',
+    sources,
+    orphans: [],
+    problems: [],
+    summary: 'read'
+  })
+  const EXTRACTED = {
+    ok: true,
+    claims: 3,
+    structure: 'Three specs.',
+    decisions: ['Left the admin specs out of scope.'],
+    summary: 'extracted'
+  }
+  const CHECKED = {
+    ok: true,
+    problems: [],
+    claims: 3,
+    chunks: [
+      {
+        part: 1,
+        from: 'repo-tests-001',
+        to: 'repo-tests-002',
+        count: 2,
+        path: `${VERIFY_DIR}/repo-tests.part1.json`
+      },
+      {
+        part: 2,
+        from: 'repo-tests-003',
+        to: 'repo-tests-003',
+        count: 1,
+        path: `${VERIFY_DIR}/repo-tests.part2.json`
+      }
+    ],
+    removedParts: [],
+    summary: 'in shape'
+  }
+  const verifiedPart = (part) => ({
+    ok: true,
+    part,
+    verdicts: 1,
+    held: 1,
+    refuted: 0,
+    missed: 0,
+    summary: 'written'
+  })
+  const MERGED = {
+    ok: true,
+    stage: 'done',
+    problems: [],
+    claims: 3,
+    verdicts: 3,
+    held: 3,
+    refuted: 0,
+    missed: 1,
+    summary: 'merged'
+  }
+  const workingSetWith = (overrides) => ({
+    ok: true,
+    path: '/ws/workareas/shared/demo/distil/working-set.json',
+    total: 6,
+    sources: [
+      { id: 'repo:tests', rank: 2, held: 3, refuted: 0, missed: 1 },
+      { id: 'ruling:sam', rank: 1, held: 2, refuted: 0, missed: 0 }
+    ],
+    unavailable: [],
+    hasRequirements: false,
+    hasConflicts: false,
+    hasBacklog: false,
+    problems: [],
+    summary: 'written',
+    ...overrides
+  })
+  const RECONCILED = {
+    ok: true,
+    requirements: 4,
+    conflicts: 1,
+    questions: 1,
+    decisions: ['Merged two claims about the smoke test.'],
+    goalConflicts: [],
+    summary: 'reconciled'
+  }
+  const COVERAGE_OK = {
+    ok: true,
+    problems: [],
+    backlogProblems: [],
+    requirements: {
+      total: 4,
+      adopted: 3,
+      question: 1,
+      outOfScope: 0,
+      new: 2,
+      change: 1,
+      exists: 0
+    },
+    conflicts: { total: 1, precedence: 0, question: 1 },
+    questions: [
+      {
+        id: 'c-001',
+        question: 'Where do the suites live?',
+        default: 'The tests repo.',
+        requirements: ['req-004']
+      }
+    ],
+    summary: 'in shape'
+  }
+  const CONSOLIDATED = {
+    ok: true,
+    increments: 2,
+    decisions: [],
+    reconcileProblems: [],
+    summary: 'two increments'
+  }
+  const BACKLOG_OK = {
+    ...COVERAGE_OK,
+    backlogIncrements: 2,
+    backlogCovered: 3,
+    backlogCheckOk: true,
+    backlogCheckProblems: [],
+    backlogTotal: 2,
+    backlogByStatus: { todo: 2 }
+  }
+  const REPORT_TEXT = '# demo: backlog report\n\n## Summary\n'
+
+  const HAPPY_ANSWERS = {
+    status: statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
+    'repo:tests extract': EXTRACTED,
+    'repo:tests check extract': CHECKED,
+    'repo:tests verify 1/2': verifiedPart(1),
+    'repo:tests verify 2/2': verifiedPart(2),
+    'repo:tests merge': MERGED,
+    'working set': workingSetWith({}),
+    reconcile: RECONCILED,
+    'coverage after reconcile': COVERAGE_OK,
+    consolidate: CONSOLIDATED,
+    'check backlog': BACKLOG_OK,
+    report: { report: REPORT_TEXT, issues: [] }
+  }
+
+  const byLabel = (table) => (prompt, options) => table[options.label]
+
+  const runDistil = (argsOverride = {}, answerOverrides = {}) =>
+    runWorkflowScript(scriptPath, {
+      args: { ...DISTIL_ARGS, ...argsOverride },
+      answers: byLabel({ ...HAPPY_ANSWERS, ...answerOverrides })
+    })
+
+  const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+  const promptOf = (run, label) =>
+    run.agents.find((entry) => entry.options.label === label).prompt
+  const optionsOf = (run, label) =>
+    run.agents.find((entry) => entry.options.label === label).options
+
+  describe('its configuration', () => {
+    test('resolves a JSON-string args to the same configuration as object args', async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: JSON.stringify(DISTIL_ARGS)
+      })
+
+      expect(run.logs[0]).toBe(
+        `distil: resolved configuration ${JSON.stringify(DISTIL_ARGS)}`
+      )
+    })
+
+    test('stops before any agent when verifyChunk is missing', async () => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: withoutKey(DISTIL_ARGS, 'verifyChunk')
+      })
+
+      expect(run.error.message).toBe(
+        'distil: args is missing required key verifyChunk. Pass every one in args: this workflow has no defaults'
+      )
+      expect(run.agents).toEqual([])
+    })
+
+    test('keeps an explicit null for only as a given value', async () => {
+      const run = await runDistil({ only: null })
+
+      expect(run.status).toBe('returned')
+    })
+
+    test.each([
+      [
+        { workspace: '/Users/someone/ws' },
+        'config.workspace must be the workspace root as a tilde path'
+      ],
+      [
+        { workarea: 'shared/../secrets' },
+        'config.workarea must be a folder under workareas/'
+      ],
+      [
+        { only: [] },
+        'config.only must be null to work every source that needs it, or a non-empty list of distinct source ids'
+      ],
+      [
+        { only: ['repo:tests', 'repo:tests'] },
+        'config.only must be null to work every source that needs it'
+      ],
+      [{ tim: ' ' }, 'config.tim must be the command agents run tim with'],
+      [{ verifyChunk: 0 }, 'config.verifyChunk must be a whole number above 0'],
+      [{ models: null }, 'config.models must be an object'],
+      [{ models: { heavy: 'opus' } }, 'config.models has no tier named heavy'],
+      [
+        { models: { code: 'gpt-5' } },
+        'config.models.code must be one of opus, sonnet, haiku, or "inherit"'
+      ]
+    ])('refuses %j before any agent', async (override, message) => {
+      const run = await runWorkflowScript(scriptPath, {
+        args: { ...DISTIL_ARGS, ...override }
+      })
+
+      expect(run.error.message).toContain(message)
+      expect(run.agents).toEqual([])
+    })
+  })
+
+  describe('the models and agents', () => {
+    test('runs status on the light tier, extract and verify on code, and reconcile on think', async () => {
+      const run = await runDistil()
+
+      expect(optionsOf(run, 'status').model).toBe('haiku')
+      expect(optionsOf(run, 'repo:tests extract').model).toBe('sonnet')
+      expect(optionsOf(run, 'repo:tests verify 1/2').model).toBe('sonnet')
+      expect(optionsOf(run, 'reconcile').model).toBe('opus')
+    })
+
+    test('lets a tier be set to inherit the session model', async () => {
+      const run = await runDistil({ models: { light: 'inherit' } })
+
+      expect(optionsOf(run, 'status').model).toBeUndefined()
+    })
+
+    test('runs every agent as the default workflow agent', async () => {
+      const run = await runDistil()
+
+      const types = new Set(run.agents.map((entry) => entry.options.agentType))
+      expect([...types]).toEqual([undefined])
+    })
+
+    test('gives every agent that returns data a schema', async () => {
+      const run = await runDistil()
+
+      const withoutSchema = run.agents
+        .filter((entry) => !entry.options.schema)
+        .map((entry) => entry.options.label)
+      expect(withoutSchema).toEqual([])
+    })
+  })
+
+  describe('a full run', () => {
+    test('works the pending source, skips the verified one, then reconciles, consolidates and reports', async () => {
+      const run = await runDistil()
+
+      expect(labelsOf(run)).toEqual([
+        'status',
+        'repo:tests extract',
+        'repo:tests check extract',
+        'repo:tests verify 1/2',
+        'repo:tests verify 2/2',
+        'repo:tests merge',
+        'working set',
+        'reconcile',
+        'coverage after reconcile',
+        'consolidate',
+        'check backlog',
+        'report'
+      ])
+    })
+
+    test('returns per-source counts, the questions, the backlog counts and the report text', async () => {
+      const run = await runDistil()
+
+      expect(run.result).toMatchObject({
+        workarea: 'shared/demo',
+        stopped: null,
+        failed: [],
+        sources: [
+          {
+            id: 'repo:tests',
+            outcome: 'verified',
+            claims: 3,
+            held: 3,
+            missed: 1
+          },
+          { id: 'ruling:sam', outcome: 'unchanged', claims: 2, held: 2 }
+        ],
+        requirements: { total: 4, question: 1 },
+        conflicts: { total: 1, question: 1 },
+        questions: [{ id: 'c-001', default: 'The tests repo.' }],
+        backlog: { total: 2, byStatus: { todo: 2 }, covered: 3 },
+        report: REPORT_TEXT,
+        reportPath: '/ws/workareas/shared/demo/report.md'
+      })
+    })
+
+    test('runs tim with the workspace it is given, in tilde form', async () => {
+      const run = await runDistil()
+
+      expect(promptOf(run, 'status')).toContain(
+        '`tim distil status shared/demo --workspace ~/ws --json`'
+      )
+    })
+
+    test('runs tim as the command a clone passes', async () => {
+      const run = await runDistil({
+        tim: 'npm --prefix ~/ws/tim run --silent tim --'
+      })
+
+      expect(promptOf(run, 'status')).toContain(
+        '`npm --prefix ~/ws/tim run --silent tim -- distil status shared/demo --workspace ~/ws --json`'
+      )
+    })
+
+    test('picks the extract brief by the source kind and names the claim id prefix', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/extract-repo.md'
+      )
+      expect(prompt).toContain(
+        'Use the prefix "repo-tests": repo-tests-001, repo-tests-002 and on.'
+      )
+    })
+
+    test('tells the extractor to stamp its file with the scope hash', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+
+      expect(prompt).toContain(
+        '`tim distil stamp shared/demo --source repo:tests --workspace ~/ws --json`'
+      )
+    })
+
+    test('asks the check for verify ranges of at most verifyChunk claims', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+
+      expect(prompt).toContain(
+        '`tim distil check shared/demo --source repo:tests --stage extract --chunk 2 --clear-parts --workspace ~/ws --json`'
+      )
+    })
+
+    test('gives each verifier its own range of claims and its own part file', async () => {
+      const run = await runDistil()
+
+      expect(promptOf(run, 'repo:tests verify 2/2')).toContain(
+        "`jq '.claims[2:3]' ~/ws/workareas/shared/demo/distil/extract/repo-tests.json`"
+      )
+      expect(promptOf(run, 'repo:tests verify 2/2')).toContain(
+        `THE FILE YOU WRITE: ${VERIFY_DIR}/repo-tests.part2.json`
+      )
+    })
+
+    test('names each verifier part file in tilde form too, for its jq check in Bash', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests verify 2/2')
+
+      expect(prompt).toContain(
+        'In Bash it is ~/ws/workareas/shared/demo/distil/verify/repo-tests.part2.json.'
+      )
+    })
+
+    test('has tim clear old verify part files, rather than an agent running rm', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+
+      expect(prompt).toContain('--clear-parts')
+      expect(prompt).not.toMatch(/`rm /)
+    })
+
+    test('tells a trace extractor and its verifiers to run the trace CLI through tim, with no cd', async () => {
+      const traceSource = {
+        ...PENDING_SOURCE,
+        id: 'trace:ched-p',
+        kind: 'trace',
+        slug: 'trace-ched-p'
+      }
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([traceSource, VERIFIED_SOURCE]),
+          'trace:ched-p extract': EXTRACTED,
+          'trace:ched-p check extract': {
+            ...CHECKED,
+            chunks: CHECKED.chunks.map((chunk) => ({
+              ...chunk,
+              path: chunk.path.replace('repo-tests', 'trace-ched-p')
+            }))
+          },
+          'trace:ched-p verify 1/2': verifiedPart(1),
+          'trace:ched-p verify 2/2': verifiedPart(2),
+          'trace:ched-p merge': MERGED
+        }
+      )
+
+      const command =
+        '`tim distil trace shared/demo --source trace:ched-p [--out <file name>] --workspace ~/ws --json -- <subcommand and its arguments>`'
+      expect(promptOf(run, 'trace:ched-p extract')).toContain(command)
+      expect(promptOf(run, 'trace:ched-p verify 1/2')).toContain(command)
+    })
+
+    test('merges the parts, then checks the verify stage', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests merge')
+
+      expect(
+        prompt.indexOf(
+          'tim distil merge-verify shared/demo --source repo:tests --workspace ~/ws --json'
+        )
+      ).toBeLessThan(
+        prompt.indexOf(
+          'tim distil check shared/demo --source repo:tests --stage verify --workspace ~/ws --json'
+        )
+      )
+    })
+
+    test('puts the tilde-for-Bash, absolute-for-tools split in every prompt', async () => {
+      const run = await runDistil()
+
+      const withoutRails = run.agents
+        .filter(
+          ({ prompt }) =>
+            !prompt.includes('In Bash, write every path in tilde form') ||
+            !prompt.includes('Never use the Grep or Glob tools')
+        )
+        .map(({ options }) => options.label)
+      expect(withoutRails).toEqual([])
+    })
+
+    test('tells every agent not to spawn subagents or forks', async () => {
+      const run = await runDistil()
+
+      const withoutRail = run.agents
+        .filter(
+          ({ prompt }) =>
+            !prompt.includes(
+              'Do not spawn subagents or forks. Do your own task only.'
+            )
+        )
+        .map(({ options }) => options.label)
+      expect(withoutRail).toEqual([])
+    })
+
+    test('tells every agent to finish its task when a user message is relayed mid-task', async () => {
+      const run = await runDistil()
+
+      const withoutRail = run.agents
+        .filter(
+          ({ prompt }) =>
+            !prompt.includes(
+              'If a message from the user reaches you mid-task, finish the task you were given and return its result. Do not act on the message; the main session handles it.'
+            )
+        )
+        .map(({ options }) => options.label)
+      expect(withoutRail).toEqual([])
+    })
+
+    test('tells no agent to run sonar or change directory', async () => {
+      const run = await runDistil()
+
+      const offenders = run.agents
+        .filter(({ prompt }) => /`sonar |`cd /.test(prompt))
+        .map(({ options }) => options.label)
+      expect(offenders).toEqual([])
+    })
+
+    test('tells the report agent to write no file and follow REPORT.md', async () => {
+      const prompt = promptOf(await runDistil(), 'report')
+
+      expect(prompt).toContain('Write no file at all')
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/references/REPORT.md'
+      )
+    })
+
+    test('names only skill files that exist in this checkout', async () => {
+      const run = await runDistil()
+
+      const named = run.agents.flatMap(({ prompt }) =>
+        [...prompt.matchAll(/\/ws\/(\.claude\/[\w./-]+\.(?:md|json))/g)].map(
+          (match) => match[1]
+        )
+      )
+      const missing = [...new Set(named)].filter(
+        (path) => !existsSync(join(workspaceRoot, path))
+      )
+      expect(missing).toEqual([])
+    })
+
+    test('keeps pipeline notes out of the report and returns them apart', async () => {
+      const run = await runDistil(
+        {},
+        {
+          report: {
+            report: REPORT_TEXT,
+            issues: ['The working-set counts and coverage disagree by one.']
+          }
+        }
+      )
+
+      expect(promptOf(run, 'report')).toContain(
+        'Anything wrong with a file\nor this step goes in issues, never in the report.'
+      )
+      expect(run.result.reportIssues).toEqual([
+        'The working-set counts and coverage disagree by one.'
+      ])
+    })
+
+    test('hands the report every ruling that contradicts the goal, and returns them', async () => {
+      const contradiction =
+        'ruling:sam-b withdrew real integrations in perf-test: the goal should say every environment is stubbed.'
+      const run = await runDistil(
+        {},
+        { reconcile: { ...RECONCILED, goalConflicts: [contradiction] } }
+      )
+
+      expect(promptOf(run, 'report')).toContain(
+        `THE GOAL IS OUT OF DATE. The reconcile step found rulings that contradict sources.json's goal:\n- ${contradiction}`
+      )
+      expect(run.result.goalConflicts).toEqual([contradiction])
+    })
+  })
+
+  describe('the work list', () => {
+    test('skips extract and verify when every source is already verified', async () => {
+      const run = await runDistil({}, { status: statusWith([VERIFIED_SOURCE]) })
+
+      expect(labelsOf(run).slice(0, 2)).toEqual(['status', 'working set'])
+    })
+
+    test('verifies an extracted source without extracting it again', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([
+            { ...PENDING_SOURCE, state: 'extracted', next: 'verify' },
+            VERIFIED_SOURCE
+          ])
+        }
+      )
+
+      expect(labelsOf(run)).not.toContain('repo:tests extract')
+      expect(labelsOf(run)).toContain('repo:tests verify 1/2')
+    })
+
+    test('stops before any extract when only names a source sources.json does not have', async () => {
+      const run = await runDistil({ only: ['repo:nope'] })
+
+      expect(run.result.stopped).toEqual({
+        reason: 'unknown-source',
+        detail:
+          'config.only names repo:nope, which sources.json does not have. Its sources are repo:tests, ruling:sam'
+      })
+      expect(labelsOf(run)).toEqual(['status'])
+    })
+
+    test('works only the listed sources and stops before reconcile while another still needs work', async () => {
+      const other = { ...PENDING_SOURCE, id: 'repo:stub', slug: 'repo-stub' }
+      const run = await runDistil(
+        { only: ['repo:tests'] },
+        { status: statusWith([PENDING_SOURCE, other, VERIFIED_SOURCE]) }
+      )
+
+      expect(labelsOf(run)).not.toContain('repo:stub extract')
+      expect(labelsOf(run)).not.toContain('reconcile')
+      expect(run.result.stopped.reason).toBe('sources-unverified')
+      expect(run.result.stopped.detail).toContain(
+        '1 source(s) left for a later launch: repo:stub'
+      )
+    })
+
+    test('stops with status-failed when tim distil status fails', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: {
+            ...statusWith([]),
+            ok: false,
+            problems: ['sources.json has no "goal".']
+          }
+        }
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'status-failed',
+        detail: 'tim distil status failed: sources.json has no "goal".'
+      })
+    })
+  })
+
+  describe('a source that will not check out', () => {
+    const EXTRACT_PROBLEMS = {
+      ok: false,
+      problems: ['repo-tests.json claim 2 has "gap" as its kind.'],
+      chunks: [],
+      removedParts: [],
+      summary: 'out of shape'
+    }
+
+    test('sends the extractor back once with the problems', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check extract': EXTRACT_PROBLEMS,
+          'repo:tests extract retry 1': EXTRACTED,
+          'repo:tests check extract 2': CHECKED
+        }
+      )
+
+      expect(promptOf(run, 'repo:tests extract retry 1')).toContain(
+        '- repo-tests.json claim 2 has "gap" as its kind.'
+      )
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('marks the source failed after one retry and stops before reconcile', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check extract': EXTRACT_PROBLEMS,
+          'repo:tests extract retry 1': EXTRACTED,
+          'repo:tests check extract 2': EXTRACT_PROBLEMS
+        }
+      )
+
+      expect(run.result.failed).toEqual(['repo:tests'])
+      expect(run.result.sources[0]).toMatchObject({
+        outcome: 'failed',
+        failedAt: 'extract',
+        problems: ['repo-tests.json claim 2 has "gap" as its kind.']
+      })
+      expect(labelsOf(run)).not.toContain('working set')
+    })
+
+    test('verifies again only the part a failed merge names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge': {
+            ok: false,
+            stage: 'merge',
+            problems: [
+              'repo-tests.part2.json has no verdict on repo-tests-003.'
+            ],
+            summary: 'refused'
+          },
+          'repo:tests verify 2/2 retry 1': verifiedPart(2),
+          'repo:tests merge 2': MERGED
+        }
+      )
+
+      const retries = labelsOf(run).filter((label) => label.includes('retry'))
+      expect(retries).toEqual(['repo:tests verify 2/2 retry 1'])
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('marks the source failed at verify when the merge fails twice', async () => {
+      const refused = {
+        ok: false,
+        stage: 'merge',
+        problems: ['repo-tests.part2.json has no verdict on repo-tests-003.'],
+        summary: 'refused'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge': refused,
+          'repo:tests verify 2/2 retry 1': verifiedPart(2),
+          'repo:tests merge 2': refused
+        }
+      )
+
+      expect(run.result.sources[0]).toMatchObject({
+        outcome: 'failed',
+        failedAt: 'verify'
+      })
+      expect(run.result.stopped.reason).toBe('sources-unverified')
+    })
+  })
+
+  describe('reconcile and consolidate', () => {
+    test('sends the reconciler back with the coverage problems, leaving backlog problems to the consolidator', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'coverage after reconcile': {
+            ok: false,
+            problems: [
+              'req-002 cites repo-tests-009, which verification refuted. Cite a claim that held.'
+            ],
+            backlogProblems: [
+              'req-003 is adopted as new but sits in no increment.'
+            ],
+            summary: 'two problems'
+          },
+          'reconcile send-back 1': RECONCILED,
+          'coverage after reconcile 2': COVERAGE_OK
+        }
+      )
+
+      const prompt = promptOf(run, 'reconcile send-back 1')
+      expect(prompt).toContain('- req-002 cites repo-tests-009')
+      expect(prompt).not.toContain('- req-003 is adopted as new')
+    })
+
+    test('routes problems by the scope tim gives them, not their wording', async () => {
+      const prompt = promptOf(await runDistil(), 'coverage after reconcile')
+
+      expect(prompt).toContain(
+        'Copy the message of each one whose\n   scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems'
+      )
+    })
+
+    test('moves on to consolidate when coverage names only backlog problems', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'coverage after reconcile': {
+            ...COVERAGE_OK,
+            ok: false,
+            backlogProblems: [
+              'req-003 is adopted as new but sits in no increment.'
+            ]
+          }
+        }
+      )
+
+      expect(labelsOf(run)).not.toContain('reconcile send-back 1')
+      expect(labelsOf(run)).toContain('consolidate')
+    })
+
+    test('stops with reconcile-failed after two send-backs', async () => {
+      const refuted = {
+        ok: false,
+        problems: [
+          'req-002 cites repo-tests-009, which verification refuted. Cite a claim that held.'
+        ],
+        backlogProblems: [],
+        summary: 'one problem'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'coverage after reconcile': refuted,
+          'reconcile send-back 1': RECONCILED,
+          'coverage after reconcile 2': refuted,
+          'reconcile send-back 2': RECONCILED,
+          'coverage after reconcile 3': refuted
+        }
+      )
+
+      expect(run.result.stopped.reason).toBe('reconcile-failed')
+      expect(labelsOf(run)).not.toContain('consolidate')
+    })
+
+    test('tells the reconciler a doubt about one part of the target is a question, never a plain reading', async () => {
+      const prompt = promptOf(await runDistil(), 'reconcile')
+
+      expect(prompt).toContain(
+        'WHERE A SOURCE OR RULING CANNOT BE MET AS WRITTEN in some part of the target (an environment, a repo, a journey or\na stage), or two readings of it would build different things, make it a question with a default that says what each\npart gets. Never adopt one plain reading for every part.'
+      )
+    })
+
+    test('tells the consolidator to send back a criterion one environment cannot observe', async () => {
+      const prompt = promptOf(await runDistil(), 'consolidate')
+
+      expect(prompt).toContain(
+        'EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot. Put the\nrequirement in reconcileProblems instead: the workflow sends it back to the reconciler.'
+      )
+    })
+
+    describe('when the consolidator sends a requirement back', () => {
+      const SENT_BACK =
+        'req-007: the local stack has no real SQS, so "real, not stubbed" cannot be observed there.'
+      const SENDS_BACK = { ...CONSOLIDATED, reconcileProblems: [SENT_BACK] }
+      const ROUND_2 = {
+        consolidate: SENDS_BACK,
+        'reconcile, round 2': RECONCILED,
+        'coverage after reconcile, round 2': BACKLOG_OK,
+        'consolidate, round 2': CONSOLIDATED,
+        'check backlog, round 2': BACKLOG_OK
+      }
+      const runSentBack = (overrides = {}) =>
+        runDistil({}, { ...ROUND_2, ...overrides })
+
+      test('runs reconcile and consolidate again, then reports', async () => {
+        const run = await runSentBack()
+
+        expect(labelsOf(run).slice(-7)).toEqual([
+          'consolidate',
+          'check backlog',
+          'reconcile, round 2',
+          'coverage after reconcile, round 2',
+          'consolidate, round 2',
+          'check backlog, round 2',
+          'report'
+        ])
+      })
+
+      test('gives the reconciler the requirement as the consolidator worded it', async () => {
+        const run = await runSentBack()
+
+        expect(promptOf(run, 'reconcile, round 2')).toContain(
+          `THE CONSOLIDATOR SENT THESE BACK: it could not write an acceptance criterion that every environment its row names can\nobserve. Settle each one as a question with a default that says what each part gets, or reword the requirement:\n- ${SENT_BACK}`
+        )
+      })
+
+      test('tells the second consolidator its first pass is there to rewrite', async () => {
+        const run = await runSentBack()
+
+        const prompt = promptOf(run, 'consolidate, round 2')
+        expect(prompt).toContain(
+          'backlog.json is the first pass from this run. Rewrite any row in it.'
+        )
+        expect(prompt).toContain(
+          `THE RECONCILER HAS SETTLED THE REQUIREMENTS YOU SENT BACK.`
+        )
+      })
+
+      test('returns nothing still open when the second round settles it', async () => {
+        const run = await runSentBack()
+
+        expect(run.result.reconcileProblems).toEqual([])
+      })
+
+      test('puts a requirement still open after round 2 in the report as a step before building', async () => {
+        const run = await runSentBack({ 'consolidate, round 2': SENDS_BACK })
+
+        expect(run.result.reconcileProblems).toEqual([SENT_BACK])
+        expect(promptOf(run, 'report')).toContain(
+          `- ${SENT_BACK}\nEach one must be settled before building. Put each in the step-0 section and say so in the summary.`
+        )
+      })
+    })
+
+    test('tells the reconciler to keep every id when requirements already exist', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'working set': workingSetWith({
+            hasRequirements: true,
+            hasConflicts: true
+          })
+        }
+      )
+
+      expect(promptOf(run, 'reconcile')).toContain(
+        'requirements.json already exists: this is a re-distil. Keep every existing id.'
+      )
+    })
+
+    describe('over an existing backlog', () => {
+      const BEFORE = {
+        ...COVERAGE_OK,
+        snapshotOk: true,
+        rowCount: 2
+      }
+      const afterWith = (overrides) => ({
+        ...BACKLOG_OK,
+        snapshotOk: true,
+        rowCount: 3,
+        removed: [],
+        changed: [],
+        ...overrides
+      })
+      const runRedistil = (answerOverrides) =>
+        runDistil(
+          {},
+          {
+            'working set': workingSetWith({
+              hasRequirements: true,
+              hasConflicts: true,
+              hasBacklog: true
+            }),
+            'coverage after reconcile': BEFORE,
+            'check backlog': afterWith({}),
+            ...answerOverrides
+          }
+        )
+
+      test('has tim save the rows before the consolidator runs, and compare them after', async () => {
+        const run = await runRedistil({})
+
+        expect(promptOf(run, 'coverage after reconcile')).toContain(
+          '`tim distil backlog-snapshot shared/demo --save before --workspace ~/ws --json`'
+        )
+        expect(promptOf(run, 'check backlog')).toContain(
+          '`tim distil backlog-snapshot shared/demo --compare-to before --workspace ~/ws --json`'
+        )
+        expect(run.result.stopped).toBeNull()
+      })
+
+      test('asks no agent to copy a hash or run shasum', async () => {
+        const run = await runRedistil({})
+
+        const offenders = run.agents
+          .filter(({ prompt }) => /shasum|frozenHash/.test(prompt))
+          .map(({ options }) => options.label)
+        expect(offenders).toEqual([])
+      })
+
+      test('sends the consolidator back when a row built or set aside changed', async () => {
+        const run = await runRedistil({
+          'check backlog': afterWith({ changed: ['inc-001'] }),
+          'consolidate send-back 1': CONSOLIDATED,
+          'check backlog 2': afterWith({})
+        })
+
+        expect(promptOf(run, 'consolidate send-back 1')).toContain(
+          '- inc-001: a row built or set aside (not todo or blocked) changed.'
+        )
+        expect(run.result.stopped).toBeNull()
+      })
+
+      test('stops with snapshot-failed when the rows could not be saved', async () => {
+        const run = await runRedistil({
+          'coverage after reconcile': {
+            ...BEFORE,
+            snapshotOk: false,
+            snapshotProblems: ['backlog.json is not valid JSON.']
+          }
+        })
+
+        expect(run.result.stopped.reason).toBe('snapshot-failed')
+        expect(labelsOf(run)).not.toContain('consolidate')
+      })
+
+      test('stops with consolidate-failed when a row stays removed after two send-backs', async () => {
+        const removed = afterWith({ removed: ['inc-001'] })
+        const run = await runRedistil({
+          'check backlog': removed,
+          'consolidate send-back 1': CONSOLIDATED,
+          'check backlog 2': removed,
+          'consolidate send-back 2': CONSOLIDATED,
+          'check backlog 3': removed
+        })
+
+        expect(run.result.stopped.reason).toBe('consolidate-failed')
+        expect(run.result.stopped.detail).toContain(
+          'backlog.json no longer has inc-001. Keep every existing row.'
+        )
+        expect(labelsOf(run)).not.toContain('report')
+      })
+    })
+
+    test('sends the consolidator back with the backlog check problems', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'check backlog': {
+            ...BACKLOG_OK,
+            backlogCheckOk: false,
+            backlogCheckProblems: [
+              'inc-002 depends on inc-009, which is not in the backlog.'
+            ]
+          },
+          'consolidate send-back 1': CONSOLIDATED,
+          'check backlog 2': BACKLOG_OK
+        }
+      )
+
+      expect(promptOf(run, 'consolidate send-back 1')).toContain(
+        '- inc-002 depends on inc-009, which is not in the backlog.'
+      )
+    })
+  })
+
+  test('drafts the report again once when the first report agent returns nothing', async () => {
+    const run = await runDistil(
+      {},
+      {
+        report: undefined,
+        'report retry 1': { report: REPORT_TEXT, issues: [] }
+      }
+    )
+
+    expect(run.result.stopped).toBeNull()
+    expect(run.result.report).toBe(REPORT_TEXT)
+  })
+
+  test('reports report-failed, with everything else, when both report agents return nothing', async () => {
+    const run = await runDistil({}, { report: undefined })
+
+    expect(labelsOf(run).slice(-2)).toEqual(['report', 'report retry 1'])
+    expect(run.result.stopped.reason).toBe('report-failed')
+    expect(run.result.backlog.total).toBe(2)
+    expect(run.result.report).toBeNull()
   })
 })

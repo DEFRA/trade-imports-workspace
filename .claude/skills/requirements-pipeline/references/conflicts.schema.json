@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The recorded conflicts",
+  "description": "workareas/<workarea>/distil/conflicts.json: every disagreement between sources, and every gap that matters, with how it was settled. Written by the reconcile agent beside requirements.json. Never blocking: precedence settles what it can, and every question carries a default so building can start. `tim distil coverage` validates it against this file, and also checks what a schema cannot: ids are unique, every position names a source in sources.json and a claim some extract or verification holds, every conflict is cited by at least one requirement, a precedence conflict has positions from at least two sources, and what it overrules is one of its positions, ranked below a position it keeps.",
+  "type": "object",
+  "required": ["conflicts"],
+  "additionalProperties": false,
+  "properties": {
+    "conflicts": {
+      "description": "Every conflict, in id order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/conflict" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "position": {
+      "description": "What one source says about the conflict.",
+      "type": "object",
+      "required": ["source", "says", "claim"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "The source id from sources.json.",
+          "$ref": "#/$defs/text"
+        },
+        "says": {
+          "description": "The source's position, in one sentence.",
+          "$ref": "#/$defs/text"
+        },
+        "claim": {
+          "description": "The claim id the position rests on.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "conflict": {
+      "description": "One disagreement or gap. One conflict per decision: never one question copied onto many requirements.",
+      "type": "object",
+      "required": ["id", "about", "positions", "resolution", "outcome"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "`c-NNN`. Stable: never renumber, because requirements, increments and the report cite it.",
+          "type": "string",
+          "pattern": "^c-[0-9]{3,}$"
+        },
+        "about": {
+          "description": "What is in dispute, in one line.",
+          "$ref": "#/$defs/text"
+        },
+        "positions": {
+          "description": "Each source's position, at least one.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/position" }
+        },
+        "resolution": {
+          "description": "precedence: two or more sources disagree, sources.json's precedence settled it, and the higher-ranked source won. Positions all from one source are never settled by precedence: merge their claims into one requirement, or make it a question. question: precedence cannot settle it, or it is a gap that matters, so it goes to Sam with a default.",
+          "enum": ["precedence", "question"]
+        },
+        "outcome": {
+          "description": "What was adopted, and why.",
+          "$ref": "#/$defs/text"
+        },
+        "overruled": {
+          "description": "For precedence only: the claim ids the outcome sets aside, each one a position's claim. List every claim the losing positions rest on that must no longer be built, such as an earlier ruling a later one withdraws. `tim distil coverage` then refuses an adopted or question requirement that still cites one, and a todo or blocked backlog row that still names one. A question overrules nothing until it is answered.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "question": {
+          "description": "For a question only: the question for Sam, in one sentence.",
+          "$ref": "#/$defs/text"
+        },
+        "default": {
+          "description": "For a question only: what will be built if nobody answers.",
+          "$ref": "#/$defs/text"
+        }
+      },
+      "if": {
+        "required": ["resolution"],
+        "properties": { "resolution": { "const": "question" } }
+      },
+      "then": {
+        "description": "A question carries the question and the default that will be built.",
+        "required": ["question", "default"]
+      },
+      "else": {
+        "description": "Precedence settled it, so there is no question and no default.",
+        "not": {
+          "anyOf": [{ "required": ["question"] }, { "required": ["default"] }]
+        }
+      }
+    }
+  }
+}

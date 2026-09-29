@@ -1,0 +1,64 @@
+{
+  "requirements": [
+    {
+      "id": "req-001",
+      "statement": "There is one set of k6 performance suites for INS. Which environment a run targets (local Docker stack, CDP dev, CDP test or CDP perf-test) is chosen by run configuration, never by a separate copy of a suite.",
+      "why": "The ruling makes k6 the tool; the tests repo already names the CDP environments, so the suites reuse them rather than inventing new ones.",
+      "claims": ["sam3-001", "tests-001", "tests-001-m1", "tests-005"],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "The tests repo already resolves base URLs per environment for Playwright (tests-005, tests-001-m1). k6 has nothing (tests-001).",
+      "conflicts": ["c-001"]
+    },
+    {
+      "id": "req-002",
+      "statement": "A tier-1 smoke run at smoke scale runs on every pull request and fails the pull request when a threshold fails.",
+      "why": "Tier 1 answers whether a change made INS slower.",
+      "claims": ["dr5-038"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-002"]
+    },
+    {
+      "id": "req-003",
+      "statement": "The suites are organised by set, one Playwright project per journey set.",
+      "why": "A k6 profile sits beside the existing projects rather than replacing them.",
+      "claims": ["tests-002"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "tests-002: the e2e, admin, ins and plants projects already exist.",
+      "conflicts": []
+    },
+    {
+      "id": "req-004",
+      "statement": "Tier 4 calls the real external systems directly at owner-agreed rates, never as a load test.",
+      "why": "Only the conformance run touches real dependencies, and only at rates an owner agrees to.",
+      "claims": ["dr5-060"],
+      "status": "question",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-002"]
+    },
+    {
+      "id": "req-005",
+      "statement": "The DR records its status and the date it was agreed.",
+      "why": "Document metadata, not behaviour the suites need.",
+      "claims": ["dr5-001", "dr5-001-m1", "dr5-004"],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-006",
+      "statement": "Inside the INS product boundary a run uses the real component; outside it, a stub configured from the agreed interface service level.",
+      "why": "The boundary rule is what makes a result attributable to INS.",
+      "claims": ["dr5-018"],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-001"]
+    }
+  ]
+}

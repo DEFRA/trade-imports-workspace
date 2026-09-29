@@ -1,5 +1,20 @@
 # Handoff: build the INS performance-testing backlog
 
+## Parked on 29 September 2026: start here
+
+Step 0 is done. The build is parked before inc-001, because the loop's baseline gate is red on unchanged `main`.
+
+- **Done:** the k6 conversion (DEFRA/trade-imports-performance-tests#1, merged). Workspace PR DEFRA/trade-imports-workspace#77 holds the loop change, gates, docs and this backlog, and is waiting for Sam.
+- **Sam's answers:** epic EUDPA-641. Build all 12 open-question defaults as written. INS is not deployed to CDP perf-test yet, so inc-003 stays blocked.
+- **inc-001:** ticket EUDPA-642, branch `feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the` in the performance-tests repo. Nothing is built on it yet. Relaunching resumes it.
+- **Why it stopped:** in the baseline's e2e phase, ins-tests `--project=animals` failed two tests on `main`: "allows signing out after signing in" and "lands on the sign in page when opening a page further in the journey". Both pass when run alone. The unit phase (20 rungs), the FIT phase and the ins, plants and k6 e2e rungs pass.
+- **To resume:**
+  1. Pull every repo with `tim workspace update`, then `tim workspace install` for the programme's Node repos.
+  2. Stop the stack with `tim docker down`, because FIT needs its ports free.
+  3. Run `tim build gate shared/ins-performance-testing --phase e2e`.
+  4. When the gate is green, relaunch the loop by `scriptPath`, with the args below.
+- **Args:** the full lifecycle; `branch: main`; epic EUDPA-641; statuses "In Progress" and "Done"; board 13780; `requireApproval: false`; `repos` copied from the envelope (9 keys, including `instests`); `increments: null`; `stopAfter: "all"`.
+
 You are overseeing the build of the INS performance-testing backlog: 19 increments of k6 load tests for the Import Notification Service. You orchestrate and verify. Agents and the build loop write the code. Use the `requirements-pipeline` skill (BUILD phase) for the build itself.
 
 ## Read first

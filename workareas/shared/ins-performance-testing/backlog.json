@@ -380,6 +380,33 @@
       "gate": "Look at the first design-target run before anything builds on it: the achieved rates and request mix against the volumetrics figures, which thresholds passed or failed and by how much, generator and stub headroom, the stub profiles each run named, and whether gating on the two-journey figures with the with-IUU profile reported is the right split."
     },
     {
+      "id": "inc-019",
+      "title": "An average-load run follows a normal weekday for both journeys and the front door",
+      "detail": "k6 and Grafana name six test types. Average-load is the only one with no scenario of its own: the sustained peak run holds the busiest hour of a seasonal peak day with 2x headroom on top, so it tests stress rather than a typical day. This run replays the shape of a normal weekday at the forecast volume, so the team knows how INS behaves on an ordinary day as well as at peak.",
+      "acceptanceCriteria": [
+        "An average-load run follows the weekday profile: overnight baseline, ramp-up from 06:00, the 09:00 to 16:00 window, then the ramp-downs to midnight, compressible in time, for live animals, high-risk plants and the front door together. (web:grafana-load-testing-types section:2-average-load-test; web:k6-docs testing-guides/test-types/; confluence:6604328622 §4.3 Daily profile rows 1 to 5)",
+        "The run uses the average weekday volume: the design target without the seasonal peak-day factor (A1, 2.0) or the design headroom (A3, 2x). Its busiest hour is a quarter of the sustained peak run's rate, and its mean across the day about an eighth, because a weekday spread over 24 hours is about 4.2% an hour against 8% in the busiest hour. (confluence:6604328622 §4.1 Method steps 2 to 4 and 9; §4.2 T2; §4.3 Daily profile; §4.4 A1, A3; conflict c-015)",
+        "The run passes on the same response-time and failure-rate thresholds as the sustained peak run. (conflict c-004 default)",
+        "The report shows the rate achieved in each hour of the profile beside the target, per journey and for the front door, on the same time series as the other scenarios. (web:k6-docs using-k6/metrics/; web:k6-docs using-k6/tags-and-groups/)",
+        "The run is available on demand in every environment, with its cadence set by the tier-by-environment question. (conflict c-003 default)"
+      ],
+      "requirements": ["req-080"],
+      "sources": [
+        { "source": "web:grafana-load-testing-types", "ref": "section:2-average-load-test" },
+        { "source": "web:k6-docs", "ref": "testing-guides/test-types/" },
+        { "source": "confluence:6604328622", "ref": "§4.1 Method; §4.2 T2; §4.3 Daily profile; §4.4 A1, A3" }
+      ],
+      "repos": ["tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-004", "inc-005", "inc-006", "inc-007", "inc-008"],
+      "status": "todo",
+      "openQuestions": [
+        "c-004: Which response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own? Default: the interim thresholds in the report, the same for this run as for sustained peak.",
+        "c-003: Which tiers and scenarios run in each environment, and how often? Default: on demand everywhere; the report's tier table does not yet place this run on a schedule."
+      ],
+      "notes": "Added by hand on 29 September 2026, at Sam's request, after a check of the backlog against the six k6 test types. c-015 had folded average-load into sustained peak, but sustained peak runs the busiest hour of a peak day with 2x headroom, which is a stress test. Kept out of inc-009 because that row's notes already put it at the limit of one review. The id is new, so it sits after inc-018 numerically but straight after inc-009 in build order."
+    },
+    {
       "id": "inc-010",
       "title": "Spike and recovery and the 8-hour endurance run at the design targets",
       "detail": "The other two scenario shapes. A ten-second spike at each component's stated capacity shows whether INS recovers within a minute and whether a failure cascades through the stubs; an eight-hour run at peak shows whether response times drift, pools or memory run out, or re-authentication breaks as sessions and tokens expire.",

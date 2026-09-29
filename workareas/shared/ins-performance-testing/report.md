@@ -2,8 +2,8 @@
 
 ## Summary
 
-- The backlog has 18 increments: 16 ready to build, 2 blocked.
-- The tests use k6. They cover the live animals and high-risk plants journeys, the INS front door and the shared components.
+- The backlog has 19 increments: 17 ready to build, 2 blocked.
+- The tests use k6. They cover the live animals and high-risk plants journeys, the INS front door and the shared components, with all 6 k6 test types.
 - 13 questions are open. Each has a default, so building can start without an answer.
 - Before building, the build loop must be extended to handle more than 3 repos (step 0).
 - 3 increments need INS deployed to CDP perf-test, which is Sam's CDP work.
@@ -78,7 +78,7 @@ Each question lists the default that will be built if nobody answers.
 | Spike | P95 back within 10% of normal within 60 seconds |
 | Endurance | P95 in the last hour no more than 1.2 times the first hour |
 
-- **Affects:** inc-001, inc-009, inc-010.
+- **Affects:** inc-001, inc-009, inc-019, inc-010.
 - **Why it is open:** the meeting confirmed no NFRs (non-functional requirements) are agreed for INS. The defaults come from volumetrics §4.7 and the IPAFFS service levels.
 
 ### 5. Which tests run where, and how often?
@@ -90,7 +90,7 @@ Each question lists the default that will be built if nobody answers.
 | CDP test | Journey tests (tier 2) nightly at the design targets |
 | CDP perf-test | Per release: tiers 2, 3 and 5, the 8-hour endurance run, breakpoint and the tier 4 check against real systems |
 
-- **Affects:** inc-001, inc-002, inc-009, inc-010, inc-016, inc-017.
+- **Affects:** inc-001, inc-002, inc-009, inc-019, inc-010, inc-016, inc-017. The average-load run (inc-019) has no place in the table yet, so it runs on demand.
 - **Why it is open:** Sam's rulings name the environments but not which tests run in each.
 
 ### 6. Do the shared components pass or fail on the figures with IUU or without?
@@ -161,6 +161,7 @@ These are Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID.
 | Test notifications are created only through the frontends' save routes. Backend-only runs replay request bodies captured from those saves | The tests repo's existing rule | c-013 |
 | Session load is 1.35 requests a second, not 0.67 | Volumetrics §9.4, which replaces NFR-VOL-CORE-06 | c-014 |
 | A breakpoint run is added to DR-EUDP-005's 4 scenario shapes | The meeting | c-015 |
+| An average-load run of a normal weekday is added. Sustained peak is a stress test, because it runs a seasonal peak day with 2x headroom | Sam, after a check against the 6 k6 test types | c-015 |
 | Uploads are at most 10MB | The animals frontend's limit, over the backend's 50MB | c-016 |
 
 ## Already in place
@@ -184,6 +185,7 @@ These are Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID.
 | inc-007 | A delay profile for each stubbed system, switchable per run and named in every report | 7 | tests, stub, idstub | 001 | Ready |
 | inc-008 | Each stub's capacity measured before its results are trusted | 4 | tests, stub, idstub | 007 | Ready |
 | inc-009 | Sustained peak and burst at the design targets | 8 | tests | 004 to 008 | Ready. **Review point** |
+| inc-019 | An average-load run follows a normal weekday, at a quarter of the sustained peak rate in its busiest hour | 5 | tests | 004 to 008 | Ready |
 | inc-010 | Spike and recovery, and the 8-hour endurance run | 6 | tests | 009 | Ready |
 | inc-011 | Events reach the dashboard's data and the Service Bus stub, counted at peak-day volume | 5 | tests | 010 | Ready |
 | inc-012 | Shared components under combined load, including IUU's share, without one journey slowing another | 6 | tests | 009 | Ready |
@@ -199,6 +201,16 @@ A **review point** means the loop stops after that increment so Sam can look bef
 **Check these ordering decisions:**
 
 - **Stub delays come before the first design-target run.** No design-target result is taken through a stub that answers instantly. The smoke test keeps a zero-delay profile.
+- **inc-019 was added by hand.** Its id is out of sequence but it builds straight after inc-009. The 6 k6 test types map as follows:
+
+  | k6 type | Increments |
+  |---|---|
+  | Smoke | inc-001 to inc-003 |
+  | Average-load | inc-019 |
+  | Stress | inc-009 |
+  | Spike | inc-010 |
+  | Soak | inc-010 (8 hours at peak, stricter than k6's soak at average load) |
+  | Breakpoint | inc-016, and inc-008 for the stubs |
 - **inc-003 is blocked until INS is deployed to CDP perf-test.** That is Sam's CDP work. inc-016 and inc-018 wait on it too. Set inc-003 to ready once the deployment exists.
 - **Plants has no events and no uploads today.** inc-011 reports that plants sends no events. It does not build them. inc-005 adds documents to live animals only. inc-006 reports the real size of the dashboard's data, not 76,000.
 - **Fault injection (inc-017) is expected to find failures.** It is done when the runs detect and report each missing timeout or retry limit, not when the services pass.
@@ -212,7 +224,7 @@ A **review point** means the loop stops after that increment so Sam can look bef
 - 19 were dropped
 - 56 missed claims were added
 
-These became 79 requirements: 53 to build (3 of them already in place), 3 open questions and 23 out of scope.
+These became 80 requirements: 54 to build (3 of them already in place), 3 open questions and 23 out of scope. One of them, req-080 (average-load), was added by hand after the run.
 
 | Source | Claims | Held | Added | Requirements it backs (in scope) |
 |---|---|---|---|---|

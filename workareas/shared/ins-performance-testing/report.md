@@ -5,18 +5,18 @@
 - The backlog has 19 increments: 17 ready to build, 2 blocked.
 - The tests use k6. They cover the live animals and high-risk plants journeys, the INS front door and the shared components, with all 6 k6 test types.
 - 12 questions are open. Each has a default, so building can start without an answer.
-- Before building, a person creates the k6 suite's repo in CDP, and the build loop is extended to handle more than 3 repos (step 0).
+- Step 0 is done: the k6 suite's repo exists and runs in CDP's image, and the build loop takes any number of repos.
 - 3 increments need INS deployed to CDP perf-test, which is Sam's CDP work.
 
 ## Before you build: step 0
 
-**1. Create the k6 suite's repo in CDP.** The suites live in their own CDP performance-test suite repo (Sam's answer to the question on where the suites live, c-005). A person creates it through CDP. The build loop cannot. The backlog uses the name `trade-imports-performance-tests`: confirm it when the repo is created, and update the backlog's `perftests` entry if it differs.
+Step 0 is done.
 
-**2. Extend the build loop.** The build loop's normal run only supports repos named `frontend`, `backend` and `tests`. This backlog uses 8.
+**1. The k6 suite's repo exists.** `DEFRA/trade-imports-performance-tests` was created in CDP, added to the workspace and converted from CDP's JMeter template to k6. Its image reads `ENVIRONMENT`, runs a suite and uploads the report to `RESULTS_OUTPUT_S3_PATH`, and one trivial health check proves that end to end. inc-001 builds the smoke run on it.
 
-Extend the loop so it takes its repos from the backlog, whatever they are called. Each increment then gets a ticket, a pull request per repo, CI and merge, as usual. The Codex instructions must change to match.
+**2. The build loop takes any repos.** Its full lifecycle now takes its repos from the backlog, whatever they are called: a ticket, then a branch, pull request, CI and merge per repo. A row's `repos` are merged in the order listed, so each row lists the services before perftests. The Codex instructions match.
 
-The backlog itself does not change. inc-014 is the hardest test: it touches 6 repos in one increment.
+The backlog also lists `trade-imports-ins-tests` as `instests`. No increment changes it; the build gate runs its Playwright suites so that changes to the service repos are checked end to end.
 
 ## Decisions the pipeline made
 
@@ -24,7 +24,7 @@ The backlog itself does not change. inc-014 is the hardest test: it touches 6 re
 
 | Key | Repo | Why |
 |---|---|---|
-| perftests | trade-imports-performance-tests (to be created in CDP; name to confirm) | The k6 suites live here, as a CDP performance-test suite |
+| perftests | trade-imports-performance-tests | The k6 suites live here, as a CDP performance-test suite |
 | stub | trade-imports-stub | Stands in for systems outside INS |
 | idstub | trade-imports-defra-id-stub | Stands in for Defra ID sign-in |
 | insfrontend | trade-imports-ins-frontend | Needs per-dependency call metrics |
@@ -33,7 +33,7 @@ The backlog itself does not change. inc-014 is the hardest test: it touches 6 re
 | referencedata | trade-imports-reference-data | Needs per-dependency call metrics |
 | gateway | trade-imports-dynamics-gateway | Needs per-dependency call metrics |
 
-The INS backend, address book and both journey backends are tested but not changed, so they are not listed. Nor is trade-imports-animals-tests: the new suite copies its environment names and URL scheme, but does not change it.
+The INS backend, address book and both journey backends are tested but not changed, so they are not listed. trade-imports-ins-tests is listed as `instests` but no increment changes it: the new suite copies its environment names and URL scheme, and the build gate runs its Playwright suites so that changes to the service repos are checked end to end.
 
 **Which source wins a disagreement**, highest first:
 
@@ -173,7 +173,7 @@ These are Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID.
 
 | Id | What it delivers | Criteria | Repos | Depends on | Status |
 |---|---|---|---|---|---|
-| inc-001 | Smoke test of both journeys and the front door on local Docker, failing the pull request when a limit is broken | 9 | perftests | – | Ready. **Review point** |
+| inc-001 | Smoke test of both journeys and the front door on local Docker, failing the pull request when a limit is broken | 8 | perftests | – | Ready. **Review point** |
 | inc-002 | The same smoke test in CDP dev and test, signing in through the Defra ID stub | 4 | perftests | 001 | Ready |
 | inc-003 | First small run in CDP perf-test, once INS is deployed there | 3 | perftests | 002 | **Blocked**. **Review point** |
 | inc-004 | Traffic follows the real journey: draft, many edits, submit, read back, update | 6 | perftests | 001 | Ready |

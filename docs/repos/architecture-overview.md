@@ -76,7 +76,7 @@ flowchart LR
 | schemas | JSON Schema and JSON-LD contracts for payloads | Runtime enforcement; consumers reference it, not depend on it |
 | stub | Fake Trade platform token endpoint and MDM countries and ports | Any real logic |
 | defra-id-stub | Fake Defra ID OIDC sign-in | Real identity; still a work in progress |
-| animals-tests | End-to-end tests for the stack | Application code |
+| ins-tests | End-to-end, accessibility and security tests for the stack, one Playwright project per frontend | Application code |
 
 ## Data flows worth knowing
 

@@ -143,7 +143,7 @@ Then the run loop, driven by `scripts/stack/`:
 Finally, exercise the running stack with the end-to-end suite:
 
 ```
-cd repos/trade-imports-animals-tests
+cd repos/trade-imports-ins-tests
 npm run test:docker-compose
 ```
 

@@ -2,6 +2,10 @@
 
 **Repo:** DEFRA/trade-imports-animals-tests
 
+> **Deprecated.** Replaced by [`trade-imports-ins-tests`](trade-imports-ins-tests.md).
+> Nothing in the workspace runs this suite any more. The repo will be archived
+> once every consumer has switched over.
+
 ## Purpose
 
 End-to-end browser test suite for the trade imports animals service. Tests run against a live stack from a user's perspective, covering full journeys through the frontend application. Supports multiple execution environments: local development, GitHub Actions CI, and DEFRA CDP Portal.

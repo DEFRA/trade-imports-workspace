@@ -126,7 +126,7 @@ ever.
   repos: {
     frontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
     backend: { path: 'repos/trade-imports-animals-backend', github: 'DEFRA/trade-imports-animals-backend' },
-    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
+    tests: { path: 'repos/trade-imports-ins-tests', github: 'DEFRA/trade-imports-ins-tests' }
   },
   models: {},
   increments: null,
@@ -258,7 +258,7 @@ The worked example for the frontend alignment sync:
     ins: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
     animals: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
     plants: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
-    tests: { path: 'repos/trade-imports-animals-tests', github: 'DEFRA/trade-imports-animals-tests' }
+    tests: { path: 'repos/trade-imports-ins-tests', github: 'DEFRA/trade-imports-ins-tests' }
   },
   models: {},
   increments: null,

@@ -149,7 +149,7 @@ echo
 # A failure here doesn't roll back individual upgrades — the operator
 # needs to investigate, since the failure could be in any of $SUCCESS
 # packages.
-if [[ "$REPO_NAME" == "trade-imports-animals-tests" ]] && [[ $SUCCESS -gt 0 ]]; then
+if [[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && [[ $SUCCESS -gt 0 ]]; then
     echo "==========================================="
     echo "End-of-batch E2E gate (npm run test:docker-compose)"
     echo "==========================================="

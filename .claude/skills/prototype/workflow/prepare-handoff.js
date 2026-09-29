@@ -94,7 +94,7 @@ const { handoff, ticket, dryRun } = config
 const WORKSPACE = '~/git/defra/trade-imports-workspace'
 const PLANTS_FRONTEND = `${WORKSPACE}/repos/trade-imports-plants-frontend`
 const PLANTS_BACKEND = `${WORKSPACE}/repos/trade-imports-plants-backend`
-const TESTS_REPO = `${WORKSPACE}/repos/trade-imports-animals-tests`
+const TESTS_REPO = `${WORKSPACE}/repos/trade-imports-ins-tests`
 const PROTOTYPE_SKILL = `${WORKSPACE}/.claude/skills/prototype`
 
 const GUARD_RAILS = [

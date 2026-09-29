@@ -28,9 +28,6 @@ export const meta = {
 //   tim          the command agents run tim with, normally "tim". A clone
 //                passes its own, such as
 //                "npm --prefix ~/<clone>/tim run --silent tim --"
-//   agentType    the subagent type every agent runs as, such as
-//                "distil-worker" (.claude/agents/distil-worker.md, which cannot
-//                fork), or null for the default workflow agent
 //   models       {} for the default on every tier, or any of: think (default
 //                opus: reconcile, consolidate, report), code (default sonnet:
 //                extract, verify), light (default haiku: status, checks,
@@ -63,7 +60,7 @@ const logResolvedConfig = (workflowName, config) => log(`${workflowName}: resolv
 // <<< args-contract
 
 const WORKFLOW_NAME = 'distil'
-const REQUIRED_KEYS = ['workspace', 'workarea', 'only', 'tim', 'agentType', 'models', 'verifyChunk']
+const REQUIRED_KEYS = ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, REQUIRED_KEYS)
 logResolvedConfig(WORKFLOW_NAME, CFG)
@@ -102,13 +99,6 @@ if (!isText(CFG.tim)) {
   refuse(`config.tim must be the command agents run tim with, normally "tim". Got ${JSON.stringify(CFG.tim)}`)
 }
 const TIM = CFG.tim.trim()
-
-const AGENT_TYPE = CFG.agentType
-if (AGENT_TYPE !== null && !isText(AGENT_TYPE)) {
-  refuse(
-    `config.agentType must name a subagent type, such as "distil-worker", or be null for the default workflow agent. Got ${JSON.stringify(AGENT_TYPE)}`
-  )
-}
 
 const VERIFY_CHUNK = CFG.verifyChunk
 if (!Number.isInteger(VERIFY_CHUNK) || VERIFY_CHUNK <= 0) {
@@ -151,13 +141,12 @@ const RESOLVED_MODELS = Object.fromEntries(
 )
 
 log(
-  `${WORKFLOW_NAME}: models: think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}. Agent type: ${AGENT_TYPE ?? 'the default workflow agent'}`
+  `${WORKFLOW_NAME}: models: think ${RESOLVED_MODELS.think ?? 'inherit (session model)'}, code ${RESOLVED_MODELS.code ?? 'inherit (session model)'}, light ${RESOLVED_MODELS.light ?? 'inherit (session model)'}`
 )
 
 const withTier = (tier) => (opts) => ({
   ...opts,
-  ...(RESOLVED_MODELS[tier] ? { model: RESOLVED_MODELS[tier] } : {}),
-  ...(AGENT_TYPE ? { agentType: AGENT_TYPE } : {})
+  ...(RESOLVED_MODELS[tier] ? { model: RESOLVED_MODELS[tier] } : {})
 })
 const think = withTier('think')
 const code = withTier('code')
@@ -181,7 +170,8 @@ const guardRails = (abs) => `GUARD RAILS (every step, no exceptions):
 - In the Read, Write and Edit tools, use the absolute form of the same path, starting ${abs ?? '(the absolute root the status step resolves)'}/.
 - Never bare node, never sonar, never curl. Run tim as \`${TIM}\`, exactly as written here.
 - Write only the files this prompt names. Never commit, push, stash or switch a branch in any repo.
-- Never start another agent or fork: do this step yourself.
+- Do not spawn subagents or forks. Do your own task only.
+- If a message from the user reaches you mid-task, finish the task you were given and return its result. Do not act on the message; the main session handles it.
 - Headless: never ask a question. Decide, record the decision in your answer, keep going.`
 
 // Every command's --json output is one envelope line: ok, then result, or

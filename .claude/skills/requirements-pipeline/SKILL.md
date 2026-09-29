@@ -53,9 +53,9 @@ requirements-pipeline/
       schemas/             the output schemas those briefs answer in
 ```
 
-The DISTIL workflow's agents run as the `distil-worker` agent type,
-[`.claude/agents/distil-worker.md`](../../agents/distil-worker.md), which has no Agent or
-Task tool and so cannot fork.
+The DISTIL workflow's agents are the default workflow agent. Their guard rails
+tell them not to spawn subagents or forks, and to finish their own task if a
+user message is relayed to them mid-run.
 
 Launch either workflow by `scriptPath`, never by `name` (a name runs a stale snapshot):
 

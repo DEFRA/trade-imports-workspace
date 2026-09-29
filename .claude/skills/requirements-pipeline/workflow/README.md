@@ -47,7 +47,6 @@ and the first log line is the resolved configuration.
 | `workarea` | The programme's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ins-performance-testing`. Never starts with `workareas/` |
 | `only` | `null` to work every source that needs it. Or a list of source ids: only those are extracted and verified this launch. A listed source already verified is skipped, and the run stops before reconcile while any other source still needs work |
 | `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
-| `agentType` | The subagent type every agent runs as. `distil-worker` ([`.claude/agents/distil-worker.md`](../../../agents/distil-worker.md)) has no Agent or Task tool, so it cannot fork helpers that race it on its file. `null` for the default workflow agent |
 | `models` | `{}` for the default on every tier. `think` (default opus): reconcile, consolidate, report. `code` (default sonnet): extract, verify. `light` (default haiku): status, the checks, merge, working set, coverage. `"inherit"` uses the session model |
 | `verifyChunk` | The most claims one verify agent takes, such as 150. A 330-claim extract at 150 is verified by 3 agents in parallel, each writing its own part file |
 
@@ -59,7 +58,6 @@ The worked example for the INS performance testing programme:
   workarea: 'shared/ins-performance-testing',
   only: null,
   tim: 'tim',
-  agentType: 'distil-worker',
   models: {},
   verifyChunk: 150
 }

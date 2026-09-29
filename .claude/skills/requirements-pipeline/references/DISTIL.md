@@ -128,7 +128,6 @@ Every key of `args` is required, and a missing one stops the run before any agen
   workarea: 'shared/hrp-origin-and-commodity',      // the workarea: under workareas/, never starting with it
   only: null,                                       // or a list of source ids to work this launch
   tim: 'tim',                                       // how agents run tim; a clone passes its own
-  agentType: 'distil-worker',                       // agents that cannot fork; null for the default agent
   models: {},                                       // defaults: think opus, code sonnet, light haiku
   verifyChunk: 150                                  // the most claims one verify agent takes
 }

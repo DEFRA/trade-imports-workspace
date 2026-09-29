@@ -99,15 +99,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'approvalWaitMinutes'
   ],
   'args-canary.js': ['list', 'n'],
-  'distil.js': [
-    'workspace',
-    'workarea',
-    'only',
-    'tim',
-    'agentType',
-    'models',
-    'verifyChunk'
-  ]
+  'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
 }
 
 const JIRA_AND_CI_KEYS = [
@@ -1938,7 +1930,6 @@ describe('distil', () => {
     workarea: 'shared/demo',
     only: null,
     tim: 'tim',
-    agentType: 'distil-worker',
     models: {},
     verifyChunk: 2
   }
@@ -2137,11 +2128,10 @@ describe('distil', () => {
       expect(run.agents).toEqual([])
     })
 
-    test('keeps an explicit null for only and agentType as given values', async () => {
-      const run = await runDistil({ only: null, agentType: null })
+    test('keeps an explicit null for only as a given value', async () => {
+      const run = await runDistil({ only: null })
 
       expect(run.status).toBe('returned')
-      expect(optionsOf(run, 'status').agentType).toBeUndefined()
     })
 
     test.each([
@@ -2162,7 +2152,6 @@ describe('distil', () => {
         'config.only must be null to work every source that needs it'
       ],
       [{ tim: ' ' }, 'config.tim must be the command agents run tim with'],
-      [{ agentType: '' }, 'config.agentType must name a subagent type'],
       [{ verifyChunk: 0 }, 'config.verifyChunk must be a whole number above 0'],
       [{ models: null }, 'config.models must be an object'],
       [{ models: { heavy: 'opus' } }, 'config.models has no tier named heavy'],
@@ -2180,7 +2169,7 @@ describe('distil', () => {
     })
   })
 
-  describe('the models and agent type', () => {
+  describe('the models and agents', () => {
     test('runs status on the light tier, extract and verify on code, and reconcile on think', async () => {
       const run = await runDistil()
 
@@ -2196,11 +2185,11 @@ describe('distil', () => {
       expect(optionsOf(run, 'status').model).toBeUndefined()
     })
 
-    test('runs every agent as the agent type it is given', async () => {
+    test('runs every agent as the default workflow agent', async () => {
       const run = await runDistil()
 
       const types = new Set(run.agents.map((entry) => entry.options.agentType))
-      expect([...types]).toEqual(['distil-worker'])
+      expect([...types]).toEqual([undefined])
     })
 
     test('gives every agent that returns data a schema', async () => {
@@ -2386,6 +2375,34 @@ describe('distil', () => {
         )
         .map(({ options }) => options.label)
       expect(withoutRails).toEqual([])
+    })
+
+    test('tells every agent not to spawn subagents or forks', async () => {
+      const run = await runDistil()
+
+      const withoutRail = run.agents
+        .filter(
+          ({ prompt }) =>
+            !prompt.includes(
+              'Do not spawn subagents or forks. Do your own task only.'
+            )
+        )
+        .map(({ options }) => options.label)
+      expect(withoutRail).toEqual([])
+    })
+
+    test('tells every agent to finish its task when a user message is relayed mid-task', async () => {
+      const run = await runDistil()
+
+      const withoutRail = run.agents
+        .filter(
+          ({ prompt }) =>
+            !prompt.includes(
+              'If a message from the user reaches you mid-task, finish the task you were given and return its result. Do not act on the message; the main session handles it.'
+            )
+        )
+        .map(({ options }) => options.label)
+      expect(withoutRail).toEqual([])
     })
 
     test('tells no agent to run sonar or change directory', async () => {

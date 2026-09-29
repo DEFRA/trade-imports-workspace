@@ -10,7 +10,7 @@ with
   acceptance criteria as _Given_, _When_, _Then_, and a Tech Notes panel
   (patch, drift, services, tests, recipe, branch). Then: "See the prototype"
   (links and how to run it locally, plus `[See it walked through|<url>]`
-  once `scripts/designer/prototype.json` has a `reportsUrl`), "Journey flow"
+  once `scripts/designer/prototype.json` has a `siteUrl`), "Journey flow"
   (page order before and after, and gate changes), "Validation" (one row per
   rule, with the English and Welsh error), "Service to build" for each new
   service, "Tests to add" and "For the developer or agent". Everything else
@@ -334,9 +334,10 @@ upstream.patch` in their own clone of `trade-imports-plants-frontend`, write
    designer.
 2. The brief carries a link to see it walked through, page by page
    (`[See it walked through|<url>]` in `brief.jira.txt`), when
-   `scripts/designer/prototype.json` has a `reportsUrl`: `pr-<n>/` before the
-   change has a pull request or is merged, `main/` after. If `reportsUrl` is
-   not set yet, say there is no link yet rather than inventing one.
+   `scripts/designer/prototype.json` has a `siteUrl`: `reports/pr-<n>/`
+   while the change is on an open pull request, the site root once it is
+   merged (or pushed straight to `main`). If `siteUrl` is not set yet, say
+   there is no link yet rather than inventing one.
 3. `upstream.patch` applies: the Tech Notes panel says "applies cleanly", or
    you have told the designer why not. A brief only has no patch, and says
    why.

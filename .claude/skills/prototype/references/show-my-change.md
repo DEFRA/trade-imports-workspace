@@ -23,8 +23,8 @@ last commit), not "set", "manifest" or "HEAD".
   describe it and offer the reference that fixes it. That reference runs
   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where -- <path>`
   and checks `overrides.json` before any edit: anything not in its `ours`
-  list belongs to the real service and is never edited on a `design/*`
-  branch.
+  list belongs to the real service and is never edited, on `main` or a
+  `design/*` branch alike.
 - **One Bash command per call.** Never commit or push from here
   (`references/share-my-change.md` does that).
 
@@ -168,15 +168,18 @@ something before the show and tell": pick the first of these that holds.
    cannot see it): no report link works yet, so go to 4 and tell the
    designer the prototype maintainer has to turn Pages on (Settings, Pages,
    Deploy from a branch, `gh-pages`, `/ (root)`).
-2. **The release is already on `main`** (merged, or the real journey): send
-   `<reportsUrl>main/#?q=@<set-id>` now, reading `reportsUrl` from
-   `scripts/designer/prototype.json` in the prototype repo. Nothing to run.
-3. **The release has changes not on `main` yet**: save and open a pull
-   request (`references/share-my-change.md`, steps 5 and 6). Its checks
+2. **The release is already on `main`** (merged, pushed straight there, or
+   the real journey): send `<siteUrl>#?q=@<set-id>` now, reading `siteUrl`
+   from `scripts/designer/prototype.json` in the prototype repo. Nothing to
+   run.
+3. **The release has changes not on `main` yet, on a branch**: save and open
+   a pull request (`references/share-my-change.md`, step 6). Its checks
    publish the report within about ten minutes and comment the link:
-   `<reportsUrl>pr-<n>/#?q=@<set-id>` is the one to send. For a show and
-   tell on a set day, push at least the day before, so a failed check has
-   time to be fixed.
+   `<siteUrl>reports/pr-<n>/#?q=@<set-id>` is the one to send. For a show
+   and tell on a set day, push at least the day before, so a failed check
+   has time to be fixed. (For work still only on the designer's own
+   computer, pushing straight to `main` — route 2 above — is usually
+   simpler than opening a pull request just to get a link.)
 4. **No web link yet** (Pages off, or no time for a pull request): zip the
    local report folder,
    `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/walkthrough/report/`,

@@ -105,8 +105,10 @@ Run:
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype status
 ```
 
-The first line names the branch. If it is `main`, make a branch before
-editing:
+The first line names the branch. Branches are optional
+(`references/ROUTING.md`, "Branches"): on `main`, stay on `main` and edit
+there. Only on someone else's branch (a `feat/*`, `chore/*` or trial branch)
+make one before editing:
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release>-<short-slug>

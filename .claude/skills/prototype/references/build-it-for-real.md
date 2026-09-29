@@ -23,8 +23,8 @@ service nobody built pages for, or the designer describes something that
 was never made — go to `references/hand-off.md` first. It makes the change
 with its own reference (`references/fake-a-service.md` for a new service,
 `references/change-the-journey.md` for pages), saves it on the designer's
-`design/*` branch and writes the folder. Then come back here. Say in one
-line that the design had to be made first.
+current branch (`main` or a `design/*` branch) and writes the folder. Then
+come back here. Say in one line that the design had to be made first.
 
 ## Which route
 
@@ -152,7 +152,8 @@ read-only, and show it to the designer before doing anything:
 Writes `<handoff>/distil-request.md` naming:
 
 - the hand-off folder itself as a source
-- the design branch (`design/<set>-<slug>` in the prototype)
+- the designer's branch in the prototype (a `design/<set>-<slug>` branch, or
+  `main` when the work was made there)
 - `repo:trade-imports-plants-frontend`
 - `repo:trade-imports-plants-backend` (when the change needs a backend
   contract)

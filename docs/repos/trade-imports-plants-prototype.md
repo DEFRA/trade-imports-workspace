@@ -55,7 +55,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prot
 
 It runs on stubs alone, with no backend, Defra ID, Defra ID stub, Redis or reference data. Then open `http://localhost:3103/`. Sign-in is on by default (`AUTH_ENABLED` unset) and the chooser and every set sit behind it, exactly as the real service's pages do, but stub sign-in signs you in straight away with no password. `/auth/stub-sign-in?organisationId=<id>` signs in as another organisation.
 
-A design release, once saved on its own `design/<set>-<slug>` branch, is data that lives locally at `.cache/designer/data/` (gitignored) — it survives a restart on the same machine and resets per-release via "Reset this prototype's data" on the chooser.
+A design release, once saved (on `main` or its own `design/<set>-<slug>` branch — a branch is never required), is data that lives locally at `.cache/designer/data/` (gitignored) — it survives a restart on the same machine and resets per-release via "Reset this prototype's data" on the chooser.
 
 ## CI
 
@@ -74,11 +74,13 @@ canary), two jobs publish a Playwright report:
 - **Merge the Playwright report** combines both into one HTML report
   (FIT plus the walkthroughs, filterable by `#?q=@<tag>`), and **Publish the
   Playwright report** pushes it to the `gh-pages` branch: `reports/pr-<n>/`
-  for a pull request, `reports/main/` for `main`. The pull request gets a
-  comment with the link. A nightly `prune-reports.yml` job (a new name,
-  because `cleanup-e2e-reports.yml` is in `overrides.json`'s `deleted`)
-  removes closed pull requests' reports and keeps `gh-pages` to what is
-  live.
+  for a pull request, the site root
+  (`https://defra.github.io/trade-imports-plants-prototype/`) for `main`,
+  with `reports/main/` kept as a redirect to the root for old links. The
+  pull request gets a comment with the link. A nightly `prune-reports.yml`
+  job (a new name, because `cleanup-e2e-reports.yml` is in
+  `overrides.json`'s `deleted`) removes closed pull requests' reports and
+  keeps `gh-pages` to what is live; it never touches the root report.
 - **Prerequisite**: GitHub Pages must be turned on for this repository
   (Settings, Pages, "Deploy from a branch", `gh-pages`, `/ (root)`) before
   the report links resolve. Until then, the checks still pass and each
@@ -95,7 +97,7 @@ The prototype has its own multi-stage `Dockerfile` (development / production_bui
 
 ## Designer work vs. hand-off
 
-Designer changes are made on a `design/<set>-<slug>` branch (exempt from the workspace's cross-repo branch-naming rule — see `CLAUDE.md` rule 2 — because this repo has no Docker stack image to match against). A maintainer's own change to this repo's contract (scripts, rules, docs) uses `chore/NO_JIRA-<slug>` or `chore/EUDPA-N-<slug>` instead, following the workspace's own branch-naming rule.
+Designer changes work end to end on `main` — no branch is required, and a designer can save and push straight to `main` throughout. A `design/<set>-<slug>` branch is available (exempt from the workspace's cross-repo branch-naming rule — see `CLAUDE.md` rule 2 — because this repo has no Docker stack image to match against) but only ever offered, never enforced: it exists to let a designer share in-progress work via a draft pull request without it reaching `main` yet. A maintainer's own change to this repo's contract (scripts, rules, docs) uses `chore/NO_JIRA-<slug>` or `chore/EUDPA-N-<slug>` instead, following the workspace's own branch-naming rule.
 
 When a change is ready to become real, "hand this to the real team" raises a Jira story from the prototype (`tim jira create`, dry run first) and routes the actual build into `trade-imports-plants-frontend` on one real `feat/EUDPA-N-<slug>` branch — never inside this repo. See the `prototype` skill's `references/hand-off.md` and `references/build-it-for-real.md`.
 

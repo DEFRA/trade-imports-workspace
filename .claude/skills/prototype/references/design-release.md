@@ -133,18 +133,19 @@ to stay as it is.
    `plants-research-oct` for October research. Check it is not taken with
    `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:release -- list`.
    Never use `examples`, `reset`, `auth`, `public` or `health`.
-3. **Get onto the designer's branch.** On a `design/*` branch, stay on it.
-   On any other branch (`main`, a `feat/*`, `chore/*` or trial branch), make
-   one:
+3. **Stay on the designer's branch.** Branches are optional
+   (`references/ROUTING.md`, "Branches"): on `main`, stay on `main` — that is
+   the default, and starting a release there works exactly the same way. On
+   a `design/*` branch, stay on it. Only on someone else's branch (a
+   `feat/*`, `chore/*` or trial branch) make a new one:
 
    ```
    git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/<release-id>-start
    ```
 
-   This is the one branch rule in `references/ROUTING.md`, "Branches": the designer's
-   change and its save then land on the same branch as the release, and
-   `references/share-my-change.md` stays there too. If there are unsaved
-   changes, ask the designer to save or undo them first
+   The designer's change and its save then land on the same branch as the
+   release, and `references/share-my-change.md` stays there too. If there
+   are unsaved changes, ask the designer to save or undo them first
    (`references/share-my-change.md`): the release must be a commit of its
    own. When another reference sent you here mid-change, its edits are not
    made yet, so there is nothing to ask.

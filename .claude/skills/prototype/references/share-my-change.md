@@ -29,7 +29,7 @@ pages that changed and give links.
   (`DEFRA/trade-imports-plants-prototype`), never to plants-frontend.
 - **Check ownership before saving.** Run
   `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:where`
-  and follow it. On a `design/*` branch, never save a file that "belongs to
+  and follow it. On `main` or a `design/*` branch, never save a file that "belongs to
   the real service" or is "removed", and never save a change inside a frozen
   release. Check `overrides.json` if in doubt: only files matching its
   `ours` list are the prototype's own. On a `handoff/*` branch, and a
@@ -80,30 +80,39 @@ Use the `designer:where` answers:
 Files under `.cache/`, `coverage/` and `node_modules/` are never saved (git
 ignores them).
 
-### 3. Get onto the designer's own branch
+### 3. Stay on the designer's own branch
 
-The same rule as every other reference
-(`references/ROUTING.md`, "Branches"), so one request never ends up split
-across two branches:
+The same rule as every other reference (`references/ROUTING.md`,
+"Branches"): a branch is never required, so stay on whatever branch the
+designer is already working on, and never switch them onto one without
+saying so.
 
+- On `main`: stay on it. Saving to `main` is a fully supported way to work,
+  and step 6 below pushes straight there when the designer asks to share.
 - On a `design/*` branch: stay on it. One branch can hold several saved
   changes, and the release's own "Start design release" commit is usually
   already there.
 - On a `handoff/*` branch: this is the upstream route. Save as below; the
   `references/hand-off.md` reference says what comes next.
-- On any other branch (`main`, a `feat/*`, `chore/*` or trial branch): make
-  a new branch named `design/<set-id>-<slug>`, where `<slug>` is two to four
-  words for the change, in lower case with hyphens:
+- On someone else's branch (a `feat/*`, `chore/*` or trial branch left from
+  another session): never save here. Make a new branch named
+  `design/<set-id>-<slug>`, where `<slug>` is two to four words for the
+  change, in lower case with hyphens:
 
   ```
   git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype switch -c design/plants-working-consignment-addresses
   ```
 
   Unsaved changes come with it, so the new branch starts from the current
-  one. Tell the designer the branch name, and, when that was not `main`,
-  say in one line which branch it started from and why (usually: `main`
-  does not have the designer suite yet). Never save onto someone else's
+  one. Tell the designer the branch name and which branch it started from,
+  and why (it was not theirs to save on). Never save onto someone else's
   `feat/*` or `chore/*` branch.
+- **The designer can also ask for a `design/*` branch from `main`**, to keep
+  a change off `main` while they share it for review — "keep this off
+  main", "put it on a branch first", "I'd rather review it before it goes
+  live". Make `design/<set-id>-<slug>` from `main` the same way, and treat
+  that as their preference for the rest of the session unless they say
+  otherwise.
 
 ### 4. Format and check
 
@@ -167,11 +176,58 @@ across two branches:
    `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --stat`
    and tell the designer what was saved, in one sentence.
 
-### 6. Send it to GitHub and open a pull request (only when asked)
+### 6. Send it to GitHub (only when asked)
 
-If the designer already asked for a pull request (in this message or the one
-that led here), go straight on. Otherwise ask: "Shall I send this to GitHub
-and open a pull request so others can see it?", and go on only on a clear yes:
+If the designer already asked to share (in this message or the one that led
+here — "save it and open a pull request", "push it to main", "share this",
+"send this to GitHub"), go straight on. Otherwise ask: "Shall I send this to
+GitHub so others can see it?", and go on only on a clear yes. On `main`, with
+no route stated yet this session, that one question may add one line: "It
+goes straight to `main`; say 'keep it off main' if you'd rather share it on
+a branch with its own link first." Never add it again once they have
+answered, and never add it on a `design/*` branch.
+
+Which route:
+
+- On `main`, and they asked for a pull request, a review first, or to keep
+  it off `main` ("make a pull request", "keep this off main", "put it on a
+  branch first"), now or earlier this session: make
+  `design/<set-id>-<slug>` from here (step 3, last bullet — the saved
+  commit comes with it), then follow **On a `design/*` branch** below.
+  So a later push from `main` cannot carry the kept-off commit there by
+  surprise, point the local `main` back at GitHub's once the branch is
+  made — every commit it had is on the new branch, so nothing is lost:
+  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
+  then
+  `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype branch -f main origin/main`.
+- On `main` otherwise: **On `main`** below.
+- On a `design/*` branch: **On a `design/*` branch** below, even if they
+  said "push it" — a designer who wants it on `main` instead says "merge my
+  pull request" (section 7).
+
+**On `main`:** push straight there. No pull request, and nothing to review:
+this is the direct route.
+
+```
+git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push origin main
+```
+
+If git refuses (`Permission denied`, `403`, `could not read Username`, or
+`main` has moved on and it is rejected as non-fast-forward), stop and say
+plainly what happened: either this computer cannot send to the prototype yet
+(see below), or `main` has changed since — offer to bring it in
+(`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,
+then `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype merge --no-edit origin/main`, settling
+any clash as in `references/design-release.md` section G) and push again.
+Read `siteUrl` from `scripts/designer/prototype.json` (in the prototype
+repo) and tell the designer: "This is on `main` now. The deployed prototype
+and its report at `<siteUrl>` update once the pipeline runs, usually within
+about ten minutes." Skip the rest of this section.
+
+**On a `design/*` branch** (made because the designer wanted to share
+without touching `main` — `references/ROUTING.md`, "Branches"): push the
+branch and open a **draft** pull request, so others can see and comment on
+it before it reaches `main`.
 
 1. `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push -u origin <branch>`
 
@@ -198,10 +254,12 @@ and open a pull request so others can see it?", and go on only on a clear yes:
    example link to open the page that changed, for example
    `http://localhost:3103/examples/plants-working/draft-midway?page=task-list`
    or `?page=notification-view` (check your answers).
-3. Open the pull request against the prototype, never plants-frontend:
+3. Open a **draft** pull request against the prototype, never plants-frontend
+   (draft because sharing in-progress work is the point of a branch here —
+   nothing stops the designer asking for it to be marked ready when it is):
 
    ```
-   gh pr create --repo DEFRA/trade-imports-plants-prototype --base main --head <branch> --title "<first line>" --body-file ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md
+   gh pr create --repo DEFRA/trade-imports-plants-prototype --base main --head <branch> --draft --title "<first line>" --body-file ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.cache/designer/share/pr-body.md
    ```
 
    `--repo` tells `gh` which repository to open the pull request against, so
@@ -218,21 +276,23 @@ and open a pull request so others can see it?", and go on only on a clear yes:
 
    Tell them: "Open this link, paste the title below into the title box and
    the description from `.cache/designer/share/pr-body.md` into the
-   description box, then press Create pull request." Give the title in the
-   reply, and the path of the body file.
+   description box, tick 'Create as draft', then press Create pull request."
+   Give the title in the reply, and the path of the body file.
 
-4. Give the designer the pull request link, and say: "The deployed prototype
-   only changes after this is merged to `main`. Send this link to the
-   prototype maintainer for a review and say when you need it merged. The
-   pull request's checks publish a walkthrough of every release on this
-   branch as a web page, usually within about ten minutes: a picture of
-   each page, a video and a trace." Read `reportsUrl` from
+4. Give the designer the pull request link, and say: "This is on a branch,
+   so the deployed prototype only changes once this is merged to `main` —
+   say 'merge my pull request' or send the link to the prototype maintainer
+   for a review. The pull request's checks publish a walkthrough of every
+   release on this branch as a web page, usually within about ten minutes: a
+   picture of each page, a video and a trace." Read `siteUrl` from
    `scripts/designer/prototype.json` (in the prototype repo) and, once you
    have the pull request's number, give
-   `<reportsUrl>pr-<n>/#?q=@walkthrough` as the link to send stakeholders —
-   that is the demo. If the pull request's comment says GitHub Pages is not
-   turned on yet, give the `prototype-playwright-report` Actions artifact
-   instead and say the prototype maintainer needs to turn Pages on.
+   `<siteUrl>reports/pr-<n>/#?q=@walkthrough` as the link to send
+   stakeholders — that is the demo, live for as long as the pull request
+   stays open. If the
+   pull request's comment says GitHub Pages is not turned on yet, give the
+   `prototype-playwright-report` Actions artifact instead and say the
+   prototype maintainer needs to turn Pages on.
 
 ### 7. Check on or merge a pull request (only when asked)
 
@@ -448,9 +508,12 @@ the branch is already on GitHub, offer to send the undo too (ask first).
    version before the undo beside it (plain `--before` would compare with the
    undo commit itself, so both pictures would match).
    Never claim a visual result you have not looked at.
-4. After a pull request,
+4. After a direct push to `main`,
+   `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype log -1 --format="%H" origin/main`
+   matches the commit just pushed.
+5. After a pull request,
    `gh pr view --repo DEFRA/trade-imports-plants-prototype <branch>` shows it
-   open against `main`.
+   open against `main`, as a draft.
 
 ## Hand-off
 

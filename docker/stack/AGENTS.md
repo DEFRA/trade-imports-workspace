@@ -125,12 +125,13 @@ queue once ASB is reachable again.
 ```bash
 ./scripts/stack/run-stack.sh                     # default stack first, as normal
 ./scripts/stack/run-stack.sh --profile security   # additive: brings up just zap
-cd repos/trade-imports-animals-tests
+cd repos/trade-imports-ins-tests
 npm run test:docker-compose:security              # passive scan
-npm run test:docker-compose:security:active       # passive + active scan
+npm run test:docker-compose:ins:security          # passive scan, one domain
+npm run test:docker-compose:security:active       # passive + active scan, every domain
 ```
 
-See `repos/trade-imports-animals-tests/docs/security.md` for the full local
+See `repos/trade-imports-ins-tests/docs/security.md` for the full local
 workflow, what is scanned and how the run is gated. It's opt-in unlike
 `toxiproxy` because it's a heavy scanner nobody wants brought up by a plain
 `run-stack.sh`, and it needs `network_mode: host` because the app frontends'
@@ -158,8 +159,9 @@ meters, not for promoting. Config lives in `docker/stack/monitoring/`.
 
 ```bash
 ./scripts/stack/run-stack.sh
-cd repos/trade-imports-animals-tests
-npm run test:docker-compose
+cd repos/trade-imports-ins-tests
+npm run test:docker-compose             # every domain
+npm run test:docker-compose:plants      # one domain: animals, animals-admin, ins or plants
 ```
 
 ## Lifecycle scripts live in `scripts/stack/`

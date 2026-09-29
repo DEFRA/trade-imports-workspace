@@ -2,7 +2,7 @@
 
 ## Overview
 
-All tests use **Vitest** and run in a Node environment. There is no browser test runner — controllers are tested by spinning up the real Hapi server and calling `server.inject()`. End-to-end browser tests (Playwright) live in the separate `trade-imports-animals-tests` repo.
+All tests use **Vitest** and run in a Node environment. There is no browser test runner — controllers are tested by spinning up the real Hapi server and calling `server.inject()`. End-to-end browser tests (Playwright) live in the separate `trade-imports-ins-tests` repo, one Playwright project per frontend.
 
 **Run with:**
 ```bash

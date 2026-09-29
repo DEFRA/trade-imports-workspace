@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { join, normalize, sep } from 'node:path'
+import { join } from 'node:path'
+import { workareaDirFor } from '../../backlog/workarea.js'
 import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
@@ -24,24 +25,8 @@ import { makeBacklogAction, parseOptions } from './shared.js'
  * @returns {string}
  * @throws {TimError} USAGE
  */
-export const backlogPathFor = (workspaceRoot, workarea) => {
-  if (typeof workarea !== 'string' || !workarea.trim()) {
-    throw new TimError('USAGE', 'Name a workarea, such as shared/my-programme.')
-  }
-  const trimmed = workarea.trim().replace(/\/+$/, '')
-  const normalised = normalize(trimmed).split(sep).join('/')
-  if (
-    trimmed.startsWith('/') ||
-    normalised === '..' ||
-    normalised.startsWith('../')
-  ) {
-    throw new TimError(
-      'USAGE',
-      `Workarea "${workarea}" must be a path inside workareas/, such as shared/my-programme.`
-    )
-  }
-  return join(workspaceRoot, 'workareas', normalised, 'backlog.json')
-}
+export const backlogPathFor = (workspaceRoot, workarea) =>
+  join(workareaDirFor(workspaceRoot, workarea), 'backlog.json')
 
 const prSchema = z.object({ url: z.string().min(1) }).passthrough()
 

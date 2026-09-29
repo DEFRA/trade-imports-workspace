@@ -1,0 +1,42 @@
+{
+  "conflicts": [
+    {
+      "id": "c-001",
+      "about": "Whether the suites run against real external integrations in CDP perf-test",
+      "positions": [
+        {
+          "source": "repo:tests",
+          "says": "The suite already has a named perf-test CDP environment it can point at.",
+          "claim": "tests-001-m1"
+        },
+        {
+          "source": "confluence:6608160092",
+          "says": "Everything outside the INS product boundary is stubbed for performance testing.",
+          "claim": "dr5-018"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The DR's boundary rule applies in every environment, perf-test included: stubs outside the boundary. The perf-test environment name is reused for targeting only."
+    },
+    {
+      "id": "c-002",
+      "about": "Which tiers and scenario shapes run in which environment, and how often",
+      "positions": [
+        {
+          "source": "confluence:6608160092",
+          "says": "Tier 1 runs on every pull request at smoke scale.",
+          "claim": "dr5-038"
+        },
+        {
+          "source": "confluence:6608160092",
+          "says": "Tier 4 is not a load test: tens of requests, not hundreds a second.",
+          "claim": "dr5-060"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "A gap that shapes the CI wiring and schedules; building starts on the default below.",
+      "question": "Which tiers and scenarios should run in each environment, and on what schedule?",
+      "default": "Local Docker: the tier-1 smoke run on every pull request. CDP perf-test: per release, tiers 2 to 5, with the tier-4 conformance run at owner-agreed rates."
+    }
+  ]
+}

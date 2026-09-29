@@ -1,0 +1,40 @@
+{
+  "source": "repo:tests",
+  "structure": "trade-imports-animals-tests at ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests, branch main, HEAD a6c2da2. Playwright/TypeScript E2E suite. Top-level: adapters/{http,queue,db} (HTTP/SQS/Mongo clients), fixtures/ (Playwright test.extend fixtures), flows/ (journey helper classes).",
+  "scopeHash": "2463275d5028bb20924759609f192edb5cf7f95091101e0bbfd8acd947a36330",
+  "claims": [
+    {
+      "id": "tests-001",
+      "statement": "The repo has no k6 (or any other load/performance-test tool) material anywhere — no k6 scripts, no k6 devDependency, no load-test npm script, no load-test CI workflow.",
+      "kind": "non-functional",
+      "ref": "package.json (scripts, devDependencies); repo-wide grep for k6|load.?test|perf(ormance)test",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "tests-002",
+      "statement": "The suite is organised as Playwright projects by set: 'e2e' (animals, root paths), 'admin', 'ins', 'plants', each with its own testMatch/testIgnore globs pointing at tests/e2e/features/<set>/**.",
+      "kind": "behaviour",
+      "ref": "utils/playwright/shared-config.ts:15-72",
+      "quote": "projects: [ { name: 'e2e', testIgnore: [...] }, { name: 'admin', testMatch: [...] }, { name: 'ins', testMatch: [...] }, { name: 'plants', testMatch: [...] } ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tests-005",
+      "statement": "docker-compose base URLs default to animals-frontend :3000, admin :3001, ins-frontend :3002 and plants-frontend :3003 — the same ports the workspace stack documents.",
+      "kind": "data",
+      "ref": "playwright.docker-compose.config.ts:8-24",
+      "quote": "const projectBaseUrls: Record<string, string> = { e2e: 'http://localhost:3000', admin: 'http://localhost:3001', ins: 'http://localhost:3002', plants: 'http://localhost:3003' };",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "tests-010",
+      "statement": "The notificationApi fixture is used only in fixtures/security.ts and fixtures/ui.ts.",
+      "kind": "integration",
+      "ref": "fixtures/security.ts; fixtures/ui.ts",
+      "quote": "notificationApi: async ({ request }, use) => { ... }",
+      "confidence": "inferred",
+      "note": "Found by grepping for notificationApi under fixtures/."
+    }
+  ]
+}

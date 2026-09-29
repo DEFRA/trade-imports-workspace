@@ -55,7 +55,7 @@ REPO_PATH=$(cd "$REPO_PATH" && pwd -P)
 # Tests-repo has no unit-test suite. Skip the per-package npm-test
 # gating; the WALKER runs `npm run test:docker-compose` once at end of batch.
 SKIP_NPM_TEST=0
-[[ "$REPO_NAME" == "trade-imports-animals-tests" ]] && SKIP_NPM_TEST=1
+[[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && SKIP_NPM_TEST=1
 
 echo "========================================="
 echo "Manual upgrade: $PACKAGE | $CURRENT → $TARGET (repo: $REPO_NAME)"

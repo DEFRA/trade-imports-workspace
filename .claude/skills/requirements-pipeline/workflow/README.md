@@ -1,12 +1,124 @@
-# The increment build loop
+# The requirements-pipeline workflows
+
+Two workflows, one per phase of the `requirements-pipeline` skill:
+
+| Script | Phase | What it does |
+|---|---|---|
+| [`distil.js`](#distiljs) | DISTIL | Sources in, `backlog.json` and a report out |
+| [`increment-build-loop.js`](#increment-build-loopjs) | BUILD | Builds the backlog, one increment at a time |
+
+Point the `Workflow` tool at a file by `scriptPath` with an `args` object. Launching by
+`name` runs a stale snapshot rather than what is on disk:
+
+```
+Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/distil.js", args })
+Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args })
+```
+
+## `distil.js`
+
+The whole DISTIL phase, from the work list to the report. The main session keeps only
+intake (writing `sources.json`, fetching Confluence pages, writing up rulings), answering the
+report's questions with the user and saving the report. See
+[`../references/DISTIL.md`](../references/DISTIL.md) for those, and for how to fold in a new
+source or a ruling: edit `sources.json` and launch again.
+
+The method each agent follows lives in brief files beside the script, in
+[`distil/briefs/`](distil/briefs/): `extract.md` for every source, one
+`extract-<kind>.md` per source kind (repo, confluence, web, document, trace, ruling, image),
+`verify.md`, `reconcile.md` and `consolidate.md`. The report agent follows
+[`../references/REPORT.md`](../references/REPORT.md). Every count, check, merge, file
+clean-up and backlog comparison is a `tim distil` command, so no agent ever writes `jq` to
+check another's file, runs `rm`, or copies a hash. A trace source's extractor and verifiers
+run the trace CLI through `tim distil trace`, which works in the source's own folder, so no
+prompt carries a `cd`.
+
+**A workarea distilled by hand before this workflow** reads as stale on every source, because
+its files carry no hashes. Adopt the sources that are still good with `tim distil adopt`
+before the first launch: see
+[`../references/DISTIL.md`](../references/DISTIL.md#adopting-a-programme-distilled-by-hand).
+
+**The config.** Every key is required. A missing key stops the run before any agent starts,
+and the first log line is the resolved configuration.
+
+| Field | What it is |
+|---|---|
+| `workspace` | The workspace root as a tilde path, such as `~/git/defra/trade-imports-workspace`. A clone passes its own. Agents run every Bash command against it, and the status agent resolves its absolute form for the Read, Write and Edit tools |
+| `workarea` | The programme's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ins-performance-testing`. Never starts with `workareas/` |
+| `only` | `null` to work every source that needs it. Or a list of source ids: only those are extracted and verified this launch. A listed source already verified is skipped, and the run stops before reconcile while any other source still needs work |
+| `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
+| `agentType` | The subagent type every agent runs as. `distil-worker` ([`.claude/agents/distil-worker.md`](../../../agents/distil-worker.md)) has no Agent or Task tool, so it cannot fork helpers that race it on its file. `null` for the default workflow agent |
+| `models` | `{}` for the default on every tier. `think` (default opus): reconcile, consolidate, report. `code` (default sonnet): extract, verify. `light` (default haiku): status, the checks, merge, working set, coverage. `"inherit"` uses the session model |
+| `verifyChunk` | The most claims one verify agent takes, such as 150. A 330-claim extract at 150 is verified by 3 agents in parallel, each writing its own part file |
+
+The worked example for the INS performance testing programme:
+
+```js
+{
+  workspace: '~/git/defra/trade-imports-workspace',
+  workarea: 'shared/ins-performance-testing',
+  only: null,
+  tim: 'tim',
+  agentType: 'distil-worker',
+  models: {},
+  verifyChunk: 150
+}
+```
+
+### The stages
+
+| Stage | Agents | What it does |
+|---|---|---|
+| Status | 1 light | Resolves the workspace root's absolute form and runs `tim distil status`: the work list. A source verified with an unchanged scope hash and an unchanged extract is skipped |
+| Extract | 1 code, then 1 light check, per source | Only for a source whose next step is extract. The extractor follows `extract.md` and its kind's brief, writes `distil/extract/<slug>.json`, and stamps it with `tim distil stamp`. The check runs `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and removes old part files. A failed check sends the extractor back once with the problems, then the source fails |
+| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
+| Reconcile | 1 light, then 1 think and 1 light, up to 3 times | `tim distil working-set --write`, then the reconciler writes `requirements.json` and `conflicts.json`, and `tim distil coverage` checks them. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the consolidator. Up to 2 send-backs |
+| Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
+| Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
+
+Extract and verify run as one `pipeline()` over the work list: a source moves on to verify as
+soon as its own extract checks out, and never waits for the others.
+
+**A failed source stops the run before reconcile**, and so does one that `only` left for
+later. Reconcile reads every source, so reconciling without one would leave its claims out
+without anyone seeing. The result names each failed source with its problems. Launching again
+retries it, and skips every source already verified.
+
+**On a re-distil, rows built or set aside are held fixed by tim, not by trust.** The consolidator may rewrite `todo` and `blocked` rows: a blocked row has no code behind it, so a later ruling changes it. When
+`backlog.json` exists, the coverage check after reconcile runs
+`tim distil backlog-snapshot --save before`, which keeps every row id and every row that is
+`done`, `deferred`, `dropped`, `rejected` or `merged-into` in `distil/backlog-snapshot.before.json`. The check after each consolidate runs
+`--compare-to before`, which names every row removed and every such row changed. Each is sent
+back to the consolidator as a problem.
+
+### What it returns
+
+```js
+{
+  workarea, stopped,     // stopped: null, or { reason, detail }
+  sources,               // every source: outcome (verified, unchanged, failed, not-run) and its counts
+  failed,                // the ids of the sources that failed
+  requirements, conflicts, questions,   // from tim distil coverage; each question with its default
+  backlog,               // { path, total, byStatus, covered }
+  decisions,             // the reconciler's and consolidator's
+  goalConflicts,         // rulings that contradict sources.json's goal: the main session corrects the goal
+  report, reportPath,    // the report text, and where the main session saves it
+  reportIssues           // what the report step found wrong with its inputs, kept out of the report
+}
+```
+
+`stopped.reason` is one of `status-failed`, `unknown-source`, `sources-unverified`,
+`working-set-failed`, `reconcile-failed`, `snapshot-failed`, `consolidate-failed` or
+`report-failed`. Each carries whatever the run had worked out by then. What the main session
+does for each is in [`../references/DISTIL.md`](../references/DISTIL.md#4-when-the-run-stops-early).
+
+The script keeps the args contract every workflow keeps, and
+`tim/src/backlog/workflow-contract.test.js` checks its config, its stages and its stops.
+
+## The increment build loop
 
 The workflow the `requirements-pipeline` skill's BUILD phase drives. Point the `Workflow`
 tool at the file by `scriptPath` with an `args` object — see the worked example below.
-Launching by `name` runs a stale snapshot rather than what is on disk:
-
-```
-Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args })
-```
 
 **To run a backlog, follow the BUILD phase**
 ([`../references/BUILD.md`](../references/BUILD.md)). It builds the args once, launches this
@@ -15,11 +127,11 @@ keeps going. This runs from the main session because **a subagent cannot invoke
 `Workflow`**. That is why the former two-tier `batch-orchestrator/` prompts were removed:
 their middle tier could never start the thing it existed to drive.
 
-The loop keeps the args contract every workflow script in the workspace keeps — see
+Both scripts keep the args contract every workflow script in the workspace keeps — see
 [`.claude/workflows/README.md`](../../../workflows/README.md#the-args-contract) — and
 `tim/src/backlog/workflow-contract.test.js` checks it here as well as there.
 
-## `frontend-alignment.js`
+### `frontend-alignment.js`
 
 Kept as a reference only, at
 [`workareas/shared/frontend-alignment/frontend-alignment.reference.js`](../../../../workareas/shared/frontend-alignment/frontend-alignment.reference.js)
@@ -28,7 +140,7 @@ workflow-contract test's `FALLBACK` check. It drove the design demonstration tha
 `trade-imports-ins-frontend` into shape against the two journey frontends, stage by stage;
 its plan stage was lifted into `increment-build-loop.js` below.
 
-## `increment-build-loop.js`
+### `increment-build-loop.js`
 
 Builds increments from **any** `backlog.json` under `workareas/`, one at a time, with a
 full quality pass per increment rather than a single implement-and-hope pass. It derives

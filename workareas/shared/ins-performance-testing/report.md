@@ -1,243 +1,311 @@
-# INS performance testing: distil report
+# INS performance testing: backlog report
 
-## 0. What the skill decided
+## Summary
 
-It will build in 8 repos: tests (trade-imports-animals-tests), stub (trade-imports-stub), idstub (trade-imports-defra-id-stub), insfrontend, animalsfrontend, plantsfrontend, referencedata and gateway (trade-imports-dynamics-gateway). The k6 suites sit beside the E2E suites in the tests repo. The two stub repos are the systems outside the INS boundary, and they must answer with latency and faults derived from service levels. The service repos are touched only where a tier needs something from them. Only one row does that: per-dependency call metrics. sources.json also lists insbackend, addressbook, animalsbackend and plantsbackend, but no increment changes them, so they are not in the backlog's repos table.
+- The backlog has 18 increments: 16 ready to build, 2 blocked.
+- The tests use k6. They cover the live animals and high-risk plants journeys, the INS front door and the shared components.
+- 13 questions are open. Each has a default, so building can start without an answer.
+- Before building, the build loop must be extended to handle more than 3 repos (step 0).
+- 3 increments need INS deployed to CDP perf-test, which is Sam's CDP work.
 
-Precedence, highest first: Sam's three rulings (29 September "c" on the tool, then "b" correcting the first, then the first), then the team meeting of 29 September, then the tests, stub and service repos, then the INS volumetrics page (Confluence 6604328622), DR-EUDP-005 (Confluence 6608160092), Grafana's load-testing types page and the k6 docs.
+## Before you build: step 0
 
-## 0b. How to build it
+The build loop's normal run only supports repos named `frontend`, `backend` and `tests`. This backlog uses 8.
 
-**Step 0 is to enhance the builder.** The build loop's full lifecycle takes only the repo keys `frontend`, `backend` and `tests`, because its script fixes them. This backlog names 8 repo keys: tests, stub, idstub, insfrontend, animalsfrontend, plantsfrontend, referencedata and gateway. Today only the loop's branch lifecycle takes any repo keys, and it gives up Jira, pull requests per increment and the Codex executor. That is a workaround, not a sensible way to build this.
+Extend the loop so it takes its repos from the backlog, whatever they are called. Each increment then gets a ticket, a pull request per repo, CI and merge, as usual. The Codex instructions must change to match.
 
-So before inc-001, the full lifecycle is extended to take its repos from the backlog envelope, whatever their keys. That means ticket, branch, plan, build, pull request per repo touched, CI and merge, for any number of repos. The Codex briefs follow suit. The backlog itself does not change. Its rows already name the repos each increment touches, and the envelope already maps every key to a path and a GitHub slug.
+The backlog itself does not change. inc-014 is the hardest test: it touches 6 repos in one increment.
 
-inc-014 is the row that tests this hardest. It touches six repos in one increment.
+## Decisions the pipeline made
 
-## 1. Questions for Sam
+**Repos (8).** The pipeline chose these from the goal:
 
-13 questions are open. Each has a default, and building starts on the defaults. Three requirements are in "question" status and ride on these conflicts rather than adding questions of their own:
+| Key | Repo | Why |
+|---|---|---|
+| tests | trade-imports-animals-tests | The k6 suites live here, beside the end-to-end tests |
+| stub | trade-imports-stub | Stands in for systems outside INS |
+| idstub | trade-imports-defra-id-stub | Stands in for Defra ID sign-in |
+| insfrontend | trade-imports-ins-frontend | Needs per-dependency call metrics |
+| animalsfrontend | trade-imports-animals-frontend | Needs per-dependency call metrics |
+| plantsfrontend | trade-imports-plants-frontend | Needs per-dependency call metrics |
+| referencedata | trade-imports-reference-data | Needs per-dependency call metrics |
+| gateway | trade-imports-dynamics-gateway | Needs per-dependency call metrics |
 
-- req-018, the session API and related components, rides on the shared-path question.
-- req-039, the Defra ID stub's capacity, rides on the Defra ID stub question.
-- req-079, stub profiles per integration, rides on the one-stub-or-shared question.
+The INS backend, address book and both journey backends are tested but not changed, so they are not listed.
 
-None of these questions clashes with a ruling already in a target repo. The one repo ruling, that notifications are created only through the frontends' save routes, was settled by precedence (see section 2). The first question below is the nearest thing to a clash, because one of Sam's own rulings cannot apply literally there.
+**Which source wins a disagreement**, highest first:
 
-1. **In local Docker, what counts as the "real" SNS, SQS and cdp-uploader?** (c-018)
-   - Default: the stack's stand-ins take their place locally. These are floci for SNS and SQS, and the local cdp-uploader container for the document store and scanning. Results that depend on them carry a caveat. In CDP they are the real services.
-   - Touches: inc-001.
-   - One side: Sam's second ruling says they are real, and names no environment. On the other side: the first ruling says the suites run locally, and the stub repo shows that only emulators exist locally.
+1. Sam's 3 rulings of 29 September 2026
+2. The team meeting of 29 September 2026
+3. The repos as they are today
+4. The INS volumetrics page (Confluence 6604328622)
+5. DR-EUDP-005, the decision record on how to performance test (Confluence 6608160092)
+6. Grafana's guide to load test types, and the k6 documentation
 
-2. **Should the k6 suites live in the tests repo, or in a separate CDP performance-test-suite repo?** (c-005)
-   - Default: the tests repo, as a third profile beside Playwright and ZAP in the same image and entrypoint. Revisit only if CDP's perf-test runner cannot run it from there.
-   - Touches: inc-001, and so everything after it.
-   - One side: the programme brief and the tests repo, which already hosts a non-Playwright profile. Other side: CDP's usual convention of a separate repo. No source states that convention.
+## Questions for Sam
 
-3. **Should the build go ahead on DR-EUDP-005 v0.1 while it is still Proposed?** (c-006)
-   - Default: yes, as amended by the meeting and the rulings. Tier cadences and scenario parameters are held in configuration, so an agreed revision changes values, not scripts.
-   - Touches: inc-004, inc-009.
-   - Sources: DR-EUDP-005 is Proposed, with no approver recorded. The meeting has the DR author agreeing to rework it.
+Each question lists the default that will be built if nobody answers.
 
-4. **Which response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own?** (c-004)
-   - Default for backend APIs: P95 under 200ms and P99 under 1,200ms. P50 under 25ms is reported but does not fail the run.
-   - Default for frontend pages: P95 under 2s and P99 under 5s.
-   - Default for upload pages: P99 under 60s.
-   - Failure rate stays under 1%.
-   - P99 burst: 5xx under 1%, and P95 no worse than twice the sustained P95.
-   - Spike: P95 back within 10% of baseline within 60 seconds.
-   - Endurance: final-hour P95 no more than 1.2 times the first hour.
-   - Touches: inc-001, inc-009, inc-010.
-   - Sources: the volumetrics page (section 4.7 and the IPAFFS service levels) and the k6 docs examples, against the DR and the meeting ("no NFRs agreed yet").
+### 1. In local Docker, what stands in for SNS, SQS and cdp-uploader?
 
-5. **Which tiers and scenarios run in each environment, and how often?** (c-003)
-   - Default:
-     - Local: smoke on every pull request, and everything runnable on demand at short durations.
-     - CDP dev: smoke after each deploy.
-     - CDP test: tier 2 nightly at design targets.
-     - CDP perf-test, per release: tiers 2, 3 and 5, the 8-hour endurance run, breakpoint and tier-4 conformance.
-   - Touches: inc-001, inc-002, inc-009, inc-010, inc-016, inc-017.
-   - Sources: the DR's tier cadences, the k6 docs (only smoke belongs in CI) and Grafana. Sam's rulings name the environments but not the tiers.
+- **Default:** floci for SNS and SQS, and the local cdp-uploader container. Results that depend on them carry a caveat. In CDP, the real services are used.
+- **Affects:** inc-001.
+- **Why it is open:** Sam ruled these services are real, but real ones do not exist locally.
 
-6. **Should the shared-component thresholds gate on the two-journey figures or the with-IUU figures?** (c-007)
-   - Default: gate on the two-journey figures (live animals and plants). Run the with-IUU figures as a second profile that is reported but does not fail the run. That profile is 770 sign-ins an hour, 241 concurrent users and a 55 RPS session spike, driven by synthetic IUU-shaped front-door traffic. Switch the gate when IUU is confirmed for Day One.
-   - Touches: inc-005, inc-009, inc-012.
-   - Sources: the volumetrics page (with-IUU figures apply from IUU go-live) and the DR (the combined tier includes IUU), against the meeting (IUU journey tests out of scope) and the tests repo (no IUU journey exists).
+### 2. Do the k6 suites live in the tests repo or a separate CDP performance-test repo?
 
-7. **What should the shared path be while the session API, permissions service and routing proxy are not built?** (c-008, which also carries req-018)
-   - Default: test the shared path that exists today. That is ins-frontend with its own Redis session, ins-backend, address-book and reference-data. Apply the section 9.4 session load to each frontend's own session store. Add the three components when they exist.
-   - Touches: inc-012, and inc-013 (blocked until they are built).
-   - Sources: the DR (they sit on the real side), against the ins-frontend and ins-backend repos and the meeting (not built).
+- **Default:** the tests repo, as a third profile beside Playwright and ZAP. Revisit only if CDP's perf-test runner cannot run it from there.
+- **Affects:** inc-001, and so everything after it.
+- **Why it is open:** CDP usually uses a separate repo, but no source says so.
 
-8. **What latency should each stub use until its section 9.5 service level is agreed?** (c-011)
-   - Default: an interim p50 100ms, p95 400ms and p99 1,000ms for Defra ID, the Trade token endpoint and MDM, marked "unagreed" in every report. Replace it with the latency the services measure on real calls, or with the first conformance measurement, then with the agreed service level. The scan has no profile because cdp-uploader is real.
-   - Touches: inc-007, inc-014, inc-018.
-   - Sources: the DR (lognormal from the agreed service level) and the volumetrics page (every service level TBC), against the stub repo (no latency today) and the meeting (feed back measured medians).
+### 3. Do we build to DR-EUDP-005 while it is still Proposed?
 
-9. **Does CDP perf-test need its own stub configuration?** (c-022)
-   - Default: one stub build and one set of profiles for every environment, chosen at runtime. A zero-delay profile is kept for script development and the pull-request smoke run. Only instance sizing differs, and that is CDP configuration.
-   - Touches: inc-001, inc-007.
-   - Sources: Sam's first ruling (one suite, run configuration) and the DR, against the meeting (a fast dev stub may not serve when variable latency is needed). The second ruling is silent.
+- **Default:** yes, as amended by the meeting and Sam's rulings. Tier cadences and scenario settings are held in configuration. An agreed revision then changes values, not scripts.
+- **Affects:** inc-004, inc-009.
+- **Why it is open:** nobody has approved the decision record. Its author agreed in the meeting to rework it.
 
-10. **Should each stubbed integration get its own stub service?** (c-020, which also carries req-079)
-    - Default: keep the existing stub services, with a separate latency and fault profile per integration inside them. Split one out only if a measured headroom run shows the shared stub distorts results.
-    - Touches: inc-007, inc-008, inc-016, inc-017.
-    - Sources: the meeting (a shared stub carries combined load in perf-test) and the DR (measure stub ceilings), against the stub repo (one service fakes both the token endpoint and MDM). Sam's second ruling leaves it open.
+### 4. What pass and fail limits do we use until INS agrees its own?
 
-11. **What test-data distributions should be used until the IPAFFS analyses land?** (c-012)
-    - Default commodity lines per plants notification: 50% have 1–3, 30% have 4–10, 15% have 11–25 and 5% have 26–50. The interim maximum is 50.
-    - Default documents: 0–3 per live-animals notification, PDF or JPEG, 100KB to 5MB.
-    - Default amendments: 20% of notifications amended once, and 5% of those cancelled.
-    - Default background volume: one year at the 2025 baseline (42,000 live animals and 34,000 plants).
-    - Touches: inc-005, inc-006.
-    - Sources: the DR (realistic distributions) and the meeting (vary inputs), against the volumetrics page (TBC, open items 4, 5 and 22) and the plants frontend (no line ceiling).
+"P95" means 95% of responses are faster than this.
 
-12. **Should the Defra ID stub's session store be redesigned before load runs?** (c-010, which also carries req-039)
-    - Default: no. Measure its headroom first. Change it only if it cannot carry twice the sign-in target (400 an hour, or 1,540 with IUU) plus the 5 RPS spike.
-    - Touches: inc-008.
-    - Sources: the idstub repo (it rewrites one JSON file synchronously and is a single process), against the DR (770 sign-ins an hour against an IDM stub, and measure stub ceilings first).
+| Measure | Default limit |
+|---|---|
+| Backend APIs | P95 under 200ms, P99 under 1,200ms. P50 under 25ms is reported but does not fail a run |
+| Frontend pages | P95 under 2 seconds, P99 under 5 seconds |
+| Upload pages | P99 under 60 seconds |
+| Failed requests | Under 1% |
+| Burst | Server errors under 1%. P95 no worse than twice the sustained P95 |
+| Spike | P95 back within 10% of normal within 60 seconds |
+| Endurance | P95 in the last hour no more than 1.2 times the first hour |
 
-13. **Should stubs be built now for Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID?** (c-009)
-    - Default: no. Stub only what deployed INS services call today: Defra ID, the Trade token endpoint, MDM and Azure Service Bus. Address Lookup comes first when a service calls it, and its service level is raised as a risk now.
-    - Touches: inc-007, inc-015.
-    - Sources: the DR (all on the stubbed side), against the stub, idstub and ins-backend repos (none is called in deployed environments). The meeting names Address Lookup as the biggest worry.
+- **Affects:** inc-001, inc-009, inc-010.
+- **Why it is open:** the meeting confirmed no NFRs (non-functional requirements) are agreed for INS. The defaults come from volumetrics §4.7 and the IPAFFS service levels.
 
-## 2. What precedence settled
+### 5. Which tests run where, and how often?
 
-Sam's rulings came first:
+| Environment | Default |
+|---|---|
+| Local Docker | Smoke test on every pull request. Anything else on demand, at shorter durations |
+| CDP dev | Smoke test after each deploy |
+| CDP test | Journey tests (tier 2) nightly at the design targets |
+| CDP perf-test | Per release: tiers 2, 3 and 5, the 8-hour endurance run, breakpoint and the tier 4 check against real systems |
 
-- **k6, not JMeter** (c-021). The third ruling won over CDP's one-paragraph JMeter guidance in the meeting. JMeter is not kept as a fallback either.
-- **Every environment is stubbed, perf-test included** (c-001). The second ruling withdrew the first ruling's real integrations in perf-test and sided with the meeting and the DR.
-- **Real external systems only through tier-4 conformance** (c-002). The second ruling and the DR won over the first ruling's unbounded real traffic. No design-target load ever reaches a real external system.
-- **SNS, SQS and cdp-uploader with its document store and antivirus are real** (c-017). The second ruling and the meeting won over the DR's stubbed box. Only the gateway's Service Bus leg to PIMS stays a stand-in.
-- **Go wide across both journeys** (c-019). The second ruling won over the meeting's live-animals-first next step. The early thin run in perf-test still stands.
+- **Affects:** inc-001, inc-002, inc-009, inc-010, inc-016, inc-017.
+- **Why it is open:** Sam's rulings name the environments but not which tests run in each.
 
-Then the lower-ranked sources:
+### 6. Do the shared components pass or fail on the figures with IUU or without?
 
-- **Notifications are created only through the frontends' save routes** (c-013). The tests repo's ruling won over the DR's backend-only tier 1. A backend-only run uses request bodies captured from those saves.
-- **Session load is set at 1.35 RPS, not 0.67** (c-014). Volumetrics section 9.4 won over NFR-VOL-CORE-06, which it supersedes. The repos show backends resolve no session today.
-- **A breakpoint run is added** (c-015). The meeting won over the DR's four shapes. Average-load and stress map onto sustained peak, and soak is the 8-hour endurance run.
-- **Uploads are at most 10MB** (c-016). The animals frontend's cap won over the backend's 50MB limit.
+- **Default:** pass or fail on the live animals and plants figures. Run the figures with IUU as a second profile that is reported only: 770 sign-ins an hour, 241 concurrent users and a 55 requests-a-second session spike, using made-up IUU-style traffic. Switch when IUU is confirmed for day one.
+- **Affects:** inc-005, inc-009, inc-012.
+- **Why it is open:** IUU (illegal, unreported and unregulated fishing) is a journey built by another supplier. Its tests are out of scope, but it adds load to the shared components.
 
-## 3. Already met
+### 7. What do we test while the session API, permissions service and routing proxy do not exist?
 
-- **req-030, correlation and attribution.** Every service already carries x-cdp-request-id and times each endpoint (ins-frontend, animals and plants backends, address-book, ins-backend, reference-data, gateway). The suite only sets the header and records the run window.
-- **req-036, the messaging-stand-in caveat.** floci and the Service Bus emulator behind toxiproxy already run in the stack (stub repo). Only the report's caveat line is added, and it is written in inc-001.
-- **req-078, SNS, SQS and cdp-uploader are real in CDP.** The services already use the CDP-provisioned ones (meeting), and the local stand-ins already run (stub repo). Nothing is built. It is reported only.
+- **Default:** the shared path that exists today: the INS frontend with its own session store, the INS backend, the address book and reference data. Add the three when they are built.
+- **Affects:** inc-012, and inc-013 (blocked until they exist).
+- **Why it is open:** DR-EUDP-005 says to test them for real, but none is built.
 
-## 4. The increments
+### 8. How slow should the stubs be until service levels are agreed?
 
-18 rows. 16 are `todo` and 2 are `blocked`.
+- **Default:** 100ms for half of responses, 400ms for 95%, and 1 second for 99%. This applies to Defra ID, the Trade token endpoint and MDM (master data). Every report marks these figures "unagreed". They are replaced first by measured latency, then by the agreed service level. Virus scanning has no stub figure because cdp-uploader is real.
+- **Affects:** inc-007, inc-014, inc-018.
+- **Why it is open:** every service level in the volumetrics page is still TBC, and the stubs have no delay today.
 
-| id | title | ACs | repos | depends on | status | gate |
-|---|---|---|---|---|---|---|
-| inc-001 | k6 smoke of both journeys and the front door on local Docker, failing the PR on a breach | 9 | tests | – | todo | yes: the walking skeleton |
-| inc-002 | Same smoke on CDP dev and test through real OIDC against the Defra ID stub | 4 | tests | inc-001 | todo | – |
-| inc-003 | Thin run of both journeys and the front door on CDP perf-test once INS is deployed | 3 | tests | inc-002 | **blocked** | yes: what the first perf-test run surfaced |
-| inc-004 | Both journeys and the front door follow the real journey shape under open-model load | 6 | tests | inc-001 | todo | – |
-| inc-005 | Distinct identities, varied notifications, documents and address-book use | 7 | tests, idstub | inc-004 | todo | – |
-| inc-006 | A year of background notifications before any load run | 4 | tests | inc-005 | todo | – |
-| inc-007 | SLA-derived latency profile per stubbed integration, switched at runtime and named in every report | 7 | tests, stub, idstub | inc-001 | todo | – |
-| inc-008 | Each stub's throughput ceiling measured before results through it are trusted | 4 | tests, stub, idstub | inc-007 | todo | – |
-| inc-009 | Sustained peak and P99 burst at design targets | 8 | tests | inc-004, 005, 006, 007, 008 | todo | yes: the first design-target run |
-| inc-010 | Spike and recovery, and 8-hour endurance | 6 | tests | inc-009 | todo | – |
-| inc-011 | Events reach the read model and the Service Bus stand-in, smoothed and counted at peak-day volume | 5 | tests | inc-010 | todo | – |
-| inc-012 | Shared components carry combined load in proportion, including IUU's share, without cross-journey harm | 6 | tests | inc-009 | todo | – |
-| inc-013 | Session API, permissions service and routing proxy loaded once built | 3 | tests | inc-012 | **blocked** | – |
-| inc-014 | Every INS service measures each call outside the boundary, per dependency and operation | 4 | tests, insfrontend, animalsfrontend, plantsfrontend, referencedata, gateway | inc-007 | todo | – |
-| inc-015 | Call ratios and the required SLA per external system | 4 | tests | inc-012, inc-014 | todo | – |
-| inc-016 | Breakpoint run, and the scale the services needed in perf-test | 6 | tests | inc-003, inc-008, inc-012 | todo | – |
-| inc-017 | Resilience runs inject faults at each stub under load | 6 | tests, stub, idstub | inc-009 | todo | – |
-| inc-018 | Tier-4 conformance of each real external system at an owner-agreed rate | 5 | tests, stub, idstub | inc-003, inc-007 | todo | – |
+### 9. Does CDP perf-test need its own stub settings?
 
-Build-order decisions to check:
+- **Default:** no. One stub build and one set of profiles everywhere, chosen when a run starts. A zero-delay profile is kept for writing scripts and for the pull request smoke test. Only instance sizing differs between environments, and that is CDP configuration.
+- **Affects:** inc-001, inc-007.
+- **Why it is open:** the meeting noted a fast dev stub may not suit tests that need realistic delays.
 
-- **Stub latency comes before the first design-target run.** inc-009 depends on inc-007 (profiles) and inc-008 (stub ceilings). No design-target result is taken through a zero-delay or unmeasured stub. The smoke run keeps a zero-delay profile.
-- **inc-003 is blocked because INS is not deployed to perf-test.** Deploying INS and the stubs there is Sam's CDP work and is out of scope here. inc-016 (breakpoint and sizing) and inc-018 (conformance) are marked `todo` but depend on inc-003, so in practice they wait on that deployment too. Set inc-003 to `todo` once the deployment exists.
-- **Plants publishes no events and has no upload feature today.**
-  - inc-011 measures eventing for both journeys and reports that plants is missing. It does not build a plants outbox.
-  - inc-005 applies documents to live animals only.
-  - inc-006 reports the real read-model size, not 76,000.
-  - This keeps the go-wide rule without inventing product.
-- **Resilience runs are expected to report failures.** inc-017 is done when the runs detect and report each unbounded wait or retry. It is not waiting for the services to pass. The known missing timeouts, retry bounds and circuit breakers are findings for the owning teams (section 6).
-- **Per-dependency latency metrics span five service repos in one row.** inc-014 stays as one row because only a run across all five shows every dependency measured. If it is too big to review, split it by language: the three Node frontends, then reference-data and the gateway. Do not split it by layer.
-- inc-013 is blocked with no safe default because none of its three components exists yet. It stays visible rather than being dropped.
+### 10. Does each stubbed system get its own stub service?
 
-## 5. Coverage
+- **Default:** keep today's stubs, with a separate delay and fault profile for each system inside them. Split one out only if a measured test shows the shared stub skews results.
+- **Affects:** inc-007, inc-008, inc-016, inc-017.
+- **Why it is open:** one person raised it in the meeting. Sam confirmed it was not decided.
 
-In total, 1,042 claims were extracted and 1,023 held under verification (19 did not). Verifiers added 56 missed claims. These produced 79 requirements: 53 adopted (3 of them already met), 3 questions and 23 out of scope.
+### 11. What test data do we use until the IPAFFS analysis is done?
 
-| source | claims | held | missed added | requirements backed (of which in scope) |
+| Data | Default |
+|---|---|
+| Commodity lines per plants notification | 50% have 1 to 3, 30% have 4 to 10, 15% have 11 to 25, 5% have 26 to 50. Maximum 50 |
+| Documents per live animals notification | 0 to 3, PDF or JPEG, 100KB to 5MB |
+| Amendments | 20% of notifications amended once. 5% of those cancelled |
+| Existing data before a run | 1 year at the 2025 volume: 42,000 live animals and 34,000 plants notifications |
+
+- **Affects:** inc-005, inc-006.
+- **Why it is open:** the volumetrics page leaves these as TBC (open items 4, 5 and 22). The plants journey has no limit on commodity lines.
+
+### 12. Do we redesign the Defra ID stub before load testing?
+
+- **Default:** no. Measure what it can take first. Change it only if it cannot carry twice the sign-in target plus the spike. The target is 400 sign-ins an hour, or 1,540 with IUU, and the spike is 5 requests a second.
+- **Affects:** inc-008.
+- **Why it is open:** the stub runs as a single process and rewrites one file on every sign-in, which may not scale.
+
+### 13. Do we build stubs now for systems INS does not call yet?
+
+These are Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID.
+
+- **Default:** no. Stub only what INS calls today: Defra ID, the Trade token endpoint, MDM and Azure Service Bus. Address Lookup comes first once a service calls it. Its service level is raised as a risk now, because the meeting named it as the biggest worry.
+- **Affects:** inc-007, inc-015.
+- **Why it is open:** DR-EUDP-005 lists all of them as stubbed, but no deployed service calls them.
+
+## Settled without a question
+
+| Decision | Settled by | Conflict |
+|---|---|---|
+| k6 only. JMeter is not used, even as a fallback | Sam's ruling | c-021 |
+| Every environment is stubbed outside INS, including perf-test | Sam's ruling, siding with the meeting | c-001 |
+| Real external systems only get the tier 4 check, at rates their owners agree. No design-target load reaches them | Sam's ruling and DR-EUDP-005 | c-002 |
+| SNS, SQS and cdp-uploader, with its document store and virus scanning, are real. Only the gateway's link to PIMS is stubbed | Sam's ruling and the meeting | c-017 |
+| Both journeys from the first increment, not live animals first. The early perf-test run still stands | Sam's ruling | c-019 |
+| Test notifications are created only through the frontends' save routes. Backend-only runs replay request bodies captured from those saves | The tests repo's existing rule | c-013 |
+| Session load is 1.35 requests a second, not 0.67 | Volumetrics §9.4, which replaces NFR-VOL-CORE-06 | c-014 |
+| A breakpoint run is added to DR-EUDP-005's 4 scenario shapes | The meeting | c-015 |
+| Uploads are at most 10MB | The animals frontend's limit, over the backend's 50MB | c-016 |
+
+## Already in place
+
+| Requirement | What already exists |
+|---|---|
+| req-030: trace a request across services | Every service passes the `x-cdp-request-id` header and times each endpoint. The suite only sets the header and records when each run happened |
+| req-036: caveat on local messaging | floci and the Service Bus emulator already run in the local stack. inc-001 adds the caveat to reports |
+| req-078: real SNS, SQS and cdp-uploader in CDP | The services already use the ones CDP provides |
+
+## The increments
+
+| Id | What it delivers | Criteria | Repos | Depends on | Status |
+|---|---|---|---|---|---|
+| inc-001 | Smoke test of both journeys and the front door on local Docker, failing the pull request when a limit is broken | 9 | tests | – | Ready. **Review point** |
+| inc-002 | The same smoke test in CDP dev and test, signing in through the Defra ID stub | 4 | tests | 001 | Ready |
+| inc-003 | First small run in CDP perf-test, once INS is deployed there | 3 | tests | 002 | **Blocked**. **Review point** |
+| inc-004 | Traffic follows the real journey: draft, many edits, submit, read back, update | 6 | tests | 001 | Ready |
+| inc-005 | Different users and organisations, varied notifications, documents and address book use | 7 | tests, idstub | 004 | Ready |
+| inc-006 | 1 year of existing notifications loaded before any load run | 4 | tests | 005 | Ready |
+| inc-007 | A delay profile for each stubbed system, switchable per run and named in every report | 7 | tests, stub, idstub | 001 | Ready |
+| inc-008 | Each stub's capacity measured before its results are trusted | 4 | tests, stub, idstub | 007 | Ready |
+| inc-009 | Sustained peak and burst at the design targets | 8 | tests | 004 to 008 | Ready. **Review point** |
+| inc-010 | Spike and recovery, and the 8-hour endurance run | 6 | tests | 009 | Ready |
+| inc-011 | Events reach the dashboard's data and the Service Bus stub, counted at peak-day volume | 5 | tests | 010 | Ready |
+| inc-012 | Shared components under combined load, including IUU's share, without one journey slowing another | 6 | tests | 009 | Ready |
+| inc-013 | Session API, permissions service and routing proxy, once built | 3 | tests | 012 | **Blocked** |
+| inc-014 | Every INS service measures each call it makes outside INS | 4 | tests + 5 service repos | 007 | Ready |
+| inc-015 | How often INS calls each outside system, and the service level it needs from each | 4 | tests | 012, 014 | Ready |
+| inc-016 | Breakpoint run, and the scale each service needed in perf-test | 6 | tests | 003, 008, 012 | Waits on inc-003 |
+| inc-017 | Faults injected at each stub under load | 6 | tests, stub, idstub | 009 | Ready |
+| inc-018 | Low-volume check of each real outside system, at a rate its owner agrees | 5 | tests, stub, idstub | 003, 007 | Waits on inc-003 |
+
+A **review point** means the loop stops after that increment so Sam can look before anything that depends on it is built.
+
+**Check these ordering decisions:**
+
+- **Stub delays come before the first design-target run.** No design-target result is taken through a stub that answers instantly. The smoke test keeps a zero-delay profile.
+- **inc-003 is blocked until INS is deployed to CDP perf-test.** That is Sam's CDP work. inc-016 and inc-018 wait on it too. Set inc-003 to ready once the deployment exists.
+- **Plants has no events and no uploads today.** inc-011 reports that plants sends no events. It does not build them. inc-005 adds documents to live animals only. inc-006 reports the real size of the dashboard's data, not 76,000.
+- **Fault injection (inc-017) is expected to find failures.** It is done when the runs detect and report each missing timeout or retry limit, not when the services pass.
+- **inc-014 spans 5 service repos.** If it is too big to review, split it by language: the 3 Node frontends, then reference data and the gateway. Do not split it by layer.
+
+## Where the requirements came from
+
+1,042 claims were taken from 20 sources. A second agent checked each one:
+
+- 1,023 held
+- 19 were dropped
+- 56 missed claims were added
+
+These became 79 requirements: 53 to build (3 of them already in place), 3 open questions and 23 out of scope.
+
+| Source | Claims | Held | Added | Requirements it backs (in scope) |
 |---|---|---|---|---|
-| Sam's ruling, 29 Sep (c, tool) | 1 | 1 | 0 | 1 (1) |
-| Sam's ruling, 29 Sep (b, correction) | 12 | 11 | 2 | 17 (14) |
-| Sam's ruling, 29 Sep (first) | 7 | 7 | 3 | 6 (5) |
-| Meeting, 29 Sep | 70 | 67 | 3 | 40 (30) |
-| tests repo | 17 | 15 | 2 | 13 (12) |
+| Sam's ruling: k6 | 1 | 1 | 0 | 1 (1) |
+| Sam's ruling: correction after the meeting | 12 | 11 | 2 | 17 (14) |
+| Sam's first ruling | 7 | 7 | 3 | 6 (5) |
+| Meeting, 29 September 2026 | 70 | 67 | 3 | 40 (30) |
+| Tests repo | 17 | 15 | 2 | 13 (12) |
 | trade-imports-stub | 14 | 14 | 1 | 12 (9) |
 | Defra ID stub | 16 | 16 | 2 | 10 (6) |
-| ins-frontend | 44 | 44 | 2 | 21 (10) |
-| ins-backend | 42 | 40 | 2 | 15 (7) |
-| address-book | 35 | 35 | 2 | 12 (6) |
-| reference-data | 32 | 32 | 2 | 12 (6) |
-| dynamics gateway | 37 | 36 | 2 | 9 (5) |
-| animals frontend | 52 | 49 | 5 | 24 (16) |
-| animals backend | 57 | 55 | 1 | 13 (10) |
-| plants frontend | 44 | 43 | 3 | 19 (14) |
-| plants backend | 38 | 38 | 1 | 9 (6) |
-| Volumetrics page (6604328622) | 330 | 329 | 9 | 42 (32) |
-| DR-EUDP-005 (6608160092) | 104 | 103 | 4 | 40 (29) |
-| Grafana load-testing types | 16 | 16 | 4 | 7 (7) |
-| k6 docs | 74 | 73 | 6 | 12 (11) |
+| INS frontend | 44 | 44 | 2 | 21 (10) |
+| INS backend | 42 | 40 | 2 | 15 (7) |
+| Address book | 35 | 35 | 2 | 12 (6) |
+| Reference data | 32 | 32 | 2 | 12 (6) |
+| Dynamics gateway | 37 | 36 | 2 | 9 (5) |
+| Animals frontend | 52 | 49 | 5 | 24 (16) |
+| Animals backend | 57 | 55 | 1 | 13 (10) |
+| Plants frontend | 44 | 43 | 3 | 19 (14) |
+| Plants backend | 38 | 38 | 1 | 9 (6) |
+| Volumetrics page | 330 | 329 | 9 | 42 (32) |
+| DR-EUDP-005 | 104 | 103 | 4 | 40 (29) |
+| Grafana load test types | 16 | 16 | 4 | 7 (7) |
+| k6 documentation | 74 | 73 | 6 | 12 (11) |
 
-"In scope" counts adopted requirements.
+**Strongest requirements.** 72 of the 79 are backed by 2 or more sources:
 
-Cross-referenced requirements: 72 of the 79 are backed by two or more sources. The strongest are:
+- req-030 (trace a request): 11 sources
+- req-044 (check the journeys work before measuring): 8 sources
+- req-001, req-003, req-004, req-026 and req-032: 7 sources each
 
-- req-030 (correlation), backed by 11 sources
-- req-044 (functional readiness before measuring), backed by 8
-- req-001 (one k6 suite set, chosen by configuration), req-003 (local stack), req-004 (CDP dev and test), req-026 (endurance) and req-032 (stub latency profiles), backed by 7 each
+**Weakest requirements.** These rest on one source:
 
-Single-source requirements:
+- req-002: suites live in the tests repo (the tests repo only). Question 2 covers it.
+- req-051: sizing the machine that generates load (the k6 documentation only).
+- req-072: perf-test runs report the scale needed (the meeting only).
 
-- In scope:
-  - req-002, suites in the tests repo, rests on the tests repo alone. It carries question c-005.
-  - req-051, generator sizing, rests on the k6 docs alone.
-  - req-072, perf-test runs report the scale needed, rests on the meeting alone.
-- Out of scope: req-056 (volumetrics page), and the findings req-059 (reference-data), req-061 (gateway) and req-064 (animals backend).
+Four out-of-scope requirements also rest on one source: req-056, req-059, req-061 and req-064.
 
-Inferred claims: no requirement rests only on inferred claims. The single-source finding req-061 (the gateway double-sends events) leans most on inference. Two of its five claims are inferred, and both were added by the verifier, so confirm it before handing it on. req-038 and req-079, on stub capacity, cite four and two inferred stub claims beside verbatim ones.
+**Confirm before passing on:** req-061, the gateway sending every event twice. It rests on one repo, and 2 of its 5 claims were read between the lines rather than seen in the code.
 
-## 6. Out of scope
+No requirement rests only on claims read between the lines. The stub capacity requirements, req-038 and req-079, lean on some: 4 and 2 of their claims respectively.
 
-**Service defects, handed to the owning teams as findings.** The tests will surface these. They are not fixed here.
+## Out of scope
 
-- req-058: the frontends' outbound calls have no timeout, retry bound or circuit breaker, and no tuned connection pool.
-- req-059: reference-data's MDM and token calls ignore their timeouts. They have no retry, circuit breaker or stampede protection, refresh tokens without coordination, log full bodies and drop the trace header.
-- req-060: the busiest list queries are not index-backed (animals and plants lists, ins-backend's status filter, address-book's regex search).
-- req-061: the gateway sends every event to Service Bus twice, one after the other, with no Service Bus retry or timeout.
-- req-062: page handlers call services one after another, and dashboards make up to two address-book calls per row. A failed reference-data load is retried on every request.
-- req-063: no service limits inbound concurrency or rate, and nothing isolates one journey from another on the shared path.
-- req-064: the animals outbox halts a whole poll on one bad event, and submit makes up to six address-book lookups at once, each with a 2-second timeout.
-- req-065: ins-frontend re-fetches OIDC discovery and JWKS on every sign-in and refresh.
-- req-066: the Redis session client has no timeouts or fallback, and the Java services' Mongo clients have no socket or server-selection timeout.
-- req-067: the plants backend and address-book run on platform threads. Plants' busiest write is not transactional, amend deep-copies the payload, and its read-preference default contradicts its docs.
-- req-068: saves are capped at Hapi's default 1MiB, and plants lines have no maximum, so a large consignment can be refused.
-- req-069: the frontends' reference-data clients send no trace header.
-- req-070: an access-control finding on the notification list. It is not described here because this repo is public. The detail is in the programme's local distil files.
+### Problems in the services, for the owning teams
 
-**Sam's CDP platform work.** This is cdp-app-config and platform configuration, which Sam commits by hand.
+The tests will show these up. This programme does not fix them.
 
-- req-006: deploy trade-imports-stub and the Defra ID stub to CDP dev, test and perf-test, deploy INS to perf-test, and point the services at the stubs. This includes the gateway's Service Bus leg, which goes to a stand-in. It blocks inc-003, and so inc-016 and inc-018.
-- req-007: production-like sizing in perf-test (instance counts, CPU and memory, autoscaling, JVM sizing). inc-016 reads and reports this sizing but does not set it.
-- req-031: production-grade service telemetry at 10-second resolution. This is service and platform work (open item 20). Per-dependency call latency was split out and is built in inc-014.
+| Req | Problem |
+|---|---|
+| req-058 | Frontends' calls to other services have no timeout, retry limit or circuit breaker (a guard that stops calling a failing service) |
+| req-059 | Reference data ignores its configured timeouts for MDM and token calls. It has no retry, circuit breaker or protection against many requests refreshing an empty cache at once. Instances refresh tokens without coordinating. It logs full response bodies and drops the trace header |
+| req-060 | The busiest list queries have no database index: animals and plants lists, the INS backend's status filter, the address book's text search |
+| req-061 | The gateway sends every event to Service Bus twice, one after the other, with no retry or timeout |
+| req-062 | Pages call services one after another. Dashboards make up to 2 address book calls per row. A failed reference data load is retried on every request |
+| req-063 | No service limits incoming requests, and nothing stops one journey slowing another on the shared path |
+| req-064 | One bad event stops the animals outbox sending the rest. Submit makes up to 6 address book lookups at once, each with a 2-second timeout |
+| req-065 | The INS frontend re-fetches its sign-in configuration on every sign-in and refresh |
+| req-066 | The session store client has no timeouts or fallback. The Java services' database clients have no connection timeouts |
+| req-067 | The plants backend and address book use a less scalable threading model. Plants' busiest save is not transactional, amend copies the whole notification, and its database read setting contradicts its own documentation |
+| req-068 | Saves are capped at 1MB and plants has no limit on commodity lines, so a large consignment can be refused |
+| req-069 | The frontends' calls to reference data do not pass the trace header |
+| req-070 | An access-control finding on the notification list. It is not described here because this repo is public. The detail is in the programme's local files |
 
-**Exclusions from the DR and the meeting:**
+### Sam's CDP platform work
 
-- req-052: IUU journey-level targets and tests. Another supplier builds IUU. IUU appears here only as load on the shared components.
-- req-053: performance-testing the dependencies themselves (Defra ID, MDM, the risk engine, TIG, Dynamics, PIMS). Their owners test them. INS supplies call rates and takes part in conformance.
-- req-035: stubs for Address Lookup, TIG, TRACES, direct Dynamics and PIMS, and Entra ID. They wait until a deployed service calls them (see question 13).
-- req-054: tier-6 production measurement and traffic shadowing. INS is not live yet.
-- req-055: functional, contract, security and browser-rendering performance. ZAP and Lighthouse already cover the last two.
-- req-056: load the volumetrics page does not model. This covers inspectors and case-working, machine-to-machine submission, TIG inbound, downstream event delivery, CDN assets and IPAFFS cutover.
-- req-057: setting or validating the volumetric targets themselves. The suite uses them as parameters and feeds its measurements back.
+These are changes to CDP configuration, which Sam makes by hand.
+
+- **req-006:** deploy both stubs to CDP dev, test and perf-test, deploy INS to perf-test, and point the services at the stubs, including the gateway's link to PIMS. This blocks inc-003, inc-016 and inc-018.
+- **req-007:** size perf-test like production: instance counts, CPU, memory and autoscaling. inc-016 reports this sizing but does not set it.
+- **req-031:** detailed service metrics every 10 seconds (volumetrics open item 20). Per-call latency is split out and built in inc-014.
+
+### Excluded by the decision record or the meeting
+
+- **req-052:** IUU journey tests. Another supplier builds IUU. It appears here only as load on the shared components.
+- **req-053:** load testing the outside systems themselves. Their owners do that. INS gives them expected call rates.
+- **req-035:** stubs for systems INS does not call yet. See question 13.
+- **req-054:** measuring production and replaying its traffic. INS is not live yet.
+- **req-055:** functional, contract, security and in-browser performance testing. ZAP and Lighthouse already cover security and browser performance.
+- **req-056:** load the volumetrics page does not model: inspectors, system-to-system submissions, TIG inbound, onward event delivery, static files and IPAFFS cutover.
+- **req-057:** setting the volumetric targets. The tests use them and report back against them.
+
+## Terms used
+
+| Term | Meaning |
+|---|---|
+| CDP | Core Delivery Platform, where the services run |
+| DR-EUDP-005 | The decision record on how INS is performance tested |
+| INS | Import Notification Service |
+| IPAFFS | Import of products, animals, food and feed system: the service INS replaces |
+| MDM | Master data management: reference data such as countries |
+| NFR | Non-functional requirement, such as speed or capacity |
+| P50, P95, P99 | The response time that 50%, 95% or 99% of responses beat |
+| SLA | Service level agreement between INS and a system it depends on |
+| Stub | A stand-in for a real system, which answers with set delays and faults |
+| Tier 2, 3, 4, 5 | DR-EUDP-005's test levels: 2 is one journey, 3 is all journeys together, 4 is a low-volume check of real systems, 5 is fault injection |

@@ -18,7 +18,7 @@
       "$ref": "#/$defs/textList"
     },
     "repos": {
-      "description": "Where the programme builds: each repo key a row's `repos` names (frontend, backend and tests for the full lifecycle; any lower-case words under the branch lifecycle, such as ins, animals, plants and tests) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
+      "description": "Where the programme builds: each repo key a row's `repos` names (any lower-case words other than workspace, under either lifecycle, such as frontend, backend and tests, or perftests, stub and gateway) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/repo" }
     },
@@ -105,7 +105,7 @@
           "enum": ["feat", "fix", "chore", "refactor", "test", "docs"]
         },
         "repos": {
-          "description": "The repo keys the slice touches, such as [\"backend\", \"frontend\", \"tests\"]: keys of the envelope's `repos`. Left out, the loop takes every configured repo. [] means the row changes no backlog repo, such as a docs row whose output is in the workspace repo; only the branch lifecycle builds one.",
+          "description": "The repo keys the slice touches, such as [\"backend\", \"tests\", \"frontend\"]: keys of the envelope's `repos`, in merge order, provider before consumer: a service before the frontend that calls it, a stub before the service that calls it, a tests or performance-tests repo after every service it exercises. The full lifecycle merges in this order unless the keys are exactly frontend, backend and tests, which always merge backend, tests, frontend. Left out, the loop takes every configured repo. [] means the row changes no backlog repo, such as a docs row whose output is in the workspace repo; only the branch lifecycle builds one.",
           "$ref": "#/$defs/textList"
         },
         "sources": {

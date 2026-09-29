@@ -62,15 +62,18 @@ requireApproval      whether EVERY PR of an increment needs an approving review
               Default false
 approvalWaitMinutes  how long the merge stage waits for those approvals before
               stopping with every PR open. Default 20
-repos         where frontend, backend and tests live: a workspace-relative path
-              and a GitHub owner/name slug each. Take it from the backlog
-              envelope's `repos`, which DISTIL wrote:
+repos         the backlog envelope's `repos` map, whatever its keys, copied
+              in full: a workspace-relative path and a GitHub owner/name slug
+              per key. DISTIL wrote it:
                 jq '.repos' workareas/<workarea>/backlog.json
-              Ask only when that prints null (a backlog older than the field).
-              Never type it from memory and never default to the animals repos:
-              the same three keys name different repos in different
+              Its keys are the programme's own: frontend, backend and tests in
+              one backlog; perftests, stub, idstub, insfrontend and gateway in
+              another. Ask only when that prints null (a backlog older than the
+              field). Never type it from memory and never default to the
+              animals repos: the same key names different repos in different
               programmes, and a path typed from memory is how a plants
-              increment ends up built in the animals frontend
+              increment ends up built in the animals frontend. The loop's
+              preflight stops the run when the args and the envelope differ
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
               opus) plans and judges: plan, judge, the consistency reviewer.
@@ -257,9 +260,15 @@ Build the args object with every key below:
   requireApproval: false,
   approvalWaitMinutes: 20,
   repos: {
-    frontend: { path: 'repos/<frontend repo>', github: 'DEFRA/<frontend repo>' },
-    backend: { path: 'repos/<backend repo>', github: 'DEFRA/<backend repo>' },
-    tests: { path: 'repos/<tests repo>', github: 'DEFRA/<tests repo>' }
+    // the envelope's repos, every key exactly as `jq '.repos'` prints it. For the INS performance-testing backlog:
+    perftests: { path: 'repos/trade-imports-performance-tests', github: 'DEFRA/trade-imports-performance-tests' },
+    stub: { path: 'repos/trade-imports-stub', github: 'DEFRA/trade-imports-stub' },
+    idstub: { path: 'repos/trade-imports-defra-id-stub', github: 'DEFRA/trade-imports-defra-id-stub' },
+    insfrontend: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
+    animalsfrontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+    plantsfrontend: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
+    referencedata: { path: 'repos/trade-imports-reference-data', github: 'DEFRA/trade-imports-reference-data' },
+    gateway: { path: 'repos/trade-imports-dynamics-gateway', github: 'DEFRA/trade-imports-dynamics-gateway' }
   },
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
@@ -276,7 +285,24 @@ Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-
 **One launch. Never one per increment.** Change nothing else in `args`. Write
 `repos` out in full every time, copied from the backlog envelope's `repos`: the
 loop has no repos table of its own any more, so a missing `repos` stops the run
-before any agent starts.
+before any agent starts, and the preflight stops it before the first increment
+when a key, a path or a GitHub slug differs from the envelope's.
+
+**Merge order.** An increment across several repos merges one PR at a time, and
+the order is the script's, not an agent's:
+
+- **The keys are exactly `frontend`, `backend` and `tests`:** backend first, then
+  tests, then frontend, whatever order the row lists them in. The backend is the
+  provider and the frontend the consumer, and CDP runs the tests repo's suite
+  against the deployed frontend, so a frontend merged ahead of its test fixes
+  goes red.
+- **Any other keys:** the order of the row's own `repos` list. Write it provider
+  before consumer — a service before the frontend that calls it, a stub before
+  the service that calls it, and a tests or performance-tests repo after every
+  service it exercises. The ticket stage copies it as written and the planner
+  returns its `repos` in the same order, saying under `risks` where the row's
+  order puts a consumer first. A PR in a repo the row does not name, such as one
+  a CI fixer raised, merges last.
 
 `stopAfter` is what ends an ordinary run, so write it in explicitly too. Pass
 `"all"` only when the user asked for the whole backlog; the loop still stops at
@@ -465,7 +491,10 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
   in progress and stashes the rest.
-- It runs on `executor: 'claude'` only. The Codex briefs name the frontend, backend and tests repos.
+
+It runs on either executor. The Codex briefs take the configured repos, whatever their keys, and a Codex stage is
+told about a merge in progress, a row that changes no backlog repo and a row whose `gatePhases` leave out unit,
+exactly as a Claude stage is.
 
 ### The row fields it reads
 
@@ -493,7 +522,8 @@ run**, then push the workspace. Give such a row `gatePhases: []`, because nothin
 
 The same keys as above, with `lifecycle: 'branch'`, `branch` set to the working branch, and `null` for every Jira
 key, `requireApproval` and `approvalWaitMinutes`. `repos` is the envelope's `repos` copied in full, whatever its
-keys are: the branch stage stops the run if the envelope and the args name different repos. The worked example in
+keys are, exactly as for the full lifecycle: the preflight and the branch stage both stop the run if the envelope
+and the args name different repos. The worked example in
 [`../workflow/README.md`](../workflow/README.md#the-branch-lifecycle) is the one for the frontend alignment sync.
 
 ### Checking what landed

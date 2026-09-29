@@ -91,13 +91,13 @@ export const meta = {
 //                   whole lifecycle. It needs an explicit `increments` list:
 //                   planning a backlog you are not building has no end, because
 //                   a plan does not change what `tim backlog next` returns
-//   repos           the three repos an increment's "repos" list can name —
-//                   frontend, backend, tests — each with its workspace-relative
-//                   path and its GitHub owner/name slug. A programme in another
-//                   repo family (the plants frontend and backend, say) names its
-//                   own table here. Under lifecycle 'branch' the keys are
-//                   whatever the backlog envelope's `repos` names (ins,
-//                   animals, plants, tests, say), copied in full
+//   repos           the backlog envelope's `repos` map, whatever its keys,
+//                   copied in full: each key a lower-case word an increment's
+//                   "repos" list can name, with its workspace-relative path and
+//                   its GitHub owner/name slug. frontend, backend and tests is
+//                   one such map; perftests, stub, insfrontend and gateway is
+//                   another. The preflight stops the run when it differs from
+//                   the envelope's
 //   models         required; {} takes the recommended default on every tier —
 //                   it does NOT inherit the session model. Three tiers, each
 //                   optional: think (default opus) = plan, judge, the
@@ -269,11 +269,6 @@ if (IS_BRANCH) {
       `${WORKFLOW_NAME}: lifecycle "branch" commits and pushes straight onto config.branch, so it refuses ${PROTECTED_BRANCHES.join(' and ')}. Name the long-lived working branch — got "${BASE_BRANCH}"`
     )
   }
-  if (EXECUTOR !== 'claude') {
-    throw new Error(
-      `${WORKFLOW_NAME}: lifecycle "branch" runs on executor "claude" only. The Codex briefs name the frontend, backend and tests repos, and a branch-lifecycle backlog names its own — got "${EXECUTOR}"`
-    )
-  }
 }
 
 if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
@@ -327,41 +322,51 @@ if (PLAN_ONLY && EXPLICIT_IDS === null) {
 
 // ---------------------------------------------------------------------------
 // Repos. An increment is a full-stack slice and lists the repos it touches in
-// "repos"; this table says where each one lives on disk and on GitHub. All
-// three keys are required so every stage's REPO PATHS line reads the same
-// whichever repo family the programme builds in.
+// "repos"; this table says where each one lives on disk and on GitHub. The
+// keys are whatever the backlog envelope names, under either lifecycle: the
+// preflight checks the two agree before any increment starts.
 // ---------------------------------------------------------------------------
-// Under the branch lifecycle the keys are whatever the backlog envelope names.
-// They must be plain lower-case words, because a changed file is written
+// Keys must be plain lower-case words, because a changed file is written
 // `<repoKey>:<path>` and routed back to its repo by that prefix. `workspace`
 // is reserved: it names the workspace repo itself, where a docs row writes.
 const REPOS = CFG.repos
-const FULL_REPO_KEYS = ['frontend', 'backend', 'tests']
 const WORKSPACE_KEY = 'workspace'
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 
-if (IS_BRANCH) {
-  const keys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
-  const badKeys = keys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
-  if (keys.length === 0 || badKeys.length > 0) {
-    throw new Error(
-      `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
-    )
-  }
+const configuredKeys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
+const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
+if (configuredKeys.length === 0 || badRepoKeys.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
+  )
 }
 
-const REPO_KEYS = IS_BRANCH ? Object.keys(REPOS) : FULL_REPO_KEYS
+const REPO_KEYS = configuredKeys
 
 for (const key of REPO_KEYS) {
-  const entry = REPOS?.[key]
+  const entry = REPOS[key]
   const pathOk = typeof entry?.path === 'string' && /^repos\/[^/]+$/.test(entry.path)
   const githubOk = typeof entry?.github === 'string' && /^[^/\s]+\/[^/\s]+$/.test(entry.github)
   if (!pathOk || !githubOk) {
     throw new Error(
-      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-${key}" and a "github" owner/name slug like "DEFRA/trade-imports-animals-${key}" — got ${JSON.stringify(entry)}`
+      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-frontend" and a "github" owner/name slug like "DEFRA/trade-imports-animals-frontend" — got ${JSON.stringify(entry)}`
     )
   }
 }
+
+// The frontend, backend and tests keys every programme once had to use. A
+// programme that still names exactly those three keeps the rules written for
+// them: `repo: both` on an old row, the tests repo added to every UI change,
+// and backend → tests → frontend as the merge order. Any other set of keys
+// takes its merge order from the row's own `repos` list.
+const LEGACY_REPO_KEYS = ['frontend', 'backend', 'tests']
+const IS_LEGACY_KEYS =
+  REPO_KEYS.length === LEGACY_REPO_KEYS.length && LEGACY_REPO_KEYS.every((key) => REPO_KEYS.includes(key))
+
+// frontend-change covers only these two repos, whatever key a programme gives
+// them. Its recipes, copy files and behaviour spec mean nothing elsewhere.
+const FRONTEND_CHANGE_PATHS = ['repos/trade-imports-animals-frontend', 'repos/trade-imports-plants-frontend']
+const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
 
 // ---------------------------------------------------------------------------
 // Models. Three tiers, each with a BUILT-IN default matched to the kind of
@@ -504,10 +509,16 @@ const ghTable = Object.entries(GH_REPO)
   .map(([k, v]) => `${k}=${v}`)
   .join(', ')
 
+const LEGACY_ITS_REPOS = `ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
+frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.`
+
+const KEYED_ITS_REPOS = `ITS REPOS: the increment's \`repos\` list, in the order it is written: that order is the increment's MERGE ORDER.
+Where it has none, an older backlog's \`repo\` field: a configured key means that repo alone, and \`both\` means every
+configured repo. Where it has neither, every configured repo, in this order: ${REPO_KEYS.join(', ')}.`
+
 const FULL_REPO_RULE = `REPO PATHS: ${repoTable}. An increment is a full-stack slice: it is built, reviewed and proved in
 every repo it touches at once, on the SAME branch name in each (CLAUDE.md rule 2, cross-repo branch parity).
-ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
-frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.
+${IS_LEGACY_KEYS ? LEGACY_ITS_REPOS : KEYED_ITS_REPOS}
 Listing a repo the change leaves alone costs nothing — no change means no commit and no PR.`
 
 const BRANCH_REPO_RULE = `REPO PATHS: ${repoTable}. This run builds straight onto \`${BASE_BRANCH}\`, which already exists in
@@ -583,6 +594,11 @@ is not in your way: leave it. The plan's sections 5 and 6 checks are yours to ru
 // a browser, so it runs only the gate's unit phase.
 const codexGateUnit = (id, stage) =>
   `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage}`
+
+// A branch-lifecycle row whose gatePhases leave out unit runs no gate phase
+// in its builders, Codex's included. The briefs read `none` as exactly that.
+const CODEX_NO_GATE = 'none'
+const codexGateBinding = (id, stage, phases) => (phases.includes('unit') ? codexGateUnit(id, stage) : CODEX_NO_GATE)
 
 const GATE_RUNG_SCHEMA = {
   type: 'object',
@@ -717,17 +733,43 @@ const groupDiffCommand = (group) =>
 // fixer pushes whatever it had to open on the end — so the array's own order is
 // an accident of when a PR appeared, not a merge plan. Sort it here rather than
 // asking the merge agent to reorder: order is a decision the script owns.
+//
+// Those three reasons are about the frontend, backend and tests keys. A
+// programme with any other keys — a perf-test repo, two stubs, five services
+// — has no fixed rank to look up, so the row's own `repos` list is the merge
+// order: the backlog writes it provider before consumer, the ticket stage
+// copies it as written, and the planner says under risks where it is wrong.
+// A PR in a repo the row did not name (a CI fixer's) merges last.
 const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
-const sortForMerge = (list) =>
-  [...list].sort((a, b) => (MERGE_RANK[a.repo] ?? 99) - (MERGE_RANK[b.repo] ?? 99))
+const UNRANKED = Number.MAX_SAFE_INTEGER
+const rankInRow = (rowRepos, repo) => (rowRepos.includes(repo) ? rowRepos.indexOf(repo) : UNRANKED)
+const mergeRankOf = (rowRepos, repo) => (IS_LEGACY_KEYS ? (MERGE_RANK[repo] ?? UNRANKED) : rankInRow(rowRepos, repo))
+const sortForMerge = (list, rowRepos) =>
+  [...list].sort((a, b) => mergeRankOf(rowRepos, a.repo) - mergeRankOf(rowRepos, b.repo))
 
-const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
+const LEGACY_MERGE_ORDER = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
 backend is the provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that
 calls an endpoint which is not there yet; and CDP runs the tests repo's suite against the deployed frontend, so a
-frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.
+frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.`
+
+const KEYED_MERGE_ORDER = `MERGE ORDER for a cross-repo increment: the order the increment's \`repos\` list names them. The
+backlog writes that list provider before consumer — a service before the frontend that calls it, a stub before the
+service that calls it, and a tests or performance-tests repo after every service it exercises — so
+\`${BASE_BRANCH}\` is never left holding a consumer of something that is not there yet. A pull request in a repo the list
+does not name merges last.`
+
+const MERGE_ORDER_RULE = `${IS_LEGACY_KEYS ? LEGACY_MERGE_ORDER : KEYED_MERGE_ORDER}
 EVERY PR of the increment must be GREEN — AND, where the approval gate is on, APPROVED — BEFORE ANY ONE OF THEM
 MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
 auto-reverts it.`
+
+// Where the planner is told the order its repos[] comes back in.
+const PLAN_MERGE_ORDER = IS_LEGACY_KEYS
+  ? 'in merge order: backend, then tests, then frontend'
+  : `in merge order: the order the increment's \`repos\` list gives them, which is the order the merge stage merges in.
+That order must put a provider before its consumer — a service before a frontend that calls it, a stub before the
+service that calls it, and a tests or performance-tests repo after every service it exercises. Where the row's
+order does not, keep the row's order in repos and say so under risks, naming the order it should have`
 
 // A `blocked` line means the stage hit something no fixer can fix. It stops the
 // run without spending fix attempts on it.
@@ -799,7 +841,7 @@ Do not commit "just this once" and sort the branch out afterwards.`
 const PUSH_RULE = IS_BRANCH ? BRANCH_PUSH_RULE : `HOW TO PUSH — the exact form, every time, no variations:
 \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
 Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
-destination, and in a repo configured \`push.default=tracking\` (two of these three repos are) it resolves to the
+destination, and in a repo configured \`push.default=tracking\` (the animals tests and backend repos are) it resolves to the
 branch's upstream, which is how a commit once landed on \`${BASE_BRANCH}\` with no PR behind it. The fully
 qualified \`refs/heads/X:refs/heads/X\` can only ever update branch X.
 
@@ -1128,8 +1170,8 @@ const TICKET_SCHEMA = {
     },
     repos: {
       type: 'array',
-      description: 'Every repo this increment touches, in merge order. A "both" increment is ["backend","frontend"]',
-      items: { type: 'string', enum: ['frontend', 'backend', 'tests'] }
+      description: 'Every repo this increment touches, in merge order, as the ITS REPOS rule gives them',
+      items: { type: 'string', enum: REPO_KEYS }
     },
     branch: { type: 'string', description: 'The branch name this increment builds on, e.g. feat/EUDPA-12345-add-a-set-recipe' },
     resumeAt: {
@@ -1283,6 +1325,10 @@ const codexPaths = (id, slug) => ({
   runLog: `${WORKAREA_TILDE}/logs/${id}-${slug}.log`
 })
 
+// Every configured repo, `<key>=<absolute path>`, whatever the keys are. The
+// briefs name no repo of their own.
+const CODEX_REPOS = REPO_KEYS.map((key) => `${key}=${ABS}/${REPO_PATH[key]}`).join(', ')
+
 const bindingLines = (bindings) =>
   Object.entries(bindings)
     .map(([name, value]) => `  <${name}> = ${value}`)
@@ -1312,9 +1358,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <baseBranch>   = ${BASE_BRANCH}
   <INCREMENT_ID> = ${id}
   <plan>         = ${PLANS}/${id}.md
-  <frontendRepo> = ${ABS}/${REPOS.frontend.path}
-  <backendRepo>  = ${ABS}/${REPOS.backend.path}
-  <testsRepo>    = ${ABS}/${REPOS.tests.path}
+  <repos>        = ${CODEX_REPOS}
 ${bindingLines(bindings)}
 
 ${instructions}
@@ -1406,6 +1450,34 @@ const codexNoResult = (id, slug) =>
 // ---------------------------------------------------------------------------
 const standardsKeys = REPO_KEYS.map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``).join(', ')
 
+const frontendChangeRepos = FRONTEND_CHANGE_KEYS.map((key) => `${key} (\`${REPO_PATH[key]}\`)`).join(' or ')
+
+const frontendChangeTarget = () => {
+  if (FRONTEND_CHANGE_KEYS.length === 1) return `\`${TILDE}/${REPO_PATH[FRONTEND_CHANGE_KEYS[0]]}\``
+  return `whichever of ${FRONTEND_CHANGE_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(' and ')} the plan names for the journey change`
+}
+
+const FRONTEND_CHANGE_IMPLEMENT_LINE = FRONTEND_CHANGE_KEYS.length
+  ? `
+Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
+paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
+skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
+and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
+at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
+${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
+\`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
+in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.`
+  : ''
+
+// Only a programme that builds a repo frontend-change covers is sent to it.
+const FRONTEND_CHANGE_PLAN_LINE = FRONTEND_CHANGE_KEYS.length
+  ? `
+   - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
+     the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
+     recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
+     rather than improvising.${IS_LEGACY_KEYS ? '' : ` It covers ${frontendChangeRepos} only: never route another repo's change through it.`}`
+  : ''
+
 const rowReposPlanLine = (rowRepos) => {
   if (!rowRepos) return ''
   if (rowRepos.length === 0) {
@@ -1449,11 +1521,7 @@ implementor decides nothing.
      the exemplar the implementor will imitate;
    - the standards for those files. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\`
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
-     every rules and bestPractice file it lists;
-   - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
-     the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
-     recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
-     rather than improvising.
+     every rules and bestPractice file it lists;${FRONTEND_CHANGE_PLAN_LINE}
 3. CHECK THE CLAIMS. Test each thing the increment asserts about the application against the live tree. Where one
    is wrong, record it under Decisions and plan against reality. If the increment cannot be carried out at all,
    return ok:false saying exactly why.
@@ -1477,23 +1545,83 @@ implementor decides nothing.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
    or "the backend half" for another increment.
-Return ok, summary, repos (the repos the plan changes), behaviourChanges, decisions and risks.
+Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions and risks.
 Return the structured output only.`,
     think({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
+const ENVELOPE_REPO_SCHEMA = {
+  type: 'object',
+  required: ['key', 'path', 'github'],
+  properties: {
+    key: { type: 'string' },
+    path: { type: ['string', 'null'] },
+    github: { type: ['string', 'null'] }
+  },
+  additionalProperties: false
+}
+
+const PREFLIGHT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary', 'envelopeRepos'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    envelopeRepos: {
+      type: ['array', 'null'],
+      items: ENVELOPE_REPO_SCHEMA,
+      description: "The backlog envelope's repos exactly as the second command printed them, or null when it printed null"
+    }
+  },
+  additionalProperties: false
+}
+
 const preflight = await agent(
-  `Report whether this run's backlog exists and is readable. Run exactly one command and read its output:
-\`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-If it prints a number, return ok:true with that number in summary. If the file is missing or is not valid
-JSON, return ok:false quoting the error. Do nothing else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-  light({ label: 'preflight', phase: 'Baseline', schema: incrementSchema })
+  `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
+two commands, one Bash call each, and read their output:
+1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github}) end' ${BACKLOG_TILDE}\`
+If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
+JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
+the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
+else. No Grep/Glob tools, tilde paths only.`,
+  light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
 
 if (!preflight || !preflight.ok) {
   throw new Error(
     `increment-build-loop: no readable backlog at ${BACKLOG} (workarea "${WORKAREA_REL}") — ${preflight ? preflight.summary : 'preflight agent failed'}`
   )
+}
+
+// The gate reads the envelope's repos and every stage reads the args', so the
+// two must name the same repos at the same paths. Checked here, by the script,
+// before any increment — planOnly included — rather than trusted to an agent.
+const envelopeRepoProblems = (envelopeRepos) => {
+  const envelopeKeys = envelopeRepos.map((entry) => entry.key)
+  const shared = envelopeRepos.filter((entry) => REPO_KEYS.includes(entry.key))
+  return [
+    ...REPO_KEYS.filter((key) => !envelopeKeys.includes(key)).map((key) => `args name "${key}", which the envelope does not`),
+    ...envelopeKeys.filter((key) => !REPO_KEYS.includes(key)).map((key) => `the envelope names "${key}", which the args do not`),
+    ...shared
+      .filter((entry) => entry.path !== REPO_PATH[entry.key])
+      .map((entry) => `"${entry.key}" is at ${JSON.stringify(entry.path)} in the envelope and "${REPO_PATH[entry.key]}" in the args`),
+    ...shared
+      .filter((entry) => entry.github && entry.github !== REPOS[entry.key].github)
+      .map((entry) => `"${entry.key}" is ${entry.github} on GitHub in the envelope and ${REPOS[entry.key].github} in the args`)
+  ]
+}
+
+const ENVELOPE_REPOS = preflight.envelopeRepos ?? null
+if (ENVELOPE_REPOS === null) {
+  log(`${WORKFLOW_NAME}: the backlog envelope names no repos, so the args' repos cannot be checked against it. The gate needs them there`)
+} else {
+  const problems = envelopeRepoProblems(ENVELOPE_REPOS)
+  if (problems.length > 0) {
+    throw new Error(
+      `${WORKFLOW_NAME}: config.repos does not match the repos the backlog envelope at ${BACKLOG} names — ${problems.join('; ')}. Copy the envelope's repos into args in full`
+    )
+  }
 }
 
 // Deriving the next increment is a shell command, and a workflow script has no
@@ -1933,6 +2061,24 @@ Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
 
+const LAND_ORDER = IS_LEGACY_KEYS ? 'backend first' : "in the order of the increment's repos"
+
+const UNBRANCHED_WARNING = `Naming a repo here is what gets it BRANCHED, and a repo that is never branched sits
+on \`${BASE_BRANCH}\` for the whole run — which is how an increment once committed straight onto the tests repo's
+main. Over-listing a repo costs nothing: a repo with no changes simply gets no commit and no PR.`
+
+const LEGACY_TICKET_REPOS_STEP = `STEP 7 — repos[]: by the ITS REPOS rule above, in merge order (backend, tests, frontend). An older row's
+\`repo\` of \`both\` → ["backend","frontend","tests"]; any other single \`repo\` → that repo plus \`tests\`.
+Do NOT narrow the list from the increment's title. **Include \`tests\` in every case that changes what a user
+sees.** A UI change breaks the E2E specs and their visual baselines essentially always, and the slice's
+integration proof lives there. ${UNBRANCHED_WARNING}`
+
+const KEYED_TICKET_REPOS_STEP = `STEP 7 — repos[]: by the ITS REPOS rule above. The row's \`repos\` EXACTLY AS WRITTEN AND IN THE ORDER WRITTEN:
+that order is the increment's merge order, and the merge stage merges in it. Never reorder, narrow or widen it, and
+never narrow it from the increment's title. Only an older row with no \`repos\` falls back: its \`repo\` field, a
+configured key → that one key; \`both\` → every configured repo; neither → every configured repo, in this order:
+${REPO_KEYS.join(', ')}. ${UNBRANCHED_WARNING}`
+
 const queue = EXPLICIT_IDS === null ? null : [...EXPLICIT_IDS]
 const plannedWork = queue ? `${queue.length} increment(s)` : 'draining the backlog'
 const stopAfterText = STOP_AFTER === 'all' ? 'every one it can' : `${STOP_AFTER} landed`
@@ -2149,13 +2295,7 @@ Re-entering an increment must never rebuild work that is already committed on it
 status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
 Deskcheck or IN QA says nothing about how far the build got.
 
-STEP 7 — repos[]: by the ITS REPOS rule above, in merge order (backend, tests, frontend). An older row's
-\`repo\` of \`both\` → \["backend","frontend","tests"\]; any other single \`repo\` → that repo plus \`tests\`.
-Do NOT narrow the list from the increment's title. **Include \`tests\` in every case that changes what a user
-sees.** A UI change breaks the E2E specs and their visual baselines essentially always, and the slice's
-integration proof lives there. Naming a repo here is what gets it BRANCHED, and a repo that is never branched sits
-on \`${BASE_BRANCH}\` for the whole run — which is how an increment once committed straight onto the tests repo's
-main. Over-listing a repo costs nothing: a repo with no changes simply gets no commit and no PR.
+${IS_LEGACY_KEYS ? LEGACY_TICKET_REPOS_STEP : KEYED_TICKET_REPOS_STEP}
 
 Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
 moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
@@ -2379,9 +2519,9 @@ ${baselineRungList(baseline)}`
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
-        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`,
+        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateUnit(id, 'implement') }
+        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
     : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
@@ -2393,15 +2533,7 @@ ${readPlan(id)} Follow it verbatim: it has already settled every choice. Where i
 and copy its shape rather than improvising. Where it follows a repo's recipe, read the recipe it cites and follow
 it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
 criteria and say what you changed in notes.
-Before you write to a file, read the rules and best-practice files the plan lists for it.
-Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
-paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
-skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
-and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
-at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
-${REPO_PATH.frontend ? `\`${TILDE}/${REPO_PATH.frontend}\`` : 'the backlog repo the plan names for the journey change'}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
-\`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
-in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.
+Before you write to a file, read the rules and best-practice files the plan lists for it.${FRONTEND_CHANGE_IMPLEMENT_LINE}
 
 RULES:
 - Implement EXACTLY the plan's scope. Do not fix adjacent things you notice — report them in notes instead;
@@ -2430,7 +2562,7 @@ ${builderGateRule(id, 'implement', builderPhases)}
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
-${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
+${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`${REPO_KEYS[0]}:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
     code({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
   )
 
@@ -2560,8 +2692,9 @@ LOOK FOR: the same concept named two ways across files; a pattern the repo alrea
 reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
 in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
 without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field nothing
-writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what the frontend
-sends and expects matches what the backend accepts and returns, and the tests repo exercises the slice through it;
+writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what each consumer (a
+frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
+or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A better solution than the plan imagined is not a finding.
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
@@ -2597,7 +2730,7 @@ Return the structured output only.`,
       group.files.join(', '),
       `Review ONE GROUP of the staged, uncommitted change for increment ${id}: ${groupHeader(group)}
 Apply every persona bound to <personas>, and no other. Another Codex run reviews each other group, and a consistency
-run looks across the whole change, so report findings on this group's files only.`
+run looks across the whole change, so report findings on this group's files only.${mergeNote}${isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}`
     )
   )
 
@@ -2609,7 +2742,7 @@ run looks across the whole change, so report findings on this group's files only
 <personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding.`
+reporting any that fails as a finding.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}`
   )
 
   const codexReviewResults = async () => {
@@ -2768,9 +2901,9 @@ Return the structured output only.`,
 ${baselineEvidence}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
-${impl.notes || '(none)'}`,
+${impl.notes || '(none)'}${mergeNote}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateUnit(id, 'fix') }
+        bindings: { gateUnit: codexGateBinding(id, 'fix', builderPhases) }
       })
       if (!fixResult) {
         results.push(
@@ -2962,8 +3095,8 @@ TASK:
    The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
    the workspace. Name the spec commit in your summary, separately from the repo commits.
 5. Do NOT push. A later stage owns that.
-6. Record it: \`${setRow(id, '--commit "<sha, or several backend first, space separated>"')}\`. Leave the status alone — this increment is not done until its PRs are merged.
-Report the commit SHA. For several repos report each, backend first, space separated.
+6. Record it: \`${setRow(id, `--commit "<sha, or several ${LAND_ORDER}, space separated>"`)}\`. Leave the status alone — this increment is not done until its PRs are merged.
+Report the commit SHA. For several repos report each, ${LAND_ORDER}, space separated.
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
@@ -3145,8 +3278,8 @@ For EACH repo, in that order:
      lifecycle is out of step and a new PR would hide that.
    - It returns nothing → create one:
      a. Write the body with the Write tool to ${WORKAREA}/logs/${id}-pr-<repo>.md. It says what changed, names
-        the increment id and the ticket, and for a \`both\` increment names the sibling repo and states the merge
-        order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
+        the increment id and the ticket, and for an increment across several repos names the sibling repos and
+        states the merge order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
      b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
      raised:true.
 5. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
@@ -3322,7 +3455,8 @@ Return the structured output only.`,
 
     // Merge order is the script's decision, not the order PRs happened to be
     // appended in. See MERGE_RANK.
-    const mergeOrder = sortForMerge(prs)
+    const mergeOrder = sortForMerge(prs, repos)
+    log(`${id}: merge order ${mergeOrder.map((p) => p.repo).join(' → ')}`)
 
     const merge = await agent(
       `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is

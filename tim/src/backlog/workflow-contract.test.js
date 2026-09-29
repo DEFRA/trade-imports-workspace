@@ -1470,16 +1470,6 @@ describe('increment-build-loop', () => {
         }
       )
 
-      test('runs on the claude executor only', async () => {
-        const run = await runWorkflowScript(scriptPath, {
-          args: { ...BRANCH_ARGS, executor: 'codex' }
-        })
-
-        expect(run.error.message).toContain(
-          'lifecycle "branch" runs on executor "claude" only'
-        )
-      })
-
       test('refuses a repo key that names the workspace itself', async () => {
         const run = await runWorkflowScript(scriptPath, {
           args: {
@@ -1810,6 +1800,46 @@ describe('increment-build-loop', () => {
         })
       })
 
+      describe('with the codex executor', () => {
+        const runCodexMergeRow = (row) =>
+          runBranch({ executor: 'codex' }, row, BASELINE, PLAN, MERGE_STARTED, {
+            ok: true,
+            summary: 'codex ran in one slice'
+          })
+
+        test('hands Codex the merge the loop started for it to resolve', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow(MERGE_ROW),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain('THE MERGE IS YOURS TO RESOLVE')
+          expect(prompt).toContain(
+            '- tests (`~/ws/repos/trade-imports-animals-tests`): `origin/main` into `feat/NO_JIRA-frontend-alignment`, 1 conflicted path(s) when it started'
+          )
+        })
+
+        test('binds the gate’s unit phase for a row that owes it', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow(MERGE_ROW),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain(
+            '<gateUnit> = tim build gate shared/args-fixture --phase unit --workspace /ws --json --logs /ws/workareas/shared/args-fixture/logs/inc-900-implement'
+          )
+        })
+
+        test('binds no gate phase for a row whose gatePhases leave out unit', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow({ ...MERGE_ROW, gatePhases: ['e2e'] }),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain('<gateUnit> = none')
+        })
+      })
+
       describe('when the merge cannot finish', () => {
         const runToRedLadder = () =>
           runBranch(
@@ -1918,6 +1948,508 @@ describe('increment-build-loop', () => {
           )
         })
       })
+    })
+  })
+
+  describe('under the full lifecycle, with the envelope’s own repo keys', () => {
+    const repo = (folder) => ({
+      path: `repos/${folder}`,
+      github: `DEFRA/${folder}`
+    })
+    // The INS performance-testing envelope: a k6 repo, two stubs, three Node
+    // frontends and two Java services, and no key called frontend, backend
+    // or tests.
+    const PERF_REPOS = {
+      perftests: repo('trade-imports-performance-tests'),
+      stub: repo('trade-imports-stub'),
+      idstub: repo('trade-imports-defra-id-stub'),
+      insfrontend: repo('trade-imports-ins-frontend'),
+      animalsfrontend: repo('trade-imports-animals-frontend'),
+      plantsfrontend: repo('trade-imports-plants-frontend'),
+      referencedata: repo('trade-imports-reference-data'),
+      gateway: repo('trade-imports-dynamics-gateway')
+    }
+    const PERF_ARGS = {
+      ...BASE_ARGS,
+      repos: PERF_REPOS,
+      increments: ['inc-014']
+    }
+    const envelopeOf = (repos) =>
+      Object.entries(repos).map(([key, { path, github }]) => ({
+        key,
+        path,
+        github
+      }))
+    const PREFLIGHT = {
+      ok: true,
+      summary: '19',
+      envelopeRepos: envelopeOf(PERF_REPOS)
+    }
+    // Six of the eight, the way inc-014 touches them, written provider first:
+    // the Java services, then the three frontends, then the perf-test repo
+    // that exercises them all.
+    const ROW_REPOS = [
+      'gateway',
+      'referencedata',
+      'insfrontend',
+      'animalsfrontend',
+      'plantsfrontend',
+      'perftests'
+    ]
+    const WORK_BRANCH = 'feat/EUDPA-914-dependency-metrics'
+    const prUrl = (key) =>
+      `https://github.com/${PERF_REPOS[key].github}/pull/${ROW_REPOS.indexOf(key) + 1}`
+    const CHANGED_FILES = [
+      'gateway:src/main/java/uk/gov/defra/Gateway.java',
+      'referencedata:src/main/java/uk/gov/defra/MdmClient.java',
+      'insfrontend:src/server/common/helpers/metrics.js',
+      'animalsfrontend:src/server/common/helpers/metrics.js',
+      'plantsfrontend:src/server/common/helpers/metrics.js',
+      'perftests:src/report/dependencies.js'
+    ]
+    // The PR stage raises them as it goes and a fixer appends to the end, so
+    // they come back in no useful order: perf tests first here.
+    const PRS_AS_RAISED = [
+      'perftests',
+      'plantsfrontend',
+      'gateway',
+      'insfrontend',
+      'referencedata',
+      'animalsfrontend'
+    ].map((key) => ({ repo: key, url: prUrl(key), raised: true }))
+
+    const ANSWERS = {
+      workspace: WORKSPACE_ANSWER,
+      preflight: PREFLIGHT,
+      'inc-014 ticket': {
+        ok: true,
+        key: 'EUDPA-914',
+        created: true,
+        movedToBoard: true,
+        branch: WORK_BRANCH,
+        repos: ROW_REPOS,
+        resumeAt: 'build',
+        status: 'In Progress',
+        summary: 'raised'
+      },
+      'inc-014 branch': { ok: true, branch: WORK_BRANCH, summary: 'branched' },
+      'inc-014 baseline': {
+        ok: true,
+        green: true,
+        rungs: [],
+        summary: 'green'
+      },
+      'inc-014 plan': {
+        ok: true,
+        summary: 'Measured every call out of the boundary.',
+        repos: ROW_REPOS,
+        behaviourChanges: [
+          'Each service emits latency and outcome per dependency.'
+        ],
+        decisions: []
+      },
+      'inc-014 implement': {
+        ok: true,
+        summary: 'Built it.',
+        changedFiles: CHANGED_FILES,
+        notes: ''
+      },
+      'inc-014 ladder': { green: true, ran: [], summary: 'green' },
+      'inc-014 branch-guard:land': { ok: true, summary: 'on the branch' },
+      'inc-014 land': {
+        landed: true,
+        commit: 'a1 b2 c3 d4 e5 f6',
+        summary: 'committed'
+      },
+      'inc-014 pr': { ok: true, prs: PRS_AS_RAISED, summary: 'six PRs' },
+      'inc-014 ci watch': { green: true, summary: 'every check green' },
+      'inc-014 merge': {
+        green: true,
+        merged: ROW_REPOS.map((key) => ({ repo: key, sha: `${key}-sha` })),
+        summary: 'merged'
+      },
+      'inc-014 done': { ok: true, summary: 'ticket moved to Done' },
+      'inc-014 gate check': { ok: true, summary: 'no gate' }
+    }
+
+    const isReviewer = (label) =>
+      /^inc-014 (style|review):|consistency$/.test(label)
+
+    const answerByLabel =
+      (overrides = {}) =>
+      (prompt, { label }) => {
+        const answers = { ...ANSWERS, ...overrides }
+        if (Object.hasOwn(answers, label)) return answers[label]
+        return isReviewer(label) ? { findings: [] } : null
+      }
+
+    const runPerf = (argsOverride = {}, answerOverrides = {}) =>
+      runWorkflowScript(scriptPath, {
+        args: { ...PERF_ARGS, ...argsOverride },
+        answers: answerByLabel(answerOverrides)
+      })
+
+    const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+    const agentOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label)
+    const promptOf = (run, label) => agentOf(run, label).prompt
+
+    describe('its configuration', () => {
+      test('accepts a repos map with none of the old frontend, backend and tests keys', async () => {
+        const run = await runPerf({ planOnly: true })
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'planned',
+          repos: ROW_REPOS
+        })
+      })
+
+      test('plans with every configured key and no other', async () => {
+        const run = await runPerf({ planOnly: true })
+
+        expect(
+          agentOf(run, 'inc-014 plan').options.schema.properties.repos.items
+            .enum
+        ).toEqual(Object.keys(PERF_REPOS))
+      })
+
+      test('tells the planner to return its repos in the row’s merge order', async () => {
+        const prompt = promptOf(
+          await runPerf({ planOnly: true }),
+          'inc-014 plan'
+        )
+
+        expect(prompt).toContain(
+          "in merge order: the order the increment's `repos` list gives them, which is the order the merge stage merges in."
+        )
+        expect(prompt).toContain(
+          'and a tests or performance-tests repo after every service it exercises'
+        )
+      })
+
+      test('stops before any increment when the args name a repo the envelope does not', async () => {
+        const run = await runPerf(
+          {},
+          {
+            preflight: {
+              ...PREFLIGHT,
+              envelopeRepos: envelopeOf(PERF_REPOS).filter(
+                ({ key }) => key !== 'gateway'
+              )
+            }
+          }
+        )
+
+        expect(run.error.message).toContain(
+          'config.repos does not match the repos the backlog envelope at /ws/workareas/shared/args-fixture/backlog.json names — args name "gateway", which the envelope does not'
+        )
+        expect(labelsOf(run)).toEqual(['workspace', 'preflight'])
+      })
+
+      test('stops before any increment when the envelope names a repo the args do not', async () => {
+        const sevenRepos = Object.fromEntries(
+          Object.entries(PERF_REPOS).filter(([key]) => key !== 'gateway')
+        )
+        const run = await runPerf({ repos: sevenRepos })
+
+        expect(run.error.message).toContain(
+          'the envelope names "gateway", which the args do not'
+        )
+        expect(labelsOf(run)).toEqual(['workspace', 'preflight'])
+      })
+
+      test('stops before any increment when a repo sits at another path in the envelope', async () => {
+        const run = await runPerf(
+          {},
+          {
+            preflight: {
+              ...PREFLIGHT,
+              envelopeRepos: envelopeOf({
+                ...PERF_REPOS,
+                insfrontend: repo('trade-imports-animals-frontend')
+              })
+            }
+          }
+        )
+
+        expect(run.error.message).toContain(
+          '"insfrontend" is at "repos/trade-imports-animals-frontend" in the envelope and "repos/trade-imports-ins-frontend" in the args'
+        )
+      })
+
+      test('stops a planOnly run at the same check, before the planner', async () => {
+        const run = await runPerf(
+          { planOnly: true },
+          { preflight: { ...PREFLIGHT, envelopeRepos: [] } }
+        )
+
+        expect(run.error.message).toContain('config.repos does not match')
+        expect(labelsOf(run)).not.toContain('inc-014 plan')
+      })
+    })
+
+    describe('building a six-repo increment', () => {
+      test('goes ticket, branch, build, PR, CI, merge and done', async () => {
+        const run = await runPerf()
+
+        expect(labelsOf(run).filter((label) => !isReviewer(label))).toEqual([
+          'workspace',
+          'preflight',
+          'inc-014 ticket',
+          'inc-014 branch',
+          'inc-014 baseline',
+          'inc-014 plan',
+          'inc-014 implement',
+          'inc-014 ladder',
+          'inc-014 branch-guard:land',
+          'inc-014 land',
+          'inc-014 pr',
+          'inc-014 ci watch',
+          'inc-014 merge',
+          'inc-014 done',
+          'inc-014 gate check'
+        ])
+      })
+
+      test('reports it landed with a PR in every repo it touched', async () => {
+        const run = await runPerf()
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          ticket: 'EUDPA-914',
+          branch: WORK_BRANCH,
+          outcome: 'landed',
+          prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('tells the ticket stage to copy the row’s repos as written, in the order written', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 ticket')
+
+        expect(prompt).toContain(
+          "The row's `repos` EXACTLY AS WRITTEN AND IN THE ORDER WRITTEN:\nthat order is the increment's merge order"
+        )
+        expect(prompt).not.toContain('Include `tests` in every case')
+      })
+
+      test('cuts the branch in every repo the increment touches', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 branch')
+
+        expect(prompt).toContain(`REPOS, in order: ${ROW_REPOS.join(', ')}.`)
+        expect(prompt).toContain(
+          'perftests=repos/trade-imports-performance-tests'
+        )
+      })
+
+      test('reviews each repo and language as its own group', async () => {
+        const run = await runPerf()
+
+        expect(
+          labelsOf(run).filter((label) => label.startsWith('inc-014 review:'))
+        ).toEqual([
+          'inc-014 review:gateway-java',
+          'inc-014 review:referencedata-java',
+          'inc-014 review:insfrontend-javascript',
+          'inc-014 review:animalsfrontend-javascript',
+          'inc-014 review:plantsfrontend-javascript',
+          'inc-014 review:perftests-javascript'
+        ])
+      })
+
+      test('commits one per repo, recorded in the row’s repo order', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 land')
+
+        expect(prompt).toContain(
+          '--commit "<sha, or several in the order of the increment\'s repos, space separated>"'
+        )
+      })
+
+      test('raises a PR per repo against the configured GitHub repos', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 pr')
+
+        expect(prompt).toContain('gateway=DEFRA/trade-imports-dynamics-gateway')
+        expect(prompt).toContain('idstub=DEFRA/trade-imports-defra-id-stub')
+      })
+
+      test('watches CI on every PR', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 ci watch')
+
+        for (const { repo: key, url } of PRS_AS_RAISED) {
+          expect(prompt).toContain(`${key}: ${url}`)
+        }
+      })
+
+      test('merges in the row’s repo order, however the PRs were raised', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          [
+            'THE PULL REQUESTS, in merge order:',
+            ...ROW_REPOS.map((key) => `${key}: ${prUrl(key)}`)
+          ].join('\n')
+        )
+      })
+
+      test('merges a PR in a repo the row did not name last', async () => {
+        const run = await runPerf(
+          {},
+          {
+            'inc-014 pr': {
+              ok: true,
+              prs: [
+                {
+                  repo: 'stub',
+                  url: 'https://github.com/DEFRA/trade-imports-stub/pull/7'
+                },
+                ...PRS_AS_RAISED
+              ],
+              summary: 'seven PRs'
+            }
+          }
+        )
+
+        expect(run.logs).toContain(
+          `inc-014: merge order ${[...ROW_REPOS, 'stub'].join(' → ')}`
+        )
+      })
+
+      test('states the merge order as the row’s, not backend, tests and frontend', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          "MERGE ORDER for a cross-repo increment: the order the increment's `repos` list names them."
+        )
+        expect(prompt).not.toContain('BACKEND FIRST')
+      })
+
+      test('sweeps every configured repo for a PR left open', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          Object.values(PERF_REPOS)
+            .map(({ github }) => github)
+            .join(', ')
+        )
+      })
+
+      test('sends only the animals and plants frontends through frontend-change', async () => {
+        const run = await runPerf()
+
+        expect(promptOf(run, 'inc-014 plan')).toContain(
+          'It covers animalsfrontend (`repos/trade-imports-animals-frontend`) or plantsfrontend (`repos/trade-imports-plants-frontend`) only'
+        )
+        expect(promptOf(run, 'inc-014 implement')).toContain(
+          'the TARGET REPO is\nwhichever of `~/ws/repos/trade-imports-animals-frontend` and `~/ws/repos/trade-imports-plants-frontend` the plan names for the journey change'
+        )
+      })
+
+      test('sends no repo through frontend-change when the programme builds none it covers', async () => {
+        const services = {
+          stub: PERF_REPOS.stub,
+          gateway: PERF_REPOS.gateway
+        }
+        const run = await runPerf(
+          { repos: services },
+          {
+            preflight: { ...PREFLIGHT, envelopeRepos: envelopeOf(services) },
+            'inc-014 ticket': {
+              ...ANSWERS['inc-014 ticket'],
+              repos: ['stub', 'gateway']
+            },
+            'inc-014 plan': {
+              ...ANSWERS['inc-014 plan'],
+              repos: ['stub', 'gateway']
+            }
+          }
+        )
+
+        expect(promptOf(run, 'inc-014 plan')).not.toContain('frontend-change')
+        expect(promptOf(run, 'inc-014 implement')).not.toContain(
+          'frontend-change'
+        )
+      })
+
+      test('binds every configured repo for the Codex briefs', async () => {
+        const run = await runPerf(
+          { executor: 'codex' },
+          { 'inc-014 codex:implement': { ok: true, summary: 'ran' } }
+        )
+        const prompt = promptOf(run, 'inc-014 codex:implement')
+
+        expect(prompt).toContain(
+          `<repos>        = ${Object.entries(PERF_REPOS)
+            .map(([key, { path }]) => `${key}=/ws/${path}`)
+            .join(', ')}`
+        )
+        expect(prompt).not.toContain('<frontendRepo>')
+      })
+    })
+  })
+
+  describe('under the full lifecycle, with the frontend, backend and tests keys', () => {
+    const LEGACY_PRS = ['frontend', 'tests', 'backend'].map((key) => ({
+      repo: key,
+      url: `https://github.com/DEFRA/trade-imports-animals-${key}/pull/1`
+    }))
+
+    const answersFor = (label) => {
+      const answers = {
+        workspace: WORKSPACE_ANSWER,
+        preflight: { ok: true, summary: '1' },
+        'inc-900 ticket': {
+          ok: true,
+          key: 'EUDPA-900',
+          created: false,
+          movedToBoard: true,
+          branch: 'feat/EUDPA-900-fixture',
+          repos: ['frontend', 'tests', 'backend'],
+          resumeAt: 'ci',
+          status: 'In Progress',
+          summary: 'reused'
+        },
+        'inc-900 branch': { ok: true, summary: 'branched' },
+        'inc-900 pr': { ok: true, prs: LEGACY_PRS, summary: 'three PRs' },
+        'inc-900 ci watch': { green: true, summary: 'green' }
+      }
+      return answers[label] ?? null
+    }
+
+    const runLegacyToMerge = () =>
+      runWorkflowScript(scriptPath, {
+        args: BASE_ARGS,
+        answers: (prompt, { label }) => answersFor(label)
+      })
+
+    test('still merges backend, then tests, then frontend, whatever order the row gives', async () => {
+      const run = await runLegacyToMerge()
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 merge'
+      ).prompt
+
+      expect(prompt).toContain(
+        [
+          'THE PULL REQUESTS, in merge order:',
+          'backend: https://github.com/DEFRA/trade-imports-animals-backend/pull/1',
+          'tests: https://github.com/DEFRA/trade-imports-animals-tests/pull/1',
+          'frontend: https://github.com/DEFRA/trade-imports-animals-frontend/pull/1'
+        ].join('\n')
+      )
+      expect(prompt).toContain('BACKEND FIRST, THEN TESTS, THEN FRONTEND')
+    })
+
+    test('still tells the ticket stage to add the tests repo to every UI change', async () => {
+      const run = await runLegacyToMerge()
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 ticket'
+      ).prompt
+
+      expect(prompt).toContain(
+        '**Include `tests` in every case that changes what a user\nsees.**'
+      )
+      expect(prompt).toContain(
+        '`repo` of `both` → ["backend","frontend","tests"]'
+      )
     })
   })
 })

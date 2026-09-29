@@ -163,7 +163,7 @@ missing key. The first log line is the resolved configuration.
 | `branch` | Under `lifecycle: 'full'`, the base branch each increment's own branch is cut from and merged back into. Under `lifecycle: 'branch'`, the working branch itself, which already exists in every backlog repo; `main` and `master` are refused |
 | `lifecycle` | `'full'` (ticket, own branch, PR, CI, merge, ticket done) or `'branch'` (build straight onto `branch` with no Jira and no merge). See [The branch lifecycle](#the-branch-lifecycle) |
 | `scope` | Conventional-commit scope for the landing commit |
-| `executor` | `claude` or `codex` — see below. The branch lifecycle takes `claude` only |
+| `executor` | `claude` or `codex`, under either lifecycle — see below |
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
 | `jiraProject` | Jira project key raised tickets land in. `null` under the branch lifecycle |
 | `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
@@ -174,14 +174,36 @@ missing key. The first log line is the resolved configuration.
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
-| `repos` | Where the repos live: a workspace-relative `path` and a GitHub `github` slug each. Under the full lifecycle the keys are `frontend`, `backend` and `tests`; under the branch lifecycle they are whatever the backlog envelope's `repos` names. Give it in full, copied from the envelope |
+| `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word other than `workspace`. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path or slug differs from the envelope's |
 | `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (ticket, branch, branch guard, merge start, baseline, land, preserve, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
-nothing.
+nothing. The same preflight reads the envelope's `repos`, and the script throws when the args
+name a repo the envelope does not, the envelope names one the args do not, or a key sits at
+another path or slug. It runs for `planOnly` too, so a dry run proves the args before the
+planner starts. A backlog whose envelope has no `repos` is logged and let through; its gate
+goes red at the baseline instead.
+
+### Merge order
+
+The script sorts an increment's PRs before the merge stage sees them, because the order the PR
+stage raised them in is an accident:
+
+- **Keys exactly `frontend`, `backend` and `tests`:** backend, then tests, then frontend,
+  whatever the row lists — the rule every programme built before other keys existed.
+- **Any other keys:** the order of the row's `repos` list, which the backlog writes provider
+  before consumer — a service before the frontend that calls it, a stub before the service that
+  calls it, and a tests or performance-tests repo after every service it exercises. The ticket
+  stage copies it as written; the planner returns its `repos` in the same order and says under
+  `risks` where the row's order puts a consumer first. A PR in a repo the row does not name
+  merges last.
+
+`frontend-change` is routed by what a repo is, not by its key: the planner and implementor are
+sent to it only for a configured repo at `repos/trade-imports-animals-frontend` or
+`repos/trade-imports-plants-frontend`, and a programme with neither never hears of it.
 
 ### What drains the backlog, and what stops it
 
@@ -245,7 +267,24 @@ ever.
 ```
 
 That resolves to `workareas/shared/plant-products-ched-pp/backlog.json` and lands commits
-as `feat(plant-products): <increment title>`. Any other workarea works the same way.
+as `feat(plant-products): <increment title>`. Any other workarea works the same way, with its
+envelope's own keys: the INS performance-testing backlog passes
+
+```js
+repos: {
+  perftests: { path: 'repos/trade-imports-performance-tests', github: 'DEFRA/trade-imports-performance-tests' },
+  stub: { path: 'repos/trade-imports-stub', github: 'DEFRA/trade-imports-stub' },
+  idstub: { path: 'repos/trade-imports-defra-id-stub', github: 'DEFRA/trade-imports-defra-id-stub' },
+  insfrontend: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
+  animalsfrontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+  plantsfrontend: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
+  referencedata: { path: 'repos/trade-imports-reference-data', github: 'DEFRA/trade-imports-reference-data' },
+  gateway: { path: 'repos/trade-imports-dynamics-gateway', github: 'DEFRA/trade-imports-dynamics-gateway' }
+}
+```
+
+and an increment that touches six of them gets a branch, a commit, a PR and a CI watch in each
+of the six, merged in its row's order.
 
 ### The stages, per increment
 
@@ -291,7 +330,11 @@ that writes the resolved prompt to `<workarea>/logs/<id>-<stage>.prompt.md`, run
 `<id>-<stage>.lastmsg.txt` and re-emits it as the stage's result. Keeping them apart is what
 makes "the run died" distinguishable from "Codex looked and found nothing". The briefs are
 written with `<workspace>` / `<workarea>` / `<backlog>` / `<logs>` / `<skills>` /
-`<branch>` / `<INCREMENT_ID>` placeholders that the loop binds to real values in that prompt.
+`<branch>` / `<INCREMENT_ID>` / `<repos>` placeholders that the loop binds to real values in that prompt.
+`<repos>` is every configured repo as `<key>=<absolute path>`, so the briefs name no repo of their
+own and run under either lifecycle, whatever the keys. Under the branch lifecycle a Codex stage
+is also told about a merge in progress and a row that changes no backlog repo, and `<gateUnit>`
+is bound to `none` for a row whose `gatePhases` leave out unit.
 
 Four things to know about codex mode:
 

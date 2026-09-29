@@ -13,11 +13,12 @@ pipes, `node`, `npx`, absolute paths and `cd` are fine.
 ## Constants
 
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`, `<skills>`,
-`<branch>`, `<INCREMENT_ID>`, `<gateUnit>` — is bound to a real value in the prompt that pointed you here. Use those bindings;
-never guess one.
+`<branch>`, `<INCREMENT_ID>`, `<repos>`, `<gateUnit>` — is bound to a real value in the prompt that pointed you
+here. Use those bindings; never guess one.
 
-Workspace root `<workspace>`; plan of record `<backlog>`; logs
-`<logs>`; repos under `<workspace>/repos/`.
+Workspace root `<workspace>`; plan of record `<backlog>`; logs `<logs>`. The repos are `<repos>`, each
+written `<repoKey>=<absolute path>` — bound per run, and different between programmes. Where the prompt says
+a merge is in progress, never commit, continue or abort it.
 
 Every repo this increment touches is already on branch `<branch>` — cut for this increment by an earlier
 stage, or, on a local run, the branch the run was given. Do not switch branches and do not create one,
@@ -51,7 +52,8 @@ A repo's own rungs — format check, lint, typecheck, unit tests, `mvn verify` �
 which reads them from `<skills>/requirements-pipeline/references/gates.json`. Check your fixes with its unit
 phase, and never pick, add or substitute a script for those rungs:
 `<gateUnit>`
-It prints one JSON line; each rung has an `ok` and a `log`. Then run the plan's sections 5 and 6 checks as
+It prints one JSON line; each rung has an `ok` and a `log`. Where `<gateUnit>` is bound to `none`, this row's
+gate phases leave out unit: run no gate phase. Then run the plan's sections 5 and 6 checks as
 the plan writes them, each to a file under `<logs>`, read once.
 
 **Browser-driven suites are not yours to run** — the gate's FIT and E2E phases, and Lighthouse, cannot start
@@ -77,7 +79,8 @@ what you tried.
 ## Report
 
 Your final message must satisfy the schema given via `--output-schema`: `ok`, `summary`, `changedFiles`,
-`notes`. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`, the repo key being
-`frontend`, `backend` or `tests` — review is grouped by repo and language from it. In `notes`, state for
+`notes`. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`, the repo key being one of
+the keys in `<repos>` (or `workspace` for a file in the workspace repo itself) — review is grouped by repo
+and language from it. In `notes`, state for
 each ruled fix whether it was applied, name anything you deliberately left alone, and write down any
 diagnosis of a red suite and what got it green — the ladder stage is given your notes.

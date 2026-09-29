@@ -198,6 +198,18 @@ something before the show and tell": pick the first of these that holds.
    video under `tests/`, work; only the trace needs the web link or
    `--show`. Or run `--show` on the designer's laptop and share the screen.
 
+The demo page is on GitHub Pages and is not behind any password: anyone with
+the link can watch it. When stakeholders should click through the deployed
+prototype itself instead, send `deployedUrl` from
+`scripts/designer/prototype.json` (nothing to send while it is `null`). The
+deployed prototype can be password-protected: one shared password, set by the
+prototype maintainer as the `PROTOTYPE_PASSWORD` secret in CDP. Tell the
+designer to get it from the maintainer and send it apart from the link, never
+in a pull request, ticket or anything saved in the repo; and that with no
+secret set, the deployed prototype is open to anyone who has the link. See
+the prototype repo's `docs/designers/sharing-and-handing-off.md`, "The
+prototype password".
+
 ## Step 3: Run it
 
 Tell the designer how long to expect: under a minute for a few pages, a few

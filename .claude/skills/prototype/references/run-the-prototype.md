@@ -262,6 +262,16 @@ when the designer asks "where did my data go":
   `http://localhost:3103/auth/sign-out`, then the prototypes page. The
   deployed prototype signs in the same way: use the same paths on its
   address.
+- **The deployed prototype's password.** The deployed prototype can ask for
+  one shared password before any page, when the maintainer sets the
+  `PROTOTYPE_PASSWORD` secret in CDP; with none set, it is open to anyone who
+  has its address. The designer enters it once and their browser remembers
+  it for 30 days; `/prototype-password/sign-out` forgets it. On their own
+  computer it only asks when started with one. To see the password page
+  before a session, the designer runs this in their own terminal (it sets
+  the password for that one start, so it is theirs to run, not yours):
+  `PROTOTYPE_PASSWORD=try-me npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run dev`
+  (or `run designer:fresh`).
 
 ## The INS address-book link
 

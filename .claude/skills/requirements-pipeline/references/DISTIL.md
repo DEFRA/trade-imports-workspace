@@ -39,13 +39,13 @@ caught. Then write `<workarea>/sources.json` yourself — it is the one file you
 {
   "programme": "hrp-origin-and-commodity",
   "goal": "One sentence: what is being built, for whom.",
-  "repos": { "frontend": "repos/trade-imports-plants-frontend", "backend": "repos/trade-imports-plants-backend", "tests": "repos/trade-imports-animals-tests" },
+  "repos": { "frontend": "repos/trade-imports-plants-frontend", "backend": "repos/trade-imports-plants-backend", "tests": "repos/trade-imports-ins-tests" },
   "reposWhy": "High-risk plants origin and commodity is the plants journey: the plants frontend and backend own it; the tests repo holds every service's E2E suite.",
   "precedence": ["repo:frontend", "repo:backend", "repo:tests", "confluence:6518997274", "trace:ched-pp", "trace:recorded-run"],
   "sources": [
     { "id": "repo:frontend", "kind": "repo", "locator": "repos/trade-imports-plants-frontend", "scope": "the origin and commodity pages, spec/decisions.json", "role": "what exists today and what has already been ruled" },
     { "id": "repo:backend", "kind": "repo", "locator": "repos/trade-imports-plants-backend", "scope": "the notification's origin and commodity fields", "role": "what exists today and what has already been ruled" },
-    { "id": "repo:tests", "kind": "repo", "locator": "repos/trade-imports-animals-tests", "scope": "the plants origin and commodity specs", "role": "what is already proven end to end" },
+    { "id": "repo:tests", "kind": "repo", "locator": "repos/trade-imports-ins-tests", "scope": "the plants origin and commodity specs", "role": "what is already proven end to end" },
     { "id": "confluence:6518997274", "kind": "confluence", "locator": "6518997274", "scope": "whole page", "role": "policy: what data must be captured" },
     { "id": "trace:ched-pp", "kind": "trace", "locator": "workareas/trace-requirements/ched-pp", "scope": "pages/country-of-origin.json, pages/variety-of-genus-and-species.json", "role": "how the current service does it" },
     { "id": "trace:recorded-run", "kind": "trace", "locator": "workareas/shared/hrp-origin-and-commodity/sources/traces", "scope": "the traces whose titles name the origin or commodity steps", "role": "how the current service does it" }
@@ -57,7 +57,7 @@ caught. Then write `<workarea>/sources.json` yourself — it is the one file you
 - **Work out `repos` from the goal.** The workspace already knows what every repo does: read the "Repo map"
   table in `CLAUDE.md`, `docs/repos/*.md` where a repo has one, then the README and CLAUDE.md of each
   candidate repo. Pick the repos that own the behaviour the goal describes, keyed `frontend`, `backend` and
-  `tests`, each a workspace-relative `repos/<folder>` path. The tests repo (`repos/trade-imports-animals-tests`,
+  `tests`, each a workspace-relative `repos/<folder>` path. The tests repo (`repos/trade-imports-ins-tests`,
   which holds every service's E2E suite) is always included: it is where an increment proves itself end to
   end. Leave a key out when the goal needs no change there. Write one line in `reposWhy` saying why these
   repos. Ask the user only when two repo families fit the goal equally well (animals or plants, say) and the

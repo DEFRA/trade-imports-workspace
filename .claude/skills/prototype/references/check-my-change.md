@@ -62,8 +62,9 @@ Read these before every run.
 
 If the designer asks about a red story in a walkthrough report, or a pull
 request's "Walkthroughs" check, this is not this reference's job: a red
-story is reported, never a reason a pull request is blocked, and
-`designer:check` never runs the walkthrough. Explain it in plain words (the
+story shows as a warning on the demo page, never a reason a pull request is
+blocked, and `designer:check` never runs the walkthrough. Explain it in
+plain words (the
 "Walkthroughs" section in
 `docs/designers/checks-and-errors.md` covers "Sent directly" and "the story
 stops here"), and route on: an example that stopped at a page goes to

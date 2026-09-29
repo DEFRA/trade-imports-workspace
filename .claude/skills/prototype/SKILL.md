@@ -107,7 +107,9 @@ Read these before any change, whatever the request:
     (`references/ROUTING.md`, "Branches").
 12. **Run `designer:walkthrough` with `--no-open`, always.** Serving the
     report blocks. Only the designer, never you, runs `-- --show` to watch
-    it themselves.
+    it themselves. Add `--fast` when you only need to know the stories
+    reach the end, not to watch them: it skips the human pacing and runs at
+    today's speed.
 
 ## Open `references/ROUTING.md`
 

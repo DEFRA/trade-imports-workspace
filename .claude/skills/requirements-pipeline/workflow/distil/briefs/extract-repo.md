@@ -32,7 +32,7 @@ Write what you found into `structure`: the areas in scope, the files that hold t
 
 ## The tests repo
 
-The tests repo (`repos/trade-imports-animals-tests`) holds every service's end-to-end suite. Its role is **what is
+The tests repo (`repos/trade-imports-ins-tests`) holds every service's end-to-end suite. Its role is **what is
 already proven end to end**. A claim from it says what a spec proves a user can do, or what rule it holds the suite
 to, with the spec file and test name as `ref`.
 

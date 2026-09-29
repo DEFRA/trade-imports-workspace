@@ -21,7 +21,7 @@ Does NOT own:
 - Country and port reference data: it reads these from reference-data.
 - Saved addresses: it reads these from the address book.
 - Document upload, outbox, event publishing and PIMS routing: explicitly out of scope for the plants alpha.
-- The end-to-end Playwright suite: it lives in `trade-imports-animals-tests` (a fourth project alongside `e2e`, `admin`, `ins`).
+- The end-to-end Playwright suite: it lives in `trade-imports-ins-tests` as the `plants` project, alongside `animals`, `animals-admin` and `ins`.
 
 ## Integrations
 

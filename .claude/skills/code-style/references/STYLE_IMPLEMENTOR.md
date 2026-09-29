@@ -101,7 +101,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/style-
 Run E2E tests:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-pre-e2e.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/style-pre-e2e.log 2>&1
 ```
 
 Read each log file once.
@@ -114,7 +114,7 @@ E2E: [pass/fail]
 ```
 
 For E2E failures, also read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md`
+`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md`
 to confirm the failure isn't related to the file you're about to touch.
 
 ---
@@ -157,7 +157,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} test > /tmp/style-
 Run E2E tests:
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/style-post-e2e.log 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/style-post-e2e.log 2>&1
 ```
 
 **If unit tests fail:**
@@ -172,7 +172,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tes
 
 **If E2E tests fail:**
 
-- Read `~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results/*/error-context.md` to determine if the failure is related to your change.
+- Read `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md` to determine if the failure is related to your change.
 - If related: revert as above and mark all `applicable_items` Failed.
 - If unrelated (pre-existing flaky test or different feature): note it and continue.
 

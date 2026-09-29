@@ -37,7 +37,7 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/<repo> test > /tmp/<repo>
 ```
 ```bash
 # E2E (only when changing tests repo or cross-cutting code)
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-pre-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 
 ## Implementation

@@ -221,8 +221,13 @@ then `git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prot
 any clash as in `references/design-release.md` section G) and push again.
 Read `siteUrl` from `scripts/designer/prototype.json` (in the prototype
 repo) and tell the designer: "This is on `main` now. The deployed prototype
-and its report at `<siteUrl>` update once the pipeline runs, usually within
-about ten minutes." Skip the rest of this section.
+and its demo page at `<siteUrl>` update once the pipeline runs, usually
+within about ten minutes." When they plan to send the deployed prototype's
+own address to anyone, add: "The deployed prototype can ask for a shared
+password (the `PROTOTYPE_PASSWORD` secret the maintainer sets in CDP); send
+it separately from the link. Without it, anyone with the link can use the
+prototype. The demo page is never behind the password." Skip the rest of
+this section.
 
 **On a `design/*` branch** (made because the designer wanted to share
 without touching `main` — `references/ROUTING.md`, "Branches"): push the
@@ -282,14 +287,15 @@ it before it reaches `main`.
 4. Give the designer the pull request link, and say: "This is on a branch,
    so the deployed prototype only changes once this is merged to `main` —
    say 'merge my pull request' or send the link to the prototype maintainer
-   for a review. The pull request's checks publish a walkthrough of every
-   release on this branch as a web page, usually within about ten minutes: a
-   picture of each page, a video and a trace." Read `siteUrl` from
-   `scripts/designer/prototype.json` (in the prototype repo) and, once you
-   have the pull request's number, give
-   `<siteUrl>reports/pr-<n>/#?q=@walkthrough` as the link to send
-   stakeholders — that is the demo, live for as long as the pull request
-   stays open. If the
+   for a review. The pull request's checks build a demo page of every
+   release on this branch, usually within about ten minutes: short videos
+   of the most important journeys, most important first, paced so they are
+   watchable." Read `siteUrl` from `scripts/designer/prototype.json` (in the
+   prototype repo) and, once you have the pull request's number, give
+   `<siteUrl>reports/pr-<n>/` as the link to send stakeholders — that is the
+   demo page, live for as long as the pull request stays open (add
+   `#set-<set-id>` to jump straight to one release). The full technical
+   report sits underneath it at `<siteUrl>reports/pr-<n>/tests/`. If the
    pull request's comment says GitHub Pages is not turned on yet, give the
    `prototype-playwright-report` Actions artifact instead and say the
    prototype maintainer needs to turn Pages on.
@@ -321,11 +327,11 @@ request", "why is my pull request red?" or "merge my pull request":
      (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype push`,
      step 6.1, asking first as always). A red "Walkthroughs" check is a
      crash, not a red story: treat it like any other failed check.
-   - The report comment (its body starts
+   - The demo page comment (its body starts
      `<!-- prototype-playwright-report -->`, from
      `gh pr view --repo DEFRA/trade-imports-plants-prototype <branch> --comments`):
-     read it and say any red story in plain words. A red story is reported,
-     never a reason the merge is blocked.
+     read it and say any red story in plain words. A red story shows as a
+     warning on the demo page, never a reason the merge is blocked.
    - `mergeStateStatus` `DIRTY`: `main` has moved on in the same lines. Offer
      to bring `main` in
      (`git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype fetch origin main`,

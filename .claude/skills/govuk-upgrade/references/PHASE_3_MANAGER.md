@@ -139,7 +139,7 @@ From the tests repo, run the docker-compose suite (cleans, then runs
 Playwright against the dockerised stack):
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose
 ```
 
 (`test:docker-compose` is the local E2E entry point — the same script CI

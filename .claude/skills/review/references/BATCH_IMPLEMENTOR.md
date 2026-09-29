@@ -60,13 +60,13 @@ Then read the file you just created.
 
 E2E tests:
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose > /tmp/e2e-tests-$(date +%Y%m%d-%H%M%S).txt 2>&1
 ```
 Then read the file you just created for the summary. If failures exist,
 do NOT grep the console output — find and read the structured Playwright
 artifacts instead:
 ```bash
-find ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-tests/test-results -name "error-context.md"
+find ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results -name "error-context.md"
 ```
 
 ### Java repo (backend)

@@ -109,7 +109,7 @@ above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants).
 
 NOT for a multi-increment run over a backlog — that is `journey-builder`, which
 invokes this skill once per increment. NOT for the tests repo
-(`trade-imports-animals-tests` owns the workspace E2E suite), NOT for ticket
+(`trade-imports-ins-tests` owns the workspace E2E suite), NOT for ticket
 planning (`ticket`), NOT for the plants prototype or a design release
 (`prototype`).
 

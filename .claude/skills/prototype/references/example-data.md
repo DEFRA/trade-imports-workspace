@@ -238,6 +238,39 @@ another page of the same notification: `?page=task-list`, or
 `?page=notification-view` for check your answers. Use these in pull requests
 and research sheets to link straight to the page that changed.
 
+## Featured journeys (what the demo page shows first)
+
+"put the amend journey first", "take deleted off the demo page", "call it
+'Change a sent notification'", "feature this journey", "what shows first
+for stakeholders" all mean changing `featured` and `headline` on examples
+in `src/server/prototype-seed/scenarios/<set-id>.js`, not writing a new
+example:
+
+| The designer says | Change |
+| --- | --- |
+| "put the X journey first" (or second, third, fourth) | Set `featured: <n>` on X's example. If another example already has that number, renumber it out of the way first (never leave two examples sharing a number). |
+| "take X off the demo page" | Remove `featured` (and `headline`) from X's example. It still shows in the full report. |
+| "call it '<new title>'" | Set `headline: '<new title>'` on the example. It defaults to `label` when left out. |
+
+Never feature more than 4 examples in one set. The error-messages story is
+always featured last, one place after the highest number in use, and it
+cannot be moved or removed: say so plainly if the designer asks.
+
+Check the order before calling it done:
+
+```
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:examples -- check <set-id>
+```
+
+```
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:walkthrough -- --set <set-id> --fast --no-open
+```
+
+`--fast` skips the human pacing, so this only proves the order and the
+headlines, not the finished video. Open the demo page it names
+(`.cache/designer/walkthrough/site/index.html`) and read it yourself before
+telling the designer what leads it now.
+
 ## Verify
 
 - `designer:examples -- check <set-id>` reports every example as "Reached".

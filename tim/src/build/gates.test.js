@@ -73,7 +73,7 @@ describe('the workspace gates.json', () => {
       expect.arrayContaining([
         'trade-imports-plants-frontend',
         'trade-imports-plants-backend',
-        'trade-imports-animals-tests'
+        'trade-imports-ins-tests'
       ])
     )
   })
@@ -81,7 +81,7 @@ describe('the workspace gates.json', () => {
   test('runs the tests repo end to end only through test:docker-compose', () => {
     const gates = loadGates(workspaceRoot)
 
-    const e2eRuns = gates.repos['trade-imports-animals-tests'].rungs
+    const e2eRuns = gates.repos['trade-imports-ins-tests'].rungs
       .filter(({ phase }) => phase === 'e2e')
       .map(({ run }) => run)
 

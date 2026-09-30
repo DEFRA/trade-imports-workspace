@@ -100,35 +100,22 @@ Sign in with your SonarCloud account when prompted. Authentication is stored in 
 
 Once done, the hooks activate automatically when you open Claude Code in any of the four repos.
 
-#### Workspace-level MCP (running Claude Code from the workspace root)
+#### SonarCloud MCP tools (per repo only)
 
-Each repo's `.mcp.json` is only loaded when Claude Code runs **inside that repo**. When you
-launch from the **workspace root** (the usual case here), those per-repo files aren't read, so
-the SonarCloud MCP tools don't appear. The committed **workspace-root `.mcp.json`** closes that
-gap — it registers all four projects as separate servers, so a root session can query any of
-them:
+Each repo's `.mcp.json` registers that repo's SonarCloud MCP server, and Claude Code loads it
+only when a session runs **inside that repo**. The workspace root deliberately registers **no**
+Sonar MCP servers.
 
-| server name | SonarCloud project key |
-|---|---|
-| `sonar-frontend` | `DEFRA_trade-imports-animals-frontend` |
-| `sonar-admin` | `DEFRA_trade-imports-animals-admin` |
-| `sonar-backend` | `DEFRA_trade-imports-animals-backend` |
-| `sonar-gateway` | `DEFRA_trade-imports-dynamics-gateway` |
+It used to register all eight, but Claude Code starts every server in a project `.mcp.json`
+at session start, and each one is an `mcp/sonarqube` docker container (roughly 400–800 MiB).
+Every workspace-root session therefore held about 5–6 GiB of Docker memory, enough to starve
+the testcontainers the Java integration suites start. Nothing automated needed them: the
+pre-push quality gate (`tools/sonar/sonar-push-check.sh`) and the pending-check hooks under
+`scripts/sonar/` call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
 
-Tools are namespaced per server, e.g. `mcp__sonar-frontend__*`. The only prerequisite is the
-`sonar` CLI installed + authed (above) so bare `sonar` is on your `PATH` — there's no
-machine-specific path in the config, so it's portable.
-
-Because `.mcp.json` is committed (a shared/project-scope MCP config), Claude Code asks you to
-approve each server the first time you launch — approve them at the startup prompt or via
-`/mcp`. To skip that prompt for everyone, commit an approval allowlist to
-`.claude/settings.json`:
-
-```json
-"enabledMcpjsonServers": ["sonar-frontend", "sonar-admin", "sonar-backend", "sonar-gateway"]
-```
-
-Verify with `claude mcp list` — all four `sonar-*` servers should show **Connected**.
+To query SonarCloud from a workspace-root session, use the `sonar` CLI (for example
+`sonar list issues --project DEFRA_<repo>`), or open a session inside the repo to get its
+`mcp__sonar-*` tools.
 
 #### Workspace-level hooks
 

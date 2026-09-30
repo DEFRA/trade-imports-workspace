@@ -10,7 +10,9 @@ You will be told:
 - The capability path(s), e.g. `live-animals/addresses`
 - Where the suite report lives — the fit/vitest run's output and, for
   the E2E leg, the Playwright report/spec files under
-  `repos/trade-imports-animals-tests/tests/e2e/`
+  `repos/trade-imports-ins-tests/tests/<domain>/e2e/` (domain per
+  [`SUITES.md`](SUITES.md)'s **E2E project** column — `animals`,
+  `animals-admin`, `ins` or `plants`)
 - The run directory to write into
 
 Read `openspec/specs/<capability>/spec.md` and
@@ -43,7 +45,7 @@ always records one.
 
 Reach for it when source + test body genuinely don't resolve the
 judgement — most often because the test routes through a page object or
-shared journey helper (`page-objects/` in `trade-imports-animals-tests`)
+shared journey helper (`page-objects/` in `trade-imports-ins-tests`)
 that hides what actually happened, or the verdict would otherwise land on
 `uncertain`. Don't open a trace when `spec.md`, the test, and the source
 already agree — that's cost with no signal, and it doesn't apply to

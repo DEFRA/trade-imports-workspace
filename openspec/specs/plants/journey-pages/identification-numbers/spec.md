@@ -86,3 +86,17 @@ The system MUST save the current values and reach Overview on save-and-return-to
 - **GIVEN** the user is on identification numbers
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: Changing commodity type purges out-of-scope fields and keeps the consignment number
+**ID**: REQ-PLANTS-IDENT-NUMBERS-005
+The system MUST drop any identification-number answer that falls out of scope for a newly chosen commodity type, and MUST leave the consignment number — the field every commodity type may hold — unchanged.
+
+#### Scenario: Changing commodity type purges the out-of-scope field and keeps the consignment number
+**ID**: SCN-PLANTS-IDENT-NUMBERS-005-A
+- **GIVEN** a plants-for-planting notification with a supplier identification number and a consignment number saved
+- **WHEN** the commodity type is changed to potatoes
+- **THEN** the supplier field is no longer shown and its value is no longer held
+- **AND** the consignment number is unchanged
+- **WHEN** the commodity type is changed back to plants for planting
+- **THEN** the supplier field is shown blank
+- **AND** the consignment number remains unchanged

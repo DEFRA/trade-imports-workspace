@@ -148,15 +148,15 @@ The concurrency token is already threaded through Review and Declaration hidden 
 Y = covers directly. P = partial (edge cases remain). — = does not cover.
 For the *Explains what changed* column: Y = field-level detail (which field, old vs. new value); P = generic notification only ("content changed" or "another user edited this"); — = no guidance path.
 
-| Option                                             | 1. Address-book edit | 2. Other-tab edit | 3. URL subversion | 4. Two users | Explains what changed | Cost |
-| -------------------------------------------------- | -------------------- | ----------------- | ----------------- | ------------ |-----------------------| ---- |
-| A. Collapse Review + Declaration                   | —                    | —                 | Y                 | —            | —                     | S    |
-| B1. Take literals (address rework)                 | Y                    | —                 | —                 | —            | —                     | L    |
-| B2. Snapshot address on attach                     | Y                    | —                 | —                 | —            | —                     | M    |
-| C. Content hash Review → Submit                    | Y                    | Y                 | Y                 | Y            | Partial               | M    |
-| D. Persisted snapshot + id, verified at Submit     | Y                    | Y                 | Y                 | Y            | Full                  | M–L  |
-| E. Server-side reviewed snapshot as source of truth | Y                   | Y                 | Y                 | Y            | —                     | L    |
-| F. Concurrency token check on Submit               | —                    | Y                 | —                 | Y            | Partial               | XS   |
+| Option                                              | 1. Address-book edit | 2. Other-tab edit | 3. URL subversion | 4. Two users | Explains what changed | Cost |
+|-----------------------------------------------------|----------------------| ----------------- | ----------------- | ------------ |-----------------------| ---- |
+| A. Collapse Review + Declaration                    | —                    | —                 | Y                 | —            | —                     | S    |
+| B1. Take literals (address rework)                  | Y                    | —                 | —                 | —            | —                     | L    |
+| B2. Snapshot address on attach                      | Y                    | —                 | —                 | —            | —                     | M    |
+| C. Content hash Review → Submit                     | Y                    | Y                 | Y                 | Y            | Partial               | M    |
+| D. Persisted snapshot + id, verified at Submit      | Y                    | Y                 | Y                 | Y            | Full                  | M–L  |
+| E. Server-side reviewed snapshot as source of truth | Y                    | Y                 | Y                 | Y            | —                     | L    |
+| F. Concurrency token check on Submit                | —                    | Y                 | —                 | Y            | Partial               | XS   |
 
 Useful combinations:
 

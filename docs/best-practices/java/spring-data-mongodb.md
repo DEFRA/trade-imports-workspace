@@ -690,45 +690,41 @@ private LocalDateTime createdAt;
 private Instant createdAt;
 ```
 
-For date-only values, pick by whether the wire DTO and the persisted document are the same class.
-
-**(a) Distinct types — convert to `Instant` at the service boundary.** The request type carries
-`LocalDate`, the document carries `Instant`, and the mapper pins the zone explicitly. This is the
-clearer option when you control both types: the persisted type is honest about being an instant.
+**Date-only values are `Instant` too — all the way out to the wire.** EUDPA-565 settled this: a
+date-only field carries `Instant` on the request DTO, on the document and on the response, so the
+JSON contract is an RFC 3339 instant (`"2026-07-21T00:00:00Z"`), not a bare `"2026-07-21"`. There
+is no zone-less type left anywhere on the path, so there is no conversion to get wrong and no
+converter to register.
 
 ```java
-// Document field — see AccompanyingDocument.dateOfIssue
+// Wire DTO — the caller sends an instant
+@Schema(description = "Date of issue on the physical document, as UTC midnight",
+    example = "2026-01-15T00:00:00Z")
+Instant dateOfIssue
+
+// Document field — same type, no conversion
 private Instant dateOfIssue;
-
-// Service boundary — see DocumentService
-.dateOfIssue(request.dateOfIssue().atStartOfDay(ZoneOffset.UTC).toInstant())
 ```
 
-**(b) One shared class — register a UTC `LocalDate` converter pair.** When a single class serves
-as both the wire DTO and the Mongo document, the field must stay `LocalDate` to keep the JSON
-contract (`"2026-07-21"`), so pin the zone at the persistence boundary instead. Custom conversions
-are checked before Spring Data's built-in JSR-310 converters, and registering the pair covers
-every `LocalDate` field on every document rather than one field at a time.
+**Normalise the date-only ones at the service boundary.** `LocalDate` made a time component
+impossible to represent; `Instant` does not. A caller can now send `2026-07-21T23:00:00Z` for a
+field that means a calendar day, and under `Europe/London` that is the *next* day — the EUDPA-282
+failure mode relocated from the JVM to the caller. So truncate where the value means a date:
 
 ```java
-@WritingConverter
-public enum LocalDateToDateConverter implements Converter<LocalDate, Date> {
-    INSTANCE;
-
-    @Override
-    public Date convert(LocalDate source) {
-        return Date.from(source.atStartOfDay(ZoneOffset.UTC).toInstant());
-    }
-}
-
-// Register in MongoConfig — see UtcLocalDateConverters for the pair
-@Bean
-MongoCustomConversions mongoCustomConversions() {
-    return new MongoCustomConversions(List.of(
-        UtcLocalDateConverters.LocalDateToDateConverter.INSTANCE,
-        UtcLocalDateConverters.DateToLocalDateConverter.INSTANCE));
-}
+// Service boundary — pin it to the day the caller meant
+.dateOfIssue(request.dateOfIssue().truncatedTo(ChronoUnit.DAYS))
 ```
+
+Do this wherever a date-only instant reaches a downstream system that reads it as a calendar day —
+`Transport.arrivalDate` feeds the GB-NAG `scheduledOccurrenceDateTime` that PIMS reads that way.
+A `@Schema` or Javadoc that states the value *is* UTC midnight must be backed by a truncation that
+makes it so; documenting the guarantee without enforcing it is worse than not claiming it.
+
+**Don't register a `LocalDate` converter pair.** An earlier revision of this guide recommended a
+`@WritingConverter`/`@ReadingConverter` pair pinning `LocalDate` to UTC at the persistence
+boundary. That approach is abolished — nothing in these codebases uses it, and it only ever
+existed to make a zone-less persisted type safe. Use `Instant` and the problem does not arise.
 
 **Don't reach for `ZonedDateTime` here.** It looks like the zone-safe choice, but Mongo has no
 zone-aware date type: a `ZonedDateTime` field still serialises to a plain BSON `Date` with the

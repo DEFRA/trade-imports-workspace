@@ -6,17 +6,17 @@ below.
 
 | Set | Set name | Spec prefix | Local suite | E2E project |
 |---|---|---|---|---|
-| Live animals | `animals` | `live-animals` | `trade-imports-animals-frontend`: `npm run test:fit` | `e2e` |
+| Live animals | `animals` | `live-animals` | `trade-imports-animals-frontend`: `npm run test:fit` | `animals` |
 | High-risk plants | `plants` | `plants` | `trade-imports-plants-frontend`: `npm run test:fit` | `plants` |
 | Import Notification Service | `ins` | `ins` | `trade-imports-ins-frontend`: `npm run test:fit` | `ins` |
-| Admin | `admin` | `admin` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `admin` |
+| Admin | `admin` | `admin` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `animals-admin` |
 
 `<prefix>` in every command below is the **Spec prefix** column exactly
 as written — no trailing slash (`tim spec gaps --capability live-animals/`
 throws `Can't find capability "live-animals/"`; drop the slash). The
 **E2E project** column is what `--project=` takes in
-`trade-imports-animals-tests`; note live-animals is the odd one out
-(`e2e`, not `animals`).
+`trade-imports-ins-tests`, and also the domain folder its suite lives
+under — `tests/<E2E project>/{e2e,a11y,security}/`.
 
 A capability's spec prefix and its coverage links' E2E project don't
 always match — e.g. `live-animals/notification-events`'s only links live
@@ -60,13 +60,36 @@ judges scenarios off a **green** report, and the repos' own defaults
 passes:
 
 ```
-npm run test:fit -- --trace=on          # skip for admin — it has no fit suite
-npm run test:docker-compose -- --project=<this set's E2E project column> --trace=on
+npm run test:fit -- --trace=on          # skip for admin — it has no fit suite (run in the local-suite repo)
+npm run test:docker-compose -- --project=<this set's E2E project column> --trace=on   # run in repos/trade-imports-ins-tests
 ```
 
 `--trace=on` overrides each repo's `playwright.config` for this invocation
 only — never edit the checked-in configs for this. Traces land under
 `test-results/<test>/trace.zip`; inspect with the `playwright-trace` skill.
+
+### Running more than one set in the same pass
+
+`trade-imports-ins-tests` is one repo holding all four domains as
+separate Playwright projects, so its E2E leg is not tied to a single
+set the way each domain's own local suite is. When this pass will judge
+more than one set — `catch-up` / `cover` / `catch-up and cover` with no
+set name, or any run covering several sets back to back — run the E2E
+leg **once, for every domain together**, instead of once per set:
+
+```
+npm run test:docker-compose -- --trace=on   # no --project filter — all four domains in one run
+```
+
+Record its SHA once in a shared run directory —
+`~/git/defra/trade-imports-workspace/workareas/spec-catchup/<date>-e2e-all/shas.json`
+— and have every set's own run directory point at it instead of
+re-running the E2E leg. Each set then judges only its own project's
+slice of that one report (`test-results/<project>-*`,
+`playwright-report` filtered to `--project=<set>`). Running a single set
+on its own (`catch-up animals` alone) still scopes the E2E leg to that
+one project with `--project=<set>` — the batching above is only a saving
+once more than one set's E2E leg would otherwise run in the same pass.
 
 ## Report reuse
 
@@ -77,7 +100,7 @@ recorded SHAs to the current ones:
 ```
 git rev-parse HEAD
 git -C repos/<local-suite-repo> rev-parse HEAD
-git -C repos/trade-imports-animals-tests rev-parse HEAD
+git -C repos/trade-imports-ins-tests rev-parse HEAD
 ```
 
 (only the repos this set's suite touches). If every SHA matches what an

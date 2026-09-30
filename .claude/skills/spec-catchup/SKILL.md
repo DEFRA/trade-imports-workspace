@@ -56,7 +56,7 @@ turn (`subagent_type: general-purpose`).
 
 Never fan out the Docker check, the suite run, `tim spec lint`, applying
 a verdict, or running two sets in parallel — they share `openspec/` and,
-for E2E, `trade-imports-animals-tests`. Workers **propose only**; the
+for E2E, `trade-imports-ins-tests`. Workers **propose only**; the
 parent reads every `judge-*.json`, applies serially (or fans out the
 apply step only across verdicts touching disjoint files), then lints
 and commits.

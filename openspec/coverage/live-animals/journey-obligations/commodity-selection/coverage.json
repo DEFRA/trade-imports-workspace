@@ -13,7 +13,7 @@
           "name": "Adding a commodity that calls for a CPH number brings it into play",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after Felis catus, adding Bos taurus makes the addresses-hub CPH row appear Not added yet" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after Felis catus, adding Bos taurus makes the addresses-hub CPH row appear Not added yet" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line has a CPH-required commodity", "strength": "full", "notes": "Horse+Cow mixed lines; Cow alone triggers" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should put cph in scope when a line has commodity = 'Cow'", "strength": "full", "notes": "iterates every cphCommodities() name" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "seeds Bos taurus then deep-links to /cph-number — proves the page when in scope, not the add-line transition" }
@@ -24,7 +24,7 @@
           "name": "A notification with no such commodity is not asked for one",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "Felis catus alone: CPH row hidden; Continue from addresses returns to Overview with CPH heading hidden" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "Felis catus alone: CPH row hidden; Continue from addresses returns to Overview with CPH heading hidden" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is out of scope when no line has a CPH-required commodity", "strength": "full", "notes": "Horse+Cat" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should not put cph in scope when no line matches", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the CPH row for an exempt commodity", "strength": "partial", "notes": "CYA omit only; not the addresses hub / page skip" }
@@ -43,7 +43,7 @@
           "name": "Adding a commodity requiring unweaned tracking brings the question into play",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "Felis catus hides the group; then Bos taurus makes it visible" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "Felis catus hides the group; then Bos taurus makes it visible" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for 'Cow'", "strength": "partial", "notes": "carried over from before the narrowing to cattle-only (UNWEANED_ANIMAL_COMMODITIES) — this row's Cow/Horse unweaned:true expectation needs re-checking against the current whitelist before trusting it still passes as written" }
           ]
         },
@@ -86,7 +86,7 @@
           "name": "A commodity calling for particular identifiers asks only for those",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "partial", "notes": "confirms Cat: microchip + passport + tattoo on, ear tag off (matches the current spec wording), but doesn't assert all three together as a combined THEN in one place — a fit-level read of the identification page for Cat would close this" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "partial", "notes": "confirms Cat: microchip + passport + tattoo on, ear tag off (matches the current spec wording), but doesn't assert all three together as a combined THEN in one place — a fit-level read of the identification page for Cat would close this" }
           ],
           "notes": "spec text changed to the microchip+passport+tattoo example (Cat/Dog) since no current commodity produces the old passport+tattoo+ear-tag combination (see spec-refresh-evidence-2026-09-10.md). identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
         },
@@ -111,7 +111,7 @@
           "name": "A commodity with no specific identifier is asked for nothing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no panel, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no panel, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "fish card asserted absent (#identification-card-2 count 0), not merely stripped of typed fields" }
           ]
         }
@@ -127,7 +127,7 @@
           "name": "A commodity requiring a permanent address asks for one for each animal",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-animals-tests", "file": "tests/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "permanent address fields mandatory once any part filled; save blocked until address complete" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs", "strength": "full", "notes": "permanent address fields mandatory once any part filled; save blocked until address complete" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address asks for eight fields and never for a country", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "partial", "notes": "nameOrOrganisationName count 0 on cattle line — negative for permanent address on non-cats/dogs" }
           ]

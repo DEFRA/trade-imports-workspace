@@ -63,3 +63,13 @@ The system MUST show an additional row for the County Parish Holding (CPH) numbe
 - **GIVEN** none of the notification's commodity lines is one the service treats as requiring a CPH number
 - **WHEN** the user views the consignment addresses page
 - **THEN** no CPH number row is shown
+
+### Requirement: The page warns that a false address is fraud
+**ID**: REQ-CONSIGN-ADDR-006
+The system MUST warn the user, on the consignment addresses page, that providing a false address is an act of fraud.
+
+#### Scenario: The consignment addresses page carries the fraud warning
+**ID**: SCN-CONSIGN-ADDR-006-A
+- **GIVEN** the user is on the consignment addresses page
+- **WHEN** the page loads
+- **THEN** it warns that providing a false address is an act of fraud

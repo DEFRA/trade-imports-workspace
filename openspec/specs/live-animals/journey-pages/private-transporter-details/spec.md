@@ -6,16 +6,23 @@ Asks for the name and address of a private transporter, keyed in by hand rather 
 
 ## Requirements
 
-### Requirement: The page asks for the transporter's name and full contact address, with two fields optional
+### Requirement: The page asks for the transporter's name and full contact address, with two fields optional, closing at a Contact details heading with email before phone
 **ID**: REQ-PRIVATE-TRANS-001
-The system MUST ask the user for the private transporter's name or organisation name, and for a full address — address line 1, an optional address line 2, town or city, an optional county, postal or zip code, country, telephone number and email address — offering a save-and-continue action.
+The system MUST ask the user for the private transporter's name or organisation name, and for a full address — address line 1, an optional address line 2, town or city, an optional county, postal or zip code and country — then, under a "Contact details" heading, an email address followed by a telephone number, offering a save-and-continue action. The telephone field MUST hint that an international number should include its country code.
 
 #### Scenario: The page presents its name and address questions, marking two fields optional
 **ID**: SCN-PRIVATE-TRANS-001-A
 - **GIVEN** the user has chosen the private transporter type and reached the private transporter details page
 - **WHEN** the page loads
-- **THEN** it asks for a name or organisation name, address line 1, address line 2, a town or city, a county, a postal or zip code, a country, a telephone number and an email address, offering a save-and-continue action
+- **THEN** it asks for a name or organisation name, address line 1, address line 2, a town or city, a county, a postal or zip code and a country, then under a Contact details heading an email address and a telephone number
 - **AND** address line 2 and county are marked optional
+- **AND** the telephone field hints that an international number should include its country code
+
+#### Scenario: The contact details close the form, email before phone
+**ID**: SCN-PRIVATE-TRANS-001-B
+- **GIVEN** the user is on the private transporter details page
+- **WHEN** the page loads
+- **THEN** the address ends at country, then a Contact details heading introduces the email address field followed by the telephone number field
 
 ### Requirement: A complete set of private transporter details is saved as one record and reloads into the form
 **ID**: REQ-PRIVATE-TRANS-002

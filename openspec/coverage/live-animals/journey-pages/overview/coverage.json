@@ -59,15 +59,85 @@
     },
     {
       "id": "REQ-OVERVIEW-004",
-      "name": "Overview shows running totals of animals and packages once commodity lines exist",
+      "name": "Overview shows running totals of animals and packages from the first visit, defaulting to zero",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OVERVIEW-004-A",
+          "name": "Overview shows zero totals before any commodity is added",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "both boxes read 0 before a commodity is added", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-004-B",
           "name": "Overview totals the animals and packages entered so far",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "each box reads as the number, then the label, then the caption", "strength": "full", "notes": "the fit spec also has two purely visual/CSS tests for the same feature (static panel styling, responsive stacking) — excluded as out of scope, not behavioural" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-005",
+      "name": "The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-005-A",
+          "name": "No commodity chosen means no identification row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: when no commodity is chosen, the animal identification row is absent", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-005-B",
+          "name": "Choosing a commodity that needs identifiers reveals the row in its place",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: when a commodity needing identifiers is chosen, the row appears", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: the second section lists identification above the additional details", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-006",
+      "name": "Commodity details is its own task, completing only once its numbers are saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-006-A",
+          "name": "Commodity details stays To do until its numbers are saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "stands as its own task, linking to the consignment-details page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-006-B",
+          "name": "Commodity details reads Complete once its numbers are saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "reads Complete once the numbers are saved, leaving the other rows alone", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-007",
+      "name": "Only the Roles and addresses row carries hint text",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-007-A",
+          "name": "Roles and addresses is the only row with a hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: only the roles and addresses row carries a hint", "strength": "full", "notes": "" }
           ]
         }
       ]

@@ -47,12 +47,60 @@ The system MUST offer a return-to-dashboard action from Overview and take the us
 - **WHEN** they use the return-to-dashboard action
 - **THEN** they arrive at the dashboard
 
-### Requirement: Overview shows running totals of animals and packages once commodity lines exist
+### Requirement: Overview shows running totals of animals and packages from the first visit, defaulting to zero
 **ID**: REQ-OVERVIEW-004
-The system MUST show, once at least one commodity line has been added, a running total of the number of animals and a running total of the number of packages declared across the notification's commodity lines, each as a figure with a label and a caption.
+The system MUST show, from the first time a notification's Overview is viewed, a running total of the number of animals and a running total of the number of packages declared across the notification's commodity lines, each as a figure with a label and a caption, defaulting to zero before any commodity line has been added.
+
+#### Scenario: Overview shows zero totals before any commodity is added
+**ID**: SCN-OVERVIEW-004-A
+- **GIVEN** a new notification has just been started, with no commodity line added
+- **WHEN** the user views Overview
+- **THEN** it shows the animal and package totals as 0, each labelled and captioned
 
 #### Scenario: Overview totals the animals and packages entered so far
-**ID**: SCN-OVERVIEW-004-A
+**ID**: SCN-OVERVIEW-004-B
 - **GIVEN** the user has added a commodity line and entered its number of animals and number of packages
 - **WHEN** they view Overview
 - **THEN** it shows the total number of animals and the total number of packages, each labelled and captioned
+
+### Requirement: The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details
+**ID**: REQ-OVERVIEW-005
+The system MUST omit the Identification details task row from the "Description of the goods" section until a chosen commodity requires identifiers, MUST show it, linked, once one does, and MUST list it after Commodity details and before Additional details.
+
+#### Scenario: No commodity chosen means no identification row
+**ID**: SCN-OVERVIEW-005-A
+- **GIVEN** a new notification with no commodity chosen
+- **WHEN** the user views Overview
+- **THEN** no Identification details row is shown in the second section
+
+#### Scenario: Choosing a commodity that needs identifiers reveals the row in its place
+**ID**: SCN-OVERVIEW-005-B
+- **GIVEN** the user has chosen a commodity that carries identifiers
+- **WHEN** they view Overview
+- **THEN** the second section lists Commodity details, then Identification details, then Additional details, in that order
+
+### Requirement: Commodity details is its own task, completing only once its numbers are saved
+**ID**: REQ-OVERVIEW-006
+The system MUST show Commodity details as a task row of its own, separate from the commodity-choice row, linking to the consignment-details page, and MUST mark it Complete only once its numbers have been saved, leaving every other row's status unaffected.
+
+#### Scenario: Commodity details stays To do until its numbers are saved
+**ID**: SCN-OVERVIEW-006-A
+- **GIVEN** a commodity has been chosen but its numbers not yet entered
+- **WHEN** the user views Overview
+- **THEN** Commodity details shows To do, linking to the consignment-details page, while the commodity-choice row shows Complete
+
+#### Scenario: Commodity details reads Complete once its numbers are saved
+**ID**: SCN-OVERVIEW-006-B
+- **GIVEN** the commodity's numbers have been saved
+- **WHEN** the user views Overview
+- **THEN** Commodity details reads Complete, and the other rows' statuses are unchanged
+
+### Requirement: Only the Roles and addresses row carries hint text
+**ID**: REQ-OVERVIEW-007
+The system MUST show every task row as a bare link with a status, except Roles and addresses, which alone MUST carry a hint naming the parties it collects.
+
+#### Scenario: Roles and addresses is the only row with a hint
+**ID**: SCN-OVERVIEW-007-A
+- **GIVEN** the user views Overview
+- **WHEN** the task rows are examined
+- **THEN** only the Roles and addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination

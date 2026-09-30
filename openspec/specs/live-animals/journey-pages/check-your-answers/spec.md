@@ -119,13 +119,14 @@ The system MUST refuse to continue from the review while any card still holds ou
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008
-The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress.
+The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress, or a submit/continue action to submit it again.
 
 #### Scenario: The submitted view offers the actions open to a submitted notification
 **ID**: SCN-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** copy-as-new and delete actions are offered, and no cancel-amendment action is shown
+- **AND** no submit or continue action is shown
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009

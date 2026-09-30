@@ -211,13 +211,13 @@ The system MUST keep an uploaded document's file and details once it has been sc
 
 ### Requirement: Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue
 **ID**: REQ-DOCS-013
-The system MUST ask for a document type as a mandatory answer, offering a placeholder plus thirteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
+The system MUST ask for a document type as a mandatory answer, offering a placeholder plus all fourteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
 
-#### Scenario: The type question offers thirteen types behind a placeholder, in position
+#### Scenario: The type question offers fourteen types behind a placeholder, in position
 **ID**: SCN-DOCS-013-A
 - **GIVEN** the user is adding a document
 - **WHEN** the page loads
-- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and thirteen document types
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and fourteen document types, Health certificate among them
 
 #### Scenario: Leaving the type on its placeholder is rejected
 **ID**: SCN-DOCS-013-B

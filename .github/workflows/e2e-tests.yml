@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       project:
-        description: 'Playwright project (domain) to run: animals, animals-admin, ins or plants. Empty runs every project.'
+        description: 'Playwright project(s) (domain) to run: animals, animals-admin, ins or plants — space- or comma-separated for more than one. Empty runs every project.'
         required: false
         type: string
         default: ''
@@ -17,7 +17,7 @@ on:
         required: true
         type: string
       project:
-        description: 'Playwright project (domain) to run: animals, animals-admin, ins or plants. Empty runs every project.'
+        description: 'Playwright project(s) (domain) to run: animals, animals-admin, ins or plants — space- or comma-separated for more than one. Empty runs every project.'
         required: false
         type: string
         default: ''
@@ -129,6 +129,15 @@ jobs:
         env:
           PROJECT: ${{ inputs.project }}
         run: |
+          # Playwright selects multiple projects by repeating --project, so
+          # turn a space- and/or comma-separated PROJECT into one flag each.
+          # Unquoted word-splitting below also trims stray whitespace.
+          projects="${PROJECT//,/ }"
+          project_args=()
+          for p in $projects; do
+            project_args+=(--project="$p")
+          done
+
           docker run --rm \
             --network host \
             --user root \
@@ -138,7 +147,7 @@ jobs:
             --entrypoint npm \
             defradigital/trade-imports-ins-tests:${{ steps.branch-tag.outputs.tests-tag }} \
             run test:docker-compose:ci -- \
-              ${PROJECT:+"--project=$PROJECT"} \
+              "${project_args[@]}" \
               --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
       - name: Upload shard artifacts

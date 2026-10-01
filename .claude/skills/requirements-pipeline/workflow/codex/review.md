@@ -13,15 +13,17 @@ Compound commands, pipes, `node`, `npx`, absolute paths and `cd` are all fine he
 ## Constants
 
 Every `<placeholder>` here — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<skills>`,
-`<INCREMENT_ID>`, `<branch>`, `<baseBranch>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>`,
-`<personas>`, `<reviewFiles>` — is bound to a real value in the prompt that pointed you here. Use those
-bindings; never guess one. `<repo>` below means each of the repo paths the plan changes.
+`<INCREMENT_ID>`, `<branch>`, `<baseBranch>`, `<repos>`, `<personas>`, `<reviewFiles>` — is bound to a
+real value in the prompt that pointed you here. Use those bindings; never guess one. `<repo>` below means
+each of the repo paths the plan changes.
 
-Workspace root `<workspace>`; plan of record `<backlog>`. The three repos are `<frontendRepo>`,
-`<backendRepo>` and `<testsRepo>` — bound per run, and different between programmes. Never substitute
-a repo name you remember from another run.
+Workspace root `<workspace>`; plan of record `<backlog>`. The repos are `<repos>`, each written
+`<repoKey>=<absolute path>` — bound per run, and different between programmes, in their keys as well as
+their paths. Never substitute a repo name you remember from another run.
 
-Every repo is already on branch `<branch>`. Do not switch branches and do not create one.
+Every repo is already on branch `<branch>`. Do not switch branches and do not create one. Where the prompt
+says a merge is in progress, `git diff --staged` is the merge result against the pre-merge HEAD: judge the
+resolutions it describes, not what the merged ref brought.
 
 ## Your share of the review
 
@@ -103,9 +105,9 @@ Standing concerns, in priority order:
    such edit: was this forced (the test cannot pass without it because production is genuinely wrong), or
    is it opportunistic redesign that belongs in its own increment? Name which, and say what a later
    increment now inherits.
-1b. **The contract between repos.** What the frontend sends and expects must match what the backend
-   accepts and returns, and the tests repo must exercise the slice through it. A slice whose parts do not
-   meet is a finding however clean each part is.
+1b. **The contract between repos.** What each consumer (a frontend, say) sends and expects must match what
+   its provider (a backend or a stub) accepts and returns, and the tests or performance-tests repo must
+   exercise the slice through it. A slice whose parts do not meet is a finding however clean each part is.
 2. **Behaviour changed on a path the increment was not scoped to touch.** A shared helper edited to make
    one caller's test pass changes every other caller too.
 3. **Test quality.** Tests asserting implementation rather than behaviour (`verify(collaborator)` /
@@ -135,8 +137,9 @@ defect.
 ## Step 5 — report
 
 Your final message must satisfy the JSON schema given via `--output-schema`. Findings only — no fixes
-applied, nothing committed, no file written. Write each finding's `file` as `<repoKey>:<repo-relative path>`
-(`frontend`, `backend` or `tests`), so the verification stage can group findings by repo and language.
+applied, nothing committed, no file written. Write each finding's `file` as `<repoKey>:<repo-relative path>`,
+the repo key being one of the keys in `<repos>` (or `workspace` for a file in the workspace repo itself), so
+the verification stage can group findings by repo and language.
 
 **Always report, even if you did not finish.** Reporting is not the last thing you do if there is room
 left — it is the thing you must not run out of room for. If you are running low, stop reading, stop

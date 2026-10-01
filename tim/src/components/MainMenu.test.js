@@ -95,7 +95,7 @@ describe('MainMenu', () => {
     const getTicket = async (id) => ({
       id,
       summary: 'Plan the rollout',
-      status: 'In Progress',
+      status: 'In Dev',
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',
@@ -123,7 +123,7 @@ describe('MainMenu', () => {
     stdin.write('\r')
 
     await vi.waitFor(() => expect(lastFrame()).toContain('Plan the rollout'))
-    expect(lastFrame()).toContain('In Progress')
+    expect(lastFrame()).toContain('In Dev')
   })
 
   test('selecting Docker > Dev launches run-stack.sh with -d via the injected launcher', async () => {

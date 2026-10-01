@@ -6,7 +6,7 @@ import TicketResultScreen from './TicketResultScreen.js'
 const ticket = {
   id: 'EUDPA-200',
   summary: 'Build the CLI',
-  status: 'In Progress',
+  status: 'In Dev',
   type: 'Story',
   assignee: 'Sam Farrington',
   priority: 'High',
@@ -22,7 +22,7 @@ describe('TicketResultScreen', () => {
     const frame = lastFrame()
     expect(frame).toContain('EUDPA-200')
     expect(frame).toContain('Build the CLI')
-    expect(frame).toContain('In Progress')
+    expect(frame).toContain('In Dev')
     expect(frame).toContain('Story')
     expect(frame).toContain('Sam Farrington')
     expect(frame).toContain('High')

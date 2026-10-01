@@ -225,17 +225,89 @@ routes it to the step that can fix it.
 subcommand. It runs the Playwright tim installs, in
 `distil/extract/<slug>.work/`, so a trace opened there belongs to that source.
 
-### `tim build` — the build loop's deterministic steps
+### `tim docker lease` — who holds the workspace stack
 
-The build loop's branch and gate steps, run the same way every time. Both read
-the repos a backlog builds from its envelope `repos` map.
+The workspace stack is one compose project per machine. A build stage that
+needs it takes a lease first and gives it back before it finishes, so a stack
+is never left up with nobody owning it.
 
 ```bash
+tim docker lease acquire --holder "ibl-20261001T090000Z inc-003 ladder" --json  # start it, or reuse your own
+tim docker lease release --holder "ibl-20261001T090000Z inc-003 ladder" --json  # take down what you started
+tim docker lease status --json                                                    # up or down, and who holds it
+```
+
+- `acquire` on a stack that is down records the lease, then starts it
+  (`run-stack.sh -d`; `--mode up` for the published images) and records its
+  container ids. On a stack the same holder already leases it reuses it as it
+  is, but only when that start finished and the containers are still the ones
+  recorded. A start of the holder's own that died part-way (a timeout killing
+  `acquire`, say) is taken down and started again; one still running is
+  refused.
+- `acquire` on a stack leased to anyone else, up with no lease at all (one
+  somebody started by hand with `tim docker dev`), or restarted by hand under
+  a lease (other container ids), refuses with `STACK_HELD`, naming the holder,
+  its mode, its branches and when it took the lease. It never reuses or takes
+  down such a stack.
+- `release` takes down the stack its holder started, then clears the lease.
+  It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
+  stack nobody leases. A stack restarted by hand under the lease is left up and
+  the lease cleared (`FOREIGN_STACK`). When `stop-stack.sh` fails the lease is
+  kept.
+- A lease whose stack has gone, and whose start is not still running, is stale
+  and the next `acquire` replaces it, under a lock (`stack-lease.json.lock`) so
+  two processes never both take it over.
+- While a lease is held, `tim docker up`, `dev`, `down`, `restart` and
+  `bounce-backend` refuse with `STACK_HELD`, naming the holder. Add `--force`
+  to go ahead anyway; the holder then refuses to reuse or take down what you
+  start.
+
+The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
+`tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).
+`tim build gate` takes the same lease for its E2E phase.
+
+**Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
+started with `tim docker dev`, because nobody leases it. Either run
+`tim docker down` first and let the gate start and stop its own stack, or hold
+a lease yourself for the whole session:
+
+```bash
+tim docker lease acquire --holder "sam manual"
+tim build gate shared/my-programme --phase e2e --holder "sam manual"
+tim docker lease release --holder "sam manual"
+```
+
+### `tim build` — the build loop's deterministic steps
+
+The build loop's start, branch and gate steps, run the same way every time.
+Each reads the repos a backlog builds from its envelope `repos` map.
+
+```bash
+tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDPA-20628 \
+  --in-dev-status "In Dev" --done-status Done --board 13780 --json  # derive, ticket, branch
 tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
 tim build gate shared/my-programme --json                   # unit, then FIT, then E2E
 tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
+tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T090000Z inc-003 ladder" --json
 ```
+
+`tim build start` starts one increment, in three steps. **Derive**: the
+increment `--id` names, or the next buildable one (`--last <id>` stops before
+the ticket when the next one is the id the previous attempt built, reporting
+`repeat`). **Ticket**: reuse the key on the row, or an open ticket under `--epic` with this increment's exact summary (a create that timed out may have raised one), or raise a Task under
+`--epic` with the row's title, detail, acceptance criteria and sources as its
+wiki-markup description, and record the key on the row before anything else,
+so a retry never raises a second. A status other than `--in-dev-status` is
+moved there by an exact-name transition; one already at `--done-status` is
+left alone with a warning. Then the ticket is moved onto `--board`, every time.
+**Branch**: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row,
+checked out in each of the increment's repos (a row naming none takes every repo, in `--repos` order when given) (fast-forwarded to what is
+pushed), tracked from origin, or cut with `--no-track` from a freshly fetched
+`origin/<base>`. A repo with uncommitted work stops it before any repo
+changes. The result names `resumeAt` from the row's `commit` and `prs`. A
+failure names its step (`failedStep`: `derive`, `ticket` or `branch`) and its
+exact reason, and exits 1; nothing buildable is `id: null` and exits 0.
 
 `tim build branch` checks the branch out in each repo where it exists
 locally, and otherwise cuts it with `--no-track` from `origin/<branch>` if the
@@ -248,13 +320,54 @@ files). Running it again is a no-op.
 repo, in backlog order: every unit rung, then every FIT rung (after checking
 its ports are free — a held port fails the rung and names the holder), then
 the E2E rungs against the workspace stack built from local source
-(`run-stack.sh -d`, the path `tim docker dev` takes). If the stack was down,
-the gate starts it and always stops it afterwards; if it was up, the gate
-rebuilds it from local source and leaves it up. Each rung writes to
+(`run-stack.sh -d`, the path `tim docker dev` takes), under a stack lease
+held as `--holder` (default: this gate run). If the stack was down, the gate
+starts it, leases it and always releases it afterwards; if this holder
+already leases it, the gate rebuilds it from local source and leaves it up. A
+stack leased to anyone else, or up with no lease, is refused and left alone,
+and so is a FIT port such a stack holds: `stack.held` names the holder (null
+for no lease) and the reason. Each rung writes to
 `gate-<repo>-<rung>.log`; nothing streams. A rung that cannot run fails with
 its reason. The result is `{green, rungs, stack}` and the command exits 1
 unless every rung passed. gates.json refuses any rung that names a remote or
 CDP script.
+
+### `tim build runs archive|report` — what each run cost
+
+Keeps the full transcripts of workflow runs and reports what each stage cost
+and how long it took, so build-loop runs can be compared over time.
+
+```bash
+tim build runs archive wf_850da050-87a          # one run, by id or transcript folder path
+tim build runs archive --all                    # every run Claude Code still holds for this workspace
+tim build runs report wf_850da050-87a           # run → increment → stage → agent table
+tim build runs report wf_850da050-87a --json    # the same, for mining
+tim build runs report --all --session <id>      # one line per run, then each stage across them
+tim build runs report --all --workflow all      # every workflow, not only increment-build-loop
+```
+
+`archive` copies a run's `journal.jsonl`, every agent's transcript and
+`.meta.json`, the run's own record (`<session>/workflows/<runId>.json`: args,
+`log()` lines, result, per-agent progress) and any subagents its agents
+started, into `workareas/build-telemetry/runs/<runId>/`, and records the run in
+`workareas/build-telemetry/index.json`. It only reads `~/.claude`. Running it
+again copies only files that changed, so archiving a run while it is still
+going, then again after it stops, is safe. A run with no record yet is indexed
+as `unfinished`.
+
+The archive lives under `workareas/` because git ignores it — transcripts hold
+prompts, code and private context, and this repo is public — and outside
+`~/.claude`, which deletes session folders after `cleanupPeriodDays` (30 days
+unless set).
+
+`report` reads only the archive. Tokens are summed once per model request from
+each transcript: `input`, `output`, `cache write` and `cache read`, with
+`total` the sum of all four, so cache reads dominate it. An agent's own
+subagents count towards it. A stage's time is the span from its first agent's
+start to its last one's end, so parallel reviewers are not double counted; the
+JSON also carries `agentMs`, the sum. The increment and stage come from the
+agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
+increment id sit under `(run)`.
 
 ### `tim jira create|attach|link|epics` — the Jira write surface
 

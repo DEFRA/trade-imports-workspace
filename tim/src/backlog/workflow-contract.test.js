@@ -90,7 +90,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'stopAfter',
     'jiraProject',
     'epic',
-    'jiraInProgressStatus',
+    'jiraInDevStatus',
     'jiraDoneStatus',
     'jiraBoard',
     'ciFixAttempts',
@@ -105,7 +105,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
 const JIRA_AND_CI_KEYS = [
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'ciFixAttempts',
@@ -140,7 +140,7 @@ const BASE_ARGS = {
   stopAfter: 1,
   jiraProject: 'EUDPA',
   epic: 'EUDPA-1',
-  jiraInProgressStatus: 'In Progress',
+  jiraInDevStatus: 'In Dev',
   jiraDoneStatus: 'Done',
   jiraBoard: 13780,
   ciFixAttempts: 3,
@@ -154,7 +154,90 @@ const WORKSPACE_ANSWER = {
   abs: '/ws',
   tilde: '~/ws',
   canonical: true,
+  startedAt: '20261001T090000Z',
   summary: 'resolved'
+}
+
+// The run id the loop builds from WORKSPACE_ANSWER.startedAt, which every
+// stack lease holder starts with.
+const RUN_ID = 'ibl-20261001T090000Z'
+
+// The loop gives back each leasing stage's own lease after it, with an agent
+// of its own. Those agents are answered here, so a test's answers list stays
+// the stages it is about.
+const LEASE_RETURNED = { ok: true, summary: 'nothing to give back' }
+const isLeaseReturn = (label) => / lease return:/.test(label ?? '')
+
+const answeringLeaseReturns = (answers) => {
+  if (typeof answers === 'function') {
+    return (prompt, options) =>
+      isLeaseReturn(options.label) ? LEASE_RETURNED : answers(prompt, options)
+  }
+  let next = 0
+  return (prompt, options) => {
+    if (isLeaseReturn(options.label)) return LEASE_RETURNED
+    const answer = next < answers.length ? answers[next] : null
+    next += 1
+    return answer
+  }
+}
+
+const stageLabels = (run) =>
+  run.agents
+    .map((entry) => entry.options.label)
+    .filter((label) => !isLeaseReturn(label))
+
+const runLoop = (path, { answers = [], ...options } = {}) =>
+  runWorkflowScript(path, {
+    ...options,
+    answers: answeringLeaseReturns(answers)
+  })
+
+// What `tim build start --json` prints, as the start agent copies it.
+const startAnswer = (result) => ({
+  exitCode: result.failedStep ? 1 : 0,
+  stdout: JSON.stringify({
+    ok: !result.failedStep,
+    schema_version: 1,
+    tim_version: '0.0.0',
+    result,
+    errors: result.failedStep
+      ? [
+          {
+            code: `${result.failedStep.toUpperCase()}_FAILED`,
+            message: result.reason
+          }
+        ]
+      : []
+  })
+})
+
+const startedResult = (fields = {}) => ({
+  workarea: 'shared/args-fixture',
+  id: 'inc-900',
+  repeat: false,
+  ticket: {
+    key: 'EUDPA-900',
+    created: false,
+    status: 'In Dev',
+    movedToBoard: true,
+    warnings: []
+  },
+  branch: 'feat/EUDPA-900-fixture',
+  repos: ['backend', 'tests', 'frontend'],
+  resumeAt: 'build',
+  branched: [],
+  warnings: [],
+  failedStep: null,
+  reason: null,
+  ...fields
+})
+
+const NOTHING_STARTED = {
+  ticket: null,
+  branch: null,
+  repos: null,
+  resumeAt: null
 }
 
 const withoutKeys = (object, keys) =>
@@ -320,7 +403,7 @@ describe('increment-build-loop', () => {
   const scriptPath = join(buildLoopDir, 'increment-build-loop.js')
 
   const runJsonStringArgs = () =>
-    runWorkflowScript(scriptPath, {
+    runLoop(scriptPath, {
       args: JSON.stringify(BASE_ARGS),
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -362,7 +445,7 @@ describe('increment-build-loop', () => {
   })
 
   test('resolves object args to the same configuration as the string', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: BASE_ARGS,
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -373,7 +456,7 @@ describe('increment-build-loop', () => {
   })
 
   test('stops before any agent when increments is missing, the reproduced failure', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: JSON.stringify(withoutKey(BASE_ARGS, 'increments'))
     })
 
@@ -384,18 +467,18 @@ describe('increment-build-loop', () => {
   })
 
   test('names every Jira and CI key the loop needs', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKeys(BASE_ARGS, JIRA_AND_CI_KEYS)
     })
 
     expect(run.error.message).toContain(
-      'keys jiraProject, epic, jiraInProgressStatus, jiraDoneStatus, jiraBoard, ciFixAttempts, ciWatchMinutes, requireApproval, approvalWaitMinutes'
+      'keys jiraProject, epic, jiraInDevStatus, jiraDoneStatus, jiraBoard, ciFixAttempts, ciWatchMinutes, requireApproval, approvalWaitMinutes'
     )
     expect(run.agents).toEqual([])
   })
 
   test('refuses an empty increments list after logging the configuration', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, increments: [] }
     })
 
@@ -407,7 +490,7 @@ describe('increment-build-loop', () => {
   })
 
   test('stops before any agent when stopAfter is missing', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'stopAfter')
     })
 
@@ -418,7 +501,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a stopAfter that would never stop the run', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, stopAfter: 0 }
     })
 
@@ -429,7 +512,7 @@ describe('increment-build-loop', () => {
   })
 
   test('accepts stopAfter "all" and carries on to the backlog', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, stopAfter: 'all' },
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -438,7 +521,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses planOnly without an explicit increments list', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: true, increments: null }
     })
 
@@ -449,7 +532,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a models value that is not an object', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, models: null }
     })
 
@@ -459,7 +542,7 @@ describe('increment-build-loop', () => {
 
   describe('the models config', () => {
     const runPlanOnlyWithModels = (models) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, models },
         answers: [
           WORKSPACE_ANSWER,
@@ -533,7 +616,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a scope it would once have derived', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'scope')
     })
 
@@ -543,7 +626,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a planOnly that is not a boolean', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: 'yes' }
     })
 
@@ -554,7 +637,7 @@ describe('increment-build-loop', () => {
   })
 
   const runPlanOnly = () =>
-    runWorkflowScript(scriptPath, {
+    runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: true },
       answers: [
         WORKSPACE_ANSWER,
@@ -594,11 +677,7 @@ describe('increment-build-loop', () => {
   test('runs no stage after the planner when planOnly is true', async () => {
     const run = await runPlanOnly()
 
-    expect(run.agents.map((entry) => entry.options.label)).toEqual([
-      'workspace',
-      'preflight',
-      'inc-900 plan'
-    ])
+    expect(stageLabels(run)).toEqual(['workspace', 'preflight', 'inc-900 plan'])
   })
 
   test('tells the planner where to write the plan', async () => {
@@ -610,7 +689,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses an executor it would once have defaulted', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'executor')
     })
 
@@ -619,42 +698,49 @@ describe('increment-build-loop', () => {
     )
   })
 
+  test('stops before any increment when the workspace agent reports no start time, which the run id needs', async () => {
+    const run = await runLoop(scriptPath, {
+      args: BASE_ARGS,
+      answers: [{ ...WORKSPACE_ANSWER, startedAt: 'now' }]
+    })
+
+    expect(run.error.message).toContain(
+      'the workspace agent reported no start time in the form 20261001T091500Z — got "now"'
+    )
+  })
+
+  test('tells the workspace agent to report the time the run started', async () => {
+    const run = await runJsonStringArgs()
+
+    expect(run.agents[0].prompt).toContain(
+      'Then run `date -u +%Y%m%dT%H%M%SZ` and report exactly what it printed as `startedAt`.'
+    )
+  })
+
   describe('the build stages', () => {
     const PREFLIGHT_ANSWER = { ok: true, summary: '1' }
     const WORK_BRANCH = 'feat/EUDPA-900-fixture'
-    const TICKET_ANSWER = {
-      ok: true,
-      key: 'EUDPA-900',
-      created: false,
-      movedToBoard: true,
-      branch: WORK_BRANCH,
-      repos: ['backend', 'tests', 'frontend'],
-      resumeAt: 'build',
-      status: 'In Progress',
-      summary: 'reused'
-    }
-    const BRANCHED_ANSWER = { ok: true, summary: 'branched' }
+    const START_ANSWER = startAnswer(startedResult())
 
     const runFrom = (...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, START_ANSWER, ...answers]
+      })
+
+    const runFromWithArgs = (argsOverride, ...answers) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, ...argsOverride },
+        answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, START_ANSWER, ...answers]
+      })
+
+    const runStartedWith = (result, ...answers) =>
+      runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
           PREFLIGHT_ANSWER,
-          TICKET_ANSWER,
-          BRANCHED_ANSWER,
-          ...answers
-        ]
-      })
-
-    const runFromWithArgs = (argsOverride, ...answers) =>
-      runWorkflowScript(scriptPath, {
-        args: { ...BASE_ARGS, ...argsOverride },
-        answers: [
-          WORKSPACE_ANSWER,
-          PREFLIGHT_ANSWER,
-          TICKET_ANSWER,
-          BRANCHED_ANSWER,
+          startAnswer(result),
           ...answers
         ]
       })
@@ -666,23 +752,163 @@ describe('increment-build-loop', () => {
       ).prompt
     }
 
-    test('raises the ticket and cuts the branch before the baseline', async () => {
+    test('starts the increment with one tim build start call before the baseline', async () => {
       const run = await runFrom(null)
 
-      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+      expect(stageLabels(run)).toEqual([
         'workspace',
         'preflight',
-        'inc-900 ticket',
-        'inc-900 branch',
+        'inc-900 start',
         'inc-900 baseline'
       ])
+    })
+
+    test('runs tim build start with the run’s Jira config and the listed id', async () => {
+      const run = await runFrom(null)
+
+      expect(run.agents[2].prompt).toContain(
+        '`tim build start shared/args-fixture --id inc-900 --base main --jira-project EUDPA --epic EUDPA-1 --in-dev-status "In Dev" --done-status "Done" --board 13780 --repos frontend,backend,tests --workspace ~/ws --json`'
+      )
+    })
+
+    test('builds on the branch and repos tim build start reports', async () => {
+      const run = await runFrom(null)
+
+      expect(run.logs).toContain(
+        'inc-900: EUDPA-900 (reused, In Dev) on board 13780, branch feat/EUDPA-900-fixture in backend, tests, frontend, resuming at build'
+      )
+    })
+
+    test('stops with ticket-failed, naming tim’s reason, when the ticket step fails', async () => {
+      const run = await runStartedWith({
+        ...startedResult({ ticket: null, branch: null, repos: null }),
+        failedStep: 'ticket',
+        reason:
+          'EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
+      })
+
+      expect(run.result).toEqual({
+        increments: [
+          {
+            id: 'inc-900',
+            outcome: 'ticket-failed',
+            detail:
+              'EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
+          }
+        ],
+        stopped: {
+          reason: 'ticket-failed',
+          detail:
+            'inc-900: EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
+        }
+      })
+    })
+
+    test('stops with ticket-failed when tim does not report the ticket on the board', async () => {
+      const run = await runStartedWith(
+        startedResult({
+          ticket: { ...startedResult().ticket, movedToBoard: false }
+        })
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'ticket-failed',
+        detail:
+          'inc-900: EUDPA-900 is not on board 13780: tim build start did not report it moved there'
+      })
+    })
+
+    test('stops with branch-failed, keeping the ticket, when the branch step fails', async () => {
+      const run = await runStartedWith({
+        ...startedResult(),
+        failedStep: 'branch',
+        reason: 'Nothing changed. frontend has uncommitted work: a.js.'
+      })
+
+      expect(run.result.increments).toEqual([
+        {
+          id: 'inc-900',
+          ticket: 'EUDPA-900',
+          outcome: 'branch-failed',
+          detail: 'Nothing changed. frontend has uncommitted work: a.js.'
+        }
+      ])
+    })
+
+    test('stops with branch-failed when tim branched a repo the args do not configure', async () => {
+      const run = await runStartedWith(
+        startedResult({ repos: ['backend', 'gateway'] })
+      )
+
+      expect(run.result.stopped).toEqual({
+        reason: 'branch-failed',
+        detail:
+          'inc-900: tim build start branched gateway, which the args do not configure'
+      })
+    })
+
+    test('logs every warning tim build start gives', async () => {
+      const run = await runStartedWith(
+        startedResult({
+          warnings: [
+            'EUDPA-900 is already Done, but inc-900 is not done in the backlog. A human needs to look at that mismatch.'
+          ]
+        }),
+        null
+      )
+
+      expect(run.logs).toContain(
+        'inc-900: EUDPA-900 is already Done, but inc-900 is not done in the backlog. A human needs to look at that mismatch.'
+      )
+    })
+
+    test('stops with derive-failed when the start agent copies no JSON', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          { exitCode: 127, stdout: 'zsh: command not found: tim' }
+        ]
+      })
+
+      expect(run.result.stopped).toEqual({
+        reason: 'derive-failed',
+        detail:
+          'tim build start printed no JSON (exit 127): zsh: command not found: tim'
+      })
+    })
+
+    test('stops with derive-failed, quoting tim, when tim fails before any step', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          PREFLIGHT_ANSWER,
+          {
+            exitCode: 2,
+            stdout: JSON.stringify({
+              ok: false,
+              result: null,
+              errors: [
+                { code: 'USAGE', message: 'Give --epic, such as EUDPA-20628.' }
+              ]
+            })
+          }
+        ]
+      })
+
+      expect(run.result.stopped).toEqual({
+        reason: 'derive-failed',
+        detail: 'Give --epic, such as EUDPA-20628.'
+      })
     })
 
     test('tells the baseline to refuse a repo on the base branch', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'if ANY repo is on `main`, stop and report ok:false naming it'
+        "if ANY of the increment's repos is on `main`, stop and report ok:false naming it"
       )
     })
 
@@ -699,8 +925,16 @@ describe('increment-build-loop', () => {
         [
           '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
           '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
-          '   3. `tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`'
+          `   3. \`tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID} inc-900 baseline"\``
         ].join('\n')
+      )
+    })
+
+    test('tells the baseline to hand back a stack somebody else holds rather than work round it', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        "A phase whose `result.stack.held` is not null found the workspace stack in somebody else's hands"
       )
     })
 
@@ -806,6 +1040,7 @@ describe('increment-build-loop', () => {
         run.agents
           .filter((entry) => entry.options.phase === phaseName)
           .map((entry) => entry.options.label)
+          .filter((label) => !isLeaseReturn(label))
 
       const runThroughFixToLadder = () =>
         runFrom(
@@ -904,7 +1139,7 @@ describe('increment-build-loop', () => {
           [
             '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
             '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
-            '   3. `tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`'
+            `   3. \`tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID} inc-900 ladder"\``
           ].join('\n')
         )
       })
@@ -938,6 +1173,116 @@ describe('increment-build-loop', () => {
           .map(({ options }) => options.label)
 
         expect(stopsTheStack).toEqual([])
+      })
+
+      test('tells every increment agent the workspace stack is used only through a lease', async () => {
+        const run = await runThroughFixToLadder()
+        const unguarded = run.agents
+          .filter(
+            ({ options, prompt }) =>
+              options.label.startsWith('inc-900 ') &&
+              !prompt.includes(
+                'THE WORKSPACE STACK IS LEASED, with `tim docker lease`, and only a stage whose task below gives it a lease\n  holder may use it.'
+              )
+          )
+          .map(({ options }) => options.label)
+
+        expect(unguarded).toEqual([])
+      })
+
+      test('tells every agent to take down any other compose project it starts', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 consistency')).toContain(
+          "is followed, before you return, by that repo's own script that takes the\n  project down. Leave nothing running that you started."
+        )
+      })
+
+      test('gives each stage that may use the stack a lease holder of its own run, increment and stage', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(
+          ['implement', 'consistency', 'fix', 'ladder'].map((stage) =>
+            promptOf(run, `inc-900 ${stage}`).includes(
+              `\`tim docker lease acquire --holder "${RUN_ID} inc-900 ${stage}" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-${stage}\``
+            )
+          )
+        ).toEqual([true, true, true, true])
+      })
+
+      test('tells a leasing stage to give the stack back before it returns, and before FIT', async () => {
+        const prompt = promptOf(
+          await runThroughFixToLadder(),
+          'inc-900 implement'
+        )
+
+        expect(prompt).toContain(
+          'Give it back as soon as they are done, and always before you return, whatever they showed:'
+        )
+        expect(prompt).toContain(
+          "The stack holds the FIT ports, so give it back before you run the gate's FIT phase."
+        )
+      })
+
+      test('gives back each leasing stage’s own lease as soon as the stage returns', async () => {
+        const run = await runThroughFixToLadder()
+        const all = run.agents.map((entry) => entry.options.label)
+        const followedByItsReturn = (stage) =>
+          all[all.indexOf(`inc-900 ${stage}`) + 1] ===
+          `inc-900 lease return:${stage}`
+
+        expect(
+          ['baseline', 'implement', 'fix', 'ladder'].map(followedByItsReturn)
+        ).toEqual([true, true, true, true])
+      })
+
+      test('gives back the consistency reviewer’s own lease after review', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(run.agents.map((entry) => entry.options.label)).toContain(
+          'inc-900 lease return:consistency'
+        )
+      })
+
+      test('releases exactly the stage’s own holder when it gives its lease back', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 lease return:ladder')).toContain(
+          `\`tim docker lease release --holder "${RUN_ID} inc-900 ladder" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-return-ladder\``
+        )
+      })
+
+      test('gives no lease holder to a stage that runs no stack check', async () => {
+        const prompt = promptOf(
+          await runThroughFixToLadder(),
+          'inc-900 review:frontend-javascript'
+        )
+
+        expect(prompt).not.toContain('Your lease holder is')
+      })
+
+      test('tells the consistency reviewer to run a stack check inside its lease', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 consistency')).toContain(
+          'A section 5 check that needs the workspace stack up runs inside your\nlease, as THE WORKSPACE STACK below says.'
+        )
+      })
+
+      test('tells the planner a plan may name a stack check, and how to mark it', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 plan')).toContain(
+          'Mark a check that needs\n      the workspace stack up "needs the workspace stack": the stage that runs it takes the stack\'s lease first and\n      gives it back after (`tim docker lease`)'
+        )
+      })
+
+      test('keeps the integration proof on the gate’s E2E phase in the plan', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 plan')).toContain(
+          "The integration proof is still the\n      gate's E2E phase"
+        )
       })
 
       test('stops at a baseline whose gate is red', async () => {
@@ -979,11 +1324,190 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('leaves the workspace stack to the gate in the ladder', async () => {
+      describe('when a stage finds the workspace stack held', () => {
+        const LEAKED = {
+          holder: `${RUN_ID} inc-900 consistency`,
+          detail: `The workspace stack is leased to "${RUN_ID} inc-900 consistency" (dev mode, since 2026-10-01T09:05:00.000Z). Leave it alone: it is theirs to release.`
+        }
+        const OTHER_RUN = {
+          holder: 'ibl-20260930T170000Z inc-004 ladder',
+          detail:
+            'The workspace stack is leased to "ibl-20260930T170000Z inc-004 ladder" (dev mode, since 2026-09-30T17:00:00.000Z). Leave it alone: it is theirs to release.'
+        }
+        const UNLEASED = {
+          holder: null,
+          detail:
+            'The workspace stack is up and nobody holds a lease on it, so somebody started it by hand (tim docker dev, say), outside any build. Leave it alone: ask whoever started it to take it down.'
+        }
+        const RELEASED = { ok: true, summary: 'released' }
+        const heldLadder = (stackHeld) => ({
+          green: false,
+          ran: [],
+          summary: 'the stack is held',
+          stackHeld
+        })
+        const KEPT = { ok: true, summary: 'wip commit pushed' }
+
+        const runToLadderWith = (...answers) =>
+          runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            ...answers
+          )
+
+        const labelsFrom = (run, label) =>
+          labels(run).slice(labels(run).indexOf(label))
+
+        test('releases a lease an earlier stage of this increment leaked, and runs the stage again', async () => {
+          const run = await runToLadderWith(
+            heldLadder(LEAKED),
+            RELEASED,
+            GREEN_LADDER,
+            ON_BRANCH,
+            null
+          )
+
+          expect(labelsFrom(run, 'inc-900 ladder').slice(0, 4)).toEqual([
+            'inc-900 ladder',
+            'inc-900 lease release:ladder',
+            'inc-900 ladder',
+            'inc-900 branch-guard:land'
+          ])
+        })
+
+        test('tells the releaser to release exactly the leaked holder', async () => {
+          const run = await runToLadderWith(
+            heldLadder(LEAKED),
+            RELEASED,
+            GREEN_LADDER,
+            ON_BRANCH,
+            null
+          )
+
+          expect(promptOf(run, 'inc-900 lease release:ladder')).toContain(
+            `\`tim docker lease release --holder "${RUN_ID} inc-900 consistency" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-release-ladder\``
+          )
+        })
+
+        test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+
+          expect({
+            stopped: run.result.stopped,
+            released: labels(run).some((label) =>
+              label.includes('lease release')
+            ),
+            last: labels(run).at(-1)
+          }).toEqual({
+            stopped: {
+              reason: 'stack-held',
+              detail: `inc-900 ladder: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder". ${OTHER_RUN.detail}`
+            },
+            released: false,
+            last: 'inc-900 preserve'
+          })
+        })
+
+        test('names the holder in the increment’s result', async () => {
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+
+          expect(run.result.increments[0]).toMatchObject({
+            id: 'inc-900',
+            outcome: 'stack-held',
+            holder: 'ibl-20260930T170000Z inc-004 ladder',
+            preserved: 'wip commit pushed'
+          })
+        })
+
+        test('stops with stack-held for a stack that is up with no lease', async () => {
+          const run = await runToLadderWith(heldLadder(UNLEASED), KEPT)
+
+          expect(run.result.stopped).toEqual({
+            reason: 'stack-held',
+            detail: `inc-900 ladder: the workspace stack is held by nobody: it is up with no lease, so somebody started it by hand. ${UNLEASED.detail}`
+          })
+        })
+
+        test('releases a leak only once: a stage still refused after it stops the run', async () => {
+          const run = await runToLadderWith(
+            heldLadder(LEAKED),
+            RELEASED,
+            heldLadder(LEAKED),
+            KEPT
+          )
+
+          expect({
+            reason: run.result.stopped.reason,
+            releases: labels(run).filter((label) =>
+              label.includes('lease release')
+            ).length
+          }).toEqual({ reason: 'stack-held', releases: 1 })
+        })
+
+        test('stops with stack-held, saying why, when the leaked lease will not release', async () => {
+          const run = await runToLadderWith(
+            heldLadder(LEAKED),
+            { ok: false, summary: 'The workspace stack did not come down.' },
+            KEPT
+          )
+
+          expect(run.result.stopped.detail).toContain(
+            'Releasing that leaked lease failed: The workspace stack did not come down.'
+          )
+        })
+
+        test('stops at the baseline with stack-held and nothing to preserve', async () => {
+          const run = await runFrom({
+            ok: true,
+            green: false,
+            rungs: [],
+            summary: 'the stack is held',
+            stackHeld: OTHER_RUN
+          })
+
+          expect({
+            increments: run.result.increments,
+            last: labels(run).at(-1)
+          }).toEqual({
+            increments: [
+              {
+                id: 'inc-900',
+                ticket: 'EUDPA-900',
+                outcome: 'stack-held',
+                holder: 'ibl-20260930T170000Z inc-004 ladder',
+                detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder". ${OTHER_RUN.detail}`
+              }
+            ],
+            last: 'inc-900 baseline'
+          })
+        })
+
+        test('stops after review when the consistency reviewer finds the stack held', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            { findings: [], stackHeld: OTHER_RUN },
+            KEPT
+          )
+
+          expect(run.result.stopped.detail).toMatch(
+            /^inc-900 consistency: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder"\./
+          )
+        })
+      })
+
+      test('tells the ladder the gate leases the workspace stack for E2E', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          'For E2E it starts the workspace stack only if it was down and\nstops only what it started.'
+          "For E2E it takes the workspace stack's lease as the holder its\ncommand names: it starts the stack only if it was down and stops only what it started"
         )
       })
 
@@ -1021,7 +1545,7 @@ describe('increment-build-loop', () => {
           summary: 'backend is on main'
         })
 
-      const labels = (run) => run.agents.map((entry) => entry.options.label)
+      const labels = (run) => stageLabels(run)
 
       test('checks every repo is on the branch before land', async () => {
         const run = await runToFailedLand()
@@ -1079,8 +1603,6 @@ describe('increment-build-loop', () => {
         // check, every stage green: what it takes for the loop to count one as
         // landed and go round again.
         const LANDED = [
-          TICKET_ANSWER,
-          BRANCHED_ANSWER,
           BASELINE_ANSWER,
           PLAN_ANSWER,
           implementAnswer(['frontend:src/a.js']),
@@ -1111,69 +1633,63 @@ describe('increment-build-loop', () => {
           { ok: true, summary: 'no gate' }
         ]
 
-        const derived = (id) => ({ ok: true, next: id, summary: id })
+        const derived = (id, fields = {}) =>
+          startAnswer(startedResult({ id, ...fields }))
 
         const runDraining = (stopAfter, ...answers) =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: { ...BASE_ARGS, increments: null, stopAfter },
             answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, ...answers]
           })
 
-        test('asks tim for the next increment and builds the id it names', async () => {
-          const run = await runDraining(
-            1,
-            derived('inc-901'),
-            TICKET_ANSWER,
-            BRANCHED_ANSWER,
-            null
-          )
+        test('asks tim build start for the next increment and builds the id it names', async () => {
+          const run = await runDraining(1, derived('inc-901'), null)
 
           expect(labels(run)).toEqual([
             'workspace',
             'preflight',
-            'derive next',
-            'inc-901 ticket',
-            'inc-901 branch',
+            'start next',
             'inc-901 baseline'
           ])
         })
 
-        test('tells the derive agent to read result.next from the envelope', async () => {
+        test('passes no id when draining, so tim derives the next one', async () => {
           const run = await runDraining(1, derived('inc-901'), null)
           const prompt = run.agents.find(
-            (entry) => entry.options.label === 'derive next'
+            (entry) => entry.options.label === 'start next'
           ).prompt
 
           expect(prompt).toContain(
-            '`tim backlog next shared/args-fixture --workspace ~/ws --json`'
+            '`tim build start shared/args-fixture --base main --jira-project EUDPA'
           )
-          expect(prompt).toContain('Read `result.next` and nothing else')
         })
 
-        test('stops with no-buildable when tim returns no next increment', async () => {
-          const run = await runDraining(1, {
-            ok: true,
-            summary: 'result.next was null'
-          })
+        test('stops with no-buildable when tim build start finds nothing buildable', async () => {
+          const run = await runDraining(1, derived(null, NOTHING_STARTED))
 
           expect(run.result).toEqual({
             increments: [],
             stopped: {
               reason: 'no-buildable',
-              detail: 'result.next was null'
+              detail: 'tim build start found nothing buildable in the backlog'
             }
           })
         })
 
-        test('stops with derive-failed rather than calling a broken query a finished backlog', async () => {
-          const run = await runDraining(1, {
-            ok: false,
-            summary: 'tim backlog next exited 2: no such workarea'
-          })
+        test('stops with derive-failed rather than calling a broken backlog a finished one', async () => {
+          const run = await runDraining(
+            1,
+            startAnswer({
+              ...startedResult({ id: null, ...NOTHING_STARTED }),
+              failedStep: 'derive',
+              reason:
+                "Can't find /ws/workareas/shared/args-fixture/backlog.json."
+            })
+          )
 
           expect(run.result.stopped).toEqual({
             reason: 'derive-failed',
-            detail: 'tim backlog next exited 2: no such workarea'
+            detail: "Can't find /ws/workareas/shared/args-fixture/backlog.json."
           })
         })
 
@@ -1199,9 +1715,26 @@ describe('increment-build-loop', () => {
           )
 
           expect(labels(run).slice(-2)).toEqual([
-            'derive next',
-            'inc-902 ticket'
+            'start next',
+            'inc-902 baseline'
           ])
+        })
+
+        test('tells tim build start which increment the last attempt built', async () => {
+          const run = await runDraining(
+            2,
+            derived('inc-901'),
+            ...LANDED,
+            derived('inc-902'),
+            null
+          )
+          const starts = run.agents.filter(
+            (entry) => entry.options.label === 'start next'
+          )
+
+          expect(starts[1].prompt).toContain(
+            '`tim build start shared/args-fixture --last inc-901 --base main'
+          )
         })
 
         test('stops with not-landed when the same id comes back twice', async () => {
@@ -1209,7 +1742,7 @@ describe('increment-build-loop', () => {
             2,
             derived('inc-901'),
             ...LANDED,
-            derived('inc-901')
+            derived('inc-901', { repeat: true, ...NOTHING_STARTED })
           )
 
           expect(run.result.stopped.reason).toBe('not-landed')
@@ -1218,8 +1751,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
-        // Claude, plus the two startup agents, the twenty-eighth does not fit —
+        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
+        // Claude, plus the two startup agents, the twenty-sixth does not fit —
         // so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1229,15 +1762,15 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(27)
+          expect(run.result.increments.length).toBe(25)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
         })
       })
 
       describe('an explicit increments list', () => {
         const runListed = (...answers) =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: {
               ...BASE_ARGS,
               increments: ['inc-900', 'inc-901'],
@@ -1246,8 +1779,7 @@ describe('increment-build-loop', () => {
             answers: [
               WORKSPACE_ANSWER,
               PREFLIGHT_ANSWER,
-              TICKET_ANSWER,
-              BRANCHED_ANSWER,
+              START_ANSWER,
               ...answers
             ]
           })
@@ -1262,8 +1794,7 @@ describe('increment-build-loop', () => {
           expect(labels(run)).toEqual([
             'workspace',
             'preflight',
-            'inc-900 ticket',
-            'inc-900 branch',
+            'inc-900 start',
             'inc-900 baseline'
           ])
         })
@@ -1279,7 +1810,7 @@ describe('increment-build-loop', () => {
             reason: 'baseline-red',
             detail: 'inc-900: lint red'
           })
-          expect(labels(run)).not.toContain('inc-901 ticket')
+          expect(labels(run)).not.toContain('inc-901 start')
         })
       })
 
@@ -1287,13 +1818,12 @@ describe('increment-build-loop', () => {
         const CODEX_RAN = { ok: true, summary: 'codex ran in one slice' }
 
         const runCodexToReview = () =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: { ...BASE_ARGS, executor: 'codex' },
             answers: [
               WORKSPACE_ANSWER,
               PREFLIGHT_ANSWER,
-              TICKET_ANSWER,
-              BRANCHED_ANSWER,
+              START_ANSWER,
               BASELINE_ANSWER,
               PLAN_ANSWER,
               CODEX_RAN,
@@ -1380,7 +1910,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a lifecycle it does not know', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, lifecycle: 'trunk' }
     })
 
@@ -1408,7 +1938,7 @@ describe('increment-build-loop', () => {
       },
       jiraProject: null,
       epic: null,
-      jiraInProgressStatus: null,
+      jiraInDevStatus: null,
       jiraDoneStatus: null,
       jiraBoard: null,
       requireApproval: null,
@@ -1416,18 +1946,18 @@ describe('increment-build-loop', () => {
     }
 
     const runBranch = (overrides, ...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...BRANCH_ARGS, ...overrides },
         answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, ...answers]
       })
 
-    const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+    const labelsOf = (run) => stageLabels(run)
     const promptOf = (run, label) =>
       run.agents.find((entry) => entry.options.label === label).prompt
 
     describe('its configuration', () => {
       test('takes null for every Jira and approval key, and whatever repo keys the envelope names', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: BRANCH_ARGS,
           answers: [WORKSPACE_ANSWER, null]
         })
@@ -1436,7 +1966,7 @@ describe('increment-build-loop', () => {
       })
 
       test('refuses a Jira or approval key that is given a value, naming it', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: { ...BRANCH_ARGS, epic: 'EUDPA-1', requireApproval: false }
         })
 
@@ -1447,7 +1977,7 @@ describe('increment-build-loop', () => {
       })
 
       test('still needs the Jira and approval keys passed, as null', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: withoutKey(BRANCH_ARGS, 'jiraBoard')
         })
 
@@ -1459,7 +1989,7 @@ describe('increment-build-loop', () => {
       test.each(['main', 'master'])(
         'refuses to build onto %s',
         async (branch) => {
-          const run = await runWorkflowScript(scriptPath, {
+          const run = await runLoop(scriptPath, {
             args: { ...BRANCH_ARGS, branch }
           })
 
@@ -1470,18 +2000,8 @@ describe('increment-build-loop', () => {
         }
       )
 
-      test('runs on the claude executor only', async () => {
-        const run = await runWorkflowScript(scriptPath, {
-          args: { ...BRANCH_ARGS, executor: 'codex' }
-        })
-
-        expect(run.error.message).toContain(
-          'lifecycle "branch" runs on executor "claude" only'
-        )
-      })
-
       test('refuses a repo key that names the workspace itself', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: {
             ...BRANCH_ARGS,
             repos: { ...BRANCH_ARGS.repos, workspace: repo('workspace') }
@@ -1808,6 +2328,46 @@ describe('increment-build-loop', () => {
         })
       })
 
+      describe('with the codex executor', () => {
+        const runCodexMergeRow = (row) =>
+          runBranch({ executor: 'codex' }, row, BASELINE, PLAN, MERGE_STARTED, {
+            ok: true,
+            summary: 'codex ran in one slice'
+          })
+
+        test('hands Codex the merge the loop started for it to resolve', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow(MERGE_ROW),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain('THE MERGE IS YOURS TO RESOLVE')
+          expect(prompt).toContain(
+            '- tests (`~/ws/repos/trade-imports-ins-tests`): `origin/main` into `feat/NO_JIRA-frontend-alignment`, 1 conflicted path(s) when it started'
+          )
+        })
+
+        test('binds the gate’s unit phase for a row that owes it', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow(MERGE_ROW),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain(
+            '<gateUnit> = tim build gate shared/args-fixture --phase unit --workspace /ws --json --logs /ws/workareas/shared/args-fixture/logs/inc-900-implement'
+          )
+        })
+
+        test('binds no gate phase for a row whose gatePhases leave out unit', async () => {
+          const prompt = promptOf(
+            await runCodexMergeRow({ ...MERGE_ROW, gatePhases: ['e2e'] }),
+            'inc-900 codex:implement'
+          )
+
+          expect(prompt).toContain('<gateUnit> = none')
+        })
+      })
+
       describe('when the merge cannot finish', () => {
         const runToRedLadder = () =>
           runBranch(
@@ -1916,6 +2476,591 @@ describe('increment-build-loop', () => {
           )
         })
       })
+    })
+  })
+
+  describe('under the full lifecycle, with the envelope’s own repo keys', () => {
+    const repo = (folder) => ({
+      path: `repos/${folder}`,
+      github: `DEFRA/${folder}`
+    })
+    // The INS performance-testing envelope: a k6 repo, two stubs, three Node
+    // frontends and two Java services, and no key called frontend, backend
+    // or tests.
+    const PERF_REPOS = {
+      perftests: repo('trade-imports-performance-tests'),
+      stub: repo('trade-imports-stub'),
+      idstub: repo('trade-imports-defra-id-stub'),
+      insfrontend: repo('trade-imports-ins-frontend'),
+      animalsfrontend: repo('trade-imports-animals-frontend'),
+      plantsfrontend: repo('trade-imports-plants-frontend'),
+      referencedata: repo('trade-imports-reference-data'),
+      gateway: repo('trade-imports-dynamics-gateway')
+    }
+    const PERF_ARGS = {
+      ...BASE_ARGS,
+      repos: PERF_REPOS,
+      increments: ['inc-014']
+    }
+    const envelopeOf = (repos) =>
+      Object.entries(repos).map(([key, { path, github }]) => ({
+        key,
+        path,
+        github
+      }))
+    const PREFLIGHT = {
+      ok: true,
+      summary: '19',
+      envelopeRepos: envelopeOf(PERF_REPOS)
+    }
+    // Six of the eight, the way inc-014 touches them, written provider first:
+    // the Java services, then the three frontends, then the perf-test repo
+    // that exercises them all.
+    const ROW_REPOS = [
+      'gateway',
+      'referencedata',
+      'insfrontend',
+      'animalsfrontend',
+      'plantsfrontend',
+      'perftests'
+    ]
+    const WORK_BRANCH = 'feat/EUDPA-914-dependency-metrics'
+    const prUrl = (key) =>
+      `https://github.com/${PERF_REPOS[key].github}/pull/${ROW_REPOS.indexOf(key) + 1}`
+    const CHANGED_FILES = [
+      'gateway:src/main/java/uk/gov/defra/Gateway.java',
+      'referencedata:src/main/java/uk/gov/defra/MdmClient.java',
+      'insfrontend:src/server/common/helpers/metrics.js',
+      'animalsfrontend:src/server/common/helpers/metrics.js',
+      'plantsfrontend:src/server/common/helpers/metrics.js',
+      'perftests:src/report/dependencies.js'
+    ]
+    // The PR stage raises them as it goes and a fixer appends to the end, so
+    // they come back in no useful order: perf tests first here.
+    const PRS_AS_RAISED = [
+      'perftests',
+      'plantsfrontend',
+      'gateway',
+      'insfrontend',
+      'referencedata',
+      'animalsfrontend'
+    ].map((key) => ({ repo: key, url: prUrl(key), raised: true }))
+
+    const ANSWERS = {
+      workspace: WORKSPACE_ANSWER,
+      preflight: PREFLIGHT,
+      'inc-014 start': startAnswer(
+        startedResult({
+          id: 'inc-014',
+          ticket: {
+            key: 'EUDPA-914',
+            created: true,
+            status: 'In Dev',
+            movedToBoard: true,
+            warnings: []
+          },
+          branch: WORK_BRANCH,
+          repos: ROW_REPOS
+        })
+      ),
+      'inc-014 baseline': {
+        ok: true,
+        green: true,
+        rungs: [],
+        summary: 'green'
+      },
+      'inc-014 plan': {
+        ok: true,
+        summary: 'Measured every call out of the boundary.',
+        repos: ROW_REPOS,
+        behaviourChanges: [
+          'Each service emits latency and outcome per dependency.'
+        ],
+        decisions: []
+      },
+      'inc-014 implement': {
+        ok: true,
+        summary: 'Built it.',
+        changedFiles: CHANGED_FILES,
+        notes: ''
+      },
+      'inc-014 ladder': { green: true, ran: [], summary: 'green' },
+      'inc-014 branch-guard:land': { ok: true, summary: 'on the branch' },
+      'inc-014 land': {
+        landed: true,
+        commit: 'a1 b2 c3 d4 e5 f6',
+        summary: 'committed'
+      },
+      'inc-014 pr': { ok: true, prs: PRS_AS_RAISED, summary: 'six PRs' },
+      'inc-014 ci watch': { green: true, summary: 'every check green' },
+      'inc-014 merge': {
+        green: true,
+        merged: ROW_REPOS.map((key) => ({ repo: key, sha: `${key}-sha` })),
+        summary: 'merged'
+      },
+      'inc-014 done': { ok: true, summary: 'ticket moved to Done' },
+      'inc-014 gate check': { ok: true, summary: 'no gate' }
+    }
+
+    const isReviewer = (label) =>
+      /^inc-014 (style|review):|consistency$/.test(label)
+
+    const answerByLabel =
+      (overrides = {}) =>
+      (prompt, { label }) => {
+        const answers = { ...ANSWERS, ...overrides }
+        if (Object.hasOwn(answers, label)) return answers[label]
+        return isReviewer(label) ? { findings: [] } : null
+      }
+
+    const runPerf = (argsOverride = {}, answerOverrides = {}) =>
+      runLoop(scriptPath, {
+        args: { ...PERF_ARGS, ...argsOverride },
+        answers: answerByLabel(answerOverrides)
+      })
+
+    const labelsOf = (run) => stageLabels(run)
+    const agentOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label)
+    const promptOf = (run, label) => agentOf(run, label).prompt
+
+    describe('its configuration', () => {
+      test('accepts a repos map with none of the old frontend, backend and tests keys', async () => {
+        const run = await runPerf({ planOnly: true })
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'planned',
+          repos: ROW_REPOS
+        })
+      })
+
+      test('plans with every configured key and no other', async () => {
+        const run = await runPerf({ planOnly: true })
+
+        expect(
+          agentOf(run, 'inc-014 plan').options.schema.properties.repos.items
+            .enum
+        ).toEqual(Object.keys(PERF_REPOS))
+      })
+
+      test('tells the planner to return its repos in the row’s merge order', async () => {
+        const prompt = promptOf(
+          await runPerf({ planOnly: true }),
+          'inc-014 plan'
+        )
+
+        expect(prompt).toContain(
+          "in merge order: the order the increment's `repos` list gives them, which is the order the merge stage merges in."
+        )
+        expect(prompt).toContain(
+          'and a tests or performance-tests repo after every service it exercises'
+        )
+      })
+
+      test('stops before any increment when the args name a repo the envelope does not', async () => {
+        const run = await runPerf(
+          {},
+          {
+            preflight: {
+              ...PREFLIGHT,
+              envelopeRepos: envelopeOf(PERF_REPOS).filter(
+                ({ key }) => key !== 'gateway'
+              )
+            }
+          }
+        )
+
+        expect(run.error.message).toContain(
+          'config.repos does not match the repos the backlog envelope at /ws/workareas/shared/args-fixture/backlog.json names — args name "gateway", which the envelope does not'
+        )
+        expect(labelsOf(run)).toEqual(['workspace', 'preflight'])
+      })
+
+      test('stops before any increment when the envelope names a repo the args do not', async () => {
+        const sevenRepos = Object.fromEntries(
+          Object.entries(PERF_REPOS).filter(([key]) => key !== 'gateway')
+        )
+        const run = await runPerf({ repos: sevenRepos })
+
+        expect(run.error.message).toContain(
+          'the envelope names "gateway", which the args do not'
+        )
+        expect(labelsOf(run)).toEqual(['workspace', 'preflight'])
+      })
+
+      test('stops before any increment when a repo sits at another path in the envelope', async () => {
+        const run = await runPerf(
+          {},
+          {
+            preflight: {
+              ...PREFLIGHT,
+              envelopeRepos: envelopeOf({
+                ...PERF_REPOS,
+                insfrontend: repo('trade-imports-animals-frontend')
+              })
+            }
+          }
+        )
+
+        expect(run.error.message).toContain(
+          '"insfrontend" is at "repos/trade-imports-animals-frontend" in the envelope and "repos/trade-imports-ins-frontend" in the args'
+        )
+      })
+
+      test('stops a planOnly run at the same check, before the planner', async () => {
+        const run = await runPerf(
+          { planOnly: true },
+          { preflight: { ...PREFLIGHT, envelopeRepos: [] } }
+        )
+
+        expect(run.error.message).toContain('config.repos does not match')
+        expect(labelsOf(run)).not.toContain('inc-014 plan')
+      })
+    })
+
+    describe('building a six-repo increment', () => {
+      test('goes start, build, PR, CI, merge and done', async () => {
+        const run = await runPerf()
+
+        expect(labelsOf(run).filter((label) => !isReviewer(label))).toEqual([
+          'workspace',
+          'preflight',
+          'inc-014 start',
+          'inc-014 baseline',
+          'inc-014 plan',
+          'inc-014 implement',
+          'inc-014 ladder',
+          'inc-014 branch-guard:land',
+          'inc-014 land',
+          'inc-014 pr',
+          'inc-014 ci watch',
+          'inc-014 merge',
+          'inc-014 done',
+          'inc-014 gate check'
+        ])
+      })
+
+      test('reports it landed with a PR in every repo it touched', async () => {
+        const run = await runPerf()
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          ticket: 'EUDPA-914',
+          branch: WORK_BRANCH,
+          outcome: 'landed',
+          prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('starts the listed increment through tim build start', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 start')
+
+        expect(prompt).toContain(
+          '`tim build start shared/args-fixture --id inc-014 --base main'
+        )
+      })
+
+      test('builds in every repo tim build start branched, in the row’s order', async () => {
+        const run = await runPerf()
+
+        expect(run.logs).toContain(
+          `inc-014: EUDPA-914 (raised, In Dev) on board 13780, branch ${WORK_BRANCH} in ${ROW_REPOS.join(', ')}, resuming at build`
+        )
+      })
+
+      test('reviews each repo and language as its own group', async () => {
+        const run = await runPerf()
+
+        expect(
+          labelsOf(run).filter((label) => label.startsWith('inc-014 review:'))
+        ).toEqual([
+          'inc-014 review:gateway-java',
+          'inc-014 review:referencedata-java',
+          'inc-014 review:insfrontend-javascript',
+          'inc-014 review:animalsfrontend-javascript',
+          'inc-014 review:plantsfrontend-javascript',
+          'inc-014 review:perftests-javascript'
+        ])
+      })
+
+      test('commits one per repo, recorded in the row’s repo order', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 land')
+
+        expect(prompt).toContain(
+          '--commit "<sha, or several in the order of the increment\'s repos, space separated>"'
+        )
+      })
+
+      test('raises a PR per repo against the configured GitHub repos', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 pr')
+
+        expect(prompt).toContain('gateway=DEFRA/trade-imports-dynamics-gateway')
+        expect(prompt).not.toContain('idstub=DEFRA/trade-imports-defra-id-stub')
+      })
+
+      test('watches CI on every PR', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 ci watch')
+
+        for (const { repo: key, url } of PRS_AS_RAISED) {
+          expect(prompt).toContain(`${key}: ${url}`)
+        }
+      })
+
+      test('merges in the row’s repo order, however the PRs were raised', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          [
+            'THE PULL REQUESTS, in merge order:',
+            ...ROW_REPOS.map((key) => `${key}: ${prUrl(key)}`)
+          ].join('\n')
+        )
+      })
+
+      test('merges a PR in a repo the row did not name last', async () => {
+        const run = await runPerf(
+          {},
+          {
+            'inc-014 pr': {
+              ok: true,
+              prs: [
+                {
+                  repo: 'stub',
+                  url: 'https://github.com/DEFRA/trade-imports-stub/pull/7'
+                },
+                ...PRS_AS_RAISED
+              ],
+              summary: 'seven PRs'
+            }
+          }
+        )
+
+        expect(run.logs).toContain(
+          `inc-014: merge order ${[...ROW_REPOS, 'stub'].join(' → ')}`
+        )
+      })
+
+      test('states the merge order as the row’s, not backend, tests and frontend', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          "MERGE ORDER for a cross-repo increment: the order the increment's `repos` list names them."
+        )
+        expect(prompt).not.toContain('BACKEND FIRST')
+      })
+
+      test('sweeps every configured repo for a PR left open', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          Object.values(PERF_REPOS)
+            .map(({ github }) => github)
+            .join(', ')
+        )
+      })
+
+      test('sends only the animals and plants frontends through frontend-change', async () => {
+        const run = await runPerf()
+
+        expect(promptOf(run, 'inc-014 plan')).toContain(
+          'It covers animalsfrontend (`repos/trade-imports-animals-frontend`) or plantsfrontend (`repos/trade-imports-plants-frontend`) only'
+        )
+        expect(promptOf(run, 'inc-014 implement')).toContain(
+          'the TARGET REPO is\nwhichever of `~/ws/repos/trade-imports-animals-frontend` and `~/ws/repos/trade-imports-plants-frontend` the plan names for the journey change'
+        )
+      })
+
+      test('sends no repo through frontend-change when the programme builds none it covers', async () => {
+        const services = {
+          stub: PERF_REPOS.stub,
+          gateway: PERF_REPOS.gateway
+        }
+        const run = await runPerf(
+          { repos: services },
+          {
+            preflight: { ...PREFLIGHT, envelopeRepos: envelopeOf(services) },
+            'inc-014 start': startAnswer(
+              startedResult({
+                id: 'inc-014',
+                branch: WORK_BRANCH,
+                repos: ['stub', 'gateway']
+              })
+            ),
+            'inc-014 plan': {
+              ...ANSWERS['inc-014 plan'],
+              repos: ['stub', 'gateway']
+            }
+          }
+        )
+
+        expect(promptOf(run, 'inc-014 plan')).not.toContain('frontend-change')
+        expect(promptOf(run, 'inc-014 implement')).not.toContain(
+          'frontend-change'
+        )
+      })
+
+      test('binds every configured repo for the Codex briefs', async () => {
+        const run = await runPerf(
+          { executor: 'codex' },
+          { 'inc-014 codex:implement': { ok: true, summary: 'ran' } }
+        )
+        const prompt = promptOf(run, 'inc-014 codex:implement')
+
+        expect(prompt).toContain(
+          `<repos>        = ${Object.entries(PERF_REPOS)
+            .map(([key, { path }]) => `${key}=/ws/${path}`)
+            .join(', ')}`
+        )
+        expect(prompt).not.toContain('<frontendRepo>')
+      })
+    })
+
+    describe('building a one-repo increment in a nine-repo programme', () => {
+      const NINE_REPOS = {
+        ...PERF_REPOS,
+        instests: repo('trade-imports-ins-tests')
+      }
+      const ONE_REPO = ['perftests']
+      const OTHER_REPOS = Object.keys(NINE_REPOS).filter(
+        (key) => !ONE_REPO.includes(key)
+      )
+      const PERFTESTS_PR = {
+        repo: 'perftests',
+        url: 'https://github.com/DEFRA/trade-imports-performance-tests/pull/2',
+        raised: true
+      }
+
+      const runOneRepo = () =>
+        runPerf(
+          { repos: NINE_REPOS },
+          {
+            preflight: { ...PREFLIGHT, envelopeRepos: envelopeOf(NINE_REPOS) },
+            'inc-014 start': startAnswer(
+              startedResult({
+                id: 'inc-014',
+                branch: WORK_BRANCH,
+                repos: ONE_REPO
+              })
+            ),
+            'inc-014 plan': { ...ANSWERS['inc-014 plan'], repos: ONE_REPO },
+            'inc-014 implement': {
+              ...ANSWERS['inc-014 implement'],
+              changedFiles: ['perftests:src/k6/journeys.js']
+            },
+            'inc-014 land': {
+              landed: true,
+              commit: 'dcd653e',
+              summary: 'committed'
+            },
+            'inc-014 pr': { ok: true, prs: [PERFTESTS_PR], summary: 'one PR' },
+            'inc-014 merge': {
+              green: true,
+              merged: [{ repo: 'perftests', sha: 'perftests-sha' }],
+              summary: 'merged'
+            }
+          }
+        )
+
+      test('reaches the PR stage, CI, merge and done', async () => {
+        const run = await runOneRepo()
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'landed',
+          prs: [PERFTESTS_PR.url]
+        })
+      })
+
+      test('asks the PR stage to check, push and raise only in the increment’s repo', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 pr')
+
+        expect(prompt).toContain('REPOS, in order: perftests.')
+        expect(prompt).toContain(
+          'GitHub repos: perftests=DEFRA/trade-imports-performance-tests. Repo paths: perftests=repos/trade-imports-performance-tests.'
+        )
+        for (const key of OTHER_REPOS) {
+          expect(prompt).not.toContain(NINE_REPOS[key].path)
+        }
+      })
+
+      test('asks the baseline to hold only the increment’s repo off the base branch', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 baseline')
+
+        expect(prompt).toContain(
+          "Check the increment's repos only — perftests; another configured repo staying on\n   `main` is correct."
+        )
+      })
+
+      test('still sweeps all nine repos for a PR left open at merge', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          Object.values(NINE_REPOS)
+            .map(({ github }) => github)
+            .join(', ')
+        )
+      })
+    })
+  })
+
+  describe('under the full lifecycle, with the frontend, backend and tests keys', () => {
+    const LEGACY_PRS = ['frontend', 'tests', 'backend'].map((key) => ({
+      repo: key,
+      url: `https://github.com/DEFRA/trade-imports-animals-${key}/pull/1`
+    }))
+
+    const answersFor = (label) => {
+      const answers = {
+        workspace: WORKSPACE_ANSWER,
+        preflight: { ok: true, summary: '1' },
+        'inc-900 start': startAnswer(
+          startedResult({
+            repos: ['frontend', 'tests', 'backend'],
+            resumeAt: 'ci'
+          })
+        ),
+        'inc-900 pr': { ok: true, prs: LEGACY_PRS, summary: 'three PRs' },
+        'inc-900 ci watch': { green: true, summary: 'green' }
+      }
+      return answers[label] ?? null
+    }
+
+    const runLegacyToMerge = () =>
+      runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: (prompt, { label }) => answersFor(label)
+      })
+
+    test('still merges backend, then tests, then frontend, whatever order the row gives', async () => {
+      const run = await runLegacyToMerge()
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 merge'
+      ).prompt
+
+      expect(prompt).toContain(
+        [
+          'THE PULL REQUESTS, in merge order:',
+          'backend: https://github.com/DEFRA/trade-imports-animals-backend/pull/1',
+          'tests: https://github.com/DEFRA/trade-imports-animals-tests/pull/1',
+          'frontend: https://github.com/DEFRA/trade-imports-animals-frontend/pull/1'
+        ].join('\n')
+      )
+      expect(prompt).toContain('BACKEND FIRST, THEN TESTS, THEN FRONTEND')
+    })
+
+    test('still raises a PR in each of the three repos the row names', async () => {
+      const run = await runLegacyToMerge()
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 pr'
+      ).prompt
+
+      expect(prompt).toContain(
+        'REPOS, in order: frontend, tests, backend. These are the increment'
+      )
+      expect(prompt).toContain(
+        'GitHub repos: frontend=DEFRA/trade-imports-animals-frontend, tests=DEFRA/trade-imports-ins-tests, backend=DEFRA/trade-imports-animals-backend.'
+      )
     })
   })
 })

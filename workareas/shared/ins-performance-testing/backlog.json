@@ -1,0 +1,1297 @@
+{
+  "programme": "ins-performance-testing",
+  "generatedFrom": [
+    "ruling:sam-2026-09-29d",
+    "ruling:sam-2026-09-29c",
+    "ruling:sam-2026-09-29b",
+    "ruling:sam-2026-09-29",
+    "meeting:2026-09-29",
+    "repo:tests",
+    "repo:stub",
+    "repo:idstub",
+    "repo:insfrontend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:gateway",
+    "repo:animalsfrontend",
+    "repo:animalsbackend",
+    "repo:plantsfrontend",
+    "repo:plantsbackend",
+    "confluence:6604328622",
+    "confluence:6608160092",
+    "web:grafana-load-testing-types",
+    "web:k6-docs"
+  ],
+  "invariants": [
+    "k6 is the tool. JMeter is not used and is no fallback. (ruling:sam-2026-09-29c; conflict c-021)",
+    "Every environment the suites run in — local Docker, CDP dev, CDP test, CDP perf-test — runs the real INS components against stubs for everything outside the INS product boundary. No load scenario sends design-target traffic to a real external system; only the low-volume tier-4 conformance run touches real external systems, at owner-agreed rates. (ruling:sam-2026-09-29b; meeting:2026-09-29 Summary §Stubbed vs Integrated Testing; conflicts c-001, c-002)",
+    "SNS, SQS, and cdp-uploader with its document store and antivirus scanning are real, inside the boundary, never stubbed and never given a latency or fault profile. In the local Docker stack the stack's stand-ins take their place (floci for SNS/SQS, the local cdp-uploader container for the document store and scanning), per c-018's default, and results that depend on them carry a caveat naming them. (ruling:sam-2026-09-29b; conflicts c-017, c-018)",
+    "The programme goes wide: live animals and high-risk plants from the first increment. No row builds one journey's capability while deferring the other's — a row that adds journey traffic, a scenario or test data does it for both journeys. IUU journey tests are out of scope; the shared components still carry IUU's contribution. (ruling:sam-2026-09-29b; conflict c-019; meeting:2026-09-29 Summary §Volumetrics and Observability)",
+    "One stub per integration versus shared stubs is open (c-020, req-079): no row may assume per-integration stub services. Follow the default — keep the existing stub services (trade-imports-stub, trade-imports-defra-id-stub and the Service Bus stand-in) and give each integration its own separately-configurable profile within them; split a stub into its own service only where a measured headroom run shows the shared one would distort results. (ruling:sam-2026-09-29b; conflict c-020)",
+    "There is one set of k6 suites. Which environment a run targets, and which stub profile it runs with, is chosen by run configuration, never by a copy of a suite. Tier cadences, scenario parameters, volumetric figures and thresholds are held in configuration, so an agreed revision of DR-EUDP-005 or the volumetrics page changes values, not scripts. (ruling:sam-2026-09-29; conflicts c-006, c-022)",
+    "Traffic follows the real journey shape — sign in, create a draft, many edits across sessions, submit, read back, amend — with varied inputs, never a shallow create-and-submit loop of one static notification. (confluence:6608160092 Decision / 'Scenario shapes' / closing paragraph; meeting:2026-09-29 Summary §Decisions Made)",
+    "Every notification the suite creates — journey traffic and background volume — is created through the frontends' own save routes; a backend-only run uses only request bodies captured from those saves. (repo:tests flows/seeded-journey.ts; conflict c-013)",
+    "Every threshold ties to a volumetrics figure or a stated interim default (c-004), is named, and is scoped per scenario and endpoint tag. Shared-component thresholds gate on the two-journey figures; the with-IUU figures run as a second profile that is reported and does not fail the run (c-007).",
+    "Every run's report says which environment it ran in and which stub profile each stubbed integration ran with."
+  ],
+  "repos": {
+    "perftests": {
+      "path": "repos/trade-imports-performance-tests",
+      "github": "DEFRA/trade-imports-performance-tests"
+    },
+    "stub": {
+      "path": "repos/trade-imports-stub",
+      "github": "DEFRA/trade-imports-stub"
+    },
+    "idstub": {
+      "path": "repos/trade-imports-defra-id-stub",
+      "github": "DEFRA/trade-imports-defra-id-stub"
+    },
+    "insfrontend": {
+      "path": "repos/trade-imports-ins-frontend",
+      "github": "DEFRA/trade-imports-ins-frontend"
+    },
+    "animalsfrontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "referencedata": {
+      "path": "repos/trade-imports-reference-data",
+      "github": "DEFRA/trade-imports-reference-data"
+    },
+    "gateway": {
+      "path": "repos/trade-imports-dynamics-gateway",
+      "github": "DEFRA/trade-imports-dynamics-gateway"
+    },
+    "instests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    }
+  },
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "A k6 smoke run of both journeys and the front door runs against the local Docker stack and fails the pull request on a breached threshold",
+      "detail": "The walking skeleton. Nothing performance-related exists in any repo today. This adds k6 to the new CDP performance-test suite repo, pointed at a target environment by configuration, and a tier-1 smoke run that signs in, opens the INS dashboard and creates, saves and reads back a notification on live animals and on high-risk plants — as a real browser session would, with cookies, CSRF crumbs and redirects. The run waits until the stack is functionally ready, judges itself against named interim thresholds, and runs on every pull request so a change that makes INS slower fails its check. Everything later builds on this.",
+      "acceptanceCriteria": [
+        "The environment a run targets — local Docker stack, CDP dev, CDP test or CDP perf-test — is chosen by run configuration, using the same environment names and service URL scheme as the Playwright suites in trade-imports-ins-tests; this increment proves the local Docker target. (ruling:sam-2026-09-29; ruling:sam-2026-09-29b; repo:tests playwright.config.ts:1-27, playwright.docker-compose.config.ts:8-24; web:k6-docs using-k6/environment-variables/)",
+        "Against the local Docker stack the smoke run — at most 5 virtual users, a few minutes — signs in, opens the INS dashboard, and on live animals and on high-risk plants creates a draft, saves a page and reads it back, each notification created through the frontend's own save route. (confluence:6608160092 Decision / 'Test tiers' table / row 1; ruling:sam-2026-09-29b; repo:tests flows/seeded-journey.ts:14-17)",
+        "The smoke run also drives the live-animals and high-risk-plants backends directly, using only request bodies captured from those frontend saves, never hand-built ones. (confluence:6608160092 Decision / 'Test tiers' table / row 1; conflict c-013)",
+        "The local stack a performance run uses has template caching on and no stub sign-in shortcut, so sign-in, address-book and reference-data are really called; SNS/SQS and the document store are the stack's own stand-ins. (ruling:sam-2026-09-29; repo:animalsfrontend src/config/nunjucks/nunjucks.js:10-27; repo:plantsfrontend src/config/config.js stubMode; repo:insfrontend src/config/nunjucks/nunjucks.js:24-25; conflict c-018 default)",
+        "Each virtual user keeps its own cookies, reads the CSRF crumb from the page and returns it on every form POST, follows redirects and the journeys' entry guards, and a stale-concurrency redirect is counted as a handled outcome, not an error. (repo:animalsfrontend src/plugins/csrf.js:22-38, scripts/lighthouse/journey-client.js:1-60, .../flow/entry-guard.js:13-26; repo:plantsfrontend src/plugins/csrf.js:19-42, src/server/app/shared/kit.js redirectOnStaleAction)",
+        "A run waits for functional readiness — a signed-in page, a backend read and a reference-data read succeed — rather than trusting the health endpoints, and the start-up window is excluded from measurement. (repo:animalsfrontend src/server/health/controller.js:1-11, src/auth/get-oidc-config-with-retry.js:5-29; repo:insfrontend src/auth/get-oidc-config-with-retry.js:5-30; repo:referencedata src/main/resources/application.yml:76-78)",
+        "Every scenario carries named thresholds scoped per scenario and per endpoint tag — backend API P95 under 200ms and P99 under 1,200ms, frontend pages P95 under 2,000ms and P99 under 5,000ms, failure rate under 1% — failed checks feed a threshold, and a runaway run aborts on threshold failure after a short evaluation delay. (confluence:6604328622 §4.7 Response time targets; web:k6-docs using-k6/thresholds/, using-k6/checks/; conflict c-004 default)",
+        "The smoke run runs on every pull request against the local stack, with the performance suite's image run beside the E2E tests image in the workspace E2E workflow, with the stubs answering without added delay, and the pull request's check fails when any threshold fails. (confluence:6608160092 Decision / 'Test tiers' table / row 1; repo:tests .github/workflows/workspace-e2e-tests.yml:1-46; web:k6-docs testing-guides/automated-performance-testing/; conflict c-003 default; conflict c-022 default)"
+      ],
+      "requirements": [
+        "req-001",
+        "req-002",
+        "req-003",
+        "req-012",
+        "req-027",
+        "req-028",
+        "req-043",
+        "req-044"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-09-29c",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "ruling:sam-2026-09-29",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §NFRs and Testing Approach; §Decisions Made"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "entrypoint.sh, Dockerfile, playwright.config.ts, playwright.docker-compose.config.ts, flows/seeded-journey.ts, .github/workflows/workspace-e2e-tests.yml"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/plugins/csrf.js; scripts/lighthouse/journey-client.js; src/config/nunjucks/nunjucks.js; src/server/health"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/plugins/csrf.js; src/config/config.js stubMode; src/server/app/shared/kit.js"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/config/nunjucks/nunjucks.js; src/auth/get-oidc-config-with-retry.js"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "src/main/resources/application.yml:76-78"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.7 Response time targets"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Test tiers' table / row 1"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "using-k6/environment-variables/; using-k6/thresholds/; using-k6/checks/; testing-guides/automated-performance-testing/"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [],
+      "status": "done",
+      "openQuestions": [
+        "c-004: 'What response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own (open item 3)?' Default, followed here: 'Backend API endpoints: P95 under 200ms and P99 under 1,200ms (section 4.7), with P50 under 25ms reported but not failing the run. Frontend pages (form, dashboard, sign-in): interim P95 under 2,000ms, P99 under 5,000ms (5 seconds is the failure point). Upload pages including the scan: P99 under 60 seconds. Failure rate under 1% in sustained peak and endurance. P99 burst: 5xx under 1% and P95 no worse than twice the sustained-peak P95. Spike: P95 back within 10% of the pre-spike baseline within 60 seconds. Endurance: final-hour P95 no more than 1.2 times the first hour, and no pool-exhaustion errors.'",
+        "c-003: 'Which tiers and scenarios should run in each environment, and on what schedule?' Default, followed here for the local part: 'Local Docker (stubs; local stand-ins for SNS/SQS and cdp-uploader): the tier-1 smoke run on every pull request via the workspace E2E workflow, and every scenario runnable on demand at compressed durations for script development.'",
+        "c-018: 'In the local Docker stack, where no real AWS or CDP service exists, what counts as the real SNS, SQS and cdp-uploader?' Default, followed here: 'The stack's existing stand-ins take their place locally — floci for SNS/SQS and the local cdp-uploader container (over floci's S3 and SQS) for the document store and scanning — and results that depend on them carry the req-036 caveat.'",
+        "c-022: 'Does CDP perf-test need its own stub configuration, or does one configuration serve local Docker, CDP dev, test and perf-test?' Default, followed here: 'One stub build and one set of SLA-derived latency and fault profiles serve every environment, selected at runtime by configuration. A zero-delay profile is kept for script development and for the pull-request smoke run, whose question is \"did this change make it slower\".' The stubs answer without delay today, which is the zero-delay profile until inc-007 makes profiles switchable."
+      ],
+      "notes": [
+        "Combines the environment-targeting slice (req-001, req-002), the browser-like session slice (req-012), the readiness slice (req-044), the thresholds slice (req-028), the creation-through-save-routes slice (req-043), the production-like local stack slice (req-003) and the pull-request smoke slice (req-027): each alone would repeat the same k6 profile, target resolution and smoke script set-up, and none carries an open question the others do not. Together they are the walking skeleton the brief names.",
+        "Production-like local settings (template caching on, no STUB_MODE) are a matter of how the workspace stack is started for a performance run; that configuration lives in the workspace repo's docker/stack, not a backlog repo. If the plan finds a frontend cannot run with caching on outside development mode without a change of its own, add that frontend's key to this row's repos and say so.",
+        "The existing correlation id (req-030) and the local emulator caveat (req-036) are already met and are not rebuilt.",
+        "Already built in step 0 (trade-imports-performance-tests PR #1): the suite runs as its own CDP image, whose entrypoint reads ENVIRONMENT, runs src/suites/$TEST_SUITE.k6.js and uploads index.html and summary.json to RESULTS_OUTPUT_S3_PATH, exiting 99 on a breached threshold; Compose with LocalStack runs it locally; src/config/target.js resolves a service URL from ENVIRONMENT or a <SERVICE>_URL override; and test:docker-compose runs a health check against the workspace stack as the gate's e2e rung. This increment replaces that health check with the smoke run and builds on the rest.",
+        "ATTEMPT FAILED: trade-imports-ins-frontend fit gate (port 3000 in use); branch feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the; wip 2e8c6d30c3ec4fcd4285346f84cd854438e4a2ec"
+      ],
+      "gate": "Look at the walking skeleton before anything builds on it: how the performance suite repo is laid out and runs in CDP, how a run is pointed at an environment, the smoke path through both journeys and the front door, the interim thresholds, and a pull-request run that fails on a deliberately breached threshold.",
+      "ticket": "EUDPA-642",
+      "branch": "feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the",
+      "commit": "dcd653e",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/2",
+          "repo": "perftests",
+          "number": 2,
+          "merged": true,
+          "sha": "5ef1f2cde1b5e38ffe41b620f86a94318a00e55c"
+        }
+      ]
+    },
+    {
+      "id": "inc-002",
+      "title": "The same smoke run targets CDP dev and CDP test, signing in through the real OIDC flow against the Defra ID stub",
+      "detail": "The suites must run unchanged in CDP dev and CDP test, where the INS services run in production mode against the stubs deployed there and against the real CDP-provisioned SNS, SQS and cdp-uploader. The stub sign-in shortcut cannot be used there, so virtual users sign in through the real OIDC flow against the Defra ID stub and send the secure cookies and CSRF crumb the platform requires. The smoke run then runs after each deploy to dev.",
+      "acceptanceCriteria": [
+        "Pointed at CDP dev or CDP test by run configuration alone, the smoke run from inc-001 signs in, opens the dashboard, and creates, saves and reads back a notification on live animals and on high-risk plants against the INS services deployed there. (ruling:sam-2026-09-29; repo:tests playwright.config.ts:25-27,33-38, README.md:244,248)",
+        "Virtual users sign in through the real OIDC flow against the Defra ID stub, since no stub sign-in shortcut exists where the services run in production mode, and send the secure cookies and CSRF crumb the platform requires. (repo:animalsfrontend tests/lighthouse/auth-setup.cjs:1-34, src/server/common/services/mode.js:12-14, src/plugins/csrf.js:24-28; repo:insfrontend src/config/config.js:282-287; repo:plantsfrontend src/plugins/auth.js getCookieOptions)",
+        "In CDP dev and CDP test the run exercises the real CDP-provisioned SNS, SQS and cdp-uploader, and every system outside the INS boundary answers from its stub. (ruling:sam-2026-09-29b; meeting:2026-09-29 Transcript, Speaker 3, 'I—I don't think they'll be stubbed, Pete.')",
+        "The smoke run runs in CDP dev after each deploy and its summary is published with the run. (conflict c-003 default)"
+      ],
+      "requirements": [
+        "req-004"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-09-29",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 3, 'I—I don't think they'll be stubbed, Pete.'"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "playwright.config.ts:25-27,33-38; README.md:174-176,244,248"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "tests/lighthouse/auth-setup.cjs; src/server/common/services/mode.js; src/plugins/csrf.js"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/config/config.js:282-287; src/server/common/services/mode.js:1-5"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/config/config.js session.cookie; src/plugins/auth.js"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-003: 'Which tiers and scenarios should run in each environment, and on what schedule?' Default, followed here: 'CDP dev (stubs): smoke after each deploy. CDP test (stubs): tier-2 journey runs nightly at design targets' — the nightly CDP test runs land with inc-009."
+      ],
+      "notes": [
+        "Kept separate from inc-001 because it needs the CDP environments and a different sign-in path (real OIDC against the Defra ID stub), and from inc-003 because perf-test waits on a deployment this backlog does not make.",
+        "The stubs' deployment and wiring in CDP dev and test is req-006, out of scope for this backlog (CDP configuration)."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-003",
+      "title": "A thin run of both journeys and the front door reaches CDP perf-test as soon as INS is deployed there",
+      "detail": "The team agreed to get into perf-test early rather than anticipate everything up front: a smoke-scale run covering both in-scope journeys and the front door, so the stubbing and configuration perf-test needs surface early and the suites iterate outward from it. Perf-test runs the real INS components, including the CDP-provisioned SNS, SQS and cdp-uploader, with every system outside the boundary stubbed exactly as in dev and test.",
+      "acceptanceCriteria": [
+        "Pointed at CDP perf-test by run configuration alone, a smoke-scale run signs in, opens the dashboard, and creates and saves a notification on live animals and on high-risk plants. (meeting:2026-09-29 Summary §Next Steps, §Decisions Made; ruling:sam-2026-09-29b)",
+        "The run goes through the real INS components including the CDP-provisioned SNS, SQS and cdp-uploader, with every system outside the boundary stubbed as in dev and test, and no request in it reaches a real external system. (ruling:sam-2026-09-29b; confluence:6608160092 Decision / code block; meeting:2026-09-29 Summary §Stubbed vs Integrated Testing)",
+        "The run's report lists every stubbing or configuration gap it hit in perf-test, so missing stub wiring is known before any design-target run relies on the environment. (meeting:2026-09-29 Transcript, Speaker 1, 'Yeah. I mean, what we—what we could do is, so we—we could try and anticipate everything up front.'; meeting:2026-09-29 Transcript, Speaker 2, 'Are we deployed—are we deployed into perf tests?')"
+      ],
+      "requirements": [
+        "req-005",
+        "req-071"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Stubbed vs Integrated Testing, §Next Steps, §Decisions Made; Transcript, Speaker 2, 'Are we deployed—are we deployed into perf tests?'"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / code block; Alternatives considered table / row 1"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "README.md:244,248; playwright.config.ts:1-27"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-002"
+      ],
+      "status": "blocked",
+      "openQuestions": [
+        "Is INS deployed to CDP perf-test, with trade-imports-stub and trade-imports-defra-id-stub deployed beside it and the INS services configured to call them (req-006, out of scope for this backlog; CDP configuration Sam's team owns)? The meeting on 29 September confirmed it is not deployed yet. No safe default: the row's acceptance is a run in perf-test and cannot be observed until the deployment exists. Set this row to todo once it does."
+      ],
+      "notes": [
+        "Combines req-005 (the suites run in perf-test, stubbed outside the boundary) with req-071 (the early thin run): the thin run is the first observable proof of req-005, so separating them would be a layer split.",
+        "The suite side needs only perf-test URL resolution, which inc-001 builds on the scheme trade-imports-ins-tests already uses; the work is the run and what it surfaces."
+      ],
+      "gate": "Look at what the first perf-test run surfaced — missing stub wiring, configuration gaps, anything that behaved differently from dev and test — before the breakpoint, sizing and conformance rows rely on perf-test."
+    },
+    {
+      "id": "inc-004",
+      "title": "Both journeys and the front door follow the real journey shape under open-model load",
+      "detail": "A shallow create-and-submit loop does not load INS the way people use it. This replaces the smoke path with the real journey shape for live animals and high-risk plants — draft, many edits across sessions, submit, read back, amend — and models the front door's own traffic, including dashboard-only sessions and the address book. Load is applied by arrival rate, so a slowing service keeps receiving the load it would in production, and the report shows the request mix achieved against the modelled one.",
+      "acceptanceCriteria": [
+        "Each live-animals virtual user signs in, views the dashboard, creates a draft, fills and re-edits its pages across 1.5 sessions with save and return, submits through the declaration page, reads it back from the dashboard and hub, and amends or cancel-amends it — about 40 page requests per notification over 20-minute sessions. (confluence:6604328622 §6.2 Journey assumptions AG1, AG2; §4.4 A2; confluence:6608160092 Decision / 'Scenario shapes' / closing paragraph)",
+        "Each high-risk-plants virtual user follows the journey in flow order — commodity type and lines, origin, arrival, destination, parties, contact, check answers, declaration — then reads back, amends and cancel-amends, at about 50 page requests per notification over 25-minute sessions. (confluence:6604328622 §7.2 Journey assumptions PP1, PP2; repo:plantsfrontend src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:49-63)",
+        "Front-door traffic is modelled: one sign-in per session, the dashboard, the address-book pages (list, add, view, edit, delete), dashboard-only sessions at 1.0 per notification lasting 5 minutes over 8 pages, and 6 core pages per journey session. (confluence:6604328622 §5.1 Scope; §5.2 Assumptions C1–C4)",
+        "Pages per notification, sessions per notification, session lengths and the front-door ratios are run parameters, not fixed in the scripts. (confluence:6604328622 §1.3 Assumptions carried by the model; conflict c-006 default)",
+        "Load is applied by arrival-rate executors at stated rates in requests or journeys per second, with think time between pages, so a slowing service does not reduce the load it receives. (confluence:6604328622 §4.1 Method ol:6; §3.1 Concepts row 3; web:k6-docs using-k6/scenarios/concepts/open-vs-closed/, using-k6/scenarios/executors/)",
+        "Dashboard reads make up about 25% of a run's requests, with post-submission reads and amendments present, and the report shows the achieved request mix against that target. (confluence:6604328622 §9.4 Derived call rates D7; §9.3.3 SYN-21; §5.1 Scope row 2)"
+      ],
+      "requirements": [
+        "req-008",
+        "req-009",
+        "req-010",
+        "req-011",
+        "req-013"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§1.3; §3.1; §4.1; §4.4; §5.1; §5.2; §6.2; §7.2; §9.3.3 SYN-21; §9.4 D7"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Scenario shapes' / closing paragraph"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Decisions Made; Transcript, Speaker 1, 'Yeah. So there's this concept of, like, virtual users in K6 and JMeter.'"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/server/app/sets/live-animals/journeys/linear/features (hub, declaration, dashboard, cancel-amend)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js; features/index.js"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/server/app/shared/paths.js; src/server/app/features/index.js"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "using-k6/scenarios/concepts/open-vs-closed/; using-k6/scenarios/executors/"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-006: 'Should the build proceed on DR-EUDP-005 v0.1 while it is still Proposed?' Default, followed here: 'Yes — build to DR-EUDP-005 v0.1 as amended by the meeting and the rulings ... with tier cadence and scenario parameters held in configuration so an agreed revision changes values, not scripts.' The journey figures (pages, sessions, session length, C1–C4) are TBC working figures on the volumetrics page and are held as parameters."
+      ],
+      "notes": [
+        "Combines the live-animals shape (req-008), the high-risk-plants shape (req-009), the front-door model (req-010), the request-mix report (req-011) and the open-model executors (req-013): all five are one traffic model; building a journey's shape without the other would break the go-wide ruling, and the mix report needs all three traffic sources.",
+        "Routing questions are counted in the front door's core pages but no routing pages exist yet (insfe-041): model the core pages that exist."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-005",
+      "title": "Virtual users sign in as distinct identities and vary their notifications, documents and address-book use",
+      "detail": "One identity resubmitting one static notification tests a cache, not INS. Each virtual user signs in as its own identity in its own organisation, and each notification draws its content from the reference data the journeys offer, with commodity lines, documents and amendments drawn from stated, replaceable distributions. Address-book traffic comes from every caller across many organisations, including worst-case searches, and live-animals uploads go through the real document store and scanning so the scan's latency is measured, not assumed.",
+      "acceptanceCriteria": [
+        "There are enough distinct test identities and organisations for design-target concurrency — 51 concurrent users, 241 for the with-IUU profile — and each virtual user signs in to the Defra ID stub as its own identity. (confluence:6604328622 §5.4 NFR-VOL-CORE-03; repo:idstub src/data/people.js, src/data/mock.json; conflict c-007 default)",
+        "Address-book traffic comes from ins-frontend, both journey frontends' pickers and dashboards, and live-animals submit, spread across many organisations with each virtual user in its own organisation, and each organisation sees only its own address-book entries. (meeting:2026-09-29 Summary §Volumetrics and Observability; repo:addressbook src/main/java/.../filter/IdentityHeaderFilter.java:36-58; repo:animalsbackend src/main/java/.../notification/ConsignmentPartyResolver.java:60-100)",
+        "Address-book traffic includes free-text searches with a worst-case-length search term. (repo:addressbook src/main/java/.../address/OperatorService.java:109-111; meeting:2026-09-29 Transcript, Speaker 2, 'On the INS dashboard, the INS front end.')",
+        "Load is split by journey and notification type, and each notification draws its commodity codes, species or plant types, origins and ports of entry from the reference data the journeys offer, rather than resubmitting one static notification. (meeting:2026-09-29 Transcript, Speaker 1, 'Definitely. So I think we should be able to split it by journey type.'; confluence:6608160092 Rationale / 'Validation against the real systems' / bullets; repo:referencedata CountriesController.java:23-26, PortsOfEntryController.java:22-24)",
+        "Commodity lines per high-risk-plants notification follow a stated, replaceable distribution — 50% with 1–3 lines, 30% with 4–10, 15% with 11–25, 5% with 26–50 — that includes the 50-line large-consignment case. (confluence:6604328622 §7.4 NFR-VOL-PP-07; §7.2 PP4; meeting:2026-09-29 Transcript, Speaker 2, 'Have a CHED PP with a certain number of commodities on—on, um, on the submission, it would show up a problem.'; conflict c-012 default)",
+        "Live-animals notifications carry 0–3 documents (mean 1), PDF or JPEG between 100KB and 5MB under the 10MB cap, and 20% of submitted notifications on both journeys are amended once, 5% of those cancelled — each a stated, replaceable distribution. (confluence:6604328622 §10.2 Validation activities row 4; Appendix A: Open Items rows 5, 22; repo:animalsfrontend .../features/documents/upload-config.js:3-17; conflict c-012 default)",
+        "Live-animals uploads go to the real cdp-uploader with its document store and antivirus scanning in CDP (the local cdp-uploader container in Docker), and the report states the scan's measured latency against the upload page allowance of P99 under 60 seconds. (ruling:sam-2026-09-29b; confluence:6604328622 §9.3.6 SYN-28, SYN-29; §4.7 row 2; meeting:2026-09-29 Transcript, Speaker 3, 'There is one exception to that, which is the—in the purple box there is document store and antivirus scanning.'; conflict c-004 default)"
+      ],
+      "requirements": [
+        "req-020",
+        "req-037",
+        "req-040",
+        "req-041",
+        "req-073"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Volumetrics and Observability; Transcript, Speaker 1, 'Definitely. So I think we should be able to split it by journey type.'; Speaker 2, 'Have a CHED PP with a certain number of commodities...'"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.7; §5.4 NFR-VOL-CORE-03; §7.2 PP4; §7.4 NFR-VOL-PP-07; §9.3.6; §10.2 row 4; Appendix A rows 5, 22"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Rationale / 'Validation against the real systems' / bullets"
+        },
+        {
+          "source": "repo:idstub",
+          "ref": "src/data/people.js; src/data/mock.json; AUTH_OVERRIDE_FILE"
+        },
+        {
+          "source": "repo:addressbook",
+          "ref": "IdentityHeaderFilter.java; OperatorService.java:73-82,109-111"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/server/app/services/address-book/client.js; .../features/documents/upload-config.js; src/server/app/services/document-uploads/real.js"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/app/services/address-book/client.js; obligations/sections/commodity.js"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "CountriesController.java; PortsOfEntryController.java"
+        }
+      ],
+      "repos": [
+        "idstub",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-004"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-012: 'What commodity-line, document, amendment and background-volume distributions should the test data use until the IPAFFS analyses and open items 4, 5 and 22 are answered?' Default, followed here: 'GBN-PP lines per notification: 50% 1–3, 30% 4–10, 15% 11–25, 5% 26–50, with 50 as the interim maximum for the large-consignment case. GBN-AG documents: 0–3 per notification (mean 1), PDF or JPEG between 100KB and 5MB, under the 10MB cap. Amendments: 20% of submitted notifications amended once, 5% of those cancelled.'",
+        "c-007: 'Should the shared-component thresholds gate on the two-journey figures or the with-IUU figures?' Default, followed here: gate on the two-journey figures and run the with-IUU figures (241 concurrent users) as a reported-not-failing profile — so the identity set is sized for 241."
+      ],
+      "notes": [
+        "Combines identities and organisations (req-040), address-book traffic across organisations (req-020), varied inputs (req-073), data distributions (req-041) and the upload path (req-037): all are the test-data shape a virtual user carries, built once over the same journey scripts from inc-004.",
+        "High-risk plants has no upload feature (pfe-025), so the document distribution and upload path apply to live animals only; that is the journeys' own difference, not a deferral. The amendment distribution applies to both.",
+        "The Defra ID stub already accepts an identity override; a performance identity set is added to it, which is why idstub is in this row's repos.",
+        "A notification with 50 commodity lines may be refused on save by the frontends' default payload limit (finding req-068, out of scope). If it is, the run reports it as a failure rather than dropping the case."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-006",
+      "title": "Each environment holds a year of background notifications before a load run measures anything",
+      "detail": "An empty database answers every query fast. Before a load run the environment holds a realistic background volume — a year of notifications per journey, the dashboard read model and address-book entries per organisation — created once through the frontends' own save routes and kept, and the run does not start measuring until each datastore's indexes are built.",
+      "acceptanceCriteria": [
+        "Before a load run each environment holds one year of notifications per journey at the 2025 baseline — 42,000 live-animals and 34,000 high-risk-plants — spread across the test organisations and varied as journey traffic is, with address-book entries per test organisation. (confluence:6604328622 §5.5 Data growth rows 1–3, 5; §6.1 Baseline; §7.1 Baseline; Appendix A: Open Items row 4; conflict c-012 default)",
+        "The background volume is created through the frontends' own save routes, once per environment, and kept between runs rather than recreated for each run. (repo:tests flows/seeded-journey.ts:14-17; conflict c-013)",
+        "A run confirms each datastore's indexes are built — the journey backends, the dashboard read model and address-book — before measurement starts, and does not start measuring until they are. (meeting:2026-09-29 Transcript, Speaker 3, 'I think with our architecture, as we've done slightly different to IPaaS.'; repo:animalsbackend src/main/resources/application.yml:15; repo:insbackend src/main/resources/application.yml:34; repo:addressbook src/main/resources/application.yml:12)",
+        "Each run's report states the background volume present in each journey backend, the dashboard read model and address-book when it started. (confluence:6604328622 §5.5 Data growth; meeting:2026-09-29 Transcript, Speaker 3, 'Those numbers look so low that there's performance testing even required on this project.')"
+      ],
+      "requirements": [
+        "req-042"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§5.5 Data growth; §6.1 Baseline; §7.1 Baseline; Appendix A: Open Items row 4"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 3, 'I think with our architecture, as we've done slightly different to IPaaS.'"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "flows/seeded-journey.ts:14-17"
+        },
+        {
+          "source": "repo:animalsbackend",
+          "ref": "src/main/resources/application.yml:15; NotificationRepository.java:24"
+        },
+        {
+          "source": "repo:plantsbackend",
+          "ref": "NotificationRepository.java:24"
+        },
+        {
+          "source": "repo:insbackend",
+          "ref": "src/main/resources/application.yml:34; AggregatedNotificationRepository.java:10"
+        },
+        {
+          "source": "repo:addressbook",
+          "ref": "src/main/resources/application.yml:12"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-005"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-012: as inc-005. Default, followed here: 'Background volume: one year of notifications at the 2025 baseline (42,000 GBN-AG, 34,000 GBN-PP; 76,000 in the dashboard read model) spread across the test organisations.'"
+      ],
+      "notes": [
+        "Kept on its own: background volume is a once-per-environment set-up with its own cost, and every design-target row depends on it.",
+        "The read model's 76,000 assumes both journeys publish events. High-risk plants publishes none today (pbe-022), so the read model will hold only what the journeys actually publish; the report states the real figure rather than claiming 76,000.",
+        "The busiest list queries are not index-backed today (finding req-060, out of scope); confirming indexes are built checks what exists, it does not add any."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-007",
+      "title": "Each stubbed integration answers with its own SLA-derived latency profile, switched at runtime, and every report names it",
+      "detail": "A stub that answers instantly makes INS look faster than it will be. Each system outside the boundary that an INS service calls today gets a latency profile inside the existing stub services, drawn from a lognormal distribution fitted to its service level — interim values until those are agreed — chosen per environment at runtime. Each profile says what it represents and how current it is, and every run report names the profiles it used and flags any that are unagreed or overdue for conformance.",
+      "acceptanceCriteria": [
+        "Every system outside the boundary that an INS service calls today has a stub in the rig — Defra ID, the Trade token endpoint and MDM, and Azure Service Bus as the only route to Dynamics and PIMS — and none exists for SNS, SQS or cdp-uploader, which stay real. (confluence:6608160092 Decision / 'What sits on each side' table / Stubbed row; ruling:sam-2026-09-29b; meeting:2026-09-29 Summary §Next Steps; conflict c-009 default)",
+        "Each stubbed request/response integration — the Defra ID token and keys, the Trade token and MDM — answers with latency drawn from a lognormal distribution fitted to its p50, p95 and p99, starting from the interim profile of p50 100ms, p95 400ms and p99 1,000ms. (confluence:6604328622 §9.5 Service levels to be agreed; §9.6 NFR-DEP-01; confluence:6608160092 Rationale / 'Validation against the real systems'; meeting:2026-09-29 Transcript, Speaker 1, 'So plug—plug it as real as we can get into the stubs.'; conflict c-011 default)",
+        "Each integration's profile is configured separately within the existing stub services and chosen per environment at runtime without a rebuild; one stub build and one set of profiles serves local Docker, CDP dev, CDP test and CDP perf-test. (ruling:sam-2026-09-29b; conflict c-020 default; conflict c-022 default)",
+        "A zero-delay profile remains for script development and the pull-request smoke run, and the SLA-derived profiles are on for every design-target, breakpoint and resilience scenario. (conflict c-022 default)",
+        "Each run's report shows, per stubbed integration, the p50, p95 and p99 the stub actually answered with beside its profile's targets. (confluence:6608160092 Rationale / 'Validation against the real systems' / bullets)",
+        "Each profile records the interface it represents, its owner, the service level it was derived from and the date it was last conformed. (confluence:6604328622 §9.1 Purpose and scope para 3; §9.2 row 4; confluence:6608160092 Summary / bullet list)",
+        "Every run report names the profile each stubbed integration ran with and flags any profile that is unagreed — every interim profile — or overdue for conformance. (confluence:6608160092 Rationale / 'Validation against the real systems' / intro; conflict c-011 default)"
+      ],
+      "requirements": [
+        "req-032",
+        "req-034",
+        "req-046",
+        "req-079"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Next Steps; Transcript, Speaker 1, 'So plug—plug it as real as we can get into the stubs.'; Speaker 3, 'So, uh, we already have, like, stubs, don't we?'"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§9.1; §9.2 row 4; §9.5 Service levels to be agreed; §9.6 NFR-DEP-01"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'What sits on each side' table / Stubbed row; Rationale / 'Validation against the real systems'; Summary / bullet list"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/** (trade/TradeAuthController, mdm/countries, mdm/poe); src/main/resources/application*.yml"
+        },
+        {
+          "source": "repo:idstub",
+          "ref": "src/routes/auth.js; src/routes/open-id.js; src/config/config.js"
+        }
+      ],
+      "repos": [
+        "stub",
+        "idstub",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-001"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-020 (req-079): 'Should each stubbed integration get its own stub service, or stay within the existing stub services?' Default, followed here: 'Keep the existing stub services and give each integration its own separately-configurable latency and fault profile within them; split a stub into its own service only where a measured headroom run shows the shared one would distort results.'",
+        "c-011: 'What latency profile should each stub use until its section 9.5 service level is agreed?' Default, followed here: 'An interim profile per stubbed interface, marked \"unagreed\" in every run report: request/response APIs (Defra ID token and keys, Trade token, MDM) p50 100ms, p95 400ms, p99 1,000ms. Replace each with the latency the services measure on real calls (req-076) or the first tier-4 measurement, whichever comes first, then with the agreed SLA. Scan completion has no profile: cdp-uploader and its scanning are real (c-017).'",
+        "c-022: 'Does CDP perf-test need its own stub configuration, or does one configuration serve local Docker, CDP dev, test and perf-test?' Default, followed here: 'One stub build and one set of SLA-derived latency and fault profiles serve every environment, selected at runtime by configuration. A zero-delay profile is kept for script development and for the pull-request smoke run ... the SLA-derived profiles are on for every design-target, breakpoint and resilience scenario. Only the stubs' instance sizing differs per environment, which is CDP configuration.'",
+        "c-009: 'Should stubs be built now for Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID, which no deployed INS service calls today?' Default, followed here: 'No — stub only the systems outside the boundary that INS services call in deployed environments today ... Record the rest as out of scope until a service calls them.'"
+      ],
+      "notes": [
+        "Combines the latency-profile slice (req-032), the stub-inventory slice (req-034), the profile-metadata-and-flagging slice (req-046) and the per-integration-profile question (req-079): one change to the same two stub services and the same report section; building them apart would reopen the same stubs three times.",
+        "req-079 is a question-status requirement adopted here on c-020's default, because that default is safe and matches the go-wide rule against assuming per-integration stub services. The split trigger is measured in inc-008.",
+        "The Service Bus leg keeps its existing local fault and latency point (the toxiproxy in front of the emulator in the workspace stack); its CDP stand-in is CDP configuration (req-006, out of scope). Section 9.5 gives no interim Service Bus figure, so the Service Bus profile starts at zero added delay and is marked unagreed.",
+        "Correcting a profile from the latency the services measure on real calls (the second half of req-032) needs inc-014's metrics; it is a profile value change, not a code change, and inc-014's acceptance covers it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-008",
+      "title": "Each stub's own throughput ceiling is measured before any result through it is trusted",
+      "detail": "A stub that cannot keep up makes INS look slow when it is not. Each stub is driven to its breaking point on its own, and every run report says whether each stub it went through had headroom over the load it carried. The Defra ID stub, whose session store is a likely ceiling, is shown to carry twice the sign-in design target plus the front-door spike before anyone changes it.",
+      "acceptanceCriteria": [
+        "A stepped ramp drives each stub — the Trade token and MDM stub and the Defra ID stub — to its breaking point with its SLA-derived profile on, and records its ceiling per integration in requests per second. (confluence:6608160092 Rationale / 'Validation against the real systems' / bullets; web:grafana-load-testing-types section:5-breakpoint-test; web:k6-docs testing-guides/test-types/)",
+        "The Defra ID stub is shown to carry twice the sign-in design target — 400 sign-ins an hour, 1,540 for the with-IUU profile — plus the 5 RPS front-door spike reaching sign-in, with headroom; its session store is changed only if that measurement falls short. (confluence:6604328622 §5.4 NFR-VOL-CORE-01; §9.4 IDM sign-in row; §9.5 IDM row; confluence:6608160092 Decision / 'Worked examples' table / row 2; conflict c-010 default)",
+        "Every run report states, for each stub the run went through, the load it carried against its measured ceiling and whether it had headroom; a run without stub headroom is marked untrusted. (confluence:6608160092 Rationale / 'Validation against the real systems' / bullets; meeting:2026-09-29 Transcript, Speaker 1, 'That'd be part of the work, right?')",
+        "Where one shared stub's ceiling would distort the results for one of the integrations it serves, the report names that integration, which is the evidence for splitting it into its own stub service. (meeting:2026-09-29 Transcript, Speaker 3, 'So, uh, we already have, like, stubs, don't we?'; conflict c-020 default)"
+      ],
+      "requirements": [
+        "req-038",
+        "req-039"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6608160092",
+          "ref": "Rationale / 'Validation against the real systems' / bullets; Decision / 'Worked examples' table / row 2"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§5.4 NFR-VOL-CORE-01; §9.4 IDM sign-in; §9.5 IDM"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 1, 'That'd be part of the work, right?'; Speaker 3, 'So, uh, we already have, like, stubs, don't we?'"
+        },
+        {
+          "source": "repo:idstub",
+          "ref": "src/auth/session.js; src/auth/storage.js; docker/stack/stubs.compose.yml (workspace repo)"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "pom.xml:47,72; src/main/java/uk/gov/defra/trade/imports/stubs/**"
+        },
+        {
+          "source": "web:grafana-load-testing-types",
+          "ref": "section:5-breakpoint-test"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "testing-guides/test-types/"
+        }
+      ],
+      "repos": [
+        "stub",
+        "idstub",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-010 (req-039): 'Should the Defra ID stub's session store be redesigned before load runs, or only if its measured headroom falls short?' Default, followed here: 'Keep the stub as it is and measure its headroom first; change its session store off the synchronous whole-file write only if it cannot carry twice the sign-in design target (400 an hour, 1,540 with IUU) plus the 5 RPS front-door spike reaching sign-in.'",
+        "c-020: as inc-007. Default, followed here: split a stub into its own service only where a measured headroom run shows the shared one would distort results."
+      ],
+      "notes": [
+        "Combines the stub-headroom slice (req-038) with the Defra ID stub capacity question (req-039): the second is the first measurement applied to one stub.",
+        "req-039 is a question-status requirement adopted here on c-010's default: measure first, change the stub only if it falls short. If it does fall short, the session-store change lands in this row in idstub.",
+        "Kept separate from inc-007 because it carries c-010, which inc-007 does not, and because a stub-ceiling run is its own scenario."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-009",
+      "title": "Sustained peak and P99 burst run at the design targets for both journeys and the front door",
+      "detail": "The first design-target runs. Live animals, high-risk plants and the front door are driven at the rates the volumetrics page sets — sustained peak over the working day, then a one-minute P99 burst — with the SLA-derived stub profiles on, a year of background data in place, and a load generator that is never the bottleneck. Each run reports per scenario and per endpoint, with a one-second time series, and runs nightly in CDP test.",
+      "acceptanceCriteria": [
+        "Live animals runs at its design targets: 44 notifications an hour, 0.5 RPS on the frontend and 0.5 RPS on the backend sustained, 22 concurrent users and a 0.7 RPS one-minute P99 burst. (confluence:6604328622 §6.3 Derived volumes; §6.4 NFR-VOL-AG-01 to AG-04; §4.5 Summary GBN-AG row; confluence:6608160092 Decision / 'Test tiers' table / row 2)",
+        "High-risk plants runs at its design targets: 36 notifications an hour, 0.5 RPS on the frontend and 0.5 RPS on the backend sustained, 22 concurrent users and a 0.7 RPS P99 burst. (confluence:6604328622 §7.3 Derived volumes; §7.4 NFR-VOL-PP-01 to PP-04; §4.5 Summary GBN-PP row)",
+        "The front door runs at 200 sign-ins an hour, 0.4 RPS core page traffic sustained, 51 concurrent users and a 0.6 RPS P99 burst, with dashboard queries holding their response-time target at that concurrency; the with-IUU figures — 770 sign-ins an hour, 1.5 RPS, 241 concurrent users, 2.2 RPS burst — run as a second profile that is reported and does not fail the run. (confluence:6604328622 §5.3 Derived volumes; §5.4 NFR-VOL-CORE-01 to CORE-04, CORE-07; §4.5 Summary INS-Frontend rows; conflict c-007 default)",
+        "Sustained peak ramps up over 3 hours, compressible, then holds the peak-hour rate for the 7-hour 09:00–16:00 window, compressible to 2 hours, and passes on the named response-time thresholds and a failure rate under 1%. (confluence:6608160092 Decision / 'Scenario shapes' table / row 1; confluence:6604328622 §4.2 T1; §4.3 Daily profile rows 2–3; web:grafana-load-testing-types section:2-average-load-test; conflict c-004 default)",
+        "P99 burst runs 30 minutes at design-target peak then 60 seconds at 1.5 times sustained, and passes when 5xx stays under 1% and P95 is no worse than twice the sustained-peak P95. (confluence:6608160092 Decision / 'Scenario shapes' table / row 2; confluence:6604328622 §4.1 Method ol:8; §4.2 T5; conflict c-004 default)",
+        "Each run publishes an end-of-test summary as JSON and HTML, per scenario and per endpoint tagged by journey, page and backend call, and a time-series stream at one-second resolution. (confluence:6604328622 §4.6 Observability NFR-OBS-03; web:k6-docs results-output/, results-output/end-of-test/custom-summary/, using-k6/tags-and-groups/; meeting:2026-09-29 Transcript, Speaker 1, 'Yeah. I suspect they might want to repeat some stuff.')",
+        "The load generator keeps at least 20% idle CPU within a stated memory allowance per virtual user, with shared read-only test data held once for all virtual users; the report records the generator's CPU and memory and marks a run where it was the bottleneck as untrusted. (web:k6-docs testing-guides/running-large-tests/; javascript-api/k6-data/sharedarray/)",
+        "Sustained peak (compressed to 2 hours) and P99 burst run nightly in CDP test with the SLA-derived stub profiles on, and on demand at compressed durations in local Docker. (conflict c-003 default; conflict c-022 default)"
+      ],
+      "requirements": [
+        "req-014",
+        "req-015",
+        "req-016",
+        "req-023",
+        "req-024",
+        "req-029",
+        "req-051"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.1; §4.2 T1, T5; §4.3; §4.5 Summary; §4.6 NFR-OBS-03; §5.3; §5.4; §6.3; §6.4; §7.3; §7.4; §10.1 rows 1–2"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Test tiers' table / row 2; 'Scenario shapes' table / rows 1–2; 'Worked examples' table / row 2"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 2, 'On the INS dashboard, the INS front end.'; Speaker 1, 'Yeah. I suspect they might want to repeat some stuff.'"
+        },
+        {
+          "source": "web:grafana-load-testing-types",
+          "ref": "section:2-average-load-test; section:3-stress-test"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "results-output/; using-k6/tags-and-groups/; testing-guides/running-large-tests/; javascript-api/k6-data/sharedarray/"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-004",
+        "inc-005",
+        "inc-006",
+        "inc-007",
+        "inc-008"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-004: as inc-001. Default, followed here: 'Failure rate under 1% in sustained peak and endurance. P99 burst: 5xx under 1% and P95 no worse than twice the sustained-peak P95.'",
+        "c-007: 'Should the shared-component thresholds gate on the two-journey figures or the with-IUU figures?' Default, followed here: 'Gate on the two-journey figures (GBN-AG and GBN-PP, the Day One journeys this team delivers). Run the with-IUU figures (770 sign-ins an hour, core frontend 1.5 RPS and 241 concurrent users, 55 RPS session spike) as a second, reported-not-failing profile, generated as synthetic IUU-shaped front-door traffic (sign-in, dashboard, address book) since no IUU journey exists here; make it the gate when open item 7 puts IUU in Day One.'",
+        "c-003: as inc-001. Default, followed here: 'CDP test (stubs): tier-2 journey runs nightly at design targets (sustained peak compressed to 2 hours, P99 burst, spike and recovery).'",
+        "c-006: as inc-004. Default, followed here: scenario parameters held in configuration so an agreed DR revision changes values, not scripts."
+      ],
+      "notes": [
+        "Combines the three design-target slices (req-014, req-015, req-016), the first two scenario shapes (req-023, req-024), the per-scenario and time-series reporting (req-029) and generator sizing (req-051): the targets are only observable through a scenario, the scenarios are only judged through the report, and a generator bottleneck would invalidate the run; building them apart would repeat the same design-target set-up.",
+        "req-014, req-015 and req-016 also carry spike and peak-day figures. The spike figures are observed through inc-010's spike and recovery run and the peak-day volumes through inc-011; those rows cite the same volumetrics rows. The target rates are configured once, here.",
+        "Kept separate from inc-010 so the first design-target run can be looked at (the gate) before spike and 8-hour endurance runs build on it, and because nine-plus criteria in one row would be too large to review."
+      ],
+      "gate": "Look at the first design-target run before anything builds on it: the achieved rates and request mix against the volumetrics figures, which thresholds passed or failed and by how much, generator and stub headroom, the stub profiles each run named, and whether gating on the two-journey figures with the with-IUU profile reported is the right split."
+    },
+    {
+      "id": "inc-019",
+      "title": "An average-load run follows a normal weekday for both journeys and the front door",
+      "detail": "k6 and Grafana name six test types. Average-load is the only one with no scenario of its own: the sustained peak run holds the busiest hour of a seasonal peak day with 2x headroom on top, so it tests stress rather than a typical day. This run replays the shape of a normal weekday at the forecast volume, so the team knows how INS behaves on an ordinary day as well as at peak.",
+      "acceptanceCriteria": [
+        "An average-load run follows the weekday profile: overnight baseline, ramp-up from 06:00, the 09:00 to 16:00 window, then the ramp-downs to midnight, compressible in time, for live animals, high-risk plants and the front door together. (web:grafana-load-testing-types section:2-average-load-test; web:k6-docs testing-guides/test-types/; confluence:6604328622 §4.3 Daily profile rows 1 to 5)",
+        "The run uses the average weekday volume: the design target without the seasonal peak-day factor (A1, 2.0) or the design headroom (A3, 2x). Its busiest hour is a quarter of the sustained peak run's rate, and its mean across the day about an eighth, because a weekday spread over 24 hours is about 4.2% an hour against 8% in the busiest hour. (confluence:6604328622 §4.1 Method steps 2 to 4 and 9; §4.2 T2; §4.3 Daily profile; §4.4 A1, A3; conflict c-015)",
+        "The run passes on the same response-time and failure-rate thresholds as the sustained peak run. (conflict c-004 default)",
+        "The report shows the rate achieved in each hour of the profile beside the target, per journey and for the front door, on the same time series as the other scenarios. (web:k6-docs using-k6/metrics/; web:k6-docs using-k6/tags-and-groups/)",
+        "The run is available on demand in every environment, with its cadence set by the tier-by-environment question. (conflict c-003 default)"
+      ],
+      "requirements": [
+        "req-080"
+      ],
+      "sources": [
+        {
+          "source": "web:grafana-load-testing-types",
+          "ref": "section:2-average-load-test"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "testing-guides/test-types/"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.1 Method; §4.2 T2; §4.3 Daily profile; §4.4 A1, A3"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-004",
+        "inc-005",
+        "inc-006",
+        "inc-007",
+        "inc-008"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-004: Which response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own? Default: the interim thresholds in the report, the same for this run as for sustained peak.",
+        "c-003: Which tiers and scenarios run in each environment, and how often? Default: on demand everywhere; the report's tier table does not yet place this run on a schedule."
+      ],
+      "notes": "Added by hand on 29 September 2026, at Sam's request, after a check of the backlog against the six k6 test types. c-015 had folded average-load into sustained peak, but sustained peak runs the busiest hour of a peak day with 2x headroom, which is a stress test. Kept out of inc-009 because that row's notes already put it at the limit of one review. The id is new, so it sits after inc-018 numerically but straight after inc-009 in build order."
+    },
+    {
+      "id": "inc-010",
+      "title": "Spike and recovery and the 8-hour endurance run at the design targets",
+      "detail": "The other two scenario shapes. A ten-second spike at each component's stated capacity shows whether INS recovers within a minute and whether a failure cascades through the stubs; an eight-hour run at peak shows whether response times drift, pools or memory run out, or re-authentication breaks as sessions and tokens expire.",
+      "acceptanceCriteria": [
+        "Spike and recovery runs 5 minutes at design-target peak then a 10-second spike at each component's stated capacity — 5 RPS on each journey frontend and backend for live animals and for high-risk plants, 5 RPS on the front door including sign-in, and 25 RPS on the session path, with 55 RPS for the with-IUU profile reported. (confluence:6608160092 Decision / 'Scenario shapes' table / row 3; confluence:6604328622 §4.2 Spike capacities table rows 1, 3, 5; §6.4 NFR-VOL-AG-05; §7.4 NFR-VOL-PP-05; §5.4 NFR-VOL-CORE-05; web:grafana-load-testing-types section:4-spike-test)",
+        "The spike run passes when P95 returns within 10% of the pre-spike baseline within 60 seconds, shown on the one-second time series. (confluence:6604328622 §5.4 NFR-VOL-CORE-05; §4.2 T6; conflict c-004 default)",
+        "The spike run shows no failure cascading through the stubs to the Service Bus stand-in or the Defra ID stub. (confluence:6608160092 Decision / 'Scenario shapes' table / row 3; confluence:6604328622 §4.2 para residual-risk)",
+        "The endurance run holds design-target peak for 8 hours and passes when the final hour's P95 is no more than 1.2 times the first hour's and no connection-pool or memory-exhaustion error occurs. (confluence:6608160092 Decision / 'Scenario shapes' table / row 4; web:grafana-load-testing-types section:6-soak-test; conflict c-004 default)",
+        "During the endurance run virtual users re-authenticate as their sessions and tokens expire — the 4-hour session and the 1-hour stub session lifetime — and re-authentication shows in the report as its own tagged traffic. (repo:insfrontend src/config/config.js:160-172, src/server/auth/controller.js:76-83; repo:idstub src/auth/session.js:5,49-53, src/auth/token.js:112-121; repo:animalsfrontend src/config/config.js:163-177)",
+        "Spike and recovery runs nightly in CDP test beside the sustained and burst runs; both scenarios run on demand at compressed durations in local Docker and, per release, in CDP perf-test once it is available. (conflict c-003 default)"
+      ],
+      "requirements": [
+        "req-025",
+        "req-026"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Scenario shapes' table / rows 3–4"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.2 Spike capacities; §4.2 T6; §5.4 NFR-VOL-CORE-05; §6.4 NFR-VOL-AG-05; §7.4 NFR-VOL-PP-05"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/config/config.js:10,160-172; src/server/auth/controller.js:76-83"
+        },
+        {
+          "source": "repo:idstub",
+          "ref": "src/auth/session.js; src/auth/token.js; src/auth/keys.js"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/config/config.js:9-10,163-177"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/common/helpers/session-cache/session-cache.js"
+        },
+        {
+          "source": "web:grafana-load-testing-types",
+          "ref": "section:4-spike-test; section:6-soak-test"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-009"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-004: as inc-001. Default, followed here: 'Spike: P95 back within 10% of the pre-spike baseline within 60 seconds. Endurance: final-hour P95 no more than 1.2 times the first hour, and no pool-exhaustion errors.'",
+        "c-003: as inc-001. Default, followed here: 'CDP test (stubs): tier-2 journey runs nightly at design targets (... spike and recovery). CDP perf-test (stubs, production-like sizing): per release, ... the 8-hour endurance run ...'"
+      ],
+      "notes": [
+        "Combines the spike-and-recovery slice (req-025) and the endurance slice (req-026): both reuse inc-009's design-target configuration and reporting, and neither carries a question the other does not.",
+        "The per-release perf-test runs wait on inc-003's deployment; this row is observable in CDP test and local Docker without it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-011",
+      "title": "Submitted notifications' events reach the read model and the Service Bus stand-in, smoothed through bursts and counted at peak-day volume",
+      "detail": "INS's eventing layer — the real SNS and SQS and the dynamics gateway's consumer — should absorb bursts rather than pass them straight to PIMS, and every submitted notification's events should arrive. A run submits the peak-day volume and counts what reached the dashboard read model and the Service Bus stand-in against what was submitted, and the burst and spike runs show the outbound message rate staying smooth and the SQS backlog draining afterwards.",
+      "acceptanceCriteria": [
+        "A run submits the peak-day volume — 546 live-animals and 442 high-risk-plants notifications — through the journeys. (confluence:6604328622 §6.4 NFR-VOL-AG-06; §7.4 NFR-VOL-PP-06)",
+        "Every submitted notification's events reach the dashboard read model and the Service Bus stand-in, and the report counts them per journey against what was submitted. (confluence:6604328622 §9.7 row 4; repo:gateway NotificationSqsListener.java:30-33,53-66,99-103; repo:insbackend NotificationSqsListener.java:28-31)",
+        "For a journey that publishes no events today — high-risk plants — the report says so explicitly rather than counting zero against zero as a match. (repo:plantsfrontend src/server/app/sets/high-risk-plants/docs/limits.md 'One backend projection, and no event publishing')",
+        "During the burst and spike runs the rate of messages reaching the Service Bus stand-in stays smoothed by the real SNS/SQS and the gateway's consumer rather than passing the burst straight through, shown on the one-second time series. (confluence:6604328622 §9.6 NFR-DEP-06; §6.4 NFR-VOL-AG-07; §7.4 NFR-VOL-PP-08; §9.7 rows 1–2; §4.5 Summary para 3; meeting:2026-09-29 Transcript, Speaker 1, 'Sort of, but it's a—it's a little bit more subtle than that because we—we push to the messaging fabric.')",
+        "After a burst or spike the SQS backlog drains back to its pre-burst depth, and the report states how long that took. (confluence:6604328622 §9.7 row 2; repo:animalsbackend OutboxPoller.java:25-42)"
+      ],
+      "requirements": [
+        "req-048",
+        "req-049"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.5 Summary para 3; §6.4 NFR-VOL-AG-06, AG-07; §7.4 NFR-VOL-PP-06, PP-08; §9.6 NFR-DEP-06; §9.7 rows 1, 2, 4"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 1, 'Sort of, but it's a—it's a little bit more subtle than that...'; Speaker 3, 'I—I don't think they'll be stubbed, Pete.'"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "repo:gateway",
+          "ref": "NotificationSqsListener.java; AwsConfig.java:60-67; application.yml:20-21"
+        },
+        {
+          "source": "repo:insbackend",
+          "ref": "NotificationSqsListener.java; AwsConfig.java:54-58"
+        },
+        {
+          "source": "repo:animalsbackend",
+          "ref": "OutboxPoller.java; OutboxPublishService.java; OutboxEvent.java"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/app/sets/high-risk-plants/docs/limits.md"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-010"
+      ],
+      "status": "todo",
+      "notes": [
+        "Combines the burst-smoothing slice (req-048) and the peak-day end-to-end count (req-049): both read the same eventing path (SNS/SQS, the gateway, the read model, the Service Bus stand-in) from the same counters, so one set-up serves both.",
+        "High-risk plants has no outbox or event publishing yet (pbe-022). Building it is a product change, not performance testing, so this row does not add it; it measures both journeys and reports plants' absence honestly, which keeps the go-wide rule without inventing a feature.",
+        "The gateway sends every event to Service Bus twice (finding req-061, out of scope); count what arrives and say so in the report."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-012",
+      "title": "The shared components carry every journey's combined load in proportion, including IUU's share, without one journey degrading another",
+      "detail": "The front door, dashboard read model, reference-data, address-book and dynamics gateway carry the sum of every journey's traffic, including IUU's, which has no journey here. A combined run drives both in-scope journeys in parallel at their proportions, tops up each shared component's summed rate with an API-level scenario where the journeys cannot reach it, loads the session path that exists today, exercises reference-data's cold cache, and shows one journey's load does not degrade the other's.",
+      "acceptanceCriteria": [
+        "A combined run drives live animals and high-risk plants in parallel at their proportions against the shared components — the front door and dashboard, ins-backend, reference-data, address-book and the dynamics gateway. (confluence:6608160092 Decision / 'Test tiers' table / row 3; meeting:2026-09-29 Summary §Volumetrics and Observability; meeting:2026-09-29 Transcript, Speaker 3, 'Yeah. I think it's just the reference data and the shared component.')",
+        "Where the two journeys cannot reach a shared component's summed rate including IUU's contribution, an API-level scenario adds the difference directly against that component as synthetic IUU-shaped front-door traffic — sign-in, dashboard and address book — reported and not failing the run. (confluence:6604328622 §8.5 NFR-VOL-IUU-01; meeting:2026-09-29 Transcript, Speaker 2, 'So I've called out some things that I think to be out of scope.'; conflict c-007 default)",
+        "The session-resolution path — each frontend's own Redis-backed session store today — is loaded under the combined page traffic at 1.35 RPS sustained, a 2.0 RPS P99 burst and a 25 RPS spike, with 6.24, 9.4 and 55 RPS for the with-IUU profile reported. (confluence:6604328622 §9.4 Session-API row, D2, para session-api-supersedes; §9.6 NFR-DEP-05; repo:insfrontend src/plugins/auth.js:92-118; conflict c-008 default)",
+        "Dashboard reads hit the read model at 0.17 RPS sustained and a 0.25 RPS P99 burst, with 0.78 and 1.2 RPS for the with-IUU profile reported, against a read model sized for all journeys' notifications, and the report shows its SQS consumer keeping up with the journeys' event rate. (confluence:6604328622 §9.4 Dashboard-reads row; §5.4 NFR-VOL-CORE-07; §9.7 row 4; repo:insbackend AggregatedNotificationController.java:36-42)",
+        "Reference-data is exercised behind the frontends with MDM stubbed, including a cold-cache start — the first request after deploy and after the 60-minute MDM cache expires — and the report shows cold and warm response times separately. (confluence:6604328622 §9.3.3 SYN-18, SYN-19; repo:referencedata CacheConfig.java:30-45; meeting:2026-09-29 Transcript, Speaker 2, 'But DefRA—let's say, you know, we don't want to be testing DefRA identity...')",
+        "The combined run shows per-journey isolation: a burst or spike on one journey leaves the other journey's response times and failure rate within its thresholds, and the report compares each journey's figures run alone and combined. (confluence:6608160092 Decision / 'Worked examples' table / row 1; confluence:6604328622 §8.5 NFR-VOL-IUU-09; §10.1 row 2; meeting:2026-09-29 Summary §Decisions Made)"
+      ],
+      "requirements": [
+        "req-017",
+        "req-019",
+        "req-021",
+        "req-022",
+        "req-074"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Test tiers' table / row 3; 'Worked examples' table / row 1; 'What sits on each side' table / Real row"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§5.4 NFR-VOL-CORE-07; §8.5 NFR-VOL-IUU-01, IUU-04, IUU-09; §9.3.3 SYN-18, SYN-19; §9.4; §9.6 NFR-DEP-05; §9.7 row 4; §10.1 row 2"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Volumetrics and Observability, §Decisions Made; Transcript, Speaker 3, 'Yeah. I think it's just the reference data and the shared component.'"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/plugins/auth.js; src/server/common/helpers/session-cache/session-cache.js; src/server/app/services/ins-backend/client.js"
+        },
+        {
+          "source": "repo:insbackend",
+          "ref": "AggregatedNotificationController.java; NotificationSqsListener.java"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "configuration/CacheConfig.java; client/MdmService.java"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/server/server.js:82-87; src/server/app/services/countries/index.js"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/common/helpers/session-cache/session-cache.js; src/server/app/services/countries/index.js"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-009"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-008: 'What should the combined and journey tiers treat as the shared path while the session API, permissions service and routing proxy are not built?' Default, followed here: 'Test the shared path that exists today — ins-frontend (sign-in, its own Redis-backed session, dashboard, address-book UI), ins-backend (the dashboard read model), address-book and reference-data — and apply the section 9.4 session-resolution load to each frontend's own session store. Add the session API, permissions service and routing proxy as real targets when they are built.'",
+        "c-007: as inc-009. Default, followed here: gate on the two-journey figures; the with-IUU figures run as a reported-not-failing profile of synthetic IUU-shaped front-door traffic."
+      ],
+      "notes": [
+        "Combines the session-path slice (req-017), the read-model slice (req-019), the reference-data cold-cache slice (req-021), the isolation slice (req-022) and the proportional-loading slice (req-074): all are the tier-3 combined run over the same shared components, and each needs the others' traffic to be observed at its real rate.",
+        "The dynamics gateway serves live animals only today (mtg-039); its proportion comes from live animals' events.",
+        "The injected-failure half of isolation is proven in inc-017's resilience runs, which assert no cascade to the other journey."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-013",
+      "title": "The session API, permissions service and routing proxy are loaded as real shared components once they are built",
+      "detail": "DR-EUDP-005 puts a session API, a permissions service and a routing proxy on the real side of the boundary, but none of them exists yet. When they are built they join the combined run at their section 9.4 rates, replacing the frontends' own session stores as the session path under test.",
+      "acceptanceCriteria": [
+        "The session API and permissions service are each loaded as real components at their section 9.4 rates — 1.35 RPS sustained and a 25 RPS spike, with 6.24 and 55 RPS for the with-IUU profile reported. (confluence:6604328622 §9.4 rates table Session-API and Permissions-service rows; §9.3.1 SYN-01 to SYN-03; confluence:6608160092 Decision / 'What sits on each side' table / Real row)",
+        "The routing proxy carries the combined front-door and journey page traffic of the combined run, within the frontend page thresholds. (confluence:6604328622 §9.3.1; confluence:6608160092 Rationale / 'Why the boundary sits at the product edge' / bullets)",
+        "The combined run's shared-path report names these components alongside the existing shared components, and the session-resolution load moves from the frontends' own session stores to the session API. (confluence:6604328622 §9.4 para session-api-supersedes; conflict c-008 default)"
+      ],
+      "requirements": [
+        "req-018"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§9.2; §9.3.1 SYN-01 to SYN-03; §9.4 rates table; §9.5 Permissions-service; Appendix A rows 17, 28"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'What sits on each side' table / Real row; Rationale / 'Why the boundary sits at the product edge'"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 2, 'So each of the dependencies are called out as the synchronous calls.'"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/plugins/auth.js; src/server/router.js:8-23"
+        },
+        {
+          "source": "repo:insbackend",
+          "ref": "whole package tree (no session, permissions or proxy component)"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-012"
+      ],
+      "status": "blocked",
+      "openQuestions": [
+        "c-008: 'What should the combined and journey tiers treat as the shared path while the session API, permissions service and routing proxy are not built?' Default: 'Test the shared path that exists today ... Add the session API, permissions service and routing proxy as real targets when they are built.' No safe default to build now: none of the three exists in any repo and the DR's author confirmed the session API is not built yet. Set this row to todo when they exist, and add the repos they live in to its repos."
+      ],
+      "notes": [
+        "req-018 is a question-status requirement adopted into its own row because its conflict's default is itself 'wait until built'. It is blocked, not dropped, so it stays visible; the exists-today half of c-008's default is built in inc-012."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-014",
+      "title": "Every INS service measures each call it makes to a system outside the boundary, per dependency and operation",
+      "detail": "The stubs can only be as realistic as the figures behind them, and a downstream SLA can only be checked if INS measures what it gets. Every INS service that calls a system outside the boundary records latency and outcome per dependency and operation and emits them as metrics for the volumetrics page's Grafana widgets; load-run reports read them, and measured real-call figures correct the stub profiles.",
+      "acceptanceCriteria": [
+        "Every INS service that calls a system outside the boundary records latency and outcome for each call, per dependency and operation: ins-frontend, the live-animals frontend and the high-risk-plants frontend for Defra ID; reference-data for MDM and the Trade token endpoint; the dynamics gateway for Azure Service Bus. (confluence:6604328622 §4.6 Observability NFR-OBS-02; meeting:2026-09-29 Summary §Next Steps)",
+        "Those measurements are emitted as metrics giving p50, p95, p99 and error rate per dependency and operation, in the form the volumetrics observability section's Grafana widgets read. (confluence:6604328622 §4.6 NFR-OBS-02; meeting:2026-09-29 Transcript, Speaker 2, 'Yeah. In the—in the volumetrics document, I've put a whole section on observability...')",
+        "A load run's report reads each dependency's measured p50, p95, p99 and error rate from the services' own metrics for the run window, beside the stub profile that integration ran with. (meeting:2026-09-29 Transcript, Speaker 1, 'So plug—plug it as real as we can get into the stubs.'; meeting:2026-09-29 Transcript, Speaker 2, 'Yeah. No, I—I agree.')",
+        "Where measured figures from real calls exist for an integration, its stub profile is corrected to them and the correction is recorded against the profile, replacing the interim values. (confluence:6608160092 Rationale / 'Validation against the real systems' / bullets; conflict c-011 default)"
+      ],
+      "requirements": [
+        "req-076"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.6 Observability NFR-OBS-02"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Rationale / 'Validation against the real systems' / bullets"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Next Steps; Transcript, Speaker 1, 'So plug—plug it as real as we can get into the stubs.'; Speaker 2, 'Yeah. In the—in the volumetrics document, I've put a whole section on observability...'"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/server/server.js:23,66"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/server/server.js:25,66-72; package.json:56-57"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "src/server/server.js:20,60-77"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "src/main/resources/application.yml:85-101; service/EmfMetricsPublisher.java; client/MdmService.java:61-69"
+        },
+        {
+          "source": "repo:gateway",
+          "ref": "events/QueueMessageSender.java"
+        }
+      ],
+      "repos": [
+        "referencedata",
+        "gateway",
+        "insfrontend",
+        "animalsfrontend",
+        "plantsfrontend",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-007"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-011: as inc-007. Default, followed here: 'Replace each [interim profile] with the latency the services measure on real calls (req-076) or the first tier-4 measurement, whichever comes first, then with the agreed SLA.'"
+      ],
+      "notes": [
+        "One requirement across five service repos. It stays one row because the change is the same shape in each service and only a run across all of them shows every dependency measured; splitting per service would be a layer split. If the plan finds it too large to review, split by language (the three Node frontends, then the two Java services) with the same acceptance, not by layer.",
+        "The Grafana widgets themselves are built on the CDP platform, not in these repos.",
+        "The frontends' reference-data clients drop the trace header (finding req-069, out of scope); reference-data sits inside the boundary, so it is not measured here."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-015",
+      "title": "Journey runs state the call ratios and the service level INS needs from each system outside the boundary",
+      "detail": "The volumetrics page derives its dependency rates from assumed call ratios. A journey run measures the real ones, and from them states, for each system outside the boundary, how often each journey calls it and the latency and rate it must sustain — INS's required SLA, to go to each owner. A dependency whose published SLA falls short is raised as a risk before production, and whether each SLA is being met is read from the per-dependency metrics, never from an integrated load run.",
+      "acceptanceCriteria": [
+        "A journey run measures backend calls per page and session resolutions per request for live animals and high-risk plants and reports them against the derived figures — 1 backend call per page (D1, T8) and the session ratios D2 and D3. (confluence:6604328622 §9.4 Derived call rates D1; §4.2 T8; §9.3.1 para syn04-syn05-scale; §10.1 row 4; Appendix A: Open Items row 18; §1.2 Confidence in the inputs row 6)",
+        "For each system outside the boundary, the report states how often each journey calls it per page and per notification, and the latency and rate it must sustain at standard and peak traffic. (confluence:6604328622 §9.5 Service levels to be agreed para 1; §10.2 Validation activities row 5; meeting:2026-09-29 Summary §Next Steps)",
+        "That statement is published per dependency as INS's required SLA, ready to go to each owner, and a dependency whose published SLA falls short is flagged as a risk before production, with address lookup named first even though no service calls it yet. (meeting:2026-09-29 Transcript, Speaker 2, 'I think I have a pretty good idea that says, for address lookup...'; meeting:2026-09-29 Transcript, Speaker 2, 'To my mind, we should establish what—what we want as an SLA...'; conflict c-009 default)",
+        "Whether each required SLA is being met is shown from the per-dependency metrics, not from an integrated load run against the real system. (ruling:sam-2026-09-29b; meeting:2026-09-29 Transcript, Speaker 1, 'Yeah. I'd say from a testing perspective, like, I always prefer to keep it simple'; meeting:2026-09-29 Transcript, Speaker 3, 'Trust—trust people to do the jobs is a fair approach.')"
+      ],
+      "requirements": [
+        "req-050",
+        "req-077"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6604328622",
+          "ref": "§1.2; §4.2 T8; §9.3.1; §9.4 D1; §9.5 para 1; §10.1 row 4; §10.2 row 5; Appendix A row 18"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Summary §Next Steps; Transcript, Speaker 2, 'I think I have a pretty good idea that says, for address lookup...'; Speaker 2, 'To my mind, we should establish what—what we want as an SLA...'"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "repo:animalsfrontend",
+          "ref": "src/server/app/engine/write/submit.js; src/server/app/engine/journey.js:185-229"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-012",
+        "inc-014"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-009: as inc-007. Default, followed here: 'Address Lookup, the dependency the team is most concerned about, comes first when one does, and its SLA is raised as a risk now (req-077).'"
+      ],
+      "notes": [
+        "Combines the call-ratio measurement (req-050) with the required-SLA statement (req-077): the SLA statement is computed from the measured ratios, so one without the other shows nothing.",
+        "Sending the statement to each owner is a people step outside the build; the row's output is the published statement."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-016",
+      "title": "A breakpoint run finds each INS component's breaking load, and perf-test runs report the scale the services needed",
+      "detail": "The design targets are low, so the useful question is how far above them INS breaks. A breakpoint run ramps load in steps beyond the targets on the INS components, with stubs outside the boundary, until thresholds fail, and reports each component's breaking load as a multiple of its target. Every perf-test run records the instance counts, CPU and memory each service ran with and states the scale needed to pass at design target, as input to production sizing.",
+      "acceptanceCriteria": [
+        "A breakpoint run ramps load in steps beyond the design targets — towards ten times and further — on the live-animals and high-risk-plants frontends and backends, the front door, ins-backend, address-book, reference-data and the dynamics gateway, with every system outside the boundary stubbed, until thresholds fail. (meeting:2026-09-29 Transcript, Speaker 1, 'It's where I think breakpoint testing will be interesting.'; meeting:2026-09-29 Transcript, Speaker 3, 'Those numbers look so low that there's performance testing even required on this project.'; web:grafana-load-testing-types section:5-breakpoint-test)",
+        "The report states each component's breaking load as a multiple of its design target and which threshold failed first. (web:grafana-load-testing-types section:5-breakpoint-test; web:k6-docs testing-guides/test-types/)",
+        "A breaking load is reported as the component's only where every stub it went through still had headroom at that step; otherwise the report names the stub as the limit. (confluence:6608160092 Rationale / 'Validation against the real systems' / bullets; conflict c-020 default)",
+        "Every CDP perf-test run records the instance counts, CPU and memory each INS service ran with. (meeting:2026-09-29 Transcript, Speaker 2, 'I think that's quite an interesting point you raised there, um, incidentally, Sam, about scaling up the RAM.')",
+        "The perf-test report states the scale the services needed to pass at design target, as input to production sizing: production at that scale, or one instance more. (meeting:2026-09-29 Transcript, Speaker 2, 'Um, so for example, the peak hours, concurrent users, and burst traffic.')",
+        "The breakpoint run runs per release in CDP perf-test and on demand in the other environments. (conflict c-003 default)"
+      ],
+      "requirements": [
+        "req-072",
+        "req-075"
+      ],
+      "sources": [
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 1, 'It's where I think breakpoint testing will be interesting.'; Speaker 2, '...about scaling up the RAM.'; Speaker 2, 'Um, so for example, the peak hours, concurrent users, and burst traffic.'"
+        },
+        {
+          "source": "confluence:6608160092",
+          "ref": "Rationale / 'Validation against the real systems' / bullets"
+        },
+        {
+          "source": "web:grafana-load-testing-types",
+          "ref": "section:5-breakpoint-test"
+        },
+        {
+          "source": "web:k6-docs",
+          "ref": "testing-guides/test-types/"
+        }
+      ],
+      "repos": [
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-003",
+        "inc-008",
+        "inc-012"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-003: as inc-001. Default, followed here: 'CDP perf-test (stubs, production-like sizing): per release, ... the breakpoint run of the INS components.'",
+        "c-020: as inc-007. Default, followed here: a stub is split into its own service only where a measured headroom run shows the shared one would distort results — the breakpoint run is where that is most likely to show."
+      ],
+      "notes": [
+        "Combines breakpoint (req-075) with sizing (req-072): both are about capacity above the design targets, both read from perf-test runs, and the sizing statement is most useful beside the breaking loads.",
+        "Waits on inc-003 (blocked on the perf-test deployment). The instance sizing itself is CDP configuration (req-007, out of scope); this row reads and reports it rather than sets it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-017",
+      "title": "Resilience runs inject faults at each stubbed dependency under design-target load and show bounded waits, clean failure, recovery and no cascade",
+      "detail": "Services fail at their dependencies. Each stub gains faults it can inject per endpoint and per run — slow responses, hangs, connection resets, throttling and errors — and resilience runs inject each one under design-target load of both journeys and the front door, reporting whether each service waits a bounded time, retries a bounded number of times, fails cleanly or degrades as declared, recovers when the fault clears, and keeps the failure away from the other journey and other dependencies.",
+      "acceptanceCriteria": [
+        "Each stub can inject faults per endpoint and per run — slow responses, hangs past a timeout, connection resets, 429 throttling and 5xx errors at a chosen rate — switched by configuration without a rebuild; no fault is injected into SNS, SQS or cdp-uploader. (confluence:6608160092 Decision / 'Test tiers' table / row 5; 'Worked examples' table / row 4; ruling:sam-2026-09-29b; repo:gateway servicebus/servicebus-config.json)",
+        "Resilience runs inject each fault at each stubbed dependency — Defra ID, the Trade token endpoint, MDM and the Service Bus stand-in — under design-target load of live animals, high-risk plants and the front door. (confluence:6608160092 Decision / 'Test tiers' table / row 5; 'Scenario shapes' table / row 3)",
+        "For each fault the report shows whether each calling service waited a bounded time, retried a bounded number of times, and failed the affected request cleanly or degraded as declared; a caller that waits or retries without bound is reported as failing that criterion. (confluence:6604328622 §9.6 NFR-DEP-03, NFR-DEP-04; §9.2 rows 2–3; repo:animalsbackend RestClientConfig.java:138-152; repo:gateway QueueMessageSender.java:91-100)",
+        "After each fault clears the report shows every service returning to its pre-fault response times and failure rate, and how long that took. (confluence:6608160092 Decision / 'Worked examples' table / row 4)",
+        "During each fault the other journey and the other dependencies stay within their thresholds, so the failure does not cascade. (confluence:6608160092 Decision / 'Scenario shapes' table / row 3; confluence:6604328622 §4.5 Summary para 3-reading-the-numbers)",
+        "Resilience runs run per release in CDP perf-test and on demand in the other environments. (conflict c-003 default)"
+      ],
+      "requirements": [
+        "req-033",
+        "req-047"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6608160092",
+          "ref": "Decision / 'Test tiers' table / row 5; 'Worked examples' table / row 4; 'Scenario shapes' table / row 3; Rationale / 'What the external guidance supports, and where it pushes back'"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§4.5 Summary para 3; §9.2 rows 2–3; §9.6 NFR-DEP-03, NFR-DEP-04"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/**; docker/stack/infrastructure.compose.yml (workspace repo)"
+        },
+        {
+          "source": "repo:idstub",
+          "ref": "src/routes/auth.js; src/routes/open-id.js; src/config/config.js"
+        },
+        {
+          "source": "repo:gateway",
+          "ref": "servicebus/servicebus-config.json; events/QueueMessageSender.java; notification/NotificationErrorHandler.java"
+        },
+        {
+          "source": "repo:animalsbackend",
+          "ref": "RestClientConfig.java; AddressBookClient.java"
+        },
+        {
+          "source": "repo:insbackend",
+          "ref": "NotificationSqsListener.java; NotificationErrorHandler.java"
+        }
+      ],
+      "repos": [
+        "stub",
+        "idstub",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-009"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-003: as inc-001. Default, followed here: 'CDP perf-test (stubs, production-like sizing): per release, ... tier-5 resilience'.",
+        "c-020: as inc-007. Default, followed here: fault profiles live within the existing stub services, one per integration."
+      ],
+      "notes": [
+        "Combines fault injection in the stubs (req-033) with the resilience runs (req-047): a stub fault is only observable through a run, so separating them would be a layer split.",
+        "The Service Bus leg is faulted through the existing toxiproxy in front of the emulator locally; its CDP stand-in is CDP configuration (req-006).",
+        "The repo findings (req-058, req-059, req-061, req-064, req-066: missing timeouts, retry bounds and circuit breakers) are out of scope. Expect these runs to report failures against them: the increment is done when the runs detect and report each unbounded wait or retry, not when the services pass. Fixing them is separate work."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-018",
+      "title": "A tier-4 conformance run checks each real external system against its stub profile and service level at an owner-agreed rate",
+      "detail": "Stubs drift from the systems they stand in for. From CDP perf-test, a conformance run calls each real external system the rig stubs directly — not through the INS services — at a low rate its owner has agreed, measures what it gets, and compares it with the stub profile and the section 9.5 service level, giving one of three outcomes per system. It is the only run that touches a real external system.",
+      "acceptanceCriteria": [
+        "A conformance run from CDP perf-test calls each real external system the rig stubs — Defra ID, the Trade token endpoint, MDM and Azure Service Bus — directly, not through the INS services, at its owner-agreed rate: tens of requests, never the load profile. (confluence:6608160092 Decision / 'Tier 4 in detail' / paras 1–2; 'Test tiers' table / row 4; ruling:sam-2026-09-29b)",
+        "It measures p50, p95, p99, error rate and throttling for each system and compares them with that system's stub profile and section 9.5 service level. (confluence:6608160092 Decision / 'Tier 4 in detail' / para 1; confluence:6604328622 §10.1 row 5)",
+        "The report gives one of three outcomes per system: matches; real is worse than the stub, so correct the stub and re-run the affected journeys; real is outside its SLA, so raise it with the interface owner. (confluence:6608160092 Decision / 'Tier 4 in detail' / outcomes table rows 1–3)",
+        "A conformance run updates each conformed profile's last-conformed date, so later run reports stop flagging it as overdue. (confluence:6608160092 Summary / bullet list; Rationale / 'Validation against the real systems')",
+        "A system whose owner has not agreed a rate is not called; the run skips it and says so. (confluence:6608160092 Decision / 'Tier 4 in detail' / closing paragraph; ruling:sam-2026-09-29b)"
+      ],
+      "requirements": [
+        "req-045"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6608160092",
+          "ref": "Summary; Decision / 'Test tiers' table / row 4; 'Tier 4 in detail'; 'Worked examples' table / row 2; Rationale / 'What the external guidance supports, and where it pushes back'"
+        },
+        {
+          "source": "confluence:6604328622",
+          "ref": "§10.1 row 5"
+        },
+        {
+          "source": "ruling:sam-2026-09-29",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "ruling:sam-2026-09-29b",
+          "ref": "whole ruling"
+        },
+        {
+          "source": "meeting:2026-09-29",
+          "ref": "Transcript, Speaker 2, 'There is a bit of an exception to this.'"
+        }
+      ],
+      "repos": [
+        "stub",
+        "idstub",
+        "perftests"
+      ],
+      "kind": "feat",
+      "dependsOn": [
+        "inc-003",
+        "inc-007"
+      ],
+      "status": "todo",
+      "openQuestions": [
+        "c-011: as inc-007. Default, followed here: the first tier-4 measurement may replace an interim profile if it comes before the services' own measurement (inc-014)."
+      ],
+      "notes": [
+        "Kept on its own: it is the only run that touches real external systems, under different rules (owner-agreed rates, direct calls), and reviewing it apart keeps that boundary visible.",
+        "Waits on inc-003 (blocked on the perf-test deployment). Agreeing rates with each owner is a people step outside the build; with no rate agreed the run skips that system, so the row can land with none agreed and still be observed.",
+        "stub and idstub are in repos because a conformance result corrects a stub profile and its last-conformed date, which live with the stubs."
+      ],
+      "gate": null
+    }
+  ]
+}

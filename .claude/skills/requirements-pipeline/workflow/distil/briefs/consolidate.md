@@ -40,6 +40,10 @@ reads as the change, not a restatement of what is there.
 - `requirements`: the requirement ids it covers. Every adopted `new` or `change` requirement sits in exactly one
   increment whose status is `todo`, `blocked`, `done` or `deferred`.
 - `sources`, `repos`, `kind`, `dependsOn` (a real ordering need only, never a layer order), `status`.
+- `repos` is written in **merge order**, provider before consumer: a service before the frontend that calls it, a
+  stub before the service that calls it, and a tests or performance-tests repo after every service it exercises.
+  The build loop merges a row's PRs in that order, unless the keys are exactly `frontend`, `backend` and `tests`,
+  which always merge backend, then tests, then frontend.
 - `openQuestions` where a question touches it. A row a question touches is `todo` when the question has a default,
   so the builder follows the default and says so. It is `blocked` only when there is no safe default to build.
 - A row that needs somebody to act first, such as a platform change, says so in `notes` and is `blocked` until

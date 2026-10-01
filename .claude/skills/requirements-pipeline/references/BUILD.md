@@ -50,7 +50,7 @@ increments    null to drain the backlog, which is the normal run. A list of ids
 jiraProject   default EUDPA
 epic          parent epic every raised ticket hangs off. The one thing
               a run must be told
-inProgress    the board's working status. Read it from the board's
+inDev         the board's working status. Read it from the board's
               transitions (below) rather than asking
 doneStatus    the board's finished status, the same way
 board         numeric id of the board tickets are moved onto. 13780 is
@@ -62,22 +62,26 @@ requireApproval      whether EVERY PR of an increment needs an approving review
               Default false
 approvalWaitMinutes  how long the merge stage waits for those approvals before
               stopping with every PR open. Default 20
-repos         where frontend, backend and tests live: a workspace-relative path
-              and a GitHub owner/name slug each. Take it from the backlog
-              envelope's `repos`, which DISTIL wrote:
+repos         the backlog envelope's `repos` map, whatever its keys, copied
+              in full: a workspace-relative path and a GitHub owner/name slug
+              per key. DISTIL wrote it:
                 jq '.repos' workareas/<workarea>/backlog.json
-              Ask only when that prints null (a backlog older than the field).
-              Never type it from memory and never default to the animals repos:
-              the same three keys name different repos in different
+              Its keys are the programme's own: frontend, backend and tests in
+              one backlog; perftests, stub, idstub, insfrontend and gateway in
+              another. Ask only when that prints null (a backlog older than the
+              field). Never type it from memory and never default to the
+              animals repos: the same key names different repos in different
               programmes, and a path typed from memory is how a plants
-              increment ends up built in the animals frontend
+              increment ends up built in the animals frontend. The loop's
+              preflight stops the run when the args and the envelope differ
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
               opus) plans and judges: plan, judge, the consistency reviewer.
               code (default sonnet) writes and repairs code: implement, the
               per-group style and code reviewers, the finding verifiers, fix,
               the ladder, CI fix. light (default haiku) runs a command and
-              reports what it said: everything else. A tier left out takes
+              reports what it said: everything else, the start stage
+              included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
 ```
@@ -123,11 +127,14 @@ as approving neither.
 
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
-increment at the ticket stage:
+increment at the start stage:
 
 ```bash
 tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
 ```
+
+On EUDPA the working status is `In Dev` and the finished status is `Done`; the
+args use those names.
 
 Do not take a status name from a script's `--help` text — that is generic
 placeholder wording, not this board's workflow.
@@ -135,18 +142,28 @@ placeholder wording, not this board's workflow.
 **A raised ticket lands in the board's backlog, and no status gets it out.**
 Board membership is not a field on the issue and is not implied by status — two
 tickets identical in every field sit one on the board and one in the backlog.
-So the ticket stage moves it with `tools/jira/move-to-board.sh <board> <KEY>`
-after it sets the working status, and reports `movedToBoard`. The loop treats a
-false there as `ticket-failed`, because a ticket the team cannot see on a run
-that otherwise looks clean is the failure worth catching loudly. The call is
+So the start stage (`tim build start`) moves it onto the board after it sets the
+working status, and reports `movedToBoard`. The loop treats anything but true
+there as `ticket-failed`, because a ticket the team cannot see on a run that
+otherwise looks clean is the failure worth catching loudly. The call is
 idempotent, so it runs on reused tickets too.
+
+**Each increment starts with one deterministic call.** Under the full lifecycle
+a light agent runs `tim build start` and copies its JSON line, which the script
+reads: it derives the increment, reuses or raises its ticket (templating the
+description in Jira wiki markup from the row, and recording the key before
+anything else so a retry never raises a second), sets the working status by
+exact name, moves it onto the board, and puts the increment's repos on its
+branch. A failure names its step and its exact reason, and the loop maps it to
+`derive-failed`, `no-buildable`, `ticket-failed` or `branch-failed`. See
+[`../workflow/README.md`](../workflow/README.md#the-start-stage).
 
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 23–35 agents on Claude and 29–41 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 39 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
    increments on Claude and 23 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -157,19 +174,49 @@ idempotent, so it runs on reused tickets too.
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
 4. **Check the gate covers every repo the programme builds.** Branching needs
-   nothing from you — the loop's Branch stage cuts each increment's branch off a
+   nothing from you — the loop's start stage cuts each increment's branch off a
    freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
    a free-port check, then E2E against the workspace stack built from local
-   source. It starts the stack for E2E only if it was down and stops only what it
-   started. Every rung writes to its own log, a rung that cannot run fails with
-   its reason, and the command exits 1 unless every rung passed. The baseline and
+   source, under a stack lease. It starts the stack for E2E only if it was down,
+   stops only what it started, and refuses a stack anybody else holds. Every rung
+   writes to its own log, a rung that cannot run fails with its reason, and the
+   command exits 1 unless every rung passed. The baseline and
    the ladder each run it one phase per call (each phase fits a ten-minute Bash
    window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
    the implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts or starts or stops the stack. It reads the
+   agent picks a repo's test scripts.
+
+   **The workspace stack is leased.** A stage uses it only through
+   `tim docker lease acquire --holder "<run> <increment> <stage>"`, and gives it
+   back with `tim docker lease release` before it returns. The implementor, fixer,
+   consistency reviewer and ladder each have a holder; no other agent touches the
+   stack. A plan may name a check that needs the stack, marked "needs the
+   workspace stack"; the stage that runs it takes the lease. The integration proof
+   is still the gate's E2E rung. A stage refused the stack returns `stackHeld`, and
+   the script rules: a lease an earlier stage of the same increment and run leaked
+   is released and the stage run once more; anything else stops the run at
+   `stack-held` for you to rule on. A stack somebody brought up by hand, with no
+   lease, counts as somebody else's: it is never reused and never taken down, and
+   so does a stack restarted by hand under a lease (its container ids no longer
+   match the lease's). After every stage that may hold the stack the script gives
+   that stage's own lease back, so a lease an agent forgot never reaches the next
+   increment. The lease file is per machine (`tim docker lease status` shows it),
+   and while it is held `tim docker up`, `dev`, `down`, `restart` and
+   `bounce-backend` refuse unless given `--force`, which the loop never passes.
+
+   **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
+   brought up yourself with `tim docker dev`, because it has no lease. Either take
+   it down first (`tim docker down`) and let the gate start and stop its own, or
+   run the gate under a lease of your own:
+   `tim docker lease acquire --holder "<you> manual"`, then
+   `tim build gate <workarea> --phase e2e --holder "<you> manual"`, then
+   `tim docker lease release --holder "<you> manual"`. A check that
+   starts any other compose project (`docker compose run` starts its
+   `depends_on`) is followed by that repo's down script.
+   The gate reads the
    repos from the backlog envelope's `repos` map, so a backlog without one goes
    baseline-red until it has one. Add a repo's rungs to `gates.json`
    before the first increment that builds it; the gate fails a repo it has no
@@ -184,13 +231,15 @@ Build the args, launch once, read the result. The loop does the repeating.
 
 ### 1. What the loop derives for itself
 
-You do not pick the increments. With `increments: null` the loop runs
+You do not pick the increments. With `increments: null` the loop's start stage
+runs `tim build start <workarea>` with no `--id`, which derives the next one the
+same way as
 
 ```bash
 tim backlog next <workarea>
 ```
 
-itself, after each increment lands, and builds whatever id comes back. That is
+after each increment lands, and builds whatever id comes back. That is
 what lets one launch build many: a list chosen in advance throws away everything
 the first increment teaches, and a run that needed a turn from you per increment
 died whenever the session did.
@@ -249,7 +298,7 @@ Build the args object with every key below:
   planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
   jiraProject: '<jiraProject>',
   epic: '<epic>',
-  jiraInProgressStatus: '<inProgress>',
+  jiraInDevStatus: '<inDev>',
   jiraDoneStatus: '<doneStatus>',
   jiraBoard: 13780, // the EUDPA board. Another programme's board is another id
   ciFixAttempts: 3,
@@ -257,9 +306,15 @@ Build the args object with every key below:
   requireApproval: false,
   approvalWaitMinutes: 20,
   repos: {
-    frontend: { path: 'repos/<frontend repo>', github: 'DEFRA/<frontend repo>' },
-    backend: { path: 'repos/<backend repo>', github: 'DEFRA/<backend repo>' },
-    tests: { path: 'repos/<tests repo>', github: 'DEFRA/<tests repo>' }
+    // the envelope's repos, every key exactly as `jq '.repos'` prints it. For the INS performance-testing backlog:
+    perftests: { path: 'repos/trade-imports-performance-tests', github: 'DEFRA/trade-imports-performance-tests' },
+    stub: { path: 'repos/trade-imports-stub', github: 'DEFRA/trade-imports-stub' },
+    idstub: { path: 'repos/trade-imports-defra-id-stub', github: 'DEFRA/trade-imports-defra-id-stub' },
+    insfrontend: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
+    animalsfrontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
+    plantsfrontend: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
+    referencedata: { path: 'repos/trade-imports-reference-data', github: 'DEFRA/trade-imports-reference-data' },
+    gateway: { path: 'repos/trade-imports-dynamics-gateway', github: 'DEFRA/trade-imports-dynamics-gateway' }
   },
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
@@ -276,7 +331,24 @@ Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-
 **One launch. Never one per increment.** Change nothing else in `args`. Write
 `repos` out in full every time, copied from the backlog envelope's `repos`: the
 loop has no repos table of its own any more, so a missing `repos` stops the run
-before any agent starts.
+before any agent starts, and the preflight stops it before the first increment
+when a key, a path or a GitHub slug differs from the envelope's.
+
+**Merge order.** An increment across several repos merges one PR at a time, and
+the order is the script's, not an agent's:
+
+- **The keys are exactly `frontend`, `backend` and `tests`:** backend first, then
+  tests, then frontend, whatever order the row lists them in. The backend is the
+  provider and the frontend the consumer, and CDP runs the tests repo's suite
+  against the deployed frontend, so a frontend merged ahead of its test fixes
+  goes red.
+- **Any other keys:** the order of the row's own `repos` list. Write it provider
+  before consumer — a service before the frontend that calls it, a stub before
+  the service that calls it, and a tests or performance-tests repo after every
+  service it exercises. The start stage copies it as written and the planner
+  returns its `repos` in the same order, saying under `risks` where the row's
+  order puts a consumer first. A PR in a repo the row does not name, such as one
+  a CI fixer raised, merges last.
 
 `stopAfter` is what ends an ordinary run, so write it in explicitly too. Pass
 `"all"` only when the user asked for the whole backlog; the loop still stops at
@@ -296,11 +368,18 @@ The run returns `{increments, stopped}`: one entry per increment it attempted,
 each with its `outcome`, and one `stopped` saying which condition ended the run.
 Do not trust that report on its own.
 
-- The `Workflow` tool's result carries a `transcriptDir`. Read
-  `<transcriptDir>/journal.jsonl` and find the run's first `log()` line —
-  `increment-build-loop: resolved configuration {…}`. Check it matches the
-  `args` you passed. If it does not — or it is missing — stop, quoting both the
-  log line (or its absence) and the args you sent.
+- Archive the run first (step 3c), then read its first `log()` line —
+  `increment-build-loop: resolved configuration {…}`:
+
+  ```bash
+  jq -r '.logs[0]' workareas/build-telemetry/runs/<runId>/run.json
+  ```
+
+  Check it matches the `args` you passed. If it does not — or it is missing —
+  stop, quoting both the log line (or its absence) and the args you sent. The
+  `log()` lines are only in the run's record (`<session>/workflows/<runId>.json`,
+  copied to `run.json`); `journal.jsonl` holds one `started` and one `result`
+  or `failed` line per agent and never a `log()` line.
 
 Then one query for every id the run reported:
 
@@ -345,6 +424,38 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
 
+### 3c. Archive the run and report what it cost
+
+Every run, however it stopped — landed, red, killed or out of budget. The run id
+is the `wf_…` folder name at the end of the `Workflow` result's `transcriptDir`.
+
+```bash
+tim build runs archive <runId>
+tim build runs report <runId>
+```
+
+`archive` copies every agent's full transcript, the journal and the run's own
+record (args, `log()` lines, result) into `workareas/build-telemetry/runs/<runId>/`,
+which git ignores — transcripts carry prompts and code, and this repo is public.
+Do it straight away: Claude Code deletes session folders after
+`cleanupPeriodDays` (30 days unless set), and that deletes the transcripts with
+them. Never copy a transcript, or anything derived from one, into
+`workareas/shared/` or any other tracked path.
+
+`report` prints the run by increment, then stage, then agent — model, input,
+output and cache tokens, tool calls, time and outcome — and the five most
+expensive and five slowest stages. Put those two top-five lists in your report to
+the user, one line each. `--json` gives the same for mining; `report --all`
+compares every archived build-loop run stage by stage.
+
+If the run was relaunched after a stop, archive the earlier run ids too —
+`tim build runs archive --all` sweeps every run Claude Code still holds and
+copies only what changed.
+
+**Not yet in the loop.** The loop does not archive itself; the session does it
+after the run stops. What the loop should change to make this data richer is
+listed under "Run telemetry" in `../workflow/README.md`.
+
 ### 4. Report one line per increment
 
 To the user, from the returned list:
@@ -366,10 +477,11 @@ handover prompt.
 | `count-reached` | `stopAfter` increments have landed. The ordinary ending |
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
-| `derive-failed` | `tim backlog next` itself failed. **Not** a finished backlog — fix the query or the workarea and launch again |
+| `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
 | `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
-| `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch |
+| `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
+| `stack-held` | A stage needed the workspace stack and somebody else holds it: another run, another session, another increment, or a stack somebody started by hand with no lease. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) or take down a hand-started stack yourself, then launch again. A lease an earlier stage of the same increment leaked never stops the run: the loop releases it and runs the stage again |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
@@ -377,7 +489,7 @@ handover prompt.
 | `ladder-red` | The verification ladder went red. Preserved, not discarded |
 | `land-failed` | The commit could not be made |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
@@ -429,7 +541,7 @@ Then stop:
 - **Never re-run the increment to get a different answer.** The PRs are already
   green; a second set only adds noise for the reviewer.
 
-Resuming is free once somebody approves: `prs` stays populated, so STEP 5 puts
+Resuming is free once somebody approves: `prs` stays populated, so the start stage puts
 the increment back at `"ci"`, which re-checks the PRs and reaches the merge stage
 again — this time finding the approvals.
 
@@ -456,7 +568,7 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 ### What it never does
 
 - It makes no Jira call of any kind. There is no ticket and no board, so `jiraProject`, `epic`,
-  `jiraInProgressStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
+  `jiraInDevStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
   `null`. The loop refuses a value in any of them, because a value would suggest it governs the run.
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
@@ -465,7 +577,10 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
   in progress and stashes the rest.
-- It runs on `executor: 'claude'` only. The Codex briefs name the frontend, backend and tests repos.
+
+It runs on either executor. The Codex briefs take the configured repos, whatever their keys, and a Codex stage is
+told about a merge in progress, a row that changes no backlog repo and a row whose `gatePhases` leave out unit,
+exactly as a Claude stage is.
 
 ### The row fields it reads
 
@@ -493,7 +608,8 @@ run**, then push the workspace. Give such a row `gatePhases: []`, because nothin
 
 The same keys as above, with `lifecycle: 'branch'`, `branch` set to the working branch, and `null` for every Jira
 key, `requireApproval` and `approvalWaitMinutes`. `repos` is the envelope's `repos` copied in full, whatever its
-keys are: the branch stage stops the run if the envelope and the args name different repos. The worked example in
+keys are, exactly as for the full lifecycle: the preflight and the branch stage both stop the run if the envelope
+and the args name different repos. The worked example in
 [`../workflow/README.md`](../workflow/README.md#the-branch-lifecycle) is the one for the frontend alignment sync.
 
 ### Checking what landed
@@ -528,7 +644,7 @@ scope        <scope>
 executor     <executor>
 jiraProject  <jiraProject>
 epic         <epic>
-inProgress   <inProgress>
+inDev         <inDev>
 doneStatus   <doneStatus>
 board        <board>
 repos        <the repos table, one JSON object>

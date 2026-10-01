@@ -20,6 +20,7 @@ The reusable workflow:
 
 - Spins up the workspace stack via `scripts/stack/run-stack.sh --branch <name>` so the same branch tag drives all linked service images. `run-stack.sh` also stages the repo-owned init scripts (backend Floci init, tests-repo mongo seeds), sparse-fetching them from GitHub on the same branch (falling back to `main`) since CI checks out only the workspace repo.
 - Shards Playwright × 3, merges blob reports, publishes the HTML report to `gh-pages` at `e2e/<branch-tag>/`.
+- Runs the k6 smoke run of `trade-imports-performance-tests` beside the shards, by calling that repo's `smoke.yml` on a runner and stack of its own. A breached threshold fails the workflow, so the caller's E2E check fails too.
 - Outputs `report-url` so the caller can comment on the PR.
 
 If you find yourself copying the publish step into a new repo's own `gh-pages` job, stop and call the reusable workflow instead.

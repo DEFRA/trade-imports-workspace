@@ -87,6 +87,25 @@ describe('the workspace gates.json', () => {
 
     expect(new Set(e2eRuns)).toEqual(new Set(['test:docker-compose']))
   })
+
+  test('gates every service repo the INS performance-testing backlog builds', () => {
+    const gates = loadGates(workspaceRoot)
+    const serviceRepos = [
+      'trade-imports-stub',
+      'trade-imports-defra-id-stub',
+      'trade-imports-ins-frontend',
+      'trade-imports-animals-frontend',
+      'trade-imports-plants-frontend',
+      'trade-imports-reference-data',
+      'trade-imports-dynamics-gateway'
+    ].map(repo)
+
+    const refusals = planRungs({ gates, repos: serviceRepos, phase: 'unit' })
+      .filter(({ refusal }) => refusal)
+      .map(({ refusal }) => refusal)
+
+    expect(refusals).toEqual([])
+  })
 })
 
 describe('parseGates', () => {

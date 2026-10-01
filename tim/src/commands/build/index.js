@@ -6,6 +6,8 @@ import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { runBuildBranch } from '../../build/branch.js'
 import { runGate, GATE_PHASES } from '../../build/gate.js'
+import { registerRuns } from './runs.js'
+import { registerStart } from './start.js'
 
 const SCHEMA_VERSION = 1
 
@@ -38,7 +40,15 @@ const gateOptionsSchema = z.object({
   phase: z.enum(GATE_PHASES, {
     message: `--phase must be one of: ${GATE_PHASES.join(', ')}.`
   }),
-  logs: z.string().trim().min(1).optional()
+  logs: z.string().trim().min(1).optional(),
+  holder: z
+    .string()
+    .trim()
+    .regex(
+      /^[^\n\r"'`$]+$/,
+      'The holder must be one line with no quotes, backticks or $.'
+    )
+    .optional()
 })
 
 const describeBranchRepo = ({
@@ -74,10 +84,19 @@ const describeRung = ({ repo, name, phase, ok, durationMs, reason }) =>
     ? `  pass  ${phase}  ${repo} ${name} (${Math.round(durationMs / 1000)}s)`
     : `  FAIL  ${phase}  ${repo} ${name} — ${reason}`
 
-const describeStack = ({ wasUp, startedForE2e, stoppedAfter, downError }) => {
+const describeStack = ({
+  wasUp,
+  startedForE2e,
+  stoppedAfter,
+  downError,
+  held
+}) => {
+  if (held) {
+    return `The workspace stack was not the gate’s to use: ${held.detail}`
+  }
   if (wasUp === null) return 'The gate did not use the workspace stack.'
   if (!startedForE2e) {
-    return 'The workspace stack was already up. The gate rebuilt it from local source and left it up.'
+    return 'The workspace stack was already up under this holder’s lease. The gate rebuilt it from local source and left it up.'
   }
   return stoppedAfter
     ? 'The gate started the workspace stack from local source and stopped it afterwards.'
@@ -106,7 +125,10 @@ const gateFailureMessage = ({ rungs, stack }) => {
   const failedRungs = rungs
     .filter(({ ok }) => !ok)
     .map(({ repo, name }) => `${repo} ${name}`)
-  const stackProblem = stack.downError ? [`stack: ${stack.downError}`] : []
+  const stackProblem = [
+    ...(stack.held ? [`stack held: ${stack.held.detail}`] : []),
+    ...(stack.downError ? [`stack: ${stack.downError}`] : [])
+  ]
   return `The gate failed: ${[...failedRungs, ...stackProblem].join(', ')}.`
 }
 
@@ -197,12 +219,16 @@ const registerGate = (build, timVersion) =>
       '--logs <dir>',
       'Where each rung writes its log (default: logs/ beside the backlog)'
     )
+    .option(
+      '--holder <text>',
+      'Who the gate takes the workspace stack lease as for its E2E phase (default: this gate run)'
+    )
     .description(
-      "Run the backlog's rungs from gates.json in order: unit, then FIT, then E2E against the workspace stack built from local source. Every rung writes to its own log. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json in order: unit, then FIT, then E2E against the workspace stack built from local source, under a lease (see tim docker lease). A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T090000Z inc-003 ladder" --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -210,7 +236,8 @@ const registerGate = (build, timVersion) =>
         const parsed = parseOptions(gateOptionsSchema, {
           workarea,
           phase: opts.phase,
-          logs: opts.logs
+          logs: opts.logs,
+          holder: opts.holder
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
@@ -219,7 +246,8 @@ const registerGate = (build, timVersion) =>
           workspaceRoot,
           workarea: parsed.workarea,
           phase: parsed.phase,
-          logsDir: parsed.logs ? resolve(parsed.logs) : undefined
+          logsDir: parsed.logs ? resolve(parsed.logs) : undefined,
+          ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         emit(
           globalOpts.json
@@ -236,8 +264,10 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: put the backlog's repos on one branch, and run its gate"
+      "The build loop's deterministic steps: start an increment (ticket and branch), put the backlog's repos on one branch, run its gate, and archive and report its runs"
     )
+  registerStart(build, timVersion)
   registerBranch(build, timVersion)
   registerGate(build, timVersion)
+  registerRuns(build, timVersion)
 }

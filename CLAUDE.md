@@ -64,6 +64,7 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 | `repos/trade-imports-animals-frontend` | DEFRA/trade-imports-animals-frontend | User-facing web application | Node.js |
 | `repos/trade-imports-animals-backend` | DEFRA/trade-imports-animals-backend | API / business logic service | Java / Spring Boot |
 | `repos/trade-imports-ins-tests` | DEFRA/trade-imports-ins-tests | End-to-end, accessibility and security test suite — one Playwright project per domain (`animals`, `animals-admin`, `ins`, `plants`) | Node.js |
+| `repos/trade-imports-performance-tests` | DEFRA/trade-imports-performance-tests | k6 performance-test suite for INS (a CDP performance-test suite) — runs against the stack rather than in it (`dockerStack: null` in `repos.json`) | k6 / Node.js tooling |
 | `repos/trade-imports-animals-admin` | DEFRA/trade-imports-animals-admin | Internal admin interface | Node.js |
 | `repos/trade-imports-stub` | DEFRA/trade-imports-stub | Stub of upstream trade-imports services | Java / Spring Boot |
 | `repos/trade-imports-reference-data` | DEFRA/trade-imports-reference-data | Reference data service | Java / Spring Boot |

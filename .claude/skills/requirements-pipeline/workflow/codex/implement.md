@@ -14,8 +14,8 @@ discipline, house rules — applies in full.
 ## Constants
 
 Every `<placeholder>` in this brief — `<workspace>`, `<workarea>`, `<backlog>`, `<plan>`, `<logs>`,
-`<skills>`, `<branch>`, `<INCREMENT_ID>`, `<frontendRepo>`, `<backendRepo>`, `<testsRepo>`, `<gateUnit>` — is bound to a
-real value in the prompt that pointed you here. Use those bindings; never guess one.
+`<skills>`, `<branch>`, `<INCREMENT_ID>`, `<repos>`, `<gateUnit>` — is bound to a real value in the prompt
+that pointed you here. Use those bindings; never guess one.
 
 | Thing | Path |
 |---|---|
@@ -25,16 +25,17 @@ real value in the prompt that pointed you here. Use those bindings; never guess 
 | Workarea | `<workarea>` |
 | Logs | `<logs>` |
 | Skills | `<skills>` |
-| frontend repo | `<frontendRepo>` |
-| backend repo | `<backendRepo>` |
-| tests repo | `<testsRepo>` |
+| Every repo the programme builds | `<repos>`, each written `<repoKey>=<absolute path>` |
 
-Those three are **bound per run** and differ between programmes — the same three roles name different
-repos in different backlogs. Never substitute a repo name you remember from another run; a path typed
-from memory is how one programme's increment ends up built in another programme's repo.
+The repos are **bound per run** and differ between programmes: one backlog's keys are `frontend`,
+`backend` and `tests`, another's are `perftests`, `stub` and `gateway`, and the same key can name
+different repos in different backlogs. Never substitute a repo name you remember from another run; a path
+typed from memory is how one programme's increment ends up built in another programme's repo.
 
 Every repo this increment touches is already on branch `<branch>` — cut for this increment by an earlier
-stage, or, on a local run, the branch the run was given. Do not switch branches and do not create one.
+stage, or, under the branch lifecycle, the long-lived working branch the run builds on. Do not switch
+branches and do not create one. A repo may be mid-merge by design: where the prompt says a merge is in
+progress, resolve it as it says and never commit, continue or abort it.
 
 The increment is a full-stack slice. Its plan names every repo it changes; do the work in each, on that
 same branch name in all of them.
@@ -76,7 +77,7 @@ sleeps.
 - **A page added to a journey breaks the preceding page's E2E spec — fix it in THIS increment.** When your
   change inserts or reorders a page, the tests-repo spec covering the page BEFORE yours still expects the
   old next page. It will pass locally, pass its own repo's checks, and go red in CI or after merge. Update
-  that spec yourself, in `<testsRepo>`, on the SAME branch name — cross-repo branch parity means the stack
+  that spec yourself, in the tests repo among `<repos>`, on the SAME branch name — cross-repo branch parity means the stack
   serves your branch frontend to your branch specs, so your own ladder catches it in seconds rather than a
   CI round trip finding it in half an hour. An increment that ships a page and leaves a stale spec behind
   is not finished. This is in scope even when the plan did not list the tests repo.
@@ -101,7 +102,8 @@ sleeps.
   `<skills>/requirements-pipeline/references/gates.json`. Run its unit phase:
   `<gateUnit>`
   It prints one JSON line; each rung has an `ok` and a `log`, and a red rung's log is yours to read once.
-  A red rung is yours to fix. Never pick, add or substitute a script for a repo's own rungs.
+  A red rung is yours to fix. Never pick, add or substitute a script for a repo's own rungs. Where
+  `<gateUnit>` is bound to `none`, this row's gate phases leave out unit: run no gate phase at all.
 - **Browser-driven suites are not yours to run.** The gate's FIT and E2E phases, and anything else that
   launches a real browser, cannot start under your sandbox: Chromium is refused its Mach port and every
   test fails at launch, which tells you nothing about the change. The **verification-ladder stage runs
@@ -125,6 +127,7 @@ sleeps.
 
 Your final message must satisfy the JSON schema supplied via `--output-schema`: `ok`, `summary`,
 `changedFiles`, `notes`. Nothing else. Write each `changedFiles` entry as `<repoKey>:<repo-relative path>`,
-the repo key being `frontend`, `backend` or `tests` (e.g. `frontend:src/server/app/index.js`) — review is
-grouped by repo and language from it. In `notes`, write down any diagnosis of a red suite and what got it
+the repo key being one of the keys in `<repos>` (e.g. `frontend:src/server/app/index.js` where `frontend` is
+one of them), or `workspace` for a file in the workspace repo itself on a row that changes no backlog repo —
+review is grouped by repo and language from it. In `notes`, write down any diagnosis of a red suite and what got it
 green: the ladder stage is given your notes.

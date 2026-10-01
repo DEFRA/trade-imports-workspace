@@ -48,8 +48,9 @@ jobs:
         id: workspace-ref
         env:
           GH_TOKEN: ${{ github.token }}
+          REQUESTED: ${{ inputs.branch || (github.event_name == 'pull_request' && github.head_ref || github.ref_name) }}
         run: |
-          requested="${{ inputs.branch || (github.event_name == 'pull_request' && github.head_ref || github.ref_name) }}"
+          requested="$REQUESTED"
           ref_enc=$(printf 'heads/%s' "$requested" | jq -sRr @uri)
           if gh api "repos/DEFRA/trade-imports-workspace/git/ref/${ref_enc}" >/dev/null 2>&1; then
             echo "ref=${requested}" >> "$GITHUB_OUTPUT"
@@ -67,8 +68,10 @@ jobs:
 
       - name: Resolve branch tag
         id: branch-tag
+        env:
+          RAW_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
         run: |
-          raw="${{ inputs.branch || github.head_ref || github.ref_name }}"
+          raw="$RAW_BRANCH"
           tag="${raw//\//-}"
           tag="$(printf '%s' "$tag" | tr -cd 'a-zA-Z0-9_.-')"
           tag="$(printf '%s' "$tag" | tr '[:upper:]' '[:lower:]')"
@@ -85,7 +88,9 @@ jobs:
           fi
 
       - name: Start stack
-        run: ./scripts/stack/run-stack.sh --branch "${{ inputs.branch || github.head_ref || github.ref_name }}"
+        env:
+          BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
+        run: ./scripts/stack/run-stack.sh --branch "$BRANCH"
 
       - name: Assert E2E stack
         run: |
@@ -164,6 +169,19 @@ jobs:
       # No teardown step: the runner is ephemeral and takes every container,
       # network and volume with it when the job ends.
 
+  # The performance suite's k6 smoke run, beside the E2E shards on a runner and
+  # stack of its own so neither run's load skews the other. The stubs answer at
+  # their default zero delay. A breached threshold fails this job, so the
+  # caller's E2E check fails with it.
+  smoke:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'workflow_call' ||
+      !github.event.pull_request.draft
+    uses: DEFRA/trade-imports-performance-tests/.github/workflows/smoke.yml@main
+    with:
+      branch: ${{ inputs.branch || github.head_ref || github.ref_name }}
+
   merge-reports:
     if: always() && needs.e2e.result != 'skipped'
     needs: e2e
@@ -229,8 +247,10 @@ jobs:
 
       - name: Resolve branch tag
         id: branch-tag
+        env:
+          RAW_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
         run: |
-          raw="${{ inputs.branch || github.head_ref || github.ref_name }}"
+          raw="$RAW_BRANCH"
           tag="${raw//\//-}"
           tag="$(printf '%s' "$tag" | tr -cd 'a-zA-Z0-9_.-')"
           tag="$(printf '%s' "$tag" | tr '[:upper:]' '[:lower:]')"

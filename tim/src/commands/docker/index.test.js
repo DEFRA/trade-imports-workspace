@@ -5,6 +5,7 @@ import {
   mkdirSync,
   writeFileSync,
   chmodSync,
+  existsSync,
   rmSync
 } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -28,9 +29,11 @@ beforeEach(() => {
   writeFileSync(join(workspace, 'Makefile'), 'all:\n')
   mkdirSync(join(workspace, 'repos'))
   mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
+  process.env.TIM_STACK_LEASE = join(workspace, 'stack-lease.json')
 })
 
 afterEach(() => {
+  delete process.env.TIM_STACK_LEASE
   rmSync(workspace, { recursive: true, force: true })
 })
 
@@ -174,5 +177,65 @@ describe('tim docker subcommands', () => {
     const payload = JSON.parse(stdout.trim())
     expect(payload.ok).toBe(false)
     expect(payload.errors[0].code).toBe('USAGE')
+  })
+})
+
+describe('tim docker under a stack lease', () => {
+  const writeLease = () =>
+    writeFileSync(
+      process.env.TIM_STACK_LEASE,
+      JSON.stringify({
+        holder: 'ibl-20261001T090000Z inc-003 ladder',
+        mode: 'dev',
+        acquiredAt: '2026-10-01T09:00:00.000Z',
+        branches: {},
+        state: 'up',
+        containers: ['c1']
+      })
+    )
+
+  test.each(['up', 'dev', 'down', 'restart', 'bounce-backend'])(
+    '%s refuses while a build holds the lease, naming the holder',
+    async (command) => {
+      writeStackScript('run-stack.sh', `touch '${join(workspace, 'ran')}'`)
+      writeStackScript('stop-stack.sh', `touch '${join(workspace, 'ran')}'`)
+      writeStackScript('restart-stack.sh', `touch '${join(workspace, 'ran')}'`)
+      writeStackScript('bounce-backend.sh', `touch '${join(workspace, 'ran')}'`)
+      writeLease()
+
+      const { stdout, exitCode } = await execa(
+        'node',
+        [cliPath, 'docker', command, '--workspace', workspace, '--json'],
+        { reject: false }
+      )
+
+      expect({
+        exitCode,
+        error: JSON.parse(stdout.trim()).errors[0],
+        ran: existsSync(join(workspace, 'ran'))
+      }).toEqual({
+        exitCode: 1,
+        error: {
+          code: 'STACK_HELD',
+          message: expect.stringContaining(
+            'The workspace stack is leased to "ibl-20261001T090000Z inc-003 ladder"'
+          )
+        },
+        ran: false
+      })
+    }
+  )
+
+  test('runs under a lease with --force, and does not pass --force to the script', async () => {
+    writeStackScript('run-stack.sh', '[ "$*" = "-d" ] && exit 0 || exit 1')
+    writeLease()
+
+    const { exitCode } = await execa(
+      'node',
+      [cliPath, 'docker', 'dev', '--workspace', workspace, '--force'],
+      { reject: false }
+    )
+
+    expect(exitCode).toBe(0)
   })
 })

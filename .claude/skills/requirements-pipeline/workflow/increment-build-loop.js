@@ -5,8 +5,8 @@ export const meta = {
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
+    { title: 'Start' },
     { title: 'Derive' },
-    { title: 'Ticket' },
     { title: 'Branch' },
     { title: 'Baseline' },
     { title: 'Plan' },
@@ -59,7 +59,7 @@ export const meta = {
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
 //   jiraProject     Jira project key raised tickets land in
 //   epic            parent epic every raised ticket hangs off
-//   jiraInProgressStatus  the board's working status, set when the build starts
+//   jiraInDevStatus  the board's working status, set when the build starts
 //   jiraDoneStatus        the board's finished status, set after the merge
 //   jiraBoard       the numeric board id raised tickets are moved onto. Board
 //                   membership is NOT a field on the issue and NOT implied by
@@ -91,13 +91,13 @@ export const meta = {
 //                   whole lifecycle. It needs an explicit `increments` list:
 //                   planning a backlog you are not building has no end, because
 //                   a plan does not change what `tim backlog next` returns
-//   repos           the three repos an increment's "repos" list can name —
-//                   frontend, backend, tests — each with its workspace-relative
-//                   path and its GitHub owner/name slug. A programme in another
-//                   repo family (the plants frontend and backend, say) names its
-//                   own table here. Under lifecycle 'branch' the keys are
-//                   whatever the backlog envelope's `repos` names (ins,
-//                   animals, plants, tests, say), copied in full
+//   repos           the backlog envelope's `repos` map, whatever its keys,
+//                   copied in full: each key a lower-case word an increment's
+//                   "repos" list can name, with its workspace-relative path and
+//                   its GitHub owner/name slug. frontend, backend and tests is
+//                   one such map; perftests, stub, insfrontend and gateway is
+//                   another. The preflight stops the run when it differs from
+//                   the envelope's
 //   models         required; {} takes the recommended default on every tier —
 //                   it does NOT inherit the session model. Three tiers, each
 //                   optional: think (default opus) = plan, judge, the
@@ -105,7 +105,7 @@ export const meta = {
 //                   the per-group style and code reviewers, the finding
 //                   verifiers, fix, the ladder and CI fix; light (default
 //                   haiku) = every other stage — the ones that only run a
-//                   command and report what it said (ticket, branch, branch
+//                   command and report what it said (start, branch, branch
 //                   guard, merge start, baseline, land, preserve, PR, CI
 //                   watch, merge, done, and the Codex shell and relay). A
 //                   tier left out takes its default; set it to "inherit" to
@@ -161,7 +161,7 @@ const ALWAYS_REQUIRED = [
   'stopAfter',
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'ciFixAttempts',
@@ -189,7 +189,7 @@ const BASE_BRANCH = CFG.branch
 const EXECUTOR = CFG.executor
 const JIRA_PROJECT = CFG.jiraProject
 const EPIC = CFG.epic
-const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus
+const STATUS_IN_DEV = CFG.jiraInDevStatus
 const STATUS_DONE = CFG.jiraDoneStatus
 const JIRA_BOARD = CFG.jiraBoard
 const CI_FIX_ATTEMPTS = CFG.ciFixAttempts
@@ -210,14 +210,15 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is 23–35 agents on Claude and 29–41 on Codex,
-// plus the one that derives it, so a drain of an open-ended backlog would hit
-// the cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 27 increments on Claude, 23 on Codex — and
+// not a config key. An increment is up to 39 agents on Claude and 42 on Codex —
+// its start stage, its build, and a lease return after each stage that may
+// hold the workspace stack — so a drain of an open-ended backlog would hit the
+// cap mid-increment and lose the attempt. The run stops before starting one
+// that would not fit — roughly 25 increments on Claude, 23 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 36, codex: 42 }
+const AGENTS_PER_INCREMENT = { claude: 39, codex: 42 }
 const STARTUP_AGENTS = 2
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -249,7 +250,7 @@ const IS_BRANCH = LIFECYCLE === 'branch'
 const UNUSED_ON_BRANCH_KEYS = [
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'requireApproval',
@@ -269,11 +270,6 @@ if (IS_BRANCH) {
       `${WORKFLOW_NAME}: lifecycle "branch" commits and pushes straight onto config.branch, so it refuses ${PROTECTED_BRANCHES.join(' and ')}. Name the long-lived working branch — got "${BASE_BRANCH}"`
     )
   }
-  if (EXECUTOR !== 'claude') {
-    throw new Error(
-      `${WORKFLOW_NAME}: lifecycle "branch" runs on executor "claude" only. The Codex briefs name the frontend, backend and tests repos, and a branch-lifecycle backlog names its own — got "${EXECUTOR}"`
-    )
-  }
 }
 
 if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
@@ -281,9 +277,9 @@ if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
     `increment-build-loop: config.epic is required — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
   )
 }
-if (!IS_BRANCH && (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
+if (!IS_BRANCH && (typeof STATUS_IN_DEV !== 'string' || !STATUS_IN_DEV.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
   throw new Error(
-    `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
+    `increment-build-loop: config.jiraInDevStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_DEV}" and "${STATUS_DONE}"`
   )
 }
 if (!IS_BRANCH && !/^\d+$/.test(String(JIRA_BOARD))) {
@@ -327,41 +323,51 @@ if (PLAN_ONLY && EXPLICIT_IDS === null) {
 
 // ---------------------------------------------------------------------------
 // Repos. An increment is a full-stack slice and lists the repos it touches in
-// "repos"; this table says where each one lives on disk and on GitHub. All
-// three keys are required so every stage's REPO PATHS line reads the same
-// whichever repo family the programme builds in.
+// "repos"; this table says where each one lives on disk and on GitHub. The
+// keys are whatever the backlog envelope names, under either lifecycle: the
+// preflight checks the two agree before any increment starts.
 // ---------------------------------------------------------------------------
-// Under the branch lifecycle the keys are whatever the backlog envelope names.
-// They must be plain lower-case words, because a changed file is written
+// Keys must be plain lower-case words, because a changed file is written
 // `<repoKey>:<path>` and routed back to its repo by that prefix. `workspace`
 // is reserved: it names the workspace repo itself, where a docs row writes.
 const REPOS = CFG.repos
-const FULL_REPO_KEYS = ['frontend', 'backend', 'tests']
 const WORKSPACE_KEY = 'workspace'
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 
-if (IS_BRANCH) {
-  const keys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
-  const badKeys = keys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
-  if (keys.length === 0 || badKeys.length > 0) {
-    throw new Error(
-      `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
-    )
-  }
+const configuredKeys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
+const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
+if (configuredKeys.length === 0 || badRepoKeys.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
+  )
 }
 
-const REPO_KEYS = IS_BRANCH ? Object.keys(REPOS) : FULL_REPO_KEYS
+const REPO_KEYS = configuredKeys
 
 for (const key of REPO_KEYS) {
-  const entry = REPOS?.[key]
+  const entry = REPOS[key]
   const pathOk = typeof entry?.path === 'string' && /^repos\/[^/]+$/.test(entry.path)
   const githubOk = typeof entry?.github === 'string' && /^[^/\s]+\/[^/\s]+$/.test(entry.github)
   if (!pathOk || !githubOk) {
     throw new Error(
-      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-${key}" and a "github" owner/name slug like "DEFRA/trade-imports-animals-${key}" — got ${JSON.stringify(entry)}`
+      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-frontend" and a "github" owner/name slug like "DEFRA/trade-imports-animals-frontend" — got ${JSON.stringify(entry)}`
     )
   }
 }
+
+// The frontend, backend and tests keys every programme once had to use. A
+// programme that still names exactly those three keeps the rules written for
+// them: `repo: both` on an old row, the tests repo added to every UI change,
+// and backend → tests → frontend as the merge order. Any other set of keys
+// takes its merge order from the row's own `repos` list.
+const LEGACY_REPO_KEYS = ['frontend', 'backend', 'tests']
+const IS_LEGACY_KEYS =
+  REPO_KEYS.length === LEGACY_REPO_KEYS.length && LEGACY_REPO_KEYS.every((key) => REPO_KEYS.includes(key))
+
+// frontend-change covers only these two repos, whatever key a programme gives
+// them. Its recipes, copy files and behaviour spec mean nothing elsewhere.
+const FRONTEND_CHANGE_PATHS = ['repos/trade-imports-animals-frontend', 'repos/trade-imports-plants-frontend']
+const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
 
 // ---------------------------------------------------------------------------
 // Models. Three tiers, each with a BUILT-IN default matched to the kind of
@@ -372,7 +378,7 @@ for (const key of REPO_KEYS) {
 //                    finding verifiers, fix, the ladder, CI fix: the calls
 //                    that write or repair code.
 //   light (haiku)  — every stage that only runs a command and reports what it
-//                    said: workspace resolve, preflight, derive next, ticket,
+//                    said: workspace resolve, preflight, derive next, start,
 //                    branch, branch guard, merge start, baseline, land,
 //                    preserve, PR, CI watch, merge, done, and the Codex shell
 //                    and relay (they too only run a command and report).
@@ -440,27 +446,31 @@ const WORKSPACE_CANDIDATES = [
   '~/git/defra/trade-imports-animals'
 ]
 
+const STARTED_AT_FORMAT = /^\d{8}T\d{6}Z$/
+
 const WORKSPACE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'tilde', 'summary'],
+  required: ['ok', 'abs', 'tilde', 'startedAt', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
     tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
     canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
+    startedAt: { type: 'string', description: 'Exactly what `date -u +%Y%m%dT%H%M%SZ` printed, such as 20261001T091500Z' },
     summary: { type: 'string' }
   },
   additionalProperties: false
 }
 
 const workspace = await agent(
-  `Resolve THIS machine's workspace root and report it. That is your whole job.
+  `Resolve THIS machine's workspace root and report it, with the time. That is your whole job.
 Try each of these in order, ONE Bash call each, and stop at the first that exits zero:
 ${WORKSPACE_CANDIDATES.map((c, i) => `${i + 1}. \`git -C ${c} rev-parse --show-toplevel\``).join('\n')}
 Report \`abs\` as exactly what that command printed, and \`tilde\` as the candidate path you used —
 tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
 Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
+Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
 No Grep/Glob tools. One command per Bash call.`,
   light({ label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA })
@@ -471,12 +481,22 @@ if (!workspace || !workspace.ok || !workspace.abs?.startsWith('/') || !workspace
     `increment-build-loop: could not resolve the workspace root. CLAUDE.md rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace checkout — symlink it if your clone is elsewhere. ${workspace ? workspace.summary : 'the resolver agent failed'}`
   )
 }
+if (!STARTED_AT_FORMAT.test(workspace.startedAt ?? '')) {
+  throw new Error(
+    `${WORKFLOW_NAME}: the workspace agent reported no start time in the form 20261001T091500Z — got ${JSON.stringify(workspace.startedAt)}. The run's id, which every stack lease names, comes from it`
+  )
+}
 
 const ABS = workspace.abs.replace(/\/+$/, '')
 const TILDE = workspace.tilde.replace(/\/+$/, '')
 if (!workspace.canonical) {
   log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
 }
+
+// The run's id comes from an agent's answer rather than the script's own
+// clock, so a resumed run replays the same id and its prompts still match.
+const RUN_ID = `ibl-${workspace.startedAt}`
+log(`${WORKFLOW_NAME}: run ${RUN_ID}`)
 
 const WORKAREA = `${ABS}/workareas/${WORKAREA_REL}`
 const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA_REL}`
@@ -504,10 +524,16 @@ const ghTable = Object.entries(GH_REPO)
   .map(([k, v]) => `${k}=${v}`)
   .join(', ')
 
+const LEGACY_ITS_REPOS = `ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
+frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.`
+
+const KEYED_ITS_REPOS = `ITS REPOS: the increment's \`repos\` list, in the order it is written: that order is the increment's MERGE ORDER.
+Where it has none, an older backlog's \`repo\` field: a configured key means that repo alone, and \`both\` means every
+configured repo. Where it has neither, every configured repo, in this order: ${REPO_KEYS.join(', ')}.`
+
 const FULL_REPO_RULE = `REPO PATHS: ${repoTable}. An increment is a full-stack slice: it is built, reviewed and proved in
 every repo it touches at once, on the SAME branch name in each (CLAUDE.md rule 2, cross-repo branch parity).
-ITS REPOS: the increment's \`repos\` list. Where it has none, an older backlog's \`repo\` field: \`both\` means backend,
-frontend and tests; any other value means that repo plus tests. Where it has neither, all three: ${REPO_KEYS.join(', ')}.
+${IS_LEGACY_KEYS ? LEGACY_ITS_REPOS : KEYED_ITS_REPOS}
 Listing a repo the change leaves alone costs nothing — no change means no commit and no PR.`
 
 const BRANCH_REPO_RULE = `REPO PATHS: ${repoTable}. This run builds straight onto \`${BASE_BRANCH}\`, which already exists in
@@ -536,23 +562,39 @@ workspace — not the backlog, not the plans, not the logs. See what it holds wi
 \`git -C ${TILDE} status --short -- openspec/\`.`
 
 // The repo's own rungs — format, lint, typecheck, unit, `mvn verify`, FIT and
-// E2E — belong to `tim build gate`, which reads them from gates.json and owns
-// the workspace stack. Agents that picked those scripts by hand picked a
+// E2E — belong to `tim build gate`, which reads them from gates.json and
+// leases the workspace stack for E2E. Agents that picked those scripts by hand picked a
 // remote CDP one, ran unit tests against a stack left up and called a real
 // failure "pre-existing". The gate runs one phase per call so each fits in
 // one ten-minute Bash window.
 const GATE_PHASES = ['unit', 'fit', 'e2e']
 const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
-const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs}`
-const gateCommandList = (phases, logs) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
 
-const GATE_RULE = `THE GATE owns every repo's own rungs and the workspace stack. \`tim build gate\` runs the rungs
+// ---------------------------------------------------------------------------
+// The workspace stack is leased. ins-performance-testing inc-001 showed the
+// failure: a plan check started the stack, the stage that ran it returned
+// with it still up, and the ladder's FIT phase found port 3000 held by a
+// stack nobody owned. A stage may use the stack, but only under a lease
+// (`tim docker lease`) named for the run, the increment and the stage, and it
+// gives the lease back before it returns. A stage refused the stack returns
+// `stackHeld`; the script, not the agent, decides what happens next.
+// ---------------------------------------------------------------------------
+const stackHolder = (id, stage) => `${RUN_ID} ${id} ${stage}`
+
+const gateCommand = (phase, logs, holder) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs}${phase === 'e2e' ? ` --holder "${holder}"` : ''}`
+const gateCommandList = (phases, logs, holder) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, holder)}\``).join('\n')
+
+const STACK_HELD_LINE = `return \`stackHeld\` with \`holder\` (null when it is null) and \`detail\`
+  copied word for word. Never wait for it, retry, work round it, or take the stack down: the loop decides what happens next.`
+
+const GATE_RULE = `THE GATE owns every repo's own rungs. \`tim build gate\` runs the rungs
 listed for each backlog repo in ${ABS}/.claude/skills/requirements-pipeline/references/gates.json — format check,
 lint, typecheck, unit tests, \`mvn verify\`, FIT and the local-stack E2E suite — each to its own
-\`gate-<repo>-<rung>.log\` under the --logs folder. For E2E it starts the workspace stack only if it was down and
-stops only what it started. So:
+\`gate-<repo>-<rung>.log\` under the --logs folder. For E2E it takes the workspace stack's lease as the holder its
+command names: it starts the stack only if it was down and stops only what it started, and it refuses a stack leased
+to anybody else or up with no lease at all. So:
 - Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
 - Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
   leave it as it is.
@@ -561,28 +603,58 @@ stops only what it started. So:
   It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
   it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
   an \`errors[]\` entry and no \`result\`), or that hits the Bash timeout, is RED: report its error verbatim.
+- A phase whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands: an E2E phase
+  refused, or a FIT port the stack holds. Stop there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
   \`test-results/*/error-context.md\` in the tests repo as well.`
+
+const stackLeaseRule = (id, stage) => {
+  const holder = stackHolder(id, stage)
+  const lease = (verb) =>
+    `\`tim docker lease ${verb} --holder "${holder}" --workspace ${TILDE} --json --logs ${gateLogs(id, stage)}\``
+  return `THE WORKSPACE STACK, for a check that needs it up. Your lease holder is \`${holder}\`, and the lease is the only way
+you may use the stack:
+1. Take it, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000: ${lease('acquire')}
+   ok:true means it is yours: started from local source if it was down, or reused if you already held it.
+2. Run the checks that need it, and nothing else.
+3. Give it back as soon as they are done, and always before you return, whatever they showed:
+   ${lease('release')}
+   The stack holds the FIT ports, so give it back before you run the gate's FIT phase.
+If the acquire prints ok:false with \`errors[0].code\` STACK_HELD, the stack is somebody else's. Run nothing that needs it,
+and ${STACK_HELD_LINE} Copy \`holder\` from tim's \`result.holder\` and \`detail\` from \`errors[0].message\`.
+Any other ok:false (STACK_START_FAILED) is a check that could not run: report it with tim's message.`
+}
 
 const BUILDER_PHASES = ['unit', 'fit']
 
 // The branch lifecycle narrows the builder's phases to the row's gatePhases.
 const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
-  phases.length === 0
-    ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
-yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
-repo's own rungs. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
-    : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-${gateCommandList(phases, gateLogs(id, stage))}
+  `${
+    phases.length === 0
+      ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
+yourself. Never run the gate's E2E phase, never start or stop the workspace stack but through your lease, and never pick
+a script by hand for a repo's own rungs.`
+      : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+${gateCommandList(phases, gateLogs(id, stage), stackHolder(id, stage))}
 Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
-never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A stack that is up
-is not in your way: leave it. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
+never start or stop the workspace stack but through your lease, and never pick a script by hand for a repo's own rungs.
+A stack that is up and not yours is not in your way: leave it. A FIT phase whose \`result.stack.held\` is not null
+found the stack in somebody else's hands: ${STACK_HELD_LINE}`
+  }
+The plan's sections 5 and 6 checks are yours to run as the plan writes them. One that needs the workspace stack up runs
+inside your lease:
+${stackLeaseRule(id, stage)}`
 
 // Codex has a normal shell and reads absolute paths; its sandbox cannot start
 // a browser, so it runs only the gate's unit phase.
 const codexGateUnit = (id, stage) =>
   `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage}`
+
+// A branch-lifecycle row whose gatePhases leave out unit runs no gate phase
+// in its builders, Codex's included. The briefs read `none` as exactly that.
+const CODEX_NO_GATE = 'none'
+const codexGateBinding = (id, stage, phases) => (phases.includes('unit') ? codexGateUnit(id, stage) : CODEX_NO_GATE)
 
 const GATE_RUNG_SCHEMA = {
   type: 'object',
@@ -717,21 +789,131 @@ const groupDiffCommand = (group) =>
 // fixer pushes whatever it had to open on the end — so the array's own order is
 // an accident of when a PR appeared, not a merge plan. Sort it here rather than
 // asking the merge agent to reorder: order is a decision the script owns.
+//
+// Those three reasons are about the frontend, backend and tests keys. A
+// programme with any other keys — a perf-test repo, two stubs, five services
+// — has no fixed rank to look up, so the row's own `repos` list is the merge
+// order: the backlog writes it provider before consumer, the start stage
+// copies it as written, and the planner says under risks where it is wrong.
+// A PR in a repo the row did not name (a CI fixer's) merges last.
 const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
-const sortForMerge = (list) =>
-  [...list].sort((a, b) => (MERGE_RANK[a.repo] ?? 99) - (MERGE_RANK[b.repo] ?? 99))
+const UNRANKED = Number.MAX_SAFE_INTEGER
+const rankInRow = (rowRepos, repo) => (rowRepos.includes(repo) ? rowRepos.indexOf(repo) : UNRANKED)
+const mergeRankOf = (rowRepos, repo) => (IS_LEGACY_KEYS ? (MERGE_RANK[repo] ?? UNRANKED) : rankInRow(rowRepos, repo))
+const sortForMerge = (list, rowRepos) =>
+  [...list].sort((a, b) => mergeRankOf(rowRepos, a.repo) - mergeRankOf(rowRepos, b.repo))
 
-const MERGE_ORDER_RULE = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
+const LEGACY_MERGE_ORDER = `MERGE ORDER for a cross-repo increment: BACKEND FIRST, THEN TESTS, THEN FRONTEND. The
 backend is the provider and the frontend the consumer, so \`${BASE_BRANCH}\` is never left holding a frontend that
 calls an endpoint which is not there yet; and CDP runs the tests repo's suite against the deployed frontend, so a
-frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.
+frontend merged ahead of its own test fixes is exercised by stale specs and CDP goes red.`
+
+const KEYED_MERGE_ORDER = `MERGE ORDER for a cross-repo increment: the order the increment's \`repos\` list names them. The
+backlog writes that list provider before consumer — a service before the frontend that calls it, a stub before the
+service that calls it, and a tests or performance-tests repo after every service it exercises — so
+\`${BASE_BRANCH}\` is never left holding a consumer of something that is not there yet. A pull request in a repo the list
+does not name merges last.`
+
+const MERGE_ORDER_RULE = `${IS_LEGACY_KEYS ? LEGACY_MERGE_ORDER : KEYED_MERGE_ORDER}
 EVERY PR of the increment must be GREEN — AND, where the approval gate is on, APPROVED — BEFORE ANY ONE OF THEM
 MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
 auto-reverts it.`
 
+// Where the planner is told the order its repos[] comes back in.
+const PLAN_MERGE_ORDER = IS_LEGACY_KEYS
+  ? 'in merge order: backend, then tests, then frontend'
+  : `in merge order: the order the increment's \`repos\` list gives them, which is the order the merge stage merges in.
+That order must put a provider before its consumer — a service before a frontend that calls it, a stub before the
+service that calls it, and a tests or performance-tests repo after every service it exercises. Where the row's
+order does not, keep the row's order in repos and say so under risks, naming the order it should have`
+
 // A `blocked` line means the stage hit something no fixer can fix. It stops the
 // run without spending fix attempts on it.
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
+
+// A holder is `<run> <increment> <stage>`. The script rules on a refusal: a
+// lease an earlier stage of this increment in this run left behind is a leak,
+// released once and the stage run again. Anything else — another run, another
+// session, another increment, or a stack up with no lease — is a human's
+// ruling, and stops the run.
+const holderParts = (holder) => {
+  const [run = '', increment = '', ...stage] = (holder ?? '').split(' ')
+  return { run, increment, stage: stage.join(' ') }
+}
+
+const isLeakFromThisIncrement = (id, stage, holder) => {
+  const parts = holderParts(holder)
+  return parts.run === RUN_ID && parts.increment === id && parts.stage !== '' && parts.stage !== stage
+}
+
+const describeStackHolder = (holder) =>
+  holder ? `"${holder}"` : 'nobody: it is up with no lease, so somebody started it by hand'
+
+const stackHeldDetail = (id, stage, held) =>
+  `${id} ${stage}: the workspace stack is held by ${describeStackHolder(held.holder)}. ${held.detail}`
+
+const releaseLease = ({ id, holder, label, logs, phaseName, why }) =>
+  agent(
+    `You are the LEASE RELEASER for increment ${id}. ${why} You give back the workspace stack's lease held as
+\`${holder}\`. That is your whole job.
+${GUARDRAILS}
+Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+\`tim docker lease release --holder "${holder}" --workspace ${TILDE} --json --logs ${logs}\`
+It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
+was no lease to give back. Otherwise report ok:false with \`errors[0].message\` word for word. Run nothing else, and
+never take the stack down any other way.
+Return the structured output only.`,
+    light({ label, phase: phaseName, schema: incrementSchema })
+  )
+
+const releaseLeakedLease = (id, stage, phaseName, holder) =>
+  releaseLease({
+    id,
+    holder,
+    label: `${id} lease release:${stage}`,
+    logs: gateLogs(id, `release-${stage}`),
+    phaseName,
+    why: 'An earlier stage of this increment left the workspace stack leased and returned without giving it back.'
+  })
+
+// After every stage that may hold the stack, the script gives that stage's
+// own lease back, whatever the stage did: a lease an agent forgot would
+// otherwise stop the next increment as somebody else's.
+const returnOwnLease = async (id, stage, phaseName) => {
+  const returned = await releaseLease({
+    id,
+    holder: stackHolder(id, stage),
+    label: `${id} lease return:${stage}`,
+    logs: gateLogs(id, `return-${stage}`),
+    phaseName,
+    why: `The ${stage} stage has returned, and any lease it still holds goes back now.`
+  })
+  if (!returned?.ok) {
+    log(`${id}: the ${stage} stage's own lease could not be given back — ${returned?.summary ?? 'the release agent died'}`)
+  }
+}
+
+// Runs a stage that may use the workspace stack, then gives its own lease
+// back. A refusal naming a lease an earlier stage of this increment leaked
+// is released and the stage run once more; whatever comes back then is the
+// stage's result, stackHeld included.
+const withStackLease = async (id, stage, phaseName, runStage) => {
+  const runAndReturn = async () => {
+    const result = await runStage()
+    await returnOwnLease(id, stage, phaseName)
+    return result
+  }
+  const first = await runAndReturn()
+  const held = first?.stackHeld
+  if (!held || !isLeakFromThisIncrement(id, stage, held.holder)) return first
+  log(`${id}: ${stage} found the workspace stack still leased to "${held.holder}", an earlier stage of this increment — releasing it and running ${stage} again`)
+  const released = await releaseLeakedLease(id, stage, phaseName, held.holder)
+  if (!released?.ok) {
+    const why = released?.summary ?? 'the release agent died'
+    return { ...first, stackHeld: { ...held, detail: `${held.detail} Releasing that leaked lease failed: ${why}` } }
+  }
+  return runAndReturn()
+}
 
 const FULL_PUSH_GUARD = `- Never \`git push --force\`. Never merge a PR that is not green.
 - NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
@@ -745,6 +927,24 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
   builds on, always with the fully-qualified refspec form given below. Never create a branch.
 - A repo may be MID-MERGE by design (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA). Never
   commit, continue, abort or reset that merge unless your own task below tells you to.`
+
+// ins-performance-testing inc-001 also left the perftests repo's own stand-in
+// container running: its `docker compose run` checks started the services in
+// their `depends_on` and nothing took them down.
+const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED, with \`tim docker lease\`, and only a stage whose task below gives it a lease
+  holder may use it. Without one, never start it, stop it or run anything against it. Never start or stop it any other
+  way — no \`tim docker up\`, \`dev\` or \`down\`, no \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it —
+  and never take down a stack you did not lease.
+- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
+  \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
+  project down. Leave nothing running that you started.`
+
+const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs inside your
+lease, as THE WORKSPACE STACK below says.`
+
+// Codex is never given a lease, so it still leaves a stack check to the gate.
+const CODEX_SECTION_5_STACK_LINE = `Skip a section 5 check that needs the workspace stack up, even
+when the plan says to start it: the gate's E2E phase proves it, after review. Its absence is not a finding.`
 
 const GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
@@ -761,6 +961,7 @@ GUARD RAILS (mandatory, every step):
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
+${STACK_GUARD}
 ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
@@ -799,7 +1000,7 @@ Do not commit "just this once" and sort the branch out afterwards.`
 const PUSH_RULE = IS_BRANCH ? BRANCH_PUSH_RULE : `HOW TO PUSH — the exact form, every time, no variations:
 \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/<branch>:refs/heads/<branch>\`
 Never \`--force\`. Never a bare \`git push\`. Never \`push origin <branch>\` — that leaves git to work out the
-destination, and in a repo configured \`push.default=tracking\` (two of these three repos are) it resolves to the
+destination, and in a repo configured \`push.default=tracking\` (the animals tests and backend repos are) it resolves to the
 branch's upstream, which is how a commit once landed on \`${BASE_BRANCH}\` with no PR behind it. The fully
 qualified \`refs/heads/X:refs/heads/X\` can only ever update branch X.
 
@@ -948,6 +1149,27 @@ const incrementSchema = {
   },
   additionalProperties: false
 }
+
+const STACK_HELD_PROPERTY = {
+  type: 'object',
+  required: ['holder', 'detail'],
+  properties: {
+    holder: {
+      type: ['string', 'null'],
+      description: 'Who holds the workspace stack, copied from tim. null when tim said nobody leases it'
+    },
+    detail: { type: 'string', description: "tim's refusal, word for word" }
+  },
+  additionalProperties: false,
+  description: 'ONLY when tim refused you the workspace stack because somebody else has it. Leave it out otherwise'
+}
+
+// The stages that may use the workspace stack: implement, fix, the
+// consistency reviewer, baseline and ladder.
+const withStackHeld = (schema) => ({
+  ...schema,
+  properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
+})
 
 // The CI fixer's schema is the increment schema plus a channel for a PR it had
 // to open in a repo the increment did not start with — a frontend change whose
@@ -1113,59 +1335,6 @@ const LAND_SCHEMA = {
   additionalProperties: false
 }
 
-const TICKET_SCHEMA = {
-  type: 'object',
-  required: ['ok', 'key', 'repos', 'branch', 'resumeAt', 'movedToBoard', 'summary'],
-  properties: {
-    ok: { type: 'boolean' },
-    key: { type: 'string', description: 'The Jira key, e.g. EUDPA-12345' },
-    created: { type: 'boolean', description: 'true ONLY if this run raised it. false when you reused a persisted key' },
-    status: { type: 'string', description: "The ticket's status when this stage finished, verbatim as the board words it" },
-    movedToBoard: {
-      type: 'boolean',
-      description:
-        'true ONLY if move-to-board.sh ran and exited 0 this time. Never infer it from the status, and never assume a reused ticket is already on the board — the call is idempotent, so run it and report what happened'
-    },
-    repos: {
-      type: 'array',
-      description: 'Every repo this increment touches, in merge order. A "both" increment is ["backend","frontend"]',
-      items: { type: 'string', enum: ['frontend', 'backend', 'tests'] }
-    },
-    branch: { type: 'string', description: 'The branch name this increment builds on, e.g. feat/EUDPA-12345-add-a-set-recipe' },
-    resumeAt: {
-      type: 'string',
-      enum: ['build', 'pr', 'ci', 'done'],
-      description: 'Where the lifecycle picks up, from what is already persisted on the increment'
-    },
-    summary: { type: 'string' }
-  },
-  additionalProperties: false
-}
-
-const BRANCH_SCHEMA = {
-  type: 'object',
-  required: ['ok', 'branch', 'summary'],
-  properties: {
-    ok: { type: 'boolean' },
-    branch: { type: 'string' },
-    repos: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['repo', 'head'],
-        properties: {
-          repo: { type: 'string' },
-          head: { type: 'string', description: 'The short SHA the branch points at' },
-          cut: { type: 'boolean', description: 'true if this run created the branch in that repo' }
-        },
-        additionalProperties: false
-      }
-    },
-    summary: { type: 'string' }
-  },
-  additionalProperties: false
-}
-
 const PR_SCHEMA = {
   type: 'object',
   required: ['ok', 'prs', 'summary'],
@@ -1283,6 +1452,10 @@ const codexPaths = (id, slug) => ({
   runLog: `${WORKAREA_TILDE}/logs/${id}-${slug}.log`
 })
 
+// Every configured repo, `<key>=<absolute path>`, whatever the keys are. The
+// briefs name no repo of their own.
+const CODEX_REPOS = REPO_KEYS.map((key) => `${key}=${ABS}/${REPO_PATH[key]}`).join(', ')
+
 const bindingLines = (bindings) =>
   Object.entries(bindings)
     .map(([name, value]) => `  <${name}> = ${value}`)
@@ -1312,9 +1485,7 @@ PLACEHOLDER BINDINGS — the brief is written with placeholders. Resolve every o
   <baseBranch>   = ${BASE_BRANCH}
   <INCREMENT_ID> = ${id}
   <plan>         = ${PLANS}/${id}.md
-  <frontendRepo> = ${ABS}/${REPOS.frontend.path}
-  <backendRepo>  = ${ABS}/${REPOS.backend.path}
-  <testsRepo>    = ${ABS}/${REPOS.tests.path}
+  <repos>        = ${CODEX_REPOS}
 ${bindingLines(bindings)}
 
 ${instructions}
@@ -1406,6 +1577,34 @@ const codexNoResult = (id, slug) =>
 // ---------------------------------------------------------------------------
 const standardsKeys = REPO_KEYS.map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``).join(', ')
 
+const frontendChangeRepos = FRONTEND_CHANGE_KEYS.map((key) => `${key} (\`${REPO_PATH[key]}\`)`).join(' or ')
+
+const frontendChangeTarget = () => {
+  if (FRONTEND_CHANGE_KEYS.length === 1) return `\`${TILDE}/${REPO_PATH[FRONTEND_CHANGE_KEYS[0]]}\``
+  return `whichever of ${FRONTEND_CHANGE_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(' and ')} the plan names for the journey change`
+}
+
+const FRONTEND_CHANGE_IMPLEMENT_LINE = FRONTEND_CHANGE_KEYS.length
+  ? `
+Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
+paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
+skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
+and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
+at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
+${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
+\`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
+in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.`
+  : ''
+
+// Only a programme that builds a repo frontend-change covers is sent to it.
+const FRONTEND_CHANGE_PLAN_LINE = FRONTEND_CHANGE_KEYS.length
+  ? `
+   - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
+     the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
+     recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
+     rather than improvising.${IS_LEGACY_KEYS ? '' : ` It covers ${frontendChangeRepos} only: never route another repo's change through it.`}`
+  : ''
+
 const rowReposPlanLine = (rowRepos) => {
   if (!rowRepos) return ''
   if (rowRepos.length === 0) {
@@ -1449,11 +1648,7 @@ implementor decides nothing.
      the exemplar the implementor will imitate;
    - the standards for those files. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\`
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
-     every rules and bestPractice file it lists;
-   - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
-     the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
-     recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
-     rather than improvising.
+     every rules and bestPractice file it lists;${FRONTEND_CHANGE_PLAN_LINE}
 3. CHECK THE CLAIMS. Test each thing the increment asserts about the application against the live tree. Where one
    is wrong, record it under Decisions and plan against reality. If the increment cannot be carried out at all,
    return ok:false saying exactly why.
@@ -1466,34 +1661,102 @@ implementor decides nothing.
       another system can see, include the INTEGRATION PROOF: an E2E or contract test in the tests repo that
       exercises the slice through the real stack.
    5. Invariants to prove — one runnable check per acceptance criterion where practical, with its expected result,
-      plus any programme invariant this change could break.
+      plus any programme invariant this change could break. Other stages run these checks. Mark a check that needs
+      the workspace stack up "needs the workspace stack": the stage that runs it takes the stack's lease first and
+      gives it back after (\`tim docker lease\`), so never write how to start or stop the stack here — no
+      \`tim docker up\`, \`dev\` or \`down\`, no \`run-stack.sh\` or \`stop-stack.sh\`. The integration proof is still the
+      gate's E2E phase: for a criterion only the whole slice running end to end can prove, name the E2E rung from
+      gates.json that carries it, as the check.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
       gates.json — format check, lint, typecheck, unit tests, \`mvn verify\`, FIT and the tests repo's local-stack
       E2E suite, which carries the integration proof — so never list those here. List only what this increment
       needs proved on top of them and section 5, one command each in the GUARD RAILS form (\`npm --prefix\`,
-      \`mvn -f\`, tilde paths), with what each proves. None of them may need the workspace stack running: a check
-      that needs the real stack belongs in the tests repo's E2E suite, which the gate runs. "None" is an answer.
+      \`mvn -f\`, tilde paths), with what each proves. One that needs the workspace stack up is marked "needs the
+      workspace stack", as in section 5, and runs under the stage's lease; the slice's integration proof still
+      belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
+      Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
+      repo's script that takes that project down, as a check of its own. "None" is an answer.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
    or "the backend half" for another increment.
-Return ok, summary, repos (the repos the plan changes), behaviourChanges, decisions and risks.
+Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions and risks.
 Return the structured output only.`,
     think({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
 
+const ENVELOPE_REPO_SCHEMA = {
+  type: 'object',
+  required: ['key', 'path', 'github'],
+  properties: {
+    key: { type: 'string' },
+    path: { type: ['string', 'null'] },
+    github: { type: ['string', 'null'] }
+  },
+  additionalProperties: false
+}
+
+const PREFLIGHT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary', 'envelopeRepos'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' },
+    envelopeRepos: {
+      type: ['array', 'null'],
+      items: ENVELOPE_REPO_SCHEMA,
+      description: "The backlog envelope's repos exactly as the second command printed them, or null when it printed null"
+    }
+  },
+  additionalProperties: false
+}
+
 const preflight = await agent(
-  `Report whether this run's backlog exists and is readable. Run exactly one command and read its output:
-\`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-If it prints a number, return ok:true with that number in summary. If the file is missing or is not valid
-JSON, return ok:false quoting the error. Do nothing else. One Bash call, no Grep/Glob tools, tilde paths only.`,
-  light({ label: 'preflight', phase: 'Baseline', schema: incrementSchema })
+  `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
+two commands, one Bash call each, and read their output:
+1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github}) end' ${BACKLOG_TILDE}\`
+If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
+JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
+the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
+else. No Grep/Glob tools, tilde paths only.`,
+  light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
 
 if (!preflight || !preflight.ok) {
   throw new Error(
     `increment-build-loop: no readable backlog at ${BACKLOG} (workarea "${WORKAREA_REL}") — ${preflight ? preflight.summary : 'preflight agent failed'}`
   )
+}
+
+// The gate reads the envelope's repos and every stage reads the args', so the
+// two must name the same repos at the same paths. Checked here, by the script,
+// before any increment — planOnly included — rather than trusted to an agent.
+const envelopeRepoProblems = (envelopeRepos) => {
+  const envelopeKeys = envelopeRepos.map((entry) => entry.key)
+  const shared = envelopeRepos.filter((entry) => REPO_KEYS.includes(entry.key))
+  return [
+    ...REPO_KEYS.filter((key) => !envelopeKeys.includes(key)).map((key) => `args name "${key}", which the envelope does not`),
+    ...envelopeKeys.filter((key) => !REPO_KEYS.includes(key)).map((key) => `the envelope names "${key}", which the args do not`),
+    ...shared
+      .filter((entry) => entry.path !== REPO_PATH[entry.key])
+      .map((entry) => `"${entry.key}" is at ${JSON.stringify(entry.path)} in the envelope and "${REPO_PATH[entry.key]}" in the args`),
+    ...shared
+      .filter((entry) => entry.github && entry.github !== REPOS[entry.key].github)
+      .map((entry) => `"${entry.key}" is ${entry.github} on GitHub in the envelope and ${REPOS[entry.key].github} in the args`)
+  ]
+}
+
+const ENVELOPE_REPOS = preflight.envelopeRepos ?? null
+if (ENVELOPE_REPOS === null) {
+  log(`${WORKFLOW_NAME}: the backlog envelope names no repos, so the args' repos cannot be checked against it. The gate needs them there`)
+} else {
+  const problems = envelopeRepoProblems(ENVELOPE_REPOS)
+  if (problems.length > 0) {
+    throw new Error(
+      `${WORKFLOW_NAME}: config.repos does not match the repos the backlog envelope at ${BACKLOG} names — ${problems.join('; ')}. Copy the envelope's repos into args in full`
+    )
+  }
 }
 
 // Deriving the next increment is a shell command, and a workflow script has no
@@ -1525,6 +1788,84 @@ is status and dependencies, which tim has already applied.
 One Bash call, no Grep/Glob tools, tilde paths only.`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
+
+// ---------------------------------------------------------------------------
+// Start — under the full lifecycle, one `tim build start` call derives the
+// increment, gives it its ticket (reused, or raised and recorded at once, put
+// in the working status and moved onto the board) and puts its repos on its
+// branch. It replaced three agents whose retellings misreported failures — a
+// config mismatch came back as "a Jira synchronisation issue" — so the agent
+// here copies tim's JSON line and the script reads it.
+// ---------------------------------------------------------------------------
+const START_SCHEMA = {
+  type: 'object',
+  required: ['exitCode', 'stdout'],
+  properties: {
+    exitCode: { type: 'number', description: 'The exit code the command finished with' },
+    stdout: { type: 'string', description: 'Everything the command printed, word for word: one JSON line' }
+  },
+  additionalProperties: false
+}
+
+const startCommand = (explicitId, lastId) =>
+  [
+    `tim build start ${WORKAREA_REL}`,
+    explicitId ? `--id ${explicitId}` : null,
+    lastId ? `--last ${lastId}` : null,
+    `--base ${BASE_BRANCH}`,
+    `--jira-project ${JIRA_PROJECT}`,
+    `--epic ${EPIC}`,
+    `--in-dev-status "${STATUS_IN_DEV}"`,
+    `--done-status "${STATUS_DONE}"`,
+    `--board ${JIRA_BOARD}`,
+    `--repos ${REPO_KEYS.join(',')}`,
+    `--workspace ${TILDE}`,
+    '--json'
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+const startIncrement = (explicitId, lastId) =>
+  agent(
+    `You are the START STAGE${explicitId ? ` for increment ${explicitId}` : ''}. Run exactly one command and report what it
+printed. That is your whole job.
+${GUARDRAILS}
+Run it ONCE, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+\`${startCommand(explicitId, lastId)}\`
+Report its exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never summarise it, correct
+it, read anything into it or run it again, whatever it says, and run nothing else. The loop reads the JSON itself.`,
+    light({ label: explicitId ? `${explicitId} start` : 'start next', phase: 'Start', schema: START_SCHEMA })
+  )
+
+const lastJsonLine = (text) =>
+  String(text ?? '')
+    .trim()
+    .split('\n')
+    .reverse()
+    .find((line) => line.trim().startsWith('{'))
+
+// What `tim build start` reported, or a derive failure saying why there is
+// nothing to read. A command that failed before any step ran has no result.
+const startReport = (answer) => {
+  if (!answer) return { failedStep: 'derive', reason: 'the start agent died' }
+  const line = lastJsonLine(answer.stdout)
+  let envelope = null
+  try {
+    envelope = line ? JSON.parse(line) : null
+  } catch {
+    envelope = null
+  }
+  if (!envelope) {
+    return {
+      failedStep: 'derive',
+      reason: `tim build start printed no JSON (exit ${answer.exitCode}): ${String(answer.stdout ?? '').slice(0, 500)}`
+    }
+  }
+  if (!envelope.result) {
+    return { failedStep: 'derive', reason: envelope.errors?.[0]?.message ?? 'tim build start printed no result' }
+  }
+  return envelope.result
+}
 
 // ---------------------------------------------------------------------------
 // The branch lifecycle. Every stage below runs only under lifecycle 'branch':
@@ -1728,9 +2069,9 @@ const WORKSPACE_REVIEW_LINE = `
 This row changes no backlog repo: the whole change is in the workspace repo, left unstaged. See it with
 \`git -C ${TILDE} diff HEAD -- <path>\` for each changed file, and Read any new, untracked file in full.`
 
-const gateStepFor = (phases, logs) =>
+const gateStepFor = (phases, logs, holder) =>
   phases.length
-    ? gateCommandList(phases, logs)
+    ? gateCommandList(phases, logs, holder)
     : "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
 
 const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
@@ -1748,7 +2089,7 @@ TASK:
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 3. THE GATE, for the phases this row owes. Run these, in this order, one Bash call each, and nothing else:
-${gateStepFor(phases, gateLogs(id, 'baseline'))}
+${gateStepFor(phases, gateLogs(id, 'baseline'), stackHolder(id, 'baseline'))}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
@@ -1933,6 +2274,8 @@ Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
 
+const LAND_ORDER = IS_LEGACY_KEYS ? 'backend first' : "in the order of the increment's repos"
+
 const queue = EXPLICIT_IDS === null ? null : [...EXPLICIT_IDS]
 const plannedWork = queue ? `${queue.length} increment(s)` : 'draining the backlog'
 const stopAfterText = STOP_AFTER === 'all' ? 'every one it can' : `${STOP_AFTER} landed`
@@ -1964,6 +2307,7 @@ while (true) {
   }
 
   let id = null
+  let started = null
 
   if (queue) {
     id = queue.shift()
@@ -1971,7 +2315,23 @@ while (true) {
       stopped = { reason: 'no-buildable', detail: 'the increments list is built out' }
       break
     }
-  } else {
+  }
+
+  if (!PLAN_ONLY && !IS_BRANCH) {
+    phase('Start')
+    started = startReport(await startIncrement(id, lastId))
+    if (started.failedStep === 'derive') {
+      stopped = { reason: 'derive-failed', detail: started.reason }
+      log(`${WORKAREA_REL}: COULD NOT DERIVE THE NEXT INCREMENT — ${started.reason}`)
+      break
+    }
+    if (!started.id) {
+      stopped = { reason: 'no-buildable', detail: 'tim build start found nothing buildable in the backlog' }
+      break
+    }
+    id = started.id
+    log(`${WORKAREA_REL}: ${queue ? 'starting' : 'next is'} ${id}`)
+  } else if (!queue) {
     phase('Derive')
     const derived = await deriveNext()
     if (!derived || !derived.ok) {
@@ -2019,8 +2379,10 @@ while (true) {
   }
 
   // -----------------------------------------------------------------------
-  // Ticket — reuse or raise, put it in the working status, and work out where
-  // to resume. Runs first so a retry never re-does work the last attempt landed.
+  // Ticket and branch — under the full lifecycle, already done by the start
+  // stage above and read from its result here; under the branch lifecycle,
+  // the branch stage's assertions. Either way they settle where the lifecycle
+  // resumes, so a retry never re-does work the last attempt landed.
   // -----------------------------------------------------------------------
   let ticket = null
   let workBranch = BASE_BRANCH
@@ -2059,192 +2421,46 @@ while (true) {
       break ticketAndBranch
     }
 
-  phase('Ticket')
+    // The start stage's result, read by the script. A ticket off the board
+    // is one the team cannot see, so movedToBoard is checked here rather
+    // than trusted to the step's own success.
+    if (started.failedStep === 'ticket') {
+      log(`${id}: TICKET STEP FAILED — ${started.reason}`)
+      results.push({ id, outcome: 'ticket-failed', detail: started.reason })
+      stopped = { reason: 'ticket-failed', detail: `${id}: ${started.reason}` }
+      break
+    }
+    if (!started.ticket?.key || started.ticket.movedToBoard !== true) {
+      const key = started.ticket?.key ?? 'its ticket'
+      const detail = `${key} is not on board ${JIRA_BOARD}: tim build start did not report it moved there`
+      log(`${id}: TICKET STEP FAILED — ${detail}`)
+      results.push({ id, ticket: started.ticket?.key, outcome: 'ticket-failed', detail })
+      stopped = { reason: 'ticket-failed', detail: `${id}: ${detail}` }
+      break
+    }
+    ticket = started.ticket
+    for (const warning of started.warnings ?? []) log(`${id}: ${warning}`)
 
-  ticket = await agent(
-    `You are the TICKET STAGE for increment ${id}. You give the increment a Jira ticket and work out where in
-the lifecycle this run picks up. YOU RAISE AT MOST ONE TICKET, AND ONLY IF THE INCREMENT HAS NONE.
-${GUARDRAILS}
-${REPO_RULE}
-${SET_ROW_RULE}
+    const unknownRepos = (started.repos ?? []).filter((key) => !REPO_KEYS.includes(key))
+    const branchProblem =
+      started.failedStep === 'branch'
+        ? started.reason
+        : unknownRepos.length > 0
+          ? `tim build start branched ${unknownRepos.join(', ')}, which the args do not configure`
+          : null
+    if (branchProblem) {
+      log(`${id}: BRANCH STEP FAILED — ${branchProblem}`)
+      results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branchProblem })
+      stopped = { reason: 'branch-failed', detail: `${id}: ${branchProblem}` }
+      break
+    }
 
-STEP 1 — READ WHAT IS ALREADY PERSISTED. One Bash call:
-\`jq -r '.increments[] | select(.id=="${id}") | {ticket, branch, commit, prs, repos, repo, kind, title}' ${BACKLOG_TILDE}\`
-Everything below turns on that output. Read it before you do anything else.
-
-STEP 2 — THE TICKET.
-- If \`ticket\` is a key (not null, not absent): REUSE IT. Do NOT create anything. Confirm it exists with
-  \`${JIRA}/ticket.sh <KEY> summary\` and note its status VERBATIM — do not tidy or normalise the wording.
-  Set created:false.
-- Only if \`ticket\` is null or absent, raise one:
-  a. Write the description with the Write tool to ${WORKAREA}/logs/${id}-ticket.txt. **Jira uses WIKI MARKUP,
-     NOT MARKDOWN** — markdown renders as visible garbage. Use exactly this shape, substituting real values:
----8<---
-h2. Increment
-
-{{${id}}} from the {{${WORKAREA_REL}}} backlog.
-
-h2. Acceptance criteria
-
-* <first acceptance criterion>
-* <second acceptance criterion>
-
-h2. Source
-
-Backlog: {{workareas/${WORKAREA_REL}/backlog.json}}
----8<---
-     Wiki-markup rules you MUST apply to every acceptance criterion you copy across:
-     - Escape every \`[\` as \`\\[\` and every \`]\` as \`\\]\` — bare brackets become links.
-     - Escape every \`{\` as \`\\{\` — a bare brace opens a macro.
-     - Strip any leading \`*\` or \`-\` from the criterion text, or it nests the bullet.
-     - Put file paths, code identifiers and commands in \`{{monospace}}\`, never in backticks.
-     - Never write \`#\`, \`##\`, \`**bold**\` or a markdown table. Headings are \`h2.\`, bold is \`*bold*\`.
-  b. Raise it. ONE command, and run it ONCE:
-     \`JIRA_PROJECT_KEY=${JIRA_PROJECT} ${JIRA}/create-ticket.sh -t Task -p ${EPIC} -D ${WORKAREA_TILDE}/logs/${id}-ticket.txt "${id} — <the increment title, trimmed to fit>" > ${WORKAREA_TILDE}/logs/${id}-ticket.log 2>&1\`
-  c. Read that log. Its first line is the new key. If the command failed, report ok:false with the log's
-     contents and STOP — do not retry, a retry is how a board gets two tickets for one increment.
-  d. **IMMEDIATELY** persist it, before you do anything else at all: \`${setRow(id, '--ticket <KEY>')}\`.
-     This write is what makes a retry safe.
-
-STEP 3 — THE WORKING STATUS. This board's working status is \`${STATUS_IN_PROGRESS}\` and its finished
-status is \`${STATUS_DONE}\`. Both names are CONFIGURATION and are given to you here. Use them literally.
-- Status is exactly \`${STATUS_IN_PROGRESS}\` → leave it alone.
-- Status is exactly \`${STATUS_DONE}\` → leave it alone, and SAY SO in your summary. A finished ticket whose
-  increment is not done in the backlog is a mismatch a human needs to see.
-- Any other status → \`${JIRA}/transition-ticket.sh <KEY> "${STATUS_IN_PROGRESS}"\`.
-⚠ Do NOT reason about whether a status comes "before" or "after" the working one. You cannot see this
-board's workflow order, and boards carry statuses whose names say nothing about direction. Compare against
-the two configured names by EXACT STRING and nothing else.
-If the transition reports the status is not available, run \`${JIRA}/transition-ticket.sh <KEY> --list\` and
-report ok:false with BOTH the status you were asked for — \`${STATUS_IN_PROGRESS}\` — AND the full list of
-transitions the board actually offers, so the config fix is obvious from your report alone.
-Do NOT guess a nearby status and do NOT pick one off the list yourself.
-
-STEP 4 — PUT IT ON THE BOARD. Run this for EVERY increment, whether you raised the ticket or reused it:
-\`${JIRA}/move-to-board.sh ${JIRA_BOARD} <KEY>\`
-A raised ticket lands in the board's BACKLOG, and STEP 3 does not get it out. Board membership is not a
-field on the issue and is not implied by status — two tickets identical in every field sit one on the board
-and one in the backlog. So a ticket left here is one the team cannot see, on a run that otherwise looks
-clean. The call is idempotent, so running it on a ticket already on the board is a harmless no-op; that is
-why it is unconditional rather than something you reason about.
-Set movedToBoard:true when the command exits 0. If it fails, report ok:false with the command's full output
-— do not carry on, and do not fall back to a status change, which cannot do this.
-
-STEP 5 — THE BRANCH NAME.
-- If \`branch\` is already persisted on the increment, REUSE IT VERBATIM. Do not recompute it.
-- Otherwise build it as \`<type>/<KEY>-<slug>\` and persist it: \`${setRow(id, '--branch <branch>')}\`.
-  - \`<type>\` from the increment's \`kind\`: bug/fix → \`fix\`; chore/docs/refactor/test/test-coverage/
-    test-infrastructure/fixture → \`chore\`; everything else → \`feat\`.
-  - \`<slug>\` from the title: lower case, every run of non-alphanumeric characters becomes one \`-\`, trim
-    leading and trailing \`-\`, truncate to 40 characters and trim any trailing \`-\` again.
-  This matches CLAUDE.md rule 2 (\`<type>/${JIRA_PROJECT}-XXXX[-slug]\`).
-
-STEP 6 — WHERE TO RESUME, from what STEP 1 showed you. Take the FIRST that matches:
-- \`prs\` is non-empty and every entry is marked merged → resumeAt "done".
-- \`prs\` is non-empty → resumeAt "ci".
-- \`commit\` is set and \`prs\` is empty or absent → resumeAt "pr".
-- anything else, including a brand new ticket → resumeAt "build".
-Re-entering an increment must never rebuild work that is already committed on its branch.
-⚠ resumeAt comes from the BACKLOG FIELDS ABOVE and from nothing else. **Never derive it from the ticket's
-status.** A board status is moved by people for reasons this loop cannot see, and a ticket parked at
-Deskcheck or IN QA says nothing about how far the build got.
-
-STEP 7 — repos[]: by the ITS REPOS rule above, in merge order (backend, tests, frontend). An older row's
-\`repo\` of \`both\` → \["backend","frontend","tests"\]; any other single \`repo\` → that repo plus \`tests\`.
-Do NOT narrow the list from the increment's title. **Include \`tests\` in every case that changes what a user
-sees.** A UI change breaks the E2E specs and their visual baselines essentially always, and the slice's
-integration proof lives there. Naming a repo here is what gets it BRANCHED, and a repo that is never branched sits
-on \`${BASE_BRANCH}\` for the whole run — which is how an increment once committed straight onto the tests repo's
-main. Over-listing a repo costs nothing: a repo with no changes simply gets no commit and no PR.
-
-Report ok:true only if the ticket exists, its status is one you left alone or successfully set, STEP 4
-moved it onto the board, and the branch name is persisted. Report \`status\` as the ticket's status when you
-finished, verbatim.
-Return the structured output only.`,
-    light({ label: `${id} ticket`, phase: 'Ticket', schema: TICKET_SCHEMA })
-  )
-
-  if (!ticket || !ticket.ok || !ticket.key) {
-    log(`${id}: TICKET STAGE FAILED — ${ticket ? ticket.summary : 'agent failed'}`)
-    results.push({ id, outcome: 'ticket-failed', detail: ticket?.summary ?? 'agent failed' })
-    stopped = { reason: 'ticket-failed', detail: `${id}: ${ticket?.summary ?? 'agent failed'}` }
-    break
-  }
-
-  // A ticket in the backlog is one the team cannot see, and nothing later in
-  // the lifecycle notices. Checked here rather than trusted to the stage's own
-  // ok, because "I set the status" reads like success from inside that stage.
-  if (!ticket.movedToBoard) {
-    log(`${id}: TICKET STAGE FAILED — ${ticket.key} was not moved onto board ${JIRA_BOARD}`)
-    results.push({
-      id,
-      ticket: ticket.key,
-      outcome: 'ticket-failed',
-      detail: `${ticket.key} exists but is still in the backlog of board ${JIRA_BOARD}. Run \`tools/jira/move-to-board.sh ${JIRA_BOARD} ${ticket.key}\` and re-run the increment. Stage said: ${ticket.summary}`
-    })
-    stopped = { reason: 'ticket-failed', detail: `${id}: ${ticket.key} is still in the backlog of board ${JIRA_BOARD}` }
-    break
-  }
-
-  workBranch = ticket.branch
-  repos = ticket.repos
-  resumeAt = ticket.resumeAt ?? 'build'
-  log(
-    `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}) on board ${JIRA_BOARD}, branch ${workBranch}, resuming at ${resumeAt}`
-  )
-
-  // -----------------------------------------------------------------------
-  // Branch — off FRESH base, in every repo the increment touches. Refuses on
-  // a dirty tree, because switching branches over uncommitted work loses it.
-  // -----------------------------------------------------------------------
-  phase('Branch')
-
-  const branched = await agent(
-    `You are the BRANCH STAGE for increment ${id} (${ticket.key}). Put every repo this increment touches on
-\`${workBranch}\`, cut from a FRESHLY FETCHED \`${BASE_BRANCH}\`.
-${GUARDRAILS}
-${REPO_RULE}
-REPOS, in order: ${repos.join(', ')}. Do all of the following for EACH of them.
-
-1. \`git -C ${TILDE}/<repoPath> status --short\` — it MUST be empty. A dirty tree means uncommitted work from a
-   previous attempt: stop, report ok:false naming the repo and the files, and change nothing. NEVER stash,
-   reset or clean here — this stage does not own that work.
-2. \`git -C ${TILDE}/<repoPath> fetch origin\`
-3. Does the branch exist locally? \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet refs/heads/${workBranch}\`
-   - It does → \`git -C ${TILDE}/<repoPath> checkout ${workBranch}\`, then
-     \`git -C ${TILDE}/<repoPath> pull --ff-only\` to pick up anything already pushed. If the pull is not a
-     fast-forward, report ok:false — a diverged branch needs a human. If it fails because the upstream branch is
-     GONE, this increment has already merged and the remote branch was deleted: say so and pass.
-   - It does not → does it exist on the remote?
-     \`git -C ${TILDE}/<repoPath> ls-remote --heads origin ${workBranch}\`
-     - Remote has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --track origin/${workBranch}\`
-     - Nobody has it → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
-       \`--no-track\` is load-bearing and NOT optional. Without it the new branch takes \`origin/${BASE_BRANCH}\`
-       as its upstream, and a later push in a \`push.default=tracking\` repo follows that upstream onto
-       \`${BASE_BRANCH}\`. That is exactly how an increment once put a commit on the tests repo's main with no PR.
-   NEVER a bare \`checkout -b ${workBranch}\` — that branches off whatever the repo happened to be on.
-4. Confirm where you landed: \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\` and
-   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`. The second must print \`${workBranch}\`.
-5. Confirm the branch does not point at the base branch for its upstream:
-   \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref --symbolic-full-name ${workBranch}@{upstream}\`
-   It must print \`origin/${workBranch}\`, or fail with "no upstream" — either is correct, and both are safe.
-   If it prints \`origin/${BASE_BRANCH}\` the branch was cut by an older run that lacked \`--no-track\`: repair it
-   with \`git -C ${TILDE}/<repoPath> branch --unset-upstream ${workBranch}\` and say so in your summary.
-   Do NOT leave it and rely on the push form to save you.
-
-The branch name is IDENTICAL in every repo. That is CLAUDE.md rule 2 and it is load-bearing: the workspace
-stack probes each repo for a branch-tagged image, so a mismatched name breaks the linked-branch pickup.
-Report ok:true only when every repo is on ${workBranch} with a clean tree.
-Return the structured output only.`,
-    light({ label: `${id} branch`, phase: 'Branch', schema: BRANCH_SCHEMA })
-  )
-
-  if (!branched || !branched.ok) {
-    log(`${id}: BRANCH STAGE FAILED — ${branched ? branched.summary : 'agent failed'}`)
-    results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branched?.summary ?? 'agent failed' })
-    stopped = { reason: 'branch-failed', detail: `${id}: ${branched?.summary ?? 'agent failed'}` }
-    break
-  }
+    workBranch = started.branch
+    repos = started.repos
+    resumeAt = started.resumeAt ?? 'build'
+    log(
+      `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}, ${ticket.status}) on board ${JIRA_BOARD}, branch ${workBranch} in ${repos.join(', ')}, resuming at ${resumeAt}`
+    )
   } // ticketAndBranch
 
   let plan = null
@@ -2267,7 +2483,7 @@ Return the structured output only.`,
   // -----------------------------------------------------------------------
   phase('Baseline')
 
-  const baseline = await agent(
+  const baseline = await withStackLease(id, 'baseline', 'Baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -2278,25 +2494,36 @@ TASK:
 1. THE BRANCH. The branch stage has already put the increment's repos on their branch, cut from a fresh
    \`${BASE_BRANCH}\`. Do not switch branches. Record which branch each repo is on
    (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your summary.
-   One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
+   Check the increment's repos only${repos ? ` — ${repos.join(', ')}` : ', by the ITS REPOS rule'}; another configured repo staying on
+   \`${BASE_BRANCH}\` is correct. One assertion only: if ANY of the increment's repos is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
    checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
    on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
    catch a repo the branch stage did not cover.
-2. CLEAN TREES. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the ticket stage settled them: ${repos.join(', ')})` : ''}
+2. CLEAN TREES. Determine the increment's repos by the ITS REPOS rule${repos ? ` (the start stage settled them: ${repos.join(', ')})` : ''}
    (\`jq '.increments[] | select(.id=="${id}") | {repos, repo}' ${BACKLOG_TILDE}\`) and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
 3. THE GATE. Run these, in this order, one Bash call each, and nothing else:
-${gateCommandList(GATE_PHASES, gateLogs(id, 'baseline'))}
+${gateCommandList(GATE_PHASES, gateLogs(id, 'baseline'), stackHolder(id, 'baseline'))}
    Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`,
-    light({ label: `${id} baseline`, phase: 'Baseline', schema: BASELINE_SCHEMA })
-  )
+    light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
+  ))
+
+  // A stack somebody else holds is not a red tree: nothing about this
+  // increment's code has been tested, and a human rules on the holder.
+  if (baseline?.stackHeld) {
+    const detail = stackHeldDetail(id, 'baseline', baseline.stackHeld)
+    log(`${id}: STACK HELD at the baseline — ${detail}`)
+    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baseline.stackHeld.holder, detail })
+    stopped = { reason: 'stack-held', detail }
+    break
+  }
 
   // A red tree before this increment touched anything makes nothing downstream
   // trustworthy, so the run stops rather than trying the next increment against
@@ -2379,11 +2606,11 @@ ${baselineRungList(baseline)}`
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
-        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.`,
+        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateUnit(id, 'implement') }
+        bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await agent(
+    : await withStackLease(id, 'implement', 'Implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
 ${GUARDRAILS}
@@ -2393,15 +2620,7 @@ ${readPlan(id)} Follow it verbatim: it has already settled every choice. Where i
 and copy its shape rather than improvising. Where it follows a repo's recipe, read the recipe it cites and follow
 it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
 criteria and say what you changed in notes.
-Before you write to a file, read the rules and best-practice files the plan lists for it.
-Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
-paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
-skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
-and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
-at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
-${REPO_PATH.frontend ? `\`${TILDE}/${REPO_PATH.frontend}\`` : 'the backlog repo the plan names for the journey change'}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
-\`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
-in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.
+Before you write to a file, read the rules and best-practice files the plan lists for it.${FRONTEND_CHANGE_IMPLEMENT_LINE}
 
 RULES:
 - Implement EXACTLY the plan's scope. Do not fix adjacent things you notice — report them in notes instead;
@@ -2430,11 +2649,33 @@ ${builderGateRule(id, 'implement', builderPhases)}
 Return ok, a summary, changedFiles, and notes (anything the reviewers, the judge or the ladder should know,
 including anything the increment got wrong and any diagnosis of a red suite you made).
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
-${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`frontend:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
-    code({ label: `${id} implement`, phase: 'Implement', schema: incrementSchema })
-  )
+${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`${REPO_KEYS[0]}:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
+    code({ label: `${id} implement`, phase: 'Implement', schema: withStackHeld(incrementSchema) })
+  ))
 
   const attempt = { id, ticket, workBranch }
+
+  // Every stage after implement has touched the tree, so a held stack stops
+  // the run through the preserve step, like any other stop.
+  const stopForHeldStack = async (stage, phaseName, held) => {
+    const detail = stackHeldDetail(id, stage, held)
+    log(`${id}: STACK HELD at ${stage} — ${detail}`)
+    const preserved = await preserveAttempt({
+      ...attempt,
+      phaseName,
+      reason: `the workspace stack was held by somebody else at the ${stage} stage`,
+      evidence: detail,
+      outcome: 'stack-held',
+      detail
+    })
+    results.push({ ...preserved, holder: held.holder })
+    stopped = { reason: 'stack-held', detail }
+  }
+
+  if (impl?.stackHeld) {
+    await stopForHeldStack('implement', 'Implement', impl.stackHeld)
+    break
+  }
 
   // The attempt is preserved as a pushed wip commit, so the work is not lost —
   // but a dead implementor has had its go, and the run stops rather than
@@ -2550,7 +2791,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    agent(
+    withStackLease(id, 'consistency', 'Review', () => agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -2560,15 +2801,17 @@ LOOK FOR: the same concept named two ways across files; a pattern the repo alrea
 reused (compare with the exemplar the plan names); registration that exists in one place but not its twin (a page
 in dispatch but not in the contract table, a feature in features/index.js but not evaluation.js, copy.en.js
 without the matching copy.cy.js key); an obligation with no schema field behind it or a schema field nothing
-writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what the frontend
-sends and expects matches what the backend accepts and returns, and the tests repo exercises the slice through it;
+writes; a move or new file the plan listed that did not happen; THE CONTRACT BETWEEN REPOS — what each consumer (a
+frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
+or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
-report any that fails as a finding. A better solution than the plan imagined is not a finding.
+report any that fails as a finding. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
+${stackLeaseRule(id, 'consistency')}
 Return the structured output only.`,
-      think({ label: `${id} consistency`, phase: 'Review', schema: FINDINGS_SCHEMA })
-    )
+      think({ label: `${id} consistency`, phase: 'Review', schema: withStackHeld(FINDINGS_SCHEMA) })
+    ))
 
   // Codex reviews at the same granularity as Claude: one run per group applying
   // that group's personas (style + code, code alone for docs), plus one
@@ -2597,7 +2840,7 @@ Return the structured output only.`,
       group.files.join(', '),
       `Review ONE GROUP of the staged, uncommitted change for increment ${id}: ${groupHeader(group)}
 Apply every persona bound to <personas>, and no other. Another Codex run reviews each other group, and a consistency
-run looks across the whole change, so report findings on this group's files only.`
+run looks across the whole change, so report findings on this group's files only.${mergeNote}${isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}`
     )
   )
 
@@ -2609,7 +2852,7 @@ run looks across the whole change, so report findings on this group's files only
 <personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding.`
+reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}`
   )
 
   const codexReviewResults = async () => {
@@ -2635,6 +2878,12 @@ reporting any that fails as a finding.`
       })
     )
     stopped = { reason: 'review-failed', detail: `${id}: no result from ${reviewed.failed.join(', ')}` }
+    break
+  }
+
+  const heldReview = reviewed.results.find((result) => result?.stackHeld)
+  if (heldReview) {
+    await stopForHeldStack('consistency', 'Review', heldReview.stackHeld)
     break
   }
 
@@ -2768,9 +3017,9 @@ Return the structured output only.`,
 ${baselineEvidence}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
-${impl.notes || '(none)'}`,
+${impl.notes || '(none)'}${mergeNote}`,
         workingBranch: workBranch,
-        bindings: { gateUnit: codexGateUnit(id, 'fix') }
+        bindings: { gateUnit: codexGateBinding(id, 'fix', builderPhases) }
       })
       if (!fixResult) {
         results.push(
@@ -2793,7 +3042,7 @@ ${impl.notes || '(none)'}`,
         break
       }
     } else {
-      fixResult = await agent(
+      fixResult = await withStackLease(id, 'fix', 'Fix', () => agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
@@ -2811,8 +3060,12 @@ ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
-        code({ label: `${id} fix`, phase: 'Fix', schema: incrementSchema })
-      )
+        code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
+      ))
+      if (fixResult?.stackHeld) {
+        await stopForHeldStack('fix', 'Fix', fixResult.stackHeld)
+        break
+      }
     }
   }
 
@@ -2834,7 +3087,7 @@ FIXER — ${fixerReport()}`
   // -----------------------------------------------------------------------
   phase('Ladder')
 
-  const ladder = await agent(
+  const ladder = await withStackLease(id, 'ladder', 'Ladder', () => agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${GUARDRAILS}
 ${readIncrement(id)}
@@ -2848,13 +3101,13 @@ ${baselineEvidence}
 TASK — the ladder, IN ORDER. Every rung runs here, after the fix stage, even one the implementor or fixer already
 ran green: their runs are evidence, not proof.
 1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'))}
+${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'), stackHolder(id, 'ladder'))}
    Run every one, even after a red one, so you have the whole picture before you repair anything.
 2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
-   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run; none of them
-   may need the workspace stack running. Where a check does, record it in failures[] as
-   "could not run: needs the workspace stack — belongs in the E2E suite".
+   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run. One that needs
+   the workspace stack up runs inside your lease, as THE WORKSPACE STACK below says, after every gate phase and never
+   between them.
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
@@ -2890,18 +3143,25 @@ ${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'))}
   Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that recover on retry —
   a green rung with retried journey specs IS a pass, but say so explicitly.
 - A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
-  start or stop the stack to clear it: record the reason in failures[] and set green:false.
+  start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
+  \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.
+${stackLeaseRule(id, 'ladder')}
 In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran. In failures[], one line per red rung
 or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
-    code({ label: `${id} ladder`, phase: 'Ladder', schema: LADDER_SCHEMA })
-  )
+    code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
+  ))
 
   // -----------------------------------------------------------------------
   // Land — commit on green, non-destructive rollback on red.
   // -----------------------------------------------------------------------
   phase('Land')
+
+  if (ladder?.stackHeld) {
+    await stopForHeldStack('ladder', 'Ladder', ladder.stackHeld)
+    break
+  }
 
   if (!ladder || !ladder.green) {
     results.push(
@@ -2962,8 +3222,8 @@ TASK:
    The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
    the workspace. Name the spec commit in your summary, separately from the repo commits.
 5. Do NOT push. A later stage owns that.
-6. Record it: \`${setRow(id, '--commit "<sha, or several backend first, space separated>"')}\`. Leave the status alone — this increment is not done until its PRs are merged.
-Report the commit SHA. For several repos report each, backend first, space separated.
+6. Record it: \`${setRow(id, `--commit "<sha, or several ${LAND_ORDER}, space separated>"`)}\`. Leave the status alone — this increment is not done until its PRs are merged.
+Report the commit SHA. For several repos report each, ${LAND_ORDER}, space separated.
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
@@ -3123,9 +3383,12 @@ YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS
 ${GUARDRAILS}
 ${PUSH_RULE}
 ${MERGE_ORDER_RULE}
-REPOS, in order: ${repos.join(', ')}. GitHub repos: ${ghTable}. Repo paths: ${repoTable}.
+REPOS, in order: ${repos.join(', ')}. These are the increment's repos and the ONLY ones this stage touches. Another
+configured repo is not this increment's: leave it on whatever branch it is on, and never push it or raise a PR in it.
+GitHub repos: ${repos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}. Repo paths: ${repos.map((key) => `${key}=${REPO_PATH[key]}`).join(', ')}.
+<repo> below is the repo's key from that list, never its GitHub name.
 
-For EACH repo, in that order:
+For EACH of those repos, in that order:
 1. Prove the repo is on the work branch before you push a thing:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing
@@ -3145,8 +3408,8 @@ For EACH repo, in that order:
      lifecycle is out of step and a new PR would hide that.
    - It returns nothing → create one:
      a. Write the body with the Write tool to ${WORKAREA}/logs/${id}-pr-<repo>.md. It says what changed, names
-        the increment id and the ticket, and for a \`both\` increment names the sibling repo and states the merge
-        order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
+        the increment id and the ticket, and for an increment across several repos names the sibling repos and
+        states the merge order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
      b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
      raised:true.
 5. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
@@ -3322,7 +3585,8 @@ Return the structured output only.`,
 
     // Merge order is the script's decision, not the order PRs happened to be
     // appended in. See MERGE_RANK.
-    const mergeOrder = sortForMerge(prs)
+    const mergeOrder = sortForMerge(prs, repos)
+    log(`${id}: merge order ${mergeOrder.map((p) => p.repo).join(' → ')}`)
 
     const merge = await agent(
       `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is

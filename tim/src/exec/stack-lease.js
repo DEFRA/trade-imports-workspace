@@ -4,12 +4,13 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync
 } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { run } from './exec.js'
-import { runStackScriptToLog, stackContainers } from './stack.js'
+import { runStackScriptToLog, stackContainerIds } from './stack.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 
@@ -88,23 +89,52 @@ const isProcessAlive = (pid) => {
 const isStarting = (lease) =>
   lease.state === STARTING && isProcessAlive(lease.pid)
 
+const sameContainers = (recorded, running) =>
+  Array.isArray(recorded) &&
+  recorded.length === running.length &&
+  [...recorded].sort().join('\n') === [...running].sort().join('\n')
+
 /**
- * What an acquire does, given whether the stack is up and who holds it:
- * reuse it, start it, or refuse.
+ * What an acquire does, given whether the stack is up, which containers it
+ * runs and who holds it: reuse it, start it, restart it, or refuse.
  *
- * @param {{up: boolean, lease: object|null, holder: string}} state
- * @returns {'reuse'|'start'|'held'|'unleased'}
+ * - No lease: start a stack that is down; refuse one that is up (`unleased`).
+ * - Another holder: refuse while their stack is up or their start still runs
+ *   (`held`); otherwise the lease is stale, and is replaced.
+ * - The same holder: reuse only a stack it finished starting whose containers
+ *   are still the ones it recorded. A start of its own still running is
+ *   refused (`starting`). A start that died part-way (a Bash timeout killing
+ *   the acquire, say) left containers nobody finished: they are its own, so
+ *   they are taken down and started again (`restart`). Containers other than
+ *   the ones it recorded mean somebody restarted the stack by hand
+ *   (`replaced`): never reused, never taken down.
+ *
+ * @param {{up: boolean, lease: object|null, holder: string, containers?: string[]}} state
+ * @returns {'reuse'|'start'|'restart'|'held'|'unleased'|'starting'|'replaced'}
  */
-export const acquireDecision = ({ up, lease, holder }) => {
+export const acquireDecision = ({ up, lease, holder, containers = [] }) => {
   if (!lease) return up ? 'unleased' : 'start'
-  if (lease.holder === holder) return up ? 'reuse' : 'start'
-  return up || isStarting(lease) ? 'held' : 'start'
+  if (lease.holder !== holder) {
+    return up || isStarting(lease) ? 'held' : 'start'
+  }
+  if (isStarting(lease)) return 'starting'
+  if (!up) return 'start'
+  if (lease.state !== UP) return 'restart'
+  return sameContainers(lease.containers, containers) ? 'reuse' : 'replaced'
 }
 
-const refusalFor = (decision, lease) =>
-  decision === 'unleased'
-    ? 'The workspace stack is up and nobody holds a lease on it, so somebody started it by hand (tim docker dev, say), outside any build. Leave it alone: ask whoever started it to take it down.'
-    : `The workspace stack is leased to ${describeLease(lease)}. Leave it alone: it is theirs to release.`
+const REFUSALS = {
+  unleased: () =>
+    'The workspace stack is up and nobody holds a lease on it, so somebody started it by hand (tim docker dev, say), outside any build. Leave it alone: ask whoever started it to take it down.',
+  held: (lease) =>
+    `The workspace stack is leased to ${describeLease(lease)}. Leave it alone: it is theirs to release.`,
+  starting: (lease) =>
+    `The workspace stack is leased to ${describeLease(lease)}, and that start is still running (pid ${lease.pid}). Wait for it to finish rather than starting another.`,
+  replaced: (lease) =>
+    `The workspace stack is leased to ${describeLease(lease)}, but its containers are not the ones that lease started: somebody restarted it by hand since. Nothing was reused or taken down. Find out whose stack it is.`
+}
+
+const refusalFor = (decision, lease) => REFUSALS[decision](lease)
 
 const currentBranch = async (path) => {
   const result = await run('git', ['-C', path, 'branch', '--show-current'])
@@ -134,7 +164,8 @@ export const repoBranches = async (workspaceRoot) => {
 }
 
 /**
- * Whether the workspace stack is up and who, if anyone, holds its lease.
+ * Whether the workspace stack is up, the ids of its running containers, and
+ * who, if anyone, holds its lease.
  *
  * @param {object} args
  * @param {string} args.leasePath
@@ -142,26 +173,46 @@ export const repoBranches = async (workspaceRoot) => {
  * @returns {Promise<{up: boolean, containers: string[], lease: object|null}>}
  */
 export const stackStatus = async ({ leasePath, env }) => {
-  const containers = await stackContainers({ env })
+  const containers = await stackContainerIds({ env })
   return { up: containers.length > 0, containers, lease: readLease(leasePath) }
 }
 
-// A stale lease is removed only while it is still the one this acquire read,
-// so a lease another process has just written is never removed.
-const removeIfUnchanged = (leasePath, previous) => {
+const LOCK_ATTEMPTS = 10
+const LOCK_WAIT_MS = 100
+const LOCK_STALE_MS = 60_000
+
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const lockPathOf = (leasePath) => `${leasePath}.lock`
+
+const isStaleLock = (lockPath) => {
   try {
-    const current = JSON.parse(readFileSync(leasePath, 'utf8'))
-    if (JSON.stringify(current) === JSON.stringify(previous)) {
-      rmSync(leasePath, { force: true })
-    }
+    return Date.now() - statSync(lockPath).mtimeMs > LOCK_STALE_MS
   } catch {
-    // Gone already, or rewritten mid-read: the exclusive write below decides.
+    return false
   }
 }
 
-const claimLease = (leasePath, lease, previous) => {
-  mkdirSync(dirname(leasePath), { recursive: true })
-  if (previous) removeIfUnchanged(leasePath, previous)
+// mkdir is atomic: only one process creates the lock directory. A lock left
+// by a process that died holding it is broken once it is a minute old.
+const takeLock = async (lockPath) => {
+  for (let attempt = 0; attempt < LOCK_ATTEMPTS; attempt += 1) {
+    try {
+      mkdirSync(lockPath)
+      return true
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error
+      if (isStaleLock(lockPath)) {
+        rmSync(lockPath, { recursive: true, force: true })
+      } else {
+        await pause(LOCK_WAIT_MS)
+      }
+    }
+  }
+  return false
+}
+
+const writeExclusive = (leasePath, lease) => {
   try {
     writeFileSync(leasePath, `${JSON.stringify(lease, null, 2)}\n`, {
       flag: 'wx'
@@ -173,11 +224,37 @@ const claimLease = (leasePath, lease, previous) => {
   }
 }
 
+const unchangedSince = (leasePath, previous) => {
+  const current = readLease(leasePath)
+  return (
+    current === null || JSON.stringify(current) === JSON.stringify(previous)
+  )
+}
+
+// A fresh lease is one exclusive create. Taking over a stale lease is a
+// remove then a create, so it runs under a lock: two processes that read the
+// same stale lease cannot both remove it and both start the stack.
+const claimLease = async (leasePath, lease, previous) => {
+  mkdirSync(dirname(leasePath), { recursive: true })
+  if (!previous) return writeExclusive(leasePath, lease)
+  const lockPath = lockPathOf(leasePath)
+  if (!(await takeLock(lockPath))) return false
+  try {
+    if (!unchangedSince(leasePath, previous)) return false
+    rmSync(leasePath, { force: true })
+    return writeExclusive(leasePath, lease)
+  } finally {
+    rmSync(lockPath, { recursive: true, force: true })
+  }
+}
+
 const stackScript = ({ workspaceRoot, env }, script, args, logPath) =>
   runStackScriptToLog({ workspaceRoot, script, args, env, logPath })
 
 const scriptFailure = (script, result) =>
   `${script} exited ${result.exitCode}. Read ${result.log}.`
+
+const downLogFor = (logPath) => logPath.replace(/(\.log)?$/, '-down.log')
 
 const refused = ({ up, lease, reason }) => ({
   acquired: false,
@@ -188,8 +265,18 @@ const refused = ({ up, lease, reason }) => ({
   reason
 })
 
+const startFailed = ({ log, reason }) => ({
+  acquired: false,
+  refused: false,
+  up: false,
+  holder: null,
+  lease: null,
+  log,
+  reason
+})
+
 const startUnderLease = async (context, previous) => {
-  const { workspaceRoot, holder, mode, leasePath, logPath } = context
+  const { workspaceRoot, holder, mode, leasePath, logPath, env } = context
   const lease = {
     holder,
     mode,
@@ -197,14 +284,17 @@ const startUnderLease = async (context, previous) => {
     branches: mode === 'dev' ? await repoBranches(workspaceRoot) : {},
     acquiredAt: new Date().toISOString(),
     state: STARTING,
-    pid: process.pid
+    pid: process.pid,
+    containers: []
   }
-  if (!claimLease(leasePath, lease, previous)) {
+  if (!(await claimLease(leasePath, lease, previous))) {
     const winner = readLease(leasePath)
     return refused({
       up: false,
       lease: winner,
-      reason: refusalFor('held', winner)
+      reason: winner
+        ? refusalFor('held', winner)
+        : 'Another acquire is taking the workspace stack lease over right now. Try again once it has finished.'
     })
   }
   const upRun = await stackScript(
@@ -214,7 +304,8 @@ const startUnderLease = async (context, previous) => {
     logPath
   )
   if (upRun.exitCode === 0) {
-    const held = { ...lease, state: UP, pid: null }
+    const containers = await stackContainerIds({ env })
+    const held = { ...lease, state: UP, pid: null, containers }
     writeJsonAtomic(leasePath, held)
     return {
       acquired: true,
@@ -229,31 +320,45 @@ const startUnderLease = async (context, previous) => {
     context,
     'stop-stack.sh',
     [],
-    logPath.replace(/(\.log)?$/, '-down.log')
+    downLogFor(logPath)
   )
   rmSync(leasePath, { force: true })
   const takenDown =
     downRun.exitCode === 0
       ? 'It was taken down again and the lease cleared.'
       : `Taking it down again failed too: ${scriptFailure('stop-stack.sh', downRun)} The lease was cleared.`
-  return {
-    acquired: false,
-    refused: false,
-    up: false,
-    holder: null,
-    lease: null,
+  return startFailed({
     log: upRun.log,
     reason: `The workspace stack did not come up (run-stack.sh exited ${upRun.exitCode}). Read ${upRun.log}. ${takenDown}`
+  })
+}
+
+// The holder's own start died part-way, so the containers up now are its
+// own half-started stack: take them down, then start again cleanly.
+const restartUnderLease = async (context, lease) => {
+  const downRun = await stackScript(
+    context,
+    'stop-stack.sh',
+    [],
+    downLogFor(context.logPath)
+  )
+  if (downRun.exitCode !== 0) {
+    return startFailed({
+      log: downRun.log,
+      reason: `An earlier start of the workspace stack under this lease did not finish, and the half-started stack did not come down (${scriptFailure('stop-stack.sh', downRun)}) The lease is kept.`
+    })
   }
+  return startUnderLease(context, lease)
 }
 
 /**
  * Take the lease on the workspace stack for one holder. A stack that is down
- * is started (built from local source in dev mode) and leased to the holder;
- * one the same holder already leases is reused as it is. A stack leased to
- * anyone else, or up with no lease at all, is refused and left exactly as it
- * is. A lease whose stack has gone, and whose start is not still running, is
- * stale and is replaced.
+ * is started (built from local source in dev mode) and leased to the holder,
+ * recording its container ids; one the same holder already leases, with
+ * those same containers, is reused as it is. A stack leased to anyone else,
+ * up with no lease at all, or restarted by hand under a lease, is refused
+ * and left exactly as it is. A lease whose stack has gone, and whose start is
+ * not still running, is stale and is replaced under a lock.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -272,25 +377,24 @@ export const acquireStack = async ({
   logPath,
   env
 }) => {
-  const { up, lease } = await stackStatus({ leasePath, env })
-  const decision = acquireDecision({ up, lease, holder })
+  const { up, containers, lease } = await stackStatus({ leasePath, env })
+  const decision = acquireDecision({ up, lease, holder, containers })
+  const context = { workspaceRoot, holder, mode, leasePath, logPath, env }
   if (decision === 'reuse') {
     return { acquired: true, reused: true, started: false, lease, log: null }
   }
-  if (decision !== 'start') {
-    return refused({ up, lease, reason: refusalFor(decision, lease) })
-  }
-  return startUnderLease(
-    { workspaceRoot, holder, mode, leasePath, logPath, env },
-    lease
-  )
+  if (decision === 'start') return startUnderLease(context, lease)
+  if (decision === 'restart') return restartUnderLease(context, lease)
+  return refused({ up, lease, reason: refusalFor(decision, lease) })
 }
 
 /**
  * Give the lease back: take down the stack the holder started, then clear
  * the lease. A lease held by anyone else is refused and left alone, and so is
- * a stack nobody leases. When stop-stack.sh fails the lease is kept, so
- * nobody takes a stack that is half down.
+ * a stack nobody leases. A stack whose containers are not the ones the lease
+ * recorded was restarted by hand: it is left up, never taken down, and the
+ * lease that no longer describes it is cleared. When stop-stack.sh fails the
+ * lease is kept, so nobody takes a stack that is half down.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -328,28 +432,58 @@ export const releaseStack = async ({
       reason: `The workspace stack is leased to ${describeLease(lease)}, not to "${holder}". Nothing was released.`
     }
   }
-  const containers = await stackContainers({ env })
-  if (containers.length > 0) {
-    const downRun = await stackScript(
-      { workspaceRoot, env },
-      'stop-stack.sh',
-      [],
-      logPath
-    )
-    if (downRun.exitCode !== 0) {
-      return {
-        released: false,
-        refused: false,
-        stoppedStack: false,
-        holder,
-        lease,
-        log: downRun.log,
-        reason: `The workspace stack did not come down (stop-stack.sh exited ${downRun.exitCode}). Read ${downRun.log}. The lease is kept so nobody takes a stack that is half down.`
-      }
-    }
+  const containers = await stackContainerIds({ env })
+  if (containers.length === 0) {
     rmSync(leasePath, { force: true })
-    return { released: true, stoppedStack: true, holder, log: downRun.log }
+    return { released: true, stoppedStack: false, holder, log: null }
+  }
+  if (lease.state === UP && !sameContainers(lease.containers, containers)) {
+    rmSync(leasePath, { force: true })
+    return {
+      released: false,
+      refused: false,
+      foreign: true,
+      stoppedStack: false,
+      holder,
+      reason: `The workspace stack running now is not the one "${holder}" started: its containers changed, so somebody restarted it by hand. It was left up, and the lease that no longer describes it was cleared.`
+    }
+  }
+  const downRun = await stackScript(
+    { workspaceRoot, env },
+    'stop-stack.sh',
+    [],
+    logPath
+  )
+  if (downRun.exitCode !== 0) {
+    return {
+      released: false,
+      refused: false,
+      stoppedStack: false,
+      holder,
+      lease,
+      log: downRun.log,
+      reason: `The workspace stack did not come down (stop-stack.sh exited ${downRun.exitCode}). Read ${downRun.log}. The lease is kept so nobody takes a stack that is half down.`
+    }
   }
   rmSync(leasePath, { force: true })
-  return { released: true, stoppedStack: false, holder, log: null }
+  return { released: true, stoppedStack: true, holder, log: downRun.log }
+}
+
+/**
+ * Record the stack's containers on the holder's own lease again, after the
+ * holder rebuilt the stack under it (a rebuild recreates containers, giving
+ * them new ids). A lease somebody else holds is left alone.
+ *
+ * @param {object} args
+ * @param {string} args.holder
+ * @param {string} args.leasePath
+ * @param {object} [args.env]
+ * @returns {Promise<boolean>} whether the lease was the holder's and was updated
+ */
+export const recordLeaseContainers = async ({ holder, leasePath, env }) => {
+  const lease = readLease(leasePath)
+  if (!lease || lease.holder !== holder) return false
+  const containers = await stackContainerIds({ env })
+  writeJsonAtomic(leasePath, { ...lease, containers })
+  return true
 }

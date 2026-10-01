@@ -102,6 +102,7 @@ const writeLease = (lease) => {
       branches: { 'trade-imports-ins-frontend': 'feat/EUDPA-1-x' },
       state: 'up',
       pid: null,
+      containers: ['trade-imports-frontend-1'],
       ...lease
     })
   )

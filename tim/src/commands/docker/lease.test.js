@@ -76,7 +76,8 @@ const writeLease = (holder) => {
       acquiredAt: '2026-10-01T08:00:00.000Z',
       branches: {},
       state: 'up',
-      pid: null
+      pid: null,
+      containers: ['trade-imports-frontend-1']
     })
   )
 }

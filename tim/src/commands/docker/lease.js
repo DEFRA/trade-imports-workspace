@@ -77,6 +77,7 @@ const releaseText = (outcome) => {
 // Releasing with no lease is not a failure: there is nothing to give back,
 // and the stack is left alone either way.
 const releaseFailureCode = (outcome) => {
+  if (outcome.foreign) return 'FOREIGN_STACK'
   if (outcome.released || (!outcome.refused && !outcome.lease)) return null
   return outcome.refused ? 'NOT_HOLDER' : 'STACK_STOP_FAILED'
 }

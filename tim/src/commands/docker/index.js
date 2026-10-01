@@ -3,21 +3,56 @@ import { runStackScript } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 import { registerLease } from './lease.js'
+import {
+  readLease,
+  describeLease,
+  defaultLeasePath
+} from '../../exec/stack-lease.js'
 
 const SCHEMA_VERSION = 1
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
 
+const FORCE = '--force'
+
+const leaseRefusal = (lease) =>
+  `The workspace stack is leased to ${describeLease(lease)}, so tim docker leaves it alone: a build is using it. Ask its holder to release it (tim docker lease release --holder "${lease.holder}"). To go ahead anyway, add ${FORCE}; the holder will then refuse to reuse or take down what you start.`
+
+const refuseUnderLease = ({ lease, json, timVersion }) => {
+  const message = leaseRefusal(lease)
+  if (json) {
+    emit(
+      JSON.stringify({
+        ok: false,
+        schema_version: SCHEMA_VERSION,
+        tim_version: timVersion,
+        result: { holder: lease.holder, lease },
+        errors: [{ code: 'STACK_HELD', message }]
+      })
+    )
+  } else {
+    emitError(message)
+  }
+  process.exit(ERROR)
+}
+
 const makeStackAction = ({ script, extraArgs = [], timVersion }) =>
   async function stackAction() {
     const globalOpts = this.optsWithGlobals()
     // Forward any positional / extra args after the command name to the script.
-    const passthrough = this.args ?? []
+    const given = this.args ?? []
+    const force = given.includes(FORCE)
+    const passthrough = given.filter((arg) => arg !== FORCE)
     try {
       const workspaceRoot = resolveWorkspaceRoot({
         explicit: globalOpts.workspace
       })
+      const lease = readLease(defaultLeasePath())
+      if (lease && !force) {
+        refuseUnderLease({ lease, json: globalOpts.json, timVersion })
+        return
+      }
       const result = await runStackScript({
         workspaceRoot,
         script,
@@ -118,7 +153,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.)'
+      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), up, dev, down, restart and bounce-backend refuse unless you add --force'
     )
 
   for (const command of STACK_COMMANDS) {

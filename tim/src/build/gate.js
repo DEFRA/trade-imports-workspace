@@ -5,6 +5,7 @@ import { runStackScriptToLog } from '../exec/stack.js'
 import {
   acquireStack,
   releaseStack,
+  recordLeaseContainers,
   readLease,
   describeLease,
   defaultLeasePath
@@ -233,15 +234,25 @@ const takeLease = async (context) => {
   }
 }
 
+// A rebuild recreates containers, so the lease records their new ids: a
+// later release then knows the stack is still the holder's own.
 const rebuild = async (context) => {
   try {
-    return await runStackScriptToLog({
+    const up = await runStackScriptToLog({
       workspaceRoot: context.workspaceRoot,
       script: 'run-stack.sh',
       args: DEV_STACK_ARGS,
       env: context.env,
       logPath: logIn(context, 'gate-stack-up.log')
     })
+    if (up.exitCode === 0) {
+      await recordLeaseContainers({
+        holder: context.holder,
+        leasePath: context.leasePath,
+        env: context.env
+      })
+    }
+    return up
   } catch (error) {
     return { exitCode: null, log: null, error: messageOf(error) }
   }

@@ -14,6 +14,7 @@ import {
   runStackScript,
   runStackScriptToLog,
   stackContainers,
+  stackContainerIds,
   STACK_PROJECT
 } from './stack.js'
 
@@ -140,5 +141,15 @@ describe('stackContainers', () => {
       message:
         "Can't list the workspace stack's containers: Cannot connect to the Docker daemon"
     })
+  })
+})
+
+describe('stackContainerIds', () => {
+  test("lists the workspace stack's containers by id", async () => {
+    const env = fakeDocker(
+      'if [ "$5" = "{{.ID}}" ]; then printf "a1b2c3\\nd4e5f6\\n"; fi'
+    )
+
+    expect(await stackContainerIds({ env })).toEqual(['a1b2c3', 'd4e5f6'])
   })
 })

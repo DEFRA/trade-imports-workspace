@@ -238,21 +238,44 @@ tim docker lease status --json                                                  
 ```
 
 - `acquire` on a stack that is down records the lease, then starts it
-  (`run-stack.sh -d`; `--mode up` for the published images). On a stack the
-  same holder already leases it reuses it as it is.
-- `acquire` on a stack leased to anyone else, or up with no lease at all (one
-  somebody started by hand with `tim docker dev`), refuses with `STACK_HELD`,
-  naming the holder, its mode, its branches and when it took the lease. It
-  never reuses or takes down such a stack.
+  (`run-stack.sh -d`; `--mode up` for the published images) and records its
+  container ids. On a stack the same holder already leases it reuses it as it
+  is, but only when that start finished and the containers are still the ones
+  recorded. A start of the holder's own that died part-way (a timeout killing
+  `acquire`, say) is taken down and started again; one still running is
+  refused.
+- `acquire` on a stack leased to anyone else, up with no lease at all (one
+  somebody started by hand with `tim docker dev`), or restarted by hand under
+  a lease (other container ids), refuses with `STACK_HELD`, naming the holder,
+  its mode, its branches and when it took the lease. It never reuses or takes
+  down such a stack.
 - `release` takes down the stack its holder started, then clears the lease.
   It refuses a lease somebody else holds (`NOT_HOLDER`) and never touches a
-  stack nobody leases. When `stop-stack.sh` fails the lease is kept.
+  stack nobody leases. A stack restarted by hand under the lease is left up and
+  the lease cleared (`FOREIGN_STACK`). When `stop-stack.sh` fails the lease is
+  kept.
 - A lease whose stack has gone, and whose start is not still running, is stale
-  and the next `acquire` replaces it.
+  and the next `acquire` replaces it, under a lock (`stack-lease.json.lock`) so
+  two processes never both take it over.
+- While a lease is held, `tim docker up`, `dev`, `down`, `restart` and
+  `bounce-backend` refuse with `STACK_HELD`, naming the holder. Add `--force`
+  to go ahead anyway; the holder then refuses to reuse or take down what you
+  start.
 
 The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 `tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).
 `tim build gate` takes the same lease for its E2E phase.
+
+**Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
+started with `tim docker dev`, because nobody leases it. Either run
+`tim docker down` first and let the gate start and stop its own stack, or hold
+a lease yourself for the whole session:
+
+```bash
+tim docker lease acquire --holder "sam manual"
+tim build gate shared/my-programme --phase e2e --holder "sam manual"
+tim docker lease release --holder "sam manual"
+```
 
 ### `tim build` — the build loop's deterministic steps
 
@@ -272,14 +295,14 @@ tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T090000Z in
 `tim build start` starts one increment, in three steps. **Derive**: the
 increment `--id` names, or the next buildable one (`--last <id>` stops before
 the ticket when the next one is the id the previous attempt built, reporting
-`repeat`). **Ticket**: reuse the key on the row, or raise a Task under
+`repeat`). **Ticket**: reuse the key on the row, or an open ticket under `--epic` with this increment's exact summary (a create that timed out may have raised one), or raise a Task under
 `--epic` with the row's title, detail, acceptance criteria and sources as its
 wiki-markup description, and record the key on the row before anything else,
 so a retry never raises a second. A status other than `--in-dev-status` is
 moved there by an exact-name transition; one already at `--done-status` is
 left alone with a warning. Then the ticket is moved onto `--board`, every time.
 **Branch**: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row,
-checked out in each of the increment's repos (fast-forwarded to what is
+checked out in each of the increment's repos (a row naming none takes every repo, in `--repos` order when given) (fast-forwarded to what is
 pushed), tracked from origin, or cut with `--no-track` from a freshly fetched
 `origin/<base>`. A repo with uncommitted work stops it before any repo
 changes. The result names `resumeAt` from the row's `commit` and `prs`. A

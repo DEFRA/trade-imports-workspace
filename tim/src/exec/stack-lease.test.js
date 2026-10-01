@@ -7,7 +7,8 @@ import {
   readFileSync,
   existsSync,
   chmodSync,
-  rmSync
+  rmSync,
+  utimesSync
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
@@ -16,10 +17,13 @@ import {
   releaseStack,
   readLease,
   defaultLeasePath,
-  describeLease
+  describeLease,
+  recordLeaseContainers
 } from './stack-lease.js'
 
 const HOLDER = 'ibl-20261001T090000Z inc-003 consistency'
+// Above the highest pid macOS and Linux hand out by default.
+const DEAD_PID = 4_194_305
 const OTHER = 'ibl-20261001T080000Z inc-001 ladder'
 
 let root
@@ -49,7 +53,7 @@ const logPath = () => join(root, 'logs', 'lease.log')
 const fakeStack = ({ upFails = false, downFails = false } = {}) => {
   writeExecutable(
     join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $*" >> '${callsPath()}'\n${upFails ? 'exit 9' : `echo up > '${statePath()}'`}`
+    `echo "run-stack.sh $*" >> '${callsPath()}'\n${upFails ? 'exit 9' : `echo c1 > '${statePath()}'`}`
   )
   writeExecutable(
     join(root, 'scripts', 'stack', 'stop-stack.sh'),
@@ -57,16 +61,20 @@ const fakeStack = ({ upFails = false, downFails = false } = {}) => {
   )
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then echo trade-imports-frontend-1; fi`
+    `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
   )
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
 
 const stackIsUp = () => existsSync(statePath())
-const markUp = () => writeFileSync(statePath(), 'up\n')
+const markUp = (containers = 'c1') =>
+  writeFileSync(statePath(), `${containers}\n`)
 const calls = () =>
   existsSync(callsPath())
-    ? readFileSync(callsPath(), 'utf8').trim().split('\n')
+    ? readFileSync(callsPath(), 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => line.trim())
     : []
 
 const writeLease = (lease) => {
@@ -79,6 +87,7 @@ const writeLease = (lease) => {
       branches: {},
       state: 'up',
       pid: null,
+      containers: ['c1'],
       ...lease
     })
   )
@@ -248,6 +257,108 @@ describe('acquireStack', () => {
     })
   })
 
+  test('records the containers it started in the lease', async () => {
+    const env = fakeStack()
+
+    const outcome = await acquire(env)
+
+    expect(outcome.lease.containers).toEqual(['c1'])
+  })
+
+  test('takes down and restarts a stack its own start left half-done', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({
+      holder: HOLDER,
+      state: 'starting',
+      pid: DEAD_PID,
+      containers: []
+    })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      started: outcome.started,
+      calls: calls(),
+      state: readLease(leasePath()).state
+    }).toEqual({
+      acquired: true,
+      started: true,
+      calls: ['stop-stack.sh', 'run-stack.sh -d'],
+      state: 'up'
+    })
+  })
+
+  test('refuses while its own start is still running', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, state: 'starting', pid: process.pid })
+
+    const outcome = await acquire(env)
+
+    expect({
+      refused: outcome.refused,
+      reason: outcome.reason,
+      calls: calls()
+    }).toEqual({
+      refused: true,
+      reason: expect.stringContaining('that start is still running'),
+      calls: []
+    })
+  })
+
+  test('refuses its own lease when the stack was restarted by hand under it, and leaves the stack alone', async () => {
+    const env = fakeStack()
+    markUp('c2')
+    writeLease({ holder: HOLDER })
+
+    const outcome = await acquire(env)
+
+    expect({
+      refused: outcome.refused,
+      reason: outcome.reason,
+      calls: calls(),
+      up: stackIsUp()
+    }).toEqual({
+      refused: true,
+      reason: expect.stringContaining(
+        'its containers are not the ones that lease started: somebody restarted it by hand since'
+      ),
+      calls: [],
+      up: true
+    })
+  })
+
+  test('does not take over a stale lease while another takeover holds the lock', async () => {
+    const env = fakeStack()
+    writeLease({ holder: OTHER })
+    mkdirSync(`${leasePath()}.lock`)
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      calls: calls(),
+      holder: readLease(leasePath()).holder
+    }).toEqual({ acquired: false, calls: [], holder: OTHER })
+  })
+
+  test('breaks a takeover lock left by a process that died a minute ago', async () => {
+    const env = fakeStack()
+    writeLease({ holder: OTHER })
+    mkdirSync(`${leasePath()}.lock`)
+    const longAgo = new Date(Date.now() - 120_000)
+    utimesSync(`${leasePath()}.lock`, longAgo, longAgo)
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      holder: readLease(leasePath()).holder
+    }).toEqual({ acquired: true, holder: HOLDER })
+  })
+
   test('takes the stack down and clears the lease when it does not come up', async () => {
     const env = fakeStack({ upFails: true })
 
@@ -351,6 +462,28 @@ describe('releaseStack', () => {
     }).toEqual({ released: true, calls: [], lease: null })
   })
 
+  test('never takes down a stack restarted by hand under its lease, and clears the lease', async () => {
+    const env = fakeStack()
+    markUp('c2')
+    writeLease({ holder: HOLDER })
+
+    const outcome = await release(env)
+
+    expect({
+      released: outcome.released,
+      foreign: outcome.foreign,
+      calls: calls(),
+      up: stackIsUp(),
+      lease: readLease(leasePath())
+    }).toEqual({
+      released: false,
+      foreign: true,
+      calls: [],
+      up: true,
+      lease: null
+    })
+  })
+
   test('keeps the lease when the stack does not come down', async () => {
     const env = fakeStack({ downFails: true })
     markUp()
@@ -410,5 +543,41 @@ describe('describeLease', () => {
     ).toBe(
       `"${HOLDER}" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-stub main)`
     )
+  })
+})
+
+describe('recordLeaseContainers', () => {
+  test('records the containers a rebuild under the holder’s own lease created', async () => {
+    const env = fakeStack()
+    markUp('c9')
+    writeLease({ holder: HOLDER, containers: ['c1'] })
+
+    const updated = await recordLeaseContainers({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect({ updated, containers: readLease(leasePath()).containers }).toEqual({
+      updated: true,
+      containers: ['c9']
+    })
+  })
+
+  test('leaves a lease somebody else holds alone', async () => {
+    const env = fakeStack()
+    markUp('c9')
+    writeLease({ holder: OTHER, containers: ['c1'] })
+
+    const updated = await recordLeaseContainers({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect({ updated, containers: readLease(leasePath()).containers }).toEqual({
+      updated: false,
+      containers: ['c1']
+    })
   })
 })

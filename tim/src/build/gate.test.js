@@ -247,6 +247,36 @@ describe('runGate — unit and FIT rungs', () => {
     ])
   })
 
+  test('says something other than the gate left the workspace stack up when its container holds a FIT port', async () => {
+    const server = createServer()
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const { port } = server.address()
+    const env = workspaceWith({
+      gates: {
+        frontend: {
+          rungs: [
+            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ports: [port] }
+          ]
+        }
+      },
+      repos: { frontend: { 'test:fit:ci': 'echo fit' } }
+    })
+    writeExecutable(
+      join(root, 'fake-bin', 'docker'),
+      `if [ "$1" = ps ]; then printf 'trade-imports-animals-frontend-1\\ttrade-imports\\n'; fi`
+    )
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    await new Promise((resolve) => server.close(resolve))
+    expect(outcome.rungs.map(({ ok, reason }) => ({ ok, reason }))).toEqual([
+      {
+        ok: false,
+        reason: `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. The gate starts the workspace stack only for its E2E phase and stops what it started, so something other than the gate started it and left it up.`
+      }
+    ])
+  })
+
   test('leaves the workspace stack alone for unit and FIT rungs', async () => {
     const env = workspaceWith(unitOnly())
     writeFileSync(stackStatePath(), 'up\n')

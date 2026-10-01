@@ -117,14 +117,19 @@ const runRung = async (rung, { logsDir, env }) => {
   }
 }
 
+const LEFT_UP_BY_ANOTHER_STEP =
+  'The gate starts the workspace stack only for its E2E phase and stops what it started, so something other than the gate started it and left it up.'
+
+const heldPortReason = (port, holder) => {
+  const reason = `Port ${port} is in use by ${describeHolder(holder)}. The rung needs it free.`
+  return holder.workspaceStack ? `${reason} ${LEFT_UP_BY_ANOTHER_STEP}` : reason
+}
+
 const heldPortReasons = async (ports, env) => {
   const reasons = []
   for (const port of ports) {
     if (await isPortHeld(port)) {
-      const holder = describeHolder(await portHolder(port, { env }))
-      reasons.push(
-        `Port ${port} is in use by ${holder}. The rung needs it free.`
-      )
+      reasons.push(heldPortReason(port, await portHolder(port, { env })))
     }
   }
   return reasons

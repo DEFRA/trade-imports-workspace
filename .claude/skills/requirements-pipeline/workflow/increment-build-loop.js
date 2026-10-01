@@ -582,13 +582,15 @@ const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
   phases.length === 0
     ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
 yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
-repo's own rungs. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
+repo's own rungs. The plan's sections 5 and 6 checks are yours to run as the plan writes them, except one that needs the
+workspace stack up: that one is the gate's E2E phase to prove, never yours.`
     : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 ${gateCommandList(phases, gateLogs(id, stage))}
 Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
 never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A stack that is up
-is not in your way: leave it. The plan's sections 5 and 6 checks are yours to run as the plan writes them.`
+is not in your way: leave it. The plan's sections 5 and 6 checks are yours to run as the plan writes them, except
+one that needs the workspace stack up: that one is the gate's E2E phase to prove, never yours.`
 
 // Codex has a normal shell and reads absolute paths; its sandbox cannot start
 // a browser, so it runs only the gate's unit phase.
@@ -788,6 +790,23 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
 - A repo may be MID-MERGE by design (\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA). Never
   commit, continue, abort or reset that merge unless your own task below tells you to.`
 
+// ins-performance-testing inc-001: a plan's section 5 said "stack up with
+// `tim docker up`, then run the k6 smoke against it", the consistency reviewer
+// ran it as told and returned with the stack still up, and the ladder's FIT
+// phase then found port 3000 held. Its `docker compose run` checks also left
+// the perftests repo's own stand-in container running.
+const STACK_GUARD = `- THE WORKSPACE STACK BELONGS TO \`tim build gate\`. Never start it — no \`tim docker up\` or \`tim docker dev\`, no
+  \`run-stack.sh\`, no \`docker compose\` against it — and never run anything that needs it up outside the gate, such as a
+  repo's \`test:docker-compose\` script or a k6 run against it. Proof against the real stack is the gate's E2E phase.
+  A plan check that needs the stack is not yours to run, whatever the plan says: report it as needing the workspace
+  stack and go on.
+- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
+  \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
+  project down. Leave nothing running that you started.`
+
+const SECTION_5_STACK_LINE = `Skip a section 5 check that needs the workspace stack up, even
+when the plan says to start it: the gate's E2E phase proves it, after review. Its absence is not a finding.`
+
 const GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
@@ -803,6 +822,7 @@ GUARD RAILS (mandatory, every step):
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
+${STACK_GUARD}
 ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
@@ -1534,13 +1554,18 @@ implementor decides nothing.
       another system can see, include the INTEGRATION PROOF: an E2E or contract test in the tests repo that
       exercises the slice through the real stack.
    5. Invariants to prove — one runnable check per acceptance criterion where practical, with its expected result,
-      plus any programme invariant this change could break.
+      plus any programme invariant this change could break. Other stages run these checks, and no stage may start
+      the workspace stack, so none may start it or need it running: never write "start the stack", \`tim docker\`,
+      \`run-stack.sh\` or a run against the stack here. A criterion only the real stack can prove is proved by the
+      gate's E2E phase — name the E2E rung from gates.json that carries it, as the check, and run nothing.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
       gates.json — format check, lint, typecheck, unit tests, \`mvn verify\`, FIT and the tests repo's local-stack
       E2E suite, which carries the integration proof — so never list those here. List only what this increment
       needs proved on top of them and section 5, one command each in the GUARD RAILS form (\`npm --prefix\`,
       \`mvn -f\`, tilde paths), with what each proves. None of them may need the workspace stack running: a check
-      that needs the real stack belongs in the tests repo's E2E suite, which the gate runs. "None" is an answer.
+      that needs the real stack belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
+      Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
+      repo's script that takes that project down, as a check of its own. "None" is an answer.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
@@ -2696,7 +2721,7 @@ writes; a move or new file the plan listed that did not happen; THE CONTRACT BET
 frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
 or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
-report any that fails as a finding. A better solution than the plan imagined is not a finding.
+report any that fails as a finding. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 Return the structured output only.`,
@@ -2742,7 +2767,7 @@ run looks across the whole change, so report findings on this group's files only
 <personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}`
+reporting any that fails as a finding. ${SECTION_5_STACK_LINE}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}`
   )
 
   const codexReviewResults = async () => {

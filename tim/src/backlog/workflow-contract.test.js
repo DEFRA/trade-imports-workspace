@@ -940,6 +940,45 @@ describe('increment-build-loop', () => {
         expect(stopsTheStack).toEqual([])
       })
 
+      test('forbids every increment agent to start the workspace stack or run against it outside the gate', async () => {
+        const run = await runThroughFixToLadder()
+        const unguarded = run.agents
+          .filter(
+            ({ options, prompt }) =>
+              options.label.startsWith('inc-900 ') &&
+              !prompt.includes(
+                'Never start it — no `tim docker up` or `tim docker dev`, no\n  `run-stack.sh`, no `docker compose` against it — and never run anything that needs it up outside the gate'
+              )
+          )
+          .map(({ options }) => options.label)
+
+        expect(unguarded).toEqual([])
+      })
+
+      test('tells every agent to take down any other compose project it starts', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 consistency')).toContain(
+          "is followed, before you return, by that repo's own script that takes the\n  project down. Leave nothing running that you started."
+        )
+      })
+
+      test('tells the consistency reviewer to skip a plan check that needs the workspace stack', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 consistency')).toContain(
+          "Skip a section 5 check that needs the workspace stack up, even\nwhen the plan says to start it: the gate's E2E phase proves it, after review."
+        )
+      })
+
+      test('tells the planner that no plan check may start or need the workspace stack', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 plan')).toContain(
+          'so none may start it or need it running: never write "start the stack", `tim docker`,\n      `run-stack.sh` or a run against the stack here.'
+        )
+      })
+
       test('stops at a baseline whose gate is red', async () => {
         const run = await runFrom({
           ...BASELINE_ANSWER,

@@ -881,7 +881,7 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        'if ANY repo is on `main`, stop and report ok:false naming it'
+        "if ANY of the increment's repos is on `main`, stop and report ok:false naming it"
       )
     })
 
@@ -2740,7 +2740,7 @@ describe('increment-build-loop', () => {
         const prompt = promptOf(await runPerf(), 'inc-014 pr')
 
         expect(prompt).toContain('gateway=DEFRA/trade-imports-dynamics-gateway')
-        expect(prompt).toContain('idstub=DEFRA/trade-imports-defra-id-stub')
+        expect(prompt).not.toContain('idstub=DEFRA/trade-imports-defra-id-stub')
       })
 
       test('watches CI on every PR', async () => {
@@ -2859,6 +2859,93 @@ describe('increment-build-loop', () => {
         expect(prompt).not.toContain('<frontendRepo>')
       })
     })
+
+    describe('building a one-repo increment in a nine-repo programme', () => {
+      const NINE_REPOS = {
+        ...PERF_REPOS,
+        instests: repo('trade-imports-ins-tests')
+      }
+      const ONE_REPO = ['perftests']
+      const OTHER_REPOS = Object.keys(NINE_REPOS).filter(
+        (key) => !ONE_REPO.includes(key)
+      )
+      const PERFTESTS_PR = {
+        repo: 'perftests',
+        url: 'https://github.com/DEFRA/trade-imports-performance-tests/pull/2',
+        raised: true
+      }
+
+      const runOneRepo = () =>
+        runPerf(
+          { repos: NINE_REPOS },
+          {
+            preflight: { ...PREFLIGHT, envelopeRepos: envelopeOf(NINE_REPOS) },
+            'inc-014 start': startAnswer(
+              startedResult({
+                id: 'inc-014',
+                branch: WORK_BRANCH,
+                repos: ONE_REPO
+              })
+            ),
+            'inc-014 plan': { ...ANSWERS['inc-014 plan'], repos: ONE_REPO },
+            'inc-014 implement': {
+              ...ANSWERS['inc-014 implement'],
+              changedFiles: ['perftests:src/k6/journeys.js']
+            },
+            'inc-014 land': {
+              landed: true,
+              commit: 'dcd653e',
+              summary: 'committed'
+            },
+            'inc-014 pr': { ok: true, prs: [PERFTESTS_PR], summary: 'one PR' },
+            'inc-014 merge': {
+              green: true,
+              merged: [{ repo: 'perftests', sha: 'perftests-sha' }],
+              summary: 'merged'
+            }
+          }
+        )
+
+      test('reaches the PR stage, CI, merge and done', async () => {
+        const run = await runOneRepo()
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-014',
+          outcome: 'landed',
+          prs: [PERFTESTS_PR.url]
+        })
+      })
+
+      test('asks the PR stage to check, push and raise only in the increment’s repo', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 pr')
+
+        expect(prompt).toContain('REPOS, in order: perftests.')
+        expect(prompt).toContain(
+          'GitHub repos: perftests=DEFRA/trade-imports-performance-tests. Repo paths: perftests=repos/trade-imports-performance-tests.'
+        )
+        for (const key of OTHER_REPOS) {
+          expect(prompt).not.toContain(NINE_REPOS[key].path)
+        }
+      })
+
+      test('asks the baseline to hold only the increment’s repo off the base branch', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 baseline')
+
+        expect(prompt).toContain(
+          "Check the increment's repos only — perftests; another configured repo staying on\n   `main` is correct."
+        )
+      })
+
+      test('still sweeps all nine repos for a PR left open at merge', async () => {
+        const prompt = promptOf(await runOneRepo(), 'inc-014 merge')
+
+        expect(prompt).toContain(
+          Object.values(NINE_REPOS)
+            .map(({ github }) => github)
+            .join(', ')
+        )
+      })
+    })
   })
 
   describe('under the full lifecycle, with the frontend, backend and tests keys', () => {
@@ -2904,6 +2991,20 @@ describe('increment-build-loop', () => {
         ].join('\n')
       )
       expect(prompt).toContain('BACKEND FIRST, THEN TESTS, THEN FRONTEND')
+    })
+
+    test('still raises a PR in each of the three repos the row names', async () => {
+      const run = await runLegacyToMerge()
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'inc-900 pr'
+      ).prompt
+
+      expect(prompt).toContain(
+        'REPOS, in order: frontend, tests, backend. These are the increment'
+      )
+      expect(prompt).toContain(
+        'GitHub repos: frontend=DEFRA/trade-imports-animals-frontend, tests=DEFRA/trade-imports-ins-tests, backend=DEFRA/trade-imports-animals-backend.'
+      )
     })
   })
 })

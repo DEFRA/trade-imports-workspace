@@ -2458,7 +2458,8 @@ TASK:
 1. THE BRANCH. The branch stage has already put the increment's repos on their branch, cut from a fresh
    \`${BASE_BRANCH}\`. Do not switch branches. Record which branch each repo is on
    (\`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\`) in your summary.
-   One assertion only: if ANY repo is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
+   Check the increment's repos only${repos ? ` — ${repos.join(', ')}` : ', by the ITS REPOS rule'}; another configured repo staying on
+   \`${BASE_BRANCH}\` is correct. One assertion only: if ANY of the increment's repos is on \`${BASE_BRANCH}\`, stop and report ok:false naming it. You are not
    checking that it is on the *right* branch; you are refusing to let an increment start editing a repo that is
    on the base branch, because every later stage then commits and pushes there. This is the last cheap place to
    catch a repo the branch stage did not cover.
@@ -3346,9 +3347,12 @@ YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS
 ${GUARDRAILS}
 ${PUSH_RULE}
 ${MERGE_ORDER_RULE}
-REPOS, in order: ${repos.join(', ')}. GitHub repos: ${ghTable}. Repo paths: ${repoTable}.
+REPOS, in order: ${repos.join(', ')}. These are the increment's repos and the ONLY ones this stage touches. Another
+configured repo is not this increment's: leave it on whatever branch it is on, and never push it or raise a PR in it.
+GitHub repos: ${repos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}. Repo paths: ${repos.map((key) => `${key}=${REPO_PATH[key]}`).join(', ')}.
+<repo> below is the repo's key from that list, never its GitHub name.
 
-For EACH repo, in that order:
+For EACH of those repos, in that order:
 1. Prove the repo is on the work branch before you push a thing:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` MUST print \`${workBranch}\`. If it prints
    \`${BASE_BRANCH}\`, report ok:false naming the repo — the branch stage did not cover this repo and pushing

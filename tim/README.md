@@ -330,7 +330,9 @@ for no lease) and the reason. Each rung writes to
 `gate-<repo>-<rung>.log`; nothing streams. A rung that cannot run fails with
 its reason. The result is `{green, rungs, stack}` and the command exits 1
 unless every rung passed. gates.json refuses any rung that names a remote or
-CDP script.
+CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
+machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
+on a 16 GB machine) in its shell profile.
 
 ### `tim build runs archive|report` — what each run cost
 

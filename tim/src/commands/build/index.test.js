@@ -205,6 +205,37 @@ describe('tim build gate', () => {
   })
 })
 
+describe('renderGateText for a held stack', () => {
+  test('says the stack was not the gate’s to use, and who holds it', () => {
+    expect(
+      renderGateText({
+        green: false,
+        logs: '/logs',
+        rungs: [
+          {
+            repo: 'tests',
+            name: 'e2e-plants',
+            phase: 'e2e',
+            ok: false,
+            reason: 'The workspace stack is leased to "x".'
+          }
+        ],
+        stack: {
+          wasUp: true,
+          startedForE2e: false,
+          stoppedAfter: false,
+          held: {
+            holder: 'x',
+            detail: 'The workspace stack is leased to "x".'
+          }
+        }
+      }).split('\n')[2]
+    ).toBe(
+      'The workspace stack was not the gate’s to use: The workspace stack is leased to "x".'
+    )
+  })
+})
+
 describe('renderBranchText', () => {
   test('says what happened in each repo', () => {
     expect(

@@ -137,6 +137,41 @@ export const createJiraClient = ({
     return parseBody(response, action)
   }
 
+  // Jira's agile API answers a full success with 204 and a partial rejection
+  // with 200 and an error body, so only 204 counts as done.
+  const postForNoContent = async (path, body, action) => {
+    const url = `${normalisedBase}${path}`
+    let response
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader(user, token),
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+    } catch (error) {
+      throw new TimError('NETWORK', `${action}: ${error.message}`, error)
+    }
+    if (response.status === 204) return
+    const payload = await parseBody(response, action)
+    if (response.status === 400) throw mapBadRequest(action, payload)
+    const mapped = mapStatus(response.status, action)
+    if (mapped) throw mapped
+    const reasons = [
+      ...(payload?.errorMessages ?? []),
+      ...Object.entries(payload?.errors ?? {}).map(
+        ([field, reason]) => `${field}: ${reason}`
+      )
+    ]
+    throw new TimError(
+      'UNKNOWN',
+      `${action}: Jira answered ${response.status}, not 204${reasons.length ? `: ${reasons.join('; ')}` : '.'}`
+    )
+  }
+
   const postMultipart = async (path, form, action) => {
     const url = `${normalisedBase}${path}`
     let response
@@ -331,6 +366,58 @@ export const createJiraClient = ({
         inwardKey: link.inwardIssue?.key ?? null,
         outwardKey: link.outwardIssue?.key ?? null
       }))
+    },
+
+    /**
+     * The transitions an issue offers now, each with the status it leads to.
+     * A transition's name can differ from that status's name.
+     *
+     * @param {string} key
+     * @returns {Promise<Array<{id: string, name: string, to: string|null}>>}
+     */
+    listTransitions: async (key) => {
+      const data = await get(
+        `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
+        `listTransitions(${key})`
+      )
+      return (data.transitions ?? []).map((transition) => ({
+        id: transition.id,
+        name: transition.name,
+        to: transition.to?.name ?? null
+      }))
+    },
+
+    /**
+     * Move an issue through one of the transitions it offers.
+     *
+     * @param {string} key
+     * @param {string} transitionId - From `listTransitions`
+     * @returns {Promise<void>}
+     */
+    transitionIssue: async (key, transitionId) => {
+      await postJson(
+        `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
+        { transition: { id: transitionId } },
+        `transitionIssue(${key})`
+      )
+    },
+
+    /**
+     * Move issues out of a board's backlog onto the board. Board membership
+     * is not a field on the issue and no status sets it; this is the only
+     * call that does. Moving an issue already on the board changes nothing.
+     *
+     * @param {number|string} boardId
+     * @param {string[]} keys - At most 50, a Jira limit
+     * @returns {Promise<void>}
+     * @throws {TimError} UNKNOWN when Jira answers anything but 204
+     */
+    moveToBoard: async (boardId, keys) => {
+      await postForNoContent(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/issue`,
+        { issues: keys },
+        `moveToBoard(${boardId}, ${keys.join(', ')})`
+      )
     },
 
     /**

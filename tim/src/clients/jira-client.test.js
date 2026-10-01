@@ -372,3 +372,98 @@ describe('listOpenEpics', () => {
     })
   })
 })
+
+describe('listTransitions', () => {
+  test('returns each transition with the status it leads to', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300/transitions')
+      .reply(200, loadFixture('list-transitions.json'))
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    expect(await client.listTransitions('EUDPA-300')).toEqual([
+      { id: '11', name: 'Start work', to: 'In Dev' },
+      { id: '31', name: 'Done', to: 'Done' }
+    ])
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).get('/rest/api/2/issue/EUDPA-404/transitions').reply(404, {})
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.listTransitions('EUDPA-404')).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    })
+  })
+})
+
+describe('transitionIssue', () => {
+  test('posts the transition id', async () => {
+    let posted = null
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-300/transitions', (body) => {
+        posted = body
+        return true
+      })
+      .reply(204)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await client.transitionIssue('EUDPA-300', '11')
+
+    expect(posted).toEqual({ transition: { id: '11' } })
+  })
+
+  test('carries Jira’s reason on a 400', async () => {
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-300/transitions')
+      .reply(400, { errorMessages: ['Transition id 99 is not valid.'] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.transitionIssue('EUDPA-300', '99')
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'transitionIssue(EUDPA-300): Transition id 99 is not valid.'
+    })
+  })
+})
+
+describe('moveToBoard', () => {
+  test('posts the keys to the board and accepts a 204', async () => {
+    let posted = null
+    mockPool(BASE)
+      .post('/rest/agile/1.0/board/13780/issue', (body) => {
+        posted = body
+        return true
+      })
+      .reply(204)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await client.moveToBoard(13780, ['EUDPA-300'])
+
+    expect(posted).toEqual({ issues: ['EUDPA-300'] })
+  })
+
+  test('treats a 200 with errors as a failure, naming them', async () => {
+    mockPool(BASE)
+      .post('/rest/agile/1.0/board/13780/issue')
+      .reply(200, {
+        errorMessages: ['Issue EUDPA-300 is not in the board filter.']
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.moveToBoard(13780, ['EUDPA-300'])
+    ).rejects.toMatchObject({
+      code: 'UNKNOWN',
+      message:
+        'moveToBoard(13780, EUDPA-300): Jira answered 200, not 204: Issue EUDPA-300 is not in the board filter.'
+    })
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE).post('/rest/agile/1.0/board/13780/issue').reply(401, {})
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.moveToBoard(13780, ['EUDPA-300'])
+    ).rejects.toMatchObject({ code: 'AUTH' })
+  })
+})

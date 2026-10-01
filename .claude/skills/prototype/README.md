@@ -67,7 +67,8 @@ example:
 | Save and share | "Save my work" then "share this" |
 | Hand it to the developers | "Write this up as a story for the developers" |
 
-If Claude seems lost, say **"use the prototype skill"**.
+If Claude seems lost, say **"use the prototype skill"**, or type
+`/prototype`.
 
 ## Sharing your work
 

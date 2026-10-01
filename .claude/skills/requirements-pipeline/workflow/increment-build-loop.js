@@ -210,16 +210,18 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 39 agents on Claude and 42 on Codex —
-// its start stage, its build, and a lease return after each stage that may
-// hold the workspace stack — so a drain of an open-ended backlog would hit the
+// not a config key. An increment is up to 36 agents on Claude and 42 on Codex,
+// its start stage included, so a drain of an open-ended backlog would hit the
 // cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 25 increments on Claude, 23 on Codex — and
+// that would not fit — roughly 27 increments on Claude, 23 on Codex — and
 // resuming is launching the workflow again with the same args, because
-// backlog.json already carries the status, ticket, branch and PRs.
+// backlog.json already carries the status, ticket, branch and PRs. The run's
+// own agents are the workspace and preflight checks, and the one that takes
+// the workspace stack's lease at the start and the one that gives it back at
+// the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 39, codex: 42 }
-const STARTUP_AGENTS = 2
+const AGENTS_PER_INCREMENT = { claude: 36, codex: 42 }
+const STARTUP_AGENTS = 4
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
 if (!WORKAREA_REL) {
@@ -562,29 +564,35 @@ workspace — not the backlog, not the plans, not the logs. See what it holds wi
 \`git -C ${TILDE} status --short -- openspec/\`.`
 
 // The repo's own rungs — format, lint, typecheck, unit, `mvn verify`, FIT and
-// E2E — belong to `tim build gate`, which reads them from gates.json and
-// leases the workspace stack for E2E. Agents that picked those scripts by hand picked a
-// remote CDP one, ran unit tests against a stack left up and called a real
-// failure "pre-existing". The gate runs one phase per call so each fits in
-// one ten-minute Bash window.
+// E2E — belong to `tim build gate`, which reads them from gates.json and runs
+// E2E against the workspace stack under the run's lease. Agents that picked
+// those scripts by hand picked a remote CDP one, ran unit tests against a stack
+// left up and called a real failure "pre-existing". A stage that owes every
+// phase makes one `--phase all` call, which runs the phases side by side; a
+// stage that owes only some makes one call per phase.
 const GATE_PHASES = ['unit', 'fit', 'e2e']
+const WHOLE_GATE = 'all'
 const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 
 // ---------------------------------------------------------------------------
-// The workspace stack is leased. ins-performance-testing inc-001 showed the
-// failure: a plan check started the stack, the stage that ran it returned
-// with it still up, and the ladder's FIT phase found port 3000 held by a
-// stack nobody owned. A stage may use the stack, but only under a lease
-// (`tim docker lease`) named for the run, the increment and the stage, and it
-// gives the lease back before it returns. A stage refused the stack returns
-// `stackHeld`; the script, not the agent, decides what happens next.
+// The workspace stack is leased to the run, not to a stage. The run takes the
+// lease once, before its first increment, and gives it back once, after its
+// last, whatever stopped it — so the stack stays up across every increment
+// and nothing in between starts, stops or rebuilds it but the gate, which
+// reuses the run's lease. ins-performance-testing inc-001 is why the lease
+// exists at all: a plan check started the stack, its stage returned with it
+// still up, and the next stage found it in nobody's hands. A stage that finds
+// the stack in somebody else's hands returns `stackHeld`; the script, not the
+// agent, decides what happens next.
 // ---------------------------------------------------------------------------
-const stackHolder = (id, stage) => `${RUN_ID} ${id} ${stage}`
+const RUN_HOLDER = RUN_ID
 
-const gateCommand = (phase, logs, holder) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs}${phase === 'e2e' ? ` --holder "${holder}"` : ''}`
-const gateCommandList = (phases, logs, holder) =>
-  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs, holder)}\``).join('\n')
+const gateCommand = (phase, logs) =>
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"`
+const gateCommandList = (phases, logs) =>
+  phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
+
+const owesWholeGate = (phases) => GATE_PHASES.every((phase) => phases.includes(phase))
 
 const STACK_HELD_LINE = `return \`stackHeld\` with \`holder\` (null when it is null) and \`detail\`
   copied word for word. Never wait for it, retry, work round it, or take the stack down: the loop decides what happens next.`
@@ -592,9 +600,9 @@ const STACK_HELD_LINE = `return \`stackHeld\` with \`holder\` (null when it is n
 const GATE_RULE = `THE GATE owns every repo's own rungs. \`tim build gate\` runs the rungs
 listed for each backlog repo in ${ABS}/.claude/skills/requirements-pipeline/references/gates.json — format check,
 lint, typecheck, unit tests, \`mvn verify\`, FIT and the local-stack E2E suite — each to its own
-\`gate-<repo>-<rung>.log\` under the --logs folder. For E2E it takes the workspace stack's lease as the holder its
-command names: it starts the stack only if it was down and stops only what it started, and it refuses a stack leased
-to anybody else or up with no lease at all. So:
+\`gate-<repo>-<rung>.log\` under the --logs folder. Every gate command names this run's lease holder,
+\`${RUN_HOLDER}\`: the workspace stack is already up under that lease, and the gate's E2E phase uses it as it is,
+rebuilding only what changed. The gate refuses a stack leased to anybody else or up with no lease at all. So:
 - Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
 - Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
   leave it as it is.
@@ -603,27 +611,19 @@ to anybody else or up with no lease at all. So:
   It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
   it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
   an \`errors[]\` entry and no \`result\`), or that hits the Bash timeout, is RED: report its error verbatim.
-- A phase whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands: an E2E phase
-  refused, or a FIT port the stack holds. Stop there, run nothing more, and ${STACK_HELD_LINE}
+- A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
+  there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
   \`test-results/*/error-context.md\` in the tests repo as well.`
 
-const stackLeaseRule = (id, stage) => {
-  const holder = stackHolder(id, stage)
-  const lease = (verb) =>
-    `\`tim docker lease ${verb} --holder "${holder}" --workspace ${TILDE} --json --logs ${gateLogs(id, stage)}\``
-  return `THE WORKSPACE STACK, for a check that needs it up. Your lease holder is \`${holder}\`, and the lease is the only way
-you may use the stack:
-1. Take it, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000: ${lease('acquire')}
-   ok:true means it is yours: started from local source if it was down, or reused if you already held it.
-2. Run the checks that need it, and nothing else.
-3. Give it back as soon as they are done, and always before you return, whatever they showed:
-   ${lease('release')}
-   The stack holds the FIT ports, so give it back before you run the gate's FIT phase.
-If the acquire prints ok:false with \`errors[0].code\` STACK_HELD, the stack is somebody else's. Run nothing that needs it,
-and ${STACK_HELD_LINE} Copy \`holder\` from tim's \`result.holder\` and \`detail\` from \`errors[0].message\`.
-Any other ok:false (STACK_START_FAILED) is a check that could not run: report it with tim's message.`
-}
+const RUN_STACK_RULE = `THE WORKSPACE STACK is already up, leased to this run as \`${RUN_HOLDER}\` for every increment it builds. A
+check that needs it up uses it as it is. Never acquire or release its lease, and never start, stop, restart or rebuild
+it: the run took it before its first increment and gives it back after its last. If a check that needs it cannot reach
+it, run \`tim docker lease status --workspace ${TILDE} --json\` once. Where \`result.lease\` is null or its \`holder\` is not
+\`${RUN_HOLDER}\`, the stack is no longer this run's: run nothing more that needs it, and return \`stackHeld\` with
+\`holder\` copied from \`result.lease.holder\` (null when there is no lease) and \`detail\` saying whether \`result.up\` is
+true and who, if anybody, holds the lease. Never wait for it, retry, work round it, or take the stack down: the loop
+decides what happens next. Where the lease is still this run's, the check failed for a reason of its own: report it.`
 
 const BUILDER_PHASES = ['unit', 'fit']
 
@@ -632,24 +632,23 @@ const builderGateRule = (id, stage, phases = BUILDER_PHASES) =>
   `${
     phases.length === 0
       ? `CHECKING YOUR OWN WORK: this row's gatePhases runs neither the gate's unit nor its FIT phase, so run no gate phase
-yourself. Never run the gate's E2E phase, never start or stop the workspace stack but through your lease, and never pick
-a script by hand for a repo's own rungs.`
+yourself. Never run the gate's E2E phase, never start or stop the workspace stack, and never pick a script by hand for a
+repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-${gateCommandList(phases, gateLogs(id, stage), stackHolder(id, stage))}
+${gateCommandList(phases, gateLogs(id, stage))}
 Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
-never start or stop the workspace stack but through your lease, and never pick a script by hand for a repo's own rungs.
-A stack that is up and not yours is not in your way: leave it. A FIT phase whose \`result.stack.held\` is not null
-found the stack in somebody else's hands: ${STACK_HELD_LINE}`
+never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A gate command whose
+\`result.stack.held\` is not null found the stack in somebody else's hands: ${STACK_HELD_LINE}`
   }
-The plan's sections 5 and 6 checks are yours to run as the plan writes them. One that needs the workspace stack up runs
-inside your lease:
-${stackLeaseRule(id, stage)}`
+The plan's sections 5 and 6 checks are yours to run as the plan writes them.
+${RUN_STACK_RULE}`
 
 // Codex has a normal shell and reads absolute paths; its sandbox cannot start
-// a browser, so it runs only the gate's unit phase.
+// a browser, so it runs only the gate's unit phase, under the run's lease
+// like every other gate call.
 const codexGateUnit = (id, stage) =>
-  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage}`
+  `tim build gate ${WORKAREA_REL} --phase unit --workspace ${ABS} --json --logs ${WORKAREA}/logs/${id}-${stage} --holder "${RUN_HOLDER}"`
 
 // A branch-lifecycle row whose gatePhases leave out unit runs no gate phase
 // in its builders, Codex's included. The briefs read `none` as exactly that.
@@ -831,89 +830,76 @@ order does not, keep the row's order in repos and say so under risks, naming the
 // run without spending fix attempts on it.
 const hardStop = (r) => Boolean(r && r.blocked && r.blocked !== 'none')
 
-// A holder is `<run> <increment> <stage>`. The script rules on a refusal: a
-// lease an earlier stage of this increment in this run left behind is a leak,
-// released once and the stage run again. Anything else — another run, another
-// session, another increment, or a stack up with no lease — is a human's
-// ruling, and stops the run.
-const holderParts = (holder) => {
-  const [run = '', increment = '', ...stage] = (holder ?? '').split(' ')
-  return { run, increment, stage: stage.join(' ') }
-}
-
-const isLeakFromThisIncrement = (id, stage, holder) => {
-  const parts = holderParts(holder)
-  return parts.run === RUN_ID && parts.increment === id && parts.stage !== '' && parts.stage !== stage
-}
-
+// Any refusal — another run, another session, or a stack up with no lease —
+// is a human's ruling, and stops the run. A lease this run holds is never a
+// refusal: the gate and every stage reuse it.
 const describeStackHolder = (holder) =>
-  holder ? `"${holder}"` : 'nobody: it is up with no lease, so somebody started it by hand'
+  holder ? `"${holder}"` : 'nobody: no lease names it, so somebody released this run\'s lease or started the stack by hand'
 
 const stackHeldDetail = (id, stage, held) =>
   `${id} ${stage}: the workspace stack is held by ${describeStackHolder(held.holder)}. ${held.detail}`
 
-const releaseLease = ({ id, holder, label, logs, phaseName, why }) =>
+const RUN_LEASE_LOGS = `${WORKAREA_TILDE}/logs/${RUN_ID}-lease`
+
+const RUN_LEASE_ACQUIRE_SCHEMA = {
+  type: 'object',
+  required: ['acquired', 'refused', 'holder', 'summary'],
+  properties: {
+    acquired: { type: 'boolean', description: "tim's `ok`: true when the lease is this run's" },
+    refused: {
+      type: 'boolean',
+      description: "true only when tim refused the lease because somebody else has the stack (errors[0].code STACK_HELD)"
+    },
+    holder: {
+      type: ['string', 'null'],
+      description: "Who holds the workspace stack when refused, copied from tim's result.holder. null otherwise, or when nobody leases it"
+    },
+    summary: { type: 'string', description: "tim's errors[0].message word for word when ok is false; otherwise what it did" }
+  },
+  additionalProperties: false
+}
+
+const RUN_LEASE_RELEASE_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+// Started from local source, so every increment's E2E runs against this
+// machine's checkouts. The gate rebuilds what an increment changed.
+const acquireRunLease = () =>
   agent(
-    `You are the LEASE RELEASER for increment ${id}. ${why} You give back the workspace stack's lease held as
-\`${holder}\`. That is your whole job.
+    `You are the LEASE TAKER for build run ${RUN_ID}. You take the workspace stack's lease for the whole run, before
+its first increment. That is your whole job.
 ${GUARDRAILS}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-\`tim docker lease release --holder "${holder}" --workspace ${TILDE} --json --logs ${logs}\`
+\`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
+It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
+or found it already leased to \`${RUN_HOLDER}\`. When it printed ok:false, report acquired:false with \`errors[0].message\`
+word for word as summary; set refused:true only when \`errors[0].code\` is STACK_HELD, and copy \`result.holder\` into
+holder. A command that hits the Bash timeout or prints no JSON is acquired:false, refused:false, with what it printed.
+Run nothing else, and never start or stop the stack any other way.
+Return the structured output only.`,
+    light({ label: 'run lease:acquire', phase: 'Baseline', schema: RUN_LEASE_ACQUIRE_SCHEMA })
+  )
+
+const releaseRunLease = () =>
+  agent(
+    `You are the LEASE RELEASER for build run ${RUN_ID}. The run has ended, and you give back the workspace stack's
+lease it held as \`${RUN_HOLDER}\`. That is your whole job.
+${GUARDRAILS}
+Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
+\`tim docker lease release --holder "${RUN_HOLDER}" --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
 was no lease to give back. Otherwise report ok:false with \`errors[0].message\` word for word. Run nothing else, and
 never take the stack down any other way.
 Return the structured output only.`,
-    light({ label, phase: phaseName, schema: incrementSchema })
+    light({ label: 'run lease:release', phase: 'Done', schema: RUN_LEASE_RELEASE_SCHEMA })
   )
-
-const releaseLeakedLease = (id, stage, phaseName, holder) =>
-  releaseLease({
-    id,
-    holder,
-    label: `${id} lease release:${stage}`,
-    logs: gateLogs(id, `release-${stage}`),
-    phaseName,
-    why: 'An earlier stage of this increment left the workspace stack leased and returned without giving it back.'
-  })
-
-// After every stage that may hold the stack, the script gives that stage's
-// own lease back, whatever the stage did: a lease an agent forgot would
-// otherwise stop the next increment as somebody else's.
-const returnOwnLease = async (id, stage, phaseName) => {
-  const returned = await releaseLease({
-    id,
-    holder: stackHolder(id, stage),
-    label: `${id} lease return:${stage}`,
-    logs: gateLogs(id, `return-${stage}`),
-    phaseName,
-    why: `The ${stage} stage has returned, and any lease it still holds goes back now.`
-  })
-  if (!returned?.ok) {
-    log(`${id}: the ${stage} stage's own lease could not be given back — ${returned?.summary ?? 'the release agent died'}`)
-  }
-}
-
-// Runs a stage that may use the workspace stack, then gives its own lease
-// back. A refusal naming a lease an earlier stage of this increment leaked
-// is released and the stage run once more; whatever comes back then is the
-// stage's result, stackHeld included.
-const withStackLease = async (id, stage, phaseName, runStage) => {
-  const runAndReturn = async () => {
-    const result = await runStage()
-    await returnOwnLease(id, stage, phaseName)
-    return result
-  }
-  const first = await runAndReturn()
-  const held = first?.stackHeld
-  if (!held || !isLeakFromThisIncrement(id, stage, held.holder)) return first
-  log(`${id}: ${stage} found the workspace stack still leased to "${held.holder}", an earlier stage of this increment — releasing it and running ${stage} again`)
-  const released = await releaseLeakedLease(id, stage, phaseName, held.holder)
-  if (!released?.ok) {
-    const why = released?.summary ?? 'the release agent died'
-    return { ...first, stackHeld: { ...held, detail: `${held.detail} Releasing that leaked lease failed: ${why}` } }
-  }
-  return runAndReturn()
-}
 
 const FULL_PUSH_GUARD = `- Never \`git push --force\`. Never merge a PR that is not green.
 - NEVER push to \`${BASE_BRANCH}\`. Nothing in this loop writes to the base branch except the merge stage, and it
@@ -931,20 +917,23 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
 // ins-performance-testing inc-001 also left the perftests repo's own stand-in
 // container running: its `docker compose run` checks started the services in
 // their `depends_on` and nothing took them down.
-const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED, with \`tim docker lease\`, and only a stage whose task below gives it a lease
-  holder may use it. Without one, never start it, stop it or run anything against it. Never start or stop it any other
-  way — no \`tim docker up\`, \`dev\` or \`down\`, no \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it —
-  and never take down a stack you did not lease.
+const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
+  once and gives it back once; no stage does either unless its task below is exactly that. Never start, stop, restart
+  or rebuild it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\`
+  or \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
 - A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
   \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
   project down. Leave nothing running that you started.`
 
-const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs inside your
-lease, as THE WORKSPACE STACK below says.`
+const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against the
+stack the run already holds, as THE WORKSPACE STACK below says.`
 
-// Codex is never given a lease, so it still leaves a stack check to the gate.
-const CODEX_SECTION_5_STACK_LINE = `Skip a section 5 check that needs the workspace stack up, even
-when the plan says to start it: the gate's E2E phase proves it, after review. Its absence is not a finding.`
+// Codex runs under the run's lease too, so it can reach the stack the run
+// holds; its sandbox still cannot launch a browser.
+const CODEX_SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against
+the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. Never acquire or release that lease, and
+never start, stop or rebuild the stack. Skip a check that launches a browser, or one that cannot reach the stack: the
+gate's E2E phase proves it, after review. Its absence is not a finding.`
 
 const GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
@@ -1161,11 +1150,12 @@ const STACK_HELD_PROPERTY = {
     detail: { type: 'string', description: "tim's refusal, word for word" }
   },
   additionalProperties: false,
-  description: 'ONLY when tim refused you the workspace stack because somebody else has it. Leave it out otherwise'
+  description: 'ONLY when tim showed the workspace stack in somebody else\'s hands, not this run\'s. Leave it out otherwise'
 }
 
-// The stages that may use the workspace stack: implement, fix, the
-// consistency reviewer, baseline and ladder.
+// The stages that may use the workspace stack under the run's lease, and so
+// may find it in somebody else's hands: implement, fix, the consistency
+// reviewer, baseline and ladder.
 const withStackHeld = (schema) => ({
   ...schema,
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
@@ -1662,17 +1652,17 @@ implementor decides nothing.
       exercises the slice through the real stack.
    5. Invariants to prove — one runnable check per acceptance criterion where practical, with its expected result,
       plus any programme invariant this change could break. Other stages run these checks. Mark a check that needs
-      the workspace stack up "needs the workspace stack": the stage that runs it takes the stack's lease first and
-      gives it back after (\`tim docker lease\`), so never write how to start or stop the stack here — no
-      \`tim docker up\`, \`dev\` or \`down\`, no \`run-stack.sh\` or \`stop-stack.sh\`. The integration proof is still the
-      gate's E2E phase: for a criterion only the whole slice running end to end can prove, name the E2E rung from
+      the workspace stack up "needs the workspace stack": the run holds the stack's lease and keeps it up for every
+      increment, and the stage that runs the check uses it as it is, so never write how to start or stop the stack
+      here — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease\`, no \`run-stack.sh\` or \`stop-stack.sh\`.
+      The integration proof is still the gate's E2E phase: for a criterion only the whole slice running end to end can prove, name the E2E rung from
       gates.json that carries it, as the check.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
       gates.json — format check, lint, typecheck, unit tests, \`mvn verify\`, FIT and the tests repo's local-stack
       E2E suite, which carries the integration proof — so never list those here. List only what this increment
       needs proved on top of them and section 5, one command each in the GUARD RAILS form (\`npm --prefix\`,
       \`mvn -f\`, tilde paths), with what each proves. One that needs the workspace stack up is marked "needs the
-      workspace stack", as in section 5, and runs under the stage's lease; the slice's integration proof still
+      workspace stack", as in section 5, and runs under the run's lease; the slice's integration proof still
       belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
       repo's script that takes that project down, as a check of its own. "None" is an answer.
@@ -2069,10 +2059,39 @@ const WORKSPACE_REVIEW_LINE = `
 This row changes no backlog repo: the whole change is in the workspace repo, left unstaged. See it with
 \`git -C ${TILDE} diff HEAD -- <path>\` for each changed file, and Read any new, untracked file in full.`
 
-const gateStepFor = (phases, logs, holder) =>
-  phases.length
-    ? gateCommandList(phases, logs, holder)
-    : "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
+const NO_GATE_STEP = "   None: this row's gatePhases is [], so the gate runs nothing for it. Report green:true with no rungs."
+
+// The baseline stops at its first red phase: nothing is built on a red
+// baseline, so a later phase proves nothing. A whole-gate call runs every
+// phase side by side, so there it is one call and its rungs.
+const baselineGateStep = (phases, logs) => {
+  if (phases.length === 0) return `3. THE GATE, for the phases this row owes.\n${NO_GATE_STEP}`
+  if (owesWholeGate(phases)) {
+    return `3. THE GATE, for the phases this row owes — every one, so it is ONE command, which runs unit, FIT and E2E
+   side by side. Run it, and nothing else:
+${gateCommandList([WHOLE_GATE], logs)}
+   Its \`result.rungs[]\` holds every rung of every phase.`
+  }
+  return `3. THE GATE, for the phases this row owes. Run these, in this order, one Bash call each, and nothing else:
+${gateCommandList(phases, logs)}
+   Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.`
+}
+
+// The ladder runs everything even after a red, so it has the whole picture
+// before it repairs anything.
+const ladderGateStep = (phases, logs) => {
+  if (phases.length === 0) return `1. THE GATE.\n${NO_GATE_STEP}`
+  if (owesWholeGate(phases)) {
+    return `1. THE GATE. ONE command — the same one the baseline ran, into its own folder — which runs unit, FIT and E2E
+   side by side:
+${gateCommandList([WHOLE_GATE], logs)}
+   Its \`result.rungs[]\` holds every rung of every phase, red or green: you have the whole picture before you repair
+   anything.`
+  }
+  return `1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
+${gateCommandList(phases, logs)}
+   Run every one, even after a red one, so you have the whole picture before you repair anything.`
+}
 
 const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
@@ -2088,9 +2107,7 @@ TASK:
    must print nothing. If any is dirty or mid-merge, stop and report ok:false.
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
-3. THE GATE, for the phases this row owes. Run these, in this order, one Bash call each, and nothing else:
-${gateStepFor(phases, gateLogs(id, 'baseline'), stackHolder(id, 'baseline'))}
-   Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
+${baselineGateStep(phases, gateLogs(id, 'baseline'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
@@ -2290,7 +2307,33 @@ let built = 0
 let lastId = null
 let stopped = null
 
-while (true) {
+// The run takes the workspace stack once, here, and keeps it up across every
+// increment. A plan-only run builds nothing and never needs it.
+const runLease = PLAN_ONLY ? null : await acquireRunLease()
+
+if (!PLAN_ONLY && !runLease?.acquired) {
+  if (runLease?.refused) {
+    stopped = {
+      reason: 'stack-held',
+      detail: `the workspace stack is held by ${describeStackHolder(runLease.holder)}, so the run built nothing. ${runLease.summary}`
+    }
+  } else {
+    stopped = {
+      reason: 'stack-failed',
+      detail: `the run could not take the workspace stack, so it built nothing. ${runLease?.summary ?? 'the lease agent died'}`
+    }
+  }
+  log(`${WORKFLOW_NAME}: ${stopped.reason.toUpperCase()} before any increment — ${stopped.detail}`)
+}
+
+// Gives back what the acquire may have left: a refusal took nothing, but a
+// start that failed or timed out may have left a lease under this run's name.
+const runMayHoldLease = !PLAN_ONLY && !runLease?.refused
+
+// Every way out of the loop, a thrown error included, passes the release
+// below. The loop body keeps its old indentation inside the try.
+try {
+while (stopped === null) {
   if (STOP_AFTER !== 'all' && built >= STOP_AFTER) {
     stopped = { reason: 'count-reached', detail: `${built} increment(s) landed, which is what stopAfter asked for` }
     break
@@ -2483,7 +2526,7 @@ while (true) {
   // -----------------------------------------------------------------------
   phase('Baseline')
 
-  const baseline = await withStackLease(id, 'baseline', 'Baseline', () => agent(
+  const baseline = await agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -2505,15 +2548,13 @@ TASK:
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
    ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
    this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
-3. THE GATE. Run these, in this order, one Bash call each, and nothing else:
-${gateCommandList(GATE_PHASES, gateLogs(id, 'baseline'), stackHolder(id, 'baseline'))}
-   Stop after the first one that comes back red: nothing is built on a red baseline, so a later phase proves nothing.
+${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
-  ))
+  )
 
   // A stack somebody else holds is not a red tree: nothing about this
   // increment's code has been tested, and a human rules on the holder.
@@ -2610,7 +2651,7 @@ ${baselineRungList(baseline)}`
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await withStackLease(id, 'implement', 'Implement', () => agent(
+    : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
 ${GUARDRAILS}
@@ -2651,7 +2692,7 @@ including anything the increment got wrong and any diagnosis of a red suite you 
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
 ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`${REPO_KEYS[0]}:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
     code({ label: `${id} implement`, phase: 'Implement', schema: withStackHeld(incrementSchema) })
-  ))
+  )
 
   const attempt = { id, ticket, workBranch }
 
@@ -2791,7 +2832,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    withStackLease(id, 'consistency', 'Review', () => agent(
+    agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -2808,10 +2849,10 @@ an acceptance criterion nothing in the change proves; and the plan's section 5 �
 report any that fails as a finding. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
-${stackLeaseRule(id, 'consistency')}
+${RUN_STACK_RULE}
 Return the structured output only.`,
       think({ label: `${id} consistency`, phase: 'Review', schema: withStackHeld(FINDINGS_SCHEMA) })
-    ))
+    )
 
   // Codex reviews at the same granularity as Claude: one run per group applying
   // that group's personas (style + code, code alone for docs), plus one
@@ -3042,7 +3083,7 @@ ${impl.notes || '(none)'}${mergeNote}`,
         break
       }
     } else {
-      fixResult = await withStackLease(id, 'fix', 'Fix', () => agent(
+      fixResult = await agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
 ${GUARDRAILS}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
@@ -3061,7 +3102,7 @@ If a rung goes red for a reason that is not your fix — a port held, an environ
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
         code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
-      ))
+      )
       if (fixResult?.stackHeld) {
         await stopForHeldStack('fix', 'Fix', fixResult.stackHeld)
         break
@@ -3087,7 +3128,7 @@ FIXER — ${fixerReport()}`
   // -----------------------------------------------------------------------
   phase('Ladder')
 
-  const ladder = await withStackLease(id, 'ladder', 'Ladder', () => agent(
+  const ladder = await agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${GUARDRAILS}
 ${readIncrement(id)}
@@ -3100,14 +3141,11 @@ ${baselineEvidence}
 
 TASK — the ladder, IN ORDER. Every rung runs here, after the fix stage, even one the implementor or fixer already
 ran green: their runs are evidence, not proof.
-1. THE GATE. These, in this order, one Bash call each — the same commands the baseline ran, into their own folder:
-${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'), stackHolder(id, 'ladder'))}
-   Run every one, even after a red one, so you have the whole picture before you repair anything.
+${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
 2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
    \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run. One that needs
-   the workspace stack up runs inside your lease, as THE WORKSPACE STACK below says, after every gate phase and never
-   between them.
+   the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
@@ -3145,13 +3183,13 @@ ${gateStepFor(rowGatePhases, gateLogs(id, 'ladder'), stackHolder(id, 'ladder'))}
 - A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
   start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
   \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.
-${stackLeaseRule(id, 'ladder')}
+${RUN_STACK_RULE}
 In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran. In failures[], one line per red rung
 or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
-  ))
+  )
 
   // -----------------------------------------------------------------------
   // Land — commit on green, non-destructive rollback on red.
@@ -3793,6 +3831,17 @@ Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
     results.push({ id, ticket: ticket?.key, outcome: 'halted-at-gate', detail: gate.summary })
     stopped = { reason: 'gate', detail: `${id}: ${gate.summary}` }
     break
+  }
+}
+} finally {
+  if (runMayHoldLease) {
+    const released = await releaseRunLease()
+    if (!released?.ok) {
+      const why = (released?.summary ?? 'the release agent died').replace(/\.$/, '')
+      const leftBehind = `The run's workspace stack lease could not be given back — ${why}. Give it back with \`tim docker lease release --holder "${RUN_HOLDER}"\``
+      log(`${WORKFLOW_NAME}: ${leftBehind}`)
+      if (stopped) stopped = { ...stopped, detail: `${stopped.detail.replace(/\.$/, '')}. ${leftBehind}` }
+    }
   }
 }
 

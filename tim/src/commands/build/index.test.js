@@ -193,6 +193,43 @@ describe('tim build gate', () => {
     expect(run.stdout).not.toContain('SHOULD-ONLY-BE-IN-THE-LOG')
   })
 
+  test('runs serially with --serial and says so, with how long it took', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--serial',
+      '--json'
+    ])
+
+    expect(envelopeOf(run).result).toEqual(
+      expect.objectContaining({
+        serial: true,
+        durationMs: expect.any(Number),
+        phases: { unit: { durationMs: expect.any(Number) } }
+      })
+    )
+  })
+
+  test('runs repos at the same time by default', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json'
+    ])
+
+    expect(envelopeOf(run).result.serial).toBe(false)
+  })
+
   test('refuses an unknown phase', async () => {
     seedGateRepo({ test: 'echo tested' })
 
@@ -233,6 +270,38 @@ describe('renderGateText for a held stack', () => {
     ).toBe(
       'The workspace stack was not the gate’s to use: The workspace stack is leased to "x".'
     )
+  })
+})
+
+describe('renderGateText for a stack its holder already leased', () => {
+  test('says which services it rebuilt, restarted and left, and how long each phase took', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [],
+        durationMs: 251_400,
+        phases: { unit: { durationMs: 105_000 }, e2e: { durationMs: 250_600 } },
+        serial: false,
+        stack: {
+          wasUp: true,
+          startedForE2e: false,
+          stoppedAfter: false,
+          held: null,
+          refresh: {
+            ok: true,
+            rebuilt: ['trade-imports-plants-frontend'],
+            restarted: [],
+            left: ['trade-imports-stub', 'trade-imports-ins-backend']
+          }
+        }
+      })
+        .split('\n')
+        .slice(1, 3)
+    ).toEqual([
+      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: trade-imports-plants-frontend. Restarted: none. Left as they were: trade-imports-stub, trade-imports-ins-backend.',
+      'Took 251s (unit 105s, e2e 251s), unit and FIT first, repos at the same time, then performance, then E2E.'
+    ])
   })
 })
 

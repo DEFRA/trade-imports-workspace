@@ -48,7 +48,8 @@ const gateOptionsSchema = z.object({
       /^[^\n\r"'`$]+$/,
       'The holder must be one line with no quotes, backticks or $.'
     )
-    .optional()
+    .optional(),
+  serial: z.boolean()
 })
 
 const describeBranchRepo = ({
@@ -84,23 +85,44 @@ const describeRung = ({ repo, name, phase, ok, durationMs, reason }) =>
     ? `  pass  ${phase}  ${repo} ${name} (${Math.round(durationMs / 1000)}s)`
     : `  FAIL  ${phase}  ${repo} ${name} — ${reason}`
 
+const seconds = (durationMs) => `${Math.round(durationMs / 1000)}s`
+
+const listOrNone = (services) =>
+  services.length > 0 ? services.join(', ') : 'none'
+
+const describeRefresh = (refresh) =>
+  refresh
+    ? ` Rebuilt: ${listOrNone(refresh.rebuilt)}. Restarted: ${listOrNone(refresh.restarted)}. Left as they were: ${listOrNone(refresh.left)}.`
+    : ''
+
 const describeStack = ({
   wasUp,
   startedForE2e,
   stoppedAfter,
   downError,
-  held
+  held,
+  refresh = null
 }) => {
   if (held) {
     return `The workspace stack was not the gate’s to use: ${held.detail}`
   }
   if (wasUp === null) return 'The gate did not use the workspace stack.'
   if (!startedForE2e) {
-    return 'The workspace stack was already up under this holder’s lease. The gate rebuilt it from local source and left it up.'
+    return `The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up.${describeRefresh(refresh)}`
   }
   return stoppedAfter
     ? 'The gate started the workspace stack from local source and stopped it afterwards.'
     : `The gate started the workspace stack and could not stop it: ${downError}`
+}
+
+const describeTiming = ({ durationMs, phases, serial }) => {
+  const perPhase = Object.entries(phases)
+    .map(([phase, { durationMs: phaseMs }]) => `${phase} ${seconds(phaseMs)}`)
+    .join(', ')
+  const how = serial
+    ? 'one rung at a time'
+    : 'unit and FIT first, repos at the same time, then performance, then E2E'
+  return `Took ${seconds(durationMs)}${perPhase ? ` (${perPhase})` : ''}, ${how}.`
 }
 
 /**
@@ -109,7 +131,15 @@ const describeStack = ({
  * @param {{green: boolean, logs: string, rungs: object[], stack: object}} outcome
  * @returns {string}
  */
-export const renderGateText = ({ green, logs, rungs, stack }) => {
+export const renderGateText = ({
+  green,
+  logs,
+  rungs,
+  stack,
+  durationMs,
+  phases = {},
+  serial = false
+}) => {
   const failures = rungs.filter(({ ok }) => !ok).length
   return [
     green
@@ -117,6 +147,9 @@ export const renderGateText = ({ green, logs, rungs, stack }) => {
       : `Gate failed: ${failures} of ${rungs.length} rungs failed.`,
     ...rungs.map(describeRung),
     describeStack(stack),
+    ...(durationMs === undefined
+      ? []
+      : [describeTiming({ durationMs, phases, serial })]),
     `Logs are in ${logs}.`
   ].join('\n')
 }
@@ -221,14 +254,19 @@ const registerGate = (build, timVersion) =>
     )
     .option(
       '--holder <text>',
-      'Who the gate takes the workspace stack lease as for its E2E phase (default: this gate run)'
+      'Who the gate takes the workspace stack lease as for its E2E phase: a build run passes its run id, so the gate reuses the run’s stack (default: this gate run)'
+    )
+    .option(
+      '--serial',
+      'Run one rung at a time: every unit rung, then every FIT rung, then E2E (to compare against the default)',
+      false
     )
     .description(
-      "Run the backlog's rungs from gates.json in order: unit, then FIT, then E2E against the workspace stack built from local source, under a lease (see tim docker lease). A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Exits 1 unless every rung passed."
+      "Run the backlog's rungs from gates.json: unit and FIT rungs, and E2E against the workspace stack built from local source, under a lease (see tim docker lease). It runs in three layers, each once the one before has finished (passed or not): every unit and FIT rung, each repo's in order while other repos run at the same time; then every exclusive E2E rung (a performance test) on its own; then the other E2E rungs one after another. The stack gets ready during the first layer. --serial runs one rung at a time instead. A stack this holder already leases is not rebuilt: only the services whose files changed are rebuilt or restarted. A stack leased to anyone else, or up with no lease, is refused and left alone, and the result's stack.held names who has it. Every rung writes to its own log. Exits 1 unless every rung passed."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T090000Z inc-003 ladder" --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -237,7 +275,8 @@ const registerGate = (build, timVersion) =>
           workarea,
           phase: opts.phase,
           logs: opts.logs,
-          holder: opts.holder
+          holder: opts.holder,
+          serial: opts.serial === true
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
@@ -246,6 +285,7 @@ const registerGate = (build, timVersion) =>
           workspaceRoot,
           workarea: parsed.workarea,
           phase: parsed.phase,
+          serial: parsed.serial,
           logsDir: parsed.logs ? resolve(parsed.logs) : undefined,
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })

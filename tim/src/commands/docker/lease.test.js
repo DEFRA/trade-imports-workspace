@@ -122,7 +122,7 @@ describe('tim docker lease acquire', () => {
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,
       stderr:
-        'Name the holder with --holder, such as "ibl-20261001T090000Z inc-003 ladder".'
+        'Name the holder with --holder, such as the build run’s id, "ibl-20261001T090000Z".'
     })
   })
 })

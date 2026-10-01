@@ -175,7 +175,7 @@ missing key. The first log line is the resolved configuration.
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
 | `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word other than `workspace`. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path or slug differs from the envelope's |
-| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (start, branch, branch guard, merge start, baseline, land, preserve, lease release, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (start, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
@@ -222,11 +222,14 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 42 on
-  Codex, so a run fits roughly 25 or 23 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 36 agents on Claude and 42 on
+  Codex, so a run fits roughly 27 or 23 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
-- at **`stack-held`**, when a stage needed the workspace stack and somebody else holds it
-  (see [The workspace stack lease](#the-workspace-stack-lease)). A human rules on the holder;
+- at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
+  when the run cannot take its lease, or part-way through one, when a stage finds the stack
+  is no longer the run's (see [The workspace stack lease](#the-workspace-stack-lease)). A
+  human rules on the holder;
+- at **`stack-failed`**, before any increment, when the run cannot start the workspace stack;
 - at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
   `main-red` and the rest, each named in `../references/BUILD.md`.
 
@@ -295,21 +298,21 @@ of the six, merged in its row's order.
 | Stage | Agents | What it does |
 |---|---|---|
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
-| Baseline | 1 | Refuses a dirty tree, then runs `tim build gate` one phase at a time (unit, FIT, E2E) into `logs/<id>-baseline/` and reports each rung as tim printed it. Baseline green is gate green, so any later red is unambiguously ours |
+| Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
 | Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js` |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack only under its own lease |
+| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
-| Ladder | 1 | Runs `tim build gate` one phase at a time into `logs/<id>-ladder/`, then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
-unit, `mvn verify`, FIT after a free-port check, and the tests repo's local-stack E2E — and
-for E2E takes the workspace stack's lease as the stage's holder: it starts the stack only if
-it was down, stops only what it started, and refuses a stack anybody else holds. No agent
-picks those scripts. The ladder
+unit, `mvn verify`, FIT after a free-port check, and the tests repo's local-stack E2E. Every
+gate command passes the run's holder with `--holder`, so its E2E phase reuses the stack the
+run already holds, rebuilding only what changed, and refuses a stack anybody else holds. No
+agent picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
@@ -354,13 +357,22 @@ The workspace resolve and the preflight's envelope-against-args check stay in th
 
 ### The workspace stack lease
 
-The workspace stack is one compose project per machine, and a stage may use it only under a
-lease: `tim docker lease acquire --holder "<run> <increment> <stage>"`, the check, then
-`tim docker lease release` before the stage returns (and before the gate's FIT phase, whose
-ports the stack holds). The run id is `ibl-<the time the workspace agent read>`, so a resumed
-run keeps it. The implementor, fixer, consistency reviewer and ladder each get a holder of
-their own; the baseline and ladder pass theirs to `tim build gate --holder` for its E2E phase.
-Reviewers, verifiers and the judge get none, and never touch the stack.
+The workspace stack is one compose project per machine, and the run holds it for its whole
+length under one lease. The holder is the run id, `ibl-<the time the workspace agent read>`,
+so a resumed run keeps it.
+
+1. **At the start**, after the preflight and before the first increment, a light agent runs
+   `tim docker lease acquire --holder "<run id>" --mode dev`, which starts the stack from
+   local source. A `planOnly` run builds nothing and takes no lease.
+2. **Every increment reuses it.** The stack stays up across every increment. Every gate
+   command — baseline, implementor, fixer, ladder and the Codex unit phase — passes
+   `--holder "<run id>"`, so the gate's E2E phase uses the stack the run holds and rebuilds
+   only what changed. A plan check that needs the stack runs against it as it is. No stage
+   takes or gives back a lease, or starts, stops or rebuilds the stack. A check that cannot
+   reach it runs `tim docker lease status` once to see whether the lease is still the run's.
+3. **At the end**, whatever stopped the run — a thrown error included — a light agent runs
+   `tim docker lease release --holder "<run id>"`, which takes the stack down and clears the
+   lease. If that fails, the run's `stopped.detail` says so and gives the command.
 
 `acquire` starts a stack that is down and records its container ids in the lease. It reuses a
 stack the same holder leases only when that start finished and the containers are still the
@@ -372,19 +384,28 @@ a lock, so two processes never both start the stack. While a lease is held,
 `tim docker up|dev|down|restart|bounce-backend` refuse unless given `--force`, which the loop
 never passes.
 
-After every stage that may hold the stack, the script gives that stage's own lease back with a
-light agent, whatever the stage did, so a lease an agent forgot never reaches the next
-increment. A refused stage returns `stackHeld` and runs nothing that needs the stack. The
-script rules:
+The script rules on anybody else holding the stack:
 
-- **An earlier stage of the same increment in the same run holds it** — a leak. The loop
-  releases that lease with a light agent and runs the stage once more.
-- **Anything else** — another run, another session, another increment, or no lease — stops
-  the run at `stack-held`, naming the holder, for a human ruling. A stop after implement goes
-  through the preserve step like any other.
+- **At the start**, a refused acquire stops the run at `stack-held` before any increment,
+  naming the holder, and gives nothing back. A start that fails stops it at `stack-failed`,
+  and the end-of-run release clears whatever the failed start left.
+- **Part-way through**, a stage whose gate reports `result.stack.held`, or whose lease check
+  finds the lease gone or someone else's, returns `stackHeld` and runs nothing more that
+  needs the stack. The run stops at `stack-held`, naming the holder, for a human ruling. A
+  stop after implement goes through the preserve step like any other.
 
-Plans may name a check that needs the stack again, marked "needs the workspace stack"; the
-stage that runs it takes the lease. The integration proof is still the gate's E2E rung.
+**A run that dies leaves its lease behind.** The release runs on every way out of the
+script, but not when the `Workflow` run itself is killed, the session ends or the machine
+restarts mid-run. The stack is then still up, leased to the dead run, and the next run
+stops at `stack-held` naming it. Check with `tim docker lease status`, then give it back
+yourself:
+
+```
+tim docker lease release --holder "<run id>"
+```
+
+Plans may name a check that needs the stack, marked "needs the workspace stack"; the stage
+that runs it uses the run's stack. The integration proof is still the gate's E2E rung.
 
 The reviewers follow the personas the skills already ship —
 `review/references/{FILE_REVIEWER,CONSISTENCY_REVIEWER,REVIEW_ITEM_FIXER}.md` and

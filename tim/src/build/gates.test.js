@@ -78,6 +78,37 @@ describe('the workspace gates.json', () => {
     )
   })
 
+  test('gives each fit rung the port its test:fit:ci serves on, clear of the workspace stack', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const fitPorts = Object.fromEntries(
+      Object.entries(gates.repos).flatMap(([folder, { rungs }]) =>
+        rungs
+          .filter(({ phase }) => phase === 'fit')
+          .map(({ ports }) => [folder, ports])
+      )
+    )
+
+    expect(fitPorts).toEqual({
+      'trade-imports-plants-frontend': [3053],
+      'trade-imports-animals-frontend': [3050],
+      'trade-imports-ins-frontend': [3052]
+    })
+  })
+
+  test('runs the performance suite, and only it, as an exclusive rung', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const exclusive = Object.entries(gates.repos).flatMap(
+      ([folder, { rungs }]) =>
+        rungs
+          .filter(({ exclusive }) => exclusive)
+          .map(({ name }) => `${folder}:${name}`)
+    )
+
+    expect(exclusive).toEqual(['trade-imports-performance-tests:e2e-k6'])
+  })
+
   test('runs the tests repo end to end only through test:docker-compose', () => {
     const gates = loadGates(workspaceRoot)
 
@@ -165,6 +196,20 @@ describe('parseGates', () => {
     )
 
     expect(problems.message).toContain('names the repos it covers in forRepos')
+  })
+
+  test('refuses an exclusive rung that is not an e2e rung', () => {
+    const problems = problemsOf(
+      gatesWith({
+        frontend: {
+          rungs: [{ ...unitRung('unit', 'test'), exclusive: true }]
+        }
+      })
+    )
+
+    expect(problems.message).toContain(
+      'Only an e2e rung can be exclusive: an exclusive rung runs against the workspace stack on its own, after every other rung has finished.'
+    )
   })
 
   test('refuses ports on a rung that is not a fit rung', () => {

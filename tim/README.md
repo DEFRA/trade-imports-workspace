@@ -227,19 +227,22 @@ subcommand. It runs the Playwright tim installs, in
 
 ### `tim docker lease` — who holds the workspace stack
 
-The workspace stack is one compose project per machine. A build stage that
-needs it takes a lease first and gives it back before it finishes, so a stack
-is never left up with nobody owning it.
+The workspace stack is one compose project per machine. A build run takes
+one lease, held as its run id alone (such as `ibl-20261001T150000Z`), when
+it starts; every stage and gate in the run passes that same `--holder`, so
+each reuses the run's stack; the run gives the lease back when it ends. A
+stack is never left up with nobody owning it.
 
 ```bash
-tim docker lease acquire --holder "ibl-20261001T090000Z inc-003 ladder" --json  # start it, or reuse your own
-tim docker lease release --holder "ibl-20261001T090000Z inc-003 ladder" --json  # take down what you started
+tim docker lease acquire --holder "ibl-20261001T150000Z" --json  # start it, or reuse your own
+tim docker lease release --holder "ibl-20261001T150000Z" --json  # take down what you started
 tim docker lease status --json                                                    # up or down, and who holds it
 ```
 
 - `acquire` on a stack that is down records the lease, then starts it
   (`run-stack.sh -d`; `--mode up` for the published images) and records its
-  container ids. On a stack the same holder already leases it reuses it as it
+  container ids and, in dev mode, each locally built service's build and
+  source fingerprints (what `tim build gate` compares on reuse). On a stack the same holder already leases it reuses it as it
   is, but only when that start finished and the containers are still the ones
   recorded. A start of the holder's own that died part-way (a timeout killing
   `acquire`, say) is taken down and started again; one still running is
@@ -287,9 +290,10 @@ tim build start shared/my-programme --base main --jira-project EUDPA --epic EUDP
   --in-dev-status "In Dev" --done-status Done --board 13780 --json  # derive, ticket, branch
 tim build branch shared/my-programme feat/EUDPA-123-origin --json   # every backlog repo on one branch
 tim build gate shared/my-programme --phase unit --json      # unit rungs only
-tim build gate shared/my-programme --json                   # unit, then FIT, then E2E
+tim build gate shared/my-programme --json                   # unit+FIT (repos at once), then k6 alone, then E2E
+tim build gate shared/my-programme --serial --json          # one rung at a time: unit, then FIT, then E2E
 tim build gate shared/my-programme --logs /tmp/gate --json  # logs somewhere other than <workarea>/logs/
-tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T090000Z inc-003 ladder" --json
+tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json
 ```
 
 `tim build start` starts one increment, in three steps. **Derive**: the
@@ -317,19 +321,43 @@ files). Running it again is a no-op.
 
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog
-repo, in backlog order: every unit rung, then every FIT rung (after checking
-its ports are free — a held port fails the rung and names the holder), then
-the E2E rungs against the workspace stack built from local source
-(`run-stack.sh -d`, the path `tim docker dev` takes), under a stack lease
-held as `--holder` (default: this gate run). If the stack was down, the gate
-starts it, leases it and always releases it afterwards; if this holder
-already leases it, the gate rebuilds it from local source and leaves it up. A
+repo: the unit rungs, the FIT rungs (each after checking its ports are free —
+a held port fails the rung and names the holder) and the E2E rungs against
+the workspace stack built from local source (`run-stack.sh -d`, the path
+`tim docker dev` takes), under a stack lease held as `--holder` (default:
+this gate run). It runs in three layers, each starting only once the one
+before has finished — passed or not. Layer one is every unit and FIT rung:
+each repo's in the order gates.json lists them, while other repos run at the
+same time. Layer two is every rung gates.json marks `exclusive` (the k6
+performance suite), one at a time with nothing else running, so a
+performance test never shares the machine. It goes before the Playwright
+E2E so k6 measures a stack the E2E suite has not yet filled with data.
+Layer three is the other E2E rungs, one after another. Taking the lease and
+starting or refreshing the stack begins straight away, during layer one,
+and is finished before layer two starts. Each FIT rung serves on its own port, clear
+of the stack's, so FIT runs while the stack is up. `--serial` runs one rung at a time instead —
+every unit rung, then every FIT rung, then E2E — to compare against.
+Whichever way it runs, `rungs` comes back in plan order.
+
+If the stack was down, the gate starts it, leases it and always releases it
+afterwards. If this holder already leases it, the gate does not start it
+again: it rebuilds only the services whose image inputs changed, restarts
+only those whose bind-mounted `src/` changed (waiting until each is healthy),
+and leaves the rest — see `docker/stack/AGENTS.md` for the fingerprints. A
 stack leased to anyone else, or up with no lease, is refused and left alone,
 and so is a FIT port such a stack holds: `stack.held` names the holder (null
-for no lease) and the reason. Each rung writes to
-`gate-<repo>-<rung>.log`; nothing streams. A rung that cannot run fails with
-its reason. The result is `{green, rungs, stack}` and the command exits 1
-unless every rung passed. gates.json refuses any rung that names a remote or
+for no lease) and the reason. Each rung writes to `gate-<repo>-<rung>.log`;
+nothing streams. A rung that cannot run fails with its reason.
+
+The result is `{green, phase, serial, logs, durationMs, phases, layers,
+rungs, stack}`: `durationMs` is the gate's own wall-clock time,
+`phases.<unit|fit|e2e>.durationMs` each phase's (for E2E, the E2E rungs plus
+any wait for the stack that ran on past layer one), and
+`layers.local`, `layers.performance` and `layers.e2e` (each `{durationMs}`)
+the time to the end of layer one, the exclusive rungs, and everything else
+after layer one (other E2E rungs, any wait for the stack, taking it down). `stack.refresh` is null unless the stack was reused, then
+`{ok, rebuilt, restarted, left, rebuildLog, restartLog, reason}`. The
+command exits 1 unless every rung passed. gates.json refuses any rung that names a remote or
 CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
 machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
 on a 16 GB machine) in its shell profile.

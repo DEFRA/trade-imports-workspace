@@ -1,18 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runToLog } from '../exec/exec.js'
-import { runStackScriptToLog } from '../exec/stack.js'
 import {
   acquireStack,
   releaseStack,
-  recordLeaseContainers,
   readLease,
   describeLease,
   defaultLeasePath
 } from '../exec/stack-lease.js'
+import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
-import { loadGates, planRungs, MVN_VERIFY } from './gates.js'
+import { loadGates, planRungs, MVN_VERIFY, PHASES } from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
@@ -26,10 +25,6 @@ export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
  */
 export const defaultGateHolder = (workarea) =>
   `tim build gate ${workarea} (pid ${process.pid})`
-
-// run-stack.sh -d builds the repo-backed services from local source under
-// repos/, so the stack serves the branch each repo is on.
-const DEV_STACK_ARGS = ['-d']
 
 /**
  * The folder a gate's logs go to by default: `logs/` beside the backlog.
@@ -189,13 +184,58 @@ const runFitRung = async (rung, context) => {
   return held.length > 0 ? failed(rung, held.join(' ')) : runRung(rung, context)
 }
 
-const runInOrder = async (rungs, runOne) => {
-  const results = []
-  for (const rung of rungs) {
-    results.push(await runOne(rung))
-  }
-  return results
+const runLocalRung = (rung, context) =>
+  rung.phase === 'fit' ? runFitRung(rung, context) : runRung(rung, context)
+
+// Each rung's wall-clock span, so a phase's span can be told from its rungs
+// however they overlapped.
+const timed = async (rung, runOne) => {
+  const startedAt = performance.now()
+  const result = await runOne(rung)
+  return { rung, result, startedAt, endedAt: performance.now() }
 }
+
+const runInOrder = async (rungs, runOne) => {
+  const runs = []
+  for (const rung of rungs) {
+    runs.push(await timed(rung, runOne))
+  }
+  return runs
+}
+
+// Each repo's rungs run in plan order, one after another: a repo's FIT
+// builds its frontend into the same folder its unit rungs read, so they
+// never overlap. Different repos run at the same time. Results come back in
+// plan order, whatever order they finished in.
+const runEachRepoAtOnce = async (rungs, runOne) => {
+  const positioned = rungs.map((rung, position) => ({ rung, position }))
+  const chains = Object.values(
+    Object.groupBy(positioned, ({ rung }) => rung.repo)
+  )
+  const finished = await Promise.all(
+    chains.map(async (chain) => {
+      const runs = await runInOrder(
+        chain.map(({ rung }) => rung),
+        runOne
+      )
+      return runs.map((run, index) => ({
+        ...run,
+        position: chain[index].position
+      }))
+    })
+  )
+  return finished.flat().sort((left, right) => left.position - right.position)
+}
+
+const elapsedSince = (startedAt) => Math.round(performance.now() - startedAt)
+
+const spanOf = (runs) =>
+  runs.length === 0
+    ? 0
+    : Math.round(
+        Math.max(...runs.map(({ endedAt }) => endedAt)) -
+          Math.min(...runs.map(({ startedAt }) => startedAt))
+      )
 
 const logIn = (context, logName) => join(context.logsDir, logName)
 
@@ -207,7 +247,8 @@ const NO_E2E_STACK = {
   upLog: null,
   downLog: null,
   downError: null,
-  held: null
+  held: null,
+  refresh: null
 }
 
 const failAll = (rungs, reason) => rungs.map((rung) => failed(rung, reason))
@@ -234,27 +275,29 @@ const takeLease = async (context) => {
   }
 }
 
-// A rebuild recreates containers, so the lease records their new ids: a
-// later release then knows the stack is still the holder's own.
-const rebuild = async (context) => {
+const refresh = async (context, lease) => {
   try {
-    const up = await runStackScriptToLog({
+    return await refreshLeasedStack({
       workspaceRoot: context.workspaceRoot,
-      script: 'run-stack.sh',
-      args: DEV_STACK_ARGS,
-      env: context.env,
-      logPath: logIn(context, 'gate-stack-up.log')
+      holder: context.holder,
+      leasePath: context.leasePath,
+      lease: lease.lease,
+      logPaths: {
+        rebuild: logIn(context, 'gate-stack-rebuild.log'),
+        restart: logIn(context, 'gate-stack-restart.log')
+      },
+      env: context.env
     })
-    if (up.exitCode === 0) {
-      await recordLeaseContainers({
-        holder: context.holder,
-        leasePath: context.leasePath,
-        env: context.env
-      })
-    }
-    return up
   } catch (error) {
-    return { exitCode: null, log: null, error: messageOf(error) }
+    return {
+      ok: false,
+      rebuilt: [],
+      restarted: [],
+      left: [],
+      rebuildLog: null,
+      restartLog: null,
+      reason: `Can't bring the workspace stack up to date with local source: ${messageOf(error)}`
+    }
   }
 }
 
@@ -272,10 +315,6 @@ const giveBack = async (context) => {
   }
 }
 
-const rebuildFailure = (up) =>
-  up.error ??
-  `The workspace stack did not come up (run-stack.sh exited ${up.exitCode}). Read ${up.log}.`
-
 const refusedE2e = (rungs, lease) => ({
   results: failAll(rungs, lease.reason),
   stack: {
@@ -286,29 +325,52 @@ const refusedE2e = (rungs, lease) => ({
   }
 })
 
+const isExclusive = (rung) => rung.exclusive === true
+
+// Exclusive rungs (performance tests) go first, so they measure a stack the
+// E2E suite has not yet filled with data. Serially, plan order is kept.
+const e2eRunOrder = (rungs, context) =>
+  context.exclusiveFirst
+    ? [
+        ...rungs.filter(isExclusive),
+        ...rungs.filter((rung) => !isExclusive(rung))
+      ]
+    : rungs
+
+const inPlanOrder = (rungs, runs) => {
+  const byRung = new Map(runs.map((run) => [run.rung, run]))
+  return rungs.map((rung) => byRung.get(rung))
+}
+
+// The stack can get ready while the unit and FIT rungs run, but no e2e rung
+// starts until they have all finished. The e2e rungs then run one at a
+// time, so an exclusive rung never shares the machine with another rung.
+const runE2eRungs = async (rungs, context) => {
+  await context.localDone
+  const runs = await runInOrder(e2eRunOrder(rungs, context), (rung) =>
+    runRung(rung, context)
+  )
+  const ordered = inPlanOrder(rungs, runs)
+  return { results: ordered.map(({ result }) => result), runs: ordered }
+}
+
 const runLeasedRungs = async (rungs, context, lease) => {
-  if (!lease.reused) {
-    return {
-      results: await runInOrder(rungs, (rung) => runRung(rung, context))
-    }
+  if (!lease.reused) return runE2eRungs(rungs, context)
+  const refreshed = await refresh(context, lease)
+  if (!refreshed.ok) {
+    return { refresh: refreshed, results: failAll(rungs, refreshed.reason) }
   }
-  const up = await rebuild(context)
-  return {
-    upLog: up.log,
-    results:
-      up.exitCode === 0
-        ? await runInOrder(rungs, (rung) => runRung(rung, context))
-        : failAll(rungs, rebuildFailure(up))
-  }
+  return { refresh: refreshed, ...(await runE2eRungs(rungs, context)) }
 }
 
 /**
  * Run the e2e rungs against the workspace stack built from local source,
  * under a lease held as the gate's own holder. A stack that is down is
  * started, leased, and always released again, whatever happened. A stack
- * this holder already leases is rebuilt from local source and left up. A
- * stack leased to anyone else, or up with no lease, is refused and left
- * exactly as it is.
+ * this holder already leases is brought up to date service by service
+ * (rebuilt, restarted or left, see refreshLeasedStack) and left up. A stack
+ * leased to anyone else, or up with no lease, is refused and left exactly as
+ * it is.
  */
 const runE2e = async (rungs, context) => {
   const blockers = rungs.map((rung) => rung.refusal ?? cannotRunBecause(rung))
@@ -336,9 +398,10 @@ const runE2e = async (rungs, context) => {
   }
   return {
     results: ran.results,
+    runs: ran.runs ?? [],
     stack: {
       ...stack,
-      upLog: ran.upLog ?? stack.upLog,
+      refresh: ran.refresh ?? null,
       stoppedAfter: down?.released === true,
       downLog: down?.log ?? null,
       downError: down && !down.released ? down.reason : null
@@ -348,31 +411,113 @@ const runE2e = async (rungs, context) => {
 
 const byPhase = (plan, phase) => plan.filter((rung) => rung.phase === phase)
 
+const runE2eTimed = async (rungs, context) => {
+  const startedAt = performance.now()
+  const outcome = await runE2e(rungs, context)
+  return { ...outcome, startedAt, endedAt: performance.now() }
+}
+
+// One rung at a time, unit then FIT then the e2e phase: the order the gate
+// used before it ran repos at once, kept so the two can be compared.
+const runSerially = async (plan, context) => {
+  const runOne = (rung) => runLocalRung(rung, context)
+  const unit = await runInOrder(byPhase(plan, 'unit'), runOne)
+  const fit = await runInOrder(byPhase(plan, 'fit'), runOne)
+  const localEndedAt = performance.now()
+  const e2e = await runE2eTimed(byPhase(plan, 'e2e'), context)
+  return { local: [...unit, ...fit], localEndedAt, e2e }
+}
+
+// Three layers, each after the one before has finished, passed or not.
+// Layer one is every unit and FIT rung, repos at the same time; taking the
+// lease and getting the stack ready start beside it. Layer two is every
+// exclusive e2e rung, alone. Layer three is the other e2e rungs.
+const runInLayers = async (plan, context) => {
+  const layerOne = runEachRepoAtOnce(
+    plan.filter((rung) => rung.phase !== 'e2e'),
+    (rung) => runLocalRung(rung, context)
+  ).then((local) => ({ local, localEndedAt: performance.now() }))
+  const [{ local, localEndedAt }, e2e] = await Promise.all([
+    layerOne,
+    runE2eTimed(byPhase(plan, 'e2e'), {
+      ...context,
+      localDone: layerOne,
+      exclusiveFirst: true
+    })
+  ])
+  return { local, localEndedAt, e2e }
+}
+
+// The e2e phase counts its rungs and any wait for the stack that ran on
+// past layer one, not stack work layer one already covered.
+const e2eDurationMs = ({ localEndedAt, e2e }) =>
+  Math.round(e2e.endedAt - Math.max(localEndedAt, e2e.startedAt))
+
+const phaseDurationMs = (phase, ran) =>
+  phase === 'e2e'
+    ? e2eDurationMs(ran)
+    : spanOf(ran.local.filter(({ result }) => result.phase === phase))
+
+const phaseDurations = (plan, ran) =>
+  Object.fromEntries(
+    PHASES.filter((phase) => plan.some((rung) => rung.phase === phase)).map(
+      (phase) => [phase, { durationMs: phaseDurationMs(phase, ran) }]
+    )
+  )
+
+const exclusiveMs = (runs) =>
+  runs
+    .filter(({ rung }) => isExclusive(rung))
+    .reduce((total, { startedAt, endedAt }) => total + endedAt - startedAt, 0)
+
+// Everything in the e2e phase after layer one that is not an exclusive rung
+// (the other e2e rungs, any wait for the stack, taking it down) counts to
+// the e2e layer.
+const layerDurations = (startedAt, ran) => {
+  const performanceMs = exclusiveMs(ran.e2e.runs ?? [])
+  const afterLocalMs = Math.max(0, ran.e2e.endedAt - ran.localEndedAt)
+  return {
+    local: { durationMs: Math.round(ran.localEndedAt - startedAt) },
+    performance: { durationMs: Math.round(performanceMs) },
+    e2e: { durationMs: Math.max(0, Math.round(afterLocalMs - performanceMs)) }
+  }
+}
+
 /**
- * Run a backlog's gate: every unit rung, then every FIT rung (each after a
- * check that its ports are free), then the e2e rungs against the workspace
- * stack. Every rung's output goes to its own log; a rung that cannot run is
- * a failure with its reason, never left out.
+ * Run a backlog's gate: the unit and FIT rungs (each FIT rung after a check
+ * that its ports are free) and the e2e rungs against the workspace stack.
+ * By default it runs in three layers, each once the one before has
+ * finished: each repo's unit and FIT rungs, in order, with other repos' at
+ * the same time; then every exclusive e2e rung (a performance test) alone;
+ * then the other e2e rungs one after another. The stack lease and the stack
+ * itself get ready during the first layer. `serial`
+ * runs one rung at a time instead: every unit rung, then every FIT rung,
+ * then the e2e phase. Rungs come back in plan order either way. Every
+ * rung's output goes to its own log; a rung that cannot run is a failure
+ * with its reason, never left out.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
+ * @param {boolean} [args.serial] - Run one rung at a time, phase after phase
  * @param {string} [args.logsDir]
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
  * @param {string} [args.leasePath] - The stack lease file
  * @param {object} [args.env] - Extra environment for every command the gate runs
- * @returns {Promise<{green: boolean, phase: string, logs: string, rungs: object[], stack: object}>}
+ * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], stack: object}>}
  */
 export const runGate = async ({
   workspaceRoot,
   workarea,
   phase = 'all',
+  serial = false,
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
   env
 }) => {
+  const startedAt = performance.now()
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
   const plan = planRungs({ gates, repos, phase })
@@ -386,20 +531,19 @@ export const runGate = async ({
     held: null
   }
 
-  const unit = await runInOrder(byPhase(plan, 'unit'), (rung) =>
-    runRung(rung, context)
-  )
-  const fit = await runInOrder(byPhase(plan, 'fit'), (rung) =>
-    runFitRung(rung, context)
-  )
-  const e2e = await runE2e(byPhase(plan, 'e2e'), context)
+  const ran = await (serial ? runSerially : runInLayers)(plan, context)
+  const { local, e2e } = ran
 
-  const rungs = [...unit, ...fit, ...e2e.results]
+  const rungs = [...local.map(({ result }) => result), ...e2e.results]
   const stackClean = e2e.stack.wasUp !== false || e2e.stack.stoppedAfter
   return {
     green: rungs.length > 0 && rungs.every(({ ok }) => ok) && stackClean,
     phase,
+    serial,
     logs,
+    durationMs: elapsedSince(startedAt),
+    phases: phaseDurations(plan, ran),
+    layers: layerDurations(startedAt, ran),
     rungs,
     stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
   }

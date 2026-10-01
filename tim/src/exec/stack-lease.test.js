@@ -18,7 +18,8 @@ import {
   readLease,
   defaultLeasePath,
   describeLease,
-  recordLeaseContainers
+  recordLeaseContainers,
+  recordLeaseFingerprints
 } from './stack-lease.js'
 
 const HOLDER = 'ibl-20261001T090000Z inc-003 consistency'
@@ -157,6 +158,40 @@ describe('acquireStack', () => {
     expect(outcome.lease.branches).toEqual({
       'trade-imports-ins-frontend': 'feat/EUDPA-7-x'
     })
+  })
+
+  test('records the build and source fingerprints of each service the dev overlay builds', async () => {
+    const env = fakeStack()
+    const repo = join(root, 'repos', 'web')
+    mkdirSync(join(repo, 'src'), { recursive: true })
+    writeFileSync(join(repo, 'src', 'index.js'), 'export {}\n')
+    await execa('git', ['init', '--quiet', repo])
+    mkdirSync(join(root, 'docker', 'stack'), { recursive: true })
+    writeFileSync(
+      join(root, 'docker', 'stack', 'dev.compose.yml'),
+      'services:\n  web:\n    build:\n      context: ../../repos/web\n    volumes:\n      - ../../repos/web/src:/app/src\n'
+    )
+
+    const outcome = await acquire(env)
+
+    const fingerprints = {
+      web: {
+        build: expect.stringMatching(/^[0-9a-f]{64}$/),
+        source: expect.stringMatching(/^[0-9a-f]{64}$/)
+      }
+    }
+    expect({
+      onDisk: readLease(leasePath()).fingerprints,
+      returned: outcome.lease.fingerprints
+    }).toEqual({ onDisk: fingerprints, returned: fingerprints })
+  })
+
+  test('records no fingerprints in up mode, which builds nothing', async () => {
+    const env = fakeStack()
+
+    await acquire(env, { mode: 'up' })
+
+    expect(readLease(leasePath()).fingerprints).toEqual({})
   })
 
   test('reuses a stack the same holder already leases, without touching it', async () => {
@@ -579,5 +614,42 @@ describe('recordLeaseContainers', () => {
       updated: false,
       containers: ['c1']
     })
+  })
+})
+
+describe('recordLeaseFingerprints', () => {
+  const fingerprints = { web: { build: 'b2', source: 's2' } }
+
+  test('records what each service now serves on the holder’s own lease', () => {
+    writeLease({ holder: HOLDER, fingerprints: {} })
+
+    const updated = recordLeaseFingerprints({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      fingerprints
+    })
+
+    expect({
+      updated,
+      lease: readLease(leasePath())
+    }).toEqual({
+      updated: true,
+      lease: expect.objectContaining({ holder: HOLDER, fingerprints })
+    })
+  })
+
+  test('leaves a lease somebody else holds alone', () => {
+    writeLease({ holder: OTHER })
+
+    const updated = recordLeaseFingerprints({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      fingerprints
+    })
+
+    expect({
+      updated,
+      fingerprints: readLease(leasePath()).fingerprints
+    }).toEqual({ updated: false, fingerprints: undefined })
   })
 })

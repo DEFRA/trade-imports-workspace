@@ -73,8 +73,11 @@ what you tried.
 - **Never background a command** (no trailing `&`). Every command runs in the foreground and returns.
 - **A red format rung** is repaired by running the repo's `format` script and then the unit phase again, and
   that counts as one of your 3 repairs.
-- **Never start or stop the workspace stack**, and never drive `docker`. The gate owns the stack. A stack
-  that is up is not in your way: leave it.
+- **The workspace stack is already up, leased to this build run** for every increment it builds. A plan
+  check that needs it up uses it as it is. Never start, stop, restart or rebuild it, never take or give
+  back its lease (`tim docker lease`), and never drive `docker`: the run owns the lease and the gate
+  rebuilds what changed. A check that cannot reach the stack, or that launches a browser, is the
+  ladder's to prove — say so in `notes` and go on.
 
 ## Report
 

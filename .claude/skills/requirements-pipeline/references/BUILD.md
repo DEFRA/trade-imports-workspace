@@ -161,9 +161,9 @@ branch. A failure names its step and its exact reason, and the loop maps it to
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 39 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 36 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
    increments on Claude and 23 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -180,32 +180,40 @@ branch. A failure names its step and its exact reason, and the loop maps it to
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
    a free-port check, then E2E against the workspace stack built from local
-   source, under a stack lease. It starts the stack for E2E only if it was down,
-   stops only what it started, and refuses a stack anybody else holds. Every rung
-   writes to its own log, a rung that cannot run fails with its reason, and the
-   command exits 1 unless every rung passed. The baseline and
-   the ladder each run it one phase per call (each phase fits a ten-minute Bash
-   window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
-   the implementor and fixer run its unit and FIT phases to check themselves. No
+   source, under the run's stack lease. It refuses a stack anybody else holds.
+   Every rung writes to its own log, a rung that cannot run fails with its
+   reason, and the command exits 1 unless every rung passed. The baseline and the
+   ladder each run it once with `--phase all`, which runs the phases side by side,
+   into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`. A
+   branch-lifecycle row that owes only some phases runs those one per call. The
+   implementor and fixer run its unit and FIT phases to check themselves. No
    agent picks a repo's test scripts.
 
-   **The workspace stack is leased.** A stage uses it only through
-   `tim docker lease acquire --holder "<run> <increment> <stage>"`, and gives it
-   back with `tim docker lease release` before it returns. The implementor, fixer,
-   consistency reviewer and ladder each have a holder; no other agent touches the
-   stack. A plan may name a check that needs the stack, marked "needs the
-   workspace stack"; the stage that runs it takes the lease. The integration proof
-   is still the gate's E2E rung. A stage refused the stack returns `stackHeld`, and
-   the script rules: a lease an earlier stage of the same increment and run leaked
-   is released and the stage run once more; anything else stops the run at
-   `stack-held` for you to rule on. A stack somebody brought up by hand, with no
-   lease, counts as somebody else's: it is never reused and never taken down, and
-   so does a stack restarted by hand under a lease (its container ids no longer
-   match the lease's). After every stage that may hold the stack the script gives
-   that stage's own lease back, so a lease an agent forgot never reaches the next
-   increment. The lease file is per machine (`tim docker lease status` shows it),
-   and while it is held `tim docker up`, `dev`, `down`, `restart` and
-   `bounce-backend` refuse unless given `--force`, which the loop never passes.
+   **The run holds the workspace stack.** Before its first increment the loop
+   takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
+   which starts the stack from local source. The stack stays up across every
+   increment, and every gate call passes `--holder "<run id>"`, so the gate
+   reuses it and rebuilds only what changed. No stage takes or gives back a
+   lease, or starts or stops the stack. A plan may name a check that needs the
+   stack, marked "needs the workspace stack"; the stage that runs it uses the
+   stack as it is. The integration proof is still the gate's E2E rung. After the
+   run stops, whatever the reason, the loop gives the lease back, which takes the
+   stack down. A refused acquire stops the run at `stack-held` before any
+   increment; a stack that will not start stops it at `stack-failed`. A stage
+   that finds the stack in somebody else's hands returns `stackHeld`, and the
+   run stops at `stack-held` for you to rule on. A stack somebody brought up by
+   hand, with no lease, counts as somebody else's: it is never reused and never
+   taken down, and so does a stack restarted by hand under a lease (its container
+   ids no longer match the lease's). The lease file is per machine
+   (`tim docker lease status` shows it), and while it is held `tim docker up`,
+   `dev`, `down`, `restart` and `bounce-backend` refuse unless given `--force`,
+   which the loop never passes.
+
+   **A run that dies leaves its lease behind.** A killed `Workflow` run, an ended
+   session or a restarted machine never reaches the give-back, so the stack
+   stays up, leased to the dead run's id. Check with `tim docker lease status`,
+   then give it back with `tim docker lease release --holder "<run id>"` before
+   you launch again.
 
    **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
    brought up yourself with `tim docker dev`, because it has no lease. Either take
@@ -213,7 +221,8 @@ branch. A failure names its step and its exact reason, and the loop maps it to
    run the gate under a lease of your own:
    `tim docker lease acquire --holder "<you> manual"`, then
    `tim build gate <workarea> --phase e2e --holder "<you> manual"`, then
-   `tim docker lease release --holder "<you> manual"`. A check that
+   `tim docker lease release --holder "<you> manual"`. While a build run holds
+   the stack, a gate run under any other holder is refused. A check that
    starts any other compose project (`docker compose run` starts its
    `depends_on`) is followed by that repo's down script.
    The gate reads the
@@ -481,7 +490,8 @@ handover prompt.
 | `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
-| `stack-held` | A stage needed the workspace stack and somebody else holds it: another run, another session, another increment, or a stack somebody started by hand with no lease. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) or take down a hand-started stack yourself, then launch again. A lease an earlier stage of the same increment leaked never stops the run: the loop releases it and runs the stage again |
+| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
+| `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |

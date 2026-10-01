@@ -142,25 +142,55 @@ const derive = ({ path, id, last }) => {
   return { id: next, repeat: next === last }
 }
 
-const raiseTicket = async ({ jira, path, workarea, row, config }) => {
-  const created = await jira.createIssue({
-    project: { key: config.project },
-    summary: ticketSummary(row),
-    description: ticketDescription({ workarea, row }),
-    issuetype: { name: 'Task' },
-    priority: { name: 'Medium' },
-    labels: [],
-    parent: { key: config.epic }
-  })
+const recordTicket = ({ path, workarea, row, key, verb }) => {
   try {
-    recordOnRow(path, row.id, { ticket: created.key })
+    recordOnRow(path, row.id, { ticket: key })
   } catch (error) {
     fail(
       'ticket',
-      `Raised ${created.key} but could not record it on ${row.id}: ${messageOf(error)}. Record it with tim backlog set ${workarea} ${row.id} --ticket ${created.key} before anything runs again, or the next run raises a second ticket.`
+      `${verb} ${key} but could not record it on ${row.id}: ${messageOf(error)}. Record it with tim backlog set ${workarea} ${row.id} --ticket ${key} before anything runs again, or the next run raises a second ticket.`
     )
   }
-  return created.key
+}
+
+// A create that times out may still have raised the ticket in Jira, and then
+// its key was never recorded. So before raising one, look under the epic for
+// an open ticket with this increment's exact summary, and reuse it.
+const findRaisedEarlier = async ({ jira, config, summary }) => {
+  const children = await jira.listOpenChildren(config.epic)
+  return children.find((child) => child.summary === summary) ?? null
+}
+
+const raiseTicket = async ({ jira, path, workarea, row, config }) => {
+  const summary = ticketSummary(row)
+  const earlier = await findRaisedEarlier({ jira, config, summary })
+  if (earlier) {
+    recordTicket({ path, workarea, row, key: earlier.key, verb: 'Found' })
+    return {
+      key: earlier.key,
+      created: false,
+      warning: `${earlier.key} under ${config.epic} already has this increment's summary, probably raised by an attempt that died before it recorded the key. It was reused, not raised again.`
+    }
+  }
+  let created
+  try {
+    created = await jira.createIssue({
+      project: { key: config.project },
+      summary,
+      description: ticketDescription({ workarea, row }),
+      issuetype: { name: 'Task' },
+      priority: { name: 'Medium' },
+      labels: [],
+      parent: { key: config.epic }
+    })
+  } catch (error) {
+    fail(
+      'ticket',
+      `Raising the ticket failed: ${messageOf(error)} Jira may have raised it anyway. Check ${config.project} under ${config.epic} for a ticket titled "${summary}" before running again: the next run looks for exactly that and reuses it rather than raising a second.`
+    )
+  }
+  recordTicket({ path, workarea, row, key: created.key, verb: 'Raised' })
+  return { key: created.key, created: true, warning: null }
 }
 
 const describeTransitions = (transitions) =>
@@ -192,12 +222,10 @@ const setWorkingStatus = async ({ jira, key, status, config, id }) => {
 
 const ticketStep = async ({ jira, path, workarea, id, config }) => {
   const row = readRow(path, id)
-  let key = row.ticket
-  let created = false
-  if (!key) {
-    key = await raiseTicket({ jira, path, workarea, row, config })
-    created = true
-  }
+  const raised = row.ticket
+    ? { key: row.ticket, created: false, warning: null }
+    : await raiseTicket({ jira, path, workarea, row, config })
+  const { key, created } = raised
   let found
   try {
     found = await jira.getTicket(key)
@@ -217,7 +245,7 @@ const ticketStep = async ({ jira, path, workarea, id, config }) => {
     created,
     status,
     movedToBoard: true,
-    warnings: warning ? [warning] : []
+    warnings: [raised.warning, warning].filter(Boolean)
   }
 }
 
@@ -229,9 +257,11 @@ const branchFor = (path, id, key) => {
   return name
 }
 
-const reposFor = (row, envelope) => {
+// A row that names no repos takes every configured one, in the order the
+// caller's repo keys give (the loop's args), not the envelope's.
+const reposFor = (row, envelope, repoOrder) => {
   const keys = envelope.map((repo) => repo.key)
-  const wanted = incrementReposFor(row, keys)
+  const wanted = incrementReposFor(row, repoOrder ?? keys)
   const unknown = wanted.filter((key) => !keys.includes(key))
   if (unknown.length > 0) {
     fail(
@@ -283,7 +313,11 @@ const runSteps = async (result, context) => {
   const row = readRow(path, result.id)
   result.resumeAt = resumePointFor(row)
 
-  const repos = reposFor(row, readEnvelopeRepos(workspaceRoot, workarea))
+  const repos = reposFor(
+    row,
+    readEnvelopeRepos(workspaceRoot, workarea),
+    config.repoOrder
+  )
   result.repos = repos.map((repo) => repo.key)
   const branched = await branchIncrementRepos({
     repos,
@@ -309,7 +343,7 @@ const runSteps = async (result, context) => {
  * @param {string} [args.id] - Build this increment rather than the next buildable one
  * @param {string} [args.last] - The increment the previous attempt built: met again, it stops before the ticket
  * @param {string} args.base - The branch a new increment branch is cut from
- * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number}} args.config
+ * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number, repoOrder?: string[]}} args.config - repoOrder is the configured repo keys in order, the fallback for a row that names none
  * @param {() => object} args.jira - Makes the Jira client, only once a ticket is needed
  * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, resumeAt, branched, warnings, failedStep and reason
  */

@@ -439,6 +439,41 @@ export const createJiraClient = ({
         key: issue.key,
         summary: issue.fields?.summary ?? ''
       }))
+    },
+
+    /**
+     * Every open issue under a parent (an epic's children), with its summary,
+     * reading every page the enhanced JQL search returns.
+     *
+     * @param {string} parentKey - Such as `'EUDPA-20628'`
+     * @returns {Promise<Array<{key: string, summary: string}>>}
+     */
+    listOpenChildren: async (parentKey) => {
+      const jql = `parent = ${parentKey} AND statusCategory != Done`
+      const base = `/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary&maxResults=100`
+      const children = []
+      let pageToken = null
+      for (let page = 0; page < CHILD_PAGE_LIMIT; page += 1) {
+        const data = await get(
+          pageToken
+            ? `${base}&nextPageToken=${encodeURIComponent(pageToken)}`
+            : base,
+          `listOpenChildren(${parentKey})`
+        )
+        for (const issue of data.issues ?? []) {
+          children.push({
+            key: issue.key,
+            summary: issue.fields?.summary ?? ''
+          })
+        }
+        pageToken = data.nextPageToken ?? null
+        if (!pageToken) break
+      }
+      return children
     }
   }
 }
+
+// 100 issues a page: an epic with more than 5,000 open children is not one
+// this search is for.
+const CHILD_PAGE_LIMIT = 50

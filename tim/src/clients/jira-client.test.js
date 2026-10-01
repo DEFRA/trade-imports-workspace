@@ -467,3 +467,28 @@ describe('moveToBoard', () => {
     ).rejects.toMatchObject({ code: 'AUTH' })
   })
 })
+
+describe('listOpenChildren', () => {
+  test('reads every page of an epic’s open children', async () => {
+    mockPool(BASE)
+      .get(
+        /^\/rest\/api\/3\/search\/jql\?jql=parent%20%3D%20EUDPA-1%20AND%20statusCategory%20!%3D%20Done&fields=summary&maxResults=100$/
+      )
+      .reply(200, {
+        issues: [{ key: 'EUDPA-2', fields: { summary: 'inc-001 — One' } }],
+        nextPageToken: 'page-2'
+      })
+    mockPool(BASE)
+      .get(/nextPageToken=page-2$/)
+      .reply(200, {
+        issues: [{ key: 'EUDPA-3', fields: { summary: 'inc-002 — Two' } }],
+        isLast: true
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    expect(await client.listOpenChildren('EUDPA-1')).toEqual([
+      { key: 'EUDPA-2', summary: 'inc-001 — One' },
+      { key: 'EUDPA-3', summary: 'inc-002 — Two' }
+    ])
+  })
+})

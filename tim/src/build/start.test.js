@@ -119,12 +119,26 @@ const start = (options = {}) =>
 
 const captured = { issue: null }
 
+const EPIC_CHILDREN = /^\/rest\/api\/3\/search\/jql\?jql=parent%20%3D%20EUDPA-1/
+
+const epicHolds = (children) =>
+  mockPool(BASE)
+    .get(EPIC_CHILDREN)
+    .reply(200, {
+      issues: children.map(({ key, summary }) => ({
+        key,
+        fields: { summary }
+      })),
+      isLast: true
+    })
+
 const jiraRaises = ({
   status = 'To Do',
   transitions = TRANSITIONS,
   board = 204
 } = {}) => {
   captured.issue = null
+  epicHolds([{ key: 'EUDPA-499', summary: 'inc-000 — Something else' }])
   mockPool(BASE)
     .post('/rest/api/2/issue', (body) => {
       captured.issue = body.fields
@@ -258,6 +272,47 @@ describe('runBuildStart — a new increment', () => {
   })
 })
 
+describe('runBuildStart — a ticket raised before its key was recorded', () => {
+  test('reuses the open ticket under the epic with this increment’s summary, and raises none', async () => {
+    await workspaceWith([row()])
+    epicHolds([{ key: 'EUDPA-488', summary: 'inc-001 — Add the origin page' }])
+    jiraKnows('EUDPA-488', 'In Dev')
+
+    const outcome = await start()
+
+    expect({
+      ticket: outcome.ticket,
+      ticketOnRow: rowOnDisk().ticket
+    }).toEqual({
+      ticket: {
+        key: 'EUDPA-488',
+        created: false,
+        status: 'In Dev',
+        movedToBoard: true,
+        warnings: [
+          "EUDPA-488 under EUDPA-1 already has this increment's summary, probably raised by an attempt that died before it recorded the key. It was reused, not raised again."
+        ]
+      },
+      ticketOnRow: 'EUDPA-488'
+    })
+  })
+
+  test('says to check Jira for the summary when raising the ticket fails', async () => {
+    await workspaceWith([row()])
+    epicHolds([])
+    mockPool(BASE).post('/rest/api/2/issue').replyWithError('socket hang up')
+
+    const outcome = await start()
+
+    expect({ failedStep: outcome.failedStep, reason: outcome.reason }).toEqual({
+      failedStep: 'ticket',
+      reason: expect.stringContaining(
+        'Jira may have raised it anyway. Check EUDPA under EUDPA-1 for a ticket titled "inc-001 — Add the origin page" before running again'
+      )
+    })
+  })
+})
+
 describe('runBuildStart — an increment that already has a ticket', () => {
   test('reuses the ticket on the row and raises none', async () => {
     await workspaceWith([
@@ -363,6 +418,17 @@ describe('runBuildStart — derive', () => {
 })
 
 describe('runBuildStart — branch', () => {
+  test('branches a row that names no repos in the caller’s repo order, not the envelope’s', async () => {
+    await workspaceWith([row({ ticket: 'EUDPA-77', repos: undefined })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start({
+      config: { ...CONFIG, repoOrder: ['frontend', 'backend'] }
+    })
+
+    expect(outcome.repos).toEqual(['frontend', 'backend'])
+  })
+
   test('fails the branch step on a repo with uncommitted work, keeping the ticket', async () => {
     await workspaceWith([row({ ticket: 'EUDPA-77' })])
     jiraKnows('EUDPA-77', 'In Dev')

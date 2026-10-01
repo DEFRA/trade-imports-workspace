@@ -40,7 +40,15 @@ const startOptionsSchema = z.object({
   board: required('--board', '13780').regex(
     /^\d+$/,
     '--board must be the numeric board id, such as 13780.'
-  )
+  ),
+  repos: z
+    .string()
+    .trim()
+    .regex(
+      /^[a-z]+(,[a-z]+)*$/,
+      '--repos must be repo keys separated by commas, such as backend,tests,frontend.'
+    )
+    .optional()
 })
 
 const describeTicket = ({ key, created, status }) =>
@@ -136,8 +144,12 @@ export const registerStart = (build, timVersion) =>
       '--board <id>',
       'The numeric id of the board tickets are moved onto'
     )
+    .option(
+      '--repos <keys>',
+      "The configured repo keys in order, comma separated: what a row that names no repos builds (default: the backlog envelope's order)"
+    )
     .description(
-      'Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure.'
+      'Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or an open one under the epic with its summary, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure.'
     )
     .addHelpText(
       'after',
@@ -155,7 +167,8 @@ export const registerStart = (build, timVersion) =>
           epic: opts.epic,
           inDevStatus: opts.inDevStatus,
           doneStatus: opts.doneStatus,
-          board: opts.board
+          board: opts.board,
+          repos: opts.repos
         })
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
@@ -171,7 +184,8 @@ export const registerStart = (build, timVersion) =>
             epic: parsed.epic,
             inDevStatus: parsed.inDevStatus,
             doneStatus: parsed.doneStatus,
-            board: Number(parsed.board)
+            board: Number(parsed.board),
+            ...(parsed.repos ? { repoOrder: parsed.repos.split(',') } : {})
           },
           jira: () => createJiraClient()
         })

@@ -325,11 +325,18 @@ The run returns `{increments, stopped}`: one entry per increment it attempted,
 each with its `outcome`, and one `stopped` saying which condition ended the run.
 Do not trust that report on its own.
 
-- The `Workflow` tool's result carries a `transcriptDir`. Read
-  `<transcriptDir>/journal.jsonl` and find the run's first `log()` line —
-  `increment-build-loop: resolved configuration {…}`. Check it matches the
-  `args` you passed. If it does not — or it is missing — stop, quoting both the
-  log line (or its absence) and the args you sent.
+- Archive the run first (step 3c), then read its first `log()` line —
+  `increment-build-loop: resolved configuration {…}`:
+
+  ```bash
+  jq -r '.logs[0]' workareas/build-telemetry/runs/<runId>/run.json
+  ```
+
+  Check it matches the `args` you passed. If it does not — or it is missing —
+  stop, quoting both the log line (or its absence) and the args you sent. The
+  `log()` lines are only in the run's record (`<session>/workflows/<runId>.json`,
+  copied to `run.json`); `journal.jsonl` holds one `started` and one `result`
+  or `failed` line per agent and never a `log()` line.
 
 Then one query for every id the run reported:
 
@@ -373,6 +380,38 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
 
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
+
+### 3c. Archive the run and report what it cost
+
+Every run, however it stopped — landed, red, killed or out of budget. The run id
+is the `wf_…` folder name at the end of the `Workflow` result's `transcriptDir`.
+
+```bash
+tim build runs archive <runId>
+tim build runs report <runId>
+```
+
+`archive` copies every agent's full transcript, the journal and the run's own
+record (args, `log()` lines, result) into `workareas/build-telemetry/runs/<runId>/`,
+which git ignores — transcripts carry prompts and code, and this repo is public.
+Do it straight away: Claude Code deletes session folders after
+`cleanupPeriodDays` (30 days unless set), and that deletes the transcripts with
+them. Never copy a transcript, or anything derived from one, into
+`workareas/shared/` or any other tracked path.
+
+`report` prints the run by increment, then stage, then agent — model, input,
+output and cache tokens, tool calls, time and outcome — and the five most
+expensive and five slowest stages. Put those two top-five lists in your report to
+the user, one line each. `--json` gives the same for mining; `report --all`
+compares every archived build-loop run stage by stage.
+
+If the run was relaunched after a stop, archive the earlier run ids too —
+`tim build runs archive --all` sweeps every run Claude Code still holds and
+copies only what changed.
+
+**Not yet in the loop.** The loop does not archive itself; the session does it
+after the run stops. What the loop should change to make this data richer is
+listed under "Run telemetry" in `../workflow/README.md`.
 
 ### 4. Report one line per increment
 

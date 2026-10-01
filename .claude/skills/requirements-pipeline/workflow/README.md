@@ -446,3 +446,32 @@ trail — read it with:
 jq -r '.increments[] | select((.openQuestions|length)>0) | .id + ": " + (.openQuestions|join(" | "))' \
   workareas/<workarea>/backlog.json
 ```
+
+### Run telemetry
+
+After a run stops, the session archives and reports it with `tim build runs archive <runId>`
+then `tim build runs report <runId>` (see `../references/BUILD.md`, step 3c). The report
+reads what Claude Code already writes: one transcript per agent, `journal.jsonl` (a
+`started` line with each agent's `label` and `phase`, then a `result` or `failed` line) and
+the run's record (args, `log()` lines, result and per-agent progress), which is written only
+when the run ends.
+
+What the loop should change, in a run that is not in flight, to make that data richer:
+
+- **One label shape for every agent: `<id> <stage>[:<group>][ <attempt>]`.** The report
+  recovers increment and stage from the label alone. `codex:<slug>` and `relay:<slug>` hide
+  which stage they did the work for — label them `<id> <stage> codex:<slug>`. `preserve` and
+  `branch-guard:<stage>` sit in whichever phase called them; give them their own phase.
+- **An increment on every agent that serves one.** `derive next` runs once per increment
+  but carries no id, so its cost lands on the run, not the increment it chose.
+- **Log lines with times and a fixed shape.** `log()` lines reach only the run's record,
+  never `journal.jsonl`, and the record is written at the end — a killed or still-running run
+  has none. Log `<id>: START` and `<id>: <OUTCOME>` with an ISO time, as one JSON object per
+  line, so an increment's wall time includes the script's own time between agents.
+- **Codex's own usage.** Under `executor: codex` the relay agent's transcript shows only
+  Claude's tokens. Have the Codex brief return its token counts and duration in the stage's
+  schema so the report can add them.
+- **The model tier per agent.** Record whether an agent ran as `think`, `code` or `light` in
+  its label or phase, so cost per tier can be compared when the model map changes.
+- **Archive as the last step.** Once the run can name its own run id, finish with
+  `tim build runs archive <runId>` so no run is lost to `cleanupPeriodDays`.

@@ -248,7 +248,7 @@ ever.
   planOnly: false,
   jiraProject: 'EUDPA',
   epic: 'EUDPA-12345',
-  jiraInProgressStatus: 'In Progress',
+  jiraInProgressStatus: 'In Dev',
   jiraDoneStatus: 'Done',
   jiraBoard: 13780,
   ciFixAttempts: 3,

@@ -19,12 +19,12 @@ const emitError = (text) => process.stderr.write(`${text}\n`)
 const holderSchema = z
   .string({
     message:
-      'Name the holder with --holder, such as "ibl-20261001T090000Z inc-003 ladder".'
+      'Name the holder with --holder, such as the build run’s id, "ibl-20261001T090000Z".'
   })
   .trim()
   .min(
     1,
-    'Name the holder with --holder, such as "ibl-20261001T090000Z inc-003 ladder".'
+    'Name the holder with --holder, such as the build run’s id, "ibl-20261001T090000Z".'
   )
   .regex(
     /^[^\n\r"'`$]+$/,
@@ -187,7 +187,7 @@ export const registerLease = (docker, timVersion) => {
   const lease = docker
     .command('lease')
     .description(
-      'Who holds the workspace stack. A build stage takes the lease before it uses the stack and gives it back before it finishes, so a stack is never left up with nobody owning it. The lease file is per machine: TIM_STACK_LEASE, or tim/stack-lease.json under XDG_STATE_HOME (default ~/.local/state).'
+      'Who holds the workspace stack. A build run takes the lease once, as its run id, when it starts, every stage and gate reuses it with that same holder, and the run gives it back when it ends, so a stack is never left up with nobody owning it. The lease file is per machine: TIM_STACK_LEASE, or tim/stack-lease.json under XDG_STATE_HOME (default ~/.local/state).'
     )
 
   lease
@@ -207,7 +207,7 @@ export const registerLease = (docker, timVersion) => {
     .option('--logs <dir>', 'Where run-stack.sh writes its log')
     .addHelpText(
       'after',
-      '\nExample:\n  tim docker lease acquire --holder "ibl-20261001T090000Z inc-003 ladder" --json'
+      '\nExample:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json'
     )
     .action(leaseAction(runAcquire, timVersion))
 
@@ -220,7 +220,7 @@ export const registerLease = (docker, timVersion) => {
     .option('--logs <dir>', 'Where stop-stack.sh writes its log')
     .addHelpText(
       'after',
-      '\nExample:\n  tim docker lease release --holder "ibl-20261001T090000Z inc-003 ladder" --json'
+      '\nExample:\n  tim docker lease release --holder "ibl-20261001T090000Z" --json'
     )
     .action(leaseAction(runRelease, timVersion))
 

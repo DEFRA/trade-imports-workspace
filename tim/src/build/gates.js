@@ -57,7 +57,8 @@ const rungSchema = z
     run: z.string().min(1),
     scope: z.array(z.string().min(1)).optional(),
     ports: z.array(z.number().int().min(1).max(MAX_PORT)).optional(),
-    forRepos: z.array(z.string().min(1)).min(1).optional()
+    forRepos: z.array(z.string().min(1)).min(1).optional(),
+    exclusive: z.boolean().optional()
   })
   .strict()
 
@@ -69,7 +70,7 @@ const repoGatesSchema = z
   .strict()
 
 const rungProblems = (rung, remoteScripts) => {
-  const { name, phase, run, ports, forRepos } = rung
+  const { name, phase, run, ports, forRepos, exclusive } = rung
   const isMaven = run === MVN_VERIFY
   return [
     !isMaven && !NPM_SCRIPT.test(run)
@@ -85,7 +86,10 @@ const rungProblems = (rung, remoteScripts) => {
       ? 'An e2e rung names the repos it covers in forRepos.'
       : null,
     phase !== 'e2e' && forRepos ? 'Only an e2e rung takes forRepos.' : null,
-    phase !== 'fit' && ports ? 'Only a fit rung takes ports.' : null
+    phase !== 'fit' && ports ? 'Only a fit rung takes ports.' : null,
+    phase !== 'e2e' && exclusive
+      ? 'Only an e2e rung can be exclusive: an exclusive rung runs against the workspace stack on its own, after every other rung has finished.'
+      : null
   ]
     .filter(Boolean)
     .map((message) => `rung "${name}": ${message}`)
@@ -162,6 +166,7 @@ const planned = (repo, rung) => ({
   run: rung.run,
   scope: rung.scope ?? [],
   ports: rung.ports ?? [],
+  exclusive: rung.exclusive ?? false,
   refusal: null
 })
 
@@ -173,6 +178,7 @@ const refused = (repo, name, phase, refusal) => ({
   run: null,
   scope: [],
   ports: [],
+  exclusive: false,
   refusal
 })
 

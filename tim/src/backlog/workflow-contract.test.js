@@ -162,20 +162,35 @@ const WORKSPACE_ANSWER = {
 // stack lease holder starts with.
 const RUN_ID = 'ibl-20261001T090000Z'
 
-// The loop gives back each leasing stage's own lease after it, with an agent
-// of its own. Those agents are answered here, so a test's answers list stays
-// the stages it is about.
-const LEASE_RETURNED = { ok: true, summary: 'nothing to give back' }
-const isLeaseReturn = (label) => / lease return:/.test(label ?? '')
+// The run takes the workspace stack's lease once before its first increment
+// and gives it back once after its last, each with an agent of its own. Those
+// agents are answered here, so a test's answers list stays the stages it is
+// about. A test about the run's lease passes its own answers for them.
+const LEASE_ACQUIRED = {
+  acquired: true,
+  refused: false,
+  holder: null,
+  summary: `Started the workspace stack in dev mode and leased it to "${RUN_ID}".`
+}
+const LEASE_RELEASED = { ok: true, summary: 'released' }
+const ACQUIRE_LABEL = 'run lease:acquire'
+const RELEASE_LABEL = 'run lease:release'
+const isRunLease = (label) => /^run lease:/.test(label ?? '')
 
-const answeringLeaseReturns = (answers) => {
+const answeringRunLease = (answers, leaseAnswers = {}) => {
+  const leaseAnswer = (label) =>
+    label === ACQUIRE_LABEL
+      ? (leaseAnswers.acquire ?? LEASE_ACQUIRED)
+      : (leaseAnswers.release ?? LEASE_RELEASED)
   if (typeof answers === 'function') {
     return (prompt, options) =>
-      isLeaseReturn(options.label) ? LEASE_RETURNED : answers(prompt, options)
+      isRunLease(options.label)
+        ? leaseAnswer(options.label)
+        : answers(prompt, options)
   }
   let next = 0
   return (prompt, options) => {
-    if (isLeaseReturn(options.label)) return LEASE_RETURNED
+    if (isRunLease(options.label)) return leaseAnswer(options.label)
     const answer = next < answers.length ? answers[next] : null
     next += 1
     return answer
@@ -185,12 +200,12 @@ const answeringLeaseReturns = (answers) => {
 const stageLabels = (run) =>
   run.agents
     .map((entry) => entry.options.label)
-    .filter((label) => !isLeaseReturn(label))
+    .filter((label) => !isRunLease(label))
 
-const runLoop = (path, { answers = [], ...options } = {}) =>
+const runLoop = (path, { answers = [], lease, ...options } = {}) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringLeaseReturns(answers)
+    answers: answeringRunLease(answers, lease)
   })
 
 // What `tim build start --json` prints, as the start agent copies it.
@@ -677,7 +692,11 @@ describe('increment-build-loop', () => {
   test('runs no stage after the planner when planOnly is true', async () => {
     const run = await runPlanOnly()
 
-    expect(stageLabels(run)).toEqual(['workspace', 'preflight', 'inc-900 plan'])
+    expect(run.agents.map((entry) => entry.options.label)).toEqual([
+      'workspace',
+      'preflight',
+      'inc-900 plan'
+    ])
   })
 
   test('tells the planner where to write the plan', async () => {
@@ -766,7 +785,10 @@ describe('increment-build-loop', () => {
     test('runs tim build start with the run’s Jira config and the listed id', async () => {
       const run = await runFrom(null)
 
-      expect(run.agents[2].prompt).toContain(
+      expect(
+        run.agents.find((entry) => entry.options.label === 'inc-900 start')
+          .prompt
+      ).toContain(
         '`tim build start shared/args-fixture --id inc-900 --base main --jira-project EUDPA --epic EUDPA-1 --in-dev-status "In Dev" --done-status "Done" --board 13780 --repos frontend,backend,tests --workspace ~/ws --json`'
       )
     })
@@ -918,23 +940,20 @@ describe('increment-build-loop', () => {
       expect(prompt).not.toContain('tim build branch')
     })
 
-    test('tells the baseline to run every gate phase with tim build gate, into its own logs', async () => {
+    test('tells the baseline to run the whole gate as one tim build gate call under the run’s lease, into its own logs', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        [
-          '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
-          '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline`',
-          `   3. \`tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID} inc-900 baseline"\``
-        ].join('\n')
+        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``
       )
+      expect(prompt).not.toContain('--phase e2e')
     })
 
     test('tells the baseline to hand back a stack somebody else holds rather than work round it', async () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        "A phase whose `result.stack.held` is not null found the workspace stack in somebody else's hands"
+        "A gate command whose `result.stack.held` is not null found the workspace stack in somebody else's hands"
       )
     })
 
@@ -1040,7 +1059,7 @@ describe('increment-build-loop', () => {
         run.agents
           .filter((entry) => entry.options.phase === phaseName)
           .map((entry) => entry.options.label)
-          .filter((label) => !isLeaseReturn(label))
+          .filter((label) => !isRunLease(label))
 
       const runThroughFixToLadder = () =>
         runFrom(
@@ -1132,16 +1151,13 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('tells the ladder to run every gate phase with tim build gate, into its own logs', async () => {
+      test('tells the ladder to run the whole gate as one tim build gate call under the run’s lease, into its own logs', async () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          [
-            '   1. `tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
-            '   2. `tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder`',
-            `   3. \`tim build gate shared/args-fixture --phase e2e --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID} inc-900 ladder"\``
-          ].join('\n')
+          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}"\``
         )
+        expect(prompt).not.toContain('--phase e2e')
       })
 
       test('tells the ladder a rung green at baseline and red now is the increment’s to fix', async () => {
@@ -1152,16 +1168,17 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('tells the implementor and fixer to check themselves with the gate’s unit and FIT phases only', async () => {
+      test('tells the implementor and fixer to check themselves with the gate’s unit and FIT phases only, under the run’s lease', async () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          '`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement`'
+          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}"\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          '`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix`'
+          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}"\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
+        expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
       })
 
       test('tells no agent to stop the workspace stack before a unit or FIT suite', async () => {
@@ -1175,14 +1192,14 @@ describe('increment-build-loop', () => {
         expect(stopsTheStack).toEqual([])
       })
 
-      test('tells every increment agent the workspace stack is used only through a lease', async () => {
+      test('tells every increment agent the workspace stack is the run’s, and never to start or stop it', async () => {
         const run = await runThroughFixToLadder()
         const unguarded = run.agents
           .filter(
             ({ options, prompt }) =>
               options.label.startsWith('inc-900 ') &&
               !prompt.includes(
-                'THE WORKSPACE STACK IS LEASED, with `tim docker lease`, and only a stage whose task below gives it a lease\n  holder may use it.'
+                `THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_ID}\`.`
               )
           )
           .map(({ options }) => options.label)
@@ -1198,74 +1215,58 @@ describe('increment-build-loop', () => {
         )
       })
 
-      test('gives each stage that may use the stack a lease holder of its own run, increment and stage', async () => {
+      test('tells each stage that may use the stack that it is already up under the run’s lease', async () => {
         const run = await runThroughFixToLadder()
 
         expect(
           ['implement', 'consistency', 'fix', 'ladder'].map((stage) =>
             promptOf(run, `inc-900 ${stage}`).includes(
-              `\`tim docker lease acquire --holder "${RUN_ID} inc-900 ${stage}" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-${stage}\``
+              `THE WORKSPACE STACK is already up, leased to this run as \`${RUN_ID}\` for every increment it builds.`
             )
           )
         ).toEqual([true, true, true, true])
       })
 
-      test('tells a leasing stage to give the stack back before it returns, and before FIT', async () => {
+      test('tells no increment stage to take or give back a lease of its own', async () => {
+        const run = await runThroughFixToLadder()
+        const leasing = run.agents
+          .filter(
+            ({ options, prompt }) =>
+              options.label.startsWith('inc-900 ') &&
+              /tim docker lease (acquire|release) --holder/.test(prompt)
+          )
+          .map(({ options }) => options.label)
+
+        expect(leasing).toEqual([])
+      })
+
+      test('runs no lease agent between stages of an increment', async () => {
+        const run = await runThroughFixToLadder()
+        const labels = run.agents.map((entry) => entry.options.label)
+
+        expect(labels.filter((label) => /lease/.test(label))).toEqual([
+          ACQUIRE_LABEL,
+          RELEASE_LABEL
+        ])
+      })
+
+      test('tells a stage to check the lease, not take it, when a check cannot reach the stack', async () => {
         const prompt = promptOf(
           await runThroughFixToLadder(),
           'inc-900 implement'
         )
 
         expect(prompt).toContain(
-          'Give it back as soon as they are done, and always before you return, whatever they showed:'
+          'run `tim docker lease status --workspace ~/ws --json` once.'
         )
-        expect(prompt).toContain(
-          "The stack holds the FIT ports, so give it back before you run the gate's FIT phase."
-        )
+        expect(prompt).not.toContain('release before')
       })
 
-      test('gives back each leasing stage’s own lease as soon as the stage returns', async () => {
-        const run = await runThroughFixToLadder()
-        const all = run.agents.map((entry) => entry.options.label)
-        const followedByItsReturn = (stage) =>
-          all[all.indexOf(`inc-900 ${stage}`) + 1] ===
-          `inc-900 lease return:${stage}`
-
-        expect(
-          ['baseline', 'implement', 'fix', 'ladder'].map(followedByItsReturn)
-        ).toEqual([true, true, true, true])
-      })
-
-      test('gives back the consistency reviewer’s own lease after review', async () => {
-        const run = await runThroughFixToLadder()
-
-        expect(run.agents.map((entry) => entry.options.label)).toContain(
-          'inc-900 lease return:consistency'
-        )
-      })
-
-      test('releases exactly the stage’s own holder when it gives its lease back', async () => {
-        const run = await runThroughFixToLadder()
-
-        expect(promptOf(run, 'inc-900 lease return:ladder')).toContain(
-          `\`tim docker lease release --holder "${RUN_ID} inc-900 ladder" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-return-ladder\``
-        )
-      })
-
-      test('gives no lease holder to a stage that runs no stack check', async () => {
-        const prompt = promptOf(
-          await runThroughFixToLadder(),
-          'inc-900 review:frontend-javascript'
-        )
-
-        expect(prompt).not.toContain('Your lease holder is')
-      })
-
-      test('tells the consistency reviewer to run a stack check inside its lease', async () => {
+      test('tells the consistency reviewer to run a stack check against the stack the run holds', async () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 consistency')).toContain(
-          'A section 5 check that needs the workspace stack up runs inside your\nlease, as THE WORKSPACE STACK below says.'
+          'A section 5 check that needs the workspace stack up runs against the\nstack the run already holds, as THE WORKSPACE STACK below says.'
         )
       })
 
@@ -1273,7 +1274,7 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 plan')).toContain(
-          'Mark a check that needs\n      the workspace stack up "needs the workspace stack": the stage that runs it takes the stack\'s lease first and\n      gives it back after (`tim docker lease`)'
+          'Mark a check that needs\n      the workspace stack up "needs the workspace stack": the run holds the stack\'s lease and keeps it up for every\n      increment'
         )
       })
 
@@ -1281,7 +1282,7 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 plan')).toContain(
-          "The integration proof is still the\n      gate's E2E phase"
+          "The integration proof is still the gate's E2E phase"
         )
       })
 
@@ -1325,21 +1326,16 @@ describe('increment-build-loop', () => {
       })
 
       describe('when a stage finds the workspace stack held', () => {
-        const LEAKED = {
-          holder: `${RUN_ID} inc-900 consistency`,
-          detail: `The workspace stack is leased to "${RUN_ID} inc-900 consistency" (dev mode, since 2026-10-01T09:05:00.000Z). Leave it alone: it is theirs to release.`
-        }
         const OTHER_RUN = {
-          holder: 'ibl-20260930T170000Z inc-004 ladder',
+          holder: 'ibl-20260930T170000Z',
           detail:
-            'The workspace stack is leased to "ibl-20260930T170000Z inc-004 ladder" (dev mode, since 2026-09-30T17:00:00.000Z). Leave it alone: it is theirs to release.'
+            'The workspace stack is leased to "ibl-20260930T170000Z" (dev mode, since 2026-09-30T17:00:00.000Z). Leave it alone: it is theirs to release.'
         }
         const UNLEASED = {
           holder: null,
           detail:
             'The workspace stack is up and nobody holds a lease on it, so somebody started it by hand (tim docker dev, say), outside any build. Leave it alone: ask whoever started it to take it down.'
         }
-        const RELEASED = { ok: true, summary: 'released' }
         const heldLadder = (stackHeld) => ({
           green: false,
           ran: [],
@@ -1359,57 +1355,25 @@ describe('increment-build-loop', () => {
             ...answers
           )
 
-        const labelsFrom = (run, label) =>
-          labels(run).slice(labels(run).indexOf(label))
-
-        test('releases a lease an earlier stage of this increment leaked, and runs the stage again', async () => {
-          const run = await runToLadderWith(
-            heldLadder(LEAKED),
-            RELEASED,
-            GREEN_LADDER,
-            ON_BRANCH,
-            null
-          )
-
-          expect(labelsFrom(run, 'inc-900 ladder').slice(0, 4)).toEqual([
-            'inc-900 ladder',
-            'inc-900 lease release:ladder',
-            'inc-900 ladder',
-            'inc-900 branch-guard:land'
-          ])
-        })
-
-        test('tells the releaser to release exactly the leaked holder', async () => {
-          const run = await runToLadderWith(
-            heldLadder(LEAKED),
-            RELEASED,
-            GREEN_LADDER,
-            ON_BRANCH,
-            null
-          )
-
-          expect(promptOf(run, 'inc-900 lease release:ladder')).toContain(
-            `\`tim docker lease release --holder "${RUN_ID} inc-900 consistency" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-release-ladder\``
-          )
-        })
-
         test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
           const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
 
           expect({
             stopped: run.result.stopped,
-            released: labels(run).some((label) =>
-              label.includes('lease release')
-            ),
             last: labels(run).at(-1)
           }).toEqual({
             stopped: {
               reason: 'stack-held',
-              detail: `inc-900 ladder: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder". ${OTHER_RUN.detail}`
+              detail: `inc-900 ladder: the workspace stack is held by "ibl-20260930T170000Z". ${OTHER_RUN.detail}`
             },
-            released: false,
             last: 'inc-900 preserve'
           })
+        })
+
+        test('still gives back the run’s own lease after a stage found the stack held', async () => {
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+
+          expect(run.agents.at(-1).options.label).toBe(RELEASE_LABEL)
         })
 
         test('names the holder in the increment’s result', async () => {
@@ -1418,46 +1382,18 @@ describe('increment-build-loop', () => {
           expect(run.result.increments[0]).toMatchObject({
             id: 'inc-900',
             outcome: 'stack-held',
-            holder: 'ibl-20260930T170000Z inc-004 ladder',
+            holder: 'ibl-20260930T170000Z',
             preserved: 'wip commit pushed'
           })
         })
 
-        test('stops with stack-held for a stack that is up with no lease', async () => {
+        test('stops with stack-held for a stack that no lease names', async () => {
           const run = await runToLadderWith(heldLadder(UNLEASED), KEPT)
 
           expect(run.result.stopped).toEqual({
             reason: 'stack-held',
-            detail: `inc-900 ladder: the workspace stack is held by nobody: it is up with no lease, so somebody started it by hand. ${UNLEASED.detail}`
+            detail: `inc-900 ladder: the workspace stack is held by nobody: no lease names it, so somebody released this run's lease or started the stack by hand. ${UNLEASED.detail}`
           })
-        })
-
-        test('releases a leak only once: a stage still refused after it stops the run', async () => {
-          const run = await runToLadderWith(
-            heldLadder(LEAKED),
-            RELEASED,
-            heldLadder(LEAKED),
-            KEPT
-          )
-
-          expect({
-            reason: run.result.stopped.reason,
-            releases: labels(run).filter((label) =>
-              label.includes('lease release')
-            ).length
-          }).toEqual({ reason: 'stack-held', releases: 1 })
-        })
-
-        test('stops with stack-held, saying why, when the leaked lease will not release', async () => {
-          const run = await runToLadderWith(
-            heldLadder(LEAKED),
-            { ok: false, summary: 'The workspace stack did not come down.' },
-            KEPT
-          )
-
-          expect(run.result.stopped.detail).toContain(
-            'Releasing that leaked lease failed: The workspace stack did not come down.'
-          )
         })
 
         test('stops at the baseline with stack-held and nothing to preserve', async () => {
@@ -1478,8 +1414,8 @@ describe('increment-build-loop', () => {
                 id: 'inc-900',
                 ticket: 'EUDPA-900',
                 outcome: 'stack-held',
-                holder: 'ibl-20260930T170000Z inc-004 ladder',
-                detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder". ${OTHER_RUN.detail}`
+                holder: 'ibl-20260930T170000Z',
+                detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z". ${OTHER_RUN.detail}`
               }
             ],
             last: 'inc-900 baseline'
@@ -1498,17 +1434,129 @@ describe('increment-build-loop', () => {
           )
 
           expect(run.result.stopped.detail).toMatch(
-            /^inc-900 consistency: the workspace stack is held by "ibl-20260930T170000Z inc-004 ladder"\./
+            /^inc-900 consistency: the workspace stack is held by "ibl-20260930T170000Z"\./
           )
         })
       })
 
-      test('tells the ladder the gate leases the workspace stack for E2E', async () => {
-        const prompt = ladderPrompt(await runThroughFixToLadder())
+      describe('the run’s lease on the workspace stack', () => {
+        const runWithLease = (lease, ...answers) =>
+          runLoop(scriptPath, {
+            args: BASE_ARGS,
+            lease,
+            answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, ...answers]
+          })
 
-        expect(prompt).toContain(
-          "For E2E it takes the workspace stack's lease as the holder its\ncommand names: it starts the stack only if it was down and stops only what it started"
-        )
+        test('takes the lease once, as the run, after preflight and before the first increment starts', async () => {
+          const run = await runFrom(null)
+
+          expect(
+            run.agents.map((entry) => entry.options.label).slice(0, 4)
+          ).toEqual(['workspace', 'preflight', ACQUIRE_LABEL, 'inc-900 start'])
+        })
+
+        test('tells the lease taker to start the stack from local source under the run’s holder', async () => {
+          const run = await runFrom(null)
+
+          expect(promptOf(run, ACQUIRE_LABEL)).toContain(
+            `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
+          )
+        })
+
+        test('gives the lease back once, as the run, after the run stops', async () => {
+          const run = await runFrom(null)
+
+          expect({
+            last: run.agents.at(-1).options.label,
+            prompt: promptOf(run, RELEASE_LABEL)
+          }).toEqual({
+            last: RELEASE_LABEL,
+            prompt: expect.stringContaining(
+              `\`tim docker lease release --holder "${RUN_ID}" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
+            )
+          })
+        })
+
+        test('stops at stack-held before any increment when somebody else holds the stack, and gives nothing back', async () => {
+          const run = await runWithLease({
+            acquire: {
+              acquired: false,
+              refused: true,
+              holder: 'ibl-20260930T170000Z',
+              summary:
+                'The workspace stack is leased to "ibl-20260930T170000Z". Leave it alone: it is theirs to release.'
+            }
+          })
+
+          expect({
+            result: run.result,
+            labels: run.agents.map((entry) => entry.options.label)
+          }).toEqual({
+            result: {
+              increments: [],
+              stopped: {
+                reason: 'stack-held',
+                detail:
+                  'the workspace stack is held by "ibl-20260930T170000Z", so the run built nothing. The workspace stack is leased to "ibl-20260930T170000Z". Leave it alone: it is theirs to release.'
+              }
+            },
+            labels: ['workspace', 'preflight', ACQUIRE_LABEL]
+          })
+        })
+
+        test('stops at stack-failed before any increment when the stack will not start, and gives back whatever is left', async () => {
+          const run = await runWithLease({
+            acquire: {
+              acquired: false,
+              refused: false,
+              holder: null,
+              summary:
+                'The workspace stack did not come up (run-stack.sh exited 1).'
+            }
+          })
+
+          expect({
+            stopped: run.result.stopped,
+            labels: run.agents.map((entry) => entry.options.label)
+          }).toEqual({
+            stopped: {
+              reason: 'stack-failed',
+              detail:
+                'the run could not take the workspace stack, so it built nothing. The workspace stack did not come up (run-stack.sh exited 1).'
+            },
+            labels: ['workspace', 'preflight', ACQUIRE_LABEL, RELEASE_LABEL]
+          })
+        })
+
+        test('gives the lease back when the loop throws part-way through an increment', async () => {
+          const run = await runWithLease(
+            undefined,
+            START_ANSWER,
+            BASELINE_ANSWER,
+            { ok: true, summary: 'a plan with no repos' }
+          )
+
+          expect({
+            status: run.status,
+            last: run.agents.at(-1).options.label
+          }).toEqual({ status: 'threw', last: RELEASE_LABEL })
+        })
+
+        test('says how to give the lease back by hand when the release fails', async () => {
+          const run = await runWithLease(
+            {
+              release: {
+                ok: false,
+                summary: 'The workspace stack did not come down.'
+              }
+            },
+            START_ANSWER
+          )
+
+          expect(run.result.stopped.detail).toContain(
+            `The run's workspace stack lease could not be given back — The workspace stack did not come down. Give it back with \`tim docker lease release --holder "${RUN_ID}"\``
+          )
+        })
       })
 
       const GREEN_LADDER = {
@@ -1751,8 +1799,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
-        // Claude, plus the two startup agents, the twenty-sixth does not fit —
+        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
+        // Claude, plus the run’s four own agents, the twenty-eighth does not fit —
         // so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1762,9 +1810,9 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(25)
+          expect(run.result.increments.length).toBe(27)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
         })
       })
 
@@ -2164,11 +2212,27 @@ describe('increment-build-loop', () => {
         expect(prompt).not.toContain('checkout -b')
       })
 
-      test('runs only the gate phases the row owes', async () => {
+      test('runs only the gate phases the row owes, one call each under the run’s lease, stopping at the first red', async () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 baseline')
 
-        expect(prompt).toContain('--phase fit')
+        expect(prompt).toContain(
+          [
+            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
+            '   Stop after the first one that comes back red'
+          ].join('\n')
+        )
         expect(prompt).not.toContain('--phase e2e')
+        expect(prompt).not.toContain('--phase all')
+      })
+
+      test('runs every phase the row owes in the ladder, even after a red one', async () => {
+        const prompt = promptOf(await runMergeRow(null), 'inc-900 ladder')
+
+        expect(prompt).toContain(
+          'Run every one, even after a red one, so you have the whole picture before you repair anything.'
+        )
+        expect(prompt).not.toContain('--phase all')
       })
 
       test('starts the merge itself, without committing, before the implementor', async () => {
@@ -2354,7 +2418,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            '<gateUnit> = tim build gate shared/args-fixture --phase unit --workspace /ws --json --logs /ws/workareas/shared/args-fixture/logs/inc-900-implement'
+            `<gateUnit> = tim build gate shared/args-fixture --phase unit --workspace /ws --json --logs /ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}"`
           )
         })
 

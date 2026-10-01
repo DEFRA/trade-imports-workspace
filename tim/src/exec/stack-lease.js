@@ -11,6 +11,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { run } from './exec.js'
 import { runStackScriptToLog, stackContainerIds } from './stack.js'
+import { serviceFingerprints } from './stack-fingerprints.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 
@@ -285,7 +286,8 @@ const startUnderLease = async (context, previous) => {
     acquiredAt: new Date().toISOString(),
     state: STARTING,
     pid: process.pid,
-    containers: []
+    containers: [],
+    fingerprints: mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {}
   }
   if (!(await claimLease(leasePath, lease, previous))) {
     const winner = readLease(leasePath)
@@ -362,7 +364,7 @@ const restartUnderLease = async (context, lease) => {
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
- * @param {string} args.holder - Who takes the lease, such as "ibl-20261001T090000Z inc-003 ladder"
+ * @param {string} args.holder - Who takes the lease, such as a build run's id, "ibl-20261001T150000Z"
  * @param {'dev'|'up'} [args.mode]
  * @param {string} args.leasePath
  * @param {string} args.logPath - Where run-stack.sh writes its output
@@ -485,5 +487,27 @@ export const recordLeaseContainers = async ({ holder, leasePath, env }) => {
   if (!lease || lease.holder !== holder) return false
   const containers = await stackContainerIds({ env })
   writeJsonAtomic(leasePath, { ...lease, containers })
+  return true
+}
+
+/**
+ * Record what each dev service now serves on the holder's own lease, after
+ * the holder rebuilt or restarted services under it. A lease somebody else
+ * holds is left alone.
+ *
+ * @param {object} args
+ * @param {string} args.holder
+ * @param {string} args.leasePath
+ * @param {Record<string, {build: string|null, source: string|null}>} args.fingerprints
+ * @returns {boolean} whether the lease was the holder's and was updated
+ */
+export const recordLeaseFingerprints = ({
+  holder,
+  leasePath,
+  fingerprints
+}) => {
+  const lease = readLease(leasePath)
+  if (!lease || lease.holder !== holder) return false
+  writeJsonAtomic(leasePath, { ...lease, fingerprints })
   return true
 }

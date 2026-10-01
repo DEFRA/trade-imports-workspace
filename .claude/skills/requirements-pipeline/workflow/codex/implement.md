@@ -110,8 +110,11 @@ sleeps.
   the whole gate, browser phases included**, outside your sandbox. Do not attempt a sandbox bypass, and do
   not report `ok: false` merely because a browser phase was unavailable to you — a change whose unit
   phase is green is `ok: true`.
-- **Never start or stop the workspace stack**, and never drive `docker`. The gate owns the stack. A stack
-  that is up is not in your way: leave it.
+- **The workspace stack is already up, leased to this build run** for every increment it builds. A plan
+  check that needs it up uses it as it is. Never start, stop, restart or rebuild it, never take or give
+  back its lease (`tim docker lease`), and never drive `docker`: the run owns the lease and the gate
+  rebuilds what changed. A check that cannot reach the stack, or that launches a browser, is the
+  ladder's to prove — say so in `notes` and go on.
 - Run any other command the plan asks for **to a file** under `<logs>` and read that file once. For
   Playwright failures read `test-results/*/error-context.md`, not the tail of the run.
 - **Stage** your work (`git -C <repo> add`) but **do not commit**. Landing happens after review.

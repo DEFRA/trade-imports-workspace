@@ -17,6 +17,8 @@ compose stack in the workspace and its repos — the
 ./scripts/stack/stop-stack.sh         # down --volumes --remove-orphans
 ./scripts/stack/restart-stack.sh ...  # stop then run-stack (forwards -b / -e / -d / --profile)
 ./scripts/stack/bounce-backend.sh     # recreate backend container — picks up edited Java source in --dev mode
+./scripts/stack/dev-service.sh rebuild <service>...  # --dev stack: rebuild these images from local source, recreate them, wait for healthy
+./scripts/stack/dev-service.sh restart <service>...  # --dev stack: restart these containers (same ids), wait for healthy
 ```
 
 Images are pulled fresh on every run (`--pull always`).
@@ -48,7 +50,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | Edit source and see changes (Node + Java backend/stub/reference-data hot-reload) | `run-stack.sh -d` |
 | Run one repo-backed service natively from your IDE, rest in docker | `run-stack.sh -e backend` |
 | Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `run-stack.sh --profile frontend --profile infrastructure --profile database` |
-| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `run-stack.sh -d` (rebuilds; `bounce-backend.sh` only recreates the container) |
+| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `run-stack.sh -d` (rebuilds; `bounce-backend.sh` only recreates the container), or `dev-service.sh rebuild <service>` for just that service |
 
 `--branch` and `--dev` are mutually exclusive (hard error). The other flags
 compose freely.
@@ -169,8 +171,42 @@ npm run test:docker-compose:plants      # one domain: animals, animals-admin, in
 - `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in
   `lib/colour.sh`; compose `-f` list in `lib/compose.sh`; init-script
   staging in `lib/init-scripts.sh`.
-- `stop-stack.sh`, `restart-stack.sh`, `bounce-backend.sh` — siblings, share
-  `lib/` helpers.
+- `stop-stack.sh`, `restart-stack.sh`, `bounce-backend.sh`, `dev-service.sh`
+  — siblings, share `lib/` helpers.
+- `dev-service.sh rebuild|restart <service>...` touches only the named
+  services of a running `--dev` stack (`--no-deps`), with the same compose
+  files and profiles `run-stack.sh -d` uses, and blocks until they report
+  healthy. It does not re-stage init scripts.
+
+### How `tim build gate` uses the stack
+
+The gate runs in three layers, each after the one before has finished.
+Layer one is every unit and FIT rung (repos at the same time). Layer two is
+every rung gates.json marks `exclusive` — the k6 performance suite — alone,
+so a performance test never shares the machine with another test. Layer
+three is the Playwright E2E rungs, one after another. Neither E2E layer
+competes with unit tests, FIT suites or `mvn verify` for CPU. Taking the
+lease and starting or refreshing the stack overlaps layer one, so the stack
+is usually ready by the time layer two starts.
+
+When the gate's holder already leases the stack, the gate does not rerun
+`run-stack.sh -d`. The lease (`tim docker lease`) records two fingerprints
+for each service in `dev.compose.yml` that has a `build.context`:
+
+- **build** — every file git tracks or sees as untracked in the service's
+  repo, outside the bind-mounted `src/`, as it is on disk (so `package.json`,
+  `package-lock.json`, `pom.xml`, `Dockerfile`, `docker/dev-run.sh`, webpack
+  config, tests outside `src/` and so on);
+- **source** — the same, inside the bind-mounted `src/`.
+
+On reuse it compares them with the working tree now. Build changed (or the
+lease has no fingerprints, as a lease from before this has none) →
+`dev-service.sh rebuild`, then the lease records the new container ids.
+Only source changed → `dev-service.sh restart`, so E2E never runs against a
+service still part-way through a hot reload. Nothing changed → left alone.
+The gate result's `stack.refresh` lists what was rebuilt, restarted and
+left, with the logs. Changes to staged init scripts (Floci, Mongo seeds,
+the ASB config) are not picked up on reuse: they only run on a fresh stack.
 
 ## Init-script ownership and staging
 

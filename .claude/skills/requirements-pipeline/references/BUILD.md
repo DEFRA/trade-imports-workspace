@@ -129,16 +129,16 @@ They are board configuration, not constants, and a wrong one stops every
 increment at the ticket stage:
 
 ```bash
-tools/jira/search.sh "project = EUDPA AND updated >= -14d AND statusCategory != 'To Do'"
+tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
 ```
 
-Take the names from the status column of tickets the team is working on and
-has finished. Do not take them from `transition-ticket.sh <KEY> --list`: that
-prints transition names, which need not match the status they lead to. On
-EUDPA the "In Progress" transition leads to the status "In Dev", so a run told
-"In Progress" transitions the ticket, reads back "In Dev" and stops at
-`ticket-failed`. The transition script accepts either name, so passing the
-status name is always safe.
+Each line reads `transition -> status`. **Pass the status, the name after the
+arrow, never the transition.** The two can differ: on EUDPA the `In Progress`
+transition leads to the status `In Dev`, and the finished status is `Done`. The
+ticket stage compares the ticket's status with the configured name, so a run
+given a transition name moves the ticket, reads back a different name and stops
+at `ticket-failed` with the ticket already where it should be. The transition
+script accepts either name, so passing the status is always safe.
 
 Do not take a status name from a script's `--help` text — that is generic
 placeholder wording, not this board's workflow.

@@ -153,7 +153,7 @@
       ],
       "kind": "feat",
       "dependsOn": [],
-      "status": "todo",
+      "status": "done",
       "openQuestions": [
         "c-004: 'What response-time and failure-rate thresholds should each scenario pass or fail on until INS sets its own (open item 3)?' Default, followed here: 'Backend API endpoints: P95 under 200ms and P99 under 1,200ms (section 4.7), with P50 under 25ms reported but not failing the run. Frontend pages (form, dashboard, sign-in): interim P95 under 2,000ms, P99 under 5,000ms (5 seconds is the failure point). Upload pages including the scan: P99 under 60 seconds. Failure rate under 1% in sustained peak and endurance. P99 burst: 5xx under 1% and P95 no worse than twice the sustained-peak P95. Spike: P95 back within 10% of the pre-spike baseline within 60 seconds. Endurance: final-hour P95 no more than 1.2 times the first hour, and no pool-exhaustion errors.'",
         "c-003: 'Which tiers and scenarios should run in each environment, and on what schedule?' Default, followed here for the local part: 'Local Docker (stubs; local stand-ins for SNS/SQS and cdp-uploader): the tier-1 smoke run on every pull request via the workspace E2E workflow, and every scenario runnable on demand at compressed durations for script development.'",
@@ -164,11 +164,22 @@
         "Combines the environment-targeting slice (req-001, req-002), the browser-like session slice (req-012), the readiness slice (req-044), the thresholds slice (req-028), the creation-through-save-routes slice (req-043), the production-like local stack slice (req-003) and the pull-request smoke slice (req-027): each alone would repeat the same k6 profile, target resolution and smoke script set-up, and none carries an open question the others do not. Together they are the walking skeleton the brief names.",
         "Production-like local settings (template caching on, no STUB_MODE) are a matter of how the workspace stack is started for a performance run; that configuration lives in the workspace repo's docker/stack, not a backlog repo. If the plan finds a frontend cannot run with caching on outside development mode without a change of its own, add that frontend's key to this row's repos and say so.",
         "The existing correlation id (req-030) and the local emulator caveat (req-036) are already met and are not rebuilt.",
-        "Already built in step 0 (trade-imports-performance-tests PR #1): the suite runs as its own CDP image, whose entrypoint reads ENVIRONMENT, runs src/suites/$TEST_SUITE.k6.js and uploads index.html and summary.json to RESULTS_OUTPUT_S3_PATH, exiting 99 on a breached threshold; Compose with LocalStack runs it locally; src/config/target.js resolves a service URL from ENVIRONMENT or a <SERVICE>_URL override; and test:docker-compose runs a health check against the workspace stack as the gate's e2e rung. This increment replaces that health check with the smoke run and builds on the rest."
+        "Already built in step 0 (trade-imports-performance-tests PR #1): the suite runs as its own CDP image, whose entrypoint reads ENVIRONMENT, runs src/suites/$TEST_SUITE.k6.js and uploads index.html and summary.json to RESULTS_OUTPUT_S3_PATH, exiting 99 on a breached threshold; Compose with LocalStack runs it locally; src/config/target.js resolves a service URL from ENVIRONMENT or a <SERVICE>_URL override; and test:docker-compose runs a health check against the workspace stack as the gate's e2e rung. This increment replaces that health check with the smoke run and builds on the rest.",
+        "ATTEMPT FAILED: trade-imports-ins-frontend fit gate (port 3000 in use); branch feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the; wip 2e8c6d30c3ec4fcd4285346f84cd854438e4a2ec"
       ],
       "gate": "Look at the walking skeleton before anything builds on it: how the performance suite repo is laid out and runs in CDP, how a run is pointed at an environment, the smoke path through both journeys and the front door, the interim thresholds, and a pull-request run that fails on a deliberately breached threshold.",
       "ticket": "EUDPA-642",
-      "branch": "feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the"
+      "branch": "feat/EUDPA-642-a-k6-smoke-run-of-both-journeys-and-the",
+      "commit": "dcd653e",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/2",
+          "repo": "perftests",
+          "number": 2,
+          "merged": true,
+          "sha": "5ef1f2cde1b5e38ffe41b620f86a94318a00e55c"
+        }
+      ]
     },
     {
       "id": "inc-002",

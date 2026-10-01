@@ -79,7 +79,7 @@ I start?" or "how does this work?":
    `scripts/designer/prototype.json` and give `<siteUrl>`. Say nothing
    about it while `siteUrl` is not set.
 6. Then say: "You can also just describe what you want in your own words. If
-   I seem lost, say 'use the design skill'." Point at
+   I seem lost, say 'use the prototype skill'." Point at
    `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/your-first-hour.md`
    for a guided first hour.
 

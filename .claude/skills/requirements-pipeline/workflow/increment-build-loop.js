@@ -817,7 +817,7 @@ ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 //      `origin/main`, because git's default `branch.autoSetupMerge` tracks a
 //      remote-tracking start point. The branch is now *named* for the increment
 //      and *pointed at* main.
-//   2. `repos/trade-imports-animals-tests` and `-backend` are configured
+//   2. the tests and backend repos are configured
 //      `push.default=tracking`, so a push that has to resolve its own
 //      destination resolves it to that upstream — `main`.
 //

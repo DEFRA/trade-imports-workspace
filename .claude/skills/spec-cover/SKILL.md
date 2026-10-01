@@ -92,8 +92,9 @@ For each proposal, in the parent:
    test:fit -- -g '<test name>'`, or the E2E project's own wrapper),
    never a raw `npx playwright test` — a workspace hook rejects that
    regardless of repo, and its suggested `test:docker-compose` wrapper
-   only exists in `trade-imports-animals-tests`. If this is a fit probe
-   and the stack is already up, see SUITES.md's port-collision note.
+   only exists in `trade-imports-ins-tests` (`--project=<domain>` scopes
+   it to the one set being covered). If this is a fit probe and the
+   stack is already up, see SUITES.md's port-collision note.
 3. Invert the strongest Then's assertion (or, for unit/fit, the
    production line it depends on). Run again — **must go red**. If it
    stays green, the test proves nothing: rework the assertion, do not

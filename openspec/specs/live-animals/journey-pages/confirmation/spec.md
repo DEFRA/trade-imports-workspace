@@ -68,3 +68,14 @@ The system MUST show a section telling the user what they still need to do befor
 - **GIVEN** a notification was submitted with no documents recorded
 - **WHEN** the user reads the confirmation page
 - **THEN** a "Before the consignment is imported" section tells them they still need to upload the health certificate and any other required documents
+
+### Requirement: The page offers a way to start a new notification directly
+**ID**: REQ-CONFIRM-007
+The system MUST offer an action on the confirmation page that starts a fresh notification and opens it at the journey's entry page, without requiring the user to return to the dashboard first.
+
+#### Scenario: Creating a new notification from confirmation opens a fresh journey
+**ID**: SCN-CONFIRM-007-A
+- **GIVEN** a notification has just been submitted
+- **WHEN** the user chooses to create a new notification from the confirmation page
+- **THEN** a new notification is started and its own entry page (origin of the import) is shown
+- **AND** the new notification has its own reference number, different from the one just submitted

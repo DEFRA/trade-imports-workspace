@@ -210,6 +210,44 @@ secret set, the deployed prototype is open to anyone who has the link. See
 the prototype repo's `docs/designers/sharing-and-handing-off.md`, "The
 prototype password".
 
+## Show the service map
+
+"show me the service map", "journey map", "how do the pages connect", "what
+happens if they say no", "which pages does X skip", "a map of the journey"
+and "flow diagram" all mean this. It builds a page showing every page in the
+release as a card with its picture from the walkthrough, the arrow to
+wherever Continue goes next labelled with the question and answer that sends
+it there, and the task list groups as lanes. It is built straight from the
+release's own flow — the same code the prototype runs — so it can never say
+something the pages themselves do not do.
+
+To answer a question in words, with no browser and no picture-taking, read
+the graph as data:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --json-only
+```
+
+Read its `edges` and their `condition.text` to answer "what happens if they
+say no" or "which pages does potatoes skip" directly, in the designer's own
+words.
+
+To open the page itself:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:service-map -- --set <set-id> --no-open
+```
+
+Give the local path it prints
+(`.cache/designer/walkthrough/site/service-map/<set-id>/index.html`, inside
+the prototype repo), or the published link once the release is shared:
+`service-map/<set-id>/` on `main`, `reports/pr-<n>/service-map/<set-id>/` on
+a pull request.
+
+A page with no walkthrough example reaching it gets a placeholder card
+instead of a picture. Name those pages and offer `references/example-data.md`
+to add an example that reaches them, so their picture appears too.
+
 ## Step 3: Run it
 
 Tell the designer how long to expect: under a minute for a few pages, a few

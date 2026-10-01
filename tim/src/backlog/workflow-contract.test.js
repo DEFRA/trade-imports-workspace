@@ -131,8 +131,8 @@ const BASE_ARGS = {
       github: 'DEFRA/trade-imports-animals-backend'
     },
     tests: {
-      path: 'repos/trade-imports-animals-tests',
-      github: 'DEFRA/trade-imports-animals-tests'
+      path: 'repos/trade-imports-ins-tests',
+      github: 'DEFRA/trade-imports-ins-tests'
     }
   },
   models: { light: 'sonnet' },
@@ -1404,7 +1404,7 @@ describe('increment-build-loop', () => {
         ins: repo('ins-frontend'),
         animals: repo('animals-frontend'),
         plants: repo('plants-frontend'),
-        tests: repo('animals-tests')
+        tests: repo('ins-tests')
       },
       jiraProject: null,
       epic: null,
@@ -1542,7 +1542,7 @@ describe('increment-build-loop', () => {
         prs: [
           {
             repo: 'tests',
-            url: 'https://github.com/DEFRA/trade-imports-animals-tests/pull/227',
+            url: 'https://github.com/DEFRA/trade-imports-ins-tests/pull/227',
             number: 227
           }
         ],
@@ -1617,9 +1617,7 @@ describe('increment-build-loop', () => {
           branch: WORKING_BRANCH,
           outcome: 'landed',
           commit: 'aaa1111',
-          prs: [
-            'https://github.com/DEFRA/trade-imports-animals-tests/pull/227'
-          ],
+          prs: ['https://github.com/DEFRA/trade-imports-ins-tests/pull/227'],
           ci: 'green'
         })
       })
@@ -1631,7 +1629,7 @@ describe('increment-build-loop', () => {
           `git -C ~/ws/<repoPath> merge --ff-only origin/${WORKING_BRANCH}`
         )
         expect(prompt).toContain(
-          'For EACH of ins `~/ws/repos/trade-imports-ins-frontend`, animals `~/ws/repos/trade-imports-animals-frontend`, plants `~/ws/repos/trade-imports-plants-frontend`, tests `~/ws/repos/trade-imports-animals-tests`'
+          'For EACH of ins `~/ws/repos/trade-imports-ins-frontend`, animals `~/ws/repos/trade-imports-animals-frontend`, plants `~/ws/repos/trade-imports-plants-frontend`, tests `~/ws/repos/trade-imports-ins-tests`'
         )
         expect(prompt).not.toContain('checkout -b')
       })
@@ -1650,7 +1648,7 @@ describe('increment-build-loop', () => {
           'git -C ~/ws/<repoPath> merge --no-ff --no-commit <ref>'
         )
         expect(prompt).toContain(
-          '- tests (`~/ws/repos/trade-imports-animals-tests`): merge `origin/main`'
+          '- tests (`~/ws/repos/trade-imports-ins-tests`): merge `origin/main`'
         )
       })
 

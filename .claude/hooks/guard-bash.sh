@@ -28,6 +28,8 @@
 #        - raw `npx playwright test` (use `npm run test:docker-compose`)
 #        - `npm --prefix` over the workspace symlink (canonicalize with cd && pwd -P)
 #        - `&&` command chaining (one command per Bash call)
+#        - [2026-09-18] a `cd <path>` followed later by `git push` in the same
+#          command (use `git -C <path> push`, or a separate `cd` then `git push`)
 #      Force-push to main, chmod and rm -rf are already handled by settings.json's
 #      deny list, so they are NOT re-implemented here (avoid duplicate/conflicting rules).
 #
@@ -167,6 +169,21 @@ fi
 # npm --prefix over the workspace symlink — can corrupt the lockfile.
 if printf '%s' "$CMD" | grep -Eq 'npm[[:space:]].*--prefix[[:space:]]+[^[:space:]]*trade-imports-workspace[^[:space:]]*[[:space:]]+(install|i|ci|add|update|dedupe|prune|uninstall)([[:space:]]|$)'; then
   deny "npm --prefix across the workspace symlink can corrupt the lockfile. Canonicalize first (cd <path> && pwd -P) and run npm install on the real path."
+fi
+
+# [2026-09-18] `cd <path>` followed later by `git push` in the same command —
+# the Sonar pre-push gate (scripts/sonar/sonar-push-gate.sh) resolves its
+# target repo from the PreToolUse hook's reported cwd, which reflects the
+# shell BEFORE this command's own `cd` has run, not after (hooks fire before
+# any line of the command executes). Confirmed by direct testing: this
+# either checks the wrong (stale) repo entirely — silently letting an
+# unchecked push through when that stale repo isn't Sonar-integrated — or,
+# worse, blocks the real push over an unrelated failure in the stale repo
+# when it is. Uses a bash regex (not grep) so it matches across an embedded
+# newline (`cd <path>` and `git push` on separate lines of one command),
+# same reasoning as sonar-push-gate.sh's own is_git_push().
+if [[ "$CMD" =~ (^|[\;\&\|[:space:]])cd([[:space:]]|$)([^[:space:]]|[[:space:]])*git([[:space:]]+[^[:space:]]+)*[[:space:]]+push([[:space:]]|$) ]]; then
+  deny "A 'cd' followed later by 'git push' in the same command resolves the Sonar pre-push gate against the OLD directory, not the one being pushed (hooks see cwd before this command's own cd runs) — confirmed by direct testing, this can silently skip the check entirely or block your push over an unrelated failure in the wrong repo. Use 'git -C <path> push' in one command instead (the gate resolves -C correctly), or run 'cd <path>' as its own separate command, then 'git push' as a separate command."
 fi
 
 # `&&` command chaining — one command per Bash call (exit codes come back in the

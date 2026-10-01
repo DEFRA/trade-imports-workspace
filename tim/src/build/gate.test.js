@@ -78,8 +78,38 @@ const workspaceWith = ({ gates, repos }) => {
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
 
+const leasePath = () => join(root, 'state', 'stack-lease.json')
+
+const GATE_HOLDER = 'ibl-20261001T090000Z inc-001 ladder'
+
 const gate = (env, options = {}) =>
-  runGate({ workspaceRoot: root, workarea: WORKAREA, env, ...options })
+  runGate({
+    workspaceRoot: root,
+    workarea: WORKAREA,
+    env,
+    holder: GATE_HOLDER,
+    leasePath: leasePath(),
+    ...options
+  })
+
+const writeLease = (lease) => {
+  mkdirSync(dirname(leasePath()), { recursive: true })
+  writeFileSync(
+    leasePath(),
+    JSON.stringify({
+      mode: 'dev',
+      acquiredAt: '2026-10-01T09:00:00.000Z',
+      branches: { 'trade-imports-ins-frontend': 'feat/EUDPA-1-x' },
+      state: 'up',
+      pid: null,
+      containers: ['trade-imports-frontend-1'],
+      ...lease
+    })
+  )
+}
+
+const leaseOnDisk = () =>
+  existsSync(leasePath()) ? JSON.parse(readFileSync(leasePath(), 'utf8')) : null
 
 const stackCalls = () =>
   existsSync(stackCallsPath())
@@ -247,7 +277,7 @@ describe('runGate — unit and FIT rungs', () => {
     ])
   })
 
-  test('says something other than the gate left the workspace stack up when its container holds a FIT port', async () => {
+  const fitHeldByTheStack = async (lease) => {
     const server = createServer()
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
     const { port } = server.address()
@@ -265,16 +295,44 @@ describe('runGate — unit and FIT rungs', () => {
       join(root, 'fake-bin', 'docker'),
       `if [ "$1" = ps ]; then printf 'trade-imports-animals-frontend-1\\ttrade-imports\\n'; fi`
     )
+    if (lease) writeLease(lease)
 
     const outcome = await gate(env, { phase: 'fit' })
 
     await new Promise((resolve) => server.close(resolve))
+    return { port, outcome }
+  }
+
+  test('says nobody leases the workspace stack when its container holds a FIT port and no lease exists', async () => {
+    const { port, outcome } = await fitHeldByTheStack(null)
+
     expect(outcome.rungs.map(({ ok, reason }) => ({ ok, reason }))).toEqual([
       {
         ok: false,
-        reason: `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. The gate starts the workspace stack only for its E2E phase and stops what it started, so something other than the gate started it and left it up.`
+        reason: `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.`
       }
     ])
+  })
+
+  test('names the lease holder when a leased workspace stack holds a FIT port', async () => {
+    const { port, outcome } = await fitHeldByTheStack({
+      holder: 'ibl-20261001T090000Z inc-001 consistency'
+    })
+
+    expect(outcome.rungs[0].reason).toBe(
+      `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. The workspace stack is leased to "ibl-20261001T090000Z inc-001 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x).`
+    )
+  })
+
+  test('reports the held stack and its lease holder in the result', async () => {
+    const { outcome } = await fitHeldByTheStack({
+      holder: 'ibl-20261001T090000Z inc-001 consistency'
+    })
+
+    expect(outcome.stack.held).toEqual({
+      holder: 'ibl-20261001T090000Z inc-001 consistency',
+      detail: expect.stringContaining('The workspace stack is leased to')
+    })
   })
 
   test('leaves the workspace stack alone for unit and FIT rungs', async () => {
@@ -329,7 +387,50 @@ describe('runGate — e2e rungs', () => {
     )
   })
 
-  test('rebuilds a stack that was already up from local source and leaves it up', async () => {
+  test('holds the lease as its own holder while the e2e rungs run, and clears it after', async () => {
+    const env = workspaceWith(
+      withE2e({
+        'test:docker-compose':
+          'cp ../../state/stack-lease.json ../../lease-during-e2e.json #'
+      })
+    )
+
+    await gate(env, { phase: 'e2e' })
+
+    expect({
+      during: JSON.parse(
+        readFileSync(join(root, 'lease-during-e2e.json'), 'utf8')
+      ).holder,
+      after: leaseOnDisk()
+    }).toEqual({ during: GATE_HOLDER, after: null })
+  })
+
+  test('rebuilds a stack its own holder already leases from local source and leaves it up', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: GATE_HOLDER })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      lease: leaseOnDisk()?.holder,
+      stack: outcome.stack
+    }).toEqual({
+      calls: ['run-stack.sh -d'],
+      up: true,
+      lease: GATE_HOLDER,
+      stack: expect.objectContaining({
+        wasUp: true,
+        startedForE2e: false,
+        stoppedAfter: false,
+        servedFrom: 'local-source'
+      })
+    })
+  })
+
+  test('refuses a stack that is up with no lease, and leaves it alone', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(stackStatePath(), 'up\n')
 
@@ -338,16 +439,43 @@ describe('runGate — e2e rungs', () => {
     expect({
       calls: stackCalls(),
       up: stackIsUp(),
-      stack: outcome.stack
+      rungs: outcome.rungs.map(({ ok, reason }) => ({ ok, reason })),
+      held: outcome.stack.held
     }).toEqual({
-      calls: ['run-stack.sh -d'],
+      calls: [],
       up: true,
-      stack: expect.objectContaining({
-        wasUp: true,
-        startedForE2e: false,
-        stoppedAfter: false,
-        servedFrom: 'local-source'
-      })
+      rungs: [
+        {
+          ok: false,
+          reason:
+            'The workspace stack is up and nobody holds a lease on it, so somebody started it by hand (tim docker dev, say), outside any build. Leave it alone: ask whoever started it to take it down.'
+        }
+      ],
+      held: { holder: null, detail: expect.stringContaining('nobody holds') }
+    })
+  })
+
+  test('refuses a stack leased to another holder, naming the holder, and leaves it alone', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeFileSync(stackStatePath(), 'up\n')
+    writeLease({ holder: 'ibl-20261001T080000Z inc-007 consistency' })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      green: outcome.green,
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      up: true,
+      green: false,
+      held: {
+        holder: 'ibl-20261001T080000Z inc-007 consistency',
+        detail:
+          'The workspace stack is leased to "ibl-20261001T080000Z inc-007 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x). Leave it alone: it is theirs to release.'
+      }
     })
   })
 
@@ -362,13 +490,18 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
-  test('fails the e2e rungs when the stack does not come up, and still stops it', async () => {
+  test('fails the e2e rungs when the stack does not come up, still stops it, and clears the lease', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(join(root, 'up-fails'), '')
 
     const outcome = await gate(env, { phase: 'e2e' })
 
-    expect({ rungs: outcome.rungs, calls: stackCalls() }).toEqual({
+    expect({
+      rungs: outcome.rungs,
+      calls: stackCalls(),
+      lease: leaseOnDisk(),
+      held: outcome.stack.held
+    }).toEqual({
       rungs: [
         expect.objectContaining({
           ok: false,
@@ -377,7 +510,9 @@ describe('runGate — e2e rungs', () => {
           )
         })
       ],
-      calls: ['run-stack.sh -d', 'stop-stack.sh']
+      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      lease: null,
+      held: null
     })
   })
 

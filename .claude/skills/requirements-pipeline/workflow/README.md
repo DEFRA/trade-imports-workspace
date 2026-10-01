@@ -175,7 +175,7 @@ missing key. The first log line is the resolved configuration.
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
 | `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word other than `workspace`. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path or slug differs from the envelope's |
-| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (ticket, branch, branch guard, merge start, baseline, land, preserve, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (start, branch, branch guard, merge start, baseline, land, preserve, lease release, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
@@ -207,11 +207,13 @@ sent to it only for a configured repo at `repos/trade-imports-animals-frontend` 
 
 ### What drains the backlog, and what stops it
 
-With `increments: null` the loop runs `tim backlog next <workarea> --json` in a one-command
-agent before each increment and builds the id it names, reading `result.next` from the JSON
-envelope. It goes round again after each landing, so one launch builds many increments and
-the run outlives the session that started it. Resuming is launching it again with the same
-args: `backlog.json` carries the status, ticket, branch and PRs, and the ticket stage
+Under the full lifecycle each increment starts with one `tim build start` call (see
+[The start stage](#the-start-stage)), which with `increments: null` derives the next
+buildable increment itself. Under the branch lifecycle a one-command agent runs
+`tim backlog next <workarea> --json` instead. Either way the loop builds the id that comes
+back and goes round again after each landing, so one launch builds many increments and the
+run outlives the session that started it. Resuming is launching it again with the same
+args: `backlog.json` carries the status, ticket, branch and PRs, and the start stage
 resumes an increment part-way through its lifecycle.
 
 The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. It stops:
@@ -220,9 +222,11 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 36 agents on Claude and 42 on
-  Codex, so a run fits roughly 27 or 23 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 42 on
+  Codex, so a run fits roughly 25 or 23 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
+- at **`stack-held`**, when a stage needed the workspace stack and somebody else holds it
+  (see [The workspace stack lease](#the-workspace-stack-lease)). A human rules on the holder;
 - at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
   `main-red` and the rest, each named in `../references/BUILD.md`.
 
@@ -290,24 +294,97 @@ of the six, merged in its row's order.
 
 | Stage | Agents | What it does |
 |---|---|---|
+| Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
 | Baseline | 1 | Refuses a dirty tree, then runs `tim build gate` one phase at a time (unit, FIT, E2E) into `logs/<id>-baseline/` and reports each rung as tim printed it. Baseline green is gate green, so any later red is unambiguously ours |
 | Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js` |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); never starts or stops the workspace stack |
+| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack only under its own lease |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
 | Ladder | 1 | Runs `tim build gate` one phase at a time into `logs/<id>-ladder/`, then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
 
-**The gate owns the repos' own rungs and the workspace stack.** `tim build gate` runs the
+**The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
 unit, `mvn verify`, FIT after a free-port check, and the tests repo's local-stack E2E — and
-for E2E starts the stack only if it was down and stops only what it started. No agent picks
-those scripts or starts or stops the stack; a stack that is up is left alone. The ladder
+for E2E takes the workspace stack's lease as the stage's holder: it starts the stack only if
+it was down, stops only what it started, and refuses a stack anybody else holds. No agent
+picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
 | Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
+
+### The start stage
+
+Under the full lifecycle one light agent runs
+
+```
+tim build start <workarea> [--id <id>] [--last <id>] --base <branch> --jira-project <key> --epic <key> \
+  --in-dev-status "<status>" --done-status "<status>" --board <id> --repos <the args' repo keys> \
+  --workspace <root> --json
+```
+
+and copies the one JSON line it prints, word for word. The script reads it, so no agent
+retells a failure: it replaced the separate derive, ticket and branch agents, whose
+summaries had reported a config mismatch as "a Jira synchronisation issue". `--id` is the
+listed id under an explicit `increments` list; draining passes none and tim derives the next
+buildable row. `--last` is the id the previous attempt built: met again, tim stops before the
+ticket and the loop stops at `not-landed`. In order, tim:
+
+1. **derives** the increment;
+2. **tickets** it: reuses the key on the row, or an open ticket under the epic with this
+   increment's exact summary (one a create that timed out raised without the key being
+   recorded), or raises a Task under the epic, its description
+   templated in Jira wiki markup from the row's title, detail, acceptance criteria and sources,
+   and records the key on the row at once so a retry never raises a second; moves a status
+   other than `jiraInDevStatus` there by exact name (one already at `jiraDoneStatus` is left
+   alone, with a warning the loop logs); and moves it onto `jiraBoard`, every time;
+3. **branches** it: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row, in each of
+   the increment's repos (a row that names none takes every repo, in the args' order),
+   checked out and fast-forwarded where it exists, tracked where only
+   origin has it, or cut `--no-track` from a freshly fetched `origin/<base>`. A repo with
+   uncommitted work stops it before any repo changes, and an upstream on another branch is
+   removed.
+
+It reports `resumeAt` from the row's `commit` and `prs`, never from the ticket's status. The
+script maps a failed step to the stop reasons it always had: `derive-failed`, `no-buildable`,
+`ticket-failed` (also when tim does not report the ticket on the board) and `branch-failed`.
+The workspace resolve and the preflight's envelope-against-args check stay in the script.
+
+### The workspace stack lease
+
+The workspace stack is one compose project per machine, and a stage may use it only under a
+lease: `tim docker lease acquire --holder "<run> <increment> <stage>"`, the check, then
+`tim docker lease release` before the stage returns (and before the gate's FIT phase, whose
+ports the stack holds). The run id is `ibl-<the time the workspace agent read>`, so a resumed
+run keeps it. The implementor, fixer, consistency reviewer and ladder each get a holder of
+their own; the baseline and ladder pass theirs to `tim build gate --holder` for its E2E phase.
+Reviewers, verifiers and the judge get none, and never touch the stack.
+
+`acquire` starts a stack that is down and records its container ids in the lease. It reuses a
+stack the same holder leases only when that start finished and the containers are still the
+ones it recorded; a start of its own that died part-way is taken down and started again. It
+refuses a stack leased to anybody else, up with no lease at all (one somebody started by
+hand), or restarted by hand under the lease (other container ids), naming the holder, its
+mode and its branches, and never takes such a stack down. A stale lease is taken over under
+a lock, so two processes never both start the stack. While a lease is held,
+`tim docker up|dev|down|restart|bounce-backend` refuse unless given `--force`, which the loop
+never passes.
+
+After every stage that may hold the stack, the script gives that stage's own lease back with a
+light agent, whatever the stage did, so a lease an agent forgot never reaches the next
+increment. A refused stage returns `stackHeld` and runs nothing that needs the stack. The
+script rules:
+
+- **An earlier stage of the same increment in the same run holds it** — a leak. The loop
+  releases that lease with a light agent and runs the stage once more.
+- **Anything else** — another run, another session, another increment, or no lease — stops
+  the run at `stack-held`, naming the holder, for a human ruling. A stop after implement goes
+  through the preserve step like any other.
+
+Plans may name a check that needs the stack again, marked "needs the workspace stack"; the
+stage that runs it takes the lease. The integration proof is still the gate's E2E rung.
 
 The reviewers follow the personas the skills already ship —
 `review/references/{FILE_REVIEWER,CONSISTENCY_REVIEWER,REVIEW_ITEM_FIXER}.md` and
@@ -367,7 +444,7 @@ like this:
 
 | Stage | Under `lifecycle: 'branch'` |
 |---|---|
-| Ticket | Does not run. No Jira call of any kind, anywhere in the run |
+| Start | Does not run. No Jira call of any kind, anywhere in the run. A drain derives each id with `tim backlog next` in a one-command agent |
 | Branch | Creates nothing. Asserts every repo in the envelope's `repos` (not only the row's) is on `branch`, clean, not mid-merge and fast-forwarded to its origin (`fetch`, then `merge --ff-only`), and that the envelope names exactly the configured repos. Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, which the script checks: a merge into a repo the row does not build stops the run as `row-invalid` |
 | Baseline, Ladder | Run only the row's `gatePhases` (all three when it has none; none for `[]`). A ladder without `e2e` does not fail for want of an end-to-end proof: that proof is another row's |
 | Merge start | Runs only for a row with `merge`, between plan and implement. Fetches and runs `git merge --no-ff --no-commit <ref>` per repo, and reports the conflicted paths. The planner previews the same merge with `git merge-tree` and plans every resolution, reading a resolutions file where the row's notes point at one |

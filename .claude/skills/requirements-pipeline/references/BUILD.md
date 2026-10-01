@@ -80,7 +80,8 @@ models        {} for the recommended split, pass that unless the user asks
               code (default sonnet) writes and repairs code: implement, the
               per-group style and code reviewers, the finding verifiers, fix,
               the ladder, CI fix. light (default haiku) runs a command and
-              reports what it said: everything else. A tier left out takes
+              reports what it said: everything else, the start stage
+              included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
 ```
@@ -126,7 +127,7 @@ as approving neither.
 
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
-increment at the ticket stage:
+increment at the start stage:
 
 ```bash
 tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
@@ -141,18 +142,28 @@ placeholder wording, not this board's workflow.
 **A raised ticket lands in the board's backlog, and no status gets it out.**
 Board membership is not a field on the issue and is not implied by status — two
 tickets identical in every field sit one on the board and one in the backlog.
-So the ticket stage moves it with `tools/jira/move-to-board.sh <board> <KEY>`
-after it sets the working status, and reports `movedToBoard`. The loop treats a
-false there as `ticket-failed`, because a ticket the team cannot see on a run
-that otherwise looks clean is the failure worth catching loudly. The call is
+So the start stage (`tim build start`) moves it onto the board after it sets the
+working status, and reports `movedToBoard`. The loop treats anything but true
+there as `ticket-failed`, because a ticket the team cannot see on a run that
+otherwise looks clean is the failure worth catching loudly. The call is
 idempotent, so it runs on reused tickets too.
+
+**Each increment starts with one deterministic call.** Under the full lifecycle
+a light agent runs `tim build start` and copies its JSON line, which the script
+reads: it derives the increment, reuses or raises its ticket (templating the
+description in Jira wiki markup from the row, and recording the key before
+anything else so a retry never raises a second), sets the working status by
+exact name, moves it onto the board, and puts the increment's repos on its
+branch. A failure names its step and its exact reason, and the loop maps it to
+`derive-failed`, `no-buildable`, `ticket-failed` or `branch-failed`. See
+[`../workflow/README.md`](../workflow/README.md#the-start-stage).
 
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 23–35 agents on Claude and 29–41 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 39 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
    increments on Claude and 23 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -163,23 +174,48 @@ idempotent, so it runs on reused tickets too.
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
 4. **Check the gate covers every repo the programme builds.** Branching needs
-   nothing from you — the loop's Branch stage cuts each increment's branch off a
+   nothing from you — the loop's start stage cuts each increment's branch off a
    freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
    rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
    a free-port check, then E2E against the workspace stack built from local
-   source. It starts the stack for E2E only if it was down and stops only what it
-   started. Every rung writes to its own log, a rung that cannot run fails with
-   its reason, and the command exits 1 unless every rung passed. The baseline and
+   source, under a stack lease. It starts the stack for E2E only if it was down,
+   stops only what it started, and refuses a stack anybody else holds. Every rung
+   writes to its own log, a rung that cannot run fails with its reason, and the
+   command exits 1 unless every rung passed. The baseline and
    the ladder each run it one phase per call (each phase fits a ten-minute Bash
    window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
    the implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts or starts or stops the stack. No stage but
-   the gate starts the workspace stack or runs anything against it, whatever the
-   plan says. A plan check never needs the stack; proof against the real stack is
-   the gate's E2E rung. A check that starts any other compose project (`docker
-   compose run` starts its `depends_on`) is followed by that repo's down script.
+   agent picks a repo's test scripts.
+
+   **The workspace stack is leased.** A stage uses it only through
+   `tim docker lease acquire --holder "<run> <increment> <stage>"`, and gives it
+   back with `tim docker lease release` before it returns. The implementor, fixer,
+   consistency reviewer and ladder each have a holder; no other agent touches the
+   stack. A plan may name a check that needs the stack, marked "needs the
+   workspace stack"; the stage that runs it takes the lease. The integration proof
+   is still the gate's E2E rung. A stage refused the stack returns `stackHeld`, and
+   the script rules: a lease an earlier stage of the same increment and run leaked
+   is released and the stage run once more; anything else stops the run at
+   `stack-held` for you to rule on. A stack somebody brought up by hand, with no
+   lease, counts as somebody else's: it is never reused and never taken down, and
+   so does a stack restarted by hand under a lease (its container ids no longer
+   match the lease's). After every stage that may hold the stack the script gives
+   that stage's own lease back, so a lease an agent forgot never reaches the next
+   increment. The lease file is per machine (`tim docker lease status` shows it),
+   and while it is held `tim docker up`, `dev`, `down`, `restart` and
+   `bounce-backend` refuse unless given `--force`, which the loop never passes.
+
+   **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
+   brought up yourself with `tim docker dev`, because it has no lease. Either take
+   it down first (`tim docker down`) and let the gate start and stop its own, or
+   run the gate under a lease of your own:
+   `tim docker lease acquire --holder "<you> manual"`, then
+   `tim build gate <workarea> --phase e2e --holder "<you> manual"`, then
+   `tim docker lease release --holder "<you> manual"`. A check that
+   starts any other compose project (`docker compose run` starts its
+   `depends_on`) is followed by that repo's down script.
    The gate reads the
    repos from the backlog envelope's `repos` map, so a backlog without one goes
    baseline-red until it has one. Add a repo's rungs to `gates.json`
@@ -195,13 +231,15 @@ Build the args, launch once, read the result. The loop does the repeating.
 
 ### 1. What the loop derives for itself
 
-You do not pick the increments. With `increments: null` the loop runs
+You do not pick the increments. With `increments: null` the loop's start stage
+runs `tim build start <workarea>` with no `--id`, which derives the next one the
+same way as
 
 ```bash
 tim backlog next <workarea>
 ```
 
-itself, after each increment lands, and builds whatever id comes back. That is
+after each increment lands, and builds whatever id comes back. That is
 what lets one launch build many: a list chosen in advance throws away everything
 the first increment teaches, and a run that needed a turn from you per increment
 died whenever the session did.
@@ -307,7 +345,7 @@ the order is the script's, not an agent's:
 - **Any other keys:** the order of the row's own `repos` list. Write it provider
   before consumer — a service before the frontend that calls it, a stub before
   the service that calls it, and a tests or performance-tests repo after every
-  service it exercises. The ticket stage copies it as written and the planner
+  service it exercises. The start stage copies it as written and the planner
   returns its `repos` in the same order, saying under `risks` where the row's
   order puts a consumer first. A PR in a repo the row does not name, such as one
   a CI fixer raised, merges last.
@@ -439,10 +477,11 @@ handover prompt.
 | `count-reached` | `stopAfter` increments have landed. The ordinary ending |
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
-| `derive-failed` | `tim backlog next` itself failed. **Not** a finished backlog — fix the query or the workarea and launch again |
+| `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
 | `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
-| `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch |
+| `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
+| `stack-held` | A stage needed the workspace stack and somebody else holds it: another run, another session, another increment, or a stack somebody started by hand with no lease. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) or take down a hand-started stack yourself, then launch again. A lease an earlier stage of the same increment leaked never stops the run: the loop releases it and runs the stage again |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
@@ -502,7 +541,7 @@ Then stop:
 - **Never re-run the increment to get a different answer.** The PRs are already
   green; a second set only adds noise for the reviewer.
 
-Resuming is free once somebody approves: `prs` stays populated, so STEP 5 puts
+Resuming is free once somebody approves: `prs` stays populated, so the start stage puts
 the increment back at `"ci"`, which re-checks the PRs and reaches the merge stage
 again — this time finding the approvals.
 

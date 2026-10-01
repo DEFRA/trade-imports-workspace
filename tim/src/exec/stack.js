@@ -77,7 +77,21 @@ const nonEmptyLines = (text) =>
  * @returns {Promise<string[]>}
  * @throws {TimError} MISSING_DEP when docker is not installed, UNKNOWN when docker cannot list containers
  */
-export const stackContainers = async ({ env } = {}) => {
+export const stackContainers = ({ env } = {}) => listStack('{{.Names}}', env)
+
+/**
+ * The workspace stack's running containers, by id. A container recreated by
+ * a restart gets a new id, so the ids tell one stack from another started in
+ * its place.
+ *
+ * @param {object} [opts]
+ * @param {object} [opts.env] - Extra environment for docker
+ * @returns {Promise<string[]>}
+ * @throws {TimError} as stackContainers does
+ */
+export const stackContainerIds = ({ env } = {}) => listStack('{{.ID}}', env)
+
+const listStack = async (format, env) => {
   const result = await run(
     'docker',
     [
@@ -85,7 +99,7 @@ export const stackContainers = async ({ env } = {}) => {
       '--filter',
       `label=com.docker.compose.project=${STACK_PROJECT}`,
       '--format',
-      '{{.Names}}'
+      format
     ],
     { env }
   )

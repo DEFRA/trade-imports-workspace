@@ -22,4 +22,6 @@ the `project:` input it passes to the shared reusable workflow
 | stub | *(empty — every domain)* | Stub of upstream services, broadly consumed. |
 
 Update this table whenever a service's `project:` value changes, or a new
-service repo gets its own E2E check.
+service repo gets its own E2E check — and update **CDP Portal > Services >
+*service* > Automations > Test Runs > Automatic Test Runs** for that service
+too, since nothing here keeps that in sync automatically.

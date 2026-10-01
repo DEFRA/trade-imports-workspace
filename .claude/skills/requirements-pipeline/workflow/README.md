@@ -167,7 +167,7 @@ missing key. The first log line is the resolved configuration.
 | `planOnly` | `true` writes each increment's plan and stops — no ticket, branch, baseline or build. `false` for a real run |
 | `jiraProject` | Jira project key raised tickets land in. `null` under the branch lifecycle |
 | `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
-| `jiraInProgressStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
+| `jiraInDevStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
 | `jiraDoneStatus` | The board's finished status, set after the merge. `null` under the branch lifecycle |
 | `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
@@ -248,7 +248,7 @@ ever.
   planOnly: false,
   jiraProject: 'EUDPA',
   epic: 'EUDPA-12345',
-  jiraInProgressStatus: 'In Dev',
+  jiraInDevStatus: 'In Dev',
   jiraDoneStatus: 'Done',
   jiraBoard: 13780,
   ciFixAttempts: 3,
@@ -400,7 +400,7 @@ The worked example for the frontend alignment sync:
   planOnly: false,
   jiraProject: null,
   epic: null,
-  jiraInProgressStatus: null,
+  jiraInDevStatus: null,
   jiraDoneStatus: null,
   jiraBoard: null,
   ciFixAttempts: 3,

@@ -90,7 +90,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'stopAfter',
     'jiraProject',
     'epic',
-    'jiraInProgressStatus',
+    'jiraInDevStatus',
     'jiraDoneStatus',
     'jiraBoard',
     'ciFixAttempts',
@@ -105,7 +105,7 @@ const REQUIRED_KEYS_BY_SCRIPT = {
 const JIRA_AND_CI_KEYS = [
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'ciFixAttempts',
@@ -140,7 +140,7 @@ const BASE_ARGS = {
   stopAfter: 1,
   jiraProject: 'EUDPA',
   epic: 'EUDPA-1',
-  jiraInProgressStatus: 'In Progress',
+  jiraInDevStatus: 'In Dev',
   jiraDoneStatus: 'Done',
   jiraBoard: 13780,
   ciFixAttempts: 3,
@@ -389,7 +389,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.error.message).toContain(
-      'keys jiraProject, epic, jiraInProgressStatus, jiraDoneStatus, jiraBoard, ciFixAttempts, ciWatchMinutes, requireApproval, approvalWaitMinutes'
+      'keys jiraProject, epic, jiraInDevStatus, jiraDoneStatus, jiraBoard, ciFixAttempts, ciWatchMinutes, requireApproval, approvalWaitMinutes'
     )
     expect(run.agents).toEqual([])
   })
@@ -630,7 +630,7 @@ describe('increment-build-loop', () => {
       branch: WORK_BRANCH,
       repos: ['backend', 'tests', 'frontend'],
       resumeAt: 'build',
-      status: 'In Progress',
+      status: 'In Dev',
       summary: 'reused'
     }
     const BRANCHED_ANSWER = { ok: true, summary: 'branched' }
@@ -1447,7 +1447,7 @@ describe('increment-build-loop', () => {
       },
       jiraProject: null,
       epic: null,
-      jiraInProgressStatus: null,
+      jiraInDevStatus: null,
       jiraDoneStatus: null,
       jiraBoard: null,
       requireApproval: null,
@@ -2066,7 +2066,7 @@ describe('increment-build-loop', () => {
         branch: WORK_BRANCH,
         repos: ROW_REPOS,
         resumeAt: 'build',
-        status: 'In Progress',
+        status: 'In Dev',
         summary: 'raised'
       },
       'inc-014 branch': { ok: true, branch: WORK_BRANCH, summary: 'branched' },
@@ -2442,7 +2442,7 @@ describe('increment-build-loop', () => {
           branch: 'feat/EUDPA-900-fixture',
           repos: ['frontend', 'tests', 'backend'],
           resumeAt: 'ci',
-          status: 'In Progress',
+          status: 'In Dev',
           summary: 'reused'
         },
         'inc-900 branch': { ok: true, summary: 'branched' },

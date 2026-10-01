@@ -59,7 +59,7 @@ export const meta = {
 //                   review and fix delegated to Codex CLI via the briefs in codex/)
 //   jiraProject     Jira project key raised tickets land in
 //   epic            parent epic every raised ticket hangs off
-//   jiraInProgressStatus  the board's working status, set when the build starts
+//   jiraInDevStatus  the board's working status, set when the build starts
 //   jiraDoneStatus        the board's finished status, set after the merge
 //   jiraBoard       the numeric board id raised tickets are moved onto. Board
 //                   membership is NOT a field on the issue and NOT implied by
@@ -161,7 +161,7 @@ const ALWAYS_REQUIRED = [
   'stopAfter',
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'ciFixAttempts',
@@ -189,7 +189,7 @@ const BASE_BRANCH = CFG.branch
 const EXECUTOR = CFG.executor
 const JIRA_PROJECT = CFG.jiraProject
 const EPIC = CFG.epic
-const STATUS_IN_PROGRESS = CFG.jiraInProgressStatus
+const STATUS_IN_DEV = CFG.jiraInDevStatus
 const STATUS_DONE = CFG.jiraDoneStatus
 const JIRA_BOARD = CFG.jiraBoard
 const CI_FIX_ATTEMPTS = CFG.ciFixAttempts
@@ -249,7 +249,7 @@ const IS_BRANCH = LIFECYCLE === 'branch'
 const UNUSED_ON_BRANCH_KEYS = [
   'jiraProject',
   'epic',
-  'jiraInProgressStatus',
+  'jiraInDevStatus',
   'jiraDoneStatus',
   'jiraBoard',
   'requireApproval',
@@ -276,9 +276,9 @@ if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
     `increment-build-loop: config.epic is required — the parent epic every raised ticket hangs off, e.g. "${JIRA_PROJECT}-20628". Got "${EPIC}"`
   )
 }
-if (!IS_BRANCH && (typeof STATUS_IN_PROGRESS !== 'string' || !STATUS_IN_PROGRESS.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
+if (!IS_BRANCH && (typeof STATUS_IN_DEV !== 'string' || !STATUS_IN_DEV.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
   throw new Error(
-    `increment-build-loop: config.jiraInProgressStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_PROGRESS}" and "${STATUS_DONE}"`
+    `increment-build-loop: config.jiraInDevStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_DEV}" and "${STATUS_DONE}"`
   )
 }
 if (!IS_BRANCH && !/^\d+$/.test(String(JIRA_BOARD))) {
@@ -2277,17 +2277,17 @@ Backlog: {{workareas/${WORKAREA_REL}/backlog.json}}
   d. **IMMEDIATELY** persist it, before you do anything else at all: \`${setRow(id, '--ticket <KEY>')}\`.
      This write is what makes a retry safe.
 
-STEP 3 — THE WORKING STATUS. This board's working status is \`${STATUS_IN_PROGRESS}\` and its finished
+STEP 3 — THE WORKING STATUS. This board's working status is \`${STATUS_IN_DEV}\` and its finished
 status is \`${STATUS_DONE}\`. Both names are CONFIGURATION and are given to you here. Use them literally.
-- Status is exactly \`${STATUS_IN_PROGRESS}\` → leave it alone.
+- Status is exactly \`${STATUS_IN_DEV}\` → leave it alone.
 - Status is exactly \`${STATUS_DONE}\` → leave it alone, and SAY SO in your summary. A finished ticket whose
   increment is not done in the backlog is a mismatch a human needs to see.
-- Any other status → \`${JIRA}/transition-ticket.sh <KEY> "${STATUS_IN_PROGRESS}"\`.
+- Any other status → \`${JIRA}/transition-ticket.sh <KEY> "${STATUS_IN_DEV}"\`.
 ⚠ Do NOT reason about whether a status comes "before" or "after" the working one. You cannot see this
 board's workflow order, and boards carry statuses whose names say nothing about direction. Compare against
 the two configured names by EXACT STRING and nothing else.
 If the transition reports the status is not available, run \`${JIRA}/transition-ticket.sh <KEY> --list\` and
-report ok:false with BOTH the status you were asked for — \`${STATUS_IN_PROGRESS}\` — AND the full list of
+report ok:false with BOTH the status you were asked for — \`${STATUS_IN_DEV}\` — AND the full list of
 transitions the board actually offers, so the config fix is obvious from your report alone.
 Do NOT guess a nearby status and do NOT pick one off the list yourself.
 

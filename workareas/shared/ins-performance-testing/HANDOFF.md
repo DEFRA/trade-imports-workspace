@@ -13,7 +13,7 @@ Step 0 is done. The build is parked before inc-001, because the loop's baseline 
   2. Stop the stack with `tim docker down`, because FIT needs its ports free.
   3. Run `tim build gate shared/ins-performance-testing --phase e2e`.
   4. When the gate is green, relaunch the loop by `scriptPath`, with the args below.
-- **Args:** the full lifecycle; `branch: main`; epic EUDPA-641; statuses "In Dev" and "Done" (the status names, not the "In Progress" transition); board 13780; `requireApproval: false`; `repos` copied from the envelope (9 keys, including `instests`); `increments: null`; `stopAfter: "all"`.
+- **Args:** the full lifecycle; `branch: main`; epic EUDPA-641; statuses "In Dev" and "Done" (the status names); board 13780; `requireApproval: false`; `repos` copied from the envelope (9 keys, including `instests`); `increments: null`; `stopAfter: "all"`.
 
 You are overseeing the build of the INS performance-testing backlog: 19 increments of k6 load tests for the Import Notification Service. You orchestrate and verify. Agents and the build loop write the code. Use the `requirements-pipeline` skill (BUILD phase) for the build itself.
 

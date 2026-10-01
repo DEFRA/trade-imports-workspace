@@ -50,7 +50,7 @@ increments    null to drain the backlog, which is the normal run. A list of ids
 jiraProject   default EUDPA
 epic          parent epic every raised ticket hangs off. The one thing
               a run must be told
-inProgress    the board's working status. Read it from the board's
+inDev         the board's working status. Read it from the board's
               transitions (below) rather than asking
 doneStatus    the board's finished status, the same way
 board         numeric id of the board tickets are moved onto. 13780 is
@@ -175,7 +175,12 @@ idempotent, so it runs on reused tickets too.
    the ladder each run it one phase per call (each phase fits a ten-minute Bash
    window) into `<workarea>/logs/<id>-baseline/` and `<workarea>/logs/<id>-ladder/`;
    the implementor and fixer run its unit and FIT phases to check themselves. No
-   agent picks a repo's test scripts or starts or stops the stack. It reads the
+   agent picks a repo's test scripts or starts or stops the stack. No stage but
+   the gate starts the workspace stack or runs anything against it, whatever the
+   plan says. A plan check never needs the stack; proof against the real stack is
+   the gate's E2E rung. A check that starts any other compose project (`docker
+   compose run` starts its `depends_on`) is followed by that repo's down script.
+   The gate reads the
    repos from the backlog envelope's `repos` map, so a backlog without one goes
    baseline-red until it has one. Add a repo's rungs to `gates.json`
    before the first increment that builds it; the gate fails a repo it has no
@@ -255,7 +260,7 @@ Build the args object with every key below:
   planOnly: false, // true writes <workarea>/plans/<id>.md and stops: a dry run to see how it would be built
   jiraProject: '<jiraProject>',
   epic: '<epic>',
-  jiraInProgressStatus: '<inProgress>',
+  jiraInDevStatus: '<inDev>',
   jiraDoneStatus: '<doneStatus>',
   jiraBoard: 13780, // the EUDPA board. Another programme's board is another id
   ciFixAttempts: 3,
@@ -524,7 +529,7 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 ### What it never does
 
 - It makes no Jira call of any kind. There is no ticket and no board, so `jiraProject`, `epic`,
-  `jiraInProgressStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
+  `jiraInDevStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
   `null`. The loop refuses a value in any of them, because a value would suggest it governs the run.
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
@@ -600,7 +605,7 @@ scope        <scope>
 executor     <executor>
 jiraProject  <jiraProject>
 epic         <epic>
-inProgress   <inProgress>
+inDev         <inDev>
 doneStatus   <doneStatus>
 board        <board>
 repos        <the repos table, one JSON object>

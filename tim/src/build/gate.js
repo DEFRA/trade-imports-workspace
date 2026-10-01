@@ -1,13 +1,30 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runToLog } from '../exec/exec.js'
-import { runStackScriptToLog, stackContainers } from '../exec/stack.js'
+import { runStackScriptToLog } from '../exec/stack.js'
+import {
+  acquireStack,
+  releaseStack,
+  readLease,
+  describeLease,
+  defaultLeasePath
+} from '../exec/stack-lease.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
 import { loadGates, planRungs, MVN_VERIFY } from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
+
+/**
+ * Who the gate takes the stack lease as when no holder is given: this gate
+ * run, by its workarea and process.
+ *
+ * @param {string} workarea
+ * @returns {string}
+ */
+export const defaultGateHolder = (workarea) =>
+  `tim build gate ${workarea} (pid ${process.pid})`
 
 // run-stack.sh -d builds the repo-backed services from local source under
 // repos/, so the stack serves the branch each repo is on.
@@ -117,19 +134,49 @@ const runRung = async (rung, { logsDir, env }) => {
   }
 }
 
-const LEFT_UP_BY_ANOTHER_STEP =
-  'The gate starts the workspace stack only for its E2E phase and stops what it started, so something other than the gate started it and left it up.'
+const UNLEASED_STACK =
+  'Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.'
 
-const heldPortReason = (port, holder) => {
-  const reason = `Port ${port} is in use by ${describeHolder(holder)}. The rung needs it free.`
-  return holder.workspaceStack ? `${reason} ${LEFT_UP_BY_ANOTHER_STEP}` : reason
+const workspaceStackNote = (lease) =>
+  lease
+    ? `The workspace stack is leased to ${describeLease(lease)}.`
+    : UNLEASED_STACK
+
+const leaseOrUnreadable = (leasePath) => {
+  try {
+    return readLease(leasePath)
+  } catch (error) {
+    return {
+      holder: `nobody tim can name (${messageOf(error)})`,
+      mode: '?',
+      acquiredAt: '?'
+    }
+  }
 }
 
-const heldPortReasons = async (ports, env) => {
+const heldPortReason = (port, holder, lease) => {
+  const reason = `Port ${port} is in use by ${describeHolder(holder)}. The rung needs it free.`
+  return holder.workspaceStack
+    ? `${reason} ${workspaceStackNote(lease)}`
+    : reason
+}
+
+// The first FIT port the workspace stack holds is recorded as the gate's
+// `stack.held`, naming the lease holder, so a caller can tell a held stack
+// from a red rung without reading the reason.
+const heldPortReasons = async (ports, context) => {
   const reasons = []
   for (const port of ports) {
     if (await isPortHeld(port)) {
-      reasons.push(heldPortReason(port, await portHolder(port, { env })))
+      const holder = await portHolder(port, { env: context.env })
+      const lease = holder.workspaceStack
+        ? leaseOrUnreadable(context.leasePath)
+        : null
+      const reason = heldPortReason(port, holder, lease)
+      reasons.push(reason)
+      if (holder.workspaceStack && !context.held) {
+        context.held = { holder: lease?.holder ?? null, detail: reason }
+      }
     }
   }
   return reasons
@@ -137,7 +184,7 @@ const heldPortReasons = async (ports, env) => {
 
 const runFitRung = async (rung, context) => {
   if (rung.refusal) return failed(rung, rung.refusal)
-  const held = await heldPortReasons(rung.ports, context.env)
+  const held = await heldPortReasons(rung.ports, context)
   return held.length > 0 ? failed(rung, held.join(' ')) : runRung(rung, context)
 }
 
@@ -149,16 +196,7 @@ const runInOrder = async (rungs, runOne) => {
   return results
 }
 
-const isStackUp = async (env) => (await stackContainers({ env })).length > 0
-
-const stackScript = (context, script, args, logName) =>
-  runStackScriptToLog({
-    workspaceRoot: context.workspaceRoot,
-    script,
-    args,
-    env: context.env,
-    logPath: join(context.logsDir, logName)
-  })
+const logIn = (context, logName) => join(context.logsDir, logName)
 
 const NO_E2E_STACK = {
   wasUp: null,
@@ -167,53 +205,99 @@ const NO_E2E_STACK = {
   servedFrom: null,
   upLog: null,
   downLog: null,
-  downError: null
+  downError: null,
+  held: null
 }
 
 const failAll = (rungs, reason) => rungs.map((rung) => failed(rung, reason))
 
-const tryStackStatus = async (env) => {
+const messageOf = (error) => error.message ?? String(error)
+
+const takeLease = async (context) => {
   try {
-    return { wasUp: await isStackUp(env), error: null }
+    return await acquireStack({
+      workspaceRoot: context.workspaceRoot,
+      holder: context.holder,
+      mode: 'dev',
+      leasePath: context.leasePath,
+      logPath: logIn(context, 'gate-stack-up.log'),
+      env: context.env
+    })
   } catch (error) {
-    return { wasUp: null, error: error.message ?? String(error) }
+    return {
+      acquired: false,
+      refused: false,
+      up: null,
+      reason: `Can't tell whether the workspace stack is free: ${messageOf(error)}`
+    }
   }
 }
 
-const bringUp = async (context) => {
+const rebuild = async (context) => {
   try {
-    return await stackScript(
-      context,
-      'run-stack.sh',
-      DEV_STACK_ARGS,
-      'gate-stack-up.log'
-    )
+    return await runStackScriptToLog({
+      workspaceRoot: context.workspaceRoot,
+      script: 'run-stack.sh',
+      args: DEV_STACK_ARGS,
+      env: context.env,
+      logPath: logIn(context, 'gate-stack-up.log')
+    })
   } catch (error) {
-    return { exitCode: null, log: null, error: error.message ?? String(error) }
+    return { exitCode: null, log: null, error: messageOf(error) }
   }
 }
 
-const takeDown = async (context) => {
+const giveBack = async (context) => {
   try {
-    return await stackScript(
-      context,
-      'stop-stack.sh',
-      [],
-      'gate-stack-down.log'
-    )
+    return await releaseStack({
+      workspaceRoot: context.workspaceRoot,
+      holder: context.holder,
+      leasePath: context.leasePath,
+      logPath: logIn(context, 'gate-stack-down.log'),
+      env: context.env
+    })
   } catch (error) {
-    return { exitCode: null, log: null, error: error.message ?? String(error) }
+    return { released: false, log: null, reason: messageOf(error) }
   }
 }
 
-const upFailure = (up) =>
+const rebuildFailure = (up) =>
   up.error ??
   `The workspace stack did not come up (run-stack.sh exited ${up.exitCode}). Read ${up.log}.`
 
+const refusedE2e = (rungs, lease) => ({
+  results: failAll(rungs, lease.reason),
+  stack: {
+    ...NO_E2E_STACK,
+    wasUp: lease.up,
+    upLog: lease.log ?? null,
+    held: lease.refused ? { holder: lease.holder, detail: lease.reason } : null
+  }
+})
+
+const runLeasedRungs = async (rungs, context, lease) => {
+  if (!lease.reused) {
+    return {
+      results: await runInOrder(rungs, (rung) => runRung(rung, context))
+    }
+  }
+  const up = await rebuild(context)
+  return {
+    upLog: up.log,
+    results:
+      up.exitCode === 0
+        ? await runInOrder(rungs, (rung) => runRung(rung, context))
+        : failAll(rungs, rebuildFailure(up))
+  }
+}
+
 /**
- * Run the e2e rungs against the workspace stack built from local source.
- * A stack that was already up is brought onto local source and left up; a
- * stack the gate started is always taken down again, whatever happened.
+ * Run the e2e rungs against the workspace stack built from local source,
+ * under a lease held as the gate's own holder. A stack that is down is
+ * started, leased, and always released again, whatever happened. A stack
+ * this holder already leases is rebuilt from local source and left up. A
+ * stack leased to anyone else, or up with no lease, is refused and left
+ * exactly as it is.
  */
 const runE2e = async (rungs, context) => {
   const blockers = rungs.map((rung) => rung.refusal ?? cannotRunBecause(rung))
@@ -223,46 +307,30 @@ const runE2e = async (rungs, context) => {
       stack: NO_E2E_STACK
     }
   }
-  const status = await tryStackStatus(context.env)
-  if (status.error) {
-    return {
-      results: failAll(
-        rungs,
-        `Can't tell whether the workspace stack is up: ${status.error}`
-      ),
-      stack: NO_E2E_STACK
-    }
-  }
-  const { wasUp } = status
+  const lease = await takeLease(context)
+  if (!lease.acquired) return refusedE2e(rungs, lease)
   const stack = {
     ...NO_E2E_STACK,
-    wasUp,
-    startedForE2e: !wasUp,
-    servedFrom: 'local-source'
+    wasUp: lease.reused,
+    startedForE2e: lease.started,
+    servedFrom: 'local-source',
+    upLog: lease.log
   }
-  let results = []
+  let ran = { results: [] }
   let down = null
   try {
-    const up = await bringUp(context)
-    stack.upLog = up.log
-    results =
-      up.exitCode === 0
-        ? await runInOrder(rungs, (rung) => runRung(rung, context))
-        : failAll(rungs, upFailure(up))
+    ran = await runLeasedRungs(rungs, context, lease)
   } finally {
-    if (!wasUp) down = await takeDown(context)
+    if (lease.started) down = await giveBack(context)
   }
   return {
-    results,
+    results: ran.results,
     stack: {
       ...stack,
-      stoppedAfter: down?.exitCode === 0,
+      upLog: ran.upLog ?? stack.upLog,
+      stoppedAfter: down?.released === true,
       downLog: down?.log ?? null,
-      downError:
-        down && down.exitCode !== 0
-          ? (down.error ??
-            `stop-stack.sh exited ${down.exitCode}. Read ${down.log}.`)
-          : null
+      downError: down && !down.released ? down.reason : null
     }
   }
 }
@@ -280,6 +348,8 @@ const byPhase = (plan, phase) => plan.filter((rung) => rung.phase === phase)
  * @param {string} args.workarea
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
  * @param {string} [args.logsDir]
+ * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
+ * @param {string} [args.leasePath] - The stack lease file
  * @param {object} [args.env] - Extra environment for every command the gate runs
  * @returns {Promise<{green: boolean, phase: string, logs: string, rungs: object[], stack: object}>}
  */
@@ -288,13 +358,22 @@ export const runGate = async ({
   workarea,
   phase = 'all',
   logsDir,
+  holder = defaultGateHolder(workarea),
+  leasePath = defaultLeasePath(),
   env
 }) => {
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
   const plan = planRungs({ gates, repos, phase })
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
-  const context = { workspaceRoot, logsDir: logs, env }
+  const context = {
+    workspaceRoot,
+    logsDir: logs,
+    holder,
+    leasePath,
+    env,
+    held: null
+  }
 
   const unit = await runInOrder(byPhase(plan, 'unit'), (rung) =>
     runRung(rung, context)
@@ -311,6 +390,6 @@ export const runGate = async ({
     phase,
     logs,
     rungs,
-    stack: e2e.stack
+    stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
   }
 }

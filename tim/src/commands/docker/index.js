@@ -2,6 +2,7 @@ import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { runStackScript } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
+import { registerLease } from './lease.js'
 
 const SCHEMA_VERSION = 1
 
@@ -123,4 +124,5 @@ export const register = (program, { timVersion }) => {
   for (const command of STACK_COMMANDS) {
     registerStackCommand(docker, { ...command, timVersion })
   }
+  registerLease(docker, timVersion)
 }

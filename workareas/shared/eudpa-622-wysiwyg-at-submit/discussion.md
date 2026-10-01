@@ -2,7 +2,7 @@
 
 Discussion document for the spike. Not a plan; not a fix — a starting point for the team conversation that closes the spike out with a chosen direction and any follow-on tickets.
 
-The ticket calls the mitigation out as open, listing three candidates and inviting more. This document lays out six, notes what each does and does not cover, and pulls out the one dependency that changes the shape of the conversation: whether the address-book coupling stays or moves to literals.
+The ticket calls the mitigation out as open, listing three candidates and inviting more. This document lays out seven, notes what each does and does not cover, and pulls out the one dependency that changes the shape of the conversation: whether the address-book coupling stays or moves to literals.
 
 ---
 
@@ -76,7 +76,7 @@ Two flavours, same effect on the WYSIWYG problem:
 - **B1: Take literals at attach.** The address rework described above. Notification stores address text directly; no addressId retained.
 - **B2: Snapshot on attach.** Notification keeps the addressId **and** stores an inline copy captured at the moment the user picked or edited the address. Review renders from the inline copy. Submit uses the inline copy as the source of truth.
 
-Both cover scenario 1 fully. Neither covers 2, 3, 4 on its own — they need something else (typically E, plus A or C for the URL case).
+Both cover scenario 1 fully. Neither covers 2, 3, 4 on its own — they need something else (typically F, plus A or C for the URL case).
 
 Trade-offs vs. EUDPA-294's reference-only rationale:
 - Storage: an inline copy per party per notification. Small.
@@ -141,6 +141,26 @@ The concurrency token is already threaded through Review and Declaration hidden 
 
 **Pointer.** `.../features/declaration/controller.js` POST — after `isReviewRefused()` passes, read `payload.concurrencyToken`, fetch the current record's token, refuse with a redirect + flash on mismatch.
 
+### Option G — Lock the notification on *Continue* from Review
+
+On *Continue* from Review, the backend transitions the notification into a locked state (the same mechanism Submit uses today, pulled earlier in the flow). Edits refuse while locked. Submission from Declaration proceeds against the locked state. On successful Submit the state remains terminal as today; on abandonment the notification needs to return to an editable state.
+
+Prevention rather than detection — the drift the other options catch simply can't happen within the locked window.
+
+- Covers scenario 2 (other tab's amend refuses) and scenario 4 (second user's edits refuse) by prevention.
+- Covers scenario 3 only if Submit *also* refuses when the notification isn't locked by the submitting session; otherwise URL subversion into Declaration can still proceed against an unlocked notification.
+- Does **not** cover scenario 1. The notification lock does not propagate into the address-book service, so a referenced address can still be edited there. Making the lock cross-service for every referenced address record is a much bigger change than a per-notification state transition.
+- The hard part is unlock:
+  - Successful Submit → terminal, as today.
+  - Explicit back/cancel → unlock cleanly.
+  - Session timeout, tab close, browser crash → no reliable client-side signal. The lock has to self-expire after some window, which just relocates the drift problem to the moment of expiry — if the user's Declaration page is still open past timeout, nothing stops the notification being edited before they Submit, and we are back to needing C/D-style detection to catch it.
+  - Second user arrives mid-lock → wait, forced takeover, admin-only unlock, or an informational "locked by X" message? Each has a UX cost the design has to carry.
+- Lock ownership (session, user, or both) has to be tracked so a different session cannot inadvertently release a lock it didn't acquire.
+
+Why this likely ends up a partial answer: by itself it leaves scenario 1 open and makes scenario 3 contingent on Submit-side enforcement; the lock-expiry edge pushes it back toward one of the detection options. As a *supplement* it closes the window during which detection has to work, which can simplify the UX of the chosen detection option.
+
+**Pointer.** Backend: extend `NotificationService` with `lockForReview(notificationId, sessionId)` / `unlockFromReview(notificationId, sessionId)`; `NotificationAggregate` gains `reviewLock: { ownerSessionId, acquiredAt, expiresAt }`. Guard every write path against an active lock not held by the caller. Frontend: call `lockForReview()` in `.../features/check-answers/controller.js` POST after `reviewRefusal()` passes; call `unlockFromReview()` on explicit navigation off Declaration that isn't Submit (Back especially).
+
 ---
 
 ## Scenario-coverage matrix
@@ -154,8 +174,9 @@ The concurrency token is already threaded through Review and Declaration hidden 
 | D. Persisted snapshot + id, verified at Submit      | Y                    | Y                 | Y                 | Y            | Full              | M–L  |
 | E. Server-side reviewed snapshot as source of truth | Y                    | Y                 | Y                 | Y            | —                 | L    |
 | F. Concurrency token check on Submit                | —                    | Y                 | —                 | Y            | Partial           | XS   |
+| G. Lock notification on *Continue*                  | —                    | Y                 | Partial           | Y            | —                 | M    |
 
-For the *Explains what changed* column: Partial means we can display just generic guidance ("content changed" or "another user edited this"); — = no guidance path.
+For the *Explains what changed* column: Partial means we can display just generic guidance ("content changed" or "another user edited this"); — = no guidance path (either drift is not detected, or the option's design means no drift is possible in the first place).
 
 Useful combinations:
 
@@ -163,6 +184,7 @@ Useful combinations:
 - **B1 + F**: covers 1 via the model change; 2/4 via the token; still misses 3 (but 3 is the least likely accidental subversion).
 - **C alone**: single lever, all four scenarios. Requires care in canonical hashing and drift-UX.
 - **D alone**: same coverage as C, but the drift-detection UX can be field-level (naming what changed) rather than a generic banner, because the prior view-model is persisted and diffable. Costs a small backend schema + API change.
+- **G + C** or **G + D**: lock during the Review → Submit window to shrink the detection surface, with hash or snapshot as a safety net around lock expiry and scenario 1. Buys prevention *and* detection at the cost of carrying both mechanisms and their failure modes.
 
 ---
 
@@ -195,7 +217,7 @@ Restating the ticket's own list, plus what's surfaced above:
 
 1. Is the address-book literals rework in or out of the near-term picture? This directly changes which mitigation is cheapest.
 2. Which subversion scenarios are in scope for EUDPA-622? All four, or explicitly accept some (URL subversion, most obviously).
-3. Which mitigation, or which combination? A+E, B1+E, or C are the three clean starting points.
+3. Which mitigation, or which combination? A+F, B1+F, or C are the three clean starting points.
 4. On drift detection: block Submit and re-show Review with a diff, or something else (auto-refresh, silent re-resolve, prompt with per-field acknowledgement)?
 5. Does the answer apply identically to plants and animals, or diverge?
 6. Do we want the finalised notification (outbox event) to reflect **what was reviewed** or **the latest resolution at the moment of submit**? Today it's the latter. Options C and D make it the former. The team should call this out explicitly — it's a legal-record question as much as a technical one.

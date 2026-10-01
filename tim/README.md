@@ -256,6 +256,43 @@ its reason. The result is `{green, rungs, stack}` and the command exits 1
 unless every rung passed. gates.json refuses any rung that names a remote or
 CDP script.
 
+### `tim build runs archive|report` — what each run cost
+
+Keeps the full transcripts of workflow runs and reports what each stage cost
+and how long it took, so build-loop runs can be compared over time.
+
+```bash
+tim build runs archive wf_850da050-87a          # one run, by id or transcript folder path
+tim build runs archive --all                    # every run Claude Code still holds for this workspace
+tim build runs report wf_850da050-87a           # run → increment → stage → agent table
+tim build runs report wf_850da050-87a --json    # the same, for mining
+tim build runs report --all --session <id>      # one line per run, then each stage across them
+tim build runs report --all --workflow all      # every workflow, not only increment-build-loop
+```
+
+`archive` copies a run's `journal.jsonl`, every agent's transcript and
+`.meta.json`, the run's own record (`<session>/workflows/<runId>.json`: args,
+`log()` lines, result, per-agent progress) and any subagents its agents
+started, into `workareas/build-telemetry/runs/<runId>/`, and records the run in
+`workareas/build-telemetry/index.json`. It only reads `~/.claude`. Running it
+again copies only files that changed, so archiving a run while it is still
+going, then again after it stops, is safe. A run with no record yet is indexed
+as `unfinished`.
+
+The archive lives under `workareas/` because git ignores it — transcripts hold
+prompts, code and private context, and this repo is public — and outside
+`~/.claude`, which deletes session folders after `cleanupPeriodDays` (30 days
+unless set).
+
+`report` reads only the archive. Tokens are summed once per model request from
+each transcript: `input`, `output`, `cache write` and `cache read`, with
+`total` the sum of all four, so cache reads dominate it. An agent's own
+subagents count towards it. A stage's time is the span from its first agent's
+start to its last one's end, so parallel reviewers are not double counted; the
+JSON also carries `agentMs`, the sum. The increment and stage come from the
+agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
+increment id sit under `(run)`.
+
 ### `tim jira create|attach|link|epics` — the Jira write surface
 
 `tim jira ticket`/`comments` are read-only. Creating, attaching, linking and

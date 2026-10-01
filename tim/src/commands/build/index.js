@@ -6,6 +6,7 @@ import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { runBuildBranch } from '../../build/branch.js'
 import { runGate, GATE_PHASES } from '../../build/gate.js'
+import { registerRuns } from './runs.js'
 
 const SCHEMA_VERSION = 1
 
@@ -236,8 +237,9 @@ export const register = (program, { timVersion }) => {
   const build = program
     .command('build')
     .description(
-      "The build loop's deterministic steps: put the backlog's repos on one branch, and run its gate"
+      "The build loop's deterministic steps: put the backlog's repos on one branch, run its gate, and archive and report its runs"
     )
   registerBranch(build, timVersion)
   registerGate(build, timVersion)
+  registerRuns(build, timVersion)
 }

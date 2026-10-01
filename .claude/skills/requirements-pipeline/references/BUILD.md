@@ -161,9 +161,9 @@ branch. A failure names its step and its exact reason, and the loop maps it to
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is 23–35 agents on Claude and 29–41 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 39 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
    increments on Claude and 23 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -199,8 +199,21 @@ branch. A failure names its step and its exact reason, and the loop maps it to
    the script rules: a lease an earlier stage of the same increment and run leaked
    is released and the stage run once more; anything else stops the run at
    `stack-held` for you to rule on. A stack somebody brought up by hand, with no
-   lease, counts as somebody else's: it is never reused and never taken down. The
-   lease file is per machine (`tim docker lease status` shows it). A check that
+   lease, counts as somebody else's: it is never reused and never taken down, and
+   so does a stack restarted by hand under a lease (its container ids no longer
+   match the lease's). After every stage that may hold the stack the script gives
+   that stage's own lease back, so a lease an agent forgot never reaches the next
+   increment. The lease file is per machine (`tim docker lease status` shows it),
+   and while it is held `tim docker up`, `dev`, `down`, `restart` and
+   `bounce-backend` refuse unless given `--force`, which the loop never passes.
+
+   **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
+   brought up yourself with `tim docker dev`, because it has no lease. Either take
+   it down first (`tim docker down`) and let the gate start and stop its own, or
+   run the gate under a lease of your own:
+   `tim docker lease acquire --holder "<you> manual"`, then
+   `tim build gate <workarea> --phase e2e --holder "<you> manual"`, then
+   `tim docker lease release --holder "<you> manual"`. A check that
    starts any other compose project (`docker compose run` starts its
    `depends_on`) is followed by that repo's down script.
    The gate reads the

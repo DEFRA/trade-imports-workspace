@@ -222,8 +222,8 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 36 agents on Claude and 42 on
-  Codex, so a run fits roughly 27 or 23 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 42 on
+  Codex, so a run fits roughly 25 or 23 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
 - at **`stack-held`**, when a stage needed the workspace stack and somebody else holds it
   (see [The workspace stack lease](#the-workspace-stack-lease)). A human rules on the holder;
@@ -321,7 +321,8 @@ Under the full lifecycle one light agent runs
 
 ```
 tim build start <workarea> [--id <id>] [--last <id>] --base <branch> --jira-project <key> --epic <key> \
-  --in-dev-status "<status>" --done-status "<status>" --board <id> --workspace <root> --json
+  --in-dev-status "<status>" --done-status "<status>" --board <id> --repos <the args' repo keys> \
+  --workspace <root> --json
 ```
 
 and copies the one JSON line it prints, word for word. The script reads it, so no agent
@@ -332,13 +333,16 @@ buildable row. `--last` is the id the previous attempt built: met again, tim sto
 ticket and the loop stops at `not-landed`. In order, tim:
 
 1. **derives** the increment;
-2. **tickets** it: reuses the key on the row, or raises a Task under the epic, its description
+2. **tickets** it: reuses the key on the row, or an open ticket under the epic with this
+   increment's exact summary (one a create that timed out raised without the key being
+   recorded), or raises a Task under the epic, its description
    templated in Jira wiki markup from the row's title, detail, acceptance criteria and sources,
    and records the key on the row at once so a retry never raises a second; moves a status
    other than `jiraInDevStatus` there by exact name (one already at `jiraDoneStatus` is left
    alone, with a warning the loop logs); and moves it onto `jiraBoard`, every time;
 3. **branches** it: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row, in each of
-   the increment's repos, checked out and fast-forwarded where it exists, tracked where only
+   the increment's repos (a row that names none takes every repo, in the args' order),
+   checked out and fast-forwarded where it exists, tracked where only
    origin has it, or cut `--no-track` from a freshly fetched `origin/<base>`. A repo with
    uncommitted work stops it before any repo changes, and an upstream on another branch is
    removed.
@@ -358,10 +362,20 @@ run keeps it. The implementor, fixer, consistency reviewer and ladder each get a
 their own; the baseline and ladder pass theirs to `tim build gate --holder` for its E2E phase.
 Reviewers, verifiers and the judge get none, and never touch the stack.
 
-`acquire` starts a stack that is down, reuses one the same holder leases, and refuses one
-leased to anybody else or up with no lease at all (one somebody started by hand), naming the
-holder, its mode and its branches. A refused stage returns `stackHeld` and runs nothing that
-needs the stack. The script rules:
+`acquire` starts a stack that is down and records its container ids in the lease. It reuses a
+stack the same holder leases only when that start finished and the containers are still the
+ones it recorded; a start of its own that died part-way is taken down and started again. It
+refuses a stack leased to anybody else, up with no lease at all (one somebody started by
+hand), or restarted by hand under the lease (other container ids), naming the holder, its
+mode and its branches, and never takes such a stack down. A stale lease is taken over under
+a lock, so two processes never both start the stack. While a lease is held,
+`tim docker up|dev|down|restart|bounce-backend` refuse unless given `--force`, which the loop
+never passes.
+
+After every stage that may hold the stack, the script gives that stage's own lease back with a
+light agent, whatever the stage did, so a lease an agent forgot never reaches the next
+increment. A refused stage returns `stackHeld` and runs nothing that needs the stack. The
+script rules:
 
 - **An earlier stage of the same increment in the same run holds it** — a leak. The loop
   releases that lease with a light agent and runs the stage once more.

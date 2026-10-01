@@ -162,6 +162,37 @@ const WORKSPACE_ANSWER = {
 // stack lease holder starts with.
 const RUN_ID = 'ibl-20261001T090000Z'
 
+// The loop gives back each leasing stage's own lease after it, with an agent
+// of its own. Those agents are answered here, so a test's answers list stays
+// the stages it is about.
+const LEASE_RETURNED = { ok: true, summary: 'nothing to give back' }
+const isLeaseReturn = (label) => / lease return:/.test(label ?? '')
+
+const answeringLeaseReturns = (answers) => {
+  if (typeof answers === 'function') {
+    return (prompt, options) =>
+      isLeaseReturn(options.label) ? LEASE_RETURNED : answers(prompt, options)
+  }
+  let next = 0
+  return (prompt, options) => {
+    if (isLeaseReturn(options.label)) return LEASE_RETURNED
+    const answer = next < answers.length ? answers[next] : null
+    next += 1
+    return answer
+  }
+}
+
+const stageLabels = (run) =>
+  run.agents
+    .map((entry) => entry.options.label)
+    .filter((label) => !isLeaseReturn(label))
+
+const runLoop = (path, { answers = [], ...options } = {}) =>
+  runWorkflowScript(path, {
+    ...options,
+    answers: answeringLeaseReturns(answers)
+  })
+
 // What `tim build start --json` prints, as the start agent copies it.
 const startAnswer = (result) => ({
   exitCode: result.failedStep ? 1 : 0,
@@ -372,7 +403,7 @@ describe('increment-build-loop', () => {
   const scriptPath = join(buildLoopDir, 'increment-build-loop.js')
 
   const runJsonStringArgs = () =>
-    runWorkflowScript(scriptPath, {
+    runLoop(scriptPath, {
       args: JSON.stringify(BASE_ARGS),
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -414,7 +445,7 @@ describe('increment-build-loop', () => {
   })
 
   test('resolves object args to the same configuration as the string', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: BASE_ARGS,
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -425,7 +456,7 @@ describe('increment-build-loop', () => {
   })
 
   test('stops before any agent when increments is missing, the reproduced failure', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: JSON.stringify(withoutKey(BASE_ARGS, 'increments'))
     })
 
@@ -436,7 +467,7 @@ describe('increment-build-loop', () => {
   })
 
   test('names every Jira and CI key the loop needs', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKeys(BASE_ARGS, JIRA_AND_CI_KEYS)
     })
 
@@ -447,7 +478,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses an empty increments list after logging the configuration', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, increments: [] }
     })
 
@@ -459,7 +490,7 @@ describe('increment-build-loop', () => {
   })
 
   test('stops before any agent when stopAfter is missing', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'stopAfter')
     })
 
@@ -470,7 +501,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a stopAfter that would never stop the run', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, stopAfter: 0 }
     })
 
@@ -481,7 +512,7 @@ describe('increment-build-loop', () => {
   })
 
   test('accepts stopAfter "all" and carries on to the backlog', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, stopAfter: 'all' },
       answers: [WORKSPACE_ANSWER, null]
     })
@@ -490,7 +521,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses planOnly without an explicit increments list', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: true, increments: null }
     })
 
@@ -501,7 +532,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a models value that is not an object', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, models: null }
     })
 
@@ -511,7 +542,7 @@ describe('increment-build-loop', () => {
 
   describe('the models config', () => {
     const runPlanOnlyWithModels = (models) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...BASE_ARGS, planOnly: true, models },
         answers: [
           WORKSPACE_ANSWER,
@@ -585,7 +616,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a scope it would once have derived', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'scope')
     })
 
@@ -595,7 +626,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a planOnly that is not a boolean', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: 'yes' }
     })
 
@@ -606,7 +637,7 @@ describe('increment-build-loop', () => {
   })
 
   const runPlanOnly = () =>
-    runWorkflowScript(scriptPath, {
+    runLoop(scriptPath, {
       args: { ...BASE_ARGS, planOnly: true },
       answers: [
         WORKSPACE_ANSWER,
@@ -646,11 +677,7 @@ describe('increment-build-loop', () => {
   test('runs no stage after the planner when planOnly is true', async () => {
     const run = await runPlanOnly()
 
-    expect(run.agents.map((entry) => entry.options.label)).toEqual([
-      'workspace',
-      'preflight',
-      'inc-900 plan'
-    ])
+    expect(stageLabels(run)).toEqual(['workspace', 'preflight', 'inc-900 plan'])
   })
 
   test('tells the planner where to write the plan', async () => {
@@ -662,7 +689,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses an executor it would once have defaulted', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: withoutKey(BASE_ARGS, 'executor')
     })
 
@@ -672,7 +699,7 @@ describe('increment-build-loop', () => {
   })
 
   test('stops before any increment when the workspace agent reports no start time, which the run id needs', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: BASE_ARGS,
       answers: [{ ...WORKSPACE_ANSWER, startedAt: 'now' }]
     })
@@ -696,19 +723,19 @@ describe('increment-build-loop', () => {
     const START_ANSWER = startAnswer(startedResult())
 
     const runFrom = (...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, START_ANSWER, ...answers]
       })
 
     const runFromWithArgs = (argsOverride, ...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...BASE_ARGS, ...argsOverride },
         answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, START_ANSWER, ...answers]
       })
 
     const runStartedWith = (result, ...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
@@ -728,7 +755,7 @@ describe('increment-build-loop', () => {
     test('starts the increment with one tim build start call before the baseline', async () => {
       const run = await runFrom(null)
 
-      expect(run.agents.map((entry) => entry.options.label)).toEqual([
+      expect(stageLabels(run)).toEqual([
         'workspace',
         'preflight',
         'inc-900 start',
@@ -740,7 +767,7 @@ describe('increment-build-loop', () => {
       const run = await runFrom(null)
 
       expect(run.agents[2].prompt).toContain(
-        '`tim build start shared/args-fixture --id inc-900 --base main --jira-project EUDPA --epic EUDPA-1 --in-dev-status "In Dev" --done-status "Done" --board 13780 --workspace ~/ws --json`'
+        '`tim build start shared/args-fixture --id inc-900 --base main --jira-project EUDPA --epic EUDPA-1 --in-dev-status "In Dev" --done-status "Done" --board 13780 --repos frontend,backend,tests --workspace ~/ws --json`'
       )
     })
 
@@ -836,7 +863,7 @@ describe('increment-build-loop', () => {
     })
 
     test('stops with derive-failed when the start agent copies no JSON', async () => {
-      const run = await runWorkflowScript(scriptPath, {
+      const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
@@ -853,7 +880,7 @@ describe('increment-build-loop', () => {
     })
 
     test('stops with derive-failed, quoting tim, when tim fails before any step', async () => {
-      const run = await runWorkflowScript(scriptPath, {
+      const run = await runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: [
           WORKSPACE_ANSWER,
@@ -1013,6 +1040,7 @@ describe('increment-build-loop', () => {
         run.agents
           .filter((entry) => entry.options.phase === phaseName)
           .map((entry) => entry.options.label)
+          .filter((label) => !isLeaseReturn(label))
 
       const runThroughFixToLadder = () =>
         runFrom(
@@ -1193,6 +1221,34 @@ describe('increment-build-loop', () => {
         )
         expect(prompt).toContain(
           "The stack holds the FIT ports, so give it back before you run the gate's FIT phase."
+        )
+      })
+
+      test('gives back each leasing stage’s own lease as soon as the stage returns', async () => {
+        const run = await runThroughFixToLadder()
+        const all = run.agents.map((entry) => entry.options.label)
+        const followedByItsReturn = (stage) =>
+          all[all.indexOf(`inc-900 ${stage}`) + 1] ===
+          `inc-900 lease return:${stage}`
+
+        expect(
+          ['baseline', 'implement', 'fix', 'ladder'].map(followedByItsReturn)
+        ).toEqual([true, true, true, true])
+      })
+
+      test('gives back the consistency reviewer’s own lease after review', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(run.agents.map((entry) => entry.options.label)).toContain(
+          'inc-900 lease return:consistency'
+        )
+      })
+
+      test('releases exactly the stage’s own holder when it gives its lease back', async () => {
+        const run = await runThroughFixToLadder()
+
+        expect(promptOf(run, 'inc-900 lease return:ladder')).toContain(
+          `\`tim docker lease release --holder "${RUN_ID} inc-900 ladder" --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-return-ladder\``
         )
       })
 
@@ -1489,7 +1545,7 @@ describe('increment-build-loop', () => {
           summary: 'backend is on main'
         })
 
-      const labels = (run) => run.agents.map((entry) => entry.options.label)
+      const labels = (run) => stageLabels(run)
 
       test('checks every repo is on the branch before land', async () => {
         const run = await runToFailedLand()
@@ -1581,7 +1637,7 @@ describe('increment-build-loop', () => {
           startAnswer(startedResult({ id, ...fields }))
 
         const runDraining = (stopAfter, ...answers) =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: { ...BASE_ARGS, increments: null, stopAfter },
             answers: [WORKSPACE_ANSWER, PREFLIGHT_ANSWER, ...answers]
           })
@@ -1695,8 +1751,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
-        // Claude, plus the two startup agents, the twenty-eighth does not fit —
+        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
+        // Claude, plus the two startup agents, the twenty-sixth does not fit —
         // so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1706,15 +1762,15 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(27)
+          expect(run.result.increments.length).toBe(25)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
         })
       })
 
       describe('an explicit increments list', () => {
         const runListed = (...answers) =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: {
               ...BASE_ARGS,
               increments: ['inc-900', 'inc-901'],
@@ -1762,7 +1818,7 @@ describe('increment-build-loop', () => {
         const CODEX_RAN = { ok: true, summary: 'codex ran in one slice' }
 
         const runCodexToReview = () =>
-          runWorkflowScript(scriptPath, {
+          runLoop(scriptPath, {
             args: { ...BASE_ARGS, executor: 'codex' },
             answers: [
               WORKSPACE_ANSWER,
@@ -1854,7 +1910,7 @@ describe('increment-build-loop', () => {
   })
 
   test('refuses a lifecycle it does not know', async () => {
-    const run = await runWorkflowScript(scriptPath, {
+    const run = await runLoop(scriptPath, {
       args: { ...BASE_ARGS, lifecycle: 'trunk' }
     })
 
@@ -1890,18 +1946,18 @@ describe('increment-build-loop', () => {
     }
 
     const runBranch = (overrides, ...answers) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...BRANCH_ARGS, ...overrides },
         answers: [WORKSPACE_ANSWER, { ok: true, summary: '1' }, ...answers]
       })
 
-    const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+    const labelsOf = (run) => stageLabels(run)
     const promptOf = (run, label) =>
       run.agents.find((entry) => entry.options.label === label).prompt
 
     describe('its configuration', () => {
       test('takes null for every Jira and approval key, and whatever repo keys the envelope names', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: BRANCH_ARGS,
           answers: [WORKSPACE_ANSWER, null]
         })
@@ -1910,7 +1966,7 @@ describe('increment-build-loop', () => {
       })
 
       test('refuses a Jira or approval key that is given a value, naming it', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: { ...BRANCH_ARGS, epic: 'EUDPA-1', requireApproval: false }
         })
 
@@ -1921,7 +1977,7 @@ describe('increment-build-loop', () => {
       })
 
       test('still needs the Jira and approval keys passed, as null', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: withoutKey(BRANCH_ARGS, 'jiraBoard')
         })
 
@@ -1933,7 +1989,7 @@ describe('increment-build-loop', () => {
       test.each(['main', 'master'])(
         'refuses to build onto %s',
         async (branch) => {
-          const run = await runWorkflowScript(scriptPath, {
+          const run = await runLoop(scriptPath, {
             args: { ...BRANCH_ARGS, branch }
           })
 
@@ -1945,7 +2001,7 @@ describe('increment-build-loop', () => {
       )
 
       test('refuses a repo key that names the workspace itself', async () => {
-        const run = await runWorkflowScript(scriptPath, {
+        const run = await runLoop(scriptPath, {
           args: {
             ...BRANCH_ARGS,
             repos: { ...BRANCH_ARGS.repos, workspace: repo('workspace') }
@@ -2558,12 +2614,12 @@ describe('increment-build-loop', () => {
       }
 
     const runPerf = (argsOverride = {}, answerOverrides = {}) =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: { ...PERF_ARGS, ...argsOverride },
         answers: answerByLabel(answerOverrides)
       })
 
-    const labelsOf = (run) => run.agents.map((entry) => entry.options.label)
+    const labelsOf = (run) => stageLabels(run)
     const agentOf = (run, label) =>
       run.agents.find((entry) => entry.options.label === label)
     const promptOf = (run, label) => agentOf(run, label).prompt
@@ -2971,7 +3027,7 @@ describe('increment-build-loop', () => {
     }
 
     const runLegacyToMerge = () =>
-      runWorkflowScript(scriptPath, {
+      runLoop(scriptPath, {
         args: BASE_ARGS,
         answers: (prompt, { label }) => answersFor(label)
       })

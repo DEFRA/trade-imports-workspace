@@ -210,14 +210,15 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is 23–35 agents on Claude and 29–41 on Codex,
-// plus the one that starts it, so a drain of an open-ended backlog would hit
-// the cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 27 increments on Claude, 23 on Codex — and
+// not a config key. An increment is up to 39 agents on Claude and 42 on Codex —
+// its start stage, its build, and a lease return after each stage that may
+// hold the workspace stack — so a drain of an open-ended backlog would hit the
+// cap mid-increment and lose the attempt. The run stops before starting one
+// that would not fit — roughly 25 increments on Claude, 23 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 36, codex: 42 }
+const AGENTS_PER_INCREMENT = { claude: 39, codex: 42 }
 const STARTUP_AGENTS = 2
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -851,24 +852,58 @@ const describeStackHolder = (holder) =>
 const stackHeldDetail = (id, stage, held) =>
   `${id} ${stage}: the workspace stack is held by ${describeStackHolder(held.holder)}. ${held.detail}`
 
-const releaseLeakedLease = (id, stage, phaseName, holder) =>
+const releaseLease = ({ id, holder, label, logs, phaseName, why }) =>
   agent(
-    `You are the LEASE RELEASER for increment ${id}. An earlier stage of this increment left the workspace stack leased
-to \`${holder}\` and returned without giving it back. You give it back. That is your whole job.
+    `You are the LEASE RELEASER for increment ${id}. ${why} You give back the workspace stack's lease held as
+\`${holder}\`. That is your whole job.
 ${GUARDRAILS}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
-\`tim docker lease release --holder "${holder}" --workspace ${TILDE} --json --logs ${gateLogs(id, `release-${stage}`)}\`
-It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true. Otherwise report ok:false with
-\`errors[0].message\` word for word. Run nothing else, and never take the stack down any other way.
+\`tim docker lease release --holder "${holder}" --workspace ${TILDE} --json --logs ${logs}\`
+It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
+was no lease to give back. Otherwise report ok:false with \`errors[0].message\` word for word. Run nothing else, and
+never take the stack down any other way.
 Return the structured output only.`,
-    light({ label: `${id} lease release:${stage}`, phase: phaseName, schema: incrementSchema })
+    light({ label, phase: phaseName, schema: incrementSchema })
   )
 
-// Runs a stage that may use the workspace stack. A refusal naming a lease an
-// earlier stage of this increment leaked is released and the stage run once
-// more; whatever comes back then is the stage's result, stackHeld included.
+const releaseLeakedLease = (id, stage, phaseName, holder) =>
+  releaseLease({
+    id,
+    holder,
+    label: `${id} lease release:${stage}`,
+    logs: gateLogs(id, `release-${stage}`),
+    phaseName,
+    why: 'An earlier stage of this increment left the workspace stack leased and returned without giving it back.'
+  })
+
+// After every stage that may hold the stack, the script gives that stage's
+// own lease back, whatever the stage did: a lease an agent forgot would
+// otherwise stop the next increment as somebody else's.
+const returnOwnLease = async (id, stage, phaseName) => {
+  const returned = await releaseLease({
+    id,
+    holder: stackHolder(id, stage),
+    label: `${id} lease return:${stage}`,
+    logs: gateLogs(id, `return-${stage}`),
+    phaseName,
+    why: `The ${stage} stage has returned, and any lease it still holds goes back now.`
+  })
+  if (!returned?.ok) {
+    log(`${id}: the ${stage} stage's own lease could not be given back — ${returned?.summary ?? 'the release agent died'}`)
+  }
+}
+
+// Runs a stage that may use the workspace stack, then gives its own lease
+// back. A refusal naming a lease an earlier stage of this increment leaked
+// is released and the stage run once more; whatever comes back then is the
+// stage's result, stackHeld included.
 const withStackLease = async (id, stage, phaseName, runStage) => {
-  const first = await runStage()
+  const runAndReturn = async () => {
+    const result = await runStage()
+    await returnOwnLease(id, stage, phaseName)
+    return result
+  }
+  const first = await runAndReturn()
   const held = first?.stackHeld
   if (!held || !isLeakFromThisIncrement(id, stage, held.holder)) return first
   log(`${id}: ${stage} found the workspace stack still leased to "${held.holder}", an earlier stage of this increment — releasing it and running ${stage} again`)
@@ -877,7 +912,7 @@ const withStackLease = async (id, stage, phaseName, runStage) => {
     const why = released?.summary ?? 'the release agent died'
     return { ...first, stackHeld: { ...held, detail: `${held.detail} Releasing that leaked lease failed: ${why}` } }
   }
-  return runStage()
+  return runAndReturn()
 }
 
 const FULL_PUSH_GUARD = `- Never \`git push --force\`. Never merge a PR that is not green.
@@ -1783,6 +1818,7 @@ const startCommand = (explicitId, lastId) =>
     `--in-dev-status "${STATUS_IN_DEV}"`,
     `--done-status "${STATUS_DONE}"`,
     `--board ${JIRA_BOARD}`,
+    `--repos ${REPO_KEYS.join(',')}`,
     `--workspace ${TILDE}`,
     '--json'
   ]

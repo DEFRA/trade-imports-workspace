@@ -1813,7 +1813,7 @@ describe('increment-build-loop', () => {
 
           expect(prompt).toContain('THE MERGE IS YOURS TO RESOLVE')
           expect(prompt).toContain(
-            '- tests (`~/ws/repos/trade-imports-animals-tests`): `origin/main` into `feat/NO_JIRA-frontend-alignment`, 1 conflicted path(s) when it started'
+            '- tests (`~/ws/repos/trade-imports-ins-tests`): `origin/main` into `feat/NO_JIRA-frontend-alignment`, 1 conflicted path(s) when it started'
           )
         })
 

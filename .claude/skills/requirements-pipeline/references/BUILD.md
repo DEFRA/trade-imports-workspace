@@ -132,13 +132,8 @@ increment at the ticket stage:
 tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
 ```
 
-Each line reads `transition -> status`. **Pass the status, the name after the
-arrow, never the transition.** The two can differ: on EUDPA the `In Progress`
-transition leads to the status `In Dev`, and the finished status is `Done`. The
-ticket stage compares the ticket's status with the configured name, so a run
-given a transition name moves the ticket, reads back a different name and stops
-at `ticket-failed` with the ticket already where it should be. The transition
-script accepts either name, so passing the status is always safe.
+On EUDPA the working status is `In Dev` and the finished status is `Done`; the
+args use those names.
 
 Do not take a status name from a script's `--help` text — that is generic
 placeholder wording, not this board's workflow.
@@ -411,7 +406,7 @@ handover prompt.
 | `ladder-red` | The verification ladder went red. Preserved, not discarded |
 | `land-failed` | The commit could not be made |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays in progress. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |

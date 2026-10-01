@@ -29,7 +29,7 @@ alternative and the one the build loop still calls directly.
 | `tools/jira/attach-file.sh` | EUDPA-X FILE | Attach a file to a ticket.<br>e.g. `tools/jira/attach-file.sh EUDPA-333 diagram.svg`<br>Reference it inline from the description with wiki markup — `!diagram.svg\|thumbnail!`.<br>Re-attaching the same filename ADDS a second attachment rather than replacing it, so pair it with `delete-attachment.sh` when refreshing a file. |
 | `tools/jira/delete-attachment.sh` | EUDPA-X FILENAME [--all] \| --id ID \| EUDPA-X --list | Delete an attachment, or list what a ticket has.<br>e.g. `tools/jira/delete-attachment.sh EUDPA-333 diagram.svg`<br>Refuses to act when several attachments share the filename, listing them instead — pick with `--id` or take all with `--all`.<br>Boundary: the delete half of the regenerate loop (vs `attach-file.sh`, which only adds). |
 | `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
-| `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status` (on EUDPA, `In Progress -> In Dev`) |
+| `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status` |
 | `tools/jira/get-issues-for-board.sh` | board-id [list\|summary\|json] | Board issues |
 | `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |
 | `tools/jira/list-board-labels.sh` | board-id [list\|json] | Aggregate label frequencies from a board's backlog |

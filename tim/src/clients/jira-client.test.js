@@ -70,7 +70,7 @@ describe('getTicket', () => {
         key: 'EUDPA-200',
         fields: {
           summary: 'Build the CLI',
-          status: { name: 'In Progress' },
+          status: { name: 'In Dev' },
           issuetype: { name: 'Story' },
           assignee: { displayName: 'Sam' },
           priority: { name: 'High' },
@@ -87,7 +87,7 @@ describe('getTicket', () => {
     expect(ticket).toEqual({
       id: 'EUDPA-200',
       summary: 'Build the CLI',
-      status: 'In Progress',
+      status: 'In Dev',
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',

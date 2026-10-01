@@ -129,7 +129,7 @@ describe('useJiraFeature', () => {
     const ticket = {
       id: 'EUDPA-200',
       summary: 'Build the CLI',
-      status: 'In Progress',
+      status: 'In Dev',
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',
@@ -151,7 +151,7 @@ describe('useJiraFeature', () => {
     stdin.write('\r')
 
     await vi.waitFor(() => expect(lastFrame()).toContain('Build the CLI'))
-    expect(lastFrame()).toContain('In Progress')
+    expect(lastFrame()).toContain('In Dev')
     expect(lastFrame()).toContain('Sam')
   })
 

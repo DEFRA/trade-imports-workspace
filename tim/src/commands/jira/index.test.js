@@ -6,14 +6,14 @@ describe('renderTicket', () => {
     const text = renderTicket({
       id: 'EUDPA-200',
       summary: 'Build the CLI',
-      status: 'In Progress',
+      status: 'In Dev',
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',
       description: 'Body'
     })
     expect(text).toContain('EUDPA-200  Build the CLI')
-    expect(text).toContain('Status:    In Progress')
+    expect(text).toContain('Status:    In Dev')
     expect(text).toContain('Assignee:  Sam')
     expect(text).toContain('Priority:  High')
     expect(text).toContain('Body')

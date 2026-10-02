@@ -742,9 +742,10 @@ timestamps.
 and `TimeZone.setDefault(TimeZone.getTimeZone("UTC"))` in a static initializer on the
 `@SpringBootApplication` class (a static initializer, so `@SpringBootTest` contexts get it too —
 they never call `main()`). That gives every zone-less API in the process a safe default, including
-code that has not had this scrutiny. It is a complement to (a)/(b), never a substitute: only the
-code-level conversion still holds when the env var is missing or the service runs outside its
-container.
+code that has not had this scrutiny. It is a complement to `Instant` fields and UTC-midnight
+truncation, never a substitute: an `Instant` truncated with `truncatedTo(ChronoUnit.DAYS)` is the
+same value in any zone, so it still holds when the env var is missing or the service runs outside
+its container, where a zone-less type would be relying on the default alone.
 
 **Verify with a raw BSON read.** A repository round trip decodes with the same zone it encoded
 with, so the drift cancels out and the test passes either way. Assert on the stored value itself:

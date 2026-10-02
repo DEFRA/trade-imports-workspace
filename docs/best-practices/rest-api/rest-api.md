@@ -146,6 +146,12 @@ Use UPPER_SNAKE_CASE: `"status": "IN_PROGRESS"`
 
 Use uppercase T and Z. Prefer UTC.
 
+**Date-only fields use `date-time`, not `date`, in the trade-imports services.** EUDPA-565 settled
+that a date-only field is a UTC instant on the wire (`"2026-07-21T00:00:00Z"`), not a bare
+`"2026-07-21"`. The frontend sends the instant and the backend truncates it to UTC midnight. See
+[`spring-data-mongodb.md`](../java/spring-data-mongodb.md) → "`LocalDateTime` / `LocalDate`
+timezone drift" for the reasoning and the truncation rule.
+
 ### Standard Codes
 | Data | Format | Example |
 |------|--------|---------|

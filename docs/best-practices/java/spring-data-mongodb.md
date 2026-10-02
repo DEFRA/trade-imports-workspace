@@ -696,6 +696,14 @@ JSON contract is an RFC 3339 instant (`"2026-07-21T00:00:00Z"`), not a bare `"20
 is no zone-less type left anywhere on the path, so there is no conversion to get wrong and no
 converter these fields depend on.
 
+**This overrides the `date` form in the REST guide.**
+[`rest-api.md`](../rest-api/rest-api.md) → "Dates (RFC 3339 / ISO 8601)" lists two forms: `date`
+(`2024-01-15`) and `date-time` (`2024-01-15T10:30:00Z`). For these services a date-only field
+uses the `date-time` form, not `YYYY-MM-DD`. The frontend converts the day the user entered to a
+UTC instant before it sends it, and the backend is UTC-only. What the `date` form gave for free —
+a value that cannot carry a time of day — is put back by truncating to UTC midnight at the service
+boundary, described next.
+
 ```java
 // Wire DTO — the caller sends an instant
 @Schema(description = "Date of issue on the physical document, as UTC midnight",

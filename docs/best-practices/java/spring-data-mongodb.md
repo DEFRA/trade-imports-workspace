@@ -694,7 +694,7 @@ private Instant createdAt;
 date-only field carries `Instant` on the request DTO, on the document and on the response, so the
 JSON contract is an RFC 3339 instant (`"2026-07-21T00:00:00Z"`), not a bare `"2026-07-21"`. There
 is no zone-less type left anywhere on the path, so there is no conversion to get wrong and no
-converter to register.
+converter these fields depend on.
 
 ```java
 // Wire DTO — the caller sends an instant
@@ -721,10 +721,15 @@ Do this wherever a date-only instant reaches a downstream system that reads it a
 A `@Schema` or Javadoc that states the value *is* UTC midnight must be backed by a truncation that
 makes it so; documenting the guarantee without enforcing it is worse than not claiming it.
 
-**Don't register a `LocalDate` converter pair.** An earlier revision of this guide recommended a
-`@WritingConverter`/`@ReadingConverter` pair pinning `LocalDate` to UTC at the persistence
-boundary. That approach is abolished — nothing in these codebases uses it, and it only ever
-existed to make a zone-less persisted type safe. Use `Instant` and the problem does not arise.
+**`Instant` needs no converter; the UTC `LocalDate` pair stays registered as a guard.** An earlier
+revision of this guide recommended a `@WritingConverter`/`@ReadingConverter` pair pinning
+`LocalDate` to UTC at the persistence boundary as the way to store a date. That is no longer how a
+date field is modelled — use `Instant` and there is nothing to convert. The pair itself is not
+removed: `trade-imports-animals-backend` still registers `UtcLocalDateConverters` in `MongoConfig`,
+deliberately, although no field uses it today. It costs nothing at runtime, and it means an
+internal, non-wire `LocalDate` field added later cannot reintroduce the EUDPA-282 drift. Don't
+delete it as dead code, and don't add a `LocalDate` field to the API because it is there — a new
+field on the wire is an `Instant`.
 
 **Don't reach for `ZonedDateTime` here.** It looks like the zone-safe choice, but Mongo has no
 zone-aware date type: a `ZonedDateTime` field still serialises to a plain BSON `Date` with the

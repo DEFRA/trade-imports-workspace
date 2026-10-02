@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The rules holding for every address a notification uses: how a consignment role's address is chosen from the address book, whether it stays linked to that book or is frozen, and what a hand-keyed address must contain.
+The rules holding for every address a notification uses: how a consignment role's address is chosen from the address book and copied onto the notification, how that copy is edited in place without touching the book, and what an address must contain.
 
 ## Requirements
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service. Outside stub mode, the journey MAY offer a control that hands the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return the user to the picker with the newly added address already selected once they save it there, or to the picker unchanged if they cancel.
+The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service; editing an address copied onto the notification (REQ-ADDR-014) changes the notification's copy, never the record. Outside stub mode, the journey MAY offer a control that hands the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return the user to the picker with the newly added address already selected once they save it there, or to the picker unchanged if they cancel.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
@@ -47,74 +47,96 @@ The system MUST NOT let a user create, edit, or remove an address book record fr
 - **WHEN** they cancel without saving
 - **THEN** they return to the picker, and the role still shows no address chosen
 
-### Requirement: Every role resolves live from the address book while a notification is not yet submitted
+### Requirement: A chosen address is copied onto the notification, and later changes to the address book never reach it
 **ID**: REQ-ADDR-002
-The system MUST resolve every consignment role — consignor, consignee, importer, place of destination, place of origin, and the consignment contact — from the address book each time it is shown, for as long as the notification is DRAFT or being amended, so a later edit to that record reaches the notification without it being re-selected.
+The system MUST copy the chosen address-book record onto the notification when the user picks it for a consignment role — consignor, consignee, importer, place of destination, place of origin, or the consignment contact — and MUST keep no link back to the record. A later edit or deletion of that record in the address book MUST NOT change what the notification shows or submits, whatever the notification's status.
 
-#### Scenario: Editing a linked address changes what a draft notification shows
+#### Scenario: Editing the record in the address book leaves a draft notification unchanged
 **ID**: SCN-ADDR-002-A
-- **GIVEN** a role's address has been selected for a draft notification from the address book
+- **GIVEN** a role's address has been chosen for a draft notification from the address book
 - **WHEN** that address record is edited in the address book
-- **THEN** the notification's summary row for that role shows the updated name
-- **AND** the notification's full address details (shown on the check-your-answers view) show the updated town, postcode and other fields, not the values that were current when it was selected
+- **THEN** the notification's summary row for that role still shows the name as it was chosen
+- **AND** the notification's full address details (shown on the check-your-answers view) still show the values that were current when it was chosen
 
-### Requirement: A submitted notification freezes its addresses, and resumes live resolution once amended
+#### Scenario: Deleting the record in the address book leaves a draft notification unchanged, but removes it from the picker
+**ID**: SCN-ADDR-002-B
+- **GIVEN** a role's address has been chosen for a draft notification from the address book
+- **WHEN** that address record is deleted from the address book
+- **THEN** that role's row still shows the address as it was chosen, and no error is shown
+- **AND** the deleted address no longer appears when searching the picker
+
+### Requirement: A copied address can be edited on the notification without changing the address book
+**ID**: REQ-ADDR-014
+The system MUST let the user edit the details of an address copied onto the notification, for each consignment role and the consignment contact, wherever that address is shown with its actions — the consignment addresses page, the consignment contact page and the check-your-answers view. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages: name, address line 1, town or city, postcode, country, telephone and email required; address line 2 and county optional; the address book's length limits; an email in the correct format; a country from the list.
+
+#### Scenario: Editing a copied address changes only this notification
+**ID**: SCN-ADDR-014-A
+- **GIVEN** a role's address has been chosen for a draft notification from the address book
+- **WHEN** the user chooses to edit that address's details, changes them and saves
+- **THEN** the notification shows the edited details
+- **AND** the address book record and the user's other notifications are unchanged
+
+#### Scenario: The edit form opens with the copied details, including the county
+**ID**: SCN-ADDR-014-B
+- **GIVEN** a role's address has been chosen for a draft notification
+- **WHEN** the user chooses to edit that address's details
+- **THEN** the form shows name, both address lines, town or city, county, postcode, country, telephone and email, filled in with the copied values
+
+#### Scenario: An edit that breaks the address book's rules is refused with its messages
+**ID**: SCN-ADDR-014-C
+- **GIVEN** the user is editing a copied address
+- **WHEN** they save with a required field empty, a field too long, an email in the wrong format, or a country not in the list
+- **THEN** the save is refused, the address book's message for that rule is shown at the top of the page and against the field, and nothing is saved
+
+#### Scenario: Cancelling an edit leaves the copy unchanged
+**ID**: SCN-ADDR-014-D
+- **GIVEN** the user is editing a copied address and has changed a field
+- **WHEN** they cancel
+- **THEN** they return to where they came from and the address is as it was before
+
+#### Scenario: A copied address offers both choosing another address and editing its details
+**ID**: SCN-ADDR-014-E
+- **GIVEN** a role's address has been chosen for a draft notification
+- **WHEN** the user views that role on the consignment addresses page, the consignment contact page or the check-your-answers view
+- **THEN** they can choose a different address from the book and they can edit this address's details, as two separate actions
+- **AND** a role with no address chosen offers only adding one
+
+### Requirement: A submitted notification keeps its copied addresses, through amendment and cancellation
 **ID**: REQ-ADDR-013
-Once a notification is SUBMITTED, the system MUST show the address details stored on the notification at submit time instead of the address book's current record, and MUST stop following the address book for every role until the notification is amended again, at which point it MUST resume live resolution.
+Once a notification is SUBMITTED, the system MUST show the address details copied onto it, and amending or cancelling an amendment MUST NOT replace them with the address book's current record.
 
 #### Scenario: A submitted notification's address is unaffected by a later edit to the record
 **ID**: SCN-ADDR-013-A
 - **GIVEN** a notification has been submitted with a role's address chosen from the address book
 - **WHEN** that address record is later edited in the address book
-- **THEN** the submitted notification still shows the details as they were at the moment of submission
+- **THEN** the submitted notification still shows the details as they were copied
 
-#### Scenario: Amending a submitted notification returns its addresses to live resolution
+#### Scenario: Amending a submitted notification keeps its copied addresses
 **ID**: SCN-ADDR-013-B
 - **GIVEN** a submitted notification's address record has since been edited in the address book
 - **WHEN** the user starts amending that notification
-- **THEN** the role's details update to match the address book's current record
+- **THEN** the role's details still show what was copied onto the notification, not the address book's current record
 - **WHEN** the user cancels the amendment
-- **THEN** the role's details revert to what was frozen at the original submission
-
-### Requirement: Deleting an address behind a role clears it while the notification is not yet submitted, but leaves a submitted notification unaffected
-**ID**: REQ-ADDR-003
-While a notification is DRAFT or being amended, the system MUST show a role whose address has been deleted as if no address had been selected for it, and MUST exclude that deleted address from the picker. Once a notification is SUBMITTED, the system MUST leave every role's stored address details unaffected by a later deletion of the address book record behind it, and MUST NOT show an error.
-
-#### Scenario: Deleting a linked address clears it from a draft notification and hides it from the picker
-**ID**: SCN-ADDR-003-A
-- **GIVEN** a role's address has been selected for a draft notification from the address book
-- **WHEN** that address record is deleted from the address book
-- **THEN** that role's row shows "Not added yet" and an option to add an address, instead of the deleted address's name
-- **AND** the deleted address no longer appears when searching the picker
+- **THEN** the role's details still show what was copied
 
 #### Scenario: Deleting the record behind a submitted notification's role leaves it unaffected
-**ID**: SCN-ADDR-003-B
+**ID**: SCN-ADDR-013-C
 - **GIVEN** a notification has been submitted with a role's address chosen from the address book
 - **WHEN** that address record is later deleted from the address book
-- **THEN** the submitted notification still shows that role's details in full, and no error is shown
+- **THEN** the submitted notification, and an amendment of it, still show that role's details in full, and no error is shown
 
-### Requirement: An address book record that is unavailable is not treated as deleted
-**ID**: REQ-ADDR-004
-The system MUST distinguish an address book that cannot be reached from a record that has been deleted, and MUST NOT render a role as unanswered because the address book was unavailable.
-
-#### Scenario: An address book outage is not mistaken for a deletion
-**ID**: SCN-ADDR-004-A
-- **GIVEN** a notification with a linked address whose record still exists
-- **WHEN** the address book cannot be reached while the notification is being shown
-- **THEN** the failure is surfaced rather than the role being shown as though its address had been deleted
-
-### Requirement: The review page blocks submission while a linked address has been deleted
+### Requirement: The review page blocks submission while a copied address breaks the address book's rules
 **ID**: REQ-ADDR-005
-The system MUST refuse to submit a notification while any linked party's address has been deleted, and MUST guide the user to a replacement.
+The system MUST refuse to continue past the review page, and refuse the submit, while any copied address on the notification breaks the address book's field rules, and MUST guide the user to edit that address.
 
-#### Scenario: A deleted address is named on the review page and blocks submission until replaced
+#### Scenario: An address that breaks the rules is named on the review page and blocks submission until corrected
 **ID**: SCN-ADDR-005-A
-- **GIVEN** a notification's review page shows a linked party whose address has since been deleted
+- **GIVEN** a notification has a copied address that breaks the address book's rules
 - **WHEN** the user opens the review page
-- **THEN** an error naming that party is shown at the top of the page and against the party's own row
-- **AND** attempting to continue past the review page is refused with the same error
-- **WHEN** the user follows the error to select a replacement address for that party
-- **THEN** the error clears, the party's row shows the new address, and the notification can then be submitted
+- **THEN** an error naming that role is shown at the top of the page and against the role's own row, with the address still shown
+- **AND** attempting to continue past the review page, or to submit, is refused
+- **WHEN** the user follows the error to edit that address and corrects it
+- **THEN** the error clears and the notification can then be submitted
 
 ### Requirement: Choosing a role's address offers a search of the whole book, reporting how many matched
 **ID**: REQ-ADDR-006
@@ -135,11 +157,11 @@ The system MUST let the user search the whole address book by name when choosing
 
 ### Requirement: Choosing a role's address without selecting one is refused, focusing the first address in the list
 **ID**: REQ-ADDR-007
-The system MUST refuse to save a role's address page when nothing has been chosen, and MUST focus the first address in the list when the user follows the resulting error, rather than showing a generic error.
+The system MUST refuse to save a role's address page when nothing has been chosen and the role holds no address yet, and MUST focus the first address in the list when the user follows the resulting error, rather than showing a generic error.
 
 #### Scenario: Saving with nothing selected links to and focuses the first address
 **ID**: SCN-ADDR-007-A
-- **GIVEN** the user is choosing an address for a consignment role
+- **GIVEN** the user is choosing an address for a consignment role that holds no address yet
 - **WHEN** they save without selecting an address
 - **THEN** an error is shown naming that role
 - **WHEN** they follow the error
@@ -182,15 +204,15 @@ The system MUST page the address book when choosing a role's address, MUST let t
 - **WHEN** they move through the pages until they find it, choose it, and save
 - **THEN** they return to the consignment addresses page, and the role's row shows the record they chose
 
-### Requirement: A saved choice is carried and named when the list is reopened, even where its row is not shown
+### Requirement: Reopening the list to change an address starts with nothing chosen, and keeps the copied address unless another is chosen
 **ID**: REQ-ADDR-011
-The system MUST name the address already chosen for a role when the user reopens the list, and MUST keep that choice when they save again, even though the list reopens on its first page where the chosen record may not appear. This MUST hold without relying on client-side JavaScript.
+The system MUST open a role's address list with nothing chosen when the user reopens it to change the address — the copy on the notification keeps no link to a record — and MUST keep the address already copied onto the notification when they save without choosing another. This MUST hold without relying on client-side JavaScript.
 
-#### Scenario: Reopening the list names the saved choice and keeps it on save
+#### Scenario: Reopening the list starts afresh and keeps the copied address on save
 **ID**: SCN-ADDR-011-A
-- **GIVEN** the user has chosen an address found on a later page and saved it
+- **GIVEN** the user has chosen an address for a role and saved it
 - **WHEN** they reopen the list to change it
-- **THEN** the list opens on its first page, naming the address already selected, although that record's own row is not shown
+- **THEN** the list opens with no address chosen
 - **WHEN** they save without choosing another
 - **THEN** the role's row still shows the address they originally chose
 

@@ -303,6 +303,64 @@ describe('renderGateText for a stack its holder already leased', () => {
       'Took 251s (unit 105s, e2e 251s), unit and FIT first, repos at the same time, then performance, then E2E.'
     ])
   })
+
+  test('says it cannot tell whether the stack files changed in a workspace that is not a git checkout', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [],
+        durationMs: 1000,
+        phases: {},
+        serial: false,
+        stack: {
+          wasUp: true,
+          startedForE2e: false,
+          stoppedAfter: false,
+          held: null,
+          refresh: {
+            ok: true,
+            restacked: false,
+            stackFilesKnown: false,
+            rebuilt: [],
+            restarted: [],
+            left: ['trade-imports-stub']
+          }
+        }
+      }).split('\n')[1]
+    ).toBe(
+      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: none. Restarted: none. Left as they were: trade-imports-stub. The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack) changed, and did not start the whole stack again.'
+    )
+  })
+
+  test('says it started the whole stack again when the workspace’s stack files had changed', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [],
+        durationMs: 1000,
+        phases: {},
+        serial: false,
+        stack: {
+          wasUp: true,
+          startedForE2e: false,
+          stoppedAfter: false,
+          held: null,
+          refresh: {
+            ok: true,
+            restacked: true,
+            restackLog: '/logs/gate-stack-restack.log',
+            rebuilt: [],
+            restarted: [],
+            left: []
+          }
+        }
+      }).split('\n')[1]
+    ).toBe(
+      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. The workspace’s stack files had changed, so the gate started the whole stack again with them. Read /logs/gate-stack-restack.log.'
+    )
+  })
 })
 
 describe('renderBranchText', () => {

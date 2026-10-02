@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { isAbsolute, join, normalize, sep } from 'node:path'
 import { z } from 'zod'
 import { readJsonFile } from '../backlog/io.js'
 import { TimError } from '../errors.js'
@@ -48,6 +48,16 @@ export const looksRemote = (script) =>
     .split(/[:-]/)
     .some((segment) => REMOTE_SEGMENTS.has(segment))
 
+const isFolderInside = (path) => {
+  const normalised = normalize(path).split(sep).join('/')
+  return (
+    !isAbsolute(path) &&
+    normalised !== '.' &&
+    normalised !== '..' &&
+    !normalised.startsWith('../')
+  )
+}
+
 const rungSchema = z
   .object({
     name: z
@@ -55,6 +65,14 @@ const rungSchema = z
       .regex(RUNG_NAME, 'A rung name is lowercase letters, digits and "-".'),
     phase: z.enum(PHASES),
     run: z.string().min(1),
+    cwd: z
+      .string()
+      .min(1)
+      .refine(
+        isFolderInside,
+        'A rung cwd is a folder inside the repo, such as "tim".'
+      )
+      .optional(),
     scope: z.array(z.string().min(1)).optional(),
     ports: z.array(z.number().int().min(1).max(MAX_PORT)).optional(),
     forRepos: z.array(z.string().min(1)).min(1).optional(),
@@ -158,9 +176,11 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
+// A rung with a cwd runs in that folder of its repo: the workspace repo has
+// no package.json of its own, and tim's scripts live in tim/.
 const planned = (repo, rung) => ({
   repo: repo.folder,
-  path: repo.path,
+  path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
   name: rung.name,
   phase: rung.phase,
   run: rung.run,

@@ -1,6 +1,13 @@
 {
-  "$comment": "The build loop's rungs, run by `tim build gate` and checked by tim/src/build/gates.js. Keyed by repo folder under repos/. The gate runs in three layers, each starting only once the one before has finished (passed or not). Layer one: a repo's unit and fit rungs run in the order listed, unit before fit, while different repos run at the same time; the stack lease and stack start may overlap it. Layer two: every `exclusive` e2e rung (a performance test), one at a time, with nothing else running. Layer three: the other e2e rungs, one after another. `exclusive` is allowed only on an e2e rung. `--serial` runs unit, then fit, then e2e, one rung at a time in plan order. `run` is an npm script name or \"mvn verify\". `remoteScripts` lists a repo's scripts that reach a remote or CDP environment: the gate refuses a rung that names one. An e2e rung runs a `test:docker-compose` script against the workspace stack, scoped with `scope` (Playwright args after `--`), and runs only when the backlog builds one of its `forRepos`. A fit rung's `ports` must be free before it runs: each is the PORT its `test:fit:ci` script serves on, distinct from every other fit rung's and from the workspace stack's 3000-3003, so fit rungs run beside each other and beside the stack.",
+  "$comment": "The build loop's rungs, run by `tim build gate` and checked by tim/src/build/gates.js. Keyed by repo folder under repos/. The gate runs in three layers, each starting only once the one before has finished (passed or not). Layer one: a repo's unit and fit rungs run in the order listed, unit before fit, while different repos run at the same time; the stack lease and stack start may overlap it. Layer two: every `exclusive` e2e rung (a performance test), one at a time, with nothing else running. Layer three: the other e2e rungs, one after another. `exclusive` is allowed only on an e2e rung. `--serial` runs unit, then fit, then e2e, one rung at a time in plan order. `run` is an npm script name or \"mvn verify\". `remoteScripts` lists a repo's scripts that reach a remote or CDP environment: the gate refuses a rung that names one. An e2e rung runs a `test:docker-compose` script against the workspace stack, scoped with `scope` (Playwright args after `--`), and runs only when the backlog builds one of its `forRepos`. A fit rung's `ports` must be free before it runs: each is the PORT its `test:fit:ci` script serves on, distinct from every other fit rung's and from the workspace stack's 3000-3003, so fit rungs run beside each other and beside the stack. A rung's `cwd` is the folder inside its repo it runs in (default the repo's own folder): the workspace repo itself (`trade-imports-workspace`, at path \".\" in a backlog's repos) has no package.json of its own, so its rungs run tim's scripts in `tim`. The workspace owns the stack both e2e suites run against, so each lists it in `forRepos`.",
   "repos": {
+    "trade-imports-workspace": {
+      "rungs": [
+        { "name": "format", "phase": "unit", "run": "format:check", "cwd": "tim" },
+        { "name": "lint", "phase": "unit", "run": "lint", "cwd": "tim" },
+        { "name": "unit", "phase": "unit", "run": "test", "cwd": "tim" }
+      ]
+    },
     "trade-imports-plants-frontend": {
       "rungs": [
         { "name": "format", "phase": "unit", "run": "format:check" },
@@ -89,7 +96,8 @@
             "trade-imports-animals-frontend",
             "trade-imports-plants-frontend",
             "trade-imports-reference-data",
-            "trade-imports-dynamics-gateway"
+            "trade-imports-dynamics-gateway",
+            "trade-imports-workspace"
           ]
         }
       ]
@@ -122,7 +130,8 @@
             "trade-imports-animals-admin",
             "trade-imports-ins-frontend",
             "trade-imports-ins-backend",
-            "trade-imports-address-book"
+            "trade-imports-address-book",
+            "trade-imports-workspace"
           ]
         }
       ]

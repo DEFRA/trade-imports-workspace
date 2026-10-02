@@ -12,6 +12,7 @@ import {
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { stackFilesFingerprint } from './stack-fingerprints.js'
 import {
   acquireStack,
   releaseStack,
@@ -184,6 +185,35 @@ describe('acquireStack', () => {
       onDisk: readLease(leasePath()).fingerprints,
       returned: outcome.lease.fingerprints
     }).toEqual({ onDisk: fingerprints, returned: fingerprints })
+  })
+
+  test.each(['dev', 'up'])(
+    'records the fingerprint of the workspace’s stack files in %s mode',
+    async (mode) => {
+      const env = fakeStack()
+      await execa('git', ['init', '--quiet', root])
+
+      const outcome = await acquire(env, { mode })
+
+      const current = await stackFilesFingerprint(root)
+      expect({
+        current,
+        onDisk: readLease(leasePath()).stackFiles,
+        returned: outcome.lease.stackFiles
+      }).toEqual({
+        current: expect.stringMatching(/^[0-9a-f]{64}$/),
+        onDisk: current,
+        returned: current
+      })
+    }
+  )
+
+  test('records no stack files fingerprint for a workspace that is not a git checkout', async () => {
+    const env = fakeStack()
+
+    await acquire(env)
+
+    expect(readLease(leasePath()).stackFiles).toBeNull()
   })
 
   test('records no fingerprints in up mode, which builds nothing', async () => {
@@ -635,6 +665,28 @@ describe('recordLeaseFingerprints', () => {
     }).toEqual({
       updated: true,
       lease: expect.objectContaining({ holder: HOLDER, fingerprints })
+    })
+  })
+
+  test('records the stack files the stack was started from when given them, and keeps them otherwise', () => {
+    writeLease({ holder: HOLDER, fingerprints: {}, stackFiles: 'old' })
+
+    recordLeaseFingerprints({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      fingerprints
+    })
+    const kept = readLease(leasePath()).stackFiles
+    recordLeaseFingerprints({
+      holder: HOLDER,
+      leasePath: leasePath(),
+      fingerprints,
+      stackFiles: 'new'
+    })
+
+    expect({ kept, recorded: readLease(leasePath()).stackFiles }).toEqual({
+      kept: 'old',
+      recorded: 'new'
     })
   })
 

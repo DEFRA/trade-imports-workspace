@@ -11,7 +11,10 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { run } from './exec.js'
 import { runStackScriptToLog, stackContainerIds } from './stack.js'
-import { serviceFingerprints } from './stack-fingerprints.js'
+import {
+  serviceFingerprints,
+  stackFilesFingerprint
+} from './stack-fingerprints.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 
@@ -19,7 +22,7 @@ export const LEASE_MODES = ['dev', 'up']
 
 // run-stack.sh -d builds the repo-backed services from local source under
 // repos/; with no flag it pulls the published images.
-const RUN_STACK_ARGS = { dev: ['-d'], up: [] }
+export const RUN_STACK_ARGS = { dev: ['-d'], up: [] }
 
 const STARTING = 'starting'
 const UP = 'up'
@@ -287,7 +290,9 @@ const startUnderLease = async (context, previous) => {
     state: STARTING,
     pid: process.pid,
     containers: [],
-    fingerprints: mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {}
+    fingerprints:
+      mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {},
+    stackFiles: await stackFilesFingerprint(workspaceRoot)
   }
   if (!(await claimLease(leasePath, lease, previous))) {
     const winner = readLease(leasePath)
@@ -492,22 +497,29 @@ export const recordLeaseContainers = async ({ holder, leasePath, env }) => {
 
 /**
  * Record what each dev service now serves on the holder's own lease, after
- * the holder rebuilt or restarted services under it. A lease somebody else
- * holds is left alone.
+ * the holder rebuilt or restarted services under it, and, when given, the
+ * stack files the stack was last started from. A lease somebody else holds
+ * is left alone.
  *
  * @param {object} args
  * @param {string} args.holder
  * @param {string} args.leasePath
  * @param {Record<string, {build: string|null, source: string|null}>} args.fingerprints
+ * @param {string|null} [args.stackFiles] - The stack files' fingerprint, left as it was when not given
  * @returns {boolean} whether the lease was the holder's and was updated
  */
 export const recordLeaseFingerprints = ({
   holder,
   leasePath,
-  fingerprints
+  fingerprints,
+  stackFiles
 }) => {
   const lease = readLease(leasePath)
   if (!lease || lease.holder !== holder) return false
-  writeJsonAtomic(leasePath, { ...lease, fingerprints })
+  writeJsonAtomic(leasePath, {
+    ...lease,
+    fingerprints,
+    ...(stackFiles === undefined ? {} : { stackFiles })
+  })
   return true
 }

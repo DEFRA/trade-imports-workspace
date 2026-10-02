@@ -429,6 +429,109 @@ describe('runBuildStart — branch', () => {
     expect(outcome.repos).toEqual(['frontend', 'backend'])
   })
 
+  test('reports nothing carried by the workspace for an increment that does not build in it', async () => {
+    await workspaceWith([row({ ticket: 'EUDPA-77' })])
+    jiraKnows('EUDPA-77', 'In Dev')
+
+    const outcome = await start()
+
+    expect({
+      preexistingDirty: outcome.preexistingDirty,
+      requireApproval: outcome.requireApproval
+    }).toEqual({ preexistingDirty: null, requireApproval: [] })
+  })
+
+  describe('an increment that builds in the workspace repo itself', () => {
+    const WORKSPACE_ROW = row({
+      ticket: 'EUDPA-77',
+      kind: 'chore',
+      title: 'Add a performance mode to the workspace stack',
+      repos: ['workspace']
+    })
+
+    // The workspace is a clone of its own origin, holding the backlog the
+    // loop writes (uncommitted, as it always is) and an edit of somebody
+    // else's that the increment must leave alone.
+    const workspaceRepoWith = async (increments) => {
+      root = mkdtempSync(join(tmpdir(), 'tim-build-start-'))
+      const origins = join(root, 'origins')
+      mkdirSync(origins)
+      const { barePath } = await createBareRepo(
+        origins,
+        'trade-imports-workspace',
+        { withGhPages: false }
+      )
+      const workspaceRoot = join(root, 'ws')
+      await createFatClone(barePath, workspaceRoot)
+      const backlog = join(workspaceRoot, 'workareas', 'shared', 'programme')
+      mkdirSync(backlog, { recursive: true })
+      writeFileSync(
+        join(backlog, 'backlog.json'),
+        JSON.stringify({
+          programme: 'programme',
+          repos: {
+            workspace: {
+              path: '.',
+              github: 'DEFRA/trade-imports-workspace',
+              requireApproval: true
+            }
+          },
+          increments
+        })
+      )
+      writeFileSync(join(workspaceRoot, 'README.md'), '# somebody’s edit\n')
+      return workspaceRoot
+    }
+
+    test('cuts the workspace onto the increment’s branch and reports what it carried', async () => {
+      const workspaceRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      jiraKnows('EUDPA-77', 'In Dev')
+
+      const outcome = await start({ workspaceRoot })
+
+      expect({
+        failedStep: outcome.failedStep,
+        repos: outcome.repos,
+        preexistingDirty: outcome.preexistingDirty,
+        requireApproval: outcome.requireApproval,
+        onBranch: (
+          await execa('git', ['-C', workspaceRoot, 'branch', '--show-current'])
+        ).stdout.trim()
+      }).toEqual({
+        failedStep: null,
+        repos: ['workspace'],
+        preexistingDirty: [
+          'README.md',
+          'workareas/shared/programme/backlog.json'
+        ],
+        requireApproval: ['workspace'],
+        onBranch: 'chore/EUDPA-77-add-a-performance-mode-to-the-workspace'
+      })
+    })
+
+    test('records the branch on the backlog it carried across the switch', async () => {
+      const workspaceRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      jiraKnows('EUDPA-77', 'In Dev')
+
+      await start({ workspaceRoot })
+
+      expect(
+        JSON.parse(
+          readFileSync(
+            join(
+              workspaceRoot,
+              'workareas',
+              'shared',
+              'programme',
+              'backlog.json'
+            ),
+            'utf8'
+          )
+        ).increments[0].branch
+      ).toBe('chore/EUDPA-77-add-a-performance-mode-to-the-workspace')
+    })
+  })
+
   test('fails the branch step on a repo with uncommitted work, keeping the ticket', async () => {
     await workspaceWith([row({ ticket: 'EUDPA-77' })])
     jiraKnows('EUDPA-77', 'In Dev')

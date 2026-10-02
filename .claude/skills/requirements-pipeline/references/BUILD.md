@@ -73,7 +73,10 @@ repos         the backlog envelope's `repos` map, whatever its keys, copied
               animals repos: the same key names different repos in different
               programmes, and a path typed from memory is how a plants
               increment ends up built in the animals frontend. The loop's
-              preflight stops the run when the args and the envelope differ
+              preflight stops the run when the args and the envelope differ.
+              Under the full lifecycle the key workspace is the workspace
+              repo itself, at path ".", and a repo may set
+              requireApproval: true — see "The workspace repo" below
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
               opus) plans and judges: plan, judge, the consistency reviewer.
@@ -125,6 +128,49 @@ repo waiting no longer gets half an increment on `main`. Tell a reviewer
 they owe the increment *all* of its PRs — approving one of two is the same
 as approving neither.
 
+### The workspace repo
+
+A programme that changes the factory — tim, `gates.json`, the stack scripts,
+docs — builds the workspace repo like any other, under the full lifecycle. Its
+entry in the envelope's `repos`, and so in the args, is
+
+```js
+workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval: true }
+```
+
+- **Approval on one repo.** `requireApproval: true` on a repo's entry means
+  its PR needs an approving review before the merge stage merges **any** PR of
+  the increment. The same whole-increment sweep runs on those PRs alone, and
+  stops at `awaiting-approval` with every PR open. The other repos need no
+  approval. The run-level `requireApproval` keeps its meaning: every PR. Keep
+  it on the workspace: its changes steer every later run.
+- **What never rides in a workspace commit.** The files the workspace carried
+  in when the increment started (`tim build start` lists them as
+  `preexistingDirty`) and anything under `workareas/` the row does not name —
+  the loop's own `backlog.json` writes, plans and logs above all. The land
+  stage commits there by explicit path; the loop then reads what the branch
+  commits straight from git (`git log --name-only`) and stops at
+  `land-leaked`, pushing nothing, if that list holds either or cannot be read.
+- **Merge order.** The workspace PR merges last, after every other PR,
+  wherever the row lists it: the next increment runs on it, so it changes only
+  once everything built alongside it has merged.
+- **Back to main.** Once the increment has merged, the loop switches the
+  workspace back to the base branch and fast-forwards it, carrying its
+  uncommitted files, so the next increment runs on the merged factory. It
+  stops at `workspace-not-on-base` if it cannot. An increment that stops
+  before it merges leaves the workspace on the increment branch, and
+  `stopped.detail` says so: put it back once the increment is settled.
+- **Changing the factory mid-run.** On the increment branch, a change to tim,
+  `gates.json` or the stack scripts takes effect at once for the rest of that
+  increment, and the gate re-ups the stack when `docker/stack` or
+  `scripts/stack` changed. A change to the loop script takes effect from the
+  **next launch** only: a running loop never re-reads it.
+- **An increment that leaves the workspace out** does not touch it. A plan
+  that would write there, `openspec/` included, needs `workspace` among the
+  row's repos.
+
+See [`../workflow/README.md`](../workflow/README.md#the-workspace-repo-as-one-of-the-repos).
+
 **Confirm the two status names against the board before the first increment.**
 They are board configuration, not constants, and a wrong one stops every
 increment at the start stage:
@@ -161,10 +207,10 @@ branch. A failure names its step and its exact reason, and the loop maps it to
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 36 agents on Claude and 42 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 38 agents on Claude and 44 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 27
-   increments on Claude and 23 on Codex.
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 26
+   increments on Claude and 22 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
    one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
@@ -358,6 +404,7 @@ the order is the script's, not an agent's:
   returns its `repos` in the same order, saying under `risks` where the row's
   order puts a consumer first. A PR in a repo the row does not name, such as one
   a CI fixer raised, merges last.
+- **The workspace repo** merges after all of them, wherever the row lists it.
 
 `stopAfter` is what ends an ordinary run, so write it in explicitly too. Pass
 `"all"` only when the user asked for the whole backlog; the loop still stops at
@@ -498,10 +545,12 @@ handover prompt.
 | `off-branch` | A repo left the run's branch and could not be moved back |
 | `ladder-red` | The verification ladder went red. Preserved, not discarded |
 | `land-failed` | The commit could not be made |
+| `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
+| `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
 | `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
-| `awaiting-approval` | Every PR is green but at least one has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched |
+| `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
 | `done-failed` | The merge is real but the ticket would not move to the finished status. Under the branch lifecycle: the push is real but `tim backlog set --status done` failed |
@@ -522,7 +571,8 @@ failing.
 field is a checkpoint somebody set deliberately on that specific increment —
 data on the backlog, not a setting on the run — and it is unaffected by
 whether the human approval gate is on or off. `awaiting-approval` and
-`changes-requested`, by contrast, fire only when `requireApproval: true`.
+`changes-requested`, by contrast, fire only when `requireApproval: true`, or
+when a repo of the increment sets it on its own entry.
 
 **`pr-left-open` means the increment is half-landed, and the half that landed
 does not auto-revert.** The merge stage sweeps every repo for an open PR on the
@@ -533,9 +583,9 @@ merge the straggler yourself: it has not been through the watcher or the
 approval gate, and merging it to clear the warning is worse than the warning.
 
 **`awaiting-approval` is not a failure and must never be reported as one.** It
-can only fire when `requireApproval: true` — off by default, so this is
-something a programme opted into rather than something this skill supplies
-for free. With it on, the loop merges only PRs carrying an approving review,
+can only fire when `requireApproval: true`, on the run or on a repo's entry —
+off by default, so this is something a programme opted into rather than
+something this skill supplies for free. With it on, the loop merges only PRs carrying an approving review,
 and it merges none of an increment until all of them have one, so a run that
 ends here did everything right, merged nothing, and is waiting on a person.
 Report **every** unapproved PR URL and say plainly that they need a reviewer.

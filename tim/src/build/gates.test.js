@@ -119,6 +119,38 @@ describe('the workspace gates.json', () => {
     expect(new Set(e2eRuns)).toEqual(new Set(['test:docker-compose']))
   })
 
+  test('gates the workspace repo itself with tim’s format check, lint and unit tests, run in tim/', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const rungs = gates.repos['trade-imports-workspace'].rungs.map(
+      ({ name, phase, run, cwd }) => ({ name, phase, run, cwd })
+    )
+
+    expect(rungs).toEqual([
+      { name: 'format', phase: 'unit', run: 'format:check', cwd: 'tim' },
+      { name: 'lint', phase: 'unit', run: 'lint', cwd: 'tim' },
+      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' }
+    ])
+  })
+
+  test('runs both end-to-end suites when a backlog builds the workspace, whose stack they run against', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const covering = Object.entries(gates.repos).flatMap(
+      ([folder, { rungs }]) =>
+        rungs
+          .filter(({ forRepos }) =>
+            forRepos?.includes('trade-imports-workspace')
+          )
+          .map(({ name }) => `${folder}:${name}`)
+    )
+
+    expect(covering).toEqual([
+      'trade-imports-performance-tests:e2e-k6',
+      'trade-imports-ins-tests:e2e'
+    ])
+  })
+
   test('gates every service repo the INS performance-testing backlog builds', () => {
     const gates = loadGates(workspaceRoot)
     const serviceRepos = [
@@ -242,6 +274,21 @@ describe('parseGates', () => {
     expect(problems.message).toContain('is not an npm script name')
   })
 
+  test.each(['/tim', '../tim', '.'])(
+    'refuses a rung cwd of %s, which is not a folder inside the repo',
+    (cwd) => {
+      const problems = problemsOf(
+        gatesWith({
+          workspace: { rungs: [{ ...unitRung('unit', 'test'), cwd }] }
+        })
+      )
+
+      expect(problems.message).toContain(
+        'A rung cwd is a folder inside the repo, such as "tim".'
+      )
+    }
+  )
+
   test('names the repo each problem belongs to', () => {
     const problems = problemsOf(
       gatesWith({ tests: { rungs: [unitRung('smoke', 'test:cdp')] } })
@@ -315,6 +362,30 @@ describe('planRungs', () => {
         run: 'test:docker-compose',
         scope: ['--project=plants'],
         path: '/workspace/repos/tests'
+      })
+    ])
+  })
+
+  test('runs a rung that names a cwd in that folder of its repo', () => {
+    const gates = parseGates(
+      gatesWith({
+        'trade-imports-workspace': {
+          rungs: [{ ...unitRung('lint'), cwd: 'tim' }]
+        }
+      })
+    )
+
+    const plan = planRungs({
+      gates,
+      repos: [{ folder: 'trade-imports-workspace', path: '/workspace' }],
+      phase: 'unit'
+    })
+
+    expect(plan).toEqual([
+      expect.objectContaining({
+        repo: 'trade-imports-workspace',
+        name: 'lint',
+        path: '/workspace/tim'
       })
     ])
   })

@@ -41,9 +41,9 @@ const defaultBranchName = async (dir) => {
     : FALLBACK_DEFAULT
 }
 
-const inspect = async ({ key, folder, path }, branch) => {
+const inspect = async ({ key, folder, path, workspace = false }, branch) => {
   if (!existsSync(join(path, '.git'))) {
-    return { key, folder, path, cloned: false }
+    return { key, folder, path, workspace, cloned: false }
   }
   const [current, dirty, hasLocal, defaultName] = await Promise.all([
     currentBranch(path),
@@ -55,6 +55,7 @@ const inspect = async ({ key, folder, path }, branch) => {
     key,
     folder,
     path,
+    workspace,
     cloned: true,
     current,
     dirty,
@@ -63,11 +64,17 @@ const inspect = async ({ key, folder, path }, branch) => {
   }
 }
 
+// The workspace repo always carries uncommitted programme state (the backlog
+// itself, plans, logs), so its uncommitted files travel with it; git still
+// refuses a switch that would overwrite one of them.
+const wouldLoseWork = ({ workspace, current, dirty = [] }, branch) =>
+  !workspace && current !== branch && dirty.length > 0
+
 const problemsWith = (inspection, branch) => {
-  const { folder, cloned, current, dirty } = inspection
+  const { folder, cloned, dirty } = inspection
   if (!cloned) return [`${folder} is not cloned at ${inspection.path}.`]
   return [
-    current !== branch && dirty.length > 0
+    wouldLoseWork(inspection, branch)
       ? `${folder} has uncommitted work: ${dirty.join(', ')}. Commit or stash it first.`
       : null
   ].filter(Boolean)
@@ -160,7 +167,8 @@ const applyTo = async (inspection, branch) => {
  * alone; one that has it locally switches to it; otherwise the branch is cut
  * with `--no-track` from `origin/<branch>` when the remote has it, else from
  * the repo's default branch. Nothing changes if any repo would lose
- * uncommitted work or is not cloned.
+ * uncommitted work or is not cloned. The workspace repo itself is the
+ * exception: its uncommitted files travel with it.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -178,8 +186,8 @@ export const runBuildBranch = async ({ workspaceRoot, workarea, branch }) => {
     problemsWith(inspection, branch)
   )
   if (problems.length > 0) {
-    const dirty = inspections.some(
-      ({ current, dirty = [] }) => current !== branch && dirty.length > 0
+    const dirty = inspections.some((inspection) =>
+      wouldLoseWork(inspection, branch)
     )
     throw new TimError(
       dirty ? 'DIRTY_TREE' : 'USAGE',

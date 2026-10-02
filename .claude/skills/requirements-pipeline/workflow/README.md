@@ -172,9 +172,9 @@ missing key. The first log line is the resolved configuration.
 | `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |
-| `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle |
+| `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
-| `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word other than `workspace`. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path or slug differs from the envelope's |
+| `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word, and an optional `requireApproval: true` for a repo whose PR a person must approve. Under the full lifecycle the key `workspace` at path `.` is the workspace repo itself; under the branch lifecycle `workspace` is refused. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path, slug or `requireApproval` differs from the envelope's |
 | `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, judge, the consistency reviewer. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the ladder, CI fix. `light` (default haiku) runs a command and reports what it said: everything else (start, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
@@ -200,6 +200,10 @@ stage raised them in is an accident:
   stage copies it as written; the planner returns its `repos` in the same order and says under
   `risks` where the row's order puts a consumer first. A PR in a repo the row does not name
   merges last.
+- **The workspace repo** merges after every other PR, wherever the row lists it, even after a
+  CI fixer's PR in a repo the row does not name. It is never deployed and nothing on the base
+  branch consumes it, but the next increment runs on it, so the factory changes only once
+  everything built alongside it has merged, and a stop part-way leaves it as it was.
 
 `frontend-change` is routed by what a repo is, not by its key: the planner and implementor are
 sent to it only for a configured repo at `repos/trade-imports-animals-frontend` or
@@ -222,14 +226,18 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 36 agents on Claude and 42 on
-  Codex, so a run fits roughly 27 or 23 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 38 agents on Claude and 44 on
+  Codex, so a run fits roughly 26 or 22 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
   is no longer the run's (see [The workspace stack lease](#the-workspace-stack-lease)). A
   human rules on the holder;
 - at **`stack-failed`**, before any increment, when the run cannot start the workspace stack;
+- at **`land-leaked`**, when the land stage's workspace commit holds a file the workspace
+  carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed;
+- at **`workspace-not-on-base`**, after an increment that built in the workspace repo has
+  landed, when the workspace will not go back onto the base branch;
 - at **any stage failure** — `baseline-red`, `implement-failed`, `ladder-red`, `ci-red`,
   `main-red` and the rest, each named in `../references/BUILD.md`.
 
@@ -292,6 +300,60 @@ repos: {
 
 and an increment that touches six of them gets a branch, a commit, a PR and a CI watch in each
 of the six, merged in its row's order.
+
+### The workspace repo as one of the repos
+
+Under the full lifecycle a programme can change the workspace repo itself — tim, `gates.json`,
+the stack scripts, docs — and the loop builds it like any other repo: ticket, branch, review,
+gate, PR, CI and merge. Its `repos` entry is
+
+```js
+workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval: true }
+```
+
+`workspace` is the only key allowed at `.`, and `.` the only path allowed for it. gates.json
+knows the repo as `trade-imports-workspace`: its rungs run tim's format check, lint and unit
+tests, and both E2E suites list it, because the workspace owns the stack they run against.
+
+**`requireApproval` on a repo.** A repo whose entry sets `requireApproval: true` needs an
+approving review on its PR before the merge stage merges **any** PR of the increment. The merge
+stage lists those PRs under NEEDS APPROVAL and runs the same whole-increment approval sweep as
+the run-level gate, on them alone: still unapproved after `approvalWaitMinutes`, it stops at
+`awaiting-approval` with every PR left open. A repo without it merges on green. The run-level
+`requireApproval: true` still gates every PR. `tim build start` lists the repos that need
+approval in its result.
+
+**What never rides in a workspace commit.** The workspace is never clean: it carries the run's
+backlog, plans and logs under `workareas/`, and often somebody's work in progress. `tim build
+start` carries those files across the switch to the increment branch and lists them as
+`preexistingDirty`. Every stage is told they are not the increment's, and so is everything under
+`workareas/` the row does not name. The land stage stages and commits in the workspace by
+explicit path only, with a pathspec on the commit so nothing somebody else staged goes in. Then
+a light agent copies, word for word, what `git log --name-only --format= origin/<base>..HEAD`
+prints in the workspace, and the script checks that list itself, never the land agent's account:
+a carried file, or run state no stage reported changing, stops the run at `land-leaked` before
+anything is pushed, and so does a list it cannot read. A CI fixer is given the same rules for
+the workspace whenever it may touch it, whether or not the increment builds there.
+
+**Changing the factory mid-run.** While the workspace is on the increment branch, a change to
+tim, `gates.json` or the stack scripts takes effect at once: every later tim call and gate run
+in that increment uses the branch's copy, and the gate re-ups the stack when `docker/stack` or
+`scripts/stack` changed. A change to this loop script takes effect from the **next launch**
+only, because a running loop never re-reads it. Stages are told never to edit the loop script
+unless the row names it, and a planner says so under `risks` when it does.
+
+**Back to the base branch.** Once the increment has merged and its ticket has been closed
+(or failed to close), a light agent switches the workspace to the base branch and fast-forwards
+it with `git pull --ff-only`, carrying its uncommitted files, so the next increment runs on the
+merged factory. It never stashes, resets or commits. If it cannot, the run stops at
+`workspace-not-on-base`. An increment that stops before it merges — `awaiting-approval`,
+`ci-red`, `ladder-red` and the rest — leaves the workspace on the increment branch, because the
+programme files travel with it, and `stopped.detail` says so and gives the command to put it back.
+
+**An increment that leaves the workspace out.** The workspace stays where it is and no stage
+treats its uncommitted files as changes. A plan that would write in it, `openspec/` included,
+needs `workspace` among the row's repos: the planner refuses without it, and the land stage
+refuses to commit a spec change rather than put it on the base branch with no review.
 
 ### The stages, per increment
 

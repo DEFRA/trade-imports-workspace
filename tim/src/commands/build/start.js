@@ -54,6 +54,20 @@ const startOptionsSchema = z.object({
 const describeTicket = ({ key, created, status }) =>
   `${created ? 'Raised' : 'Reused'} ${key}, now ${status}, on the board.`
 
+const describeCarried = (paths) =>
+  paths?.length > 0
+    ? [
+        `The workspace repo carried uncommitted files across the switch, which are not this increment’s: ${paths.join(', ')}.`
+      ]
+    : []
+
+const describeApprovals = (keys) =>
+  keys?.length > 0
+    ? [
+        `A person must approve the pull request before it merges in: ${keys.join(', ')}.`
+      ]
+    : []
+
 /**
  * The plain-text report of `tim build start`.
  *
@@ -75,6 +89,8 @@ export const renderStartText = (outcome) => {
       ({ repo, branch, head, cut, from }) =>
         `  ${repo}  ${cut ? `cut ${branch} from ${from}` : `on ${branch}`} at ${head}`
     ),
+    ...describeCarried(outcome.preexistingDirty),
+    ...describeApprovals(outcome.requireApproval),
     ...(outcome.resumeAt ? [`Resume at ${outcome.resumeAt}.`] : []),
     ...(outcome.failedStep
       ? [`The ${outcome.failedStep} step failed: ${outcome.reason}`]
@@ -149,7 +165,7 @@ export const registerStart = (build, timVersion) =>
       "The configured repo keys in order, comma separated: what a row that names no repos builds (default: the backlog envelope's order)"
     )
     .description(
-      'Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or an open one under the epic with its summary, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure.'
+      'Start an increment, in order: derive it (the next buildable one, or --id), give it a Jira ticket in the working status on the board (reusing the one on its row, or an open one under the epic with its summary, or raising one and recording it at once), then put its repos on its branch, cut with --no-track from a freshly fetched origin/<base>. A repo with uncommitted work is refused, except the workspace repo itself (path "." in the backlog\'s repos): its uncommitted files travel across the switch and the result lists them as preexistingDirty, so the land stage leaves them out. A switch that would overwrite one of them fails, naming the files. The result\'s requireApproval lists the repos whose pull request a person must approve. Safe to run again. A failure names its step (derive, ticket or branch) and its exact reason. Exits 1 when a step failed; nothing buildable is not a failure.'
     )
     .addHelpText(
       'after',

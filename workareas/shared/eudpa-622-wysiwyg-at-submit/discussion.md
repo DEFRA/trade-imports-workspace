@@ -2,21 +2,22 @@
 
 Discussion document for the spike. Not a plan; not a fix — a starting point for the team conversation that closes the spike out with a chosen direction and any follow-on tickets.
 
-The ticket calls the mitigation out as open, listing three candidates and inviting more. This document lays out seven, notes what each does and does not cover, and pulls out the one dependency that changes the shape of the conversation: whether the address-book coupling stays or moves to literals.
+The ticket calls the mitigation out as open, listing three candidates and inviting more. This document lays out six and notes what each does and does not cover.
 
 ---
 
 ## The problem
 
-The happy path is *Review your answers* → *Continue* → *Declaration* → *Submit*. The Declaration is a legal document. The intent is that the user sees the complete notification on Review before making the legal declaration. Followed strictly, that works. Four subversion scenarios break it:
+The happy path is *Review your answers* → *Continue* → *Declaration* → *Submit*. The Declaration is a legal document. The intent is that the user sees the complete notification on Review before making the legal declaration. Followed strictly, that works. Three subversion scenarios break it:
 
-1. **Address-book edit.** One or more addresses shown on Review are edited in the address book. The declaration still submits, but against text the user never saw.
-2. **Other-tab edit.** The user has the notification open in another tab (accidentally or otherwise) and makes a valid amendment after Review has rendered.
-3. **URL / back-button / bookmark.** The user subverts the flow between Review and Declaration by any means other than the *Continue* button.
-4. **Two users, same notification.** Edits from a second user overlap with submission by the first.
+1. **Other-tab edit.** The user has the notification open in another tab (accidentally or otherwise) and makes a valid amendment after Review has rendered.
+2. **URL / back-button / bookmark.** The user subverts the flow between Review and Declaration by any means other than the *Continue* button.
+3. **Two users, same notification.** Edits from a second user overlap with submission by the first.
 
 Expected: the user cannot submit a notification whose contents differ from what was shown on Review.
 Actual: they can.
+
+Notifications copy address literals from the address book at pick time (decided 2026-10-02), so an address-book edit cannot change what Review showed, and an address edit within the notification is an ordinary notification save like any other answer.
 
 ---
 
@@ -26,32 +27,18 @@ Findings verified against the repo on 2026-09-30. Plants covered separately at t
 
 **Review page controller.** `repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js` (lines 60–197).
 
-- GET: builds the view-model. For DRAFT/AMEND notifications, addresses go through `partiesForRender()` → `resolveParties()`, which live-queries the address-book service per addressId on every render.
+- GET: builds the view-model from the notification's answers.
 - POST (*Continue*): calls `reviewRefusal()` (line 187) — re-validates scope readiness, outstanding parties, card-level stored errors and document scan status. Refuses and re-renders Review with HTTP 400 if any fail. This is EUDPA-130's AC6 in code.
 
 **Declaration page controller.** `.../features/declaration/controller.js` (lines 55–112).
 
-- POST (*Submit*): calls `isReviewRefused()` (line 76) — same refusal checks as *Continue*. On refusal, redirects back to Review. On pass, commits the declaration, calls `reinflatePartyAnswers()` to resolve party details, `records.replaceFulfilment()`, then `state.submitJourney()` → `records.finalise()`.
+- POST (*Submit*): calls `isReviewRefused()` (line 76) — same refusal checks as *Continue*. On refusal, redirects back to Review. On pass, commits the declaration, `records.replaceFulfilment()`, then `state.submitJourney()` → `records.finalise()`.
 
-**Backend on Submit.** `trade-imports-animals-backend`. `NotificationService.submitNotification()` calls `writeWithOutbox()` → `resolvedForOutbox()` → `consignmentPartyResolver.validatePartiesAtSubmit()` — re-fetches every address from the address book at that moment, inlines the result onto the outbox event. The stored notification keeps only the reference; the event carries the current-at-submit-time copy.
-
-**Concurrency token.** Backend mints one per save. Threaded through hidden fields on Review and Declaration templates. **Only read defensively on *copy* operations** — not checked on Submit.
+**Concurrency token.** Backend mints one per save. Rendered as a hidden field on the Review and Declaration forms — but each page reads the *current* token when it renders (`kit.base()` → `journey.concurrencyToken`); Declaration does not carry forward the token Review was rendered with. **Only read defensively on *copy* operations** — not checked on Continue or Submit.
 
 **Content anchoring.** Nothing today. No hash, no snapshot, no etag, no "as-of" pin threaded through Review → Declaration.
 
 The re-validation added by EUDPA-130 protects against reference values that have gone stale (a commodity code no longer resolving, for instance) but it is not a WYSIWYG check — the *values* the user saw can change and still pass validation.
-
----
-
-## The address-book coupling question — why it changes this conversation
-
-The team is considering reworking address selection so that the notification takes **literals** at pick time and holds those directly, with no addressId retained. Once literals are captured there is no further relationship between the notification and the address-book record. See EUDPA-294's discussion for the current (reference-only) rationale that this would reverse.
-
-**If the literals rework lands, subversion scenario 1 dissolves at the model level.** Review renders from the notification's own text; the address book cannot mutate what the user saw. EUDPA-622 then only has to protect scenarios 2, 3 and 4.
-
-**If it does not, EUDPA-622 has to defend scenario 1 in-flow** — either by copy-on-attach (in the frontend or backend), by refreshing addresses on Submit and detecting drift, or by a broader content hash that catches address changes as a side-effect.
-
-The rest of this document tags each option with which world it fits.
 
 ---
 
@@ -63,55 +50,36 @@ Ordered roughly from cheapest to most invasive. None is exclusive; several combi
 
 Replace the two-step flow with a single page that renders the Review content, the declaration wording, the tick-box and the *Submit* button together.
 
-- Covers scenario 3 (URL/back-button subversion between Review and Declaration — there is no *between* any more).
-- Does **not** cover 1, 2 or 4 on its own: the address book can still mutate under the page, another tab can still amend, another user can still edit.
+- Covers scenario 2 (URL/back-button subversion between Review and Declaration — there is no *between* any more).
+- Does **not** cover 1 or 3 on its own: another tab can still amend, another user can still edit.
 - The Review content is already long. Collapsing adds a scroll to legal-declaration confirmation, which is a content-design call as much as a code one.
 
 **Pointer.** Change entry point: remove the `/declaration` route from `.../features/declaration/index.js` and inline the declaration checkbox + submit into `.../features/check-answers/view.njk`. POST handler on `/check-answers` becomes the combined re-validation + submit.
 
-### Option B — Notification holds its own copy of the addresses
+### Option B — Content-hash the review, verify at Submit
 
-Two flavours, same effect on the WYSIWYG problem:
+At Review-render, compute a canonical hash of the answers (everything actually shown to the user). Thread the hash through as a hidden field on the Declaration form. On Submit, recompute the hash from the current state; if it differs, refuse the submit and re-show Review with a "the notification has changed since you reviewed it" banner.
 
-- **B1: Take literals at attach.** The address rework described above. Notification stores address text directly; no addressId retained.
-- **B2: Snapshot on attach.** Notification keeps the addressId **and** stores an inline copy captured at the moment the user picked or edited the address. Review renders from the inline copy. Submit uses the inline copy as the source of truth.
-
-Both cover scenario 1 fully. Neither covers 2, 3, 4 on its own — they need something else (typically F, plus A or C for the URL case).
-
-Trade-offs vs. EUDPA-294's reference-only rationale:
-- Storage: an inline copy per party per notification. Small.
-- Freshness: intentional loss — the notification will not reflect an address-book edit after attach. That's the point.
-- Deletion signalling: no longer needed for display.
-- Complexity: B1 removes the resolver path entirely; B2 doubles it (both stored, precedence rules on read).
-
-**Recommendation if this branch is taken:** B1 is the cleaner shape. B2 preserves optionality but hedges on the design question.
-
-**Pointer.** Backend: `ConsignmentParty.java` collapse the reference/inline forms into one shape with only inline fields, drop `addressId`. Frontend: `resolve-parties.js` becomes a no-op; `parties-for-render.js` reads from stored answers uniformly.
-
-### Option C — Content-hash the review, verify at Submit
-
-At Review-render, compute a canonical hash of the resolved answers (everything actually shown to the user, addresses included). Thread the hash through as a hidden field on the Declaration form. On Submit, recompute the hash from the current state; if it differs, refuse the submit and re-show Review with a "the notification has changed since you reviewed it" banner listing what changed.
-
-- Covers all four scenarios uniformly. It is the only single-option answer that does.
-- Cheap in code but demands care in *canonical serialisation* — anything the user saw has to be in the hash input in a stable order, or the check produces false negatives (misses drift) or false positives (spurious refusals). Whitespace normalisation of addresses is the most obvious footgun.
-- UX design: what to show when the hash mismatches. The ticket poses the same question ("Behaviour when drift is detected — block submit and re-show Review, or something else?"). A diff banner ("The address for consignee has changed. Review the updated notification before submitting.") is stronger than a generic "please review again".
+- Covers all three scenarios uniformly.
+- Cheap in code but demands care in *canonical serialisation* — anything the user saw has to be in the hash input in a stable order, or the check produces false negatives (misses drift) or false positives (spurious refusals).
+- UX design: what to show when the hash mismatches. The ticket poses the same question ("Behaviour when drift is detected — block submit and re-show Review, or something else?"). A hash says *that* something changed, not *what*, so the message is generic unless paired with something that keeps the prior content (Option C).
 
 **Pointer.**
 - Compute in `.../features/check-answers/controller.js` GET, after the view-model is built. Feed the same view-model shape into a small `canonicalise-and-hash.js`.
 - Thread as a hidden field alongside `concurrencyToken` in `.../features/check-answers/view.njk` and forwarded on the Declaration form in `.../features/declaration/view.njk`.
-- Verify in `.../features/declaration/controller.js` POST, before `submitJourney()`. On mismatch, redirect to `/check-answers` with a flash key naming the fields that changed.
+- Verify in `.../features/declaration/controller.js` POST, before `submitJourney()`. On mismatch, redirect to `/check-answers` with a flash message.
 
-### Option D — Persisted review snapshot, verified at Submit
+### Option C — Persisted review snapshot, verified at Submit
 
-At Review-render, persist a snapshot of the resolved view-model to Mongo alongside a fresh UUID (a *review snapshot id*). Thread the UUID through as a hidden field on the Declaration form, the same way Option C threads its hash. On Submit, do two checks:
+At Review-render, persist a snapshot of the view-model to Mongo alongside a fresh UUID (a *review snapshot id*). Thread the UUID through as a hidden field on the Declaration form, the same way Option B threads its hash. On Submit, do two checks:
 
-1. **Snapshot-id identity.** Compare the threaded UUID against the notification's current `latestReviewSnapshotId`. A mismatch means someone else has reviewed this notification since the user did (scenario 4), or the user reached Declaration through a stale form outside the linear flow (scenario 3).
-2. **Snapshot content vs current.** Compare the persisted snapshot against the current view-model. Any diff means the content the user reviewed has changed since (scenarios 1, 2).
+1. **Snapshot-id identity.** Compare the threaded UUID against the notification's current `latestReviewSnapshotId`. A mismatch means someone else has reviewed this notification since the user did (scenario 3), or the user reached Declaration through a stale form outside the linear flow (scenario 2).
+2. **Snapshot content vs current.** Compare the persisted snapshot against the current view-model. Any diff means the content the user reviewed has changed since (scenario 1, or 3 where the second user has not reviewed).
 
-If both checks pass, the user has demonstrably seen the current notification. If either fails, refuse the submit and re-show Review with per-field guidance drawn from the actual diff ("The consignee's address changed from X to Y", or "Another user has reviewed this notification since you did") — richer than C's banner because the full prior view-model is on the server, not just its hash.
+If both checks pass, the user has demonstrably seen the current notification. If either fails, refuse the submit and re-show Review with per-field guidance drawn from the actual diff ("The consignee's address changed from X to Y", or "Another user has reviewed this notification since you did") — richer than B's banner because the full prior view-model is on the server, not just its hash.
 
-- Covers all four scenarios.
-- Unlike E (below), the outbox event is still built from the current-at-submit resolution; the snapshot is used to *gate* submit, not to *replace* the finalisation. Preserves today's "latest at submit" property whenever the checks pass.
+- Covers all three scenarios.
+- Unlike D (below), the outbox event is still built from the notification as stored; the snapshot is used to *gate* submit, not to *replace* the finalisation. When the checks pass, the two are the same content anyway.
 - Requires backend schema + API changes: a new `reviewSnapshot` field or sibling collection, a write endpoint on *Continue*, a read on *Submit*.
 - Storage: one snapshot document per notification (overwritten on each Review). The QA-only state — no real users, no data to migrate — is what makes this cheap now; the cost calculus would shift once real notifications exist, so worth landing before that transition if this is the chosen path.
 
@@ -120,44 +88,45 @@ If both checks pass, the user has demonstrably seen the current notification. If
 - Frontend Review POST: after `reviewRefusal()` passes in `.../features/check-answers/controller.js`, call the endpoint, thread the returned UUID onto the Declaration form alongside `concurrencyToken` in `.../features/check-answers/view.njk` and forward it on `.../features/declaration/view.njk`.
 - Frontend Declaration POST: after `isReviewRefused()` passes in `.../features/declaration/controller.js`, read `payload.reviewSnapshotId`, fetch the notification's stored snapshot, run both checks. On mismatch, redirect to `/check-answers` with a flash payload listing the field-level diffs.
 
-### Option E — Server-side "reviewed snapshot" as source of truth
+### Option D — Server-side "reviewed snapshot" as source of truth
 
-On *Continue* from Review, the backend persists a snapshot of the resolved answers to a per-notification `reviewedContent` document (Mongo). The Declaration page renders from that snapshot. On Submit, the snapshot is what gets finalised (the outbox event is built from it) — the backend does not re-resolve at Submit.
+On *Continue* from Review, the backend persists a snapshot of the answers to a per-notification `reviewedContent` document (Mongo). The Declaration page renders from that snapshot. On Submit, the snapshot is what gets finalised (the outbox event is built from it).
 
-- Covers all four scenarios.
-- Server-authoritative WYSIWYG: the finalised notification *is* what was reviewed, not a re-resolution of it.
-- Larger change than D: new backend endpoint, new schema, new failure mode ("your Review has expired, please review again"), and the frontend has to make a call on *Continue* that today is client-side only.
-- Loses the current property that the outbox event always carries the latest resolved address at the moment of submit. That is either a bug (this ticket) or a feature (fresh legal record); the team should decide which.
+- Covers 1 and 3 by construction — later edits are simply not what gets finalised. Covers 2 only if Submit refuses when no snapshot was taken by this session.
+- Server-authoritative WYSIWYG: the finalised notification *is* what was reviewed.
+- Larger change than C: new backend endpoint, new schema, new failure mode ("your Review has expired, please review again"), and the frontend has to make a call on *Continue* that today is client-side only.
+- C gets the same guarantee by gating submit, without replacing the finalisation path. Worse, D silently submits the reviewed content over a later edit from another tab or user, discarding that edit without telling anyone.
 
-**Pointer.** New `POST /notifications/{id}/reviewed-snapshot` on the animals backend. Called from `.../features/check-answers/controller.js` POST after `reviewRefusal()` passes and before redirecting to Declaration. Read back in Declaration GET. Consumed by `submitNotification()` instead of `resolvedForOutbox()`.
+**Pointer.** New `POST /notifications/{id}/reviewed-snapshot` on the animals backend. Called from `.../features/check-answers/controller.js` POST after `reviewRefusal()` passes and before redirecting to Declaration. Read back in Declaration GET. Consumed by `submitNotification()` in place of the stored notification.
 
-### Option F — Use the existing concurrency token defensively on Submit
+### Option E — Use the existing concurrency token defensively on Continue and Submit
 
-The concurrency token is already threaded through Review and Declaration hidden fields. Change the Submit POST handler to compare the token in the payload against the current notification's token and refuse if they differ.
+The concurrency token is already a hidden field on both the Review and Declaration forms. Compare the token in the payload against the current notification's token on **both** POSTs and refuse if they differ.
 
-- Covers scenarios 2 and 4 (any edit through the app increments the token).
-- Does **not** cover 1 (address-book edits don't touch the notification, so the token doesn't change) or 3 (URL subversion doesn't imply a mismatched token — the user's original Review page's token may still match).
-- Almost no code change. Backend already exposes the token per save. Frontend already reads it into the form.
+Both checks are needed because Declaration renders the *current* token, not Review's. A Submit-only check catches edits made after Declaration rendered, but misses an edit made while the user was reading Review — Declaration would render the new token and Submit would match it. The Continue check closes that window: it proves nothing changed between Review render and Continue, leaving only the redirect hop to Declaration.
 
-**Pointer.** `.../features/declaration/controller.js` POST — after `isReviewRefused()` passes, read `payload.concurrencyToken`, fetch the current record's token, refuse with a redirect + flash on mismatch.
+- Covers scenarios 1 and 3 (any edit through the app increments the token, address edits included).
+- Does **not** cover 2. A user who reaches Declaration without passing through Review — back button, bookmark, typed URL — gets a Declaration rendered with the current token, so Submit matches. The token proves *nothing changed since this page rendered*, not *the user saw Review for this content*.
+- Almost no code change. Backend already exposes the token per save. Frontend already renders it into both forms.
 
-### Option G — Lock the notification on *Continue* from Review
+**Pointer.** `.../features/check-answers/controller.js` POST, alongside `reviewRefusal()`, and `.../features/declaration/controller.js` POST, after `isReviewRefused()` — read `payload.concurrencyToken`, compare against the current record's token, refuse on mismatch by re-showing Review with a "this notification has changed" message.
+
+### Option F — Lock the notification on *Continue* from Review
 
 On *Continue* from Review, the backend transitions the notification into a locked state (the same mechanism Submit uses today, pulled earlier in the flow). Edits refuse while locked. Submission from Declaration proceeds against the locked state. On successful Submit the state remains terminal as today; on abandonment the notification needs to return to an editable state.
 
 Prevention rather than detection — the drift the other options catch simply can't happen within the locked window.
 
-- Covers scenario 2 (other tab's amend refuses) and scenario 4 (second user's edits refuse) by prevention.
-- Covers scenario 3 only if Submit *also* refuses when the notification isn't locked by the submitting session; otherwise URL subversion into Declaration can still proceed against an unlocked notification.
-- Does **not** cover scenario 1. The notification lock does not propagate into the address-book service, so a referenced address can still be edited there. Making the lock cross-service for every referenced address record is a much bigger change than a per-notification state transition.
+- Covers scenario 1 (other tab's amend refuses) and scenario 3 (second user's edits refuse) by prevention.
+- Covers scenario 2 only if Submit *also* refuses when the notification isn't locked by the submitting session; otherwise URL subversion into Declaration can still proceed against an unlocked notification.
 - The hard part is unlock:
   - Successful Submit → terminal, as today.
   - Explicit back/cancel → unlock cleanly.
-  - Session timeout, tab close, browser crash → no reliable client-side signal. The lock has to self-expire after some window, which just relocates the drift problem to the moment of expiry — if the user's Declaration page is still open past timeout, nothing stops the notification being edited before they Submit, and we are back to needing C/D-style detection to catch it.
+  - Session timeout, tab close, browser crash → no reliable client-side signal. The lock has to self-expire after some window, which just relocates the drift problem to the moment of expiry — if the user's Declaration page is still open past timeout, nothing stops the notification being edited before they Submit, and we are back to needing B/C-style detection to catch it.
   - Second user arrives mid-lock → wait, forced takeover, admin-only unlock, or an informational "locked by X" message? Each has a UX cost the design has to carry.
 - Lock ownership (session, user, or both) has to be tracked so a different session cannot inadvertently release a lock it didn't acquire.
 
-Why this likely ends up a partial answer: by itself it leaves scenario 1 open and makes scenario 3 contingent on Submit-side enforcement; the lock-expiry edge pushes it back toward one of the detection options. As a *supplement* it closes the window during which detection has to work, which can simplify the UX of the chosen detection option.
+Why this likely ends up a partial answer: by itself it makes scenario 2 contingent on Submit-side enforcement; the lock-expiry edge pushes it back toward one of the detection options. As a *supplement* it closes the window during which detection has to work, which can simplify the UX of the chosen detection option.
 
 **Pointer.** Backend: extend `NotificationService` with `lockForReview(notificationId, sessionId)` / `unlockFromReview(notificationId, sessionId)`; `NotificationAggregate` gains `reviewLock: { ownerSessionId, acquiredAt, expiresAt }`. Guard every write path against an active lock not held by the caller. Frontend: call `lockForReview()` in `.../features/check-answers/controller.js` POST after `reviewRefusal()` passes; call `unlockFromReview()` on explicit navigation off Declaration that isn't Submit (Back especially).
 
@@ -165,26 +134,24 @@ Why this likely ends up a partial answer: by itself it leaves scenario 1 open an
 
 ## Scenario-coverage matrix
 
-| Option                                              | 1. Address-book edit | 2. Other-tab edit | 3. URL subversion | 4. Two users | Explains what changed | Cost |
-|-----------------------------------------------------|----------------------| ----------------- | ----------------- | ------------ |-------------------| ---- |
-| A. Collapse Review + Declaration                    | —                    | —                 | Y                 | —            | —                 | S    |
-| B1. Take literals (address rework)                  | Y                    | —                 | —                 | —            | —                 | L    |
-| B2. Snapshot address on attach                      | Y                    | —                 | —                 | —            | —                 | M    |
-| C. Content hash Review → Submit                     | Y                    | Y                 | Y                 | Y            | Partial           | M    |
-| D. Persisted snapshot + id, verified at Submit      | Y                    | Y                 | Y                 | Y            | Full              | M–L  |
-| E. Server-side reviewed snapshot as source of truth | Y                    | Y                 | Y                 | Y            | —                 | L    |
-| F. Concurrency token check on Submit                | —                    | Y                 | —                 | Y            | Partial           | XS   |
-| G. Lock notification on *Continue*                  | —                    | Y                 | Partial           | Y            | —                 | M    |
+| Option                                              | 1. Other-tab edit | 2. URL subversion | 3. Two users | Explains what changed | Cost |
+|-----------------------------------------------------|-------------------|-------------------|--------------|-----------------------|------|
+| A. Collapse Review + Declaration                    | —                 | Y                 | —            | —                     | S    |
+| B. Content hash Review → Submit                     | Y                 | Y                 | Y            | Partial               | M    |
+| C. Persisted snapshot + id, verified at Submit      | Y                 | Y                 | Y            | Full                  | M–L  |
+| D. Server-side reviewed snapshot as source of truth | Y                 | Partial           | Y            | —                     | L    |
+| E. Token check on Continue + Submit                 | Y                 | —                 | Y            | Partial               | XS   |
+| F. Lock notification on *Continue*                  | Y                 | Partial           | Y            | —                     | M    |
 
 For the *Explains what changed* column: Partial means we can display just generic guidance ("content changed" or "another user edited this"); — = no guidance path (either drift is not detected, or the option's design means no drift is possible in the first place).
 
 Useful combinations:
 
-- **A + F**: cheap; catches 2/3/4; misses 1. Fine if B1 is landing separately.
-- **B1 + F**: covers 1 via the model change; 2/4 via the token; still misses 3 (but 3 is the least likely accidental subversion).
-- **C alone**: single lever, all four scenarios. Requires care in canonical hashing and drift-UX.
-- **D alone**: same coverage as C, but the drift-detection UX can be field-level (naming what changed) rather than a generic banner, because the prior view-model is persisted and diffable. Costs a small backend schema + API change.
-- **G + C** or **G + D**: lock during the Review → Submit window to shrink the detection surface, with hash or snapshot as a safety net around lock expiry and scenario 1. Buys prevention *and* detection at the cost of carrying both mechanisms and their failure modes.
+- **E alone**: near-zero code; covers 1/3; leaves 2 open (the least likely accidental subversion).
+- **A + E**: cheap; covers all three with generic guidance. Carries the content-design cost of a long page ending in a legal declaration.
+- **B alone**: single lever, covers all three. Requires care in canonical hashing and drift-UX. Largely overlaps E for 1/3; its extra value is scenario 2.
+- **C alone**: same coverage as B, but the drift-detection UX can be field-level (naming what changed) rather than a generic banner, because the prior view-model is persisted and diffable. Costs a small backend schema + API change.
+- **F + B** or **F + C**: lock during the Review → Submit window to shrink the detection surface, with hash or snapshot as a safety net around lock expiry. Buys prevention *and* detection at the cost of carrying both mechanisms and their failure modes — hard to justify when E already covers 1 and 3 by detection.
 
 ---
 
@@ -192,11 +159,14 @@ Useful combinations:
 
 Not a decision, a starting position.
 
-- If **B1 (literals)** is on the near roadmap: pair it with **F** (concurrency token) here. Two small pieces of defensive code plus the model change; leaves only scenario 3 uncovered, and the team can decide whether a scenario-3 mitigation (A, or a smaller lightweight guard) is worth it.
-- If B1 is **not** on the near roadmap: **C** (content hash) is the cheapest single-option answer that covers all four. It stands alone, doesn't depend on the address-model conversation, and lands within the two existing pages. The UX for drift-detected is the design question worth spending refinement time on, not the code.
-- If the team wants **field-level** drift guidance rather than a generic "something changed" banner — because the legal-declaration framing makes it important that the user is told *what* diverged — **D** buys that at the cost of a small backend schema + endpoint. Cheap now (QA-only, no data migration); would need landing before real notifications exist to stay cheap.
+- **Start with E** (concurrency token check on Continue and Submit), in both animals and plants. Almost no code, covers 1 and 3.
+- **Then decide on scenario 2.** It is the only gap left after E: reaching Declaration without passing through Review for the current content (back button after an edit, a bookmark, a typed URL). Three positions:
+  - *Accept it.* It needs the user to step outside the linear flow; the content submitted is still the user's own latest answers.
+  - *A* (collapse the pages) closes it structurally, at a content-design cost.
+  - *B* (content hash) closes it within the two existing pages, and supersedes E rather than adding to it.
+- **Choose C over B only if** the team wants **field-level** drift guidance ("the consignee's address changed from X to Y") rather than a generic "something changed" banner, because the legal-declaration framing makes it important that the user is told *what* diverged. Cheap now (QA-only, no data migration); would need landing before real notifications exist to stay cheap.
 
-E remains the biggest change and is only strictly necessary if the team both rejects B1/C/D and wants the finalised outbox event to be built from the snapshot rather than the current-at-submit resolution.
+Not recommended: **D** (silently discards later edits, for a guarantee C gets by gating) and **F** (lock lifecycle cost for coverage E already gives).
 
 ---
 
@@ -204,10 +174,10 @@ E remains the biggest change and is only strictly necessary if the team both rej
 
 Not scoped in the outline diffs above; needs a matching pass. Two divergences to note now:
 
-- **Plants does not re-validate on Submit.** `.../trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js` (POST, lines 66–109) calls `submitJourney()` directly without an `isReviewRefused()`-equivalent. Any option chosen for animals should be landed for plants too, or plants remains exposed even to the EUDPA-130-style stale-reference case.
+- **Plants does not re-validate on Submit.** `.../trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js` (POST, lines 66–109) calls `submitJourney()` directly without an `isReviewRefused()`-equivalent. Any option chosen for animals should be landed for plants too, or plants remains exposed even to the EUDPA-130-style stale-reference case. E slots in at the same two POSTs.
 - **Plants POST on Continue skips document scan-status checks** (`.../check-answers/controller.js` lines 104–110) because plants doesn't have the documents feature in the same shape. Not directly a WYSIWYG concern, but worth flagging as part of a plants pass on the ticket.
 
-If C (content hash) is chosen, the hashing helper should live in a shared spot (or be duplicated with the same canonicalisation) so plants and animals agree on what a canonical view-model looks like.
+If B (content hash) is chosen, the hashing helper should live in a shared spot (or be duplicated with the same canonicalisation) so plants and animals agree on what a canonical view-model looks like.
 
 ---
 
@@ -215,9 +185,7 @@ If C (content hash) is chosen, the hashing helper should live in a shared spot (
 
 Restating the ticket's own list, plus what's surfaced above:
 
-1. Is the address-book literals rework in or out of the near-term picture? This directly changes which mitigation is cheapest.
-2. Which subversion scenarios are in scope for EUDPA-622? All four, or explicitly accept some (URL subversion, most obviously).
-3. Which mitigation, or which combination? A+F, B1+F, or C are the three clean starting points.
-4. On drift detection: block Submit and re-show Review with a diff, or something else (auto-refresh, silent re-resolve, prompt with per-field acknowledgement)?
-5. Does the answer apply identically to plants and animals, or diverge?
-6. Do we want the finalised notification (outbox event) to reflect **what was reviewed** or **the latest resolution at the moment of submit**? Today it's the latter. Options C and D make it the former. The team should call this out explicitly — it's a legal-record question as much as a technical one.
+1. Scenarios 1 and 3 are in scope. Is scenario 2 (reaching Declaration without passing through Review) in scope, or explicitly accepted?
+2. Which mitigation, or which combination? E alone, A + E, B, or C are the clean starting points.
+3. On drift detection: block Submit and re-show Review with a generic message, with a field-level diff (C), or something else (prompt with per-field acknowledgement)?
+4. Does the answer apply identically to plants and animals? (Recommendation: yes — including closing plants' missing re-validation on Submit.)

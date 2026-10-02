@@ -81,8 +81,17 @@ const diskBlobId = (file) => {
   }
 }
 
-const indexBlobs = async (path) => {
-  const result = await run('git', ['-C', path, 'ls-files', '-s', '-z'])
+const limitedTo = (pathspecs) => (pathspecs ? ['--', ...pathspecs] : [])
+
+const indexBlobs = async (path, pathspecs) => {
+  const result = await run('git', [
+    '-C',
+    path,
+    'ls-files',
+    '-s',
+    '-z',
+    ...limitedTo(pathspecs)
+  ])
   if (result.exitCode !== 0) return null
   return splitOnNul(result.stdout).map((line) => {
     const [meta, file] = line.split('\t')
@@ -90,7 +99,7 @@ const indexBlobs = async (path) => {
   })
 }
 
-const changedOnDisk = async (path) => {
+const changedOnDisk = async (path, pathspecs) => {
   const result = await run('git', [
     '-C',
     path,
@@ -98,7 +107,8 @@ const changedOnDisk = async (path) => {
     '--modified',
     '--others',
     '--exclude-standard',
-    '-z'
+    '-z',
+    ...limitedTo(pathspecs)
   ])
   return result.exitCode === 0 ? splitOnNul(result.stdout) : null
 }
@@ -147,6 +157,41 @@ export const repoFingerprints = async ({ path, mounted }) => {
     build: digest(blobs.filter(([file]) => !isUnder(file, mounted))),
     source: digest(blobs.filter(([file]) => isUnder(file, mounted)))
   }
+}
+
+/**
+ * The folders of the workspace repo that define the stack itself: its
+ * compose files, env and init scripts, and the scripts that start it.
+ */
+export const STACK_FILE_FOLDERS = ['docker/stack', 'scripts/stack']
+
+// Written on every stack start from the owning repos, never edited by hand.
+const GENERATED_STACK_FOLDERS = ['docker/stack/.staged']
+
+/**
+ * One fingerprint of the workspace repo's own stack files (docker/stack and
+ * scripts/stack, less the generated docker/stack/.staged): the sorted paths of
+ * the files on disk with their contents, from git's index and whatever
+ * differs from it on disk, so an edit, a new file, a deleted file and a rename
+ * all change it. A stack started before such a change is not the stack those
+ * files now describe.
+ *
+ * @param {string} workspaceRoot
+ * @returns {Promise<string|null>} null when the workspace is not a git checkout
+ */
+export const stackFilesFingerprint = async (workspaceRoot) => {
+  const [index, changed] = await Promise.all([
+    indexBlobs(workspaceRoot, STACK_FILE_FOLDERS),
+    changedOnDisk(workspaceRoot, STACK_FILE_FOLDERS)
+  ])
+  if (!index || !changed) return null
+  return digest(
+    workingTreeBlobs(workspaceRoot, index, changed).filter(
+      ([file]) =>
+        !isUnder(file, GENERATED_STACK_FOLDERS) &&
+        existsSync(join(workspaceRoot, file))
+    )
+  )
 }
 
 /**

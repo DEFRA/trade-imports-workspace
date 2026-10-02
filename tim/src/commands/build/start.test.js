@@ -154,4 +154,27 @@ describe('renderStartText', () => {
       ].join('\n')
     )
   })
+
+  test('names what the workspace repo carried and which repos need a person’s approval', () => {
+    expect(
+      renderStartText({
+        id: 'inc-002',
+        repeat: false,
+        ticket: null,
+        warnings: [],
+        branched: [],
+        preexistingDirty: ['README.md', 'workareas/'],
+        requireApproval: ['workspace'],
+        resumeAt: null,
+        failedStep: null,
+        reason: null
+      })
+    ).toBe(
+      [
+        'Increment inc-002.',
+        'The workspace repo carried uncommitted files across the switch, which are not this increment’s: README.md, workareas/.',
+        'A person must approve the pull request before it merges in: workspace.'
+      ].join('\n')
+    )
+  })
 })

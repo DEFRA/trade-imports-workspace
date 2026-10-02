@@ -179,6 +179,45 @@ describe('runBuildBranch', () => {
     ])
   })
 
+  test('carries the workspace repo’s own uncommitted files onto the branch', async () => {
+    root = mkdtempSync(join(tmpdir(), 'tim-build-branch-'))
+    const { barePath } = await createBareRepo(root, 'trade-imports-workspace', {
+      withGhPages: false
+    })
+    const workspaceRoot = join(root, 'ws')
+    await createFatClone(barePath, workspaceRoot)
+    const workarea = join(workspaceRoot, 'workareas', 'shared', 'programme')
+    mkdirSync(workarea, { recursive: true })
+    writeFileSync(
+      join(workarea, 'backlog.json'),
+      JSON.stringify({ repos: { workspace: { path: '.' } } })
+    )
+
+    const outcome = await runBuildBranch({
+      workspaceRoot,
+      workarea: WORKAREA,
+      branch: 'chore/EUDPA-6-stack'
+    })
+
+    expect({
+      repos: outcome.repos.map(({ repo, branch, ok }) => ({
+        repo,
+        branch,
+        ok
+      })),
+      stillThere: await git(workspaceRoot, 'status', '--short')
+    }).toEqual({
+      repos: [
+        {
+          repo: 'trade-imports-workspace',
+          branch: 'chore/EUDPA-6-stack',
+          ok: true
+        }
+      ],
+      stillThere: '?? workareas/'
+    })
+  })
+
   test('refuses a repo that is not cloned', async () => {
     await workspaceWith('frontend')
     rmSync(join(root, 'repos', 'frontend'), { recursive: true, force: true })

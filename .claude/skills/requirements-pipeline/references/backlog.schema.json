@@ -18,7 +18,7 @@
       "$ref": "#/$defs/textList"
     },
     "repos": {
-      "description": "Where the programme builds: each repo key a row's `repos` names (any lower-case words other than workspace, under either lifecycle, such as frontend, backend and tests, or perftests, stub and gateway) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
+      "description": "Where the programme builds: each repo key a row's `repos` names (any lower-case words, under either lifecycle, such as frontend, backend and tests, or perftests, stub and gateway) mapped to its workspace path and GitHub slug, such as { \"frontend\": { \"path\": \"repos/trade-imports-plants-frontend\", \"github\": \"DEFRA/trade-imports-plants-frontend\" } }. The key workspace, at path \".\", is the workspace repo itself, such as { \"workspace\": { \"path\": \".\", \"github\": \"DEFRA/trade-imports-workspace\", \"requireApproval\": true } }. DISTIL works it out from the goal and writes it here, so BUILD passes it to the loop as its `repos` arg without asking anyone. Older backlogs leave it out, and BUILD asks.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/repo" }
     },
@@ -45,12 +45,16 @@
       "required": ["path", "github"],
       "properties": {
         "path": {
-          "description": "The repo's folder, relative to the workspace root, such as \"repos/trade-imports-plants-frontend\".",
+          "description": "The repo's folder, relative to the workspace root, such as \"repos/trade-imports-plants-frontend\", or \".\" for the workspace repo itself. tim knows the workspace repo by the folder name trade-imports-workspace, wherever it is cloned: gates.json keys its rungs by it.",
           "$ref": "#/$defs/text"
         },
         "github": {
           "description": "The repo's GitHub owner/name, such as \"DEFRA/trade-imports-plants-frontend\". Taken from the repo's origin remote.",
           "$ref": "#/$defs/text"
+        },
+        "requireApproval": {
+          "description": "true when a person must approve the repo's pull request before the loop merges it, such as for the workspace repo, whose changes steer every later run. Left out, or false, the loop merges on green as usual. `tim build start` lists the repos it is true for in its result's requireApproval.",
+          "type": "boolean"
         }
       }
     },

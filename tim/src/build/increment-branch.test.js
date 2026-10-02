@@ -43,7 +43,7 @@ const fresh = () => {
 
 const branch = (repos, name, base = 'main') =>
   branchIncrementRepos({
-    repos: repos.map(({ key, path }) => ({ key, path })),
+    repos: repos.map(({ key, path, workspace }) => ({ key, path, workspace })),
     branch: name,
     base
   })
@@ -197,6 +197,131 @@ describe('branchIncrementRepos', () => {
         'branch.feat/EUDPA-9-origin.merge'
       )
     }).toEqual({ removed: 'origin/main', upstream: '' })
+  })
+
+  describe('the workspace repo itself', () => {
+    const workspaceClone = async () => ({
+      ...(await cloneOf('trade-imports-workspace')),
+      key: 'workspace',
+      workspace: true
+    })
+
+    test('carries its uncommitted files across the switch and lists them', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      writeFileSync(join(workspace.path, 'README.md'), '# edited\n')
+      mkdirSync(join(workspace.path, 'workareas', 'shared', 'programme'), {
+        recursive: true
+      })
+      writeFileSync(
+        join(
+          workspace.path,
+          'workareas',
+          'shared',
+          'programme',
+          'backlog.json'
+        ),
+        '{}\n'
+      )
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect({
+        ok: outcome.ok,
+        carried: outcome.repos[0].carried,
+        cut: outcome.repos[0].cut,
+        onBranch: await git(workspace.path, 'branch', '--show-current'),
+        stillEdited: await git(workspace.path, 'status', '--short')
+      }).toEqual({
+        ok: true,
+        carried: ['README.md', 'workareas/shared/programme/backlog.json'],
+        cut: true,
+        onBranch: 'chore/EUDPA-9-perf-mode',
+        stillEdited: 'M README.md\n?? workareas/'
+      })
+    })
+
+    test('stops, naming each file, when the switch would overwrite one it carries', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      await pushCommit(workspace.workPath, 'main', 'README.md')
+      writeFileSync(join(workspace.path, 'README.md'), '# edited\n')
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect({
+        ok: outcome.ok,
+        reason: outcome.reason,
+        onBranch: await git(workspace.path, 'branch', '--show-current')
+      }).toEqual({
+        ok: false,
+        reason:
+          'workspace: switching to chore/EUDPA-9-perf-mode would overwrite uncommitted files in the workspace: README.md. Nothing was stashed, reset or cleaned. Commit or move those files by hand, then run again.',
+        onBranch: 'main'
+      })
+    })
+
+    test('lists each file in an untracked folder, so a file the increment adds there later is not among them', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      const folder = join(workspace.path, 'workareas', 'shared', 'programme')
+      mkdirSync(folder, { recursive: true })
+      writeFileSync(join(folder, 'backlog.json'), '{}\n')
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+      writeFileSync(join(folder, 'plan.md'), '# the increment’s\n')
+      const newFile = 'workareas/shared/programme/plan.md'
+
+      expect({
+        carried: outcome.repos[0].carried,
+        coversNewFile: outcome.repos[0].carried.some(
+          (path) => newFile === path || newFile.startsWith(path)
+        )
+      }).toEqual({
+        carried: ['workareas/shared/programme/backlog.json'],
+        coversNewFile: false
+      })
+    })
+
+    test('lists both paths of a rename and a deleted file', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      await commitIn(workspace.path, 'old-name.md')
+      await commitIn(workspace.path, 'gone.md')
+      await git(workspace.path, 'mv', 'old-name.md', 'new-name.md')
+      rmSync(join(workspace.path, 'gone.md'))
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect([...outcome.repos[0].carried].sort()).toEqual([
+        'gone.md',
+        'new-name.md',
+        'old-name.md'
+      ])
+    })
+
+    test('lists nothing carried when the workspace is clean', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect(outcome.repos[0].carried).toEqual([])
+    })
+
+    test('still refuses an ordinary repo with uncommitted work beside it', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      const stub = await cloneOf('stub')
+      writeFileSync(join(workspace.path, 'notes.txt'), 'mine\n')
+      writeFileSync(join(stub.path, 'scratch.txt'), 'x\n')
+
+      const outcome = await branch([stub, workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect(outcome.reason).toBe(
+        "Nothing changed. stub has uncommitted work, probably from an earlier attempt: scratch.txt. Nothing was stashed, reset or cleaned: that work is not this step's."
+      )
+    })
   })
 
   test('refuses a repo that is not cloned', async () => {

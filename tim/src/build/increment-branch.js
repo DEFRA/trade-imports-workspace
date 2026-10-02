@@ -17,21 +17,59 @@ const uncommittedFiles = async (dir) =>
     .filter((line) => line.trim().length > 0)
     .map((line) => line.slice(3))
 
-const refusalFor = async ({ key, path }) => {
+const STATUS_PREFIX_LENGTH = 3
+
+// A rename or copy is followed by an entry naming the path it came from.
+const hasSourceEntry = (status) => /[RC]/.test(status)
+
+// Every uncommitted file one by one, untracked folders opened up, so a file
+// added later inside a folder that was already untracked is not mistaken for
+// one that was there before. A rename lists both its old and its new path.
+const uncommittedFilesOneByOne = async (dir) => {
+  const entries = (
+    await git(dir, ['status', '--porcelain', '-z', '--untracked-files=all'])
+  ).stdout
+    .split('\0')
+    .filter((entry) => entry.length > 0)
+  const files = []
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index]
+    files.push(entry.slice(STATUS_PREFIX_LENGTH))
+    if (hasSourceEntry(entry.slice(0, 2))) {
+      index += 1
+      files.push(entries[index])
+    }
+  }
+  return files
+}
+
+// The workspace repo always carries uncommitted programme state (a backlog
+// the loop writes, plans, logs) and often somebody's own work in progress, so
+// it is never refused for being dirty. What it carries is snapshotted before
+// it moves, so no later stage mistakes it for the increment's work, and git
+// itself refuses a switch that would overwrite any of it.
+const refusalFor = async ({ key, path, workspace }) => {
   if (!existsSync(join(path, '.git'))) return `${key} is not cloned at ${path}.`
+  if (workspace) return null
   const dirty = await uncommittedFiles(path)
   return dirty.length > 0
     ? `${key} has uncommitted work, probably from an earlier attempt: ${dirty.join(', ')}. Nothing was stashed, reset or cleaned: that work is not this step's.`
     : null
 }
 
-class BranchStepFailure extends Error {}
+class BranchStepFailure extends Error {
+  constructor(message, stderr = '') {
+    super(message)
+    this.stderr = stderr
+  }
+}
 
 const must = async (dir, args, failure) => {
   const result = await git(dir, args)
   if (result.exitCode !== 0) {
     throw new BranchStepFailure(
-      `${failure}: ${firstLine(result.stderr) || `git exited ${result.exitCode}`}`
+      `${failure}: ${firstLine(result.stderr) || `git exited ${result.exitCode}`}`,
+      result.stderr
     )
   }
   return result
@@ -100,10 +138,43 @@ const repairUpstream = async ({ path }, branch) => {
   return name
 }
 
+const wouldOverwrite = (stderr) =>
+  /would be overwritten|untracked working tree files would be/.test(stderr)
+
+// git lists each file in the way on its own indented line.
+const pathsInTheWay = (stderr) =>
+  stderr
+    .split('\n')
+    .filter((line) => /^\s+\S/.test(line))
+    .map((line) => line.trim())
+
+const describeCarriedConflict = (key, branch, stderr) => {
+  const paths = pathsInTheWay(stderr)
+  const named = paths.length > 0 ? paths.join(', ') : firstLine(stderr)
+  return `${key}: switching to ${branch} would overwrite uncommitted files in the workspace: ${named}. Nothing was stashed, reset or cleaned. Commit or move those files by hand, then run again.`
+}
+
+// A switch that would overwrite something the workspace carries fails naming
+// the files git listed, so a person can see what is in the way.
+const checkOutCarrying = async (repo, branch, base) => {
+  try {
+    return await checkOut(repo, branch, base)
+  } catch (error) {
+    if (!(error instanceof BranchStepFailure)) throw error
+    if (!wouldOverwrite(error.stderr ?? '')) throw error
+    throw new BranchStepFailure(
+      describeCarriedConflict(repo.key, branch, error.stderr)
+    )
+  }
+}
+
 const putOnBranch = async (repo, branch, base) => {
-  const { key, path } = repo
+  const { key, path, workspace } = repo
+  const carried = workspace ? await uncommittedFilesOneByOne(path) : null
   await must(path, ['fetch', '--quiet', 'origin'], `${key}: can't fetch origin`)
-  const moved = await checkOut(repo, branch, base)
+  const moved = workspace
+    ? await checkOutCarrying(repo, branch, base)
+    : await checkOut(repo, branch, base)
   const current = (await git(path, ['branch', '--show-current'])).stdout.trim()
   if (current !== branch) {
     throw new BranchStepFailure(
@@ -112,7 +183,15 @@ const putOnBranch = async (repo, branch, base) => {
   }
   const removedUpstream = await repairUpstream(repo, branch)
   const head = (await git(path, ['rev-parse', '--short', 'HEAD'])).stdout.trim()
-  return { repo: key, path, branch, head, ...moved, removedUpstream }
+  return {
+    repo: key,
+    path,
+    branch,
+    head,
+    ...moved,
+    removedUpstream,
+    ...(workspace ? { carried } : {})
+  }
 }
 
 /**
@@ -123,8 +202,15 @@ const putOnBranch = async (repo, branch, base) => {
  * removed. Nothing changes in any repo if one is not cloned or has
  * uncommitted work; a failure part-way stops at that repo.
  *
+ * The workspace repo itself (`workspace: true`) is the exception to the
+ * uncommitted-work rule: its uncommitted files travel across the switch, and
+ * its result lists them as `carried`: each file that was uncommitted before
+ * the increment started, one by one inside an untracked folder too, and both
+ * paths of a rename. A switch that would overwrite one of them stops, naming
+ * the files.
+ *
  * @param {object} args
- * @param {{key: string, path: string}[]} args.repos - In the order to branch them
+ * @param {{key: string, path: string, workspace?: boolean}[]} args.repos - In the order to branch them
  * @param {string} args.branch
  * @param {string} args.base
  * @returns {Promise<{ok: boolean, repos: object[], reason: string|null}>}

@@ -1799,9 +1799,9 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 36 an increment on
-        // Claude, plus the run’s four own agents, the twenty-eighth does not fit —
-        // so the run stops before starting it rather than dying inside it.
+        // The Workflow tool caps a run at 1000 agents. At 37 an increment on
+        // Claude, plus the run’s four own agents, the twenty-seventh does not
+        // fit — so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
             'all',
@@ -1810,9 +1810,9 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(27)
+          expect(run.result.increments.length).toBe(26)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('27 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('26 increment(s) landed')
         })
       })
 
@@ -2532,6 +2532,15 @@ describe('increment-build-loop', () => {
           )
         })
 
+        test('keeps the workspace out of the repo rules a full-lifecycle workspace increment gets', async () => {
+          const run = await runDocsRow()
+
+          expect(promptOf(run, 'inc-900 implement')).not.toContain(
+            'THE WORKSPACE REPO is one of'
+          )
+          expect(labelsOf(run)).not.toContain('inc-900 workspace to base')
+        })
+
         test('marks it done without a commit', async () => {
           const prompt = promptOf(await runDocsRow(), 'inc-900 done')
 
@@ -3063,6 +3072,576 @@ describe('increment-build-loop', () => {
           Object.values(NINE_REPOS)
             .map(({ github }) => github)
             .join(', ')
+        )
+      })
+    })
+  })
+
+  describe('under the full lifecycle, building the workspace repo itself', () => {
+    const WORKSPACE_REPO = {
+      path: '.',
+      github: 'DEFRA/trade-imports-workspace',
+      requireApproval: true
+    }
+    const PERFTESTS_REPO = {
+      path: 'repos/trade-imports-performance-tests',
+      github: 'DEFRA/trade-imports-performance-tests'
+    }
+    const FACTORY_REPOS = {
+      perftests: PERFTESTS_REPO,
+      workspace: WORKSPACE_REPO
+    }
+    const FACTORY_ARGS = {
+      ...BASE_ARGS,
+      repos: FACTORY_REPOS,
+      increments: ['inc-020'],
+      requireApproval: false
+    }
+    const envelopeOf = (repos) =>
+      Object.entries(repos).map(([key, entry]) => ({
+        key,
+        path: entry.path,
+        github: entry.github,
+        requireApproval: entry.requireApproval ?? false
+      }))
+    const WORK_BRANCH = 'feat/EUDPA-920-gate-layers'
+    // What the workspace repo already carried when the increment started: the
+    // run's own backlog and somebody's staged doc.
+    const CARRIED = [
+      'workareas/shared/ins-performance-testing/backlog.json',
+      'docs/repos/trade-imports-performance-tests.md'
+    ]
+    // The row names the workspace first; it still merges last.
+    const ROW_REPOS = ['workspace', 'perftests']
+    const WORKSPACE_PR = {
+      repo: 'workspace',
+      url: 'https://github.com/DEFRA/trade-imports-workspace/pull/90',
+      raised: true
+    }
+    const PERFTESTS_PR = {
+      repo: 'perftests',
+      url: 'https://github.com/DEFRA/trade-imports-performance-tests/pull/12',
+      raised: true
+    }
+    const CHANGED_FILES = [
+      'workspace:tim/src/build/gate.js',
+      'perftests:src/k6/journeys.js'
+    ]
+
+    const ANSWERS = {
+      workspace: WORKSPACE_ANSWER,
+      preflight: {
+        ok: true,
+        summary: '20',
+        envelopeRepos: envelopeOf(FACTORY_REPOS)
+      },
+      'inc-020 start': startAnswer(
+        startedResult({
+          id: 'inc-020',
+          ticket: {
+            key: 'EUDPA-920',
+            created: false,
+            status: 'In Dev',
+            movedToBoard: true,
+            warnings: []
+          },
+          branch: WORK_BRANCH,
+          repos: ROW_REPOS,
+          preexistingDirty: CARRIED,
+          requireApproval: ['workspace']
+        })
+      ),
+      'inc-020 baseline': {
+        ok: true,
+        green: true,
+        rungs: [],
+        summary: 'green'
+      },
+      'inc-020 plan': {
+        ok: true,
+        summary: 'Ran the gate in three layers.',
+        repos: ROW_REPOS,
+        behaviourChanges: [],
+        decisions: []
+      },
+      'inc-020 implement': {
+        ok: true,
+        summary: 'Built it.',
+        changedFiles: CHANGED_FILES,
+        notes: ''
+      },
+      'inc-020 ladder': { green: true, ran: [], summary: 'green' },
+      'inc-020 branch-guard:land': { ok: true, summary: 'on the branch' },
+      'inc-020 land': {
+        landed: true,
+        commit: 'p1 w1',
+        summary: 'committed'
+      },
+      'inc-020 workspace commit': {
+        exitCode: 0,
+        stdout: 'tim/src/build/gate.js\n'
+      },
+      'inc-020 pr': {
+        ok: true,
+        prs: [WORKSPACE_PR, PERFTESTS_PR],
+        summary: 'two PRs'
+      },
+      'inc-020 ci watch': { green: true, summary: 'every check green' },
+      'inc-020 merge': {
+        green: true,
+        merged: [
+          { repo: 'perftests', sha: 'perftests-sha' },
+          { repo: 'workspace', sha: 'workspace-sha' }
+        ],
+        summary: 'merged'
+      },
+      'inc-020 done': { ok: true, summary: 'ticket moved to Done' },
+      'inc-020 workspace to base': {
+        ok: true,
+        head: 'abc1234',
+        summary: 'back on main'
+      },
+      'inc-020 gate check': { ok: true, summary: 'no gate' }
+    }
+
+    const isReviewer = (label) =>
+      /^inc-020 (style|review):|consistency$/.test(label)
+
+    const runFactory = (argsOverride = {}, answerOverrides = {}) =>
+      runLoop(scriptPath, {
+        args: { ...FACTORY_ARGS, ...argsOverride },
+        answers: (prompt, { label }) => {
+          const answers = { ...ANSWERS, ...answerOverrides }
+          if (Object.hasOwn(answers, label)) return answers[label]
+          return isReviewer(label) ? { findings: [] } : null
+        }
+      })
+
+    const labelsOf = (run) => stageLabels(run)
+    const promptOf = (run, label) =>
+      run.agents.find((entry) => entry.options.label === label).prompt
+
+    const AWAITING_WORKSPACE_APPROVAL = {
+      green: false,
+      stopReason: 'awaiting-approval',
+      blocked: `workspace PR is green and awaiting approval: ${WORKSPACE_PR.url}`,
+      summary: 'waiting on a reviewer'
+    }
+
+    describe('its configuration', () => {
+      test('accepts the workspace key at path "."', async () => {
+        const run = await runFactory({ planOnly: true })
+
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-020',
+          outcome: 'planned'
+        })
+      })
+
+      test('refuses the workspace key at any path but "."', async () => {
+        const run = await runFactory({
+          repos: {
+            ...FACTORY_REPOS,
+            workspace: {
+              ...WORKSPACE_REPO,
+              path: 'repos/trade-imports-workspace'
+            }
+          }
+        })
+
+        expect(run.error.message).toContain(
+          'config.repos.workspace must give a workspace-relative "path" like "repos/trade-imports-animals-frontend" ("." for the "workspace" key alone)'
+        )
+        expect(run.agents).toEqual([])
+      })
+
+      test('refuses another key at path "."', async () => {
+        const run = await runFactory({
+          repos: {
+            ...FACTORY_REPOS,
+            perftests: { ...PERFTESTS_REPO, path: '.' }
+          }
+        })
+
+        expect(run.error.message).toContain('config.repos.perftests must give')
+      })
+
+      test('refuses a requireApproval that is not a boolean', async () => {
+        const run = await runFactory({
+          repos: {
+            ...FACTORY_REPOS,
+            workspace: { ...WORKSPACE_REPO, requireApproval: 'yes' }
+          }
+        })
+
+        expect(run.error.message).toBe(
+          'increment-build-loop: config.repos.workspace.requireApproval must be true or false, or left out — got "yes"'
+        )
+      })
+
+      test('stops before any increment when the envelope and the args disagree on a repo’s approval', async () => {
+        const run = await runFactory({
+          repos: {
+            ...FACTORY_REPOS,
+            workspace: { ...WORKSPACE_REPO, requireApproval: false }
+          }
+        })
+
+        expect(run.error.message).toContain(
+          '"workspace" needs approval in the envelope and does not need it in the args'
+        )
+        expect(labelsOf(run)).toEqual(['workspace', 'preflight'])
+      })
+    })
+
+    describe('building an increment that changes the workspace repo', () => {
+      test('goes start, build, PR, CI, merge, done, then back to the base branch', async () => {
+        const run = await runFactory()
+
+        expect(labelsOf(run).filter((label) => !isReviewer(label))).toEqual([
+          'workspace',
+          'preflight',
+          'inc-020 start',
+          'inc-020 baseline',
+          'inc-020 plan',
+          'inc-020 implement',
+          'inc-020 ladder',
+          'inc-020 branch-guard:land',
+          'inc-020 land',
+          'inc-020 workspace commit',
+          'inc-020 pr',
+          'inc-020 ci watch',
+          'inc-020 merge',
+          'inc-020 done',
+          'inc-020 workspace to base',
+          'inc-020 gate check'
+        ])
+        expect(run.result.increments[0]).toMatchObject({
+          id: 'inc-020',
+          outcome: 'landed',
+          prs: [WORKSPACE_PR.url, PERFTESTS_PR.url]
+        })
+      })
+
+      test('switches the workspace back to the base branch and fast-forwards it, carrying its files', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 workspace to base')
+
+        expect(prompt).toContain('1. `git -C ~/ws switch main`')
+        expect(prompt).toContain('2. `git -C ~/ws pull --ff-only origin main`')
+        expect(prompt).toContain(
+          'Never stash, reset, restore, clean, add or commit anything'
+        )
+      })
+
+      test('stops the landed run when the workspace will not go back to the base branch', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 workspace to base': {
+              ok: false,
+              summary:
+                'error: Your local changes to the following files would be overwritten by checkout'
+            }
+          }
+        )
+
+        expect(run.result.increments[0].outcome).toBe('landed')
+        expect(run.result.stopped.reason).toBe('workspace-not-on-base')
+        expect(run.result.stopped.detail).toContain(
+          `The workspace repo stays on ${WORK_BRANCH}`
+        )
+      })
+
+      test('tells the land stage exactly which carried files and state stay out of the workspace commit', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 land')
+
+        for (const path of CARRIED) {
+          expect(prompt).toContain(`  - ${path}`)
+        }
+        expect(prompt).toContain(
+          'Never edit, stage, commit, stash, restore or delete anything under `workareas/`'
+        )
+        expect(prompt).toContain('     - tim/src/build/gate.js')
+        expect(prompt).toContain(
+          '`git -C ~/ws commit -m "<message>" -- <every path you staged>`'
+        )
+      })
+
+      test('gives the CI fixer the workspace rule with the carried files', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 ci watch': {
+              green: false,
+              failures: ['unit: red'],
+              summary: 'red'
+            }
+          }
+        )
+        const prompt = promptOf(run, 'inc-020 ci fix 1')
+
+        expect(prompt).toContain(
+          "THE WORKSPACE REPO is one of this increment's repos"
+        )
+        expect(prompt).toContain(`  - ${CARRIED[1]}`)
+      })
+
+      test('reads what the workspace branch commits from git, not from the land agent', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 workspace commit')
+
+        expect(prompt).toContain(
+          '`git -C ~/ws log --name-only --format= origin/main..HEAD`'
+        )
+      })
+
+      test('stops at land-leaked, pushing nothing, when git shows a carried file the land agent did not mention', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 land': {
+              landed: true,
+              commit: 'p1 w1',
+              summary: 'committed tim/src/build/gate.js only'
+            },
+            'inc-020 workspace commit': {
+              exitCode: 0,
+              stdout: `tim/src/build/gate.js\n${CARRIED[1]}\n`
+            }
+          }
+        )
+
+        expect(run.result.stopped.reason).toBe('land-leaked')
+        expect(run.result.stopped.detail).toContain(
+          `the workspace repo's commit holds ${CARRIED[1]}`
+        )
+        expect(labelsOf(run)).not.toContain('inc-020 pr')
+      })
+
+      test('stops at land-leaked when git shows run state nobody reported changing', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 workspace commit': {
+              exitCode: 0,
+              stdout:
+                'tim/src/build/gate.js\nworkareas/shared/ins-performance-testing/logs/inc-020-ladder.log\n'
+            }
+          }
+        )
+
+        expect(run.result.stopped.reason).toBe('land-leaked')
+      })
+
+      test('stops at land-leaked, pushing nothing, when what the commit holds cannot be read', async () => {
+        const run = await runFactory(
+          {},
+          {
+            'inc-020 workspace commit': {
+              exitCode: 128,
+              stdout: "fatal: bad revision 'origin/main..HEAD'"
+            }
+          }
+        )
+
+        expect(run.result.stopped.reason).toBe('land-leaked')
+        expect(run.result.stopped.detail).toContain(
+          "could not read what the workspace repo's commit holds"
+        )
+        expect(labelsOf(run)).not.toContain('inc-020 pr')
+      })
+
+      test.each([
+        'inc-020 baseline',
+        'inc-020 plan',
+        'inc-020 implement',
+        'inc-020 review:workspace-javascript',
+        'inc-020 consistency',
+        'inc-020 ladder',
+        'inc-020 pr'
+      ])(
+        'tells %s the workspace repo is the root, what it carried, and to leave the loop script alone',
+        async (label) => {
+          const prompt = promptOf(await runFactory(), label)
+
+          expect(prompt).toContain(
+            "THE WORKSPACE REPO is one of this increment's repos, under the key `workspace`. Its repo path is the workspace\nroot itself, `~/ws`"
+          )
+          expect(prompt).toContain(`  - ${CARRIED[0]}`)
+          expect(prompt).toContain(
+            "Never edit this loop's own script, `.claude/skills/requirements-pipeline/workflow/increment-build-loop.js`, unless the row names it. A running loop never re-reads it, so a\n  change there takes effect from the next launch only"
+          )
+        }
+      )
+
+      test('reviews the workspace repo’s changes from the workspace root', async () => {
+        const prompt = promptOf(
+          await runFactory(),
+          'inc-020 review:workspace-javascript'
+        )
+
+        expect(prompt).toContain(
+          '1 file(s) in the workspace repo (~/ws), language\njavascript'
+        )
+        expect(prompt).toContain('`git -C ~/ws diff --staged -- <path>`')
+      })
+
+      test('merges the workspace PR last, whatever order the row gives', async () => {
+        const run = await runFactory()
+
+        expect(run.logs).toContain('inc-020: merge order perftests → workspace')
+      })
+    })
+
+    describe('a repo that needs approval of its own', () => {
+      test('holds every PR back until the workspace PR is approved, gating only that one', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 merge')
+
+        expect(prompt).toContain(
+          [
+            'NEEDS APPROVAL — a person must approve each of these before ANY pr above merges, the others included. The others need',
+            'no approval of their own, but they wait for these:',
+            `workspace: ${WORKSPACE_PR.url}`
+          ].join('\n')
+        )
+        expect(prompt).toContain(
+          'STEP A — THE APPROVAL SWEEP. Do this for EVERY pr under NEEDS APPROVAL BEFORE you merge a single pr.'
+        )
+      })
+
+      test('stops at awaiting-approval with every PR open, leaving the workspace on the increment branch', async () => {
+        const run = await runFactory(
+          {},
+          { 'inc-020 merge': AWAITING_WORKSPACE_APPROVAL }
+        )
+
+        expect(run.result.increments[0]).toMatchObject({
+          outcome: 'awaiting-approval',
+          merged: [],
+          prs: [WORKSPACE_PR.url, PERFTESTS_PR.url]
+        })
+        expect(run.result.stopped.detail).toContain(
+          `The workspace repo stays on ${WORK_BRANCH}, carrying this run's uncommitted programme files`
+        )
+        expect(labelsOf(run)).not.toContain('inc-020 workspace to base')
+      })
+
+      test('runs no approval sweep when no repo needs approval', async () => {
+        const noApproval = {
+          ...FACTORY_REPOS,
+          workspace: { ...WORKSPACE_REPO, requireApproval: false }
+        }
+        const run = await runFactory(
+          { repos: noApproval },
+          {
+            preflight: {
+              ok: true,
+              summary: '20',
+              envelopeRepos: envelopeOf(noApproval)
+            },
+            'inc-020 start': startAnswer(
+              startedResult({
+                id: 'inc-020',
+                branch: WORK_BRANCH,
+                repos: ROW_REPOS,
+                preexistingDirty: CARRIED,
+                requireApproval: []
+              })
+            )
+          }
+        )
+
+        expect(promptOf(run, 'inc-020 merge')).not.toContain('APPROVAL SWEEP')
+      })
+
+      test('still gates every PR under the run-level requireApproval', async () => {
+        const prompt = promptOf(
+          await runFactory({ requireApproval: true }),
+          'inc-020 merge'
+        )
+
+        expect(prompt).toContain(
+          'STEP A — THE APPROVAL SWEEP. Do this for EVERY pr above BEFORE you merge a single pr.'
+        )
+        expect(prompt).not.toContain('NEEDS APPROVAL')
+      })
+    })
+
+    describe('an increment that leaves the workspace repo out', () => {
+      const runPerftestsOnly = (overrides = {}) =>
+        runFactory(
+          {},
+          {
+            'inc-020 start': startAnswer(
+              startedResult({
+                id: 'inc-020',
+                branch: WORK_BRANCH,
+                repos: ['perftests'],
+                preexistingDirty: null,
+                requireApproval: []
+              })
+            ),
+            'inc-020 plan': {
+              ...ANSWERS['inc-020 plan'],
+              repos: ['perftests']
+            },
+            'inc-020 implement': {
+              ...ANSWERS['inc-020 implement'],
+              changedFiles: ['perftests:src/k6/journeys.js']
+            },
+            'inc-020 land': {
+              landed: true,
+              commit: 'p1',
+              summary: 'committed'
+            },
+            'inc-020 pr': { ok: true, prs: [PERFTESTS_PR], summary: 'one PR' },
+            'inc-020 merge': {
+              green: true,
+              merged: [{ repo: 'perftests', sha: 'perftests-sha' }],
+              summary: 'merged'
+            },
+            ...overrides
+          }
+        )
+
+      test('tells the planner a workspace change needs the workspace among its repos', async () => {
+        const prompt = promptOf(await runPerftestsOnly(), 'inc-020 plan')
+
+        expect(prompt).toContain(
+          'The workspace repo is not among them: a plan\nthat changes anything in it, `openspec/` included, needs it'
+        )
+      })
+
+      test('lands without moving the workspace and without its rule', async () => {
+        const run = await runPerftestsOnly()
+
+        expect(run.result.increments[0].outcome).toBe('landed')
+        expect(labelsOf(run)).not.toContain('inc-020 workspace to base')
+        expect(promptOf(run, 'inc-020 implement')).not.toContain(
+          'THE WORKSPACE REPO is one of'
+        )
+      })
+
+      test('still tells the CI fixer the workspace carries files that are not the increment’s', async () => {
+        const run = await runPerftestsOnly({
+          'inc-020 ci watch': {
+            green: false,
+            failures: ['k6 smoke: red'],
+            summary: 'red'
+          }
+        })
+        const prompt = promptOf(run, 'inc-020 ci fix 1')
+
+        expect(prompt).toContain(
+          "THE WORKSPACE REPO (`~/ws`) always carries uncommitted files that are not this increment's"
+        )
+        expect(prompt).not.toContain('THE WORKSPACE REPO is one of')
+      })
+
+      test('refuses a spec change rather than committing it where the workspace stands', async () => {
+        const prompt = promptOf(await runPerftestsOnly(), 'inc-020 land')
+
+        expect(prompt).toContain(
+          'If it has changes, report landed:false naming them, and commit nothing anywhere'
         )
       })
     })

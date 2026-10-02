@@ -286,10 +286,17 @@ const emptyResult = (workarea, id) => ({
   repos: null,
   resumeAt: null,
   branched: [],
+  preexistingDirty: null,
+  requireApproval: [],
   warnings: [],
   failedStep: null,
   reason: null
 })
+
+// What the workspace repo carried across its switch: never the increment's.
+// null when the increment does not build in the workspace repo.
+const preexistingDirtyOf = (branched) =>
+  branched.find((repo) => Array.isArray(repo.carried))?.carried ?? null
 
 const runSteps = async (result, context) => {
   const { workspaceRoot, workarea, path, base, config } = context
@@ -319,6 +326,9 @@ const runSteps = async (result, context) => {
     config.repoOrder
   )
   result.repos = repos.map((repo) => repo.key)
+  result.requireApproval = repos
+    .filter((repo) => repo.requireApproval)
+    .map((repo) => repo.key)
   const branched = await branchIncrementRepos({
     repos,
     branch: result.branch,
@@ -326,6 +336,7 @@ const runSteps = async (result, context) => {
   })
   result.branched = branched.repos
   if (!branched.ok) fail('branch', branched.reason)
+  result.preexistingDirty = preexistingDirtyOf(branched.repos)
   return result
 }
 
@@ -345,7 +356,7 @@ const runSteps = async (result, context) => {
  * @param {string} args.base - The branch a new increment branch is cut from
  * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number, repoOrder?: string[]}} args.config - repoOrder is the configured repo keys in order, the fallback for a row that names none
  * @param {() => object} args.jira - Makes the Jira client, only once a ticket is needed
- * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, resumeAt, branched, warnings, failedStep and reason
+ * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, branched, preexistingDirty (the workspace repo's uncommitted paths before it switched, or null when the increment does not build in it), warnings, failedStep and reason
  */
 export const runBuildStart = async ({
   workspaceRoot,

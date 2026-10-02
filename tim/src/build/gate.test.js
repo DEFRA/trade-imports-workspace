@@ -170,6 +170,44 @@ describe('runGate — unit and FIT rungs', () => {
     })
   })
 
+  test('runs the workspace repo’s rungs in the folder each names, under the workspace’s own folder name', async () => {
+    workspaceWith({ gates: {}, repos: {} })
+    writeFileSync(
+      join(root, GATES_PATH),
+      JSON.stringify({
+        repos: {
+          'trade-imports-workspace': {
+            rungs: [{ name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' }]
+          }
+        }
+      })
+    )
+    mkdirSync(join(root, 'tim'))
+    writeFileSync(
+      join(root, 'tim', 'package.json'),
+      JSON.stringify({ name: 'tim', scripts: { test: 'echo tested tim' } })
+    )
+    writeFileSync(
+      join(root, 'workareas', 'shared', 'programme', 'backlog.json'),
+      JSON.stringify({ repos: { workspace: { path: '.' } } })
+    )
+
+    const outcome = await gate({}, { phase: 'unit' })
+
+    expect({
+      rungs: outcomeOf(outcome.rungs),
+      log: outcome.rungs[0].log,
+      said: readFileSync(outcome.rungs[0].log, 'utf8')
+    }).toEqual({
+      rungs: ['trade-imports-workspace:unit:pass'],
+      log: join(
+        defaultLogsDir(root, WORKAREA),
+        'gate-trade-imports-workspace-unit.log'
+      ),
+      said: expect.stringContaining('tested tim')
+    })
+  })
+
   test("writes each rung's output to its own log beside the backlog", async () => {
     const env = workspaceWith(unitOnly())
 
@@ -483,6 +521,9 @@ describe('runGate — e2e rungs', () => {
       calls: ['dev-service.sh rebuild frontend'],
       refresh: {
         ok: true,
+        restacked: false,
+        restackLog: null,
+        stackFilesKnown: false,
         rebuilt: ['frontend'],
         restarted: [],
         left: [],

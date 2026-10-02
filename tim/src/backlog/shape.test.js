@@ -239,6 +239,32 @@ describe('checkBacklog', () => {
     ])
   })
 
+  test('passes the workspace repo itself at ".", whose pull request a person approves', () => {
+    const repos = {
+      workspace: {
+        path: '.',
+        github: 'DEFRA/trade-imports-workspace',
+        requireApproval: true
+      }
+    }
+
+    expect(checkBacklog({ ...backlogOf(row()), repos }).problems).toEqual([])
+  })
+
+  test('refuses a requireApproval that is not true or false', () => {
+    const repos = {
+      workspace: {
+        path: '.',
+        github: 'DEFRA/trade-imports-workspace',
+        requireApproval: 'yes'
+      }
+    }
+
+    expect(checkBacklog({ ...backlogOf(row()), repos }).problems).toEqual([
+      expect.stringContaining('The backlog "repos"')
+    ])
+  })
+
   describe('the branch lifecycle fields', () => {
     const syncRepos = {
       ins: {

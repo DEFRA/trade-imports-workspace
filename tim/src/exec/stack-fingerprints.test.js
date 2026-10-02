@@ -1,6 +1,12 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  renameSync
+} from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -10,7 +16,8 @@ import {
   repoFingerprints,
   serviceFingerprints,
   refreshDecision,
-  planRefresh
+  planRefresh,
+  stackFilesFingerprint
 } from './stack-fingerprints.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -304,5 +311,88 @@ describe('planRefresh', () => {
         api: { build: 'b', source: 's' }
       })
     ).toEqual({ rebuild: ['web', 'api'], restart: [], leave: [] })
+  })
+})
+
+// A workspace repo with committed stack files and one other file.
+const committedWorkspace = async () => {
+  writeFile(join(root, 'docker', 'stack', 'compose.yml'), 'name: trade\n')
+  writeFile(join(root, 'scripts', 'stack', 'run-stack.sh'), 'echo up\n')
+  writeFile(join(root, 'README.md'), '# workspace\n')
+  await git(root, 'init', '-q')
+  await git(root, 'add', '.')
+  await git(root, 'commit', '-q', '-m', 'first')
+}
+
+describe('stackFilesFingerprint', () => {
+  test('stays the same while no stack file changes', async () => {
+    await committedWorkspace()
+    const before = await stackFilesFingerprint(root)
+    writeFile(join(root, 'README.md'), '# edited\n')
+    writeFile(join(root, 'docker', 'stack', '.staged', 'init.sh'), 'x\n')
+
+    expect(await stackFilesFingerprint(root)).toBe(before)
+  })
+
+  test.each([
+    ['an edited compose file', join('docker', 'stack', 'compose.yml')],
+    ['an edited stack script', join('scripts', 'stack', 'run-stack.sh')],
+    ['a new compose overlay', join('docker', 'stack', 'perf.compose.yml')]
+  ])('changes with %s', async (_change, file) => {
+    await committedWorkspace()
+    const before = await stackFilesFingerprint(root)
+    writeFile(join(root, file), 'changed\n')
+
+    expect(await stackFilesFingerprint(root)).not.toBe(before)
+  })
+
+  test('changes when a stack file is deleted', async () => {
+    await committedWorkspace()
+    writeFile(join(root, 'docker', 'stack', 'perf.compose.yml'), 'x\n')
+    await git(root, 'add', '.')
+    await git(root, 'commit', '-q', '-m', 'second')
+    const before = await stackFilesFingerprint(root)
+    rmSync(join(root, 'docker', 'stack', 'perf.compose.yml'))
+
+    expect(await stackFilesFingerprint(root)).not.toBe(before)
+  })
+
+  test('changes when a stack file is renamed, keeping its contents', async () => {
+    await committedWorkspace()
+    const before = await stackFilesFingerprint(root)
+    await git(
+      root,
+      'mv',
+      join('docker', 'stack', 'compose.yml'),
+      join('docker', 'stack', 'base.compose.yml')
+    )
+
+    expect(await stackFilesFingerprint(root)).not.toBe(before)
+  })
+
+  test('changes when a stack file is renamed on disk only', async () => {
+    await committedWorkspace()
+    const before = await stackFilesFingerprint(root)
+    renameSync(
+      join(root, 'docker', 'stack', 'compose.yml'),
+      join(root, 'docker', 'stack', 'base.compose.yml')
+    )
+
+    expect(await stackFilesFingerprint(root)).not.toBe(before)
+  })
+
+  test('changes with a committed change to a stack file', async () => {
+    await committedWorkspace()
+    const before = await stackFilesFingerprint(root)
+    writeFile(join(root, 'docker', 'stack', 'compose.yml'), 'name: other\n')
+    await git(root, 'commit', '-q', '-am', 'second')
+
+    expect(await stackFilesFingerprint(root)).not.toBe(before)
+  })
+
+  test('gives nothing for a workspace that is not a git checkout', async () => {
+    writeFile(join(root, 'docker', 'stack', 'compose.yml'), 'name: trade\n')
+
+    expect(await stackFilesFingerprint(root)).toBeNull()
   })
 })

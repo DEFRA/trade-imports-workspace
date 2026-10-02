@@ -83,7 +83,10 @@ export const meta = {
 //                   GitHub forbids approving your own PR, so the approver is
 //                   always somebody other than whoever the run raised it as.
 //                   Set false only for a programme that genuinely wants
-//                   unattended merges
+//                   unattended merges. A repo can also need approval on its
+//                   own, through `requireApproval: true` on its entry in
+//                   `repos`: then its PR must be approved before ANY PR of the
+//                   increment merges, while the other repos merge on green
 //   approvalWaitMinutes  how long the merge stage may wait for those approvals
 //                   before it stops and leaves every PR open.
 //   planOnly        true: plan each increment into <workarea>/plans/<id>.md and
@@ -97,7 +100,12 @@ export const meta = {
 //                   its GitHub owner/name slug. frontend, backend and tests is
 //                   one such map; perftests, stub, insfrontend and gateway is
 //                   another. The preflight stops the run when it differs from
-//                   the envelope's
+//                   the envelope's. Under lifecycle 'full', the key
+//                   `workspace` at path "." is the workspace repo itself:
+//                   { "path": ".", "github": "DEFRA/trade-imports-workspace",
+//                   "requireApproval": true }. Its commits leave out what it
+//                   carried in and the run's own workareas/ state, and once it
+//                   merges the run puts it back on the base branch
 //   models         required; {} takes the recommended default on every tier —
 //                   it does NOT inherit the session model. Three tiers, each
 //                   optional: think (default opus) = plan, judge, the
@@ -210,17 +218,18 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 36 agents on Claude and 42 on Codex,
-// its start stage included, so a drain of an open-ended backlog would hit the
+// not a config key. An increment is up to 38 agents on Claude and 44 on Codex,
+// its start stage, the workspace commit reader and the one that puts the workspace repo back on the base
+// branch included, so a drain of an open-ended backlog would hit the
 // cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 27 increments on Claude, 23 on Codex — and
+// that would not fit — roughly 26 increments on Claude, 22 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs. The run's
 // own agents are the workspace and preflight checks, and the one that takes
 // the workspace stack's lease at the start and the one that gives it back at
 // the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 36, codex: 42 }
+const AGENTS_PER_INCREMENT = { claude: 38, codex: 44 }
 const STARTUP_AGENTS = 4
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -331,31 +340,58 @@ if (PLAN_ONLY && EXPLICIT_IDS === null) {
 // ---------------------------------------------------------------------------
 // Keys must be plain lower-case words, because a changed file is written
 // `<repoKey>:<path>` and routed back to its repo by that prefix. `workspace`
-// is reserved: it names the workspace repo itself, where a docs row writes.
+// names the workspace repo itself, always at path ".". Under the full
+// lifecycle it is a repo like any other, so an increment can change the
+// factory that builds it. Under the branch lifecycle it stays reserved: a row
+// there writes in the workspace by naming no repo, and the orchestrator
+// commits it.
 const REPOS = CFG.repos
 const WORKSPACE_KEY = 'workspace'
+const WORKSPACE_PATH = '.'
 const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const configuredKeys = isPlainObject(REPOS) ? Object.keys(REPOS) : []
-const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || key === WORKSPACE_KEY)
+const badRepoKeys = configuredKeys.filter((key) => !/^[a-z]+$/.test(key) || (IS_BRANCH && key === WORKSPACE_KEY))
 if (configuredKeys.length === 0 || badRepoKeys.length > 0) {
+  const keyRule = IS_BRANCH
+    ? `a lower-case word other than "${WORKSPACE_KEY}", which lifecycle "branch" keeps for a row that names no repo`
+    : `a lower-case word, "${WORKSPACE_KEY}" for the workspace repo itself`
   throw new Error(
-    `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is a lower-case word other than "${WORKSPACE_KEY}" — got ${JSON.stringify(REPOS)}`
+    `${WORKFLOW_NAME}: config.repos must map at least one repo key to its "path" and "github", copied from the backlog envelope's repos. Each key is ${keyRule} — got ${JSON.stringify(REPOS)}`
   )
 }
 
 const REPO_KEYS = configuredKeys
 
+const repoPathOk = (key, path) =>
+  typeof path === 'string' && (key === WORKSPACE_KEY ? path === WORKSPACE_PATH : /^repos\/[^/]+$/.test(path))
+
 for (const key of REPO_KEYS) {
   const entry = REPOS[key]
-  const pathOk = typeof entry?.path === 'string' && /^repos\/[^/]+$/.test(entry.path)
+  const pathOk = repoPathOk(key, entry?.path)
   const githubOk = typeof entry?.github === 'string' && /^[^/\s]+\/[^/\s]+$/.test(entry.github)
   if (!pathOk || !githubOk) {
     throw new Error(
-      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-frontend" and a "github" owner/name slug like "DEFRA/trade-imports-animals-frontend" — got ${JSON.stringify(entry)}`
+      `increment-build-loop: config.repos.${key} must give a workspace-relative "path" like "repos/trade-imports-animals-frontend" ("." for the "${WORKSPACE_KEY}" key alone) and a "github" owner/name slug like "DEFRA/trade-imports-animals-frontend" — got ${JSON.stringify(entry)}`
+    )
+  }
+  const approval = entry.requireApproval
+  if (approval !== undefined && typeof approval !== 'boolean') {
+    throw new Error(
+      `${WORKFLOW_NAME}: config.repos.${key}.requireApproval must be true or false, or left out — got ${JSON.stringify(approval)}`
+    )
+  }
+  if (IS_BRANCH && approval === true) {
+    throw new Error(
+      `${WORKFLOW_NAME}: config.repos.${key}.requireApproval gates a merge, and lifecycle "branch" merges nothing. Leave it out`
     )
   }
 }
+
+// The workspace repo can be one of the programme's repos, and any repo can
+// need a person's approval before it merges, whatever the run-level gate says.
+const WORKSPACE_CONFIGURED = REPO_KEYS.includes(WORKSPACE_KEY)
+const APPROVAL_REPO_KEYS = REPO_KEYS.filter((key) => REPOS[key].requireApproval === true)
 
 // The frontend, backend and tests keys every programme once had to use. A
 // programme that still names exactly those three keeps the rules written for
@@ -519,8 +555,13 @@ const JIRA = TILDE + '/tools/jira'
 const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))
 const GH_REPO = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].github]))
 
+// The workspace repo sits at "." — the root itself, not a folder under it.
+const isWorkspaceRepo = (key) => REPO_PATH[key] === WORKSPACE_PATH
+const repoTilde = (key) => (isWorkspaceRepo(key) ? TILDE : `${TILDE}/${REPO_PATH[key]}`)
+const repoAbs = (key) => (isWorkspaceRepo(key) ? ABS : `${ABS}/${REPO_PATH[key]}`)
+
 const repoTable = Object.entries(REPO_PATH)
-  .map(([k, v]) => `${k}=${v}`)
+  .map(([k, v]) => (isWorkspaceRepo(k) ? `${k}=${v} (the workspace root, \`${TILDE}\`)` : `${k}=${v}`))
   .join(', ')
 const ghTable = Object.entries(GH_REPO)
   .map(([k, v]) => `${k}=${v}`)
@@ -546,11 +587,74 @@ row has no \`repos\` at all, every configured repo: ${REPO_KEYS.join(', ')}.`
 
 const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 
+// ---------------------------------------------------------------------------
+// The workspace repo as one of an increment's repos. It is never clean: it
+// carries the run's own backlog, plans and logs under workareas/, and often
+// somebody's work in progress, across every branch switch. `tim build start`
+// lists what it carried before the increment touched it, and nothing on that
+// list, nor anything under workareas/ the row does not name, is the
+// increment's. Set for each increment from the start stage's result: null
+// when the increment does not build in the workspace repo.
+// ---------------------------------------------------------------------------
+let workspaceInIncrement = null
+const buildsWorkspace = () => workspaceInIncrement !== null
+
+const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
+
+const carriedList = (carried) => (carried.length > 0 ? carried.map((path) => `  - ${path}`).join('\n') : '  (none)')
+
+const workspaceRepoRule = () =>
+  buildsWorkspace()
+    ? `
+THE WORKSPACE REPO is one of this increment's repos, under the key \`${WORKSPACE_KEY}\`. Its repo path is the workspace
+root itself, \`${TILDE}\` (\`.\` in the repo table): \`git -C ${TILDE} ...\`, \`npm --prefix ${TILDE}/tim ...\`. It is on
+\`${workspaceInIncrement.branch}\` like the others, but it is never clean, because it carries this run's own state and
+somebody's work in progress across every branch switch. In the workspace repo:
+- Never edit, stage, commit, stash, restore or delete anything under \`workareas/\` — this run's backlog, plans and logs
+  live there — unless the increment's row names that exact path.
+- Never edit, stage, commit, stash, restore or delete any of these files. They were uncommitted before the increment
+  started and are not its work:
+${carriedList(workspaceInIncrement.carried)}
+- Its tree counts as clean when \`git -C ${TILDE} status --short\` lists nothing outside \`workareas/\` and that list.
+- Stage and commit only by explicit path: \`git -C ${TILDE} add -- <path>\` and \`git -C ${TILDE} commit -m "<message>" -- <paths>\`.
+  Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec: the index may already hold somebody else's file.
+- Never edit this loop's own script, \`${LOOP_SCRIPT}\`, unless the row names it. A running loop never re-reads it, so a
+  change there takes effect from the next launch only: a planner says so under risks.
+- A change to tim, gates.json or the stack scripts takes effect at once: every tim call and gate run for the rest of this
+  increment uses the copy on this branch.`
+    : ''
+
+// A CI fixer may reach into a repo the increment did not start with, the
+// workspace included, and the workspace always carries files that are not the
+// increment's. When the increment builds in it, the full rule is in the guard
+// rails; otherwise the fixer gets this one.
+const ciFixerWorkspaceRule = () =>
+  buildsWorkspace()
+    ? ''
+    : `
+THE WORKSPACE REPO (\`${TILDE}\`) always carries uncommitted files that are not this increment's: this run's backlog, plans
+and logs under \`workareas/\`, and often somebody's work in progress. If your fix must change it:
+- Never edit, stage, commit, stash, restore or delete anything under \`workareas/\`, or any file that was already
+  uncommitted before you started — \`git -C ${TILDE} status --short\` shows them; note them before you edit anything.
+- Stage and commit only the files you changed, by explicit path: \`git -C ${TILDE} add -- <path>\` and
+  \`git -C ${TILDE} commit -m "<message>" -- <paths>\`. Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec.
+- Never edit this loop's own script, \`${LOOP_SCRIPT}\`.`
+
 // Commit and rollback act on every configured repo with changes, not only the
 // ones the row or the plan named: an implementor that fixed a stale spec in the
-// tests repo must not leave it staged for the next increment to trip over.
-const CHANGED_REPOS_RULE = `WHICH REPOS: check EVERY configured repo — ${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')} —
-with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.`
+// tests repo must not leave it staged for the next increment to trip over. The
+// workspace repo always has changes of its own, so it counts only when the
+// increment builds in it, and then only for what is the increment's.
+const changedReposRule = () => {
+  const keys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY || buildsWorkspace())
+  const workspaceLine = buildsWorkspace()
+    ? `\nIn the workspace repo, only changes THE WORKSPACE REPO rule leaves to this increment count.`
+    : WORKSPACE_CONFIGURED
+      ? `\nThe workspace repo is not one of this increment's repos: leave it alone, except as THE BEHAVIOUR SPEC says.`
+      : ''
+  return `WHICH REPOS: check EVERY configured repo — ${keys.map((key) => `\`${repoTilde(key)}\``).join(', ')} —
+with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.${workspaceLine}`
+}
 
 // frontend-change ends by writing the workspace's own behaviour spec under
 // openspec/ and leaves it uncommitted. The workspace is not a configured repo
@@ -562,6 +666,41 @@ coverage, which frontend-change writes and leaves uncommitted. The workspace is 
 branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and never on anything else in the
 workspace — not the backlog, not the plans, not the logs. See what it holds with
 \`git -C ${TILDE} status --short -- openspec/\`.`
+
+// An increment that builds in the workspace repo carries its spec changes in
+// that repo's own commit, on the increment's branch, like any other file.
+const SPEC_IN_WORKSPACE = `THE BEHAVIOUR SPEC: \`${TILDE}/openspec/\` is part of the workspace repo, one of this increment's
+repos, so a change under it is this increment's like any other file there, under THE WORKSPACE REPO rule.`
+
+// A programme that builds the workspace as a repo merges its changes by pull
+// request. A spec change from an increment that does not name it has no branch
+// to go on, and committing it where the workspace stands would put it on the
+// base branch with no review.
+const specLandStep = () => {
+  if (buildsWorkspace()) return `4a. ${SPEC_IN_WORKSPACE} It goes in the workspace repo's commit, staged by explicit path.`
+  if (WORKSPACE_CONFIGURED) {
+    return `4a. ${SPEC_RULE} If it has changes, report landed:false naming them, and commit nothing anywhere: this programme
+   builds the workspace as a repo of its own, so a spec change belongs to an increment that names \`${WORKSPACE_KEY}\`.`
+  }
+  return `4a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same
+   subject and trailer, and nothing else from the workspace. Two commands, the pathspec on both:
+   \`git -C ${TILDE} add -- openspec/\` then \`git -C ${TILDE} commit -m "<message>" -- openspec/\`.
+   The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
+   the workspace. Name the spec commit in your summary, separately from the repo commits.`
+}
+
+const specPreserveStep = (id, branch) =>
+  buildsWorkspace()
+    ? `6a. ${SPEC_IN_WORKSPACE} It goes in the wip commit with the rest of the workspace repo's work.`
+    : `6a. ${SPEC_RULE} If it has changes, they cannot go on \`${branch}\` — the workspace is not on it — so stash them:
+   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
+   \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.`
+
+const specBaselineLine = () =>
+  buildsWorkspace()
+    ? `   For the workspace repo, clean is as THE WORKSPACE REPO rule says, \`openspec/\` included.`
+    : `   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
+   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.`
 
 // The repo's own rungs — format, lint, typecheck, unit, `mvn verify`, FIT and
 // E2E — belong to `tim build gate`, which reads them from gates.json and runs
@@ -762,7 +901,7 @@ const isWorkspaceGroup = (group) => IS_BRANCH && group.repo === WORKSPACE_KEY
 
 const groupRepoPath = (group) => {
   if (isWorkspaceGroup(group)) return TILDE
-  return REPO_PATH[group.repo] ? `${TILDE}/${REPO_PATH[group.repo]}` : `${TILDE}/<repoPath>`
+  return REPO_PATH[group.repo] ? repoTilde(group.repo) : `${TILDE}/<repoPath>`
 }
 const groupFileList = (group) => group.files.map((file) => `- ${file}`).join('\n')
 
@@ -795,10 +934,20 @@ const groupDiffCommand = (group) =>
 // order: the backlog writes it provider before consumer, the start stage
 // copies it as written, and the planner says under risks where it is wrong.
 // A PR in a repo the row did not name (a CI fixer's) merges last.
+//
+// The workspace repo merges after everything else, wherever the row puts it,
+// even after a CI fixer's PR. It is never deployed, so nothing on the base
+// branch consumes it; it is the factory the next increment runs on, so it
+// changes only once everything it was built alongside has merged, and a stop
+// part-way leaves the base branch's factory as it was.
 const MERGE_RANK = { backend: 0, tests: 1, frontend: 2 }
 const UNRANKED = Number.MAX_SAFE_INTEGER
+const WORKSPACE_RANK = Number.POSITIVE_INFINITY
 const rankInRow = (rowRepos, repo) => (rowRepos.includes(repo) ? rowRepos.indexOf(repo) : UNRANKED)
-const mergeRankOf = (rowRepos, repo) => (IS_LEGACY_KEYS ? (MERGE_RANK[repo] ?? UNRANKED) : rankInRow(rowRepos, repo))
+const mergeRankOf = (rowRepos, repo) => {
+  if (repo === WORKSPACE_KEY) return WORKSPACE_RANK
+  return IS_LEGACY_KEYS ? (MERGE_RANK[repo] ?? UNRANKED) : rankInRow(rowRepos, repo)
+}
 const sortForMerge = (list, rowRepos) =>
   [...list].sort((a, b) => mergeRankOf(rowRepos, a.repo) - mergeRankOf(rowRepos, b.repo))
 
@@ -813,7 +962,13 @@ service that calls it, and a tests or performance-tests repo after every service
 \`${BASE_BRANCH}\` is never left holding a consumer of something that is not there yet. A pull request in a repo the list
 does not name merges last.`
 
-const MERGE_ORDER_RULE = `${IS_LEGACY_KEYS ? LEGACY_MERGE_ORDER : KEYED_MERGE_ORDER}
+const WORKSPACE_MERGE_ORDER = WORKSPACE_CONFIGURED
+  ? `
+The workspace repo's pull request merges after every other one, wherever the list names it: it is the factory the next
+increment runs on, never deployed, so it changes only once everything built alongside it is on \`${BASE_BRANCH}\`.`
+  : ''
+
+const MERGE_ORDER_RULE = `${IS_LEGACY_KEYS ? LEGACY_MERGE_ORDER : KEYED_MERGE_ORDER}${WORKSPACE_MERGE_ORDER}
 EVERY PR of the increment must be GREEN — AND, where the approval gate is on, APPROVED — BEFORE ANY ONE OF THEM
 MERGES. Half an increment on \`${BASE_BRANCH}\` is the failure this ordering exists to prevent, and nothing
 auto-reverts it.`
@@ -824,7 +979,7 @@ const PLAN_MERGE_ORDER = IS_LEGACY_KEYS
   : `in merge order: the order the increment's \`repos\` list gives them, which is the order the merge stage merges in.
 That order must put a provider before its consumer — a service before a frontend that calls it, a stub before the
 service that calls it, and a tests or performance-tests repo after every service it exercises. Where the row's
-order does not, keep the row's order in repos and say so under risks, naming the order it should have`
+order does not, keep the row's order in repos and say so under risks, naming the order it should have${WORKSPACE_CONFIGURED ? `. Whatever the order, the workspace repo merges last, after every other` : ''}`
 
 // A `blocked` line means the stage hit something no fixer can fix. It stops the
 // run without spending fix attempts on it.
@@ -875,7 +1030,7 @@ const acquireRunLease = () =>
   agent(
     `You are the LEASE TAKER for build run ${RUN_ID}. You take the workspace stack's lease for the whole run, before
 its first increment. That is your whole job.
-${GUARDRAILS}
+${guardrails()}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
@@ -891,7 +1046,7 @@ const releaseRunLease = () =>
   agent(
     `You are the LEASE RELEASER for build run ${RUN_ID}. The run has ended, and you give back the workspace stack's
 lease it held as \`${RUN_HOLDER}\`. That is your whole job.
-${GUARDRAILS}
+${guardrails()}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease release --holder "${RUN_HOLDER}" --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
@@ -935,7 +1090,7 @@ the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. N
 never start, stop or rebuild the stack. Skip a check that launches a browser, or one that cannot reach the stack: the
 gate's E2E phase proves it, after review. Its absence is not a finding.`
 
-const GUARDRAILS = `
+const BASE_GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
@@ -954,6 +1109,10 @@ ${STACK_GUARD}
 ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
+
+// Every stage of an increment that builds in the workspace repo is told how
+// that repo differs from the others.
+const guardrails = () => `${BASE_GUARDRAILS}${workspaceRepoRule()}`
 
 // How every stage pushes, and why it looks paranoid.
 //
@@ -1003,12 +1162,12 @@ Do not commit "just this once" and sort the branch out afterwards.`
 // so the work is committed and PUSHED there and travels.
 const preserveWork = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK so it survives this machine.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 ${PUSH_RULE}
 EVIDENCE: ${evidence}
 TASK — the work goes onto its own branch, not into a stash. A stash ref does not travel; a pushed branch does.
-1. ${CHANGED_REPOS_RULE} A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and
+1. ${changedReposRule()} A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and
    change nothing in it.
 2. For EACH repo with changes, stage what the increment produced — but NOTHING under logs/, no coverage output, no
    test-results/, no Playwright artefacts.
@@ -1018,9 +1177,7 @@ TASK — the work goes onto its own branch, not into a stash. A stash ref does n
    That is what lets another engineer fetch the attempt and see what was tried.
 5. Do NOT open a pull request. This work does not pass its ladder and must not look reviewable.
 6. Confirm each tree is clean: \`git -C ${TILDE}/<repoPath> status --short\`.
-6a. ${SPEC_RULE} If it has changes, they cannot go on \`${branch}\` — the workspace is not on it — so stash them:
-   \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
-   \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
+${specPreserveStep(id, branch)}
 7. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; branch <branch>; wip <sha>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built, and a recorded commit would make the next attempt skip
@@ -1037,13 +1194,13 @@ Return the structured output only.`
 // the merge is aborted, which leaves the tree clean for the next run.
 const preserveWorkOnBranch = (id, branch, reason, evidence) =>
   `Attempt at increment ${id} failed: ${reason}. PRESERVE THE WORK WITHOUT COMMITTING ANY OF IT.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 EVIDENCE: ${evidence}
 \`${branch}\` is a shared branch with open pull requests. NOTHING from a failed attempt may be committed or pushed to
 it. Your own task below is the one place you ARE told to abort a merge.
 TASK:
-1. ${CHANGED_REPOS_RULE} Also act on every repo that is MID-MERGE:
+1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
    \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
    A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
 2. For EACH such repo, save the attempt under ${WORKAREA_TILDE}/logs/, one Bash call each, output redirected:
@@ -1093,16 +1250,19 @@ const preserveAttempt = async ({ id, ticket, workBranch, phaseName, reason, evid
 // fixes there; land then refused the repo. Run after every Codex stage and
 // before land, this puts such a repo back when that is safe and stops when not.
 const branchGuard = (id, stageName, phaseName, branch, branchedRepos) => {
+  // The workspace repo is never clean, so a dirty tree says nothing about it:
+  // it is checked only when the increment builds in it.
+  const otherRepos = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
   const reposToCheck = branchedRepos
-    ? `the increment's repos — ${branchedRepos.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')} — and any other
-configured repo whose \`git -C ${TILDE}/<repoPath> status --short\` is not empty (${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')})`
-    : `every configured repo — ${REPO_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(', ')}`
+    ? `the increment's repos — ${branchedRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')} — and any other
+configured repo whose \`git -C ${TILDE}/<repoPath> status --short\` is not empty (${otherRepos.map((key) => `\`${repoTilde(key)}\``).join(', ')})`
+    : `every configured repo — ${REPO_KEYS.map((key) => `\`${repoTilde(key)}\``).join(', ')}`
 
   return agent(
     `You are the BRANCH GUARD for increment ${id}, run after the ${stageName} stage. Every repo this increment works
 in must be on \`${branch}\`. A stage that switched a repo to another branch, or cut a new one, leaves the work where
 the land stage refuses it. You check, move a repo back where that is safe, and change nothing else.
-${GUARDRAILS}
+${guardrails()}
 CHECK ${reposToCheck}.
 For EACH of them:
 1. ${HEAD_BRANCH_CHECK} Prints \`${branch}\` → that repo is fine; go to the next.
@@ -1325,6 +1485,70 @@ const LAND_SCHEMA = {
   additionalProperties: false
 }
 
+const withoutWorkspacePrefix = (file) => file.replace(new RegExp(`^${WORKSPACE_KEY}:`), '').replace(/^\.\//, '')
+
+// What the workspace branch commits, read from git rather than from what the
+// land agent says it staged: every file committed on it since the base branch,
+// so an earlier attempt's wip commit is checked too.
+const WORKSPACE_COMMIT_SCHEMA = {
+  type: 'object',
+  required: ['exitCode', 'stdout'],
+  properties: {
+    exitCode: { type: 'number', description: 'The exit code the command finished with' },
+    stdout: { type: 'string', description: 'Everything the command printed, word for word' }
+  },
+  additionalProperties: false
+}
+
+const readWorkspaceCommit = (id) =>
+  agent(
+    `You are the WORKSPACE COMMIT READER for increment ${id}. Run exactly one command and report what it printed. That is
+your whole job.
+${BASE_GUARDRAILS}
+\`git -C ${TILDE} log --name-only --format= origin/${BASE_BRANCH}..HEAD\`
+Report its exit code, and in \`stdout\` everything it printed, word for word, every line. Never summarise, sort, filter or
+correct it, and run nothing else. The loop reads the list itself.`,
+    light({ label: `${id} workspace commit`, phase: 'Land', schema: WORKSPACE_COMMIT_SCHEMA })
+  )
+
+const committedPathsOf = (stdout) =>
+  [
+    ...new Set(
+      String(stdout ?? '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+    )
+  ]
+
+// A path committed on the workspace branch that the increment does not own:
+// one the workspace carried in, or the run's own state under workareas/ that no
+// stage reported changing.
+const workspaceLeaks = (committed, changedFiles) => {
+  const reported = changedFiles.map(withoutWorkspacePrefix)
+  const carried = workspaceInIncrement?.carried ?? []
+  return committed
+    .map(withoutWorkspacePrefix)
+    .filter((path) => carried.includes(path) || (path.startsWith('workareas/') && !reported.includes(path)))
+}
+
+const workspaceChangedList = (changedFiles) =>
+  changedFiles.length > 0
+    ? changedFiles.map((file) => `     - ${withoutWorkspacePrefix(file)}`).join('\n')
+    : `     (the implementor and fixer reported none: look for them with \`git -C ${TILDE} status --short\`)`
+
+const workspaceLandStep = (changedFiles) =>
+  buildsWorkspace()
+    ? `
+4b. THE WORKSPACE REPO'S COMMIT. Stage by explicit path only, one \`git -C ${TILDE} add -- <path>\` per path: the files
+   the increment created or changed there, as the implementor and fixer reported them —
+${workspaceChangedList(changedFiles)}
+   — and anything else \`git -C ${TILDE} status --short\` shows that this increment produced. NEVER a file THE WORKSPACE
+   REPO rule lists as carried, and nothing under \`workareas/\` unless the increment's row names that exact path. Then
+   \`git -C ${TILDE} commit -m "<message>" -- <every path you staged>\`, with the same subject as the other repos. The
+   pathspec keeps out anything somebody else had staged. The loop reads back from git what the commit holds.`
+    : ''
+
 const PR_SCHEMA = {
   type: 'object',
   required: ['ok', 'prs', 'summary'],
@@ -1444,7 +1668,7 @@ const codexPaths = (id, slug) => ({
 
 // Every configured repo, `<key>=<absolute path>`, whatever the keys are. The
 // briefs name no repo of their own.
-const CODEX_REPOS = REPO_KEYS.map((key) => `${key}=${ABS}/${REPO_PATH[key]}`).join(', ')
+const CODEX_REPOS = REPO_KEYS.map((key) => `${key}=${repoAbs(key)}`).join(', ')
 
 const bindingLines = (bindings) =>
   Object.entries(bindings)
@@ -1459,7 +1683,7 @@ const codexRun = (id, stage, { phaseName, instructions, workingBranch, slug = st
     `You are the CODEX SHELL for the ${slug} stage of increment ${id}. Codex does the work; you start it, wait
 for it, and report ONLY whether it RAN. You do not do the stage yourself, you do not edit anything Codex
 owns, and you do not read or judge what Codex concluded — a separate relay agent does that.
-${GUARDRAILS}
+${guardrails()}
 STEP 1 — with the Write tool, write EXACTLY the text between the markers (markers excluded) to
 ${promptFile}:
 ---8<---
@@ -1533,7 +1757,7 @@ const codexRelay = (id, stage, { phaseName, schema, slug = stage }) => {
   return agent(
     `You are the RELAY for the ${slug} stage of increment ${id}. Codex has already run and written its final
 message to ${lastMessage}. Re-emitting that file as your structured output is your ENTIRE job.
-${GUARDRAILS}
+${guardrails()}
 Read ${lastMessage} once with the Read tool. It conforms to ${BRIEFS}/schemas/${schemaFile}.
 ${relay}
 Add nothing of your own — no findings, no opinions, no work. Run no suite. Edit no file.
@@ -1565,7 +1789,9 @@ const codexNoResult = (id, slug) =>
 // against the live tree, immediately before it is built. Lifted from
 // frontend-alignment.js, where "Sonnet never had to decide anything".
 // ---------------------------------------------------------------------------
-const standardsKeys = REPO_KEYS.map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``).join(', ')
+const standardsKeys = REPO_KEYS.filter((key) => key !== WORKSPACE_KEY)
+  .map((key) => `${key} → \`${REPO_PATH[key].replace(/^repos\//, '')}\``)
+  .join(', ')
 
 const frontendChangeRepos = FRONTEND_CHANGE_KEYS.map((key) => `${key} (\`${REPO_PATH[key]}\`)`).join(' or ')
 
@@ -1619,14 +1845,23 @@ GATE PHASES: the row's \`gatePhases\`, when present, is the subset of unit, fit 
 leaves out e2e, the end-to-end proof belongs to another row: say so in section 4 rather than planning one.
 `
 
+// A programme that builds the workspace as a repo commits every workspace
+// change through it, openspec/ included, so a plan that writes there without
+// the workspace among its repos has nowhere to land it.
+const branchedWorkspaceLine = (branchedRepos) =>
+  WORKSPACE_CONFIGURED && !branchedRepos.includes(WORKSPACE_KEY)
+    ? ` The workspace repo is not among them: a plan
+that changes anything in it, \`openspec/\` included, needs it, so return ok:false naming \`${WORKSPACE_KEY}\`.`
+    : ''
+
 const planIncrement = (id, branchedRepos = null) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
-${GUARDRAILS}
+${guardrails()}
 ${readIncrement(id)}
 ${REPO_RULE}
 ${IS_BRANCH ? branchPlanRule(branchedRepos) : branchedRepos ? `BRANCHED REPOS: the repos branched for this increment are ${branchedRepos.join(', ')}. Plan only
-within them, and if the slice genuinely needs another repo, return ok:false naming it.\n` : ''}
+within them, and if the slice genuinely needs another repo, return ok:false naming it.${branchedWorkspaceLine(branchedRepos)}\n` : ''}
 WHAT A PLAN IS: a file-level script for an implementor who has less context than you. The increment says what must
 be true afterwards and why. You work out how, against the code as it is now, and settle every choice so the
 implementor decides nothing.
@@ -1681,7 +1916,8 @@ const ENVELOPE_REPO_SCHEMA = {
   properties: {
     key: { type: 'string' },
     path: { type: ['string', 'null'] },
-    github: { type: ['string', 'null'] }
+    github: { type: ['string', 'null'] },
+    requireApproval: { type: 'boolean' }
   },
   additionalProperties: false
 }
@@ -1705,7 +1941,7 @@ const preflight = await agent(
   `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
 two commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github}) end' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
@@ -1733,7 +1969,14 @@ const envelopeRepoProblems = (envelopeRepos) => {
       .map((entry) => `"${entry.key}" is at ${JSON.stringify(entry.path)} in the envelope and "${REPO_PATH[entry.key]}" in the args`),
     ...shared
       .filter((entry) => entry.github && entry.github !== REPOS[entry.key].github)
-      .map((entry) => `"${entry.key}" is ${entry.github} on GitHub in the envelope and ${REPOS[entry.key].github} in the args`)
+      .map((entry) => `"${entry.key}" is ${entry.github} on GitHub in the envelope and ${REPOS[entry.key].github} in the args`),
+    ...shared
+      .filter((entry) => typeof entry.requireApproval === 'boolean')
+      .filter((entry) => entry.requireApproval !== (REPOS[entry.key].requireApproval ?? false))
+      .map(
+        (entry) =>
+          `"${entry.key}" ${entry.requireApproval ? 'needs' : 'does not need'} approval in the envelope and ${REPOS[entry.key].requireApproval ? 'needs' : 'does not need'} it in the args`
+      )
   ]
 }
 
@@ -1819,7 +2062,7 @@ const startIncrement = (explicitId, lastId) =>
   agent(
     `You are the START STAGE${explicitId ? ` for increment ${explicitId}` : ''}. Run exactly one command and report what it
 printed. That is your whole job.
-${GUARDRAILS}
+${guardrails()}
 Run it ONCE, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`${startCommand(explicitId, lastId)}\`
 Report its exit code, and in \`stdout\` everything it printed, word for word: one JSON line. Never summarise it, correct
@@ -1865,7 +2108,7 @@ const startReport = (answer) => {
 // it asserts every repo is ready and reads the row's lifecycle fields, because
 // the script has no filesystem of its own.
 // ---------------------------------------------------------------------------
-const repoPathList = (keys) => keys.map((key) => `${key} \`${TILDE}/${REPO_PATH[key]}\``).join(', ')
+const repoPathList = (keys) => keys.map((key) => `${key} \`${repoTilde(key)}\``).join(', ')
 const protectedBranchNames = PROTECTED_BRANCHES.map((name) => `\`${name}\``).join(' or ')
 const MERGE_HEAD_CHECK = `\`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\``
 const UNRESOLVED_CHECK = `\`git -C ${TILDE}/<repoPath> diff --name-only --diff-filter=U\``
@@ -1918,7 +2161,7 @@ const assertBranch = (id) =>
   agent(
     `You are the BRANCH STAGE for increment ${id}. This run builds straight onto \`${BASE_BRANCH}\`, which already exists in
 every backlog repo. You CREATE NOTHING: no branch, no commit, no pull request. You check, fast-forward and report.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 STEP 1 — THE ROW AND THE ENVELOPE. Two Bash calls:
 \`jq -c '.increments[] | select(.id=="${id}") | {repos, merge, gatePhases, awaitCi, commit, prs}' ${BACKLOG_TILDE}\`
@@ -1997,7 +2240,7 @@ const startMerges = (id, merges) =>
   agent(
     `You are the MERGE STAGE for increment ${id}. You START the merges the row asks for, and stop there: the implementor
 resolves them and the land stage commits them. You resolve nothing and commit nothing.
-${GUARDRAILS}
+${guardrails()}
 THE MERGES, each into \`${BASE_BRANCH}\`:
 ${merges.map((entry) => `- ${entry.repo} (\`${TILDE}/${REPO_PATH[entry.repo]}\`): merge \`${entry.ref}\``).join('\n')}
 For EACH, in that order:
@@ -2096,7 +2339,7 @@ ${gateCommandList(phases, logs)}
 const branchBaselinePrompt = (id, phases) => `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 ${GATE_RULE}
 TASK:
@@ -2126,12 +2369,12 @@ const BRANCH_LAND_SCHEMA = {
 }
 
 const branchLandPrompt = (id, behaviourChanges, started) => `Increment ${id} is implemented, reviewed, judged and verified green on \`${BASE_BRANCH}\`. COMMIT IT AND PUSH IT.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 ${PUSH_RULE}
 ${SET_ROW_RULE}${mergeNoteOf(started)}
 TASK:
-1. ${CHANGED_REPOS_RULE} Also act on every repo MID-MERGE (${MERGE_HEAD_CHECK} prints a SHA), even one whose status
+1. ${changedReposRule()} Also act on every repo MID-MERGE (${MERGE_HEAD_CHECK} prints a SHA), even one whose status
    looks empty. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
 2. For EVERY repo you are about to commit in, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else is a
@@ -2190,7 +2433,7 @@ const BRANCH_PR_SCHEMA = {
 const findPrsPrompt = (id, rowRepos) => `You are the PULL REQUEST STAGE for increment ${id} on \`${BASE_BRANCH}\`. You FIND the open pull request for the
 branch in each repo; you never create, edit, retitle, un-draft, close, approve or merge one. Their titles, bodies and
 draft state are a human's.
-${GUARDRAILS}
+${guardrails()}
 ${PUSH_RULE}
 REPOS: ${repoPathList(rowRepos)}. GitHub repos: ${rowRepos.map((key) => `${key}=${GH_REPO[key]}`).join(', ')}.
 For EACH repo:
@@ -2218,7 +2461,7 @@ const BRANCH_CI_SCHEMA = {
 
 const branchWatchPrompt = (id, prList) => `You are the CI WATCHER for increment ${id} on \`${BASE_BRANCH}\`. WAIT for the checks on every PR below to
 resolve, and report what they did. You change no code, you merge nothing, and you edit no PR.
-${GUARDRAILS}
+${guardrails()}
 THE PULL REQUESTS:
 ${prList}
 
@@ -2249,7 +2492,7 @@ Return the structured output only.`
 const branchCiFixPrompt = (id, attempt, prList, seen) => `You are the CI FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${BASE_BRANCH}\`. Fix the CODE, commit onto \`${BASE_BRANCH}\` and push. You do not merge, and you
 never create, edit or un-draft a pull request.
-${GUARDRAILS}
+${guardrails()}
 ${PUSH_RULE}
 ${readIncrement(id)}
 THE PULL REQUESTS:
@@ -2282,7 +2525,7 @@ const markDoneOnBranch = (id, commit) =>
   agent(
     `Increment ${id} is built on \`${BASE_BRANCH}\` and pushed. Mark it done in the backlog. That is your whole job: this
 run has no ticket, and nothing is merged.
-${GUARDRAILS}
+${guardrails()}
 ${SET_ROW_RULE}
 Run exactly one command: \`${setRow(id, commit ? `--status done --commit "${commit}"` : '--status done')}\`
 It leaves \`branch\`, \`commit\` and \`prs\` in place: they are the record of how it got there.
@@ -2290,6 +2533,53 @@ Report ok:true only when tim exited 0 and its JSON reports ok:true.
 Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
+
+// ---------------------------------------------------------------------------
+// Back to the base branch. Once an increment that built in the workspace repo
+// has merged, the workspace goes back onto the base branch, fast-forwarded, so
+// the next increment runs on the merged tim, gates.json and stack scripts. Its
+// uncommitted programme files travel with it, as they did onto the branch.
+// ---------------------------------------------------------------------------
+const WORKSPACE_RETURN_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'The workspace repo is on the base branch, at origin\'s tip' },
+    head: { type: 'string', description: 'What `rev-parse --short HEAD` printed at the end' },
+    summary: { type: 'string', description: "git's refusal word for word when ok is false; otherwise what you did" }
+  },
+  additionalProperties: false
+}
+
+const workspaceStaysNote = (branch) =>
+  `The workspace repo stays on ${branch}, carrying this run's uncommitted programme files: put it back with \`git -C ${TILDE} switch ${BASE_BRANCH}\` once the increment is settled`
+
+const returnWorkspaceToBase = async (id, branch) => {
+  const back = await agent(
+    `Increment ${id} is merged. Put the workspace repo back on \`${BASE_BRANCH}\` and bring it up to date, so the next
+increment runs on the merged factory: tim, gates.json and the stack scripts. That is your whole job.
+${BASE_GUARDRAILS}
+The workspace repo carries uncommitted files across the switch — this run's backlog, plans and logs, and somebody's work
+in progress. They travel with it. Never stash, reset, restore, clean, add or commit anything, and never delete
+\`${branch}\`. Run exactly these, one Bash call each, in order, and stop at the first that fails:
+1. \`git -C ${TILDE} switch ${BASE_BRANCH}\`
+2. \`git -C ${TILDE} pull --ff-only origin ${BASE_BRANCH}\` — "Already up to date" is fine.
+3. \`git -C ${TILDE} rev-parse --abbrev-ref HEAD\` must print \`${BASE_BRANCH}\`.
+4. \`git -C ${TILDE} rev-parse --short HEAD\` into head.
+A step that fails — git refusing because a carried file would be overwritten, say — is ok:false with git's message word
+for word as summary. Change nothing to work round it: a person decides.
+Return the structured output only.`,
+    light({ label: `${id} workspace to base`, phase: 'Done', schema: WORKSPACE_RETURN_SCHEMA })
+  )
+  if (back?.ok) {
+    workspaceLeftOn = null
+    log(`${id}: the workspace repo is back on ${BASE_BRANCH} at ${back.head ?? 'its tip'}; the next increment runs on the merged factory`)
+    return { ok: true }
+  }
+  const detail = `${id}: the workspace repo did not go back to ${BASE_BRANCH} — ${back?.summary ?? 'the agent died'}`
+  log(detail)
+  return { ok: false, detail }
+}
 
 const LAND_ORDER = IS_LEGACY_KEYS ? 'backend first' : "in the order of the increment's repos"
 
@@ -2306,6 +2596,10 @@ const results = []
 let built = 0
 let lastId = null
 let stopped = null
+// The branch the workspace repo is left on when an increment that builds in
+// it stops before it lands: the run's programme files travel with it, so a
+// person puts it back on the base branch once the increment is settled.
+let workspaceLeftOn = null
 
 // The run takes the workspace stack once, here, and keeps it up across every
 // increment. A plan-only run builds nothing and never needs it.
@@ -2431,6 +2725,10 @@ while (stopped === null) {
   let workBranch = BASE_BRANCH
   let repos = null
   let resumeAt = 'build'
+  // The repos whose PRs need a person's approval before the merge stage
+  // merges any PR of the increment: every repo under the run-level gate.
+  let approvalRepos = []
+  workspaceInIncrement = null
   // Only the branch lifecycle reads these three row fields.
   let rowMerges = []
   let rowGatePhases = GATE_PHASES
@@ -2492,6 +2790,7 @@ while (stopped === null) {
           ? `tim build start branched ${unknownRepos.join(', ')}, which the args do not configure`
           : null
     if (branchProblem) {
+      if ((started.branched ?? []).some((entry) => entry.repo === WORKSPACE_KEY)) workspaceLeftOn = started.branch
       log(`${id}: BRANCH STEP FAILED — ${branchProblem}`)
       results.push({ id, ticket: ticket.key, outcome: 'branch-failed', detail: branchProblem })
       stopped = { reason: 'branch-failed', detail: `${id}: ${branchProblem}` }
@@ -2501,9 +2800,17 @@ while (stopped === null) {
     workBranch = started.branch
     repos = started.repos
     resumeAt = started.resumeAt ?? 'build'
+    approvalRepos = REQUIRE_APPROVAL ? REPO_KEYS : [...new Set([...APPROVAL_REPO_KEYS, ...(started.requireApproval ?? [])])]
+    if (repos.includes(WORKSPACE_KEY)) {
+      workspaceInIncrement = { branch: workBranch, carried: started.preexistingDirty ?? [] }
+      workspaceLeftOn = workBranch
+    }
     log(
       `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}, ${ticket.status}) on board ${JIRA_BOARD}, branch ${workBranch} in ${repos.join(', ')}, resuming at ${resumeAt}`
     )
+    if (buildsWorkspace()) {
+      log(`${id}: the workspace repo carried ${workspaceInIncrement.carried.length} uncommitted file(s) onto ${workBranch}; none of them is this increment's`)
+    }
   } // ticketAndBranch
 
   let plan = null
@@ -2530,7 +2837,7 @@ while (stopped === null) {
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 ${GATE_RULE}
 TASK:
@@ -2546,8 +2853,7 @@ TASK:
    (\`jq '.increments[] | select(.id=="${id}") | {repos, repo}' ${BACKLOG_TILDE}\`) and confirm each one is clean:
    \`git -C ${TILDE}/<repoPath> status --short\`.
    If any is DIRTY, stop and report ok:false — an unclean tree makes commit-or-rollback unsafe.
-   ${SPEC_RULE} It too must be clean before the increment starts: the land stage commits everything under it as
-   this increment's, so anything already there would go in with it. If it is dirty, report ok:false naming the files.
+${specBaselineLine()}
 ${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
 4. REPORT what tim printed, not your reading of it. rungs[]: every rung from every phase, each with the \`repo\`,
    \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\` tim gave it. green:true only if every phase that had rungs came back
@@ -2647,14 +2953,14 @@ ${baselineRungList(baseline)}`
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
-        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}`,
+        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
     : await agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
-${GUARDRAILS}
+${guardrails()}
 ${readIncrement(id)}
 ${REPO_RULE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}
 ${readPlan(id)} Follow it verbatim: it has already settled every choice. Where it names an exemplar, open that file
@@ -2783,7 +3089,7 @@ is written in that list, so it can be routed back to this group.`
   const styleReviews = styleGroups.map((group) => () =>
     agent(
       `You are a STYLE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
-${GUARDRAILS}
+${guardrails()}
 YOUR PERSONA — read ${SKILLS}/code-style/references/STYLE_FILE_REVIEWER.md IN FULL and follow it. It defines what
 you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKILL.md for the language routing
 (Java → modern-java + Javadoc; GDS/Nunjucks → components/styles/patterns; Playwright → playwright; Node → the
@@ -2807,7 +3113,7 @@ Return the structured output only.`,
   const codeReviews = reviewGroups.map((group) => () =>
     agent(
       `You are a CODE REVIEWER for increment ${id}, reviewing ${groupHeader(group)}
-${GUARDRAILS}
+${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/FILE_REVIEWER.md IN FULL and follow it. Also read
 ${SKILLS}/review/SKILL.md for the review dimensions. The persona is written per file: apply it to each file in the
 list in turn.
@@ -2834,7 +3140,7 @@ Return the structured output only.`,
   const consistencyReview = () =>
     agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
-${GUARDRAILS}
+${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
 CONTEXT: increment at \`jq '.increments[] | select(.id=="${id}")' ${BACKLOG_TILDE}\`; plan at ${PLANS}/${id}.md;
 the whole change via \`git -C ${TILDE}/<repoPath> diff --staged\` in EVERY repo the plan names.${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}
@@ -2881,7 +3187,7 @@ Return the structured output only.`,
       group.files.join(', '),
       `Review ONE GROUP of the staged, uncommitted change for increment ${id}: ${groupHeader(group)}
 Apply every persona bound to <personas>, and no other. Another Codex run reviews each other group, and a consistency
-run looks across the whole change, so report findings on this group's files only.${mergeNote}${isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}`
+run looks across the whole change, so report findings on this group's files only.${mergeNote}${isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
     )
   )
 
@@ -2893,7 +3199,7 @@ run looks across the whole change, so report findings on this group's files only
 <personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}`
+reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const codexReviewResults = async () => {
@@ -2961,7 +3267,7 @@ reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}
 ${group.files.length} file(s) in the ${group.repo} repo (${groupRepoPath(group)}), language ${group.language}:
 ${groupFiles}. Your job is to REFUTE each of them. Default to refuted unless the evidence is clear — a wrong
 finding that survives costs more than a real one that is missed, because it drives a pointless edit to working code.
-${GUARDRAILS}
+${guardrails()}
 Judge each finding INDEPENDENTLY and on its own evidence. They do not stand or fall together, and the number of
 them tells you nothing about whether any one is real.${mergeNote}
 
@@ -3010,7 +3316,7 @@ Return one verdict per finding, using the SAME numbers as above. Return the stru
         `You are the JUDGE for increment ${id}. You replace the interactive triage step a human would normally do —
 read ${SKILLS}/review/references/WALKER.md to understand the triage this substitutes for, then make every call
 YOURSELF. Do not defer to a human and do not ask anything.
-${GUARDRAILS}
+${guardrails()}
 ${readIncrement(id)}
 CONFIRMED FINDINGS (each already survived an adversarial refutation attempt):
 ${confirmed
@@ -3058,7 +3364,7 @@ Return the structured output only.`,
 ${baselineEvidence}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
-${impl.notes || '(none)'}${mergeNote}`,
+${impl.notes || '(none)'}${mergeNote}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'fix', builderPhases) }
       })
@@ -3085,7 +3391,7 @@ ${impl.notes || '(none)'}${mergeNote}`,
     } else {
       fixResult = await agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
-${GUARDRAILS}
+${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
 purely stylistic also read ${SKILLS}/code-style/references/STYLE_IMPLEMENTOR.md.
 ${readIncrement(id)}${mergeNote ? `${mergeNote}\n` : ''}
@@ -3130,7 +3436,7 @@ FIXER — ${fixerReport()}`
 
   const ladder = await agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
-${GUARDRAILS}
+${guardrails()}
 ${readIncrement(id)}
 ${readPlan(id)}
 ${earlierFindings}${mergeNote ? `${mergeNote}\nA path still unresolved (${UNRESOLVED_CHECK} prints it) is a failure, never a skip.` : ''}
@@ -3224,9 +3530,10 @@ Return the structured output only.`,
     break
   }
 
-  workspaceEdits = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter(
-    (file) => IS_BRANCH && file.startsWith(`${WORKSPACE_KEY}:`)
+  const workspaceFiles = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter((file) =>
+    file.startsWith(`${WORKSPACE_KEY}:`)
   )
+  workspaceEdits = IS_BRANCH ? workspaceFiles : []
 
   land = IS_BRANCH
     ? await agent(
@@ -3235,11 +3542,11 @@ Return the structured output only.`,
       )
     : await agent(
     `Increment ${id} is implemented, reviewed, judged and verified green. COMMIT IT.
-${GUARDRAILS}
+${guardrails()}
 ${REPO_RULE}
 ${SET_ROW_RULE}
 TASK:
-1. ${CHANGED_REPOS_RULE} A repo with changes that is not on \`${workBranch}\` is a
+1. ${changedReposRule()} A repo with changes that is not on \`${workBranch}\` is a
    stop: report landed:false naming it, and change nothing in it. The increment's title, for the commit subject:
    \`jq -r '.increments[] | select(.id=="${id}") | .title' ${BACKLOG_TILDE}\`.
 2. For EVERY repo you are about to commit in, confirm it is on the work branch FIRST:
@@ -3254,17 +3561,32 @@ TASK:
    changed and naming the increment id and its ticket \`${ticket?.key}\`. No trailer.
    Behaviour changes, from the plan: ${plan?.behaviourChanges?.length ? plan.behaviourChanges.map((b) => `\n   - ${b}`).join('') : 'none'}
    A slice across several repos gets ONE commit per repo, each with the same subject.
-4a. ${SPEC_RULE} If it has changes, they are part of this increment: commit them in the workspace with the same
-   subject and trailer, and nothing else from the workspace. Two commands, the pathspec on both:
-   \`git -C ${TILDE} add -- openspec/\` then \`git -C ${TILDE} commit -m "<message>" -- openspec/\`.
-   The pathspec on the commit is load-bearing: anything else staged in the workspace stays out of it. Do NOT push
-   the workspace. Name the spec commit in your summary, separately from the repo commits.
+${specLandStep()}${workspaceLandStep(workspaceFiles)}
 5. Do NOT push. A later stage owns that.
 6. Record it: \`${setRow(id, `--commit "<sha, or several ${LAND_ORDER}, space separated>"`)}\`. Leave the status alone — this increment is not done until its PRs are merged.
 Report the commit SHA. For several repos report each, ${LAND_ORDER}, space separated.
 Return the structured output only.`,
     light({ label: `${id} land`, phase: 'Land', schema: LAND_SCHEMA })
   )
+
+  // What the workspace branch commits is read back from git and checked here,
+  // by the script, before anything is pushed: a carried file or the run's own
+  // state in an increment commit would ride into the base branch with the
+  // merge. A list that cannot be read is not taken on trust either.
+  if (land?.landed && buildsWorkspace()) {
+    const read = await readWorkspaceCommit(id)
+    const readable = read && read.exitCode === 0
+    const leaked = readable ? workspaceLeaks(committedPathsOf(read.stdout), workspaceFiles) : []
+    if (!readable || leaked.length > 0) {
+      const detail = readable
+        ? `${id}: the workspace repo's commit holds ${leaked.join(', ')}, which ${leaked.length === 1 ? 'is' : 'are'} not this increment's. Nothing is pushed: take ${leaked.length === 1 ? 'it' : 'them'} out of the commit on ${workBranch} by hand, then run again`
+        : `${id}: could not read what the workspace repo's commit holds (${read ? `git exited ${read.exitCode}: ${String(read.stdout ?? '').slice(0, 300)}` : 'the reader agent died'}), so nothing is pushed. Check the commit on ${workBranch} by hand, then run again`
+      log(`${id}: LAND LEAKED — ${detail}`)
+      results.push({ id, ticket: ticket?.key, branch: workBranch, outcome: 'land-leaked', commit: land.commit, detail, findings: findingCounts() })
+      stopped = { reason: 'land-leaked', detail }
+      break
+    }
+  }
 
   if (!land || !land.landed) {
     results.push({
@@ -3418,7 +3740,7 @@ Return the structured output only.`,
     const pr = await agent(
       `You are the PULL REQUEST STAGE for increment ${id} (${ticket.key}) on branch \`${workBranch}\`.
 YOU RAISE AT MOST ONE PR PER REPO, AND ONLY IF THERE IS NOT ALREADY ONE FOR THIS BRANCH.
-${GUARDRAILS}
+${guardrails()}
 ${PUSH_RULE}
 ${MERGE_ORDER_RULE}
 REPOS, in order: ${repos.join(', ')}. These are the increment's repos and the ONLY ones this stage touches. Another
@@ -3481,7 +3803,7 @@ Return the structured output only.`,
       agent(
         `You are the CI WATCHER for increment ${id} (${ticket.key}). WAIT for the checks on every PR below to
 resolve, and report what they did. You change no code and you merge nothing.
-${GUARDRAILS}
+${guardrails()}
 THE PULL REQUESTS:
 ${prList(prs)}
 
@@ -3518,7 +3840,7 @@ Return the structured output only.`,
       const fix = await agent(
         `You are the CI FIXER for increment ${id} (${ticket.key}), attempt ${ciAttempt} of ${CI_FIX_ATTEMPTS}.
 CI is red on \`${workBranch}\`. Fix the CODE and push. You do not merge and you do not close anything.
-${GUARDRAILS}
+${guardrails()}${ciFixerWorkspaceRule()}
 ${PUSH_RULE}
 ${readIncrement(id)}
 THE PULL REQUESTS:
@@ -3626,25 +3948,41 @@ Return the structured output only.`,
     const mergeOrder = sortForMerge(prs, repos)
     log(`${id}: merge order ${mergeOrder.map((p) => p.repo).join(' → ')}`)
 
+    // The approval gate covers every PR under the run-level requireApproval,
+    // and otherwise the PRs of the repos that need approval of their own. Either
+    // way it holds back every PR of the increment until each one is approved.
+    const gatedPrs = mergeOrder.filter((pr) => REQUIRE_APPROVAL || approvalRepos.includes(pr.repo))
+    const approvalGate = gatedPrs.length > 0
+    const everyPrGated = gatedPrs.length === mergeOrder.length
+    const gatedPrsNoun = everyPrGated ? 'pr above' : 'pr under NEEDS APPROVAL'
+    if (approvalGate && !everyPrGated) log(`${id}: approval needed before any merge from ${gatedPrs.map((p) => p.repo).join(', ')}`)
+
     const merge = await agent(
-      `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${REQUIRE_APPROVAL ? `, which is
-necessary but NOT sufficient — every one of them also needs an approving review on GitHub, and you collect ALL of
+      `You are the MERGE STAGE for increment ${id} (${ticket.key}). Every PR below is green${approvalGate ? `, which is
+necessary but NOT sufficient — ${everyPrGated ? 'every one of them' : `the ${gatedPrs.map((p) => p.repo).join(', ')} PR${gatedPrs.length === 1 ? '' : 's'}`} also needs an approving review on GitHub, and you collect ALL of
 those BEFORE you merge ANYTHING` : ''}.
 Merge them and prove \`${BASE_BRANCH}\` survived it.
-${GUARDRAILS}
+${guardrails()}
 ${MERGE_ORDER_RULE}
 THE PULL REQUESTS, in merge order:
-${prList(mergeOrder)}
-${
-  REQUIRE_APPROVAL
+${prList(mergeOrder)}${
+  approvalGate && !everyPrGated
     ? `
-STEP A — THE APPROVAL SWEEP. Do this for EVERY pr above BEFORE you merge a single one.
+NEEDS APPROVAL — a person must approve each of these before ANY pr above merges, the others included. The others need
+no approval of their own, but they wait for these:
+${prList(gatedPrs)}`
+    : ''
+}
+${
+  approvalGate
+    ? `
+STEP A — THE APPROVAL SWEEP. Do this for EVERY ${gatedPrsNoun} BEFORE you merge a single pr.
 **This is a whole-increment gate, not a per-PR one.** It runs first because it used to run per-PR inside the merge
 loop, and that merged an approved frontend while its sibling tests PR was still waiting on a reviewer — half an
 increment on \`${BASE_BRANCH}\`, stale specs against a shipped UI, and CDP red. Nothing auto-reverted it.
 Green CI is not consent either: it proves the code runs, not that a person agreed to it.
 
-For EACH pr above, read its decision — this changes nothing, so the order does not matter here:
+For EACH ${gatedPrsNoun}, read its decision — this changes nothing, so the order does not matter here:
    \`gh pr view <url> --repo <ghRepo> --json reviewDecision,reviews\`
    - \`APPROVED\` → that one is satisfied. Go on to the next pr.
    - \`CHANGES_REQUESTED\` → **STOP IMMEDIATELY, before merging anything.** Report green:false,
@@ -3654,16 +3992,16 @@ For EACH pr above, read its decision — this changes nothing, so the order does
    - anything else, including empty (\`REVIEW_REQUIRED\`, or no reviews yet) → nobody has looked at that one yet.
 
 If any pr is still unapproved after that pass, WAIT: re-read the unapproved ones with the same command, up to
-${APPROVAL_POLLS} times, sleeping 120 seconds between checks via \`sleep 120\`, until every pr reports
+${APPROVAL_POLLS} times, sleeping 120 seconds between checks via \`sleep 120\`, until every ${gatedPrsNoun} reports
 \`APPROVED\` — or any one of them reports \`CHANGES_REQUESTED\`, which stops you as above.
-   - every pr \`APPROVED\` → the gate is satisfied for the whole increment. Go to STEP B.
+   - every ${gatedPrsNoun} \`APPROVED\` → the gate is satisfied for the whole increment. Go to STEP B.
    - still short after ${APPROVAL_POLLS} checks → **STOP, and this is not a failure.** Report green:false,
      \`stopReason: "awaiting-approval"\`, and blocked "<repo> PR is green and awaiting approval: <url>" naming
      EVERY pr still unapproved. **Merge nothing** — not even the ones that are approved. Leave them all open and
      untouched. Somebody will approve them and the increment resumes from its \`prs\` field on the next run,
      re-entering here with the approvals already in place.
 
-NEVER merge a PR whose reviewDecision you have not just read and seen to be \`APPROVED\`, and never merge any PR
+NEVER merge a ${gatedPrsNoun} whose reviewDecision you have not just read and seen to be \`APPROVED\`, and never merge any PR
 of this increment while a sibling is unapproved. Do not approve one yourself, do not ask anyone to, and do not
 work around the gate by any other route — GitHub refuses a self-approval and defeating that refusal is never this
 stage's business.
@@ -3683,9 +4021,9 @@ For EACH pr, in that order:`
    \`gh pr view <url> --repo <ghRepo> --json mergeable,mergeStateStatus,statusCheckRollup\`
    Anything other than a clean, green, mergeable PR stops you, with \`stopReason: "not-mergeable"\`. NEVER
    merge a red PR, under any circumstance.${
-     REQUIRE_APPROVAL
+     approvalGate
        ? `
-   Re-read its \`reviewDecision\` in the same call and confirm it is still \`APPROVED\` — a review can be
+   ${everyPrGated ? 'Re-read' : 'For a pr under NEEDS APPROVAL, re-read'} its \`reviewDecision\` in the same call and confirm it is still \`APPROVED\` — a review can be
    dismissed between STEP A and here. Anything else stops you with \`stopReason: "awaiting-approval"\`.`
        : ''
    }
@@ -3770,7 +4108,7 @@ Return the structured output only.`,
 
   const done = await agent(
     `Increment ${id} is merged into \`${BASE_BRANCH}\` and the base branch is green. Close out ${ticket.key}.
-${GUARDRAILS}
+${guardrails()}
 TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIGURATION, given to you here.
 1. \`${JIRA}/transition-ticket.sh ${ticket.key} "${STATUS_DONE}"\`.
    If it reports that status is not available, run \`${JIRA}/transition-ticket.sh ${ticket.key} --list\` and
@@ -3784,6 +4122,10 @@ TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIG
 Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
+
+  // The merge is real whether or not the ticket moved, so the workspace goes
+  // back to the base branch either way.
+  const workspaceBack = buildsWorkspace() ? await returnWorkspaceToBase(id, workBranch) : { ok: true }
 
   if (!done || !done.ok) {
     log(`${id}: TICKET NOT MOVED TO "${STATUS_DONE}" — ${done ? done.summary : 'agent failed'}. The merge stands.`)
@@ -3813,6 +4155,13 @@ Return the structured output only.`,
   })
 
   log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)
+
+  // Landed, but the next increment would run on the factory this one
+  // replaced, so the run stops rather than build on it.
+  if (!workspaceBack.ok) {
+    stopped = { reason: 'workspace-not-on-base', detail: workspaceBack.detail }
+    break
+  }
   } // finish
 
   // A HALT-FOR-REVIEW gate is a DESIGNED human checkpoint, not a review finding.
@@ -3843,6 +4192,10 @@ Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
       if (stopped) stopped = { ...stopped, detail: `${stopped.detail.replace(/\.$/, '')}. ${leftBehind}` }
     }
   }
+}
+
+if (workspaceLeftOn) {
+  stopped = { ...stopped, detail: `${stopped.detail.replace(/\.$/, '')}. ${workspaceStaysNote(workspaceLeftOn)}` }
 }
 
 log(`${WORKAREA_REL}: ${built} increment(s) landed — stopping: ${stopped.reason}. ${stopped.detail}`)

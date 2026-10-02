@@ -284,13 +284,16 @@ const refresh = async (context, lease) => {
       lease: lease.lease,
       logPaths: {
         rebuild: logIn(context, 'gate-stack-rebuild.log'),
-        restart: logIn(context, 'gate-stack-restart.log')
+        restart: logIn(context, 'gate-stack-restart.log'),
+        restack: logIn(context, 'gate-stack-restack.log')
       },
       env: context.env
     })
   } catch (error) {
     return {
       ok: false,
+      restacked: false,
+      restackLog: null,
       rebuilt: [],
       restarted: [],
       left: [],

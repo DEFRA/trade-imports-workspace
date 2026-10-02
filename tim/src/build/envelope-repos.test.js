@@ -41,14 +41,57 @@ describe('readEnvelopeRepos', () => {
           {
             key: 'frontend',
             folder: 'trade-imports-plants-frontend',
-            path: join(root, 'repos', 'trade-imports-plants-frontend')
+            path: join(root, 'repos', 'trade-imports-plants-frontend'),
+            workspace: false,
+            requireApproval: false
           },
           {
             key: 'tests',
             folder: 'trade-imports-ins-tests',
-            path: join(root, 'repos', 'trade-imports-ins-tests')
+            path: join(root, 'repos', 'trade-imports-ins-tests'),
+            workspace: false,
+            requireApproval: false
           }
         ])
+      }
+    )
+  })
+
+  test('reads "." as the workspace repo itself, by its canonical folder name, wherever it is cloned', () => {
+    withBacklog(
+      {
+        repos: {
+          workspace: {
+            path: '.',
+            github: 'DEFRA/trade-imports-workspace',
+            requireApproval: true
+          }
+        }
+      },
+      (root) => {
+        expect(readEnvelopeRepos(root, 'shared/programme')).toEqual([
+          {
+            key: 'workspace',
+            folder: 'trade-imports-workspace',
+            path: root,
+            workspace: true,
+            requireApproval: true
+          }
+        ])
+      }
+    )
+  })
+
+  test('refuses a requireApproval that is not true or false', () => {
+    withBacklog(
+      { repos: { workspace: { path: '.', requireApproval: 'yes' } } },
+      (root) => {
+        expect(
+          errorFrom(() => readEnvelopeRepos(root, 'shared/programme'))
+        ).toEqual({
+          code: 'USAGE',
+          message: expect.stringContaining('workspace.requireApproval')
+        })
       }
     )
   })

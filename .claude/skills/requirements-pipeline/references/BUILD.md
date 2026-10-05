@@ -145,12 +145,17 @@ workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval
   approval. The run-level `requireApproval` keeps its meaning: every PR. Keep
   it on the workspace: its changes steer every later run.
 - **What never rides in a workspace commit.** The files the workspace carried
-  in when the increment started (`tim build start` lists them as
-  `preexistingDirty`) and anything under `workareas/` the row does not name —
-  the loop's own `backlog.json` writes, plans and logs above all. The land
-  stage commits there by explicit path; the loop then reads what the branch
-  commits straight from git (`git log --name-only`) and stops at
-  `land-leaked`, pushing nothing, if that list holds either or cannot be read.
+  in when the increment started and anything under `workareas/` the row does
+  not name — the loop's own `backlog.json` writes, plans and logs above all.
+  `tim build start` writes every carried file to
+  `workareas/<workarea>/logs/<id>-carried.txt`, names those outside
+  `workareas/` (at most 50) as `preexistingDirty`, and counts the rest in
+  `preexistingDirtySummary`, so its JSON line stays small however dirty the
+  workspace is. The land stage commits there by explicit path; the loop then
+  reads what the branch commits straight from git (`git log --name-only`),
+  looks up in the carried-files list any committed path the result could not
+  name, and stops at `land-leaked`, pushing nothing, if the commit holds either
+  or a list cannot be read.
 - **Merge order.** The workspace PR merges last, after every other PR,
   wherever the row lists it: the next increment runs on it, so it changes only
   once everything built alongside it has merged.

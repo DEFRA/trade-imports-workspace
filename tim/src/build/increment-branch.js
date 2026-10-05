@@ -19,6 +19,16 @@ const uncommittedFiles = async (dir) =>
 
 const STATUS_PREFIX_LENGTH = 3
 
+// A reason travels in `tim build start`'s one JSON line, which an agent copies
+// back to the loop word for word, so it names a bounded number of files.
+const NAMED_FILES_LIMIT = 20
+
+const namedFiles = (paths) => {
+  const named = paths.slice(0, NAMED_FILES_LIMIT).join(', ')
+  const rest = paths.length - NAMED_FILES_LIMIT
+  return rest > 0 ? `${named} and ${rest} more` : named
+}
+
 // A rename or copy is followed by an entry naming the path it came from.
 const hasSourceEntry = (status) => /[RC]/.test(status)
 
@@ -53,7 +63,7 @@ const refusalFor = async ({ key, path, workspace }) => {
   if (workspace) return null
   const dirty = await uncommittedFiles(path)
   return dirty.length > 0
-    ? `${key} has uncommitted work, probably from an earlier attempt: ${dirty.join(', ')}. Nothing was stashed, reset or cleaned: that work is not this step's.`
+    ? `${key} has uncommitted work, probably from an earlier attempt: ${namedFiles(dirty)}. Nothing was stashed, reset or cleaned: that work is not this step's.`
     : null
 }
 
@@ -150,7 +160,7 @@ const pathsInTheWay = (stderr) =>
 
 const describeCarriedConflict = (key, branch, stderr) => {
   const paths = pathsInTheWay(stderr)
-  const named = paths.length > 0 ? paths.join(', ') : firstLine(stderr)
+  const named = paths.length > 0 ? namedFiles(paths) : firstLine(stderr)
   return `${key}: switching to ${branch} would overwrite uncommitted files in the workspace: ${named}. Nothing was stashed, reset or cleaned. Commit or move those files by hand, then run again.`
 }
 

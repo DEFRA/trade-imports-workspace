@@ -325,14 +325,23 @@ approval in its result.
 
 **What never rides in a workspace commit.** The workspace is never clean: it carries the run's
 backlog, plans and logs under `workareas/`, and often somebody's work in progress. `tim build
-start` carries those files across the switch to the increment branch and lists them as
-`preexistingDirty`. Every stage is told they are not the increment's, and so is everything under
-`workareas/` the row does not name. The land stage stages and commits in the workspace by
-explicit path only, with a pathspec on the commit so nothing somebody else staged goes in. Then
-a light agent copies, word for word, what `git log --name-only --format= origin/<base>..HEAD`
-prints in the workspace, and the script checks that list itself, never the land agent's account:
-a carried file, or run state no stage reported changing, stops the run at `land-leaked` before
-anything is pushed, and so does a list it cannot read. A CI fixer is given the same rules for
+start` carries those files across the switch to the increment branch and writes every one of
+them to `workareas/<workarea>/logs/<id>-carried.txt`. Its one JSON line stays small however
+dirty the workspace is: `preexistingDirty` names the carried files outside `workareas/` (at most
+50), and `preexistingDirtySummary` counts those and the ones under `workareas/` and gives the
+file as `listedIn`. Hundreds of other programmes' files under `workareas/`, once listed in
+full, ran that line past what the start agent can copy back, and the run stopped at
+`derive-failed` with the ticket and branch already made. Every stage is told the carried files
+are not the increment's, by name or by count and file, and so is everything under `workareas/`
+the row does not name. The land stage stages and commits in the workspace by explicit path
+only, with a pathspec on the commit so nothing somebody else staged goes in. Then a light agent
+copies, word for word, what `git log --name-only --format= origin/<base>..HEAD` prints in the
+workspace, and the script checks that list itself, never the land agent's account: a carried
+file, or run state no stage reported changing, stops the run at `land-leaked` before anything
+is pushed, and so does a list it cannot read. A committed path the start result could not name
+— run state a stage did report changing, or, when more than 50 were carried outside
+`workareas/`, any other path — is looked up in the carried-files list by a second light agent
+(`grep -Fx`), and leaks if it is there; a lookup that fails stops at `land-leaked` too. A CI fixer is given the same rules for
 the workspace whenever it may touch it, whether or not the increment builds there.
 
 **Changing the factory mid-run.** While the workspace is on the increment branch, a change to

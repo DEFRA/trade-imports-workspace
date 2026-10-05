@@ -173,6 +173,20 @@ describe('branchIncrementRepos', () => {
     })
   })
 
+  test('names at most 20 uncommitted files when it refuses a repo, counting the rest', async () => {
+    fresh()
+    const frontend = await cloneOf('frontend')
+    for (let index = 0; index < 60; index += 1) {
+      writeFileSync(join(frontend.path, `scratch-${index}.txt`), 'x\n')
+    }
+
+    const outcome = await branch([frontend], 'feat/EUDPA-9-origin')
+
+    expect(outcome.reason).toMatch(
+      /^Nothing changed\. frontend has uncommitted work, probably from an earlier attempt: (scratch-\d+\.txt, ){19}scratch-\d+\.txt and 40 more\. Nothing was stashed/
+    )
+  })
+
   test('removes an upstream an older run left pointing at the base branch', async () => {
     fresh()
     const frontend = await cloneOf('frontend')
@@ -259,6 +273,21 @@ describe('branchIncrementRepos', () => {
           'workspace: switching to chore/EUDPA-9-perf-mode would overwrite uncommitted files in the workspace: README.md. Nothing was stashed, reset or cleaned. Commit or move those files by hand, then run again.',
         onBranch: 'main'
       })
+    })
+
+    test('names at most 20 files in the way of the switch, counting the rest', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      for (let index = 0; index < 25; index += 1) {
+        await pushCommit(workspace.workPath, 'main', `added-${index}.md`)
+        writeFileSync(join(workspace.path, `added-${index}.md`), '# mine\n')
+      }
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect(outcome.reason).toMatch(
+        /^workspace: switching to chore\/EUDPA-9-perf-mode would overwrite uncommitted files in the workspace: (added-\d+\.md, ){19}added-\d+\.md and 5 more\. Nothing was stashed/
+      )
     })
 
     test('lists each file in an untracked folder, so a file the increment adds there later is not among them', async () => {

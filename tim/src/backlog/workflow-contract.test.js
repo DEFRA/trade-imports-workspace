@@ -3105,12 +3105,21 @@ describe('increment-build-loop', () => {
         requireApproval: entry.requireApproval ?? false
       }))
     const WORK_BRANCH = 'feat/EUDPA-920-gate-layers'
-    // What the workspace repo already carried when the increment started: the
-    // run's own backlog and somebody's staged doc.
+    // What the workspace repo already carried when the increment started,
+    // as tim build start reports it: somebody's edits outside workareas/ by
+    // name, and the run's own backlog among 412 files under workareas/ by
+    // count, every one listed in a file.
     const CARRIED = [
-      'workareas/shared/ins-performance-testing/backlog.json',
+      '.claude/settings.local.json',
       'docs/repos/trade-imports-performance-tests.md'
     ]
+    const CARRIED_LIST =
+      'workareas/shared/ins-performance-testing/logs/inc-020-carried.txt'
+    const CARRIED_SUMMARY = {
+      outsideWorkareas: CARRIED.length,
+      underWorkareas: 412,
+      listedIn: CARRIED_LIST
+    }
     // The row names the workspace first; it still merges last.
     const ROW_REPOS = ['workspace', 'perftests']
     const WORKSPACE_PR = {
@@ -3148,6 +3157,7 @@ describe('increment-build-loop', () => {
           branch: WORK_BRANCH,
           repos: ROW_REPOS,
           preexistingDirty: CARRIED,
+          preexistingDirtySummary: CARRIED_SUMMARY,
           requireApproval: ['workspace']
         })
       ),
@@ -3432,6 +3442,150 @@ describe('increment-build-loop', () => {
         expect(run.result.stopped.reason).toBe('land-leaked')
       })
 
+      test('tells every stage how many files under workareas/ it carried and where they are listed', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 implement')
+
+        expect(prompt).toContain(
+          '  - and 412 under `workareas/`, which the rule above already covers'
+        )
+        expect(prompt).toContain(
+          `  \`~/ws/${CARRIED_LIST}\` lists every one of them.`
+        )
+      })
+
+      describe('a reported change under workareas/, which the start result only counts', () => {
+        const REPORTED_STATE =
+          'workareas/shared/ins-performance-testing/gate-notes.md'
+        const reportingState = (lookup) => ({
+          'inc-020 implement': {
+            ...ANSWERS['inc-020 implement'],
+            changedFiles: [...CHANGED_FILES, `workspace:${REPORTED_STATE}`]
+          },
+          'inc-020 workspace commit': {
+            exitCode: 0,
+            stdout: `tim/src/build/gate.js\n${REPORTED_STATE}\n`
+          },
+          ...(lookup ? { 'inc-020 carried lookup': lookup } : {})
+        })
+
+        test('looks it up in the file that lists every carried file', async () => {
+          const run = await runFactory(
+            {},
+            reportingState({ exitCode: 1, stdout: '' })
+          )
+
+          expect(promptOf(run, 'inc-020 carried lookup')).toContain(
+            `\`grep -Fx -e '${REPORTED_STATE}' ~/ws/${CARRIED_LIST}\``
+          )
+        })
+
+        test('lands it when the workspace did not carry it', async () => {
+          const run = await runFactory(
+            {},
+            reportingState({ exitCode: 1, stdout: '' })
+          )
+
+          expect(run.result.increments[0].outcome).toBe('landed')
+        })
+
+        test('stops at land-leaked, pushing nothing, when the workspace carried it', async () => {
+          const run = await runFactory(
+            {},
+            reportingState({ exitCode: 0, stdout: `${REPORTED_STATE}\n` })
+          )
+
+          expect({
+            reason: run.result.stopped.reason,
+            detail: run.result.stopped.detail,
+            pushed: labelsOf(run).includes('inc-020 pr')
+          }).toEqual({
+            reason: 'land-leaked',
+            detail: expect.stringContaining(
+              `the workspace repo's commit holds ${REPORTED_STATE}`
+            ),
+            pushed: false
+          })
+        })
+
+        test('stops at land-leaked, pushing nothing, when the list cannot be read', async () => {
+          const run = await runFactory(
+            {},
+            reportingState({
+              exitCode: 2,
+              stdout: `grep: ~/ws/${CARRIED_LIST}: No such file or directory`
+            })
+          )
+
+          expect({
+            reason: run.result.stopped.reason,
+            detail: run.result.stopped.detail,
+            pushed: labelsOf(run).includes('inc-020 pr')
+          }).toEqual({
+            reason: 'land-leaked',
+            detail: expect.stringContaining(
+              `could not tell whether the workspace carried ${REPORTED_STATE}`
+            ),
+            pushed: false
+          })
+        })
+
+        test('stops at land-leaked when the lookup agent dies', async () => {
+          const run = await runFactory({}, reportingState(null))
+
+          expect(run.result.stopped.reason).toBe('land-leaked')
+        })
+      })
+
+      describe('more carried files outside workareas/ than the start result names', () => {
+        const startNamingSome = {
+          'inc-020 start': startAnswer(
+            startedResult({
+              id: 'inc-020',
+              branch: WORK_BRANCH,
+              repos: ROW_REPOS,
+              preexistingDirty: CARRIED,
+              preexistingDirtySummary: {
+                ...CARRIED_SUMMARY,
+                outsideWorkareas: 80
+              },
+              requireApproval: ['workspace']
+            })
+          )
+        }
+
+        test('tells every stage how many it did not name', async () => {
+          const prompt = promptOf(
+            await runFactory(
+              {},
+              {
+                ...startNamingSome,
+                'inc-020 carried lookup': { exitCode: 1, stdout: '' }
+              }
+            ),
+            'inc-020 implement'
+          )
+
+          expect(prompt).toContain('  - and 78 more outside `workareas/`')
+        })
+
+        test('stops at land-leaked when the commit holds one it did not name', async () => {
+          const run = await runFactory(
+            {},
+            {
+              ...startNamingSome,
+              'inc-020 carried lookup': {
+                exitCode: 0,
+                stdout: 'tim/src/build/gate.js\n'
+              }
+            }
+          )
+
+          expect(run.result.stopped.detail).toContain(
+            "the workspace repo's commit holds tim/src/build/gate.js"
+          )
+        })
+      })
+
       test('stops at land-leaked, pushing nothing, when what the commit holds cannot be read', async () => {
         const run = await runFactory(
           {},
@@ -3544,6 +3698,7 @@ describe('increment-build-loop', () => {
                 branch: WORK_BRANCH,
                 repos: ROW_REPOS,
                 preexistingDirty: CARRIED,
+                preexistingDirtySummary: CARRIED_SUMMARY,
                 requireApproval: []
               })
             )

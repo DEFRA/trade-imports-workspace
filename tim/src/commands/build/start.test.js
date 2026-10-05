@@ -163,7 +163,12 @@ describe('renderStartText', () => {
         ticket: null,
         warnings: [],
         branched: [],
-        preexistingDirty: ['README.md', 'workareas/'],
+        preexistingDirty: ['README.md'],
+        preexistingDirtySummary: {
+          outsideWorkareas: 1,
+          underWorkareas: 412,
+          listedIn: 'workareas/shared/programme/logs/inc-002-carried.txt'
+        },
         requireApproval: ['workspace'],
         resumeAt: null,
         failedStep: null,
@@ -172,8 +177,35 @@ describe('renderStartText', () => {
     ).toBe(
       [
         'Increment inc-002.',
-        'The workspace repo carried uncommitted files across the switch, which are not this increment’s: README.md, workareas/.',
+        'The workspace repo carried 413 uncommitted files across the switch, which are not this increment’s: README.md, and 412 under workareas/. workareas/shared/programme/logs/inc-002-carried.txt lists every one.',
         'A person must approve the pull request before it merges in: workspace.'
+      ].join('\n')
+    )
+  })
+
+  test('counts the carried files outside workareas/ that it does not name', () => {
+    expect(
+      renderStartText({
+        id: 'inc-003',
+        repeat: false,
+        ticket: null,
+        warnings: [],
+        branched: [],
+        preexistingDirty: ['a.md', 'b.md'],
+        preexistingDirtySummary: {
+          outsideWorkareas: 60,
+          underWorkareas: 0,
+          listedIn: 'workareas/shared/programme/logs/inc-003-carried.txt'
+        },
+        requireApproval: [],
+        resumeAt: null,
+        failedStep: null,
+        reason: null
+      })
+    ).toBe(
+      [
+        'Increment inc-003.',
+        'The workspace repo carried 60 uncommitted files across the switch, which are not this increment’s: a.md, b.md and 58 more. workareas/shared/programme/logs/inc-003-carried.txt lists every one.'
       ].join('\n')
     )
   })

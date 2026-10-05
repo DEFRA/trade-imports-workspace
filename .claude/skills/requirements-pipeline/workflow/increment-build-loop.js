@@ -393,6 +393,44 @@ for (const key of REPO_KEYS) {
 const WORKSPACE_CONFIGURED = REPO_KEYS.includes(WORKSPACE_KEY)
 const APPROVAL_REPO_KEYS = REPO_KEYS.filter((key) => REPOS[key].requireApproval === true)
 
+// A pull request's `repo` comes back from an agent, which can write the GitHub
+// slug or the path where the prompt asked for the key. The approval gate, the
+// merge order and the workspace-last rule all match on the key, so the script
+// settles it from the PR's own url against the configured repos and never
+// trusts the agent's spelling. A PR it cannot settle is unresolved: the gate
+// counts it as needing approval, and the run stops before anything merges.
+const GITHUB_PR_URL = /^https:\/\/github\.com\/([^/\s]+\/[^/\s]+)\/pull\/\d+(?:[/?#]|$)/i
+const repoKeyNamed = (name) => {
+  if (typeof name !== 'string') return undefined
+  const wanted = name.trim().toLowerCase()
+  return REPO_KEYS.find(
+    (key) => key === wanted || REPOS[key].github.toLowerCase() === wanted || REPOS[key].path.toLowerCase() === wanted
+  )
+}
+const withRepoKey = (pr) => {
+  const named = pr?.repo
+  const slug = GITHUB_PR_URL.exec(pr?.url ?? '')?.[1]
+  if (!slug) return { ...pr, unresolved: `${pr?.url ?? 'a PR with no url'} is not a GitHub pull request url` }
+  const urlKey = repoKeyNamed(slug)
+  if (!urlKey) return { ...pr, unresolved: `${pr.url} is in ${slug}, which is not a configured repo` }
+  const namedKey = repoKeyNamed(named)
+  if (namedKey && namedKey !== urlKey) {
+    return { ...pr, unresolved: `${pr.url} is reported as repo "${named}" but is in ${slug}, the "${urlKey}" repo` }
+  }
+  return { ...pr, repo: urlKey }
+}
+const unresolvedPrs = (list) => list.filter((pr) => pr.unresolved)
+const unresolvedRepoDetail = (list) =>
+  `cannot tell which configured repo ${unresolvedPrs(list).length === 1 ? 'this pull request is' : 'these pull requests are'} in, so the run stops here and merges nothing: ${unresolvedPrs(list)
+    .map((pr) => pr.unresolved)
+    .join('; ')}. Configured repos: ${REPO_KEYS.map((key) => `${key}=${REPOS[key].github}`).join(', ')}`
+const needsApproval = (pr, approvalKeys) => REQUIRE_APPROVAL || Boolean(pr.unresolved) || approvalKeys.includes(pr.repo)
+const PR_REPO_FIELD = {
+  type: 'string',
+  enum: REPO_KEYS,
+  description: `The repo's key, exactly one of ${REPO_KEYS.join(', ')}. Never its GitHub name or its path`
+}
+
 // The frontend, backend and tests keys every programme once had to use. A
 // programme that still names exactly those three keeps the rules written for
 // them: `repo: both` on an old row, the tests repo added to every UI change,
@@ -1380,7 +1418,7 @@ const CI_FIX_SCHEMA = {
         type: 'object',
         required: ['repo', 'url'],
         properties: {
-          repo: { type: 'string' },
+          repo: PR_REPO_FIELD,
           url: { type: 'string' },
           number: { type: 'number' }
         },
@@ -1644,7 +1682,7 @@ const PR_SCHEMA = {
         type: 'object',
         required: ['repo', 'url'],
         properties: {
-          repo: { type: 'string' },
+          repo: PR_REPO_FIELD,
           url: { type: 'string' },
           number: { type: 'number' },
           raised: { type: 'boolean', description: 'true if this run opened it, false if you reused an open one' }
@@ -2500,7 +2538,7 @@ const BRANCH_PR_SCHEMA = {
       items: {
         type: 'object',
         required: ['repo', 'url'],
-        properties: { repo: { type: 'string' }, url: { type: 'string' }, number: { type: 'number' } },
+        properties: { repo: PR_REPO_FIELD, url: { type: 'string' }, number: { type: 'number' } },
         additionalProperties: false
       }
     },
@@ -2528,7 +2566,8 @@ For EACH repo:
    - exactly one → that is the repo's PR. Persist it at once: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
    - none → put the repo in missing[] and ok:false. Do NOT create one.
    - more than one → ok:false naming them all.
-Report prs[] in the same order. ok:true only when every repo has exactly one open PR.
+Report prs[] in the same order, with \`repo\` set to the repo's key, never its GitHub name or path. ok:true only when
+every repo has exactly one open PR.
 Return the structured output only.`
 
 const BRANCH_CI_SCHEMA = {
@@ -3746,7 +3785,14 @@ Return the structured output only.`,
           stopped = { reason, detail: `${id}: ${detail}` }
           break
         }
-        prs = found.prs
+        prs = found.prs.map(withRepoKey)
+        if (unresolvedPrs(prs).length > 0) {
+          const detail = unresolvedRepoDetail(prs)
+          log(`${id}: PR REPO UNKNOWN — ${detail}`)
+          results.push({ id, branch: workBranch, outcome: 'pr-repo-unknown', prs: prs.map((p) => p.url), detail, findings })
+          stopped = { reason: 'pr-repo-unknown', detail: `${id}: ${detail}` }
+          break
+        }
         log(`${id}: found ${prs.length} open PR(s) on ${workBranch} — ${prs.map((p) => p.url).join(' ')}`)
 
         if (rowAwaitsCi) {
@@ -3867,7 +3913,8 @@ For EACH of those repos, in that order:
    It adds the PR, or merges these fields into the entry already recorded with that url. Do this after EACH
    repo, not once at the end: a run that dies between two PRs must not lose the first.
 
-Report every PR in prs\[\], in the same order. Report ok:true only when every repo that had commits ahead of
+Report every PR in prs\[\], in the same order, with \`repo\` set to the repo's key (${repos.join(', ')}), exactly as
+in the backlog entry: never the GitHub name, never the path. Report ok:true only when every repo that had commits ahead of
 \`${BASE_BRANCH}\` has exactly one open PR, and every repo you skipped at step 2 genuinely had none. At least one
 PR must exist — a run where EVERY repo was empty means nothing was built, and that is ok:false.
 Return the structured output only.`,
@@ -3881,7 +3928,14 @@ Return the structured output only.`,
       break
     }
 
-    prs = pr.prs
+    prs = pr.prs.map(withRepoKey)
+    if (unresolvedPrs(prs).length > 0) {
+      const detail = unresolvedRepoDetail(prs)
+      log(`${id}: PR REPO UNKNOWN — ${detail}`)
+      results.push({ id, ticket: ticket.key, outcome: 'pr-repo-unknown', prs: prs.map((p) => p.url), detail, findings })
+      stopped = { reason: 'pr-repo-unknown', detail: `${id}: ${detail}` }
+      break
+    }
     log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
 
     // ---------------------------------------------------------------------
@@ -3986,7 +4040,7 @@ TASK:
       \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <what you fixed>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
    d. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
       Do this per repo, not once at the end.
-   e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
+   e. Report it in \`newPrs\[\]\`, with \`repo\` set to the repo's key, never its GitHub name. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
 7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
@@ -4001,8 +4055,9 @@ Return the structured output only.`,
       // the rest of the run.
       for (const p of fix?.newPrs ?? []) {
         if (p?.url && !prs.some((existing) => existing.url === p.url)) {
-          prs.push(p)
-          log(`${id}: CI fixer opened ${p.repo} ${p.url} — added to this increment's PRs`)
+          const keyed = withRepoKey(p)
+          prs.push(keyed)
+          log(`${id}: CI fixer opened ${keyed.repo} ${keyed.url} — added to this increment's PRs`)
         }
       }
 
@@ -4034,6 +4089,16 @@ Return the structured output only.`,
     // ---------------------------------------------------------------------
     phase('Merge')
 
+    // A CI fixer's PR is keyed as it is folded in, so this catches one whose
+    // repo could not be settled. Nothing merges until every PR has its key.
+    if (unresolvedPrs(prs).length > 0) {
+      const detail = unresolvedRepoDetail(prs)
+      log(`${id}: PR REPO UNKNOWN — ${detail}`)
+      results.push({ id, ticket: ticket.key, outcome: 'pr-repo-unknown', prs: prs.map((p) => p.url), detail, findings })
+      stopped = { reason: 'pr-repo-unknown', detail: `${id}: ${detail}` }
+      break
+    }
+
     // Merge order is the script's decision, not the order PRs happened to be
     // appended in. See MERGE_RANK.
     const mergeOrder = sortForMerge(prs, repos)
@@ -4042,7 +4107,7 @@ Return the structured output only.`,
     // The approval gate covers every PR under the run-level requireApproval,
     // and otherwise the PRs of the repos that need approval of their own. Either
     // way it holds back every PR of the increment until each one is approved.
-    const gatedPrs = mergeOrder.filter((pr) => REQUIRE_APPROVAL || approvalRepos.includes(pr.repo))
+    const gatedPrs = mergeOrder.filter((pr) => needsApproval(pr, approvalRepos))
     const approvalGate = gatedPrs.length > 0
     const everyPrGated = gatedPrs.length === mergeOrder.length
     const gatedPrsNoun = everyPrGated ? 'pr above' : 'pr under NEEDS APPROVAL'

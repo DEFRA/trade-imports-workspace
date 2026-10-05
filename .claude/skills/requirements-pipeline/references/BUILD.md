@@ -143,7 +143,11 @@ workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval
   the increment. The same whole-increment sweep runs on those PRs alone, and
   stops at `awaiting-approval` with every PR open. The other repos need no
   approval. The run-level `requireApproval` keeps its meaning: every PR. Keep
-  it on the workspace: its changes steer every later run.
+  it on the workspace: its changes steer every later run. The loop works out
+  each PR's repo key from the PR's own url against the configured `github`
+  slugs, whatever name a stage reports, so the gate holds even when an agent
+  writes `DEFRA/trade-imports-workspace` instead of `workspace`. A PR it
+  cannot match to one configured repo stops the run at `pr-repo-unknown`.
 - **What never rides in a workspace commit.** The files the workspace carried
   in when the increment started and anything under `workareas/` the row does
   not name — the loop's own `backlog.json` writes, plans and logs above all.
@@ -556,6 +560,7 @@ handover prompt.
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
+| `pr-repo-unknown` | A PR's url is not a GitHub pull request in one of the configured repos, or it disagrees with the repo key the stage reported. The loop cannot tell whether the PR needs approval or where it goes in the merge order, so it stops before the merge stage. **Nothing merged**; every PR stays open. The detail names each PR and the configured repos. Check the args' `repos` against the envelope, then launch again |
 | `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent |
 | `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
@@ -689,7 +694,8 @@ exactly that, never as green.
 
 ### The stop reasons it adds
 
-`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `ci-red` gains the
+`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `pr-repo-unknown` fires here
+too, when an open PR the stage finds cannot be matched to a configured repo. `ci-red` gains the
 `pr-conflicting` case. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
 `changes-requested`, `pr-left-open`) cannot fire.
 

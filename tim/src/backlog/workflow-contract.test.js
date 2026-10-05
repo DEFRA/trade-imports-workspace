@@ -1665,7 +1665,7 @@ describe('increment-build-loop', () => {
             prs: [
               {
                 repo: 'frontend',
-                url: 'https://github.com/DEFRA/x/pull/9',
+                url: 'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9',
                 number: 9
               }
             ],
@@ -3719,6 +3719,170 @@ describe('increment-build-loop', () => {
         )
         expect(prompt).not.toContain('NEEDS APPROVAL')
       })
+
+      describe('whatever name the PR stage gives the repo', () => {
+        const NEEDS_WORKSPACE_APPROVAL = [
+          'no approval of their own, but they wait for these:',
+          `workspace: ${WORKSPACE_PR.url}`
+        ].join('\n')
+        const prStageNaming = (repo) => ({
+          'inc-020 pr': {
+            ok: true,
+            prs: [{ ...WORKSPACE_PR, repo }, PERFTESTS_PR],
+            summary: 'two PRs'
+          }
+        })
+
+        test.each([
+          ['its GitHub name', 'DEFRA/trade-imports-workspace'],
+          ['its GitHub name in another case', 'defra/Trade-Imports-Workspace'],
+          ['its path', '.'],
+          ['a name that is no configured repo', 'trade-imports-workspace']
+        ])(
+          'gates the workspace PR reported under %s, from its url',
+          async (_, repo) => {
+            const run = await runFactory({}, prStageNaming(repo))
+
+            expect({
+              order: run.logs.includes(
+                'inc-020: merge order perftests → workspace'
+              ),
+              gated: promptOf(run, 'inc-020 merge').includes(
+                NEEDS_WORKSPACE_APPROVAL
+              )
+            }).toEqual({ order: true, gated: true })
+          }
+        )
+
+        test('stops at pr-repo-unknown, merging nothing, when a PR is in no configured repo', async () => {
+          const stray = 'https://github.com/DEFRA/trade-imports-stub/pull/4'
+          const run = await runFactory(
+            {},
+            {
+              'inc-020 pr': {
+                ok: true,
+                prs: [{ repo: 'workspace', url: stray }, PERFTESTS_PR],
+                summary: 'two PRs'
+              }
+            }
+          )
+
+          expect({
+            reason: run.result.stopped.reason,
+            outcome: run.result.increments[0].outcome,
+            reachedCi: labelsOf(run).includes('inc-020 ci watch'),
+            reachedMerge: labelsOf(run).includes('inc-020 merge')
+          }).toEqual({
+            reason: 'pr-repo-unknown',
+            outcome: 'pr-repo-unknown',
+            reachedCi: false,
+            reachedMerge: false
+          })
+          expect(run.result.stopped.detail).toContain(
+            `${stray} is in DEFRA/trade-imports-stub, which is not a configured repo`
+          )
+        })
+
+        test('stops at pr-repo-unknown when the reported repo and the url disagree', async () => {
+          const run = await runFactory(
+            {},
+            {
+              'inc-020 pr': {
+                ok: true,
+                prs: [{ ...WORKSPACE_PR, repo: 'perftests' }, PERFTESTS_PR],
+                summary: 'two PRs'
+              }
+            }
+          )
+
+          expect(run.result.stopped).toEqual({
+            reason: 'pr-repo-unknown',
+            detail: expect.stringContaining(
+              `${WORKSPACE_PR.url} is reported as repo "perftests" but is in DEFRA/trade-imports-workspace, the "workspace" repo`
+            )
+          })
+        })
+
+        test('stops at pr-repo-unknown when a PR has no GitHub pull request url', async () => {
+          const run = await runFactory(
+            {},
+            {
+              'inc-020 pr': {
+                ok: true,
+                prs: [{ repo: 'workspace', url: 'pull/95' }, PERFTESTS_PR],
+                summary: 'two PRs'
+              }
+            }
+          )
+
+          expect(run.result.stopped.detail).toContain(
+            'pull/95 is not a GitHub pull request url'
+          )
+        })
+
+        describe('a PR a CI fixer opened', () => {
+          const runWithFixerPr = (newPr) => {
+            let watches = 0
+            const answers = {
+              ...ANSWERS,
+              'inc-020 pr': {
+                ok: true,
+                prs: [PERFTESTS_PR],
+                summary: 'one PR'
+              },
+              'inc-020 ci fix 1': {
+                ok: true,
+                summary: 'fixed it in the workspace',
+                newPrs: [newPr]
+              }
+            }
+            return runLoop(scriptPath, {
+              args: FACTORY_ARGS,
+              answers: (prompt, { label }) => {
+                if (label === 'inc-020 ci watch') {
+                  watches += 1
+                  return watches === 1
+                    ? { green: false, failures: ['unit: red'], summary: 'red' }
+                    : { green: true, summary: 'every check green' }
+                }
+                if (Object.hasOwn(answers, label)) return answers[label]
+                return isReviewer(label) ? { findings: [] } : null
+              }
+            })
+          }
+
+          test('gates it by its url when the fixer reports the GitHub name', async () => {
+            const run = await runWithFixerPr({
+              repo: 'DEFRA/trade-imports-workspace',
+              url: WORKSPACE_PR.url
+            })
+
+            expect(promptOf(run, 'inc-020 merge')).toContain(
+              NEEDS_WORKSPACE_APPROVAL
+            )
+          })
+
+          test('stops at pr-repo-unknown before the merge stage when it is in no configured repo', async () => {
+            const run = await runWithFixerPr({
+              repo: 'stub',
+              url: 'https://github.com/DEFRA/trade-imports-stub/pull/4'
+            })
+
+            expect({
+              reason: run.result.stopped.reason,
+              reachedMerge: labelsOf(run).includes('inc-020 merge')
+            }).toEqual({ reason: 'pr-repo-unknown', reachedMerge: false })
+          })
+        })
+      })
+
+      test('tells the PR stage to report each repo by its key', async () => {
+        const prompt = promptOf(await runFactory(), 'inc-020 pr')
+
+        expect(prompt).toContain(
+          "with `repo` set to the repo's key (workspace, perftests), exactly as\nin the backlog entry: never the GitHub name, never the path"
+        )
+      })
     })
 
     describe('an increment that leaves the workspace repo out', () => {
@@ -3805,7 +3969,7 @@ describe('increment-build-loop', () => {
   describe('under the full lifecycle, with the frontend, backend and tests keys', () => {
     const LEGACY_PRS = ['frontend', 'tests', 'backend'].map((key) => ({
       repo: key,
-      url: `https://github.com/DEFRA/trade-imports-animals-${key}/pull/1`
+      url: `https://github.com/${BASE_ARGS.repos[key].github}/pull/1`
     }))
 
     const answersFor = (label) => {
@@ -3840,7 +4004,7 @@ describe('increment-build-loop', () => {
         [
           'THE PULL REQUESTS, in merge order:',
           'backend: https://github.com/DEFRA/trade-imports-animals-backend/pull/1',
-          'tests: https://github.com/DEFRA/trade-imports-animals-tests/pull/1',
+          'tests: https://github.com/DEFRA/trade-imports-ins-tests/pull/1',
           'frontend: https://github.com/DEFRA/trade-imports-animals-frontend/pull/1'
         ].join('\n')
       )

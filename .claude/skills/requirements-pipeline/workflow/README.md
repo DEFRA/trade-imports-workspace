@@ -321,7 +321,9 @@ stage lists those PRs under NEEDS APPROVAL and runs the same whole-increment app
 the run-level gate, on them alone: still unapproved after `approvalWaitMinutes`, it stops at
 `awaiting-approval` with every PR left open. A repo without it merges on green. The run-level
 `requireApproval: true` still gates every PR. `tim build start` lists the repos that need
-approval in its result.
+approval in its result. The script matches each PR to its repo key by the PR's url against the
+configured `github` slugs, never by the name a stage reports, and a PR it cannot match counts as
+needing approval: the run stops at `pr-repo-unknown` before anything merges.
 
 **What never rides in a workspace commit.** The workspace is never clean: it carries the run's
 backlog, plans and logs under `workareas/`, and often somebody's work in progress. `tim build

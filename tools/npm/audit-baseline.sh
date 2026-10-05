@@ -21,9 +21,15 @@
 #     "inactive_allowlist": [GHSA...],   entries audit-ci ignores (inactive or expired)
 #     "fixable_allowlisted": [{ghsa, package, fixes, fixed_version}],
 #     "blocked_allowlisted": [{ghsa, package, fixes, fixed_version}],
+#     "failing_fixable": [{ghsa, package, fixes, fixed_version}],
+#     "failing_no_fix": [{ghsa, package, title}],
 #     "advisories": [{ghsa, package, severity, ranges, title}],
 #     "snapshot": "<path>"
 #   }
+#
+# failing_fixable / failing_no_fix split the failing advisories by
+# whether a fixed version exists, so a caller can allowlist only the
+# ones with no fix (audit-allowlist-add.sh) and take the rest.
 #
 # fixable_allowlisted: an allowlisted advisory that now has a fixed
 # version (a published version newer than the installed one and outside
@@ -122,9 +128,9 @@ CLASSIFIED=$(jq -nc \
         advisories: ($at | map(del(.severity_rank)))
       }')
 
-# Has an allowlisted advisory gained a fix since it was allowlisted?
-TO_CHECK=$(jq -nc --argjson c "$CLASSIFIED" '
-    $c.advisories | map(select(.ghsa as $g | any($c.allowlisted[]; . == $g))) | map({ghsa, package, ranges})')
+# Has an allowlisted advisory gained a fix since it was allowlisted, and
+# does each failing one have a fix to take?
+TO_CHECK=$(jq -nc --argjson c "$CLASSIFIED" '$c.advisories | map({ghsa, package, ranges})')
 FIX_ROWS='[]'
 if [[ "$(jq 'length' <<<"$TO_CHECK")" -gt 0 ]]; then
     FIX_ROWS=$(audit_fix_check "$REPO_PATH" <<<"$TO_CHECK") || {
@@ -142,8 +148,10 @@ SUMMARY=$(jq -n \
     --argjson c "$CLASSIFIED" \
     --argjson fixes "$FIX_ROWS" \
     --argjson allowlist "$ALLOWLIST" '
-    ($fixes | map(select(.fixed_version != null))
+    def among($ids): .ghsa as $g | any($ids[]; . == $g);
+    ($fixes | map(select(among($c.allowlisted) and .fixed_version != null))
      | map(. as $f | $f + {blocked: ([$allowlist[] | select(.id == $f.ghsa) | (.notes // "")] | any(contains($marker)))})) as $with_fix
+    | ($fixes | map(select(among($c.failing)))) as $failing_rows
     | {
         repo: $repo,
         label: $label,
@@ -154,6 +162,9 @@ SUMMARY=$(jq -n \
         inactive_allowlist: $c.inactive_allowlist,
         fixable_allowlisted: ($with_fix | map(select(.blocked | not) | {ghsa, package, fixes, fixed_version})),
         blocked_allowlisted: ($with_fix | map(select(.blocked) | {ghsa, package, fixes, fixed_version})),
+        failing_fixable: ($failing_rows | map(select(.fixed_version != null) | {ghsa, package, fixes, fixed_version})),
+        failing_no_fix: ($failing_rows | map(select(.fixed_version == null) | .ghsa as $g
+            | {ghsa, package, title: ($c.advisories[] | select(.ghsa == $g) | .title)})),
         advisories: $c.advisories,
         snapshot: $snapshot
       }')

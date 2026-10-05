@@ -143,7 +143,13 @@ Target: {target}
 Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
 Files affected (from planner): {files_affected}
 Required changes (from planner): {changes_required_summary}
+Allowlist owner: {owner}
+Allowlist expiry days: {expiry-days}
 ```
+
+Ask the user for the owner and expiry once per walk if the run has
+not given them (the sweep's workflow args `allowlistOwner` and
+`expiryDays` carry them).
 
 The implementor returns one of `DONE`, `FAILED`, `SKIPPED`. It updates
 JSON state itself via `packages-set-status.sh`; you don't need to.
@@ -153,7 +159,8 @@ script-driven flow without an extra subagent:
 
 ```bash
 ~/git/defra/trade-imports-workspace/tools/npm/run-manual-upgrade.sh \
-  --run-id EUDPA-XXXXX --repo {repo} --package {package}
+  --run-id EUDPA-XXXXX --repo {repo} --package {package} \
+  --allowlist-owner "{owner}" --expiry-days {expiry-days}
 ```
 
 The script lays down the install + test + commit + rollback frame,

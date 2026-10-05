@@ -3,7 +3,7 @@
 #
 # Usage:
 #   start-upgrade.sh EUDPA-XXXXX --phase 0|1|2|3 [--repo R ...] [--strategy LEVEL]
-#                    [--branch NAME]
+#                    [--branch NAME] [--allowlist-owner NAME --expiry-days N]
 #
 # --branch NAME refuses to run unless every requested repo is checked
 # out on NAME (the ticket's shared cross-repo branch). A requested repo
@@ -55,15 +55,19 @@ PHASE=""
 STRATEGY="latest"
 BRANCH=""
 REPOS=()
+# Passed to the phase 2 runners, so a new advisory with no fixed
+# version is allowlisted rather than failing the upgrade.
+ALLOWLIST_ARGS=()
 
 usage() {
     cat <<EOF >&2
 Usage: $0 EUDPA-XXXXX --phase 0|1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
-          [--branch NAME]
+          [--branch NAME] [--allowlist-owner NAME --expiry-days N]
 
 Without --repo, runs against every repo flagged npmUpgradeDefault in the
 workspace roster, repos.json. With --branch, refuses to run unless every
-repo is checked out on that branch.
+repo is checked out on that branch. --allowlist-owner and --expiry-days
+let phase 2 allowlist a new advisory that has no fixed version.
 EOF
     exit 1
 }
@@ -75,6 +79,7 @@ while [[ $# -gt 0 ]]; do
         --repo) REPOS+=("$2"); shift 2 ;;
         --strategy) STRATEGY="$2"; shift 2 ;;
         --branch) BRANCH="$2"; shift 2 ;;
+        --allowlist-owner|--expiry-days) ALLOWLIST_ARGS+=("$1" "$2"); shift 2 ;;
         -h|--help) usage ;;
         *) echo "Unknown option: $1" >&2; usage ;;
     esac
@@ -309,6 +314,7 @@ phase2() {
 
         (
             "$SCRIPT_DIR/run-automated-upgrades.sh" "$repo" --run-id "$TICKET" \
+                ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"} \
                 >"$tmpdir/$repo.log" 2>&1
             echo "$?" > "$tmpdir/$repo.exit"
         ) &

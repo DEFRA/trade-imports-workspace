@@ -29,6 +29,9 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 - `files_affected` — list of paths the planner identified
 - `changes_required_summary` — one-line description from the planner
 - Context bundle: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
+- `{owner}`, `{expiry-days}` — who owns any allowlist entry Step 6a
+  writes, and for how many days (90 at most in practice: the repo's CI
+  rejects an expiry more than 3 months away)
 
 ---
 
@@ -150,6 +153,37 @@ If rollback verification ALSO fails — cascade:
 
 ---
 
+## Step 6a: Run the audit
+
+Skip this step when the repo has no `audit-ci.jsonc` (it has not
+adopted audit-ci). Otherwise run it for every repo, the tests repo
+included:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/npm/audit-baseline.sh --run-id {run-id} --repo {repo} --label upgrade-{package-normalized}
+```
+
+Read the JSON it prints.
+
+- Exit 0: green. Continue to Step 7.
+- `failing_fixable` or `fixable_allowlisted` is not empty: an advisory
+  has a fix. Take it if it belongs to this upgrade (bump the package
+  that carries it, then run Steps 6 and 6a again). If you cannot, roll
+  back as in Step 6 (`git checkout -- .` puts `audit-ci.jsonc` back
+  too), mark failed with the GHSA as the reason, and return `FAILED`.
+- Only `failing_no_fix` is left: allowlist each one. The spawn prompt
+  gives the owner and the expiry in days:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/npm/audit-allowlist-add.sh --run-id {run-id} --repo {repo} --ghsa {GHSA} --reason "{advisory title}: no fixed release; arrived with {package} {target}" --owner "{owner}" --expiry-days {expiry-days}
+```
+
+  Never edit `audit-ci.jsonc` by hand. The script writes the entry in
+  the shape the repo's CI check accepts and refuses an advisory that
+  has a fix. Run `audit-baseline.sh` again: it must exit 0.
+
+---
+
 ## Step 7: Commit
 
 ```bash
@@ -162,6 +196,12 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {each-edited-file}
 
 (One add per edited file is fine — keeps the staged diff explicit.)
 
+If Step 6a allowlisted anything, stage it in the same commit:
+
+```bash
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} add audit-ci.jsonc
+```
+
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/{repo} commit -m "Upgrade {package} {current} → {target}
 
@@ -172,6 +212,12 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 
 If the pre-commit hook fails due to Prettier, re-run prettier on
 the offending file, re-add, and create a NEW commit (do NOT --amend).
+
+`trade-imports-animals-admin`'s pre-commit hook also runs
+`npm run security-audit` (and the tests), so a red audit refuses the
+commit there. Never pass `--no-verify`. If the hook refuses the commit
+for anything other than formatting, roll back as in Step 6, mark
+failed with the hook's output as the reason, and return `FAILED`.
 
 Capture the short SHA:
 

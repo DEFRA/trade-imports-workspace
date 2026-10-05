@@ -5,7 +5,7 @@
 # "todo", calling upgrade-one-package.sh per package.
 #
 # Usage:
-#   run-automated-upgrades.sh <repo-name> --run-id TICKET
+#   run-automated-upgrades.sh <repo-name> --run-id TICKET [--allowlist-owner NAME --expiry-days N]
 
 set -e
 
@@ -15,12 +15,12 @@ show_help() {
     cat << EOF
 Run automated upgrades for one repo (Phase 2).
 
-Usage: ./run-automated-upgrades.sh <repo-name> --run-id TICKET
+Usage: ./run-automated-upgrades.sh <repo-name> --run-id TICKET [--allowlist-owner NAME --expiry-days N]
 
 What it does:
   1. Pre-flight: git status clean.
   2. Loops every auto-classified, not-yet-attempted package:
-     - upgrade-one-package.sh installs, tests, commits, or
+     - upgrade-one-package.sh installs, tests, audits, commits, or
        rolls back + demotes to manual on failure.
   3. Cascade failure (rollback also fails) stops the loop.
   4. Final per-repo summary.
@@ -38,11 +38,15 @@ EOF
 
 REPO_NAME=""
 RUN_ID=""
+# Passed through to upgrade-one-package.sh, so a new advisory with no
+# fixed version is allowlisted rather than failing the upgrade.
+ALLOWLIST_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) show_help ;;
         --run-id) RUN_ID="$2"; shift 2 ;;
+        --allowlist-owner|--expiry-days) ALLOWLIST_ARGS+=("$1" "$2"); shift 2 ;;
         --no-discover|--discover) shift ;;  # legacy no-ops; we read JSON
         *)
             if [[ -z "$REPO_NAME" ]]; then
@@ -108,7 +112,7 @@ while true; do
     ((PROCESSED++))
     echo "=== Package $PROCESSED/$initial_count ==="
 
-    if "$SCRIPT_DIR/upgrade-one-package.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg"; then
+    if "$SCRIPT_DIR/upgrade-one-package.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"}; then
         # Check whether it succeeded or controlled-failed.
         latest=$("$SCRIPT_DIR/packages-list.sh" \
             --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" --json | jq -r '.[0].implementation_status')

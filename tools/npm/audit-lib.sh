@@ -110,6 +110,89 @@ AUDIT_JQ_THRESHOLD='
 # fixed version exists but a parent package pins the vulnerable range.
 AUDIT_BLOCKED_MARKER="Fix blocked upstream:"
 
+# Audit gate for one package upgrade, run after its tests pass and
+# before its commit.
+#
+#   audit_upgrade_gate RUN_ID REPO PACKAGE TARGET OWNER EXPIRY_DAYS [REPO_PATH]
+#
+# REPO_PATH audits that checkout instead of repos/<repo>.
+#
+# Returns:
+#   0  green. AUDIT_GATE_ALLOWLISTED lists any GHSA it allowlisted
+#      (new advisories with no fixed version), whose entries are now in
+#      audit-ci.jsonc and must go in the same commit.
+#   1  red. AUDIT_GATE_REASON says why (an advisory with a fix, an
+#      allowlisted advisory that now has one, or a no-fix advisory it
+#      could not allowlist because OWNER or EXPIRY_DAYS is empty).
+#   2  the audit could not run. AUDIT_GATE_REASON says so.
+audit_upgrade_gate() {
+    local run_id="$1" repo="$2" package="$3" target="$4" owner="$5" expiry_days="$6"
+    local repo_args=()
+    [[ -n "${7:-}" ]] && repo_args=(--repo-path "$7")
+    local label summary code=0 ghsa title
+    local tools
+    tools="$(dirname "${BASH_SOURCE[0]}")"
+    label="upgrade-${package//[^A-Za-z0-9._-]/_}-${target}"
+    AUDIT_GATE_ALLOWLISTED=()
+    AUDIT_GATE_REASON=""
+
+    summary=$("$tools/audit-baseline.sh" --run-id "$run_id" --repo "$repo" --label "$label" \
+        ${repo_args[@]+"${repo_args[@]}"}) || code=$?
+    if [[ "$code" -eq 0 ]]; then
+        return 0
+    fi
+    if [[ "$code" -ne 1 ]]; then
+        AUDIT_GATE_REASON="audit could not run after upgrading $package to $target"
+        return 2
+    fi
+
+    local fixable
+    fixable=$(jq -r '[.failing_fixable[], .fixable_allowlisted[]] | map("\(.ghsa) (\(.package) \(.fixed_version))") | join(", ")' <<<"$summary")
+    if [[ -n "$fixable" ]]; then
+        AUDIT_GATE_REASON="audit red after upgrading $package to $target on an advisory with a fix: $fixable"
+        return 1
+    fi
+
+    local no_fix
+    no_fix=$(jq -r '.failing_no_fix | map(.ghsa) | join(" ")' <<<"$summary")
+    if [[ -z "$owner" || -z "$expiry_days" ]]; then
+        AUDIT_GATE_REASON="audit red after upgrading $package to $target on advisories with no fix ($no_fix); pass --allowlist-owner and --expiry-days to allowlist them"
+        return 1
+    fi
+
+    for ghsa in $no_fix; do
+        title=$(jq -r --arg g "$ghsa" '.failing_no_fix[] | select(.ghsa == $g) | .title' <<<"$summary")
+        if ! "$tools/audit-allowlist-add.sh" --run-id "$run_id" --repo "$repo" --ghsa "$ghsa" \
+            --reason "${title%.}: no fixed release; arrived with $package $target" \
+            --owner "$owner" --expiry-days "$expiry_days" ${repo_args[@]+"${repo_args[@]}"} >/dev/null; then
+            AUDIT_GATE_REASON="audit red after upgrading $package to $target; could not allowlist $ghsa"
+            return 1
+        fi
+        AUDIT_GATE_ALLOWLISTED+=("$ghsa")
+    done
+
+    # The new entries must leave the audit green.
+    code=0
+    "$tools/audit-baseline.sh" --run-id "$run_id" --repo "$repo" --label "$label-allowlisted" \
+        ${repo_args[@]+"${repo_args[@]}"} >/dev/null || code=$?
+    if [[ "$code" -ne 0 ]]; then
+        AUDIT_GATE_REASON="audit still red after allowlisting ${AUDIT_GATE_ALLOWLISTED[*]} for $package $target"
+        return 1
+    fi
+    return 0
+}
+
+# Drop entries from a run's allowlist state file, after a rollback has
+# taken them back out of audit-ci.jsonc.
+audit_forget_entries() {
+    local run_id="$1" repo="$2"; shift 2
+    local state
+    state="$(audit_state_dir "$run_id" "$repo")/allowlist.${repo}.json"
+    [[ -f "$state" && $# -gt 0 ]] || return 0
+    jq --args '.entries |= map(select(.ghsa as $g | $ARGS.positional | index($g) | not))' "$@" <"$state" >"$state.tmp"
+    mv "$state.tmp" "$state"
+}
+
 # For each advisory row ({ghsa, package, ranges}) on stdin as a JSON
 # array, print the same rows with installed versions and the lowest
 # published version outside every vulnerable range that is newer than

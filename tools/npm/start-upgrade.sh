@@ -2,7 +2,7 @@
 # Dispatch the npm-upgrade workflow for one ticket.
 #
 # Usage:
-#   start-upgrade.sh EUDPA-XXXXX --phase 1|2|3 [--repo R ...] [--strategy LEVEL]
+#   start-upgrade.sh EUDPA-XXXXX --phase 0|1|2|3 [--repo R ...] [--strategy LEVEL]
 #                    [--branch NAME]
 #
 # --branch NAME refuses to run unless every requested repo is checked
@@ -12,7 +12,14 @@
 # Phase semantics (no FRESH/RESUME dual-state — every invocation is
 # fresh; consumers idempotently merge into prior packages.{repo}.json):
 #
-#   --phase 1  Run `discover-upgrades.sh` for every requested repo,
+#   --phase 0  Run `audit-baseline.sh` for every requested repo and
+#              append the result to {run-id}/phase0.json. Exits 1 if
+#              any repo's audit is red or has an allowlisted advisory
+#              that now has a fix (fixable_allowlisted).
+#
+#   --phase 1  Refuses to start unless the last phase 0 run covered
+#              every requested repo, at its current HEAD, and was
+#              green. Then runs `discover-upgrades.sh` for every requested repo,
 #              then emit a JSON manifest on stdout listing every
 #              package that still has classification=null. The caller
 #              fans out one PACKAGE_PLANNER subagent per manifest
@@ -51,7 +58,7 @@ REPOS=()
 
 usage() {
     cat <<EOF >&2
-Usage: $0 EUDPA-XXXXX --phase 1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
+Usage: $0 EUDPA-XXXXX --phase 0|1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
           [--branch NAME]
 
 Without --repo, runs against every repo flagged npmUpgradeDefault in the
@@ -114,7 +121,85 @@ if [[ -n "$BRANCH" ]]; then
     fi
 fi
 
+PHASE0_FILE="$WORKSPACE_BASE/phase0.json"
+
+phase0() {
+    mkdir -p "$WORKSPACE_BASE"
+
+    local ran_at label per_repo='[]' red=()
+    ran_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    label="phase0-$(date -u +"%Y%m%dT%H%M%SZ")"
+
+    for repo in "${REPOS[@]}"; do
+        echo "Auditing $repo..." >&2
+        local summary code=0 head
+        summary=$("$SCRIPT_DIR/audit-baseline.sh" --run-id "$TICKET" --repo "$repo" --label "$label") || code=$?
+        if [[ "$code" -eq 2 ]] || ! jq -e . >/dev/null 2>&1 <<<"$summary"; then
+            summary=$(jq -nc --arg repo "$repo" '{repo: $repo, green: false, error: "audit-baseline.sh could not run the audit"}')
+        fi
+        head=$(git -C "$REPO_BASE/$repo" rev-parse HEAD)
+        [[ "$code" -ne 0 ]] && red+=("$repo")
+        per_repo=$(jq -nc \
+            --argjson p "$per_repo" \
+            --argjson s "$summary" \
+            --arg head "$head" \
+            --argjson code "$code" \
+            '$p + [$s + {head: $head, exit_code: $code}]')
+    done
+
+    local record
+    record=$(jq -n \
+        --arg ran_at "$ran_at" \
+        --arg label "$label" \
+        --arg branch "$BRANCH" \
+        --argjson per_repo "$per_repo" \
+        --argjson red "$(printf '%s\n' "${red[@]}" | jq -R 'select(. != "")' | jq -s .)" \
+        '{ran_at: $ran_at, label: $label, branch: $branch,
+          green: ($red | length == 0), red: $red,
+          repos: ($per_repo | map(.repo)), per_repo: $per_repo}')
+
+    [[ -f "$PHASE0_FILE" ]] || echo '{"runs": []}' >"$PHASE0_FILE"
+    jq --argjson r "$record" '.runs += [$r]' "$PHASE0_FILE" >"$PHASE0_FILE.tmp"
+    mv "$PHASE0_FILE.tmp" "$PHASE0_FILE"
+
+    echo "$record"
+    if [[ "${#red[@]}" -gt 0 ]]; then
+        echo "Phase 0 RED: ${red[*]}. Clear the failing or fixable_allowlisted advisories first." >&2
+        return 1
+    fi
+    echo "Phase 0 green for ${#REPOS[@]} repo(s)." >&2
+}
+
+# Phase 1 builds on a green audit: the last phase 0 run must cover
+# every requested repo at its current HEAD and be green.
+require_green_phase0() {
+    if [[ ! -f "$PHASE0_FILE" ]]; then
+        echo "Refusing phase 1: no phase 0 run for $TICKET. Run --phase 0 first." >&2
+        exit 1
+    fi
+    local last problems=()
+    last=$(jq -c '.runs | last' "$PHASE0_FILE")
+    for repo in "${REPOS[@]}"; do
+        local row head
+        row=$(jq -c --arg r "$repo" '.per_repo[] | select(.repo == $r)' <<<"$last")
+        head=$(git -C "$REPO_BASE/$repo" rev-parse HEAD)
+        if [[ -z "$row" ]]; then
+            problems+=("$repo: not in the last phase 0 run")
+        elif [[ "$(jq -r '.exit_code' <<<"$row")" != "0" ]]; then
+            problems+=("$repo: red in the last phase 0 run")
+        elif [[ "$(jq -r '.head' <<<"$row")" != "$head" ]]; then
+            problems+=("$repo: HEAD has moved since the last phase 0 run")
+        fi
+    done
+    if [[ "${#problems[@]}" -gt 0 ]]; then
+        echo "Refusing phase 1 until a green phase 0 run covers these repos:" >&2
+        printf '  %s\n' "${problems[@]}" >&2
+        exit 1
+    fi
+}
+
 phase1() {
+    require_green_phase0
     mkdir -p "$WORKSPACE_BASE"
 
     # Discover each repo. Each call writes packages.{repo}.json
@@ -296,6 +381,7 @@ phase3() {
 }
 
 case "$PHASE" in
+    0) phase0 ;;
     1) phase1 ;;
     2) phase2 ;;
     3) phase3 ;;

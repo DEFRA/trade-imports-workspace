@@ -155,6 +155,36 @@ describe('renderStartText', () => {
     )
   })
 
+  test('says when a reused branch was caught up to its base', () => {
+    expect(
+      renderStartText({
+        id: 'inc-003',
+        repeat: false,
+        ticket: null,
+        warnings: [],
+        branched: [
+          {
+            repo: 'workspace',
+            branch: 'feat/EUDPA-5-x',
+            head: 'def5678',
+            cut: false,
+            from: 'origin/main',
+            caughtUpToBase: true
+          }
+        ],
+        resumeAt: 'build',
+        failedStep: null,
+        reason: null
+      })
+    ).toBe(
+      [
+        'Increment inc-003.',
+        '  workspace  on feat/EUDPA-5-x, caught up to origin/main at def5678',
+        'Resume at build.'
+      ].join('\n')
+    )
+  })
+
   test('names what the workspace repo carried and which repos need a person’s approval', () => {
     expect(
       renderStartText({

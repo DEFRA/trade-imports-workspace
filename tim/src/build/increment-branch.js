@@ -96,6 +96,38 @@ const catchUp = async ({ key, path }, branch) => {
   )
 }
 
+const sameCommit = async (dir, first, second) => {
+  const [firstSha, secondSha] = await Promise.all(
+    [first, second].map(async (ref) =>
+      (await git(dir, ['rev-parse', ref])).stdout.trim()
+    )
+  )
+  return firstSha === secondSha
+}
+
+// A branch with no commits of its own, behind a base that has moved on, has
+// nothing to lose, so it is fast-forwarded rather than built on a stale base.
+// A branch with any commits of its own is left as it is.
+const isBehindBaseOnly = async ({ path }, branch, base) =>
+  (await hasRef(path, `refs/remotes/origin/${base}`)) &&
+  (await succeeds(path, [
+    'merge-base',
+    '--is-ancestor',
+    branch,
+    `origin/${base}`
+  ])) &&
+  !(await sameCommit(path, branch, `origin/${base}`))
+
+const catchUpToBase = async (repo, branch, base) => {
+  if (!(await isBehindBaseOnly(repo, branch, base))) return false
+  await must(
+    repo.path,
+    ['merge', '--quiet', '--ff-only', `origin/${base}`],
+    `${repo.key}: can't fast-forward ${branch} to origin/${base}`
+  )
+  return true
+}
+
 const checkOut = async (repo, branch, base) => {
   const { key, path } = repo
   if (await hasRef(path, `refs/heads/${branch}`)) {
@@ -105,7 +137,9 @@ const checkOut = async (repo, branch, base) => {
       `${key}: can't check out ${branch}`
     )
     await catchUp(repo, branch)
-    return { cut: false, from: null }
+    return (await catchUpToBase(repo, branch, base))
+      ? { cut: false, from: `origin/${base}`, caughtUpToBase: true }
+      : { cut: false, from: null, caughtUpToBase: false }
   }
   if (await hasRef(path, `refs/remotes/origin/${branch}`)) {
     await must(
@@ -113,7 +147,7 @@ const checkOut = async (repo, branch, base) => {
       ['checkout', '--quiet', '-b', branch, '--track', `origin/${branch}`],
       `${key}: can't check out ${branch} from origin`
     )
-    return { cut: false, from: `origin/${branch}` }
+    return { cut: false, from: `origin/${branch}`, caughtUpToBase: false }
   }
   if (!(await hasRef(path, `refs/remotes/origin/${base}`))) {
     throw new BranchStepFailure(
@@ -125,7 +159,7 @@ const checkOut = async (repo, branch, base) => {
     ['checkout', '--quiet', '-b', branch, '--no-track', `origin/${base}`],
     `${key}: can't cut ${branch} from origin/${base}`
   )
-  return { cut: true, from: `origin/${base}` }
+  return { cut: true, from: `origin/${base}`, caughtUpToBase: false }
 }
 
 // The branch's upstream must be its own remote branch, or none. An upstream
@@ -208,16 +242,20 @@ const putOnBranch = async (repo, branch, base) => {
  * Put each of an increment's repos on its branch, the same name in every one:
  * check it out where it exists locally and fast-forward it to what is pushed,
  * track it where only origin has it, and otherwise cut it with --no-track from
- * a freshly fetched origin/<base>. An upstream other than the branch's own is
- * removed. Nothing changes in any repo if one is not cloned or has
- * uncommitted work; a failure part-way stops at that repo.
+ * a freshly fetched origin/<base>. A local branch with no commits of its own
+ * that origin/<base> has moved past is then fast-forwarded to origin/<base>,
+ * pushed or not, and its result says `caughtUpToBase: true` and
+ * `from: 'origin/<base>'`. A branch with commits of its own is never rebased
+ * or merged into. An upstream other than the branch's own is removed. Nothing
+ * changes in any repo if one is not cloned or has uncommitted work; a failure
+ * part-way stops at that repo.
  *
  * The workspace repo itself (`workspace: true`) is the exception to the
- * uncommitted-work rule: its uncommitted files travel across the switch, and
- * its result lists them as `carried`: each file that was uncommitted before
- * the increment started, one by one inside an untracked folder too, and both
- * paths of a rename. A switch that would overwrite one of them stops, naming
- * the files.
+ * uncommitted-work rule: its uncommitted files travel across the switch and
+ * the fast-forward, and its result lists them as `carried`: each file that was
+ * uncommitted before the increment started, one by one inside an untracked
+ * folder too, and both paths of a rename. A switch or fast-forward that would
+ * overwrite one of them stops, naming the files.
  *
  * @param {object} args
  * @param {{key: string, path: string, workspace?: boolean}[]} args.repos - In the order to branch them

@@ -93,18 +93,23 @@ isn't `I`, `D`, or `S` with a clear error and re-prompt.
 | Char | Action |
 |---|---|
 | `I` | Spawn `MANUAL_UPGRADE_IMPLEMENTOR` subagent (Step 4) |
-| `D` | Defer — mark status=todo with a "deferred" note in failure_reason and remind operator to file a follow-up ticket |
+| `D` | Defer (hold back on purpose) — ask why, store the reason, and remind operator to file a follow-up ticket |
 | `S` | Skip — leave pending |
 
-For `D`:
+For `D`: ask the user for the reason, in one plain question per
+deferred package (for example "Why hold back jsdom 30.0.1?"). Every
+held package needs one: the handoff report and the PR body list it.
+Then store it:
+
 ```bash
 ~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
   --run-id EUDPA-XXXXX --repo {repo} --package {pkg} \
-  --status failed --failure-reason "Deferred by walker — file follow-up ticket"
+  --status failed --failure-reason "Deferred by walker: {reason}"
 ```
-(We use `failed` rather than introducing a new status — failed +
-"Deferred" reason carries the same "needs human attention later"
-signal.)
+(We use `failed` rather than introducing a new status or a `held`
+classification — failed + a reason starting "Deferred by walker:"
+carries the same "needs human attention later" signal, and
+`start-upgrade.sh --phase 3` lists those rows under `held`.)
 
 For `S`: do nothing — the package row stays as it is.
 

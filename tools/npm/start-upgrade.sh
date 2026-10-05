@@ -32,7 +32,11 @@
 #              (exit 1 from any repo runner) propagates back.
 #
 #   --phase 3  Emit a JSON handoff manifest of every manual (or
-#              failed-auto) package — the WALKER consumes it.
+#              failed-auto) package — the WALKER consumes it — plus
+#              `held` (packages the walker deferred, with the reason),
+#              `allowlist` (every audit-ci.jsonc entry per repo, with
+#              reason, owner and expiry) and `audit_before` /
+#              `audit_after` (the first and latest phase 0 runs).
 #
 # All cross-phase state lives in
 # `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json`.
@@ -356,14 +360,65 @@ phase3() {
         --status failed \
         --json)
 
+    # Every allowlist entry in each repo's audit-ci.jsonc (the truth),
+    # with the package and kind this run's writer recorded for it.
+    local allowlist_json='[]'
+    for repo in "${REPOS[@]}"; do
+        local config="$REPO_BASE/$repo/audit-ci.jsonc"
+        [[ -f "$config" ]] || continue
+        local state="$WORKSPACE_BASE/$repo/allowlist.${repo}.json"
+        local recorded='[]'
+        [[ -f "$state" ]] && recorded=$(jq -c '.entries' "$state")
+        allowlist_json=$(jq -c \
+            --argjson acc "$allowlist_json" \
+            --argjson recorded "$recorded" \
+            --arg repo "$repo" '
+            $acc + [.allowlist[]
+              | if type == "string" then {ghsa: ., notes: null, expiry: null}
+                else to_entries[0] | {ghsa: .key, notes: .value.notes, expiry: .value.expiry} end
+              | .ghsa as $g
+              | ($recorded | map(select(.ghsa == $g)) | first) as $r
+              | (.notes // "") as $n
+              | {
+                  repo: $repo,
+                  ghsa: .ghsa,
+                  package: ($r.package // null),
+                  kind: ($r.kind // null),
+                  reason: ($n | sub(" *Fix blocked upstream:.*$"; "") | sub(" *Owner:.*$"; "") | sub("\\.$"; "")),
+                  blocked_by: ($n | capture("Fix blocked upstream: (?<b>.*?)\\. Owner:").b // null),
+                  owner: ($n | capture("Owner: (?<o>.*)$").o // null),
+                  expiry: .expiry
+                }]' "$config")
+    done
+
+    # The first and the latest phase 0 runs, per repo.
+    local audit_before='null' audit_after='null'
+    if [[ -f "$PHASE0_FILE" ]]; then
+        local brief='map({repo, green, failing, allowlisted, stale, fixable_allowlisted: (.fixable_allowlisted // [] | map(.ghsa)), error})'
+        audit_before=$(jq -c ".runs | first | {ran_at, label, per_repo: (.per_repo | $brief)}" "$PHASE0_FILE")
+        audit_after=$(jq -c ".runs | last | {ran_at, label, per_repo: (.per_repo | $brief)}" "$PHASE0_FILE")
+    fi
+
     jq -n \
+        --arg ticket "$TICKET" \
         --argjson manual "$manual_json" \
         --argjson failed_auto "$failed_json" \
-        '{
-            ticket: "'"$TICKET"'",
+        --argjson allowlist "$allowlist_json" \
+        --argjson audit_before "$audit_before" \
+        --argjson audit_after "$audit_after" \
+        '($manual + $failed_auto) as $packages
+        | {
+            ticket: $ticket,
             manual_count: ($manual | length),
             failed_auto_count: ($failed_auto | length),
-            packages: ($manual + $failed_auto)
+            packages: $packages,
+            held: ($packages
+                | map(select((.failure_reason // "") | startswith("Deferred by walker")))
+                | map({repo, package, current, target,
+                       reason: (.failure_reason | sub("^Deferred by walker: *"; ""))})),
+            allowlist: $allowlist,
+            audit_before: $audit_before,
+            audit_after: $audit_after
         }'
 
     echo >&2

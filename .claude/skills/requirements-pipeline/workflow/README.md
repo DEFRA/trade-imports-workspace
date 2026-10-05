@@ -417,9 +417,14 @@ ticket and the loop stops at `not-landed`. In order, tim:
 3. **branches** it: the row's branch, or `<type>/<KEY>-<slug>` recorded on the row, in each of
    the increment's repos (a row that names none takes every repo, in the args' order),
    checked out and fast-forwarded where it exists, tracked where only
-   origin has it, or cut `--no-track` from a freshly fetched `origin/<base>`. A repo with
-   uncommitted work stops it before any repo changes, and an upstream on another branch is
-   removed.
+   origin has it, or cut `--no-track` from a freshly fetched `origin/<base>`. A branch that
+   exists locally with no commits of its own, pushed or not, is also fast-forwarded to
+   `origin/<base>` when the base has moved on, so the increment never builds on a stale base;
+   its entry in `branched` says `caughtUpToBase: true`. A branch with commits of its own is
+   left as it is: never rebased, never merged into. A repo with uncommitted work stops it
+   before any repo changes, except the workspace repo, whose uncommitted files travel across
+   the switch and the fast-forward; one that either would overwrite stops it, naming the
+   files. An upstream on another branch is removed.
 
 It reports `resumeAt` from the row's `commit` and `prs`, never from the ticket's status. The
 script maps a failed step to the stop reasons it always had: `derive-failed`, `no-buildable`,

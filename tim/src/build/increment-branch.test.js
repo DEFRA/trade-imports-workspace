@@ -187,6 +187,141 @@ describe('branchIncrementRepos', () => {
     )
   })
 
+  describe('a local branch the base has moved past', () => {
+    const cutLocally = (path, name) =>
+      git(path, 'branch', '--no-track', name, 'origin/main')
+
+    const reused = (outcome) => {
+      const [{ cut, from, caughtUpToBase }] = outcome.repos
+      return { ok: outcome.ok, cut, from, caughtUpToBase }
+    }
+
+    test('fast-forwards a branch with no commits of its own to origin/<base>', async () => {
+      fresh()
+      const frontend = await cloneOf('frontend')
+      await cutLocally(frontend.path, 'feat/EUDPA-9-origin')
+      const moved = await pushCommit(frontend.workPath, 'main', 'later.txt')
+
+      const outcome = await branch([frontend], 'feat/EUDPA-9-origin')
+
+      expect({
+        ...reused(outcome),
+        head: await git(frontend.path, 'rev-parse', 'HEAD')
+      }).toEqual({
+        ok: true,
+        cut: false,
+        from: 'origin/main',
+        caughtUpToBase: true,
+        head: moved
+      })
+    })
+
+    test('leaves a branch with commits of its own where it is', async () => {
+      fresh()
+      const frontend = await cloneOf('frontend')
+      await git(
+        frontend.path,
+        'checkout',
+        '--quiet',
+        '-b',
+        'feat/EUDPA-9-origin',
+        '--no-track',
+        'origin/main'
+      )
+      await commitIn(frontend.path, 'own.txt')
+      const own = await git(frontend.path, 'rev-parse', 'HEAD')
+      await git(frontend.path, 'checkout', '--quiet', 'main')
+      await pushCommit(frontend.workPath, 'main', 'later.txt')
+
+      const outcome = await branch([frontend], 'feat/EUDPA-9-origin')
+
+      expect({
+        ...reused(outcome),
+        head: await git(frontend.path, 'rev-parse', 'HEAD')
+      }).toEqual({
+        ok: true,
+        cut: false,
+        from: null,
+        caughtUpToBase: false,
+        head: own
+      })
+    })
+
+    test('leaves a branch already at origin/<base> unchanged', async () => {
+      fresh()
+      const frontend = await cloneOf('frontend')
+      await cutLocally(frontend.path, 'feat/EUDPA-9-origin')
+
+      const outcome = await branch([frontend], 'feat/EUDPA-9-origin')
+
+      expect({
+        ...reused(outcome),
+        head: await git(frontend.path, 'rev-parse', 'HEAD')
+      }).toEqual({
+        ok: true,
+        cut: false,
+        from: null,
+        caughtUpToBase: false,
+        head: frontend.shas.main
+      })
+    })
+
+    test('fast-forwards the workspace repo with its uncommitted files intact', async () => {
+      fresh()
+      const workspace = {
+        ...(await cloneOf('trade-imports-workspace')),
+        key: 'workspace',
+        workspace: true
+      }
+      await cutLocally(workspace.path, 'chore/EUDPA-9-perf-mode')
+      const moved = await pushCommit(workspace.workPath, 'main', 'later.md')
+      writeFileSync(join(workspace.path, 'README.md'), '# edited\n')
+      writeFileSync(join(workspace.path, 'notes.txt'), 'mine\n')
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect({
+        ...reused(outcome),
+        carried: outcome.repos[0]?.carried,
+        head: await git(workspace.path, 'rev-parse', 'HEAD'),
+        stillEdited: await git(workspace.path, 'status', '--short')
+      }).toEqual({
+        ok: true,
+        cut: false,
+        from: 'origin/main',
+        caughtUpToBase: true,
+        carried: ['README.md', 'notes.txt'],
+        head: moved,
+        stillEdited: 'M README.md\n?? notes.txt'
+      })
+    })
+
+    test('stops, naming each file, when the fast-forward would overwrite one the workspace carries', async () => {
+      fresh()
+      const workspace = {
+        ...(await cloneOf('trade-imports-workspace')),
+        key: 'workspace',
+        workspace: true
+      }
+      await cutLocally(workspace.path, 'chore/EUDPA-9-perf-mode')
+      await pushCommit(workspace.workPath, 'main', 'README.md')
+      writeFileSync(join(workspace.path, 'README.md'), '# edited\n')
+
+      const outcome = await branch([workspace], 'chore/EUDPA-9-perf-mode')
+
+      expect({
+        ok: outcome.ok,
+        reason: outcome.reason,
+        stillEdited: await git(workspace.path, 'status', '--short')
+      }).toEqual({
+        ok: false,
+        reason:
+          'workspace: switching to chore/EUDPA-9-perf-mode would overwrite uncommitted files in the workspace: README.md. Nothing was stashed, reset or cleaned. Commit or move those files by hand, then run again.',
+        stillEdited: 'M README.md'
+      })
+    })
+  })
+
   test('removes an upstream an older run left pointing at the base branch', async () => {
     fresh()
     const frontend = await cloneOf('frontend')

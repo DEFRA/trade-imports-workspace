@@ -45,7 +45,7 @@ flowchart LR
   AF -.->|address handshake| IF
   IF --> AD[address-book]
   PF --> AD
-  AB --> AD
+  AF --> AD
 
   AB -->|outbox| SNS{{SNS FIFO topic}}
   SNS --> SQS1{{SQS: gateway queue}}
@@ -100,8 +100,9 @@ endpoint. The admin service does call the gateway, but only for dead-letter queu
 operations (list, replay-all, delete-all).
 
 **Addresses.** address-book is the only owner of address records. ins-frontend
-and plants-frontend call it directly. The animals backend calls it through
-`AddressBookClient`. The animals frontend sends the user to ins-frontend for
+and plants-frontend call it directly. The animals frontend calls it too, and
+copies the chosen record onto the notification at pick time; the animals
+backend never calls it. The animals frontend sends the user to ins-frontend for
 address management and back again (the handshake, journey type `gbn-ag` only).
 
 **Reference data.** Frontends call reference-data for countries and ports of

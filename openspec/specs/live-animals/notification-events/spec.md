@@ -46,13 +46,13 @@ The system MUST NOT record a withdrawal event when a draft that was never submit
 
 ### Requirement: Every event references the notification's scanned accompanying documents, coded by type
 **ID**: REQ-EVENTS-003
-A notification event MUST reference each of the notification's accompanying documents that has passed its virus scan, giving the document's type code from the GBN-AG document-type codelist, the codelist that defines that code, the document's reference and its date of issue. A document still being scanned or rejected by the scan MUST NOT be referenced, and a notification with no scanned documents MUST send no document references at all rather than an empty list.
+A notification event MUST reference each of the notification's accompanying documents that has passed its virus scan, giving the document's type code from the GBN-AG document-type codelist, a reference naming that codelist, the document's reference and its date of issue. A document still being scanned or rejected by the scan MUST NOT be referenced, and a notification with no scanned documents MUST send no document references at all rather than an empty list.
 
 #### Scenario: A submitted notification references each scanned document with its type code and codelist
 **ID**: SCN-EVENTS-003-A
 - **GIVEN** a user uploads a document that passes its virus scan and submits the notification
 - **WHEN** the outbox is checked
-- **THEN** the submission event references that document once, with its type code, the codelist that defines the code, its reference and its date of issue
+- **THEN** the submission event references that document once, with its type code, the GBN-AG document-type codelist the code comes from, its reference and its date of issue
 
 #### Scenario: A notification with no documents sends no document references
 **ID**: SCN-EVENTS-003-B

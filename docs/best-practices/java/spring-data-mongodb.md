@@ -675,9 +675,9 @@ private String id;  // Spring Data handles ObjectId ↔ String conversion
 
 **4. `LocalDateTime` / `LocalDate` timezone drift**
 
-MongoDB has one date type: a UTC instant (BSON `Date`). Every zone-less Java date is therefore
-resolved against `ZoneId.systemDefault()` on the way in, so the stored value depends on the host
-timezone. Under `Europe/London` during BST, `LocalDate 2026-07-21` persists as
+MongoDB has one date type: a UTC instant (BSON `Date`). A zone-less Java date stored as one is
+therefore resolved against `ZoneId.systemDefault()` on the way in, so the stored value depends on
+the host timezone. Under `Europe/London` during BST, `LocalDate 2026-07-21` persists as
 `2026-07-20T23:00:00Z` — an hour and a calendar day early (EUDPA-282).
 
 Use `Instant` for timestamps:
@@ -690,54 +690,79 @@ private LocalDateTime createdAt;
 private Instant createdAt;
 ```
 
-**Date-only values are `Instant` too — all the way out to the wire.** EUDPA-565 settled this: a
-date-only field carries `Instant` on the request DTO, on the document and on the response, so the
-JSON contract is an RFC 3339 instant (`"2026-07-21T00:00:00Z"`), not a bare `"2026-07-21"`. There
-is no zone-less type left anywhere on the path, so there is no conversion to get wrong and no
-converter these fields depend on.
-
-**This overrides the `date` form in the REST guide.**
-[`rest-api.md`](../rest-api/rest-api.md) → "Dates (RFC 3339 / ISO 8601)" lists two forms: `date`
-(`2024-01-15`) and `date-time` (`2024-01-15T10:30:00Z`). For these services a date-only field
-uses the `date-time` form, not `YYYY-MM-DD`. The frontend converts the day the user entered to a
-UTC instant before it sends it, and the backend is UTC-only. What the `date` form gave for free —
-a value that cannot carry a time of day — is put back by truncating to UTC midnight at the service
-boundary, described next.
+**A date-only value is a `LocalDate`, stored as a string.** A calendar date — an arrival date, a
+date of issue — has no time and no zone, so do not give it either. Type it as `LocalDate` on the
+request DTO, on the document and on the response. The JSON contract is the `date` form in
+[`rest-api.md`](../rest-api/rest-api.md) → "Dates (RFC 3339 / ISO 8601)" (`"2026-07-21"`), and
+Mongo holds the same string. The value never becomes a BSON `Date`, so no zone takes part and
+there is nothing to drift. Keep `Instant` for moments — `created`, `updated`, `submittedAt`.
 
 ```java
-// Wire DTO — the caller sends an instant
-@Schema(description = "Date of issue on the physical document, as UTC midnight",
-    example = "2026-01-15T00:00:00Z")
-Instant dateOfIssue
+// Wire DTO — the caller sends a calendar date
+@Schema(description = "Date of issue on the physical document", example = "2026-01-15")
+LocalDate dateOfIssue
 
-// Document field — same type, no conversion
-private Instant dateOfIssue;
+// Document field — same type, stored as the string "2026-01-15"
+private LocalDate dateOfIssue;
 ```
 
-**Normalise the date-only ones at the service boundary.** `LocalDate` made a time component
-impossible to represent; `Instant` does not. A caller can now send `2026-07-21T23:00:00Z` for a
-field that means a calendar day, and under `Europe/London` that is the *next* day — the EUDPA-282
-failure mode relocated from the JVM to the caller. So truncate where the value means a date:
+**Register a `LocalDate` ↔ `String` converter pair.** Left alone, Spring Data's built-in JSR-310
+converter writes a `LocalDate` as a BSON `Date` at start-of-day in `ZoneId.systemDefault()` —
+the EUDPA-282 drift. A pair registered in `MongoCustomConversions` replaces it for every
+`LocalDate` field on every document, so a field added later cannot bring the drift back:
 
 ```java
-// Service boundary — pin it to the day the caller meant
-.dateOfIssue(request.dateOfIssue().truncatedTo(ChronoUnit.DAYS))
+@WritingConverter
+public enum LocalDateToStringConverter implements Converter<LocalDate, String> {
+    INSTANCE;
+
+    @Override
+    public String convert(LocalDate source) {
+        return source.toString();   // "2026-07-21"
+    }
+}
+
+@ReadingConverter
+public enum StringToLocalDateConverter implements Converter<String, LocalDate> {
+    INSTANCE;
+
+    @Override
+    public LocalDate convert(String source) {
+        return LocalDate.parse(source);
+    }
+}
 ```
 
-Do this wherever a date-only instant reaches a downstream system that reads it as a calendar day —
-`Transport.arrivalDate` feeds the GB-NAG `scheduledOccurrenceDateTime` that PIMS reads that way.
-A `@Schema` or Javadoc that states the value *is* UTC midnight must be backed by a truncation that
-makes it so; documenting the guarantee without enforcing it is worse than not claiming it.
+`trade-imports-animals-backend` holds the pair in `LocalDateStringConverters` and registers it in
+`MongoConfig`. Two things follow from the string form:
 
-**`Instant` needs no converter; the UTC `LocalDate` pair stays registered as a guard.** An earlier
-revision of this guide recommended a `@WritingConverter`/`@ReadingConverter` pair pinning
-`LocalDate` to UTC at the persistence boundary as the way to store a date. That is no longer how a
-date field is modelled — use `Instant` and there is nothing to convert. The pair itself is not
-removed: `trade-imports-animals-backend` still registers `UtcLocalDateConverters` in `MongoConfig`,
-deliberately, although no field uses it today. It costs nothing at runtime, and it means an
-internal, non-wire `LocalDate` field added later cannot reintroduce the EUDPA-282 drift. Don't
-delete it as dead code, and don't add a `LocalDate` field to the API because it is there — a new
-field on the wire is an `Instant`.
+- The reading converter runs only where the target property is a `LocalDate`. A `String` field,
+  and an untyped payload such as a `Document` or a `Map<String, Object>`, keeps a date-shaped
+  string as a string.
+- `YYYY-MM-DD` strings sort in date order, so sorts and range queries on these fields work as
+  string comparisons.
+
+**Reject a time or an offset at the API.** Jackson's `LocalDateDeserializer` is lenient by
+default: sent `"2026-07-21T00:00:00Z"` it keeps the date part and returns 200. Turn leniency off
+for the type, so a caller that sends a moment where a calendar date belongs gets 400. Set it once
+for `LocalDate` rather than with `@JsonFormat` on each field:
+
+```java
+// StrictLocalDateModule — a Jackson Module bean, so @WebMvcTest slices load it too
+context.configOverride(LocalDate.class).setFormat(JsonFormat.Value.forLeniency(false));
+```
+
+**Convert to an instant only where a downstream contract needs one, and name the zone.** The
+GB-NAG `scheduledOccurrenceDateTime` that PIMS reads is an instant, so `TransportEvent` converts
+`Transport.arrivalDate` on the way out:
+
+```java
+// Correct — the zone is stated, so the string is the same on any host
+date.atStartOfDay(ZoneOffset.UTC).toInstant().toString()   // "2026-07-21T00:00:00Z"
+
+// Wrong — resolves against the JVM default zone
+date.atStartOfDay(ZoneId.systemDefault()).toInstant()
+```
 
 **Don't reach for `ZonedDateTime` here.** It looks like the zone-safe choice, but Mongo has no
 zone-aware date type: a `ZonedDateTime` field still serialises to a plain BSON `Date` with the
@@ -750,23 +775,28 @@ timestamps.
 and `TimeZone.setDefault(TimeZone.getTimeZone("UTC"))` in a static initializer on the
 `@SpringBootApplication` class (a static initializer, so `@SpringBootTest` contexts get it too —
 they never call `main()`). That gives every zone-less API in the process a safe default, including
-code that has not had this scrutiny. It is a complement to `Instant` fields and UTC-midnight
-truncation, never a substitute: an `Instant` truncated with `truncatedTo(ChronoUnit.DAYS)` is the
-same value in any zone, so it still holds when the env var is missing or the service runs outside
-its container, where a zone-less type would be relying on the default alone.
+code that has not had this scrutiny. It is a complement to `Instant` fields and string-stored
+`LocalDate` fields, never a substitute: neither reads the default zone, so both still hold when
+the env var is missing or the service runs outside its container, where a zone-less type stored
+as a BSON `Date` would be relying on the default alone.
 
-**Verify with a raw BSON read.** A repository round trip decodes with the same zone it encoded
-with, so the drift cancels out and the test passes either way. Assert on the stored value itself:
+**Verify with a raw read.** A repository round trip decodes with the same zone it encoded with,
+so any drift cancels out and the test passes either way. Assert on the stored value itself — a
+`String` for a date-only field, a `Date` for a moment:
 
 ```java
 Document stored = mongoTemplate.getCollection("notification")
     .find(new Document("referenceNumber", referenceNumber))
     .first();
 
+// Date-only field — get(..., String.class) throws if it was stored as a BSON date
 assertThat(stored.get("notification", Document.class)
     .get("transport", Document.class)
-    .get("arrivalDate", Date.class)
-    .toInstant()).hasToString("2026-07-21T00:00:00Z");
+    .get("arrivalDate", String.class)).isEqualTo("2026-07-21");
+
+// Moment
+assertThat(stored.get("created", Date.class).toInstant())
+    .hasToString("2026-07-21T00:30:00Z");
 ```
 
 **5. Unbounded `findAll()` in production**

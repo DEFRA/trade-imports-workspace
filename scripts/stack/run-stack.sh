@@ -48,6 +48,7 @@ stage_init_scripts "$branch" "$stage_zap"
 
 [ ${#selected_profiles[@]} -eq 0 ] && selected_profiles=("${ALL_PROFILES[@]}")
 [ "$dev" -eq 1 ] && compose_files_add_dev
+[ "$perf" -eq 1 ] && compose_files_add_perf
 
 # Sanitisation must match the per-repo publish-branch.yml workflows.
 sanitise_branch() {
@@ -125,6 +126,7 @@ for svc in ${active_services[@]+"${active_services[@]}"}; do
 done
 
 printf '%sProfiles:%s %s\n' "$COLOUR_BOLD" "$COLOUR_RESET" "${selected_profiles[*]}"
+[ "$perf" -eq 1 ] && printf '%sStub latency:%s %s (performance mode)\n' "$COLOUR_BOLD" "$COLOUR_RESET" "${STUB_PROFILE:-sla}"
 sanitised=""
 if [ -n "$branch" ]; then
   sanitised="$(sanitise_branch "$branch")"

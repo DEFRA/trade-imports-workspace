@@ -10,8 +10,11 @@ import {
   stackStatus,
   describeLease,
   defaultLeasePath,
-  LEASE_MODES
+  LEASE_MODES,
+  STUB_PROFILES,
+  perfStubProfile
 } from '../../exec/stack-lease.js'
+import { TimError } from '../../errors.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
 const emitError = (text) => process.stderr.write(`${text}\n`)
@@ -44,6 +47,18 @@ const releaseSchema = z.object({
   logs: z.string().trim().min(1).optional()
 })
 
+const stubProfileSchema = z.enum(STUB_PROFILES)
+
+const requireValidStubProfile = (env = process.env) => {
+  const profile = perfStubProfile(env)
+  if (!stubProfileSchema.safeParse(profile).success) {
+    throw new TimError(
+      'USAGE',
+      `STUB_PROFILE must be ${STUB_PROFILES.join(' or ')}, not "${profile}".`
+    )
+  }
+}
+
 const logsDirFor = (logs, leasePath) =>
   logs ? resolve(logs) : join(dirname(leasePath), 'logs')
 
@@ -58,10 +73,14 @@ const envelopeOf = ({ ok, result, code, message, timVersion }) =>
 
 const acquireText = (outcome) => {
   if (!outcome.acquired) return outcome.reason
-  const { holder, mode } = outcome.lease
-  return outcome.reused
-    ? `The workspace stack is already leased to "${holder}". Reused it as it is.`
-    : `Started the workspace stack in ${mode} mode and leased it to "${holder}". Release it with tim docker lease release --holder "${holder}".`
+  const { holder, mode, stubProfile } = outcome.lease
+  if (outcome.reused) {
+    return `The workspace stack is already leased to "${holder}". Reused it as it is.`
+  }
+  const startedIn = stubProfile
+    ? `${mode} mode, with both stubs on the ${stubProfile} latency profile,`
+    : `${mode} mode`
+  return `Started the workspace stack in ${startedIn} and leased it to "${holder}". Release it with tim docker lease release --holder "${holder}".`
 }
 
 const acquireFailureCode = (outcome) =>
@@ -136,6 +155,7 @@ const leaseAction = (run, timVersion) =>
 
 const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
   const parsed = parseOptions(acquireSchema, opts)
+  if (parsed.mode === 'perf') requireValidStubProfile()
   const outcome = await acquireStack({
     workspaceRoot,
     holder: parsed.holder,
@@ -177,6 +197,29 @@ const runStatus = async ({ leasePath }) => {
   }
 }
 
+const runPerf = (context) =>
+  runAcquire({ ...context, opts: { ...context.opts, mode: 'perf' } })
+
+/**
+ * `tim docker perf`: take the stack lease in perf mode.
+ *
+ * @param {import('commander').Command} docker
+ * @param {string} timVersion
+ */
+export const registerPerf = (docker, timVersion) =>
+  docker
+    .command('perf')
+    .description(
+      'Start the workspace stack as a performance target and lease it: published images, with both stubs answering at the latency profile in STUB_PROFILE (default sla). A stack somebody else holds, or one up with no lease, is refused and left alone. The build gate never uses this mode.'
+    )
+    .option('--holder <text>', 'Who takes the lease', 'perf')
+    .option('--logs <dir>', 'Where run-stack.sh writes its log')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim docker perf\n  STUB_PROFILE=zero-delay tim docker perf --json\n  tim docker lease release --holder perf'
+    )
+    .action(leaseAction(runPerf, timVersion))
+
 /**
  * `tim docker lease acquire|release|status`: who holds the workspace stack.
  *
@@ -201,7 +244,7 @@ export const registerLease = (docker, timVersion) => {
     )
     .option(
       '--mode <mode>',
-      'dev (build from local source) or up (published images)',
+      'dev (build from local source), up (published images) or perf (published images, both stubs on the STUB_PROFILE latency profile, default sla)',
       'dev'
     )
     .option('--logs <dir>', 'Where run-stack.sh writes its log')

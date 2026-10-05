@@ -149,6 +149,60 @@ describe('acquireStack', () => {
     expect(calls()).toEqual(['run-stack.sh'])
   })
 
+  test('starts the published images with --perf in perf mode', async () => {
+    const env = fakeStack()
+
+    await acquire(env, { mode: 'perf' })
+
+    expect(calls()).toEqual(['run-stack.sh --perf'])
+  })
+
+  test('records the stub profile a perf lease started with, sla by default', async () => {
+    const env = fakeStack()
+
+    await acquire(env, { mode: 'perf' })
+
+    expect(readLease(leasePath())).toEqual(
+      expect.objectContaining({ mode: 'perf', stubProfile: 'sla' })
+    )
+  })
+
+  test('records STUB_PROFILE as the perf lease’s stub profile, and the script sees it', async () => {
+    const env = fakeStack()
+    writeExecutable(
+      join(root, 'scripts', 'stack', 'run-stack.sh'),
+      `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath()}'\necho c1 > '${statePath()}'`
+    )
+
+    await acquire({ ...env, STUB_PROFILE: 'zero-delay' }, { mode: 'perf' })
+
+    expect({
+      stubProfile: readLease(leasePath()).stubProfile,
+      calls: calls()
+    }).toEqual({
+      stubProfile: 'zero-delay',
+      calls: ['run-stack.sh --perf STUB_PROFILE=zero-delay']
+    })
+  })
+
+  test('records no fingerprints or branches in perf mode, which builds nothing', async () => {
+    const env = fakeStack()
+
+    await acquire(env, { mode: 'perf' })
+
+    expect(readLease(leasePath())).toEqual(
+      expect.objectContaining({ fingerprints: {}, branches: {} })
+    )
+  })
+
+  test('gives a lease in any other mode no stub profile', async () => {
+    const env = fakeStack()
+
+    await acquire(env)
+
+    expect(readLease(leasePath())).not.toHaveProperty('stubProfile')
+  })
+
   test('records the branch each repo under repos/ is on', async () => {
     const env = fakeStack()
     const repo = join(root, 'repos', 'trade-imports-ins-frontend')
@@ -608,6 +662,19 @@ describe('describeLease', () => {
     ).toBe(
       `"${HOLDER}" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-stub main)`
     )
+  })
+
+  test('describes a perf lease with its stub profile', () => {
+    expect(
+      describeLease({
+        holder: 'perf',
+        mode: 'perf',
+        stubProfile: 'sla',
+        acquiredAt: '2026-10-01T08:00:00.000Z',
+        branches: {},
+        state: 'up'
+      })
+    ).toBe('"perf" (perf mode, stubs on sla, since 2026-10-01T08:00:00.000Z)')
   })
 })
 

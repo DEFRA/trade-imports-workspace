@@ -3,7 +3,7 @@ usage() {
   valid_csv="$(IFS=,; echo "${valid_labels[*]-}")"
   valid_csv="${valid_csv//,/, }"
   cat <<EOF
-Usage: $(basename "$0") [-b|--branch <name>] [-e|--exclude <label>]... [--profile <name>]... [-- <extra docker compose up args>]
+Usage: $(basename "$0") [-b|--branch <name>] [-e|--exclude <label>]... [--profile <name>]... [-d|--dev] [--perf] [-- <extra docker compose up args>]
 
   -b, --branch <name>    Branch ref to probe per service. Sanitised to match
                          the per-repo publish-branch.yml workflows. A service
@@ -30,6 +30,11 @@ Usage: $(basename "$0") [-b|--branch <name>] [-e|--exclude <label>]... [--profil
                          hot-reload via nodemon; Java services need
                          scripts/stack/bounce-backend.sh after source changes.
                          Mutually exclusive with --branch.
+  --perf                 Start the stack as a performance target: both stubs
+                         answer with the latency profile in STUB_PROFILE
+                         (default sla) instead of none. Uses the published
+                         images unless you also pass -d. Never use it for
+                         E2E runs: the build gate's stack runs without it.
   -h, --help             Show this help.
 
 Anything after \`--\` is forwarded verbatim to \`docker compose ... up\`.
@@ -59,6 +64,7 @@ parse_run_stack_flags() {
   excluded_labels=()
   selected_profiles=()
   dev=0
+  perf=0
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -93,6 +99,10 @@ parse_run_stack_flags() {
         dev=1
         shift
         ;;
+      --perf)
+        perf=1
+        shift
+        ;;
       -h|--help)
         usage
         exit 0
@@ -113,6 +123,21 @@ parse_run_stack_flags() {
   if [ -n "$branch" ] && [ "$dev" -eq 1 ]; then
     print_error "error: --branch and --dev are mutually exclusive"
     exit 2
+  fi
+
+  if [ "$perf" -eq 1 ] && [ -n "${STUB_PROFILE:-}" ]; then
+    [ "${STUB_LATENCY_PROFILES+x}" = x ] || {
+      print_error "internal error: lib/flags.sh requires STUB_LATENCY_PROFILES to be defined before sourcing"
+      exit 70
+    }
+    found=0
+    for valid in "${STUB_LATENCY_PROFILES[@]}"; do
+      [ "$STUB_PROFILE" = "$valid" ] && { found=1; break; }
+    done
+    if [ "$found" -eq 0 ]; then
+      print_error "error: STUB_PROFILE must be zero-delay or sla, not '$STUB_PROFILE'"
+      exit 2
+    fi
   fi
 
   if [ ${#excluded_labels[@]} -gt 0 ]; then

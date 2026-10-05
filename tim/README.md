@@ -240,7 +240,8 @@ tim docker lease status --json                                                  
 ```
 
 - `acquire` on a stack that is down records the lease, then starts it
-  (`run-stack.sh -d`; `--mode up` for the published images) and records its
+  (`run-stack.sh -d`; `--mode up` for the published images; `--mode perf` for
+  the published images with both stubs on a latency profile) and records its
   container ids and, in dev mode, each locally built service's build and
   source fingerprints (what `tim build gate` compares on reuse). On a stack the same holder already leases it reuses it as it
   is, but only when that start finished and the containers are still the ones
@@ -268,6 +269,23 @@ tim docker lease status --json                                                  
 The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 `tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).
 `tim build gate` takes the same lease for its E2E phase.
+
+### `tim docker perf` — the stack as a performance target
+
+`tim docker perf` takes the stack lease in perf mode (`--mode perf` on
+`tim docker lease acquire` does the same). It starts the published images
+with `run-stack.sh --perf`, so both stubs answer at the latency profile in
+`STUB_PROFILE` (default `sla`; the other value is `zero-delay`). The lease
+records the profile, and `tim docker lease status` says
+`perf mode, stubs on sla`. An unknown `STUB_PROFILE` exits 2 before anything
+starts. A stack leased to a build, or up with no lease, is refused with
+`STACK_HELD`. The holder defaults to `perf`. The build gate never uses perf mode.
+
+```bash
+tim docker perf
+STUB_PROFILE=zero-delay tim docker perf --json
+tim docker lease release --holder perf
+```
 
 **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you
 started with `tim docker dev`, because nobody leases it. Either run

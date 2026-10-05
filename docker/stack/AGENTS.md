@@ -10,6 +10,7 @@ compose stack in the workspace and its repos — the
 ./scripts/stack/run-stack.sh                                # all services on :latest
 ./scripts/stack/run-stack.sh -b feat/EUDPA-123              # branch tag where published, latest elsewhere
 ./scripts/stack/run-stack.sh -d                             # build the repo-backed services from local source
+./scripts/stack/run-stack.sh --perf                         # published images, both stubs on STUB_PROFILE (default sla)
 ./scripts/stack/run-stack.sh -e backend                     # run backend in IntelliJ / npm; rest in docker
 ./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database
                                                             # only those profiles; intended for "running other tiers natively"
@@ -40,6 +41,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `monitoring.compose.yml` | `prometheus` (:9090), `grafana` (:3030) — local view of Micrometer meters | `monitoring` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
+| `perf.compose.yml` (--perf only) | sets `STUB_LATENCY_PROFILE=${STUB_PROFILE:-sla}` on `trade-imports-stub` and `trade-imports-defra-id-stub` | — |
 
 ## Choosing between `-d`, `-e`, and `--profile`
 
@@ -48,12 +50,13 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | Run the full stack from published Dockerhub images | `run-stack.sh` (no flags) |
 | Pull a published branch tag for one or more repos | `run-stack.sh -b feat/X` |
 | Edit source and see changes (Node + Java backend/stub/reference-data hot-reload) | `run-stack.sh -d` |
+| Run the stack as a performance target (stubs at their SLA latency) | `run-stack.sh --perf`, or `tim docker perf` to also take the lease |
 | Run one repo-backed service natively from your IDE, rest in docker | `run-stack.sh -e backend` |
 | Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `run-stack.sh --profile frontend --profile infrastructure --profile database` |
 | Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `run-stack.sh -d` (rebuilds; `bounce-backend.sh` only recreates the container), or `dev-service.sh rebuild <service>` for just that service |
 
 `--branch` and `--dev` are mutually exclusive (hard error). The other flags
-compose freely.
+compose freely, and `--perf` composes with every other flag.
 
 ## `--exclude` (`-e`) labels
 
@@ -157,6 +160,30 @@ Deployed environments use CDP's Grafana over **CloudWatch**, fed by
 names match dev, but the queries don't, so a dashboard here is for checking
 meters, not for promoting. Config lives in `docker/stack/monitoring/`.
 
+## Performance mode
+
+`run-stack.sh --perf` starts the stack as a performance target: both stubs
+(`trade-imports-stub` and `trade-imports-defra-id-stub`) answer with a latency
+profile instead of none. `perf.compose.yml` sets `STUB_LATENCY_PROFILE` from
+`STUB_PROFILE`, which defaults to `sla`. The other allowed value is
+`zero-delay`; anything else exits 2 before anything starts.
+
+```bash
+./scripts/stack/run-stack.sh --perf                       # published images, stubs on sla
+STUB_PROFILE=zero-delay ./scripts/stack/run-stack.sh --perf
+tim docker perf                                           # the same, and takes the stack lease as "perf"
+tim docker lease status                                   # ... leased to "perf" (perf mode, stubs on sla, ...)
+tim docker lease release --holder perf                    # take it down
+curl -s http://localhost:8087/latency-profiles            # trade-imports-stub
+curl -s http://localhost:3007/latency-profiles            # defra-id-stub
+```
+
+`--perf` uses the published images unless you also pass `-d`. `tim docker perf`
+takes the lease in mode `perf`, so a stack leased to a build, or up with no
+lease, is refused and left alone. The gate's stack, and any stack started
+without `--perf`, keeps both stubs on `zero-delay`. Never use perf mode for E2E
+runs.
+
 ## Running E2E tests against this stack
 
 ```bash
@@ -180,6 +207,9 @@ Which domain(s) a service's own PR runs in CI: [`docs/reference/e2e-domain-cover
   healthy. It does not re-stage init scripts.
 
 ### How `tim build gate` uses the stack
+
+The gate always leases the stack in dev mode and never passes `--perf`, so
+both stubs stay on `zero-delay`.
 
 The gate runs in three layers, each after the one before has finished.
 Layer one is every unit and FIT rung (repos at the same time). Layer two is
@@ -299,6 +329,7 @@ sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
 - `compose.yml` — base, just `name: trade-imports`.
 - `<role>.compose.yml` — per-role service definitions (see layout table above).
 - `dev.compose.yml` — build/target/volumes overlay for `--dev`.
+- `perf.compose.yml` — stub latency overlay for `--perf`.
 - `shared.env` — env vars loaded by multiple services (mongo URIs, AWS test
   creds, floci endpoints, the truststore cert blob).
 - `scripts/mongodb/` — workspace-owned mongo replica-set init (`10-database-setup.js`).

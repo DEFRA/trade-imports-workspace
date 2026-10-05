@@ -51,6 +51,12 @@ The system MUST NOT let a user create, edit, or remove an address book record fr
 **ID**: REQ-ADDR-002
 The system MUST copy the chosen address-book record onto the notification when the user picks it for a consignment role — consignor, consignee, importer, place of destination, place of origin, or the consignment contact — and MUST keep no link back to the record. A later edit or deletion of that record in the address book MUST NOT change what the notification shows or submits, whatever the notification's status.
 
+#### Scenario: Picking an address shows its full details on the notification
+**ID**: SCN-ADDR-002-C
+- **GIVEN** a consignment role has no address chosen
+- **WHEN** the user picks a record from the address book for it
+- **THEN** the notification shows that record's name, address lines, town or city, county, postcode, country, telephone and email
+
 #### Scenario: Editing the record in the address book leaves a draft notification unchanged
 **ID**: SCN-ADDR-002-A
 - **GIVEN** a role's address has been chosen for a draft notification from the address book

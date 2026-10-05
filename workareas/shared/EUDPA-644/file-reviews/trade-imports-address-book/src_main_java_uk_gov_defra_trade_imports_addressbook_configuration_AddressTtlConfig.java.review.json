@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java",
+  "repo": "trade-imports-address-book",
+  "commit": "23ad6aaa5b8292a148a161c34430cc6491d36e21",
+  "pr": 10,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-05T14:40:00Z",
+  "verdict": "SAFE",
+  "verdict_reason": "Validated config record binds the TTL days from a property and backs both prod safeguards as the AC requires; one Minor hardening item on the fail-open environment check.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Minor",
+      "category": "fail-open-guard",
+      "issue": "The code-level prod guard fails open: 'environment' has no constraint and isProd() is an exact match, so a null, empty (ENVIRONMENT= set to an empty string bypasses the ':local' default) or whitespace-padded value such as 'prod ' is treated as non-prod and both the stamping and the TTL-index guard pass. Low likelihood (days and expiry.enabled would also have to be set in prod), but it is the one safeguard meant to survive a config mistake.",
+      "fix": "Annotate the component '@NotBlank String environment' so a missing value fails at startup, and compare on a trimmed value in isProd() ('environment != null && \"prod\".equalsIgnoreCase(environment.strip())'); add the blank and padded cases to AddressTtlConfigTest.",
+      "best_practice": "java/spring-boot.md"
+    }
+  ],
+  "reconciled_at": "2026-10-05T14:40:57Z"
+}

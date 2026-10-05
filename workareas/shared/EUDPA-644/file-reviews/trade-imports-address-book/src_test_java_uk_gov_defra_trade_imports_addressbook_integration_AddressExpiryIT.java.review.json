@@ -1,0 +1,21 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "23ad6aaa5b8292a148a161c34430cc6491d36e21",
+  "pr": 10,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-05T14:40:29Z",
+  "verdict": "SAFE",
+  "verdict_reason": "New IT proves the non-prod AC against a real Mongo (expireAt stamped from config, TTL index shape, live and tombstoned addresses removed, undated and unexpired kept) and restores the shared container after each test; one Minor latent flake from millisecond truncation.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 102,
+      "severity": "Minor",
+      "category": "flaky-test",
+      "issue": "post_givesTheNewAddressAnExpireAtSevenDaysAhead compares the stored expireAt against un-truncated Instant.now() bounds: Mongo stores dates to the millisecond, so when the service stamps expireAt in the same millisecond as 'before' the read-back value is below before+7d and isBetween fails intermittently.",
+      "fix": "Truncate the lower bound to the stored precision: Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS)."
+    }
+  ],
+  "reconciled_at": "2026-10-05T14:40:57Z"
+}

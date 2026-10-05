@@ -1,0 +1,40 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "23ad6aaa5b8292a148a161c34430cc6491d36e21",
+  "pr": 10,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-05T14:40:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tests are sound for days binding and validation, but nothing proves the environment property binds into isProd(), which the code-level prod guard relies on.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 24,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "No test binds address-book.ttl.environment: isProd() is only exercised on hand-built records (here and in OperatorServiceTest/AddressExpiryIndexTest), so a renamed or mis-keyed environment property would silently disable the code-level prod guard with every test still green - the AC asks for a test of a prod-configured environment",
+      "fix": "Add a contextRunner test with address-book.ttl.environment=prod and address-book.ttl.days=7 asserting the bound bean's isProd() is true (and one with environment unset asserting false)",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 32,
+      "severity": "Minor",
+      "category": "test-coverage",
+      "issue": "binding_leavesDaysUnsetWhenNotConfigured omits the property entirely, but application.yml supplies days: ${ADDRESS_TTL_DAYS:} which resolves to an empty string in prod - the prod-safe default path (empty string binds to null and passes @Positive) is not the one under test",
+      "fix": "Add a case with withPropertyValues(\"address-book.ttl.days=\") asserting the context has not failed and days() is null",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 3,
+      "line": 49,
+      "severity": "Minor",
+      "category": "weak-assertion",
+      "issue": "binding_rejectsZeroDays and binding_rejectsNegativeDays (lines 49, 54) assert only hasFailed(), which passes for any startup failure, not specifically the @Positive constraint on days",
+      "fix": "Assert on the cause, e.g. assertThat(context).getFailure().rootCause().hasMessageContaining(\"days\") or check for a BindValidationException",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-10-05T14:40:57Z"
+}

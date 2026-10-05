@@ -1,0 +1,95 @@
+{
+  "ticket": "EUDPA-644",
+  "repo": "trade-imports-address-book",
+  "items": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Minor",
+      "category": "fail-open-guard",
+      "issue": "The code-level prod guard fails open: 'environment' has no constraint and isProd() is an exact match, so a null, empty (ENVIRONMENT= set to an empty string bypasses the ':local' default) or whitespace-padded value such as 'prod ' is treated as non-prod and both the stamping and the TTL-index guard pass. Low likelihood (days and expiry.enabled would also have to be set in prod), but it is the one safeguard meant to survive a config mistake.",
+      "fix": "Annotate the component '@NotBlank String environment' so a missing value fails at startup, and compare on a trimmed value in isProd() ('environment != null && \"prod\".equalsIgnoreCase(environment.strip())'); add the blank and padded cases to AddressTtlConfigTest.",
+      "best_practice": "java/spring-boot.md",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 110,
+      "severity": "Minor",
+      "category": "test-duplication",
+      "issue": "The same seven-line OperatorService construction with an inline AddressTtlConfig is repeated in four new tests (lines 110, 146, 275, 299), three of them identical (7, dev).",
+      "fix": "Extract a private helper such as serviceWithTtl(Integer days, String environment) beside the NO_TTL constant and call it from the four tests.",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 24,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "No test binds address-book.ttl.environment: isProd() is only exercised on hand-built records (here and in OperatorServiceTest/AddressExpiryIndexTest), so a renamed or mis-keyed environment property would silently disable the code-level prod guard with every test still green - the AC asks for a test of a prod-configured environment",
+      "fix": "Add a contextRunner test with address-book.ttl.environment=prod and address-book.ttl.days=7 asserting the bound bean's isProd() is true (and one with environment unset asserting false)",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 32,
+      "severity": "Minor",
+      "category": "test-coverage",
+      "issue": "binding_leavesDaysUnsetWhenNotConfigured omits the property entirely, but application.yml supplies days: ${ADDRESS_TTL_DAYS:} which resolves to an empty string in prod - the prod-safe default path (empty string binds to null and passes @Positive) is not the one under test",
+      "fix": "Add a case with withPropertyValues(\"address-book.ttl.days=\") asserting the context has not failed and days() is null",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 49,
+      "severity": "Minor",
+      "category": "weak-assertion",
+      "issue": "binding_rejectsZeroDays and binding_rejectsNegativeDays (lines 49, 54) assert only hasFailed(), which passes for any startup failure, not specifically the @Positive constraint on days",
+      "fix": "Assert on the cause, e.g. assertThat(context).getFailure().rootCause().hasMessageContaining(\"days\") or check for a BindValidationException",
+      "best_practice": "java/testing/unit.md",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 102,
+      "severity": "Minor",
+      "category": "flaky-test",
+      "issue": "post_givesTheNewAddressAnExpireAtSevenDaysAhead compares the stored expireAt against un-truncated Instant.now() bounds: Mongo stores dates to the millisecond, so when the service stamps expireAt in the same millisecond as 'before' the read-back value is below before+7d and isBetween fails intermittently.",
+      "fix": "Truncate the lower bound to the stored precision: Instant before = Instant.now().truncatedTo(ChronoUnit.MILLIS).",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "file": "README.md",
+      "line": "244",
+      "severity": "Minor",
+      "category": "stale-docs",
+      "issue": "README was not updated: line 244 still says 'Tombstones are retained indefinitely. Automatic purge / TTL is deferred', which is now untrue in dev, test, perf-test and ext-test; the 404 rule at lines 239-240 ('not a deletion signal') needs a qualifier because outside prod a 404 can now mean the address expired; ADDRESS_TTL_DAYS and ADDRESS_TTL_EXPIRY_ENABLED are documented in the ins-tests README but not in the owning service.",
+      "fix": "Update the README retention paragraph to describe the non-prod TTL, the two env vars and the prod safeguards, and qualify the 404 rule.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

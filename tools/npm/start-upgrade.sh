@@ -282,35 +282,20 @@ phase2() {
     # the canonical packages.{repo}.json before reading state.
     "$SCRIPT_DIR/packages-aggregate-classifications.sh" --run-id "$TICKET" >&2 || true
 
-    # Pre-flight: any auto packages left to run?
-    local auto_pending
-    auto_pending=$("$SCRIPT_DIR/packages-list.sh" \
-        --run-id "$TICKET" \
-        --classification auto \
-        --status pending \
-        --json | jq 'length')
-
-    if [[ "$auto_pending" -eq 0 ]]; then
-        echo '{"status":"nothing_to_do","cascade_failures":[],"per_repo":[]}'
-        echo "No auto-classified packages awaiting upgrade." >&2
-        return 0
-    fi
-
     # Fan out per-repo runners. Run sequentially per repo (so the
     # internal --no-discover / sequential-package loop is honoured),
-    # but each repo runs in parallel via background subshells.
+    # but each repo runs in parallel via background subshells. A repo
+    # with no auto packages still runs, for its end-of-batch lockfile
+    # refresh (refresh-lockfile.sh).
     local tmpdir
     tmpdir=$(mktemp -d)
     trap "rm -rf $tmpdir" RETURN
 
     local pids=()
     for repo in "${REPOS[@]}"; do
-        # Skip repos that have no auto packages.
+        # Skip repos phase 1 never discovered.
         local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
         [[ -f "$pkgs_file" ]] || continue
-        local repo_auto
-        repo_auto=$(jq '[.packages[] | select(.classification=="auto" and (.implementation_status == null or .implementation_status == "todo"))] | length' "$pkgs_file")
-        [[ "$repo_auto" -eq 0 ]] && continue
 
         (
             "$SCRIPT_DIR/run-automated-upgrades.sh" "$repo" --run-id "$TICKET" \

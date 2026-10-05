@@ -92,7 +92,11 @@ alternative and the one the build loop still calls directly.
 | `tools/style/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh, filtered to `.js` |
 | `tools/style/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
 | **npm** | | |
-| `tools/npm/start-upgrade.sh` | EUDPA-X --phase 1\|2\|3 [--repo R ...] [--strategy LEVEL] | Single dispatcher — phase 1 discovers + emits PACKAGE_PLANNER spawn manifest, phase 2 fans out per-repo runners, phase 3 emits WALKER handoff |
+| `tools/npm/start-upgrade.sh` | EUDPA-X --phase 0\|1\|2\|3\|4 [--repo R ...] [--strategy LEVEL] [--branch NAME] [--allowlist-owner NAME --expiry-days N] | Single dispatcher — phase 0 audits every repo (gates phase 1), phase 1 discovers + emits PACKAGE_PLANNER spawn manifest, phase 2 fans out per-repo runners, phase 3 emits WALKER handoff (with allowlist, audits and held packages), phase 4 resets overrides per repo. `--branch` refuses to run if any repo is on another branch; a repo with no `package.json` is skipped |
+| `tools/npm/audit-baseline.sh` | --run-id TICKET --repo R [--label L] [--repo-path PATH] | Run the repo's audit-ci check; save the npm audit report; print failing / allowlisted / stale / fixable_allowlisted advisories and which have a fixed version. Exit 1 if red or an allowlisted advisory now has a fix |
+| `tools/npm/audit-allowlist-add.sh` | --run-id TICKET --repo R --ghsa GHSA --reason "..." --owner NAME --expiry-days N [--blocked-by "..."] [--stage N] [--repo-path PATH] | Write or renew one `audit-ci.jsonc` allowlist entry; refuses an expiry over 3 months, an advisory not in the audit, or one with a fix (unless `--blocked-by`) |
+| `tools/npm/refresh-lockfile.sh` | --run-id TICKET --repo R [--repo-path PATH] | `npm update` (lockfile only), then test, lint, audit and commit "Refresh transitive dependencies"; rolls back and reports on failure |
+| `tools/npm/reset-overrides.sh` | --run-id TICKET --repo R [--repo-path PATH] | Phase 4: remove every override in a throwaway worktree, put back only those a failing audit / test / lint / build needs, commit "Remove overrides" with a kept-overrides table |
 | `tools/npm/verify-classification-coverage.sh` | --run-id TICKET [--repo R] [--json] | Phase 1 coverage gate — fail iff any package.classification == null |
 | `tools/npm/prebake-context.sh` | --run-id TICKET --repo R --package PKG | Best-effort fetch of changelog + grep usages; updates `context_baked` field |
 | `tools/npm/bake-best-practices.sh` | --run-id TICKET --repo R | Concatenate dependency-relevant best-practices into per-repo bundle |
@@ -102,9 +106,9 @@ alternative and the one the build loop still calls directly.
 | `tools/npm/packages-counts.sh` | --run-id TICKET [--repo R] [--json] | Counts by classification × status × risk |
 | `tools/npm/packages-set-classification.sh` | --run-id TICKET --repo R --package PKG --classification auto\|manual --risk LOW\|MEDIUM\|HIGH --safe-for-automation true\|false --rationale "..." [--files-affected CSV] [--changes-required "..."] [--changelog-url URL] [--migration-guide-url URL] [--demoted-from-auto true\|false] | Set PACKAGE_PLANNER fields on one package |
 | `tools/npm/packages-set-status.sh` | --run-id TICKET --repo R --package PKG --status todo\|inprogress\|done\|failed [--failure-reason "..."] [--commit-sha SHA] | Set implementation_status (+ commit_sha / failure_reason) |
-| `tools/npm/run-automated-upgrades.sh` | repo-name --run-id TICKET | Phase 2 per-repo runner (JSON-state-driven) |
-| `tools/npm/upgrade-one-package.sh` | --run-id TICKET --repo R --package PKG | Phase 2 internal: install + test + commit + rollback |
-| `tools/npm/run-manual-upgrade.sh` | --run-id TICKET --repo R --package PKG | Phase 3 per-package manual runner (spawned by WALKER) |
+| `tools/npm/run-automated-upgrades.sh` | repo-name --run-id TICKET [--allowlist-owner NAME --expiry-days N] | Phase 2 per-repo runner (JSON-state-driven), ending with `refresh-lockfile.sh` |
+| `tools/npm/upgrade-one-package.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 2 internal: install + test + audit + commit + rollback (a refused commit rolls back too) |
+| `tools/npm/run-manual-upgrade.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 3 per-package manual runner (spawned by WALKER), same audit gate |
 | **govuk** | | |
 | `tools/govuk/start-upgrade.sh` | --ticket EUDPA-X \| --branch B [--target V] | Phase 1 dispatcher: `.run-meta.json` + branch setup + version discovery + security pre-flight (`npm audit`) |
 | `tools/govuk/discover-repos.sh` | --run-id TICKET [--branch B] [--target V] [--json] | Phase 1: write run-level `.run-meta.json` (in-scope repos) |

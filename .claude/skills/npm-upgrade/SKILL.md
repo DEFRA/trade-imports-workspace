@@ -213,7 +213,7 @@ Per repo (in parallel), `reset-overrides.sh` does every trial in a
 throwaway git worktree under the run's workarea, so the repo checkout
 never sees a red state. With no overrides it runs install, update,
 audit, test, lint and `build:frontend`. A failing advisory (high and
-above) puts back the override for its package; a failing test, lint
+above) puts back the overrides on its package or on a package that depends on it; a failing test, lint
 or build puts overrides back one at a time, then drops any that turn
 out not to matter. It commits "Remove overrides" with a table of kept
 overrides and their reasons, and records each override in

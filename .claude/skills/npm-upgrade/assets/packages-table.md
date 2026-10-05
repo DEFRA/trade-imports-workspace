@@ -112,3 +112,100 @@ take the markdown plan body as input — there is no markdown plan.
   commit SHA live in dedicated JSON fields.
 - `find ... | wc -l` status queries — replaced by
   `packages-counts.sh --json` / `packages-list.sh --json`.
+
+## Audit and override state (phase 0, 2 and 4)
+
+Written by the audit and override scripts, beside `packages.{repo}.json`
+unless noted. All are runtime cache under `workareas/` (gitignored).
+
+### `{run-id}/phase0.json` (one per run, not per repo)
+
+Appended by `start-upgrade.sh --phase 0`. Phase 1 reads the last run;
+phase 3 reports the first and last as `audit_before` / `audit_after`.
+
+```jsonc
+{
+  "runs": [
+    {
+      "ran_at": "2026-10-05T12:00:00Z",
+      "label": "phase0-20261005T120000Z",   // names each repo's audit snapshot
+      "branch": "chore/EUDPA-668-npm-security-sweep",
+      "green": true,
+      "red": [],                             // repos that failed
+      "repos": ["trade-imports-animals-admin"],
+      "per_repo": [
+        // audit-baseline.sh summary (below) + head + exit_code
+        {"repo": "...", "green": true, "failing": [], "allowlisted": ["GHSA-…"],
+         "stale": [], "fixable_allowlisted": [], "head": "<sha>", "exit_code": 0}
+      ]
+    }
+  ]
+}
+```
+
+### `audit.{repo}.{label}.json` and `audit.{repo}.{label}.summary.json`
+
+The npm audit report (v2) as audit-ci returned it, and the
+`audit-baseline.sh` summary of it: `green`, `failing`, `allowlisted`,
+`stale`, `inactive_allowlist` (GHSA lists), `fixable_allowlisted`,
+`blocked_allowlisted`, `failing_fixable` (`[{ghsa, package, fixes,
+fixed_version}]`), `failing_no_fix` (`[{ghsa, package, title}]`),
+`advisories` (`[{ghsa, package, severity, ranges, title}]` at the audit
+threshold) and `snapshot` (the report's path). Labels:
+`phase0-<timestamp>`, `before-<package>-<target>` and
+`upgrade-<package>-<target>` (the per-upgrade gate), `refresh-lockfile`,
+`override-trial-<n>`.
+
+### `allowlist.{repo}.json`
+
+Written by `audit-allowlist-add.sh`, one row per GHSA it wrote or
+renewed in this run. The entry itself lives in the repo's
+`audit-ci.jsonc`; this records why.
+
+```jsonc
+{
+  "ticket": "EUDPA-668",
+  "repo": "trade-imports-animals-frontend",
+  "entries": [
+    {
+      "ghsa": "GHSA-c475-qrg2-pj4r",
+      "package": "basic-ftp",
+      "kind": "fix_blocked_upstream",        // no_fix | fix_blocked_upstream
+      "blocked_by": "get-uri pins basic-ftp ^5", // null for no_fix
+      "fixed_version": "6.2.1",              // null for no_fix
+      "reason": "basic-ftp FTP command injection; dev only",
+      "owner": "Sam Farrington",
+      "notes": "<the notes written to audit-ci.jsonc>",
+      "expiry": "2027-01-03",
+      "added_at": "2026-10-05T12:00:00Z",    // kept on renewal
+      "stage": 1,                            // --stage when first added, or null
+      "renewed_at": null,                    // set on renewal
+      "renewed_stage": null
+    }
+  ]
+}
+```
+
+A rolled-back upgrade removes the rows it added.
+
+### `overrides.{repo}.json`
+
+Written by `reset-overrides.sh` (phase 4): one row per leaf override in
+the repo's `package.json` at HEAD.
+
+```jsonc
+[
+  {
+    "path": "lighthouse/.",                  // readable form
+    "key_path": ["lighthouse", "."],         // jq path into "overrides"
+    "value": "13.4.1",
+    "status": "kept",                        // pending | kept | removed | undecided (run stopped)
+    "kept_for": "audit-path",                // audit-direct | audit-path | check
+    "reason": "GHSA-jmr9-qjv8-65gv (extract-zip, high) fails the audit without it; this override pins lighthouse, which depends on it",
+    "evidence": "<end of the failing trial's log>"
+  }
+]
+```
+
+Trial logs sit in `override-trial-logs/`; the throwaway worktree is
+`override-trial/` (removed on success, kept when the run stops).

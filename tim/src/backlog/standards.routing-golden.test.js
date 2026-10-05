@@ -158,20 +158,19 @@ test('bake-rules-bundle.sh over every topic, unmodified', async () => {
   )
 })
 
+const detectTechCase = async (input) => {
+  const args = input === null ? [] : [join(tmpHome, 'fixture-repos', input)]
+  const { recorded } = await runScript(DETECT_TECH_SCRIPT, args)
+  return { input, ...recorded }
+}
+
+// detect-tech.sh spawns dozens of `jq` processes per repo, so run the cases
+// at once rather than one after another. Promise.all keeps input order, so
+// the snapshot is unchanged.
 test('detect-tech.sh over every fixture repo, unmodified', async () => {
-  const cases = []
-  for (const name of Object.keys(fixtureRepos)) {
-    const { recorded } = await runScript(DETECT_TECH_SCRIPT, [
-      join(tmpHome, 'fixture-repos', name)
-    ])
-    cases.push({ input: name, ...recorded })
-  }
-  const missing = await runScript(DETECT_TECH_SCRIPT, [
-    join(tmpHome, 'fixture-repos', 'does-not-exist')
-  ])
-  cases.push({ input: 'does-not-exist', ...missing.recorded })
-  const noArg = await runScript(DETECT_TECH_SCRIPT, [])
-  cases.push({ input: null, ...noArg.recorded })
+  const inputs = [...Object.keys(fixtureRepos), 'does-not-exist', null]
+
+  const cases = await Promise.all(inputs.map(detectTechCase))
 
   await expect(JSON.stringify(cases, null, 2) + '\n').toMatchFileSnapshot(
     '__fixtures__/standards/__golden__/detect-tech.json'

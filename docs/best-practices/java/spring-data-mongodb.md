@@ -749,7 +749,7 @@ context.configOverride(LocalDate.class).setFormat(JsonFormat.Value.forLeniency(f
 ```
 
 **Convert to an instant only where a downstream contract needs one, and name the zone.** The
-GB-NAG `scheduledOccurrenceDateTime` that PIMS reads is an instant, so `TransportEvent` converts
+GBN-AG `scheduledOccurrenceDateTime` that PIMS reads is an instant, so `TransportEvent` converts
 `Transport.arrivalDate` on the way out:
 
 ```java

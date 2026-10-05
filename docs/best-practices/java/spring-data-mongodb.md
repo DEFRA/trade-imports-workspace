@@ -713,9 +713,7 @@ the EUDPA-282 drift. A pair registered in `MongoCustomConversions` replaces it f
 
 ```java
 @WritingConverter
-public enum LocalDateToStringConverter implements Converter<LocalDate, String> {
-    INSTANCE;
-
+public class LocalDateToStringConverter implements Converter<LocalDate, String> {
     @Override
     public String convert(LocalDate source) {
         return source.toString();   // "2026-07-21"
@@ -723,9 +721,7 @@ public enum LocalDateToStringConverter implements Converter<LocalDate, String> {
 }
 
 @ReadingConverter
-public enum StringToLocalDateConverter implements Converter<String, LocalDate> {
-    INSTANCE;
-
+public class StringToLocalDateConverter implements Converter<String, LocalDate> {
     @Override
     public LocalDate convert(String source) {
         return LocalDate.parse(source);

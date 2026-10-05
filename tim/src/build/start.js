@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { dirname, join, relative, sep } from 'node:path'
 import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { nextBuildable, setRowFields } from '../backlog/shape.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
@@ -287,16 +289,63 @@ const emptyResult = (workarea, id) => ({
   resumeAt: null,
   branched: [],
   preexistingDirty: null,
+  preexistingDirtySummary: null,
   requireApproval: [],
   warnings: [],
   failedStep: null,
   reason: null
 })
 
+// The workspace often carries hundreds of untracked files under workareas/:
+// other programmes' logs, diffs and screenshots. Listed in the result, they
+// once ran the start line to many KB, too long for the agent copying it back
+// to the loop. So the result names at most this many carried files outside
+// workareas/ and counts the rest, and the full list goes to a file.
+export const CARRIED_NAMED_LIMIT = 50
+
+const RUN_STATE_PREFIX = 'workareas/'
+
+const isRunState = (path) => path.startsWith(RUN_STATE_PREFIX)
+
+const posixPath = (path) => path.split(sep).join('/')
+
+const withoutCarried = (repo) =>
+  Object.fromEntries(
+    Object.entries(repo).filter(([field]) => field !== 'carried')
+  )
+
+const writeCarriedList = (file, carried) => {
+  try {
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, carried.map((path) => `${path}\n`).join(''), 'utf8')
+  } catch (error) {
+    fail(
+      'branch',
+      `Can't write the list of files the workspace carried to ${file}: ${messageOf(error)}`
+    )
+  }
+}
+
 // What the workspace repo carried across its switch: never the increment's.
-// null when the increment does not build in the workspace repo.
-const preexistingDirtyOf = (branched) =>
-  branched.find((repo) => Array.isArray(repo.carried))?.carried ?? null
+// Both null when the increment does not build in the workspace repo.
+const carriedReport = ({ branched, path, id }) => {
+  const workspaceRepo = branched.find((repo) => Array.isArray(repo.carried))
+  if (!workspaceRepo) {
+    return { preexistingDirty: null, preexistingDirtySummary: null }
+  }
+  const { carried } = workspaceRepo
+  const outside = carried.filter((file) => !isRunState(file))
+  const file = join(dirname(path), 'logs', `${id}-carried.txt`)
+  writeCarriedList(file, carried)
+  return {
+    preexistingDirty: outside.slice(0, CARRIED_NAMED_LIMIT),
+    preexistingDirtySummary: {
+      outsideWorkareas: outside.length,
+      underWorkareas: carried.length - outside.length,
+      listedIn: posixPath(relative(workspaceRepo.path, file))
+    }
+  }
+}
 
 const runSteps = async (result, context) => {
   const { workspaceRoot, workarea, path, base, config } = context
@@ -334,9 +383,12 @@ const runSteps = async (result, context) => {
     branch: result.branch,
     base
   })
-  result.branched = branched.repos
+  result.branched = branched.repos.map(withoutCarried)
   if (!branched.ok) fail('branch', branched.reason)
-  result.preexistingDirty = preexistingDirtyOf(branched.repos)
+  Object.assign(
+    result,
+    carriedReport({ branched: branched.repos, path, id: result.id })
+  )
   return result
 }
 
@@ -356,7 +408,7 @@ const runSteps = async (result, context) => {
  * @param {string} args.base - The branch a new increment branch is cut from
  * @param {{project: string, epic: string, inDevStatus: string, doneStatus: string, board: number, repoOrder?: string[]}} args.config - repoOrder is the configured repo keys in order, the fallback for a row that names none
  * @param {() => object} args.jira - Makes the Jira client, only once a ticket is needed
- * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, branched, preexistingDirty (the workspace repo's uncommitted paths before it switched, or null when the increment does not build in it), warnings, failedStep and reason
+ * @returns {Promise<object>} id (null when nothing is buildable), repeat, ticket, branch, repos, requireApproval (the keys of those repos whose pull request a person must approve before it merges), resumeAt, branched, preexistingDirty (the workspace repo's uncommitted paths outside workareas/ before it switched, at most CARRIED_NAMED_LIMIT of them, or null when the increment does not build in it), preexistingDirtySummary ({outsideWorkareas, underWorkareas, listedIn}: how many it carried outside and under workareas/, and the workspace-relative file listing every one, or null), warnings, failedStep and reason
  */
 export const runBuildStart = async ({
   workspaceRoot,

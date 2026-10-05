@@ -437,8 +437,13 @@ describe('runBuildStart — branch', () => {
 
     expect({
       preexistingDirty: outcome.preexistingDirty,
+      preexistingDirtySummary: outcome.preexistingDirtySummary,
       requireApproval: outcome.requireApproval
-    }).toEqual({ preexistingDirty: null, requireApproval: [] })
+    }).toEqual({
+      preexistingDirty: null,
+      preexistingDirtySummary: null,
+      requireApproval: []
+    })
   })
 
   describe('an increment that builds in the workspace repo itself', () => {
@@ -500,12 +505,114 @@ describe('runBuildStart — branch', () => {
       }).toEqual({
         failedStep: null,
         repos: ['workspace'],
-        preexistingDirty: [
-          'README.md',
-          'workareas/shared/programme/backlog.json'
-        ],
+        preexistingDirty: ['README.md'],
         requireApproval: ['workspace'],
         onBranch: 'chore/EUDPA-77-add-a-performance-mode-to-the-workspace'
+      })
+    })
+
+    const CARRIED_LIST = 'workareas/shared/programme/logs/inc-001-carried.txt'
+
+    const writeFiles = (workspaceRoot, folder, count) => {
+      mkdirSync(join(workspaceRoot, folder), { recursive: true })
+      for (let index = 0; index < count; index += 1) {
+        writeFileSync(
+          join(workspaceRoot, folder, `screenshot-${index}.png`),
+          `${index}\n`
+        )
+      }
+    }
+
+    // Each run's temp folder and commit differ, so a repo's path and head are
+    // left out of the size compared, and so is the count's own digits.
+    const VOLATILE_FIELDS = new Set(['path', 'head'])
+    const stableBranched = (repo) =>
+      Object.fromEntries(
+        Object.entries(repo).filter(([field]) => !VOLATILE_FIELDS.has(field))
+      )
+    const sizeOf = (outcome) =>
+      JSON.stringify({
+        ...outcome,
+        branched: outcome.branched.map(stableBranched),
+        preexistingDirtySummary: {
+          ...outcome.preexistingDirtySummary,
+          underWorkareas: 0
+        }
+      }).length
+
+    test('keeps the result the same size however many files under workareas/ it carries', async () => {
+      const fewRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      jiraKnows('EUDPA-77', 'In Dev')
+      const few = await start({ workspaceRoot: fewRoot })
+      rmSync(root, { recursive: true, force: true })
+
+      const manyRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      writeFiles(manyRoot, 'workareas/shared/other-programme/logs', 400)
+      jiraKnows('EUDPA-77', 'In Dev')
+      const many = await start({ workspaceRoot: manyRoot })
+
+      expect({
+        failedStep: many.failedStep,
+        sameSize: sizeOf(many) === sizeOf(few),
+        preexistingDirty: many.preexistingDirty,
+        summary: many.preexistingDirtySummary
+      }).toEqual({
+        failedStep: null,
+        sameSize: true,
+        preexistingDirty: ['README.md'],
+        summary: {
+          outsideWorkareas: 1,
+          underWorkareas: 401,
+          listedIn: CARRIED_LIST
+        }
+      })
+    })
+
+    test('lists every carried file, under workareas/ too, in the file it names', async () => {
+      const workspaceRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      writeFiles(workspaceRoot, 'workareas/shared/other-programme/logs', 3)
+      jiraKnows('EUDPA-77', 'In Dev')
+
+      const outcome = await start({ workspaceRoot })
+
+      expect(
+        readFileSync(
+          join(workspaceRoot, outcome.preexistingDirtySummary.listedIn),
+          'utf8'
+        )
+          .split('\n')
+          .filter(Boolean)
+          .sort()
+      ).toEqual([
+        'README.md',
+        'workareas/shared/other-programme/logs/screenshot-0.png',
+        'workareas/shared/other-programme/logs/screenshot-1.png',
+        'workareas/shared/other-programme/logs/screenshot-2.png',
+        'workareas/shared/programme/backlog.json'
+      ])
+    })
+
+    test('names at most 50 carried files outside workareas/, counting the rest', async () => {
+      const workspaceRoot = await workspaceRepoWith([WORKSPACE_ROW])
+      writeFiles(workspaceRoot, 'scratch', 120)
+      jiraKnows('EUDPA-77', 'In Dev')
+
+      const outcome = await start({ workspaceRoot })
+
+      expect({
+        named: outcome.preexistingDirty.length,
+        summary: outcome.preexistingDirtySummary,
+        listedInFull: readFileSync(join(workspaceRoot, CARRIED_LIST), 'utf8')
+          .split('\n')
+          .filter(Boolean).length
+      }).toEqual({
+        named: 50,
+        summary: {
+          outsideWorkareas: 121,
+          underWorkareas: 1,
+          listedIn: CARRIED_LIST
+        },
+        listedInFull: 122
       })
     })
 

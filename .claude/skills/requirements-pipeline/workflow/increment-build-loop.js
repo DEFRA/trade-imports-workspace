@@ -591,17 +591,55 @@ const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 // The workspace repo as one of an increment's repos. It is never clean: it
 // carries the run's own backlog, plans and logs under workareas/, and often
 // somebody's work in progress, across every branch switch. `tim build start`
-// lists what it carried before the increment touched it, and nothing on that
-// list, nor anything under workareas/ the row does not name, is the
-// increment's. Set for each increment from the start stage's result: null
-// when the increment does not build in the workspace repo.
+// records what it carried before the increment touched it, and nothing it
+// carried, nor anything under workareas/ the row does not name, is the
+// increment's. Its result names the carried files outside workareas/ (up to a
+// limit) and counts the rest: hundreds of other programmes' files under
+// workareas/ once ran its one JSON line past what an agent can copy back. The
+// file it names lists every carried file. Set for each increment from the
+// start stage's result: null when the increment does not build in the
+// workspace repo.
 // ---------------------------------------------------------------------------
 let workspaceInIncrement = null
 const buildsWorkspace = () => workspaceInIncrement !== null
 
 const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
 
+// An older tim gave preexistingDirty as every carried path, under workareas/
+// too, and no summary: then the list is whole and there is no file.
+const workspaceCarriedFrom = (started) => {
+  const named = started.preexistingDirty ?? []
+  const summary = started.preexistingDirtySummary
+  return {
+    carried: named,
+    outsideWorkareas: summary?.outsideWorkareas ?? named.length,
+    underWorkareas: summary?.underWorkareas ?? 0,
+    listedIn: summary?.listedIn ?? null
+  }
+}
+
+// Every carried file outside workareas/ is named in the result.
+const carriedNamedInFull = () => workspaceInIncrement.carried.length >= workspaceInIncrement.outsideWorkareas
+
+const carriedListFile = () => `${TILDE}/${workspaceInIncrement.listedIn}`
+
 const carriedList = (carried) => (carried.length > 0 ? carried.map((path) => `  - ${path}`).join('\n') : '  (none)')
+
+const carriedRest = () => {
+  const { carried, outsideWorkareas, underWorkareas, listedIn } = workspaceInIncrement
+  const unnamed = outsideWorkareas - carried.length
+  const lines = [
+    unnamed > 0 ? `  - and ${unnamed} more outside \`workareas/\`` : null,
+    underWorkareas > 0 ? `  - and ${underWorkareas} under \`workareas/\`, which the rule above already covers` : null
+  ].filter(Boolean)
+  if (lines.length === 0 || !listedIn) return ''
+  return `\n${lines.join('\n')}\n  \`${carriedListFile()}\` lists every one of them. Read it with \`grep\` for the paths you mean to touch; never print it whole.`
+}
+
+const workspaceCleanLine = () =>
+  carriedNamedInFull()
+    ? `lists nothing outside \`workareas/\` and that list`
+    : `lists nothing outside \`workareas/\`, that list and the file that lists the rest`
 
 const workspaceRepoRule = () =>
   buildsWorkspace()
@@ -614,8 +652,8 @@ somebody's work in progress across every branch switch. In the workspace repo:
   live there — unless the increment's row names that exact path.
 - Never edit, stage, commit, stash, restore or delete any of these files. They were uncommitted before the increment
   started and are not its work:
-${carriedList(workspaceInIncrement.carried)}
-- Its tree counts as clean when \`git -C ${TILDE} status --short\` lists nothing outside \`workareas/\` and that list.
+${carriedList(workspaceInIncrement.carried)}${carriedRest()}
+- Its tree counts as clean when \`git -C ${TILDE} status --short\` ${workspaceCleanLine()}.
 - Stage and commit only by explicit path: \`git -C ${TILDE} add -- <path>\` and \`git -C ${TILDE} commit -m "<message>" -- <paths>\`.
   Never \`add -A\`, \`add .\`, \`commit -a\` or a commit without a pathspec: the index may already hold somebody else's file.
 - Never edit this loop's own script, \`${LOOP_SCRIPT}\`, unless the row names it. A running loop never re-reads it, so a
@@ -1523,13 +1561,59 @@ const committedPathsOf = (stdout) =>
 
 // A path committed on the workspace branch that the increment does not own:
 // one the workspace carried in, or the run's own state under workareas/ that no
-// stage reported changing.
+// stage reported changing. The start result names only some carried files, so
+// this is in two parts. `leaked` is what the named ones and the workareas/ rule
+// settle on their own. `toLookUp` is every other committed path that may still
+// be carried: one under workareas/ that a stage reported (the result counts
+// those, never names them), and, when the result could not name every carried
+// file outside workareas/, every committed path outside it not yet leaked.
+// Each one in `toLookUp` is looked up in the file that lists every carried
+// file, and leaks if it is there.
+const isRunState = (path) => path.startsWith('workareas/')
+
 const workspaceLeaks = (committed, changedFiles) => {
   const reported = changedFiles.map(withoutWorkspacePrefix)
   const carried = workspaceInIncrement?.carried ?? []
-  return committed
-    .map(withoutWorkspacePrefix)
-    .filter((path) => carried.includes(path) || (path.startsWith('workareas/') && !reported.includes(path)))
+  const paths = committed.map(withoutWorkspacePrefix)
+  const leaked = paths.filter((path) => carried.includes(path) || (isRunState(path) && !reported.includes(path)))
+  const mayBeCarried = (path) =>
+    isRunState(path) ? workspaceInIncrement.underWorkareas > 0 : !carriedNamedInFull()
+  const toLookUp = paths.filter((path) => !leaked.includes(path) && mayBeCarried(path))
+  return { leaked, toLookUp }
+}
+
+const shellQuoted = (text) => `'${String(text).replaceAll("'", `'\\''`)}'`
+
+const carriedLookupCommand = (paths) =>
+  `grep -Fx ${paths.map((path) => `-e ${shellQuoted(path)}`).join(' ')} ${carriedListFile()}`
+
+const CARRIED_LOOKUP_SCHEMA = WORKSPACE_COMMIT_SCHEMA
+
+// grep exits 0 when it found some, 1 when it found none, and 2 when it could
+// not read the file.
+const GREP_FOUND_NONE = 1
+
+const lookUpCarried = (id, paths) =>
+  agent(
+    `You are the CARRIED FILE LOOKUP for increment ${id}. Run exactly one command and report what it printed. That is your
+whole job.
+${BASE_GUARDRAILS}
+\`${carriedLookupCommand(paths)}\`
+Report its exit code, and in \`stdout\` everything it printed, word for word, every line. An exit code of 1 with nothing
+printed is an ordinary answer: report it as it is. Never summarise, sort, filter or correct it, and run nothing else.`,
+    light({ label: `${id} carried lookup`, phase: 'Land', schema: CARRIED_LOOKUP_SCHEMA })
+  )
+
+// Which of `paths` the workspace carried, from the file that lists them all.
+// null when that cannot be told: no file, or a lookup that failed.
+const carriedAmong = async (id, paths) => {
+  if (paths.length === 0) return []
+  if (!workspaceInIncrement.listedIn) return null
+  const answer = await lookUpCarried(id, paths)
+  if (!answer) return null
+  if (answer.exitCode === GREP_FOUND_NONE) return []
+  if (answer.exitCode !== 0) return null
+  return committedPathsOf(answer.stdout).filter((path) => paths.includes(path))
 }
 
 const workspaceChangedList = (changedFiles) =>
@@ -1544,7 +1628,7 @@ const workspaceLandStep = (changedFiles) =>
    the increment created or changed there, as the implementor and fixer reported them —
 ${workspaceChangedList(changedFiles)}
    — and anything else \`git -C ${TILDE} status --short\` shows that this increment produced. NEVER a file THE WORKSPACE
-   REPO rule lists as carried, and nothing under \`workareas/\` unless the increment's row names that exact path. Then
+   REPO rule names as carried or whose carried-files list holds it, and nothing under \`workareas/\` unless the increment's row names that exact path. Then
    \`git -C ${TILDE} commit -m "<message>" -- <every path you staged>\`, with the same subject as the other repos. The
    pathspec keeps out anything somebody else had staged. The loop reads back from git what the commit holds.`
     : ''
@@ -2802,14 +2886,17 @@ while (stopped === null) {
     resumeAt = started.resumeAt ?? 'build'
     approvalRepos = REQUIRE_APPROVAL ? REPO_KEYS : [...new Set([...APPROVAL_REPO_KEYS, ...(started.requireApproval ?? [])])]
     if (repos.includes(WORKSPACE_KEY)) {
-      workspaceInIncrement = { branch: workBranch, carried: started.preexistingDirty ?? [] }
+      workspaceInIncrement = { branch: workBranch, ...workspaceCarriedFrom(started) }
       workspaceLeftOn = workBranch
     }
     log(
       `${id}: ${ticket.key} (${ticket.created ? 'raised' : 'reused'}, ${ticket.status}) on board ${JIRA_BOARD}, branch ${workBranch} in ${repos.join(', ')}, resuming at ${resumeAt}`
     )
     if (buildsWorkspace()) {
-      log(`${id}: the workspace repo carried ${workspaceInIncrement.carried.length} uncommitted file(s) onto ${workBranch}; none of them is this increment's`)
+      const { outsideWorkareas, underWorkareas, listedIn } = workspaceInIncrement
+      log(
+        `${id}: the workspace repo carried ${outsideWorkareas + underWorkareas} uncommitted file(s) onto ${workBranch}, ${underWorkareas} of them under workareas/${listedIn ? `, listed in ${listedIn}` : ''}; none of them is this increment's`
+      )
     }
   } // ticketAndBranch
 
@@ -3576,11 +3663,15 @@ Return the structured output only.`,
   if (land?.landed && buildsWorkspace()) {
     const read = await readWorkspaceCommit(id)
     const readable = read && read.exitCode === 0
-    const leaked = readable ? workspaceLeaks(committedPathsOf(read.stdout), workspaceFiles) : []
-    if (!readable || leaked.length > 0) {
-      const detail = readable
-        ? `${id}: the workspace repo's commit holds ${leaked.join(', ')}, which ${leaked.length === 1 ? 'is' : 'are'} not this increment's. Nothing is pushed: take ${leaked.length === 1 ? 'it' : 'them'} out of the commit on ${workBranch} by hand, then run again`
-        : `${id}: could not read what the workspace repo's commit holds (${read ? `git exited ${read.exitCode}: ${String(read.stdout ?? '').slice(0, 300)}` : 'the reader agent died'}), so nothing is pushed. Check the commit on ${workBranch} by hand, then run again`
+    const settled = readable ? workspaceLeaks(committedPathsOf(read.stdout), workspaceFiles) : { leaked: [], toLookUp: [] }
+    const lookedUp = readable ? await carriedAmong(id, settled.toLookUp) : []
+    const leaked = [...settled.leaked, ...(lookedUp ?? [])]
+    if (!readable || lookedUp === null || leaked.length > 0) {
+      const detail = !readable
+        ? `${id}: could not read what the workspace repo's commit holds (${read ? `git exited ${read.exitCode}: ${String(read.stdout ?? '').slice(0, 300)}` : 'the reader agent died'}), so nothing is pushed. Check the commit on ${workBranch} by hand, then run again`
+        : lookedUp === null
+          ? `${id}: could not tell whether the workspace carried ${settled.toLookUp.join(', ')} from before the increment, because ${workspaceInIncrement.listedIn ? `${carriedListFile()} could not be read` : 'tim build start named no file listing what it carried'}. Nothing is pushed. Check the commit on ${workBranch} by hand, then run again`
+          : `${id}: the workspace repo's commit holds ${leaked.join(', ')}, which ${leaked.length === 1 ? 'is' : 'are'} not this increment's. Nothing is pushed: take ${leaked.length === 1 ? 'it' : 'them'} out of the commit on ${workBranch} by hand, then run again`
       log(`${id}: LAND LEAKED — ${detail}`)
       results.push({ id, ticket: ticket?.key, branch: workBranch, outcome: 'land-leaked', commit: land.commit, detail, findings: findingCounts() })
       stopped = { reason: 'land-leaked', detail }

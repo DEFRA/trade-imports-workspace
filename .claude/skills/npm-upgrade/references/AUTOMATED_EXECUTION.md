@@ -16,6 +16,7 @@ operator's attention.
 ## Inputs
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
+- `{branch}` — the ticket's shared branch, e.g. `chore/EUDPA-668-npm-security-sweep`.
 
 ---
 
@@ -24,7 +25,7 @@ operator's attention.
 One call runs all repos in parallel and aggregates exit codes:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2 --branch {branch}
 ```
 
 Stdout is one JSON object:

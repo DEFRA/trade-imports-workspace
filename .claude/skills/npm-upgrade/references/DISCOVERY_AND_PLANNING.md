@@ -15,6 +15,7 @@ do not override classifications, do not touch source files.
 ## Inputs
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
+- `{branch}` — the ticket's shared branch, e.g. `chore/EUDPA-668-npm-security-sweep`.
 
 Repos default to the Node repos the skill lists under `## Repos`, all of them
 beneath `~/git/defra/trade-imports-workspace/repos/`. Strategy defaults to
@@ -28,13 +29,13 @@ One call sets up everything: discovery, per-repo best-practices
 bundle, per-package context pre-bake, and emits a JSON spawn manifest.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch}
 ```
 
 Optionally narrow to a subset:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 1 --branch {branch} --repo trade-imports-animals-frontend --repo trade-imports-animals-admin --strategy minor
 ```
 
 Stdout shape (between sentinel lines):

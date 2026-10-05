@@ -62,20 +62,33 @@ the same flag, so ask the roster rather than a copied list:
 jq -r '.repos[] | select(.npmUpgradeDefault) | .name' ~/git/defra/trade-imports-workspace/repos.json
 ```
 
-Pass `--repo <name>` to run against a different set.
+Pass `--repo <name>` to run against a different set. A repo with no
+`package.json` is skipped with a warning.
 
-## Step 1: Establish Run ID
+`trade-imports-plants-prototype` is never upgraded directly: it takes
+every dependency change from `trade-imports-plants-frontend` through
+its `sync:upstream` script, after the plants-frontend PR merges.
+
+## Step 1: Establish Run ID and branch
+
+The branch is the ticket's branch, the same name in every repo (CLAUDE.md
+rule 2): `chore/EUDPA-N-<slug>`, or `feat/` or `fix/` for that kind of
+work. Read it from the ticket, or from a repo already on it:
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/trade-imports-animals-frontend branch --show-current
 ```
 
 Parse `EUDPA-XXXXX` from the branch name (e.g.
-`feature/EUDPA-20578-...` → `EUDPA-20578`). If not found, ask the user.
+`chore/EUDPA-668-npm-security-sweep` → `EUDPA-668`). If not found, ask
+the user for the ticket and the branch name.
+
+Pass the branch to every dispatcher call as `--branch {branch}`.
+`start-upgrade.sh` then refuses to run if any repo is on another branch.
 
 ## Step 2: Branch Setup
 
-For each repo, ensure it's on `feature/{run-id}-npm-dependency-upgrades`:
+For each repo, ensure it's on `{branch}`:
 
 Check locally **and** on the remote. `branch --list` only lists local
 branches, so a branch a colleague already pushed looks absent, and creating
@@ -83,30 +96,30 @@ it below would diverge from theirs.
 
 ```bash
 # Check local (separate Bash calls — no pipes)
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --list "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --list "{branch}"
 ```
 
 ```bash
 # Check remote
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --remotes --list "origin/feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} branch --remotes --list "origin/{branch}"
 ```
 
 ```bash
 # Switch if it exists locally
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout "{branch}"
 ```
 
 ```bash
 # Exists only on the remote — create it tracking origin, never bare
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades" --track "origin/feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}" --track "origin/{branch}"
 ```
 
 ```bash
 # Missing in both — create it fresh
-git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "feature/{run-id}-npm-dependency-upgrades"
+git -C ~/git/defra/trade-imports-workspace/repos/{repo-name} checkout -b "{branch}"
 ```
 
-All repos must be on the feature branch before continuing.
+All repos must be on `{branch}` before continuing.
 
 ## Phase 1: Discovery and Planning
 

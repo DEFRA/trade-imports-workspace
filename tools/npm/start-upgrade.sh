@@ -3,6 +3,11 @@
 #
 # Usage:
 #   start-upgrade.sh EUDPA-XXXXX --phase 1|2|3 [--repo R ...] [--strategy LEVEL]
+#                    [--branch NAME]
+#
+# --branch NAME refuses to run unless every requested repo is checked
+# out on NAME (the ticket's shared cross-repo branch). A requested repo
+# with no package.json (a Java service, say) is skipped with a warning.
 #
 # Phase semantics (no FRESH/RESUME dual-state — every invocation is
 # fresh; consumers idempotently merge into prior packages.{repo}.json):
@@ -41,14 +46,17 @@ done < <(jq -r '.repos[] | select(.npmUpgradeDefault) | .name' "$REPOS_MANIFEST"
 TICKET=""
 PHASE=""
 STRATEGY="latest"
+BRANCH=""
 REPOS=()
 
 usage() {
     cat <<EOF >&2
 Usage: $0 EUDPA-XXXXX --phase 1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
+          [--branch NAME]
 
 Without --repo, runs against every repo flagged npmUpgradeDefault in the
-workspace roster, repos.json.
+workspace roster, repos.json. With --branch, refuses to run unless every
+repo is checked out on that branch.
 EOF
     exit 1
 }
@@ -59,6 +67,7 @@ while [[ $# -gt 0 ]]; do
         --phase) PHASE="$2"; shift 2 ;;
         --repo) REPOS+=("$2"); shift 2 ;;
         --strategy) STRATEGY="$2"; shift 2 ;;
+        --branch) BRANCH="$2"; shift 2 ;;
         -h|--help) usage ;;
         *) echo "Unknown option: $1" >&2; usage ;;
     esac
@@ -72,6 +81,39 @@ done
 WORKSPACE_BASE="$HOME/git/defra/trade-imports-workspace/workareas/npm-upgrades/$TICKET"
 REPO_BASE="$HOME/git/defra/trade-imports-workspace/repos"
 
+# Drop repos that cannot take an npm upgrade. A missing checkout, or a
+# repo with no package.json (a Java service flagged by mistake), is a
+# warning rather than an abort, so the rest of the roster still runs.
+NPM_REPOS=()
+for repo in "${REPOS[@]}"; do
+    if [[ ! -d "$REPO_BASE/$repo" ]]; then
+        echo "Repo dir missing, skipping: $REPO_BASE/$repo" >&2
+        continue
+    fi
+    if [[ ! -f "$REPO_BASE/$repo/package.json" ]]; then
+        echo "No package.json in $repo, skipping (not an npm repo)" >&2
+        continue
+    fi
+    NPM_REPOS+=("$repo")
+done
+REPOS=()
+[[ "${#NPM_REPOS[@]}" -gt 0 ]] && REPOS=("${NPM_REPOS[@]}")
+
+# Every repo must sit on the ticket's shared branch, or the stack's
+# cross-repo branch pickup breaks (CLAUDE.md rule 2).
+if [[ -n "$BRANCH" ]]; then
+    OFF_BRANCH=()
+    for repo in "${REPOS[@]}"; do
+        current=$(git -C "$REPO_BASE/$repo" branch --show-current)
+        [[ "$current" != "$BRANCH" ]] && OFF_BRANCH+=("$repo (on '${current:-detached HEAD}')")
+    done
+    if [[ "${#OFF_BRANCH[@]}" -gt 0 ]]; then
+        echo "Refusing to run: these repos are not on $BRANCH:" >&2
+        printf '  %s\n' "${OFF_BRANCH[@]}" >&2
+        exit 1
+    fi
+fi
+
 phase1() {
     mkdir -p "$WORKSPACE_BASE"
 
@@ -79,10 +121,6 @@ phase1() {
     # idempotently (merges with prior state).
     for repo in "${REPOS[@]}"; do
         local repo_path="$REPO_BASE/$repo"
-        if [[ ! -d "$repo_path" ]]; then
-            echo "Repo dir missing, skipping: $repo_path" >&2
-            continue
-        fi
         echo "Discovering $repo..." >&2
         "$SCRIPT_DIR/discover-upgrades.sh" \
             "$repo_path" \

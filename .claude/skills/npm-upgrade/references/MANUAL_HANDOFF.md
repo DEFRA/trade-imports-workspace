@@ -15,13 +15,14 @@ worker) own implementation.
 ## Inputs
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
+- `{branch}` — the ticket's shared branch, e.g. `chore/EUDPA-668-npm-security-sweep`.
 
 ---
 
 ## Step 1: Dispatch — emit handoff manifest
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 3
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 3 --branch {branch}
 ```
 
 Stdout shape:

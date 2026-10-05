@@ -62,7 +62,8 @@ usage() {
     cat <<EOF >&2
 Usage: $0 --run-id TICKET --repo REPO [--label LABEL] [--repo-path PATH]
 
---label      names the saved snapshot (default: baseline)
+--label      names the saved snapshot (default: baseline); any character
+             other than a letter, digit, '.', '_' or '-' becomes '_'
 --repo-path  audit this checkout instead of repos/<repo>
 EOF
     exit 2
@@ -81,7 +82,10 @@ done
 
 [[ -z "$RUN_ID" ]] && usage
 [[ -z "$REPO" ]] && usage
-[[ "$LABEL" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "--label may only use letters, digits, '.', '_' and '-'" >&2; exit 2; }
+# The label names files, so anything outside [A-Za-z0-9._-] (the '@'
+# and '/' of a scoped package name, say) becomes '_'.
+LABEL="${LABEL//[^A-Za-z0-9._-]/_}"
+[[ -z "$LABEL" ]] && usage
 
 REPO_PATH=$(audit_resolve_repo_path "$REPO" "$REPO_PATH_OVERRIDE") || exit 2
 audit_require_config "$REPO_PATH" || exit 2

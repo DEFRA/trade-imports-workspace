@@ -19,6 +19,7 @@ invoke them by absolute path.
 | `start-upgrade.sh` | All | Single dispatcher (`--phase 0\|1\|2\|3\|4`) |
 | `audit-baseline.sh` | 0, 2 | Run one repo's audit-ci check; report failing, allowlisted, stale and fixable-allowlisted advisories |
 | `audit-allowlist-add.sh` | 0–4 | Write or renew one `audit-ci.jsonc` allowlist entry (refuses an advisory with a fix, or an expiry over 3 months) |
+| `audit-allowlist-forget.sh` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves). Run with `bash` |
 | `refresh-lockfile.sh` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
 | `reset-overrides.sh` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
 | `discover-upgrades.sh` | 1 | Find outdated packages + seed `packages.{repo}.json` |
@@ -71,7 +72,8 @@ streaming log tail).
 | Install failure | Peer conflict etc. | Auto-demote: classification → manual, `demoted_from_auto: true`, failure_reason populated |
 | Test failure after upgrade | Breaking change | Rollback, auto-demote (same as above) |
 | Cascade failure | Rollback itself fails | Stop immediately, report — repo is in an inconsistent state |
-| Audit red at baseline | Phase 0, or the audit before a package's install, fails | Stop, report — not an upgrade issue. Take the fix, or allowlist an advisory with no fix |
+| Audit red at baseline | Phase 0, or the audit before a package's install, fails (or cannot run). A repo with no `audit-ci.jsonc` is red in phase 0: adoption is required before phase 1 | Phase 0 exits 1 and phase 1 refuses. In phase 2, that package is marked failed (not demoted) and the repo's batch stops (`stopped` in the phase 2 summary), skipping the lockfile refresh. Not an upgrade issue: take the fix, or allowlist an advisory with no fix, then rerun |
+| Audit could not run after an upgrade | Registry offline, `npm view` failing, audit-ci missing | Roll back, mark failed without demoting, stop the repo's batch (`stopped`). Rerun when the registry is back |
 | Advisory with fix available | The audit after an upgrade fails on an advisory that has a fixed version, or an allowlisted advisory now has one (`fixable_allowlisted`) | Roll back, auto-demote with the GHSA as the reason. Take the fix; never allowlist it |
 | New advisory with no fix | The audit after an upgrade fails only on advisories with no fixed version | `audit-allowlist-add.sh` writes the entries and they go in the upgrade's commit (needs `--allowlist-owner` and `--expiry-days`; without them, treated as above) |
 | Commit refused | The repo's pre-commit hook (animals-admin runs the audit and the tests) rejects the commit | Roll back, auto-demote, failure_reason holds the hook output. Never `--no-verify` |

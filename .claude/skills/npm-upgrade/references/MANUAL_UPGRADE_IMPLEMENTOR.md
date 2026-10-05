@@ -30,8 +30,10 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 - `changes_required_summary` — one-line description from the planner
 - Context bundle: `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/.context/{normalized-package}/`
 - `{owner}`, `{expiry-days}` — who owns any allowlist entry Step 6a
-  writes, and for how many days (90 at most in practice: the repo's CI
-  rejects an expiry more than 3 months away)
+  writes, and for how many days. 89 at most: the repo's CI rejects an
+  expiry more than 3 calendar months away, and `audit-allowlist-add.sh`
+  refuses one, and from February to mid-May (and late January) 90 days
+  runs past 3 months
 
 ---
 
@@ -127,10 +129,12 @@ Read the log file you just created.
 
 If unit tests pass: continue to Step 7.
 
-If unit tests fail:
+If unit tests fail, roll back. Restore from `HEAD`, not plain
+`checkout -- .`: that restores from the index, so anything already
+staged (Step 7's `git add`) would survive.
 
 ```bash
-git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- .
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
 ```
 
 ```bash
@@ -163,14 +167,20 @@ included:
 ~/git/defra/trade-imports-workspace/tools/npm/audit-baseline.sh --run-id {run-id} --repo {repo} --label upgrade-{package-normalized}
 ```
 
+(The script turns the `@` and `/` of a scoped package name into `_`
+for the label.)
+
 Read the JSON it prints.
 
 - Exit 0: green. Continue to Step 7.
+- Exit 2: the audit could not run (registry offline, audit-ci not
+  installed). Roll back (see "Rolling back after Step 6a" below), mark
+  failed with reason "audit could not run", and return `FAILED`.
 - `failing_fixable` or `fixable_allowlisted` is not empty: an advisory
   has a fix. Take it if it belongs to this upgrade (bump the package
   that carries it, then run Steps 6 and 6a again). If you cannot, roll
-  back as in Step 6 (`git checkout -- .` puts `audit-ci.jsonc` back
-  too), mark failed with the GHSA as the reason, and return `FAILED`.
+  back (see below), mark failed with the GHSA as the reason, and
+  return `FAILED`.
 - Only `failing_no_fix` is left: allowlist each one. The spawn prompt
   gives the owner and the expiry in days:
 
@@ -181,6 +191,27 @@ Read the JSON it prints.
   Never edit `audit-ci.jsonc` by hand. The script writes the entry in
   the shape the repo's CI check accepts and refuses an advisory that
   has a fix. Run `audit-baseline.sh` again: it must exit 0.
+
+### Rolling back after Step 6a
+
+Whenever this step or Step 7 fails, roll back every file from `HEAD`
+(this puts `audit-ci.jsonc` back too, even once it is staged), then
+reinstall:
+
+```bash
+git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout HEAD -- .
+```
+
+```bash
+~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} install
+```
+
+If you allowlisted anything, also drop those entries from the run's
+`allowlist.{repo}.json` (the handoff reads it), one `--ghsa` per entry:
+
+```bash
+bash ~/git/defra/trade-imports-workspace/tools/npm/audit-allowlist-forget.sh --run-id {run-id} --repo {repo} --ghsa {GHSA}
+```
 
 ---
 
@@ -216,8 +247,9 @@ the offending file, re-add, and create a NEW commit (do NOT --amend).
 `trade-imports-animals-admin`'s pre-commit hook also runs
 `npm run security-audit` (and the tests), so a red audit refuses the
 commit there. Never pass `--no-verify`. If the hook refuses the commit
-for anything other than formatting, roll back as in Step 6, mark
-failed with the hook's output as the reason, and return `FAILED`.
+for anything other than formatting, roll back as in "Rolling back
+after Step 6a" (`checkout HEAD -- .`: the files are staged by now, so
+plain `checkout -- .` would keep them), mark failed with the hook's output as the reason, and return `FAILED`.
 
 Capture the short SHA:
 

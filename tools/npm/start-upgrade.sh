@@ -7,7 +7,8 @@
 #
 # --branch NAME refuses to run unless every requested repo is checked
 # out on NAME (the ticket's shared cross-repo branch). A requested repo
-# with no package.json (a Java service, say) is skipped with a warning.
+# with no package.json (a Java service, say) is skipped with a warning;
+# if that leaves no repo, every phase but 3 exits 1.
 #
 # Phase semantics (no FRESH/RESUME dual-state — every invocation is
 # fresh; consumers idempotently merge into prior packages.{repo}.json):
@@ -15,7 +16,8 @@
 #   --phase 0  Run `audit-baseline.sh` for every requested repo and
 #              append the result to {run-id}/phase0.json. Exits 1 if
 #              any repo's audit is red or has an allowlisted advisory
-#              that now has a fix (fixable_allowlisted).
+#              that now has a fix (fixable_allowlisted). A repo with no
+#              audit-ci.jsonc is red: adopt audit-ci before phase 1.
 #
 #   --phase 1  Refuses to start unless the last phase 0 run covered
 #              every requested repo, at its current HEAD, and was
@@ -28,8 +30,11 @@
 #
 #   --phase 2  Spawn `run-automated-upgrades.sh` per repo in
 #              parallel (background tasks), aggregate exit codes,
-#              emit a JSON status summary on stdout. Cascade-failure
-#              (exit 1 from any repo runner) propagates back.
+#              emit a JSON status summary on stdout. Exits 1 unless
+#              every runner exited 0: `cascade_failures` (runner exit
+#              1), `stopped` (exit 3: audit red before an install, or
+#              could not run) and `failed` (any other code) name the
+#              repos. Each runner's log is kept at {repo}/phase2.log.
 #
 #   --phase 3  Emit a JSON handoff manifest of every manual (or
 #              failed-auto) package — the WALKER consumes it — plus
@@ -120,6 +125,13 @@ for repo in "${REPOS[@]}"; do
 done
 REPOS=()
 [[ "${#NPM_REPOS[@]}" -gt 0 ]] && REPOS=("${NPM_REPOS[@]}")
+
+# An empty roster would otherwise pass phase 0 (and so phase 1's gate)
+# trivially. Phase 3 only reads state, so it may still run.
+if [[ "${#REPOS[@]}" -eq 0 && "$PHASE" != "3" ]]; then
+    echo "No npm repos left to run after skipping the ones above. Check --repo." >&2
+    exit 1
+fi
 
 # Every repo must sit on the ticket's shared branch, or the stack's
 # cross-repo branch pickup breaks (CLAUDE.md rule 2).
@@ -307,17 +319,23 @@ phase2() {
         local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
         [[ -f "$pkgs_file" ]] || continue
 
+        # `|| code=$?` keeps set -e (inherited by the subshell) from
+        # killing it before the exit code is written.
         (
+            code=0
             "$SCRIPT_DIR/run-automated-upgrades.sh" "$repo" --run-id "$TICKET" \
                 ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"} \
-                >"$tmpdir/$repo.log" 2>&1
-            echo "$?" > "$tmpdir/$repo.exit"
+                >"$tmpdir/$repo.log" 2>&1 || code=$?
+            echo "$code" > "$tmpdir/$repo.exit"
         ) &
         pids+=("$!:$repo")
     done
 
-    # Reap.
-    local cascade=()
+    # Reap. Exit 0 is the only success. 1 is a cascade (or a runner
+    # pre-flight refusal), 3 a repo-level stop (audit red before an
+    # install, or could not run), and anything else (127 when no exit
+    # file was written) an unexpected failure.
+    local cascade=() stopped=() failed=()
     local per_repo='[]'
     for entry in "${pids[@]}"; do
         local pid="${entry%%:*}"
@@ -325,26 +343,38 @@ phase2() {
         wait "$pid" || true
         local code
         code=$(cat "$tmpdir/$repo.exit" 2>/dev/null || echo "127")
-        if [[ "$code" == "1" ]]; then
-            cascade+=("$repo")
-        fi
+        [[ "$code" =~ ^[0-9]+$ ]] || code=127
+        case "$code" in
+            0) ;;
+            1) cascade+=("$repo") ;;
+            3) stopped+=("$repo") ;;
+            *) failed+=("$repo") ;;
+        esac
         per_repo=$(jq -nc \
             --argjson p "$per_repo" \
             --arg repo "$repo" \
             --argjson code "$code" \
-            '$p + [{repo: $repo, exit_code: $code}]')
+            --arg log "$WORKSPACE_BASE/$repo/phase2.log" \
+            '$p + [{repo: $repo, exit_code: $code, log: $log}]')
+        # Keep the runner's log: tmpdir goes when phase2 returns.
+        mkdir -p "$WORKSPACE_BASE/$repo"
+        cp "$tmpdir/$repo.log" "$WORKSPACE_BASE/$repo/phase2.log" 2>/dev/null || true
     done
 
     local status="ok"
+    [[ "${#failed[@]}" -gt 0 ]] && status="failed"
+    [[ "${#stopped[@]}" -gt 0 ]] && status="stopped"
     [[ "${#cascade[@]}" -gt 0 ]] && status="cascade_failure"
 
     jq -nc \
         --arg status "$status" \
-        --argjson cascade "$(printf '%s\n' "${cascade[@]}" | jq -R . | jq -s .)" \
+        --argjson cascade "$(printf '%s\n' "${cascade[@]}" | jq -R 'select(. != "")' | jq -s .)" \
+        --argjson stopped "$(printf '%s\n' "${stopped[@]}" | jq -R 'select(. != "")' | jq -s .)" \
+        --argjson failed "$(printf '%s\n' "${failed[@]}" | jq -R 'select(. != "")' | jq -s .)" \
         --argjson per_repo "$per_repo" \
-        '{status: $status, cascade_failures: $cascade, per_repo: $per_repo}'
+        '{status: $status, cascade_failures: $cascade, stopped: $stopped, failed: $failed, per_repo: $per_repo}'
 
-    [[ "${#cascade[@]}" -gt 0 ]] && return 1 || return 0
+    [[ "$status" == "ok" ]] && return 0 || return 1
 }
 
 phase3() {

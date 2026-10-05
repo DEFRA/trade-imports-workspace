@@ -206,8 +206,11 @@ trial() {
             --repo-path "$WORKTREE" --label "override-trial-$TRIAL" 2>>"$TRIAL_LOG") || code=$?
         echo "$TRIAL_SUMMARY" >>"$TRIAL_LOG"
         if [[ "$code" -eq 2 ]]; then
+            # Not a verdict on these overrides (registry offline, say):
+            # stop now rather than put overrides back on a failure they
+            # cannot fix, or keep one in the minimise pass.
             TRIAL_FAILED_CHECK="audit (could not run)"
-            return 1
+            stop "the audit could not run in trial $TRIAL (registry offline, or audit-ci not installed?); see $TRIAL_LOG, then run again"
         fi
         # Each failing advisory, with every package it affects: its own
         # package plus everything npm's `effects` chain reaches from it.
@@ -352,9 +355,11 @@ fi
 
 cp "$WORKTREE/package.json" "$REPO_PATH/package.json"
 cp "$WORKTREE/package-lock.json" "$REPO_PATH/package-lock.json"
-remove_worktree
+# The worktree goes only once the commit lands, so a stop below still
+# leaves it for inspection, as the header promises.
 
 if git -C "$REPO_PATH" diff --quiet -- package.json package-lock.json; then
+    remove_worktree
     output unchanged "" "" "$BELOW"
     exit 0
 fi
@@ -384,4 +389,5 @@ $KEPT_TABLE" >"$LOG_DIR/commit.log" 2>&1; then
     stop "commit refused (pre-commit hook); see $LOG_DIR/commit.log"
 fi
 
+remove_worktree
 output committed "$(git -C "$REPO_PATH" rev-parse --short HEAD)" "" "$BELOW"

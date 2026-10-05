@@ -126,7 +126,9 @@ All repos must be on `{branch}` before continuing.
 
 ## Phase 0: Audit baseline
 
-Every repo with an `audit-ci.jsonc` must start green. One call audits
+Every repo must have adopted audit-ci (an `audit-ci.jsonc` at its
+root) and start green. A repo without one is red in phase 0, so phase
+1 refuses it: adopt audit-ci in that repo first. One call audits
 them all and records the run in `{run-id}/phase0.json`:
 
 ```bash
@@ -175,8 +177,10 @@ ranges).
 Present its report verbatim. **Gate:** "Phase 2 complete. Proceed to
 Phase 3 handoff?"
 
-If cascade failures are reported, flag them and ask how to handle before
-proceeding.
+If the status is not `ok` (`cascade_failures`, `stopped` for an audit
+that was red before an install or could not run, or `failed` for any
+other runner exit), flag those repos and ask how to handle them before
+proceeding. Each runner's log is at `{run-id}/{repo}/phase2.log`.
 
 ## Phase 3: Manual Handoff
 

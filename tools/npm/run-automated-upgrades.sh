@@ -22,7 +22,9 @@ What it does:
   2. Loops every auto-classified, not-yet-attempted package:
      - upgrade-one-package.sh installs, tests, audits, commits, or
        rolls back + demotes to manual on failure.
-  3. Cascade failure (rollback also fails) stops the loop.
+  3. Cascade failure (rollback also fails) stops the loop (exit 1).
+     An audit that is red before the install, or cannot run, stops
+     the batch too (exit 3), without the lockfile refresh.
   4. refresh-lockfile.sh: npm update within the existing ranges, then
      test, lint, audit and commit (or roll back and report).
   5. trade-imports-ins-tests only: npm run test:docker-compose once.
@@ -132,6 +134,15 @@ while [[ "$initial_count" -gt 0 ]]; do
         if [[ $EXIT_CODE -eq 1 ]]; then
             echo "✗ CRITICAL: Cascade failure — stopping" >&2
             exit 1
+        fi
+        if [[ $EXIT_CODE -eq 3 ]]; then
+            # The audit was red before the install, or could not run:
+            # every package after this one would fail the same way.
+            # Stop the batch (and skip the lockfile refresh, which
+            # audits too) rather than fail them all.
+            echo "✗ Repo-level stop: the audit is red or could not run (see $next_pkg's failure_reason). Fix the repo, then rerun phase 2." >&2
+            "$SCRIPT_DIR/packages-counts.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" || true
+            exit 3
         fi
         FAILED=$((FAILED + 1))
         echo "✗ Failed (unexpected exit $EXIT_CODE)"

@@ -85,6 +85,13 @@ if git -C "$REPO_PATH" ls-files --error-unmatch "$AUDIT_CONFIG_FILE" >/dev/null 
 fi
 AUDIT_GATE_ALLOWLISTED=()
 
+# Logs live in the run's per-repo state directory, not fixed /tmp paths.
+PKG_SAFE="${PACKAGE//[^A-Za-z0-9._-]/_}"
+LOG_DIR="$(audit_state_dir "$RUN_ID" "$REPO_NAME")/logs"
+mkdir -p "$LOG_DIR"
+BASELINE_AUDIT_LOG="$LOG_DIR/baseline-audit-manual.$PKG_SAFE-$TARGET.log"
+COMMIT_LOG="$LOG_DIR/commit-manual.$PKG_SAFE-$TARGET.log"
+
 echo "========================================="
 echo "Manual upgrade: $PACKAGE | $CURRENT → $TARGET (repo: $REPO_NAME)"
 [[ "$SKIP_NPM_TEST" == "1" ]] && echo "(tests repo — npm test gating skipped; walker runs test:docker-compose at end of batch)"
@@ -138,10 +145,16 @@ fi
 # Baseline audit: red before the install is a repo issue.
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Running baseline audit..."
-    if ! "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
-        --label "before-${PACKAGE//[^A-Za-z0-9._-]/_}-${TARGET}" >/tmp/baseline-audit-manual.log 2>&1; then
+    baseline_audit=0
+    "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
+        --label "before-$PKG_SAFE-${TARGET}" >"$BASELINE_AUDIT_LOG" 2>&1 || baseline_audit=$?
+    if [[ "$baseline_audit" -eq 1 ]]; then
         echo "ERROR: Baseline audit red (repo issue)"
-        set_status failed --failure-reason "Audit red at baseline, before upgrade; repo issue. See /tmp/baseline-audit-manual.log"
+        set_status failed --failure-reason "Audit red at baseline, before upgrade; repo issue. See $BASELINE_AUDIT_LOG"
+        exit 0
+    elif [[ "$baseline_audit" -ne 0 ]]; then
+        echo "ERROR: Baseline audit could not run (repo or environment issue)"
+        set_status failed --failure-reason "Audit could not run before upgrade (registry offline, or audit-ci not installed?); repo or environment issue. See $BASELINE_AUDIT_LOG"
         exit 0
     fi
     echo "✓ Baseline audit green"
@@ -202,9 +215,9 @@ Allowlist ${AUDIT_GATE_ALLOWLISTED[*]} in audit-ci.jsonc: no fixed version yet.
 # cleanly rather than leaving the row inprogress on a dirty tree.
 if ! git -C "$REPO_PATH" commit -m "Upgrade $PACKAGE $CURRENT → $TARGET
 $COMMIT_BODY
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>" >/tmp/commit-manual.log 2>&1; then
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>" >"$COMMIT_LOG" 2>&1; then
     echo "ERROR: commit refused — rolling back"
-    rollback_and_fail "Commit refused after upgrade to $TARGET (pre-commit hook): $(tail -n 5 /tmp/commit-manual.log | tr '\n' ' ')"
+    rollback_and_fail "Commit refused after upgrade to $TARGET (pre-commit hook): $(tail -n 5 "$COMMIT_LOG" | tr '\n' ' ')(full output: $COMMIT_LOG)"
 fi
 
 COMMIT_SHA=$(git -C "$REPO_PATH" rev-parse --short HEAD)

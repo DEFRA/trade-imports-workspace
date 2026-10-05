@@ -16,8 +16,9 @@
 #   1. Mark the package inprogress.
 #   2. nvm use.
 #   3. Baseline test — if fails, mark failed (repo issue, not demoted).
-#      Baseline audit (repos with audit-ci.jsonc) — if red, mark
-#      failed (repo issue, not demoted).
+#      Baseline audit (repos with audit-ci.jsonc) — if red, or if it
+#      could not run, mark failed (repo issue, not demoted) and exit 3
+#      so the runner stops the repo's batch.
 #   4. npm install package@target.
 #      - install fails → demote to manual, mark failed, exit 0.
 #   5. npm test.
@@ -30,6 +31,8 @@
 #        --expiry-days); audit-ci.jsonc goes in the same commit.
 #      - an advisory with a fix, or no owner to allowlist under →
 #        rollback, demote to manual with the GHSA as the reason, exit 0.
+#      - the audit could not run (registry offline, say) → rollback,
+#        mark failed without demoting, exit 3.
 #   6. git commit. Mark done with commit_sha. Exit 0.
 #      - commit refused (a pre-commit hook, as in animals-admin) →
 #        rollback, demote to manual, mark failed with the hook output,
@@ -49,6 +52,9 @@
 # Exit codes:
 #   0  → success OR controlled failure (demoted to manual)
 #   1  → cascade failure (rollback failed, repo in inconsistent state)
+#   3  → repo-level stop: the audit was red before the install, or could
+#        not run. Not this package's fault, so it is not demoted; the
+#        runner stops the batch rather than fail every package after it.
 
 set -e
 
@@ -113,6 +119,14 @@ if git -C "$REPO_PATH" ls-files --error-unmatch "$AUDIT_CONFIG_FILE" >/dev/null 
     ROLLBACK_FILES+=("$AUDIT_CONFIG_FILE")
 fi
 
+# Logs live in the run's per-repo state directory, not fixed /tmp
+# paths: phase 2 runs one repo runner per repo at the same time.
+PKG_SAFE="${PACKAGE//[^A-Za-z0-9._-]/_}"
+LOG_DIR="$(audit_state_dir "$RUN_ID" "$REPO_NAME")/logs"
+mkdir -p "$LOG_DIR"
+BASELINE_AUDIT_LOG="$LOG_DIR/baseline-audit.$PKG_SAFE-$TARGET.log"
+COMMIT_LOG="$LOG_DIR/commit.$PKG_SAFE-$TARGET.log"
+
 echo "========================================="
 echo "Package: $PACKAGE | $CURRENT → $TARGET | classification: $CLASSIFICATION"
 [[ "$SKIP_NPM_TEST" == "1" ]] && echo "(tests repo — npm test gating skipped; test:docker-compose runs at end of batch)"
@@ -144,10 +158,12 @@ rollback() {
     npm --prefix "$REPO_PATH" install >/dev/null 2>&1
 }
 
-# Roll back a failure found after the install, then demote. If the
-# tests no longer pass on the rolled-back tree, it is a cascade.
+# Roll back a failure found after the install, then demote (or, with
+# an empty demote reason, leave the classification alone) and exit
+# with EXIT_CODE (default 0). If the tests no longer pass on the
+# rolled-back tree, it is a cascade.
 rollback_and_demote() {
-    local demote_reason="$1" failure_reason="$2"
+    local demote_reason="$1" failure_reason="$2" exit_code="${3:-0}"
     rollback
     [[ "${#AUDIT_GATE_ALLOWLISTED[@]}" -gt 0 ]] && audit_forget_entries "$RUN_ID" "$REPO_NAME" "${AUDIT_GATE_ALLOWLISTED[@]}"
     if [[ "$SKIP_NPM_TEST" == "0" ]]; then
@@ -159,9 +175,9 @@ rollback_and_demote() {
         fi
     fi
     echo "✓ Rollback successful"
-    demote_to_manual "$demote_reason"
+    [[ -n "$demote_reason" ]] && demote_to_manual "$demote_reason"
     set_status failed --failure-reason "$failure_reason"
-    exit 0
+    exit "$exit_code"
 }
 
 AUDIT_GATE_ALLOWLISTED=()
@@ -192,11 +208,17 @@ fi
 # it must not be blamed on this package.
 if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Running baseline audit..."
-    if ! "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
-        --label "before-${PACKAGE//[^A-Za-z0-9._-]/_}-${TARGET}" >/tmp/baseline-audit.log 2>&1; then
+    baseline_audit=0
+    "$SCRIPT_DIR/audit-baseline.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --repo-path "$REPO_PATH" \
+        --label "before-$PKG_SAFE-${TARGET}" >"$BASELINE_AUDIT_LOG" 2>&1 || baseline_audit=$?
+    if [[ "$baseline_audit" -eq 1 ]]; then
         echo "ERROR: Baseline audit red (repo issue, not upgrade)"
-        set_status failed --failure-reason "Audit red at baseline, before upgrade; repo issue, not package-specific. See /tmp/baseline-audit.log"
-        exit 0
+        set_status failed --failure-reason "Audit red at baseline, before upgrade; repo issue, not package-specific. See $BASELINE_AUDIT_LOG"
+        exit 3
+    elif [[ "$baseline_audit" -ne 0 ]]; then
+        echo "ERROR: Baseline audit could not run (repo or environment issue)"
+        set_status failed --failure-reason "Audit could not run before upgrade (registry offline, or audit-ci not installed?); repo or environment issue, not package-specific. See $BASELINE_AUDIT_LOG"
+        exit 3
     fi
     echo "✓ Baseline audit green"
 fi
@@ -227,7 +249,10 @@ if [[ "$HAS_AUDIT" == "1" ]]; then
     echo "Auditing upgraded tree..."
     gate=0
     audit_upgrade_gate "$RUN_ID" "$REPO_NAME" "$PACKAGE" "$TARGET" "$ALLOWLIST_OWNER" "$EXPIRY_DAYS" "$REPO_PATH" || gate=$?
-    if [[ "$gate" -ne 0 ]]; then
+    if [[ "$gate" -eq 2 ]]; then
+        echo "ERROR: $AUDIT_GATE_REASON — rolling back (not demoted)"
+        rollback_and_demote "" "$AUDIT_GATE_REASON; rolled back; environment issue, not demoted" 3
+    elif [[ "$gate" -ne 0 ]]; then
         echo "ERROR: $AUDIT_GATE_REASON — rolling back"
         rollback_and_demote "$AUDIT_GATE_REASON" "$AUDIT_GATE_REASON; rolled back; demoted to manual"
     fi
@@ -258,9 +283,9 @@ Allowlist ${AUDIT_GATE_ALLOWLISTED[*]} in audit-ci.jsonc: no fixed version yet.
 # as animals-admin's does) is a controlled failure, not a cascade.
 if ! git -C "$REPO_PATH" commit -m "Upgrade $PACKAGE $CURRENT → $TARGET
 $COMMIT_BODY
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>" >/tmp/commit.log 2>&1; then
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>" >"$COMMIT_LOG" 2>&1; then
     echo "ERROR: commit refused — rolling back"
-    HOOK_OUTPUT=$(tail -n 5 /tmp/commit.log | tr '\n' ' ')
+    HOOK_OUTPUT="$(tail -n 5 "$COMMIT_LOG" | tr '\n' ' ')(full output: $COMMIT_LOG)"
     rollback_and_demote "Commit refused by the repo's pre-commit hook" \
         "Commit refused after upgrade to $TARGET (pre-commit hook): $HOOK_OUTPUT; rolled back; demoted to manual"
 fi

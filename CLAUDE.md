@@ -147,7 +147,8 @@ only compose stack in the workspace and its repos. Supports `-b <branch>`
 (probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
-tiers). In `--dev` mode the Java backend, stub and reference-data hot-reload
+tiers), and `--perf` (both stubs answer at their SLA latency, on published
+images; `tim docker perf` takes the lease in perf mode). In `--dev` mode the Java backend, stub and reference-data hot-reload
 edited source via Spring Boot DevTools; `bounce-backend.sh` is a fallback that
 recreates the backend container (e.g. after a `pom.xml`/dependency change).
 

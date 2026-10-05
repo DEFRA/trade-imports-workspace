@@ -86,7 +86,7 @@ const startAgain = async (
     }
   }
   const services =
-    lease.mode === 'up' ? {} : await serviceFingerprints(workspaceRoot)
+    lease.mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {}
   recordLeaseFingerprints({
     holder,
     leasePath,

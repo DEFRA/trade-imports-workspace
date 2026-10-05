@@ -23,6 +23,14 @@ ALL_PROFILES=(database infrastructure servicebus stubs backend frontend)
 # opt-in for the same reason: only needed when looking at meters locally.
 OPT_IN_PROFILES=(security monitoring)
 
+STUB_LATENCY_PROFILES=(zero-delay sla)
+
+# Opt-in overlay: the build gate's stack must stay on zero-delay, so only
+# --perf adds it.
+compose_files_add_perf() {
+  COMPOSE_FILES+=(-f "$STACK_DIR/perf.compose.yml")
+}
+
 # Build --dev images for the daemon's own architecture. Under emulation the
 # webpack production stage effectively never finishes on arm64. Export
 # DEV_BUILD_PLATFORM beforehand to force a specific platform.

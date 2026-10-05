@@ -18,11 +18,24 @@ import {
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
 
-export const LEASE_MODES = ['dev', 'up']
+export const LEASE_MODES = ['dev', 'up', 'perf']
 
 // run-stack.sh -d builds the repo-backed services from local source under
-// repos/; with no flag it pulls the published images.
-export const RUN_STACK_ARGS = { dev: ['-d'], up: [] }
+// repos/; with no flag it pulls the published images; --perf pulls the
+// published images and adds the stub-latency overlay.
+export const RUN_STACK_ARGS = { dev: ['-d'], up: [], perf: ['--perf'] }
+
+export const STUB_PROFILES = ['zero-delay', 'sla']
+export const DEFAULT_PERF_STUB_PROFILE = 'sla'
+
+/**
+ * The latency profile run-stack.sh --perf puts both stubs on.
+ *
+ * @param {object} [env]
+ * @returns {string}
+ */
+export const perfStubProfile = (env = process.env) =>
+  env.STUB_PROFILE || DEFAULT_PERF_STUB_PROFILE
 
 const STARTING = 'starting'
 const UP = 'up'
@@ -71,14 +84,22 @@ const describeBranches = (branches = {}) => {
 }
 
 /**
- * A lease as words: who holds it, its mode, since when and the branches its
- * repos were on, for a refusal a person can act on.
+ * A lease as words: who holds it, its mode, the stub latency profile a perf
+ * stack runs, since when and the branches its repos were on, for a refusal a
+ * person can act on.
  *
  * @param {object} lease
  * @returns {string}
  */
-export const describeLease = ({ holder, mode, acquiredAt, branches, state }) =>
-  `"${holder}" (${mode} mode${state === STARTING ? ', still starting' : ''}, since ${acquiredAt}${describeBranches(branches)})`
+export const describeLease = ({
+  holder,
+  mode,
+  stubProfile,
+  acquiredAt,
+  branches,
+  state
+}) =>
+  `"${holder}" (${mode} mode${stubProfile ? `, stubs on ${stubProfile}` : ''}${state === STARTING ? ', still starting' : ''}, since ${acquiredAt}${describeBranches(branches)})`
 
 const isProcessAlive = (pid) => {
   if (!Number.isInteger(pid)) return false
@@ -292,7 +313,10 @@ const startUnderLease = async (context, previous) => {
     containers: [],
     fingerprints:
       mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {},
-    stackFiles: await stackFilesFingerprint(workspaceRoot)
+    stackFiles: await stackFilesFingerprint(workspaceRoot),
+    ...(mode === 'perf'
+      ? { stubProfile: perfStubProfile({ ...process.env, ...env }) }
+      : {})
   }
   if (!(await claimLease(leasePath, lease, previous))) {
     const winner = readLease(leasePath)
@@ -370,7 +394,7 @@ const restartUnderLease = async (context, lease) => {
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.holder - Who takes the lease, such as a build run's id, "ibl-20261001T150000Z"
- * @param {'dev'|'up'} [args.mode]
+ * @param {'dev'|'up'|'perf'} [args.mode]
  * @param {string} args.leasePath
  * @param {string} args.logPath - Where run-stack.sh writes its output
  * @param {object} [args.env] - Extra environment for docker and the stack scripts

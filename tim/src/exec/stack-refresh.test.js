@@ -405,6 +405,28 @@ describe('refreshLeasedStack — the workspace’s stack files', () => {
     })
   })
 
+  test('starts a perf stack again with --perf, recording no service fingerprints', async () => {
+    const env = await stackWorkspace()
+    const lease = await leaseWithCurrentStack({
+      mode: 'perf',
+      stubProfile: 'sla',
+      fingerprints: {}
+    })
+    editStackFile()
+
+    const outcome = await refreshWithRestack(env, lease)
+
+    expect({
+      restacked: outcome.restacked,
+      calls: calls(),
+      fingerprints: leaseOnDisk().fingerprints
+    }).toEqual({
+      restacked: true,
+      calls: ['run-stack.sh --perf'],
+      fingerprints: {}
+    })
+  })
+
   test('fails with the reason when starting the stack again fails, and tries again next time', async () => {
     const env = await stackWorkspace({ restackFails: true })
     const lease = await leaseWithCurrentStack()

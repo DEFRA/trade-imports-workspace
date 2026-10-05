@@ -16,7 +16,11 @@ invoke them by absolute path.
 
 | Script | Phase | Purpose |
 |--------|-------|---------|
-| `start-upgrade.sh` | All | Single dispatcher (`--phase 1\|2\|3`) |
+| `start-upgrade.sh` | All | Single dispatcher (`--phase 0\|1\|2\|3\|4`) |
+| `audit-baseline.sh` | 0, 2 | Run one repo's audit-ci check; report failing, allowlisted, stale and fixable-allowlisted advisories |
+| `audit-allowlist-add.sh` | 0–4 | Write or renew one `audit-ci.jsonc` allowlist entry (refuses an advisory with a fix, or an expiry over 3 months) |
+| `refresh-lockfile.sh` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
+| `reset-overrides.sh` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
 | `discover-upgrades.sh` | 1 | Find outdated packages + seed `packages.{repo}.json` |
 | `prebake-context.sh` | 1 | Per-package context bundle (best-effort) |
 | `bake-best-practices.sh` | 1 | Per-repo best-practices bundle |
@@ -67,12 +71,39 @@ streaming log tail).
 | Install failure | Peer conflict etc. | Auto-demote: classification → manual, `demoted_from_auto: true`, failure_reason populated |
 | Test failure after upgrade | Breaking change | Rollback, auto-demote (same as above) |
 | Cascade failure | Rollback itself fails | Stop immediately, report — repo is in an inconsistent state |
+| Audit red at baseline | Phase 0, or the audit before a package's install, fails | Stop, report — not an upgrade issue. Take the fix, or allowlist an advisory with no fix |
+| Advisory with fix available | The audit after an upgrade fails on an advisory that has a fixed version, or an allowlisted advisory now has one (`fixable_allowlisted`) | Roll back, auto-demote with the GHSA as the reason. Take the fix; never allowlist it |
+| New advisory with no fix | The audit after an upgrade fails only on advisories with no fixed version | `audit-allowlist-add.sh` writes the entries and they go in the upgrade's commit (needs `--allowlist-owner` and `--expiry-days`; without them, treated as above) |
+| Commit refused | The repo's pre-commit hook (animals-admin runs the audit and the tests) rejects the commit | Roll back, auto-demote, failure_reason holds the hook output. Never `--no-verify` |
+
+## Audit allowlist
+
+Each repo that has adopted audit-ci keeps a comment-free
+`audit-ci.jsonc` at its root (`"high": true`, never `skip-dev`). Every
+entry has one shape:
+
+```json
+{"GHSA-xxxx-xxxx-xxxx": {"active": true, "notes": "<reason>. Owner: <name>", "expiry": "YYYY-MM-DD"}}
+```
+
+Write or renew entries only with `audit-allowlist-add.sh`. It refuses
+an advisory that has a fixed version unless `--blocked-by` names the
+parent package that stops the repo taking it (the notes then say "Fix
+blocked upstream: ..."), and an expiry more than 3 months away. The
+rules themselves (shape, owner, expiry, expired entries named) are
+checked by the "Check audit allowlist" step in each repo's CI
+"Security audit" job, not by these scripts.
 
 ## Workspace Layout
 
 ```
+~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/phase0.json
+                                    — every phase 0 run (schema in assets/packages-table.md)
 ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/
   packages.{repo}.json              — canonical per-repo state (schema in assets/packages-table.md)
+  allowlist.{repo}.json             — allowlist entries this run wrote
+  overrides.{repo}.json             — phase 4 decision per override
+  audit.{repo}.{label}.json         — npm audit report snapshot (+ .summary.json)
   .upgrades-meta.json               — thin discovery header
   best-practices.md                 — per-repo dependency-relevant best practices
   .context/{normalized-pkg}/

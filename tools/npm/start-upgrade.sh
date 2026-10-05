@@ -2,7 +2,7 @@
 # Dispatch the npm-upgrade workflow for one ticket.
 #
 # Usage:
-#   start-upgrade.sh EUDPA-XXXXX --phase 0|1|2|3 [--repo R ...] [--strategy LEVEL]
+#   start-upgrade.sh EUDPA-XXXXX --phase 0|1|2|3|4 [--repo R ...] [--strategy LEVEL]
 #                    [--branch NAME] [--allowlist-owner NAME --expiry-days N]
 #
 # --branch NAME refuses to run unless every requested repo is checked
@@ -38,6 +38,12 @@
 #              reason, owner and expiry) and `audit_before` /
 #              `audit_after` (the first and latest phase 0 runs).
 #
+#   --phase 4  Run `reset-overrides.sh` per repo, in parallel across
+#              repos: remove every override, put back only those a
+#              failing audit, test, lint or build proves are needed,
+#              commit "Remove overrides". Emits a JSON summary; exits
+#              1 if any repo stopped for a decision.
+#
 # All cross-phase state lives in
 # `~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json`.
 
@@ -65,7 +71,7 @@ ALLOWLIST_ARGS=()
 
 usage() {
     cat <<EOF >&2
-Usage: $0 EUDPA-XXXXX --phase 0|1|2|3 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
+Usage: $0 EUDPA-XXXXX --phase 0|1|2|3|4 [--repo R [--repo R ...]] [--strategy latest|minor|patch]
           [--branch NAME] [--allowlist-owner NAME --expiry-days N]
 
 Without --repo, runs against every repo flagged npmUpgradeDefault in the
@@ -426,10 +432,59 @@ phase3() {
     echo "  Follow ~/git/defra/trade-imports-workspace/.claude/skills/npm-upgrade/references/WALKER.md (run-id $TICKET)" >&2
 }
 
+phase4() {
+    # One reset-overrides.sh per repo, in parallel across repos (each
+    # works in its own throwaway worktree).
+    mkdir -p "$WORKSPACE_BASE"
+    local tmpdir
+    tmpdir=$(mktemp -d)
+    trap "rm -rf $tmpdir" RETURN
+
+    local pids=()
+    for repo in "${REPOS[@]}"; do
+        echo "Resetting overrides in $repo..." >&2
+        (
+            code=0
+            "$SCRIPT_DIR/reset-overrides.sh" --run-id "$TICKET" --repo "$repo" \
+                >"$tmpdir/$repo.out" 2>"$tmpdir/$repo.err" || code=$?
+            echo "$code" > "$tmpdir/$repo.exit"
+        ) &
+        pids+=("$!:$repo")
+    done
+
+    local per_repo='[]' stopped=()
+    for entry in "${pids[@]}"; do
+        local pid="${entry%%:*}"
+        local repo="${entry#*:}"
+        wait "$pid" || true
+        local code result
+        code=$(cat "$tmpdir/$repo.exit" 2>/dev/null || echo "127")
+        result=$(tail -n 1 "$tmpdir/$repo.out" 2>/dev/null)
+        jq -e . >/dev/null 2>&1 <<<"$result" \
+            || result=$(jq -nc --arg e "$(tail -n 5 "$tmpdir/$repo.err" 2>/dev/null)" '{error: $e}')
+        [[ "$code" != "0" ]] && stopped+=("$repo")
+        per_repo=$(jq -nc \
+            --argjson p "$per_repo" \
+            --arg repo "$repo" \
+            --argjson code "$code" \
+            --argjson result "$result" \
+            '$p + [{repo: $repo, exit_code: $code} + $result]')
+    done
+
+    jq -n \
+        --argjson per_repo "$per_repo" \
+        --argjson stopped "$(printf '%s\n' "${stopped[@]}" | jq -R 'select(. != "")' | jq -s .)" \
+        '{status: (if ($stopped | length) == 0 then "ok" else "stopped" end),
+          stopped: $stopped, per_repo: $per_repo}'
+
+    [[ "${#stopped[@]}" -gt 0 ]] && return 1 || return 0
+}
+
 case "$PHASE" in
     0) phase0 ;;
     1) phase1 ;;
     2) phase2 ;;
     3) phase3 ;;
+    4) phase4 ;;
     *) echo "Invalid --phase: $PHASE" >&2; usage ;;
 esac

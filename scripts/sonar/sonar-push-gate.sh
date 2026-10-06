@@ -90,6 +90,16 @@ is_git_push "$COMMAND" || exit 0
 CHECK_SCRIPT="$HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh"
 [ -f "$CHECK_SCRIPT" ] || exit 0
 
+# The app runs this hook under bash with its own environment, and an app
+# launched from the Dock never reads zsh's startup files — so a SONAR_TOKEN
+# exported in ~/.zshenv or ~/.zshrc would otherwise never reach the check.
+# An interactive zsh reads both; tail keeps only the last line in case
+# ~/.zshrc prints anything to stdout on startup.
+if [ -z "$SONAR_TOKEN" ] && command -v zsh >/dev/null 2>&1; then
+  SONAR_TOKEN=$(zsh -ic 'printenv SONAR_TOKEN' 2>/dev/null </dev/null | tail -n 1)
+  [ -n "$SONAR_TOKEN" ] && export SONAR_TOKEN
+fi
+
 resolve_target_dir() {
   local cmd="$1" cwd="$2" dir="$2"
 

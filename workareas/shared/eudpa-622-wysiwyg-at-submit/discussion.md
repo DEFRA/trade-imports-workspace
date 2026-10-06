@@ -36,6 +36,13 @@ Findings verified against the repo on 2026-09-30. Plants covered separately at t
 
 **Concurrency token.** Backend mints one per save. Rendered as a hidden field on the Review and Declaration forms — but each page reads the *current* token when it renders (`kit.base()` → `journey.concurrencyToken`); Declaration does not carry forward the token Review was rendered with. **Only read defensively on *copy* operations** — not checked on Continue or Submit.
 
+Verified 2026-10-06, relevant to Option E:
+
+- The token is a Spring Data `@Version` field on `NotificationAggregate` (animals and plants backends). A notification PUT carrying a stale token is refused atomically with a 409 (`OptimisticLockingFailureException`).
+- The frontend's save (`replaceJourneyFulfilment`, `engine/journey.js`) sends the token loaded earlier in the *same request* in preference to `payload.concurrencyToken`, so the backend's check only guards the milliseconds between load and save, not the time since the page rendered.
+- Submit is two backend calls: the declaration save (a version-checked PUT that moves the token on) then `POST /notifications/{id}/submit`, which takes no token. An edit landing between the two is finalised unchecked.
+- Accompanying-document details shown on Review come from `answers.documents`, stored on the notification, so a document add/remove moves the token. Scan status lives elsewhere but is re-checked by `reviewRefusal()` on Continue and Submit.
+
 **Content anchoring.** Nothing today. No hash, no snapshot, no etag, no "as-of" pin threaded through Review → Declaration.
 
 The re-validation added by EUDPA-130 protects against reference values that have gone stale (a commodity code no longer resolving, for instance) but it is not a WYSIWYG check — the *values* the user saw can change and still pass validation.
@@ -99,17 +106,51 @@ On *Continue* from Review, the backend persists a snapshot of the answers to a p
 
 **Pointer.** New `POST /notifications/{id}/reviewed-snapshot` on the animals backend. Called from `.../features/check-answers/controller.js` POST after `reviewRefusal()` passes and before redirecting to Declaration. Read back in Declaration GET. Consumed by `submitNotification()` in place of the stored notification.
 
-### Option E — Use the existing concurrency token defensively on Continue and Submit
+### Option E — One concurrency token from Review to Submit, with Declaration reachable only from Review
 
-The concurrency token is already a hidden field on both the Review and Declaration forms. Compare the token in the payload against the current notification's token on **both** POSTs and refuse if they differ.
+The concurrency token is already a hidden field on both the Review and Declaration forms. Option E chains a single token — the one Review was rendered with, call it *T* — from Review through to the final save, and makes Declaration impossible to reach any other way.
 
-Both checks are needed because Declaration renders the *current* token, not Review's. A Submit-only check catches edits made after Declaration rendered, but misses an edit made while the user was reading Review — Declaration would render the new token and Submit would match it. The Continue check closes that window: it proves nothing changed between Review render and Continue, leaving only the redirect hop to Declaration.
+**Token-only variant (the weak form).** Compare the posted token against the current one on *Continue* and on *Submit*, leaving the pages as they are. Covers 1 and 3, but **not** 2: a user who reaches Declaration by back button, bookmark or typed URL gets a Declaration rendered with the *current* token, so Submit matches. The token proves *nothing changed since this page rendered*, not *the user saw Review for this content*. The rest of this section is the strong form, which closes that gap.
 
-- Covers scenarios 1 and 3 (any edit through the app increments the token, address edits included).
-- Does **not** cover 2. A user who reaches Declaration without passing through Review — back button, bookmark, typed URL — gets a Declaration rendered with the current token, so Submit matches. The token proves *nothing changed since this page rendered*, not *the user saw Review for this content*.
-- Almost no code change. Backend already exposes the token per save. Frontend already renders it into both forms.
+**Declaration only reachable from Review.**
 
-**Pointer.** `.../features/check-answers/controller.js` POST, alongside `reviewRefusal()`, and `.../features/declaration/controller.js` POST, after `isReviewRefused()` — read `payload.concurrencyToken`, compare against the current record's token, refuse on mismatch by re-showing Review with a "this notification has changed" message.
+- **Review's form posts to `/declaration`** (change its `action`), not to `/check-answers`.
+- **`GET /declaration` redirects to `/check-answers`.** A bookmark or typed URL cannot show Declaration.
+- **`POST /declaration` handles two submissions**, told apart by a hidden `step` field. A marker is needed because an unticked checkbox posts nothing, so a Submit without the tick would otherwise look like a Continue from Review.
+
+| From | Posted | Handler |
+|---|---|---|
+| Review's *Continue* | `step=review`, token T | 1. T must equal the current token — else redirect to `/check-answers` with "this notification has changed since you viewed it". 2. `reviewRefusal()` must pass — else redirect to `/check-answers`. 3. Render Declaration with **T** in its hidden field. |
+| Declaration's *Submit* | `step=declare`, token T, tick box | 1. Tick box missing: re-render Declaration with **T** and the error. 2. `reviewRefusal()`, as today. 3. Save the declaration **conditionally at T**, then submit, with no gap between the two (see the backend pointer). A 409 means the notification changed since Review — back to Review with the "changed" message. |
+
+- **Declaration is the exception to "render the current token".** Every other page renders the current token via `kit.base()`. Declaration always renders the *posted* T — on first render, on the tick-box error and on the save-failure page — or the chain breaks.
+- **The address bar stays honest.** Declaration shows at `/declaration` (title, analytics, back link consistent), rather than being rendered from `POST /check-answers` with `/check-answers` in the address bar.
+- **Refresh and back button are harmless.** Refresh asks to resubmit and re-posts `step=review` with T, which goes through the same checks. A cached Declaration still holds T, so its Submit is refused if anything has changed.
+- **The final save closes the last-millisecond race.** The declaration save is version-checked against T by the backend, so the notification and its fulfilments are finalised exactly as Review showed them, or not at all.
+
+**Coverage.**
+
+- Covers scenarios 1 and 3: any edit through the app moves the token — address edits and document adds/removes included.
+- Covers scenario 2 for back button, bookmark, typed URL and stale tabs.
+- Generic guidance only ("this notification has changed since you viewed it") — the token says *that* something changed, not *what*.
+
+**Remaining gap — a hand-crafted POST.** Every journey page carries the current token, so someone could copy it from another page and post `step=review` to `/declaration` with browser developer tools, reaching Declaration without opening Review. This needs deliberate effort by the user, against their own declaration. Option B has the same weakness (its hash is deterministic). If the team wants it closed, an **optional session guard**:
+
+1. `GET /check-answers`, when rendering an editable Review, records `reviewedAt[journeyId] = T` in the server-side `@hapi/yar` session (same pattern as the existing per-notification `openingRun` map). No other page writes it.
+2. Both `POST /declaration` steps additionally require the posted T to equal `reviewedAt[journeyId]`.
+3. A successful submit clears the entry.
+
+A match then proves *this browser rendered Review for exactly this content*. The posted token is still needed alongside it: Review in tab A (session = T), edit in tab B (T+1), Review in tab B (session = T+1), Submit in tab A — the session matches current, but tab A's form says T, so it is rightly refused.
+
+**Pointer.**
+
+- Frontend (animals, then plants):
+  - `.../features/check-answers/view.njk` — form `action` to the declaration path, add `step=review`.
+  - `.../features/declaration/index.js` / `controller.js` — GET redirects to Review; POST branches on `step`; every render uses `payload.concurrencyToken`, not `kit.base()`'s.
+  - The declaration save passes the posted token as `known` instead of the in-request one (`replaceJourneyFulfilment`, `engine/journey.js`).
+  - Review GET must surface the "still scanning" document error (today it computes only "rejected", `check-answers/controller.js` line 168), since a refused Continue now redirects to Review instead of re-rendering it.
+  - `POST /check-answers` removed, or kept as a redirect for a stale open tab.
+- Backend (animals and plants): close the gap between the declaration save and `/submit` — either `POST /{id}/submit?concurrencyToken=` with the same check `/copy` already does, or (better) one call that writes the declaration and submits at T.
 
 ### Option F — Lock the notification on *Continue* from Review
 
@@ -140,16 +181,17 @@ Why this likely ends up a partial answer: by itself it makes scenario 2 continge
 | B. Content hash Review → Submit                     | Y                 | Y                 | Y            | Partial               | M    |
 | C. Persisted snapshot + id, verified at Submit      | Y                 | Y                 | Y            | Full                  | M–L  |
 | D. Server-side reviewed snapshot as source of truth | Y                 | Partial           | Y            | —                     | L    |
-| E. Token check on Continue + Submit                 | Y                 | —                 | Y            | Partial               | XS   |
+| E. Token check only (weak form, pages unchanged)    | Y                 | —                 | Y            | Partial               | XS   |
+| E. One token, Declaration only via Review (strong)  | Y                 | Y                 | Y            | Partial               | S    |
 | F. Lock notification on *Continue*                  | Y                 | Partial           | Y            | —                     | M    |
 
 For the *Explains what changed* column: Partial means we can display just generic guidance ("content changed" or "another user edited this"); — = no guidance path (either drift is not detected, or the option's design means no drift is possible in the first place).
 
 Useful combinations:
 
-- **E alone**: near-zero code; covers 1/3; leaves 2 open (the least likely accidental subversion).
-- **A + E**: cheap; covers all three with generic guidance. Carries the content-design cost of a long page ending in a legal declaration.
-- **B alone**: single lever, covers all three. Requires care in canonical hashing and drift-UX. Largely overlaps E for 1/3; its extra value is scenario 2.
+- **E (strong form) alone**: small frontend change plus a small backend one; covers all three with generic guidance; keeps the two pages. Optional session guard if a deliberately hand-crafted POST must be stopped too.
+- **A + E (weak form)**: also covers all three with generic guidance, but carries the content-design cost of a long page ending in a legal declaration. E's strong form gets the same coverage without it.
+- **B alone**: single lever, covers all three. Requires care in canonical hashing and drift-UX. Adds nothing over E's strong form — same coverage, same generic guidance, same hand-crafted-POST weakness — at more cost.
 - **C alone**: same coverage as B, but the drift-detection UX can be field-level (naming what changed) rather than a generic banner, because the prior view-model is persisted and diffable. Costs a small backend schema + API change.
 - **F + B** or **F + C**: lock during the Review → Submit window to shrink the detection surface, with hash or snapshot as a safety net around lock expiry. Buys prevention *and* detection at the cost of carrying both mechanisms and their failure modes — hard to justify when E already covers 1 and 3 by detection.
 
@@ -159,12 +201,9 @@ Useful combinations:
 
 Not a decision, a starting position.
 
-- **Start with E** (concurrency token check on Continue and Submit), in both animals and plants. Almost no code, covers 1 and 3.
-- **Then decide on scenario 2.** It is the only gap left after E: reaching Declaration without passing through Review for the current content (back button after an edit, a bookmark, a typed URL). Three positions:
-  - *Accept it.* It needs the user to step outside the linear flow; the content submitted is still the user's own latest answers.
-  - *A* (collapse the pages) closes it structurally, at a content-design cost.
-  - *B* (content hash) closes it within the two existing pages, and supersedes E rather than adding to it.
-- **Choose C over B only if** the team wants **field-level** drift guidance ("the consignee's address changed from X to Y") rather than a generic "something changed" banner, because the legal-declaration framing makes it important that the user is told *what* diverged. Cheap now (QA-only, no data migration); would need landing before real notifications exist to stay cheap.
+- **E in its strong form**, in both animals and plants: one token from Review to Submit, Declaration reachable only by posting from Review, and the final save conditional on that token. Covers all three scenarios with generic guidance, keeps the two pages, and builds on the `@Version` check the backend already has. A and B are not needed.
+- **Decide on the session guard.** It closes only a deliberately hand-crafted POST by the user against their own declaration. A small change, but optional — accept the gap or add the guard.
+- **Choose C instead only if** the team wants **field-level** drift guidance ("the consignee's address changed from X to Y") rather than a generic "something changed" banner, because the legal-declaration framing makes it important that the user is told *what* diverged. Cheap now (QA-only, no data migration); would need landing before real notifications exist to stay cheap.
 
 Not recommended: **D** (silently discards later edits, for a guarantee C gets by gating) and **F** (lock lifecycle cost for coverage E already gives).
 
@@ -174,7 +213,7 @@ Not recommended: **D** (silently discards later edits, for a guarantee C gets by
 
 Not scoped in the outline diffs above; needs a matching pass. Two divergences to note now:
 
-- **Plants does not re-validate on Submit.** `.../trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js` (POST, lines 66–109) calls `submitJourney()` directly without an `isReviewRefused()`-equivalent. Any option chosen for animals should be landed for plants too, or plants remains exposed even to the EUDPA-130-style stale-reference case. E slots in at the same two POSTs.
+- **Plants does not re-validate on Submit.** `.../trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.js` (POST, lines 66–109) calls `submitJourney()` directly without an `isReviewRefused()`-equivalent. Any option chosen for animals should be landed for plants too, or plants remains exposed even to the EUDPA-130-style stale-reference case. E slots in the same way: the plants backend has the same `@Version` token and the same token-less `/submit` endpoint.
 - **Plants POST on Continue skips document scan-status checks** (`.../check-answers/controller.js` lines 104–110) because plants doesn't have the documents feature in the same shape. Not directly a WYSIWYG concern, but worth flagging as part of a plants pass on the ticket.
 
 If B (content hash) is chosen, the hashing helper should live in a shared spot (or be duplicated with the same canonicalisation) so plants and animals agree on what a canonical view-model looks like.
@@ -185,7 +224,8 @@ If B (content hash) is chosen, the hashing helper should live in a shared spot (
 
 Restating the ticket's own list, plus what's surfaced above:
 
-1. Scenarios 1 and 3 are in scope. Is scenario 2 (reaching Declaration without passing through Review) in scope, or explicitly accepted?
-2. Which mitigation, or which combination? E alone, A + E, B, or C are the clean starting points.
-3. On drift detection: block Submit and re-show Review with a generic message, with a field-level diff (C), or something else (prompt with per-field acknowledgement)?
-4. Does the answer apply identically to plants and animals? (Recommendation: yes — including closing plants' missing re-validation on Submit.)
+1. Is E's strong form (one token, Declaration only via Review) the chosen mitigation, or does the team want C's field-level guidance?
+2. Session guard: add it, or accept that a user could deliberately hand-craft a POST to skip Review?
+3. On drift detection: block Submit and re-show Review with a generic message, with a field-level diff (C), or something else (prompt with per-field acknowledgement)? What exactly should the "changed since you viewed it" message say?
+4. Backend: token on `/submit`, or a single declare-and-submit call?
+5. Does the answer apply identically to plants and animals? (Recommendation: yes — including closing plants' missing re-validation on Submit.)

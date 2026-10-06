@@ -57,16 +57,16 @@ summary=$(jq -s '
         total: ($all | length),
         by_classification:
             ($all | group_by(.classification // "pending")
-                  | map({key: .[0].classification // "pending", count: length})
+                  | map({key: (.[0].classification // "pending"), count: length})
                   | sort_by(.key)),
         by_status:
             ($all | group_by(.implementation_status // "pending")
-                  | map({key: .[0].implementation_status // "pending", count: length})
+                  | map({key: (.[0].implementation_status // "pending"), count: length})
                   | sort_by(.key)),
         by_risk:
             ($all | map(select(.classification == "manual"))
                   | group_by(.risk // "UNKNOWN")
-                  | map({key: .[0].risk // "UNKNOWN", count: length})
+                  | map({key: (.[0].risk // "UNKNOWN"), count: length})
                   | sort_by(.key)),
         by_repo:
             ($all | group_by(.repo)

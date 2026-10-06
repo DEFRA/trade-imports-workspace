@@ -232,8 +232,10 @@ trial() {
         fi
     fi
 
+    # Build first, as CI does: a repo whose .npmrc sets ignore-scripts=true
+    # never runs pretest, so its tests would find no built assets.
     local check
-    for check in test lint build:frontend; do
+    for check in build:frontend test lint; do
         [[ "$check" == "test" && "$REPO" == "trade-imports-ins-tests" ]] && continue
         has_script "$check" || continue
         echo "== npm run $check" >>"$TRIAL_LOG"

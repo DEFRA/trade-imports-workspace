@@ -37,11 +37,11 @@ All 8 service-repo branches and this workspace branch are pushed (no PRs raised)
 1. **Disk.** 20 GB free after clearing scratchpad `node_modules` and the npm cache. Docker's data is ~45 GB.
    - Restart Docker Desktop, then `docker builder prune -af` and `docker system prune -af --volumes`.
    - Lower Docker's disk limit (Settings → Resources) so it can't fill the disk again.
-2. **Node 24.21.0 for agents.** Installed with nvm (npm 11.19.0), but agents were **denied** running it: `bash -lc 'source ~/.nvm/nvm.sh && nvm exec 24.21.0 …'` and calling `~/.nvm/versions/node/v24.21.0/bin/node` directly were both refused. Pick one before resuming:
+2. **Node 24.21.0 for agents.** Installed with nvm (npm 11.19.0) and `nvm alias default 24.21.0` is set, so a new session should get it — check `npm -v` shows 11.19.x before any install. Agents were also **denied** running `node -v`; allow `Bash(node:*)` if that persists. Earlier attempts: `bash -lc 'source ~/.nvm/nvm.sh && nvm exec 24.21.0 …'` and calling `~/.nvm/versions/node/v24.21.0/bin/node` directly were both refused. Pick one before resuming:
    - `nvm alias default 24.21.0` so a plain shell gets 24.21.0 (simplest), or
    - allow the `bash -lc 'source ~/.nvm/nvm.sh && nvm exec 24.21.0 …'` pattern in permissions.
    Host npm 11.6.2 strips optional lock entries that npm 12 (in the 3.x Docker base image) needs — that is what broke admin's production build. Every install must run on 24.21.0 / npm 11.19.
-3. **ins-tests TypeScript (decision needed).** Today it runs two compilers (TS 6 aliased for eslint/editors, TS 7 for `tsc`) — rejected. typescript-eslint cannot run on TS 7 (no JS API until TS 7.1, stable ~2026-11-24; support is draft PR #12803). Options:
+3. **ins-tests TypeScript — DECIDED: option B, pin `typescript` 6.0.3.** Not yet applied: this session's shells were still on npm 11.6.2. To apply after the restart, in package.json set `"typescript": "6.0.3"` and remove `@typescript/native` (only lines referencing `@typescript/native` / `@typescript/typescript6`; nothing else in the repo does). `npm install` on npm 11.19, keep the tsconfig.json changes if `npm run typecheck` passes, run lint and check `--list` counts stay 315 / 271 (`npm run _test_docker_compose -- --list`, and with `--config=playwright.config.ts --grep-invert "@compose|@a11y|@active"`). Commit "chore(EUDPA-668): pin typescript to 6.0.3" with the reason below, mark the state row held at 6.0.3. Background for the commit body: Today it runs two compilers (TS 6 aliased for eslint/editors, TS 7 for `tsc`) — rejected. typescript-eslint cannot run on TS 7 (no JS API until TS 7.1, stable ~2026-11-24; support is draft PR #12803). Options:
    - **A (recommended):** replace eslint + typescript-eslint with `oxlint` 1.87.0 + `oxlint-tsgolint` 7.0.2003; `typescript` 7.0.2 only. All 23 typed rules covered. Generate `.oxlintrc.json` with `npx @oxlint/migrate --type-aware`; rewrite the `no-restricted-imports` lookahead regex (Rust regex has no lookahead) to list the four domains. ins-tests becomes the one non-eslint repo.
    - **B:** pin `typescript` 6.0.3, drop `@typescript/native`, keep eslint. TS 7 waits for typescript-eslint.
 
@@ -61,7 +61,7 @@ All 8 service-repo branches and this workspace branch are pushed (no PRs raised)
 
 In a new Claude Code session at the workspace root, after the blockers are cleared:
 
-> Resume EUDPA-668 from `workareas/shared/EUDPA-668-handover.md`. TypeScript option: A/B. Use workflows.
+> Resume EUDPA-668 from `workareas/shared/EUDPA-668-handover.md`. Use workflows.
 
 The next run should, per repo: finish the fixes (commit animals-frontend's pending edits; check admin's lockfile diff), prove the lockfile with `npm ci` in a `node:24.21.0` container and a production `docker build`, run stage 3 with `tools/npm/reset-overrides.sh`, then the stage 3 gate; then the defra-id-stub coverage check (vitest counting vs lost coverage), E2E on a `-d` stack with a locally built defra-id-stub plus a sign-in smoke through the stub, then push and raise PRs. The stopped script above is the template; it needs the Node invocation changed to whatever blocker 2 settles on.
 

@@ -218,18 +218,18 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 38 agents on Claude and 44 on Codex,
-// its start stage, the workspace commit reader and the one that puts the workspace repo back on the base
-// branch included, so a drain of an open-ended backlog would hit the
+// not a config key. An increment is up to 39 agents on Claude and 45 on Codex,
+// its start stage, the replan of a plan whose checks the workspace denies, the workspace commit reader and the one that
+// puts the workspace repo back on the base branch included, so a drain of an open-ended backlog would hit the
 // cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 26 increments on Claude, 22 on Codex — and
+// that would not fit — roughly 25 increments on Claude, 22 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs. The run's
 // own agents are the workspace and preflight checks, and the one that takes
 // the workspace stack's lease at the start and the one that gives it back at
 // the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 38, codex: 44 }
+const AGENTS_PER_INCREMENT = { claude: 39, codex: 45 }
 const STARTUP_AGENTS = 4
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -1128,13 +1128,71 @@ the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. N
 never start, stop or rebuild the stack. Skip a check that launches a browser, or one that cannot reach the stack: the
 gate's E2E phase proves it, after review. Its absence is not a finding.`
 
+// The programs .claude/settings.json denies as the first word of a Bash
+// command. ins-performance-testing inc-023 and inc-011 each stopped at
+// ladder-red with nothing broken: their plans proved things with curl,
+// `bash <script>` and `VAR=value` prefixes, which the ladder could not run.
+// Ruled 6 Oct 2026: the planner writes allowed forms; the deny list stays.
+const DENIED_PROGRAMS = [
+  'bash',
+  'sh',
+  'zsh',
+  'nohup',
+  'eval',
+  'exec',
+  'node',
+  'python',
+  'python3',
+  'perl',
+  'ruby',
+  'osascript',
+  'deno',
+  'bun',
+  'bunx',
+  'tsx',
+  'ts-node',
+  'php',
+  'curl',
+  'wget',
+  'chmod',
+  'env',
+  '/usr/bin/env'
+]
+const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
+
+const firstWordOf = (command) => command.trim().replace(/^`+/, '').trim().split(/\s+/)[0] ?? ''
+
+const isDeniedCommand = (command) => {
+  const firstWord = firstWordOf(command)
+  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord)
+}
+
+const DENIED_FORMS_LINE = `- DENIED, so never run them and never write them into a plan: ${DENIED_PROGRAMS.map((program) => `\`${program}\``).join(', ')}
+  as a command, and any \`VAR=value\` prefix on one. That covers \`bash <script>\`, \`bash -n\`, \`sh <script>\`, bare \`node\` and
+  \`node -e\`, and \`curl\` or \`wget\` against the stack. Wrap a script in an npm script. NEVER run \`sonar\` (not
+  allowlisted; it is a milestone gate the human runs).`
+
+const PLAN_CHECK_FORMS = `CHECK COMMANDS. Every check in sections 5 and 6 must be a command the workspace lets an agent run. A check
+in a denied form cannot run, so the ladder stops the increment red with nothing broken. A check takes one of these forms:
+  - the repo's own npm script: \`npm --prefix ${TILDE}/<repoPath> run <script>\` or \`npm --prefix ${TILDE}/<repoPath> test -- <file>\`;
+  - \`mvn -f ${TILDE}/<repoPath>/pom.xml <goal>\`;
+  - a \`tim\` command;
+  - a k6 run through the repo's own npm script, which reads its endpoints itself;
+  - \`git -C\`, \`jq\`, \`grep\`, \`ls\` or \`find\` over files.
+A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
+\`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
+Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
+none does, add a small test or npm script that makes it to the plan's own work (section 2 or 3, in that service's repo
+or the performance-tests repo) and name that as the check. To prove a script runs, run the npm script that calls it.
+To vary a script's behaviour, use an npm script or a flag the script takes, never a variable prefix.`
+
 const BASE_GUARDRAILS = `
 GUARD RAILS (mandatory, every step):
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
 - In Bash ALWAYS use tilde paths \`${TILDE}/...\` — a literal /Users/... path in Bash is DENIED.
 - For the Read/Write/Edit TOOLS use absolute paths \`${ABS}/...\`.
-- Never bare \`node\` / \`node -e\` (denied — wrap in an npm script). NEVER run \`sonar\` (not allowlisted; it is a milestone gate the human runs).
+${DENIED_FORMS_LINE}
 - Tests go TO A FILE under \`${WORKAREA_TILDE}/logs/\` and you read that file ONCE. Never grep streaming output, never re-run a suite to see it again.
 - For Playwright failures read \`test-results/*/error-context.md\`, do not grep the tail of the run.
 - Rollback is ALWAYS \`git stash push -u\` — NEVER \`reset --hard\` or \`clean -fd\`.
@@ -1492,9 +1550,22 @@ const BASELINE_SCHEMA = {
 
 const PLAN_SCHEMA = {
   type: 'object',
-  required: ['ok', 'summary', 'repos', 'behaviourChanges', 'decisions'],
+  required: ['ok', 'summary', 'repos', 'behaviourChanges', 'decisions', 'checks'],
   properties: {
     ok: { type: 'boolean', description: 'false only when the increment cannot be carried out as written' },
+    checks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['section', 'command'],
+        properties: {
+          section: { type: 'integer', enum: [5, 6] },
+          command: { type: 'string', description: 'The exact command, as the plan writes it' }
+        },
+        additionalProperties: false
+      },
+      description: 'Every check in sections 5 and 6, one entry per command. Empty when both sections say "None"'
+    },
     summary: { type: 'string' },
     repos: {
       type: 'array',
@@ -1938,10 +2009,19 @@ const branchedWorkspaceLine = (branchedRepos) =>
 that changes anything in it, \`openspec/\` included, needs it, so return ok:false naming \`${WORKSPACE_KEY}\`.`
     : ''
 
-const planIncrement = (id, branchedRepos = null) =>
+const deniedChecksNote = (id, deniedChecks) =>
+  deniedChecks.length
+    ? `YOUR LAST PLAN NAMED CHECKS THE WORKSPACE DENIES, so the ladder could not run them:
+${deniedChecks.map((command) => `  - \`${command}\``).join('\n')}
+Rewrite ${PLANS}/${id}.md so every check in sections 5 and 6 takes a CHECK COMMANDS form below, adding to the plan's own
+work any test or npm script a rewritten check needs. Keep the rest of the plan unless that change needs it.
+`
+    : ''
+
+const planIncrement = (id, branchedRepos = null, deniedChecks = []) =>
   agent(
     `You are the PLANNER for increment ${id}. You write the plan; you change no source file and you commit nothing.
-${guardrails()}
+${deniedChecksNote(id, deniedChecks)}${guardrails()}
 ${readIncrement(id)}
 ${REPO_RULE}
 ${IS_BRANCH ? branchPlanRule(branchedRepos) : branchedRepos ? `BRANCHED REPOS: the repos branched for this increment are ${branchedRepos.join(', ')}. Plan only
@@ -1979,8 +2059,8 @@ implementor decides nothing.
    6. Increment-specific checks beyond the gate. \`tim build gate\` already runs every repo's own rungs from
       gates.json — format check, lint, typecheck, unit tests, \`mvn verify\`, FIT and the tests repo's local-stack
       E2E suite, which carries the integration proof — so never list those here. List only what this increment
-      needs proved on top of them and section 5, one command each in the GUARD RAILS form (\`npm --prefix\`,
-      \`mvn -f\`, tilde paths), with what each proves. One that needs the workspace stack up is marked "needs the
+      needs proved on top of them and section 5, one command each in a CHECK COMMANDS form below, with tilde
+      paths, and what each proves. One that needs the workspace stack up is marked "needs the
       workspace stack", as in section 5, and runs under the run's lease; the slice's integration proof still
       belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
@@ -1989,10 +2069,33 @@ implementor decides nothing.
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
    or "the backend half" for another increment.
-Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions and risks.
+${PLAN_CHECK_FORMS}
+Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions, risks
+and checks: every command in sections 5 and 6, exactly as the plan writes it. The loop reads checks[] and sends back a
+plan that names a denied form.
 Return the structured output only.`,
-    think({ label: `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
+    think({ label: deniedChecks.length ? `${id} replan` : `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
+
+const deniedChecksOf = (plan) =>
+  (plan?.checks ?? []).map((check) => check.command).filter(isDeniedCommand)
+
+// The planner is sent back once with the denied commands named. A plan that
+// still names one is refused: the ladder could not run it.
+const planWithAllowedChecks = async (id, branchedRepos = null) => {
+  const plan = await planIncrement(id, branchedRepos)
+  const denied = deniedChecksOf(plan)
+  if (!plan?.ok || denied.length === 0) return plan
+  log(`${id}: the plan names checks the workspace denies — ${denied.join('; ')}. Sending the planner back once.`)
+  const replan = await planIncrement(id, branchedRepos, denied)
+  const stillDenied = deniedChecksOf(replan)
+  if (!replan?.ok || stillDenied.length === 0) return replan
+  return {
+    ...replan,
+    ok: false,
+    summary: `the plan's checks still use command forms the workspace denies, so the ladder could not run them: ${stillDenied.join('; ')}`
+  }
+}
 
 const ENVELOPE_REPO_SCHEMA = {
   type: 'object',
@@ -2784,7 +2887,7 @@ while (stopped === null) {
 
   if (PLAN_ONLY) {
     phase('Plan')
-    const plan = await planIncrement(id)
+    const plan = await planWithAllowedChecks(id)
     results.push({
       id,
       outcome: plan?.ok ? 'planned' : 'plan-refused',
@@ -2979,7 +3082,7 @@ ${baselineRungList(baseline)}`
   // -----------------------------------------------------------------------
   phase('Plan')
 
-  plan = await planIncrement(id, repos)
+  plan = await planWithAllowedChecks(id, repos)
 
   if (!plan || !plan.ok) {
     log(`${id}: PLAN REFUSED — ${plan ? plan.summary : 'the planner died'}`)
@@ -3239,7 +3342,8 @@ writes; a move or new file the plan listed that did not happen; THE CONTRACT BET
 frontend, say) sends and expects matches what its provider (a backend or a stub) accepts and returns, and the tests
 or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
-report any that fails as a finding. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
+report any that fails as a finding. A check in a form GUARD RAILS lists as DENIED is not run: report it as a finding
+naming the plan. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
@@ -3539,6 +3643,8 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
    \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run. One that needs
    the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
+   A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
+   the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.

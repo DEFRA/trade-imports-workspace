@@ -15,14 +15,14 @@ Stopped workflow script: [`EUDPA-668-finish-and-stage-3.workflow.js`](EUDPA-668-
 | 2 — upgrade everything | Done in all 8 repos (one major per step). 7 repo gates passed; admin failed on its production Docker build (lockfile, see below). E2E 277/277 against a `-d` stack. |
 | Fixes + stage 3 (override reset) + gate + E2E | **Stopped part-way** because the disk filled (346 MB free) and Docker hung. |
 
-Nothing is pushed in any service repo. Only this workspace branch is pushed.
+Every branch is pushed so the work survives the restart, but stage 3 and its gate have not run, so no PRs are raised yet.
 
 ## Repo state at handover
 
 | Repo | HEAD | Uncommitted | Still to do |
 |---|---|---|---|
-| animals-admin | b1db342 | `package-lock.json` (lockfile regeneration in progress — check the diff; likely the npm 11.19 regen) | lockfile fix + prod build, dependabot, stage 3, gate |
-| animals-frontend | 7e897c36 | `.nvmrc`, `Dockerfile`, `package.json` (Node 24.15 → 24.21.0, parent 3.2.3-node24.21.0), `.github/dependabot.yml` (eslint ignore removed). Ready to commit; message drafted by the agent. | commit those, lockfile check, stage 3 (12 overrides; trial kept only `tmp` and `lighthouse/.`), gate |
+| animals-admin | 44a8f49 | — (lockfile regen committed: restores the sass/chokidar/readdirp entries; production build not yet re-run) | prove prod build, dependabot, stage 3, gate |
+| animals-frontend | dependabot commit after 2dc30419 | — (Node 24.21.0 and dependabot edits committed) | lockfile check, stage 3 (12 overrides; trial kept only `tmp` and `lighthouse/.`), gate |
 | ins-frontend | 18175de | — | fixes (eslint `includeIgnoreFile`, lockfile/prod build), stage 3, gate |
 | plants-frontend | 38c35d7 | — | fixes (lockfile/prod build), stage 3, gate |
 | ins-tests | 5fd569c | — | **TypeScript decision (below)**, fixes, stage 3, gate |
@@ -30,7 +30,7 @@ Nothing is pushed in any service repo. Only this workspace branch is pushed.
 | schemas | e26e63f | — | stage 3 found no overrides; gate not run |
 | defra-id-stub | cc1c91c | — | check fixes landed; stage 3, gate; coverage-drop check |
 
-Workspace repo also has uncommitted, deliberately left alone: `.claude/hooks/guard-bash.sh` (user removed the `npm --prefix` rule — commit it yourself), `workareas/shared/ins-performance-testing/backlog.json` (unrelated), untracked `.test-keys/` (unknown, not from this work).
+All 8 service-repo branches and this workspace branch are pushed (no PRs raised). The `guard-bash.sh` change (dropping the `npm --prefix` rule) is committed here. Deliberately left uncommitted in the workspace: `workareas/shared/ins-performance-testing/backlog.json` (unrelated) and untracked `.test-keys/` (contains a private key — never commit it; consider adding it to `.gitignore`).
 
 ## Blockers to clear after the restart
 

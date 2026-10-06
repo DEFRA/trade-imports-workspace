@@ -4,7 +4,6 @@ Ticket: [EUDPA-668](https://eaflood.atlassian.net/browse/EUDPA-668) — sweep ev
 Branch everywhere: `chore/EUDPA-668-npm-security-sweep` (workspace + 8 service repos, all pushed, no PRs yet).
 
 Plan: [`EUDPA-668-plan.md`](EUDPA-668-plan.md) (decisions D1–D10 made).
-Template for the remaining run: [`EUDPA-668-finish-and-stage-3.workflow.js`](EUDPA-668-finish-and-stage-3.workflow.js) — drop its `bash -lc 'source ~/.nvm/nvm.sh …'` wrapper: a plain shell now runs Node 24.21.0 / npm 11.19.0.
 
 ## Where things stand
 
@@ -12,41 +11,45 @@ Template for the remaining run: [`EUDPA-668-finish-and-stage-3.workflow.js`](EUD
 |---|---|
 | 0 — skill tooling (`tools/npm/`, npm-upgrade skill) | Done (this workspace branch). |
 | 1 — audit-ci + pipeline allowlist check | Done in all 8 repos; gate passed. |
-| 2 — upgrade everything | Done in all 8 repos, one major per step. E2E 277/277 on a `-d` stack. |
-| Fixes, stage 3 (override reset), stage 3 gate, final E2E | **Not done** — next. |
+| 2 — upgrade everything | Done in all 8 repos, one major per step. |
+| Fixes (Node 24.21.0, lockfiles, eslint config, dependabot, `packageManager` npm@11.19.0) | Done in all 8 repos. Every lockfile passes Linux `npm ci` and the production image build. |
+| 3 — override reset | Done. The three frontends keep only `tmp` 0.2.7 (GHSA-ph9p-34f9-6g65) and `lighthouse/.` 13.4.1 (extract-zip GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3); admin's vite/esbuild overrides removed; defra-id-stub's expired `.snyk` deleted; nothing to do in ins-tests, performance-tests, schemas. |
+| 3 — gate | Passed in all 8 repos. |
+| defra-id-stub coverage | Counting change, not lost coverage: main re-measured under coverage-v8 5.0.3 = 91.64/84.21, branch = 91.65/84.21. |
+| Final E2E | 277/277 (7 conditional skips) on a `-d` stack with a locally built defra-id-stub; suite's sign-in specs passed. |
+| PRs | **Not raised** — next. |
 
 ## Still to do
 
-1. **ins-tests: pin `typescript` to 6.0.3 (decided).** In package.json set `"typescript": "6.0.3"` and remove `@typescript/native` (the only references to `@typescript/native` / `@typescript/typescript6`). `npm install`, keep the tsconfig.json changes if `npm run typecheck` passes, run lint, and check the test lists stay 315 (`npm run _test_docker_compose -- --list`) and 271 (add `--config=playwright.config.ts --grep-invert "@compose|@a11y|@active"`). Commit "chore(EUDPA-668): pin typescript to 6.0.3" — body: typescript-eslint supports TypeScript <6.1 only and TS 7 has no JS API until 7.1 (stable ~2026-11-24; typescript-eslint support is draft PR #12803); one compiler instead of two. Mark the state row held at 6.0.3.
-2. **Per repo fixes:**
-   - Node 24.21.0 / Dockerfile parent `3.2.3-node24.21.0` everywhere (done in admin, animals-frontend, plants-frontend, ins-frontend, defra-id-stub, performance-tests — check the rest).
-   - Prove each lockfile: `npm ci` in a `node:24.21.0` container and a production `docker build`. Earlier installs with npm 11.6.2 stripped optional entries npm 12 (in the base image) needs; admin's lockfile is already regenerated (44a8f49) but its production build has not been re-run; ins-frontend and plants-frontend are suspects too. Regenerate with npm 11.19 where needed.
-   - eslint config: ins-frontend and performance-tests switch to `includeIgnoreFile` (as admin).
-   - dependabot: drop the `eslint*` ignore where present (done in animals-frontend).
-3. **Stage 3** per repo with `tools/npm/reset-overrides.sh` plus a review of other temporary pins (D6: keep only for a high/critical advisory or a failing test/lint/build, reason table in the commit body). Already found nothing to do in performance-tests and schemas. animals-frontend has 12 overrides; an earlier trial kept only `tmp` and `lighthouse/.`.
-4. **Stage 3 gate** per repo: Linux `npm ci`, production image builds and starts, test/lint/format/build/fit/audit green, `npm outdated` only the known exceptions, test counts unchanged vs main.
-5. **defra-id-stub coverage check:** statements 94.78 → 91.6, branches 90.37 → 84.21 after vitest 3 → 5 with `coverage.include` narrowed to `src/**/*.js`. Prove counting change vs lost coverage (per-file compare against main).
-6. **Final E2E** on a `-d` stack with a locally built defra-id-stub (dev compose otherwise runs the stub from `:latest`), plus a sign-in smoke through the stub. Docker was pruned, so every image is pulled/rebuilt.
-7. **Raise PRs** after the gate; then plants-prototype `sync:upstream` from plants-frontend once that merges (plan step 17), adding its allowlist CI step by hand.
+1. **Raise PRs** in all 8 repos (and this workspace), using the notes below.
+2. After plants-frontend merges: plants-prototype `sync:upstream` (plan step 17), adding its allowlist CI step by hand.
+3. Re-check the allowlist mid-December (entries expire 2027-01-02). basic-ftp GHSA-c475-qrg2-pj4r now has a fix in basic-ftp 6.2.1 — check whether get-uri still blocks it.
 
 ## Decisions already made (don't re-ask)
 
 - audit-ci 7.1.0 exact devDependency; allowlist rules enforced by an identical "Check audit allowlist" step in every repo's CI; entries owned by Sam Farrington, ≤3 months expiry (writer uses 89 days).
-- Allowlisted: braces GHSA-vfj7-8cjw-p6xm (no fix; admin, animals-frontend, ins-frontend, plants-frontend, defra-id-stub), basic-ftp GHSA-c475-qrg2-pj4r (fix blocked by get-uri ^5; the three frontends). Both expire 2027-01-02 — re-check mid-December.
-- Everything upgraded, one major at a time, nothing deferred; test bar unchanged. Only exception: ins-tests TypeScript held at 6.0.3 (above).
-- Node 24.21.0 / parent image 3.2.3-node24.21.0 everywhere.
+- Allowlisted: braces GHSA-vfj7-8cjw-p6xm (no fix; admin, animals-frontend, ins-frontend, plants-frontend, defra-id-stub), basic-ftp GHSA-c475-qrg2-pj4r (the three frontends). Both expire 2027-01-02.
+- Everything upgraded, one major at a time, nothing deferred; test bar unchanged. Only exception: ins-tests TypeScript held at 6.0.3 (typescript-eslint supports <6.1; TS 7 has no JS API until 7.1).
+- Node 24.21.0 / parent image 3.2.3-node24.21.0 everywhere; `packageManager` npm@11.19.0 where set.
 - neostandard 0.14.0-next.1 prerelease accepted (only route to eslint 10).
 - schemas gets the new CI workflow; owners confirm on the PR before merge.
+- ins-frontend's override trial ran with `npm_config_min_release_age=0` (its pinned eslint 10.12.0 was under 7 days old until 2026-10-09). CI's `npm ci` is unaffected: it installs from the lockfile. The bypass also let in 16 transitive versions under 7 days old (e.g. @sentry/* 10.76.1, @opentelemetry/* 2.12.0, published 2026-10-06) — say so on the PR; reviewers may prefer to wait until 2026-10-13 and refresh the lockfile.
 
-## To resume
+## Housekeeping
 
-> Resume EUDPA-668 from `workareas/shared/EUDPA-668-handover.md`. Use workflows.
-
-Housekeeping: lower Docker's disk limit (Settings → Resources) so it can't fill the disk again. Never commit the untracked `.test-keys/` in the workspace (private key); `workareas/shared/ins-performance-testing/backlog.json` is unrelated work.
+- Lower Docker's disk limit (Settings → Resources) so it can't fill the disk again.
+- The dev stack may still run defra-id-stub from the local `:eudpa-668-local` build; a fresh `run-stack.sh -d` puts it back on `:latest`.
+- Never commit the untracked `.test-keys/` in the workspace (private key); `workareas/shared/ins-performance-testing/backlog.json` is unrelated work.
+- In agent sessions `node -v` and `rm -rf` are refused by permissions: check Node with `npm exec -c 'node -v'` (not `npm exec -- node -v`, which runs the npm package called `node`).
 
 ## Things for PR descriptions
 
 - Runtime defaults taken without real-infra checks: ioredis 6 pinned to `protocol: 2` (RESP2); undici 8 uses HTTP/2 via proxy (`allowH2: false` to revert); global-agent 4 strict TLS; pino 10 redaction untested; cssnano 9 rule merging not visually checked.
 - `npm outdated` shows cssnano "latest 8.0.10" — stale registry metadata; 9.3.2 is the real latest and is installed.
+- defra-id-stub: "coverage-v8 5.x AST-based counting; main re-measured under 5.0.3 = 91.64/84.21, branch = 91.65/84.21". Any future threshold should start from ~91.6/84.2.
+- npm 11.19/12 block install scripts not in `allowScripts` (puppeteer, protobufjs, @parcel/watcher, ssh2, …); installs, tests and builds still pass.
+- ins-tests' Docker image runs Node 24.20.0 (the Playwright base image's own Node).
+- Lighthouse was not run against this branch.
+- The SonarCloud pre-push hook printed nothing on push (probably no `SONAR_TOKEN` locally); CI's SonarCloud check is the gate.
 - schemas' regenerated `sequenceNumeric` description comes from the UN/CEFACT vocabulary and reads wrong for a commodity line; a schema-level description would override it.
-- The skill's scripts commit as "Upgrade X a → b" / "Refresh transitive dependencies" with a "Claude Sonnet 4.5" co-author line.
+- The skill's scripts commit as "Upgrade X a → b" / "Refresh transitive dependencies" with a "Claude Sonnet 4.5" co-author line; a few commits (animals-frontend `83b25a98`, defra-id-stub `44082ab`, `8a88a6b`) lack the session trailer — left as is.

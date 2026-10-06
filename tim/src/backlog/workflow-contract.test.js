@@ -1286,6 +1286,121 @@ describe('increment-build-loop', () => {
         )
       })
 
+      describe('the command forms a plan check may take', () => {
+        const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
+        const PREFIX_CHECK =
+          'STUB_PROFILE=fast npm --prefix ~/ws/repos/trade-imports-stub run start'
+        const SCRIPT_CHECK = 'bash scripts/stack/run-stack.sh --help'
+        const NPM_CHECK =
+          'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js'
+
+        const planWithChecks = (...commands) => ({
+          ...PLAN_ANSWER,
+          checks: commands.map((command) => ({ section: 6, command }))
+        })
+
+        test('tells the planner the forms a check takes: npm scripts, tim and tests', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            "  - the repo's own npm script: `npm --prefix ~/ws/<repoPath> run <script>` or `npm --prefix ~/ws/<repoPath> test -- <file>`;"
+          )
+          expect(prompt).toContain('  - a `tim` command;')
+          expect(prompt).toContain(
+            "  - a k6 run through the repo's own npm script, which reads its endpoints itself;"
+          )
+        })
+
+        test('tells the planner a check never uses curl, a variable prefix or bash <script>', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            'A check never takes a form GUARD RAILS lists as DENIED: no `curl` or `wget`, no `env` or `VAR=value` prefix, no\n`bash <script>`, `bash -n` or `sh <script>`, no bare `node` or `node -e`, no python.'
+          )
+          expect(prompt).toContain(
+            'Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read.'
+          )
+        })
+
+        test('lists every program the workspace denies in every increment agent’s guard rails', async () => {
+          const run = await runThroughFixToLadder()
+          const unguarded = run.agents
+            .filter(
+              ({ options, prompt }) =>
+                options.label.startsWith('inc-900 ') &&
+                ![
+                  '`curl`',
+                  '`wget`',
+                  '`bash`',
+                  '`sh`',
+                  '`node`',
+                  '`env`',
+                  '`python`'
+                ].every(
+                  (program) =>
+                    prompt.includes(
+                      '- DENIED, so never run them and never write them into a plan:'
+                    ) && prompt.includes(program)
+                )
+            )
+            .map(({ options }) => options.label)
+
+          expect(unguarded).toEqual([])
+        })
+
+        test('tells the ladder to report a check in a denied form rather than rewrite it', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            'A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round\n   the deny list. Put "denied form: <command>" in failures[] and go on to the next check.'
+          )
+        })
+
+        test('sends no plan back when every check takes an allowed form', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(NPM_CHECK),
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+        })
+
+        test('sends the planner back once, naming each denied check and no allowed one', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(CURL_CHECK, PREFIX_CHECK, SCRIPT_CHECK, NPM_CHECK),
+            planWithChecks(NPM_CHECK),
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            stageLabels(run).filter((label) =>
+              /^inc-900 (plan|replan|implement)$/.test(label)
+            )
+          ).toEqual(['inc-900 plan', 'inc-900 replan', 'inc-900 implement'])
+          expect(replan).toContain(
+            `YOUR LAST PLAN NAMED CHECKS THE WORKSPACE DENIES, so the ladder could not run them:\n  - \`${CURL_CHECK}\`\n  - \`${PREFIX_CHECK}\`\n  - \`${SCRIPT_CHECK}\`\n`
+          )
+          expect(replan).not.toContain(`  - \`${NPM_CHECK}\``)
+        })
+
+        test('stops with plan-refused, naming the check, when the second plan still names a denied form', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(CURL_CHECK),
+            planWithChecks(CURL_CHECK)
+          )
+
+          expect(run.result.stopped.reason).toBe('plan-refused')
+          expect(run.result.stopped.detail).toBe(
+            `inc-900: the plan's checks still use command forms the workspace denies, so the ladder could not run them: ${CURL_CHECK}`
+          )
+          expect(stageLabels(run)).not.toContain('inc-900 implement')
+        })
+      })
+
       test('stops at a baseline whose gate is red', async () => {
         const run = await runFrom({
           ...BASELINE_ANSWER,
@@ -1799,8 +1914,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 37 an increment on
-        // Claude, plus the run’s four own agents, the twenty-seventh does not
+        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
+        // Claude, plus the run’s four own agents, the twenty-sixth does not
         // fit — so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1810,9 +1925,9 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(26)
+          expect(run.result.increments.length).toBe(25)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('26 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
         })
       })
 

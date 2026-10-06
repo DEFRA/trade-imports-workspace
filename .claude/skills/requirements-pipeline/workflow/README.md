@@ -226,8 +226,8 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 38 agents on Claude and 44 on
-  Codex, so a run fits roughly 26 or 22 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 45 on
+  Codex, so a run fits roughly 25 or 22 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
@@ -370,7 +370,7 @@ refuses to commit a spec change rather than put it on the base branch with no re
 |---|---|---|
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
 | Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
-| Plan | 1 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js` |
+| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
 | Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
@@ -387,6 +387,28 @@ agent picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
+
+### Plan checks
+
+The ladder runs the plan's sections 5 and 6 checks under the workspace's
+`.claude/settings.json`, so a check in a denied form cannot run and stops the
+increment at `ladder-red` with nothing broken. ins-performance-testing inc-023
+(`bash -n`, `bash <script>`, a `STUB_PROFILE=fast` prefix, `curl`) and inc-011
+(`curl`) both stopped that way. The fix is in the planner, not the deny list
+(ruled 6 October 2026):
+
+- a check is a repo's own npm script, `mvn -f`, a `tim` command, a k6 run
+  through the repo's npm script, or `git -C`, `jq`, `grep`, `ls` or `find` over files
+- a check is never `curl`, `wget`, an `env` or `VAR=value` prefix, `bash <script>`,
+  `bash -n`, `sh`, bare `node` or `node -e`, python or any other program the
+  guard rails list as denied (the script's `DENIED_PROGRAMS`)
+- a check that must read a live endpoint names the npm script or test that makes
+  that read, or the plan adds a small one to its own work
+
+The planner returns every check command in `checks[]`. The script sends a plan
+that names a denied form back to the planner once, with the commands named, and
+refuses a second one as `plan-refused`. The ladder and the consistency reviewer
+report a denied check rather than rewriting it.
 | Land | 2–3 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 
 ### The start stage

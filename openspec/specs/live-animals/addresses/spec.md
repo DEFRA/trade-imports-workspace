@@ -210,17 +210,24 @@ The system MUST page the address book when choosing a role's address, MUST let t
 - **WHEN** they move through the pages until they find it, choose it, and save
 - **THEN** they return to the consignment addresses page, and the role's row shows the record they chose
 
-### Requirement: Reopening the list to change an address starts with nothing chosen, and keeps the copied address unless another is chosen
+### Requirement: Reopening the list names the address already chosen and keeps it on save
 **ID**: REQ-ADDR-011
-The system MUST open a role's address list with nothing chosen when the user reopens it to change the address — the copy on the notification keeps no link to a record — and MUST keep the address already copied onto the notification when they save without choosing another. This MUST hold without relying on client-side JavaScript.
+The system MUST name the address-book record a role's address was chosen from when the user reopens the list, and MUST keep the address already on the notification when they save again, even though the list reopens on its first page where the chosen record may not appear. It MUST name nothing once the address's details have been edited on the notification, or once that record has been deleted from the address book. This MUST hold without relying on client-side JavaScript.
 
-#### Scenario: Reopening the list starts afresh and keeps the copied address on save
+#### Scenario: Reopening the list names the saved choice and keeps it on save
 **ID**: SCN-ADDR-011-A
-- **GIVEN** the user has chosen an address for a role and saved it
+- **GIVEN** the user has chosen an address found on a later page and saved it
 - **WHEN** they reopen the list to change it
-- **THEN** the list opens with no address chosen
+- **THEN** the list opens on its first page, naming the address already selected, although that record's own row is not shown
 - **WHEN** they save without choosing another
 - **THEN** the role's row still shows the address they originally chose
+
+#### Scenario: Reopening the list names nothing once the address is edited here or deleted from the book
+**ID**: SCN-ADDR-011-B
+- **GIVEN** the user has chosen an address and saved it
+- **AND** they have since edited its details on the notification, or the record has been deleted from the address book
+- **WHEN** they reopen the list to change it
+- **THEN** the list opens with no address named as selected
 
 ### Requirement: An address keyed in by hand must be completed once any part of it is filled
 **ID**: REQ-ADDR-012

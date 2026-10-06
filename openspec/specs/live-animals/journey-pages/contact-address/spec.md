@@ -19,7 +19,7 @@ The system MUST ask the user to choose a contact address, offering every address
 
 ### Requirement: A chosen contact address is copied onto the notification and shown as the current contact
 **ID**: REQ-CONTACT-002
-The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as the current contact address — with a way to edit its details on this notification — while leaving every option in the list unchosen. Saving again without choosing another MUST keep the current contact address.
+The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as the current contact address — with a way to edit its details on this notification — and still chosen in the list. Saving again MUST keep the current contact address.
 
 #### Scenario: Choosing a contact address saves without error and is shown as the current contact on return
 **ID**: SCN-CONTACT-002-A
@@ -28,8 +28,8 @@ The system MUST accept a chosen contact address, copying it onto the notificatio
 - **THEN** the answer is saved and no error summary is shown
 - **WHEN** they return to the contact address page
 - **THEN** the same address is shown as the current contact address, with a way to edit its details
-- **AND** no option in the list is shown as chosen
-- **WHEN** they save and continue without choosing another
+- **AND** it is still shown chosen in the list
+- **WHEN** they save and continue again
 - **THEN** the current contact address is kept
 
 ### Requirement: The contact address is optional, and saving without one returns to Overview

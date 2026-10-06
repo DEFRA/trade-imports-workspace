@@ -289,16 +289,26 @@
     },
     {
       "id": "REQ-ADDR-011",
-      "name": "Reopening the list to change an address starts with nothing chosen, and keeps the copied address unless another is chosen",
-      "coverage": "full",
+      "name": "Reopening the list names the address already chosen and keeps it on save",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ADDR-011-A",
-          "name": "Reopening the list starts afresh and keeps the copied address on save",
+          "name": "Reopening the list names the saved choice and keeps it on save",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, the row selected on a later page is the one that saves, and reopening starts with nothing chosen but keeps the copy on save", "strength": "full", "notes": "asserts nothing chosen and no Selected address on reopen, then save keeps the hub row" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker saves a later-page choice, reopens with nothing chosen and keeps it on save", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Selected address names the later-page record on reopen, its row absent, then save keeps the hub row" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-011-B",
+          "name": "Reopening the list names nothing once the address is edited here or deleted from the book",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker", "strength": "partial", "notes": "deleted-record branch only: asserts no Selected address on reopen" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "edited branch, first half: the edit save drops pickedFromId" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should open with nothing selected when the held copy has no record it was picked from", "strength": "partial", "notes": "edited branch, second half: no pickedFromId opens with nothing selected; no end-to-end test drives edit then reopen" }
           ]
         }
       ]

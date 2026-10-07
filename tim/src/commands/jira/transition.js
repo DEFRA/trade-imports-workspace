@@ -119,7 +119,7 @@ export const register = (jira, { timVersion }) => {
   jira
     .command('transition <key> [status]')
     .description(
-      'Move a Jira ticket to the status with this exact name. A ticket already in that status is left alone. This changes the ticket straight away: there is no dry run.'
+      'Move a Jira ticket to the status with this exact name. If no status has that name, a transition with that name is used and the output says where the ticket ended up. A ticket already in that status is left alone. This changes the ticket straight away: there is no dry run.'
     )
     .option(
       '--list',

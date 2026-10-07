@@ -550,9 +550,10 @@ where it is needed. It exits non-zero and says why if the write is refused — r
 const SKILLS = ABS + '/.claude/skills'
 const BRIEFS = ABS + '/.claude/skills/requirements-pipeline/workflow/codex'
 const BRIEFS_TILDE = TILDE + '/.claude/skills/requirements-pipeline/workflow/codex'
-// Ticket moves go through tim too: `Bash(tim:*)` is allowed where the shell
-// scripts under tools/jira are not, so a done stage that called them never
-// moved a ticket.
+// Ticket moves go through tim too: tim is a bare command matched by
+// `Bash(tim:*)`, so the done stage does not depend on the path-prefix allow
+// rules for tools/. Why the old tools/jira call was denied inside the loop's
+// agents is not yet known.
 const jiraTransition = (key, statusOrList) => `tim jira transition ${key} ${statusOrList} --workspace ${TILDE} --json`
 
 const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))

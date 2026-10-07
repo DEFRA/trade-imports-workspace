@@ -181,14 +181,17 @@ They are board configuration, not constants, and a wrong one stops every
 increment at the start stage:
 
 ```bash
-tools/jira/transition-ticket.sh <ANY-EXISTING-KEY> --list
+tim jira transition <ANY-EXISTING-KEY> --list --workspace ~/git/defra/trade-imports-workspace
 ```
 
 On EUDPA the working status is `In Dev` and the finished status is `Done`; the
-args use those names.
+args use those names. The done stage closes each ticket with
+`tim jira transition <KEY> "<jiraDoneStatus>" --workspace ~/git/defra/trade-imports-workspace --json`,
+which `Bash(tim:*)` allows; `tools/jira/transition-ticket.sh` still works by hand
+but the loop no longer calls it.
 
-Do not take a status name from a script's `--help` text — that is generic
-placeholder wording, not this board's workflow.
+Do not take a status name from a command's `--help` text — that is example
+wording, not this board's workflow.
 
 **A raised ticket lands in the board's backlog, and no status gets it out.**
 Board membership is not a field on the issue and is not implied by status — two

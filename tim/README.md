@@ -452,6 +452,33 @@ gets written for what did succeed. The `ticket-creator` skill and the
 `prototype` skill's hand-off both build a manifest and call this surface
 rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
 
+### `tim jira transition` — move a ticket's status
+
+Moving a ticket is the whole job of this command, so it is **not** a dry run:
+it changes the ticket straight away. It replaces
+`../tools/jira/transition-ticket.sh`, which stays for use by hand.
+
+```bash
+tim jira transition EUDPA-200 "Done" --json   # moves the ticket to the status named exactly "Done", then reads it back to confirm
+tim jira transition EUDPA-200 --list          # read-only: the transitions the ticket offers, each as `transition -> status`
+```
+
+- The name is matched exactly against the status each transition leads to.
+  When no status matches, a transition with that name is used instead, as
+  the shell script did, and the output says which status the ticket ended in.
+- A ticket already in the status is left alone and reported as `unchanged`,
+  so running it twice is safe.
+- A status the ticket offers no transition to fails with `USAGE` (exit 2) and
+  lists every transition it does offer.
+- `--json` puts `{key, action, status, previousStatus, requested, transition}`
+  in `result` (`action` is `moved`, `unchanged` or `listed`; `--list` gives
+  `{key, action, status, transitions}`).
+
+The increment build loop's done stage closes each ticket with
+`tim jira transition <KEY> "<jiraDoneStatus>" --workspace <root> --json`.
+`tim build start` moves a ticket to the working status through the same
+client call (`moveToStatus` in `src/clients/jira-client.js`).
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo

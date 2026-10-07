@@ -168,7 +168,7 @@ missing key. The first log line is the resolved configuration.
 | `jiraProject` | Jira project key raised tickets land in. `null` under the branch lifecycle |
 | `epic` | Parent epic every raised ticket hangs off. `null` under the branch lifecycle |
 | `jiraInDevStatus` | The board's working status, set when the build starts. `null` under the branch lifecycle |
-| `jiraDoneStatus` | The board's finished status, set after the merge. `null` under the branch lifecycle |
+| `jiraDoneStatus` | The board's finished status, set after the merge with `tim jira transition <KEY> "<status>"`. `null` under the branch lifecycle |
 | `jiraBoard` | Numeric id of the board raised tickets are moved onto — 13780 is EUDPA. `null` under the branch lifecycle |
 | `ciFixAttempts` | How many times a red PR may be fixed and re-pushed before the run stops |
 | `ciWatchMinutes` | How long one CI watch may block before it counts as RED |

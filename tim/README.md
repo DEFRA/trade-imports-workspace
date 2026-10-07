@@ -216,14 +216,25 @@ by the distil workflow's agents instead of hand-written `jq`. The workflow is
 which stage runs which command. Each command
 takes a workarea under `workareas/`, reads its `sources.json` and `distil/`
 files, and checks them against the schemas beside `backlog.schema.json` in
-`.claude/skills/requirements-pipeline/references/` (`sources`, `extract`,
-`verify`, `requirements` and `conflicts`), read from the workspace at runtime.
+`.claude/skills/requirements-pipeline/references/` (`sources`, `partition`,
+`extract`, `verify`, `requirements` and `conflicts`), read from the workspace
+at runtime.
+
+Every source is extracted in parts: a characterise agent writes
+`distil/extract/<slug>.partition.json`, one agent per part writes
+`distil/extract/<slug>.part<N>.json`, and `merge-extract` joins them into
+`distil/extract/<slug>.json`.
 
 ```bash
 tim distil status shared/my-programme --json        # every source's state and what it needs next: the work list
-tim distil check shared/my-programme --source repo:tests --stage extract --chunk 150 --json   # one source's extract, with its verify ranges
+tim distil check shared/my-programme --source repo:tests --stage partition --clear-parts --json   # the partition, then remove old extract parts
+tim distil check shared/my-programme --source repo:tests --stage extract --part 2 --json           # one extract part file, against the partition
+tim distil merge-extract shared/my-programme --source repo:tests --json   # join the extract parts into the extract and stamp its scope hash
+tim distil check shared/my-programme --source repo:tests --stage extract --chunk 60 --json   # the extract, its parts and verify ranges
 tim distil check shared/my-programme --stage all --json                                     # every source, both stages
 tim distil check shared/my-programme --source repo:tests --stage extract --clear-parts --json   # and, once it passes, remove old verify parts
+tim distil reset shared/my-programme --source repo:tests --json          # move a source's extract and verify files aside, so it is extracted again
+tim distil reset shared/my-programme --all --json                        # every source
 tim distil stamp shared/my-programme --source repo:tests --json          # record the source's scope hash in its extract
 tim distil merge-verify shared/my-programme --source repo:tests --json   # join verify parts into one file with the extract's hash, then remove them
 tim distil adopt shared/my-programme --source repo:tests --json          # take on a source distilled by hand: record both hashes
@@ -231,7 +242,7 @@ tim distil working-set shared/my-programme --write --json   # held plus missed c
 tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, and the backlog
 tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids and the rows built or set aside
 tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, and rows built or set aside that changed, since
-tim distil trace shared/my-programme --source trace:ched-p --out actions.txt --json -- actions   # playwright trace, in the source's .work folder
+tim distil trace shared/my-programme --source trace:ched-p --folder part2 --out actions.txt --json -- actions   # playwright trace, in a sub-folder of the source's .work folder
 ```
 
 A source's state is `pending` (no extract), `extracted` (no verification),
@@ -239,17 +250,29 @@ A source's state is `pending` (no extract), `extracted` (no verification),
 extracted, the extract records no scope hash, or its claims changed after they
 were verified) or `invalid` (a file out of shape). `next` says what it needs:
 `extract`, `verify` or nothing. A relaunch skips every verified source whose
-scope hash and extract hash are unchanged.
+scope hash and extract hash are unchanged. `reset` is how to extract one again
+anyway: it moves the source's extract, partition, parts and verify files to
+`distil/superseded/<time>/`, keeping them, and the source reads `pending`.
 
-`check`, `merge-verify`, `adopt` and `coverage` exit 1 (`LINT`) and name every
-problem when anything is out of shape; `merge-verify` and `adopt` then write
-nothing. With `--json`, `coverage` also lists each problem in
-`errors[0].problems` with its scope, `reconcile` or `backlog`, so the workflow
-routes it to the step that can fix it.
+`check --stage partition` checks the partition alone: its parts numbered 1 to
+n, no two sharing a prefix, no old claim id kept by two. `check --stage
+extract` also checks every part file against `extract.schema.json` and its
+prefix, that every part has its file and no file is outside the partition, no
+claim id is in two parts, and that the extract is exactly its parts merged.
+`--clear-parts` removes the part files the next stage writes: extract parts
+after the partition stage, verify parts after any other.
+
+`check`, `merge-extract`, `merge-verify`, `adopt` and `coverage` exit 1
+(`LINT`) and name every problem when anything is out of shape;
+`merge-extract`, `merge-verify` and `adopt` then write nothing. With `--json`,
+`coverage` also lists each problem in `errors[0].problems` with its scope,
+`reconcile` or `backlog`, so the workflow routes it to the step that can fix it.
 
 `trace` takes tim's options first, then `--`, then the `playwright trace`
 subcommand. It runs the Playwright tim installs, in
-`distil/extract/<slug>.work/`, so a trace opened there belongs to that source.
+`distil/extract/<slug>.work/`, or with `--folder` in a sub-folder of it, so a
+trace opened there belongs to that agent: part and verify agents reading one
+source side by side never open over each other's trace.
 
 ### `tim docker lease` — who holds the workspace stack
 

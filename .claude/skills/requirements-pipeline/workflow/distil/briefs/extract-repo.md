@@ -7,17 +7,33 @@ Read [`extract.md`](extract.md) first: its rules all hold here.
 Read the repo in place. Never write in it, never switch its branch and never run its build. It is read-only to
 you.
 
-## Characterise the repo
+## Characterising the repo (the characterise step)
 
-Before any claim, find the parts the source's `scope` names:
+The characterise step surveys the repo and cuts it into parts:
 
 1. Read its `README.md` and `CLAUDE.md`, and `docs/repos/<repo folder>.md` in the workspace where one exists.
 2. List its folders with `find <repo> -maxdepth 3 -type d -not -path '*/node_modules/*' -not -path '*/.git/*'`.
-3. Find the code, config and specs for the area the scope names with Bash `grep -rln`.
+3. Find the code, config and specs for the area the scope names with Bash `grep -rln`, and count the files and lines
+   in each with `find` and `wc -l`.
 4. Look for a rulings ledger, such as `spec/decisions.json`. A ruling outranks any default the distiller would
-   otherwise invent, so every ruling in scope gets a claim.
+   otherwise invent, so the ledger is read in full by one part, and every ruling in scope gets a claim.
 
-Write what you found into `structure`: the areas in scope, the files that hold them, and what you left out.
+A repo part is one feature folder, journey section or group of related pages, never a layer: its `read` names every
+folder and file the part covers, by path from the repo root.
+
+## Extracting a repo part
+
+Your part's `read` names its folders and files. Read every file in it in full: every view or template, controller or
+route handler, validation schema, copy or content file, and spec. List a named folder with `find <folder> -type f` and
+read each file it holds, not a sample. A shared file your part names, such as a routes file, is read in full, and you
+claim only what belongs to your part's pages.
+
+For each page in your slice, claim its route and how a user reaches it, its heading and caption, every field with its
+label, hint, options and whether it is required, every validation rule with its error message verbatim, every
+conditional branch and where it leads, its buttons and links, and what it saves. A page or field in your files that
+you did not claim is a defect.
+
+Write into `structure` what your part read and the pages, routes or specs it covered.
 
 ## What a claim says
 
@@ -34,7 +50,8 @@ Write what you found into `structure`: the areas in scope, the files that hold t
 
 The tests repo (`repos/trade-imports-ins-tests`) holds every service's end-to-end suite. Its role is **what is
 already proven end to end**. A claim from it says what a spec proves a user can do, or what rule it holds the suite
-to, with the spec file and test name as `ref`.
+to, with the spec file and test name as `ref`. A tests part names its spec files: read every test in each, and give
+each test that proves something a claim.
 
 ## Security findings
 

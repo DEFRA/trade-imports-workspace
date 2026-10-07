@@ -5,7 +5,8 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   DEMO_WORKAREA,
-  makeDistilWorkspace
+  makeDistilWorkspace,
+  splitExtractIntoParts
 } from '../../test-support/distil-workspace.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -145,7 +146,55 @@ describe('tim distil check', () => {
 
     expect(run.exitCode).toBe(2)
     expect(envelopeOf(run).errors[0].message).toBe(
-      '--stage must be one of: extract, verify, all.'
+      '--stage must be one of: partition, extract, verify, all.'
+    )
+  })
+
+  test('checks a partition and clears the old extract parts', async () => {
+    workspace = makeDistilWorkspace()
+    const { partPath } = splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      [
+        'check',
+        DEMO_WORKAREA,
+        '--source',
+        'repo:tests',
+        '--stage',
+        'partition',
+        '--clear-parts'
+      ],
+      { json: false }
+    )
+
+    expect(run.stdout.trim().split('\n')).toEqual([
+      'repo:tests: 2 parts. In shape.',
+      '  part 1, Suite layout and config: repo-tests-p1-001 on',
+      '  part 2, Fixtures: repo-tests-p2-001 on',
+      `Removed 2 part files: ${partPath(1)}, ${partPath(2)}`
+    ])
+  })
+
+  test('checks one extract part', async () => {
+    workspace = makeDistilWorkspace()
+    splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      [
+        'check',
+        DEMO_WORKAREA,
+        '--source',
+        'repo:tests',
+        '--stage',
+        'extract',
+        '--part',
+        '2'
+      ],
+      { json: false }
+    )
+
+    expect(run.stdout.trim()).toBe(
+      'repo:tests: part 2 in shape.\n  part 2, Fixtures: 1 claim, tests-010 to tests-010'
     )
   })
 
@@ -156,6 +205,94 @@ describe('tim distil check', () => {
 
     expect(envelopeOf(run).errors[0].message).toBe(
       '--chunk must be a whole number above 0.'
+    )
+  })
+
+  test('refuses a part that is not a whole number above 0', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['check', DEMO_WORKAREA, '--part', 'two'])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--part must be a whole number above 0.'
+    )
+  })
+})
+
+describe('tim distil merge-extract', () => {
+  test('merges the parts and prints each part', async () => {
+    workspace = makeDistilWorkspace()
+    const { extractPath } = splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      ['merge-extract', DEMO_WORKAREA, '--source', 'repo:tests'],
+      { json: false }
+    )
+
+    expect(run.stdout.trim().split('\n')).toEqual([
+      `Merged 2 parts into ${extractPath}: 4 claims, stamped with scope hash ${workspace.readJson(extractPath).scopeHash}.`,
+      '  part 1, Suite layout and config: 3 claims, tests-001 to tests-005',
+      '  part 2, Fixtures: 1 claim, tests-010 to tests-010',
+      'Kept the partition and the part files.'
+    ])
+  })
+
+  test('exits 1 with LINT when a part is missing', async () => {
+    workspace = makeDistilWorkspace()
+    const { partPath } = splitExtractIntoParts(workspace)
+    rmSync(partPath(1))
+
+    const run = await runTim([
+      'merge-extract',
+      DEMO_WORKAREA,
+      '--source',
+      'repo:tests'
+    ])
+
+    expect(run.exitCode).toBe(1)
+    expect(envelopeOf(run).errors[0].code).toBe('LINT')
+  })
+})
+
+describe('tim distil reset', () => {
+  test('moves the named sources aside and prints where', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'reset',
+      DEMO_WORKAREA,
+      '--source',
+      'repo:tests',
+      '--source',
+      'ruling:sam-2026-09-29c'
+    ])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      superseded: expect.stringMatching(
+        /\/distil\/superseded\/\d{4}-\d\d-\d\dT\d\d-\d\d-\d\d-\d{3}Z$/
+      ),
+      moved: 4,
+      sources: [{ id: 'ruling:sam-2026-09-29c' }, { id: 'repo:tests' }]
+    })
+  })
+
+  test('leaves the reset sources pending for the next launch', async () => {
+    workspace = makeDistilWorkspace()
+    await runTim(['reset', DEMO_WORKAREA, '--all'])
+
+    const run = await runTim(['status', DEMO_WORKAREA])
+
+    expect(envelopeOf(run).result.counts.pending).toBe(3)
+  })
+
+  test('refuses with exit 2 when given neither sources nor --all', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['reset', DEMO_WORKAREA])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      'Name the sources to reset with --source, once for each, or reset every source with --all. Not both.'
     )
   })
 })

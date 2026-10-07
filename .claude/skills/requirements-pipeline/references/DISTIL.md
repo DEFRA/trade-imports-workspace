@@ -11,16 +11,17 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 |---|---|---|
 | 0. Intake: write `sources.json`, fetch Confluence pages, write up rulings | The main session | This file |
 | 1. Status: which sources need work | The workflow | `tim distil status` |
-| 2. Extract, one agent per source | The workflow | [`../workflow/distil/briefs/extract.md`](../workflow/distil/briefs/extract.md) and the brief for the source's kind |
-| 3. Verify, one or more agents per extract | The workflow | [`../workflow/distil/briefs/verify.md`](../workflow/distil/briefs/verify.md) |
-| 4. Reconcile into requirements and conflicts | The workflow | [`../workflow/distil/briefs/reconcile.md`](../workflow/distil/briefs/reconcile.md) |
-| 5. Consolidate into `backlog.json` | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) |
-| 6. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
-| 7. Save the report | The main session | [Section 5](#5-save-the-report) |
-| 8. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
-| 9. Split a themed backlog, one backlog per theme | The main session | [Section 7](#7-split-into-themes) |
+| 2. Characterise: cut each source into parts one agent can read in full | The workflow | [`../workflow/distil/briefs/characterise.md`](../workflow/distil/briefs/characterise.md) and [`partition.schema.json`](partition.schema.json) |
+| 3. Extract, one agent per part, merged by tim | The workflow | [`../workflow/distil/briefs/extract.md`](../workflow/distil/briefs/extract.md) and the brief for the source's kind |
+| 4. Verify, one agent per range of claims | The workflow | [`../workflow/distil/briefs/verify.md`](../workflow/distil/briefs/verify.md) |
+| 5. Reconcile into requirements and conflicts | The workflow | [`../workflow/distil/briefs/reconcile.md`](../workflow/distil/briefs/reconcile.md) |
+| 6. Consolidate into `backlog.json` | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) |
+| 7. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
+| 8. Save the report | The main session | [Section 5](#5-save-the-report) |
+| 9. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
+| 10. Split a themed backlog, one backlog per theme | The main session | [Section 7](#7-split-into-themes) |
 
-Steps 1 to 6 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
+Steps 1 to 7 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
 does every count, check and merge.
 
@@ -116,6 +117,22 @@ and verify all of them again. Adopt the ones that are still good first:
 Never adopt a source an agent has just extracted again. Its old verification judged the earlier extract, so it
 must be verified again.
 
+### Extracting a source again with an unchanged scope
+
+A launch skips every source already verified with an unchanged scope hash. When the extract method has changed, so
+an old extract is no longer good enough although its source is the same, reset the sources first:
+
+```bash
+tim distil reset <workarea> --source repo:frontend --source trace:recorded-run --json   # the named sources
+tim distil reset <workarea> --all --json                                                # every source
+```
+
+It moves each source's extract, partition, extract parts, verification and verify parts to
+`workareas/<workarea>/distil/superseded/<time>/extract/` and `.../verify/`, so nothing is lost, and the source reads
+`pending`. Its working folder (`distil/extract/<slug>.work/`) stays. Then launch as usual. The fresh extract has new
+claim ids, so the next reconcile re-cites any requirement that cited an old claim, keeping every requirement,
+conflict and row id.
+
 ## 1. Launch the workflow
 
 Launch it from the main session, by `scriptPath`, never by `name` (a name runs a stale snapshot). A subagent
@@ -133,10 +150,13 @@ Every key of `args` is required, and a missing one stops the run before any agen
   workarea: 'shared/hrp-origin-and-commodity',      // the workarea: under workareas/, never starting with it
   only: null,                                       // or a list of source ids to work this launch
   tim: 'tim',                                       // how agents run tim; a clone passes its own
-  models: {},                                       // defaults: think opus, code sonnet, light haiku
-  verifyChunk: 150                                  // the most claims one verify agent takes
+  models: {},                                       // defaults: think opus, code opus, light haiku
+  verifyChunk: 60                                   // the most claims one verify agent takes
 }
 ```
+
+`models: {}` is the deep run, and the one to use: characterise, every extract part and every verifier run on Opus.
+`verifyChunk: 60` keeps each verifier's range small enough to re-check every claim against the source.
 
 What each key does, and every stage, are in [`../workflow/README.md`](../workflow/README.md#distiljs).
 
@@ -145,12 +165,23 @@ What each key does, and every stage, are in [`../workflow/README.md`](../workflo
 1. **Status.** `tim distil status` gives the work list: each source's state (pending, extracted, verified, stale
    or invalid) and what it needs next. A source already verified, with an unchanged scope hash and an unchanged
    extract, is skipped.
-2. **Extract and verify, as a pipeline.** Each source moves on as soon as its own step checks out. Its extractor
-   writes `distil/extract/<slug>.json` and stamps it with the scope hash. `tim distil check --stage extract
-   --clear-parts` checks it and clears old verify part files: one retry with the problems, then the source fails.
-   `check` also splits the claims into ranges of at most `verifyChunk`. One verifier per range writes
-   `distil/verify/<slug>.part<N>.json`. `tim distil merge-verify` joins the parts and records the extract's hash,
-   and `check --stage verify` checks them: one retry of the failed parts, then the source fails.
+2. **Characterise, extract and verify, as a pipeline.** Each source moves on as soon as its own step checks out.
+   - **Characterise.** One Opus agent surveys the whole source and writes `distil/extract/<slug>.partition.json`:
+     its structure, and its parts, each small enough for one agent to read in full and claim exhaustively (a group
+     of pages or a feature folder of a repo, the traces of one spec file, a run of sections of a document). Each
+     part names what to read in full, what it must cover, and its claim id prefix, `<slug>-p<N>`. A small source is
+     one part. `tim distil check --stage partition --clear-parts` checks it and clears old extract part files: one
+     retry with the problems, then the source fails at `characterise`.
+   - **Extract.** One Opus agent per part, side by side, reads its slice word for word and writes
+     `distil/extract/<slug>.part<N>.json`, checking it with `check --stage extract --part <N>`. `tim distil
+     merge-extract` joins the parts in order into `distil/extract/<slug>.json` and stamps the scope hash. Then
+     `check --stage extract --clear-parts` checks the extract, every part and that the extract is its parts merged,
+     clears old verify part files, and splits the claims into ranges of at most `verifyChunk`. A failed merge
+     re-runs the parts it names, once, then the source fails.
+   - **Verify.** One Opus verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts
+     its range came from so it re-reads that slice in full. `tim distil merge-verify` joins the parts and records
+     the extract's hash, and `check --stage verify` checks them: one retry of the failed parts, then the source
+     fails.
 3. **A failed source stops the run before reconcile.** It is reported with its problems, never dropped. So is a
    source `only` left for later.
 4. **Reconcile.** `tim distil working-set --write` gives the reconciler every claim that held plus every missed
@@ -174,7 +205,13 @@ question with its default, the backlog counts, `goalConflicts` (rulings that con
 
 These hold whoever runs a step. The briefs carry each one to the agent that applies it.
 
-- **Characterise first, extract second.** Every extract writes `structure` before its first claim.
+- **Every source is extracted in depth.** Characterise, cut into parts, one agent per part reading its slice in
+  full, merge: that is the only extract path, for every source on every run, and its agents run on Opus by default.
+  A small source is simply one part. There is no lighter path because a thin extract caps everything downstream: a
+  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back.
+- **Exhaustive within a part.** A page or field seen in a part's slice and not claimed is a defect.
+- **Characterise first, extract second.** The partition writes the source's `structure` before any part is
+  extracted, and every part writes its own before its first claim.
 - **One claim per observable fact**, with provenance (`ref`) and the source's own words (`quote`). `gap` is a
   confidence, never a kind.
 - **Verify by trying to refute.** A different agent from the extractor, defaulting to refuted. A refuted claim
@@ -217,7 +254,7 @@ launch reads them as a re-distil.
 |---|---|---|
 | `status-failed` | `tim distil status` refused `sources.json` | Fix every problem it names in `sources.json`, then launch again |
 | `unknown-source` | `only` names a source `sources.json` does not have | Correct `only`, then launch again |
-| `sources-unverified` | A source failed its extract or verify checks twice, or `only` left one for later | Read the failed source's `problems`. Fix the source or its `scope`. For a large source that failed at verify, lower `verifyChunk` or narrow `scope`. Then launch again: verified sources are skipped |
+| `sources-unverified` | A source failed its characterise, extract or verify checks twice (`failedAt` says which), or `only` left one for later | Read the failed source's `problems`. Fix the source or its `scope`. For a large source that failed at verify, lower `verifyChunk` or narrow `scope`. Then launch again: verified sources are skipped |
 | `working-set-failed` | `tim distil working-set` failed | Run `tim distil status <workarea> --json` and fix what it names, then launch again |
 | `reconcile-failed` | `requirements.json` or `conflicts.json` still had problems after 2 send-backs | Read `detail`. Launch again: the reconciler starts from the files on disk. If the same problem returns, fix the named file or the source behind it |
 | `snapshot-failed` | `tim distil backlog-snapshot` could not save the backlog's rows | Run `tim backlog check <workarea> --json` and make `backlog.json` parse, then launch again |

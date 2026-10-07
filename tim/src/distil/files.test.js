@@ -3,6 +3,7 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   DISTIL_SCHEMA_DIR,
+  extractPartsOf,
   loadDistilSchemas,
   orphanFilesOf,
   readJsonLenient,
@@ -87,7 +88,47 @@ describe('verifyPartsOf', () => {
   })
 })
 
+describe('extractPartsOf', () => {
+  test('lists one source extract part files in part-number order, never its partition', () => {
+    workspace = makeDistilWorkspace()
+    const { extractDir } = workspace.layout
+    for (const name of [
+      'repo-tests.part2.json',
+      'repo-tests.part1.json',
+      'repo-tests.partition.json',
+      'repo-testsx.part1.json'
+    ]) {
+      writeFileSync(join(extractDir, name), '{}')
+    }
+
+    expect(
+      extractPartsOf(workspace.layout, 'repo-tests').map((part) => part.path)
+    ).toEqual([
+      join(extractDir, 'repo-tests.part1.json'),
+      join(extractDir, 'repo-tests.part2.json')
+    ])
+  })
+})
+
 describe('orphanFilesOf', () => {
+  test('names a partition no source owns, and not one a source owns', () => {
+    workspace = makeDistilWorkspace()
+    const { extractDir } = workspace.layout
+    writeFileSync(join(extractDir, 'repo-gone.partition.json'), '{}')
+    writeFileSync(join(extractDir, 'repo-tests.partition.json'), '{}')
+
+    expect(
+      orphanFilesOf(
+        workspace.layout,
+        new Set([
+          'repo-tests',
+          'ruling-sam-2026-09-29c',
+          'confluence-6608160092'
+        ])
+      )
+    ).toEqual([join(extractDir, 'repo-gone.partition.json')])
+  })
+
   test('names extract and verify files no source owns, parts included', () => {
     workspace = makeDistilWorkspace()
     const { extractDir, verifyDir } = workspace.layout

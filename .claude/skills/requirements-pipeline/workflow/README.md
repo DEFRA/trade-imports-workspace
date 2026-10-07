@@ -24,14 +24,27 @@ report's questions with the user and saving the report. See
 source or a ruling: edit `sources.json` and launch again.
 
 The method each agent follows lives in brief files beside the script, in
-[`distil/briefs/`](distil/briefs/): `extract.md` for every source, one
-`extract-<kind>.md` per source kind (repo, confluence, web, document, trace, ruling, image),
-`verify.md`, `reconcile.md` and `consolidate.md`. The report agent follows
+[`distil/briefs/`](distil/briefs/): `characterise.md` for cutting a source into parts,
+`extract.md` for every part of every source, one `extract-<kind>.md` per source kind (repo,
+confluence, web, document, trace, ruling, image), `verify.md`, `reconcile.md` and
+`consolidate.md`. The report agent follows
 [`../references/REPORT.md`](../references/REPORT.md). Every count, check, merge, file
 clean-up and backlog comparison is a `tim distil` command, so no agent ever writes `jq` to
-check another's file, runs `rm`, or copies a hash. A trace source's extractor and verifiers
-run the trace CLI through `tim distil trace`, which works in the source's own folder, so no
-prompt carries a `cd`.
+check another's file, runs `rm`, or copies a hash. A trace source's agents run the trace CLI
+through `tim distil trace`, which works in the source's own folder, or in a sub-folder of it
+for each part agent and verifier (`--folder part<N>`, `verify<N>`), so agents side by side
+never open over each other's trace and no prompt carries a `cd`.
+
+**Every source is extracted in depth, the same way.** One think-tier agent characterises the
+source and cuts it into parts, each small enough for one agent to read in full; one agent per
+part then reads its slice word for word and claims everything in it; tim merges the parts. A
+small source is one part. There is no lighter path, because a thin extract caps everything
+downstream: a page, field or rule nobody claimed never reaches a requirement.
+
+**To extract a source again with an unchanged scope**, because the method changed, run
+`tim distil reset <workarea> --source <id>` (or `--all`) before the launch. It moves the
+source's extract, partition, parts and verify files to `distil/superseded/<time>/`, and the
+source reads `pending`.
 
 **A workarea distilled by hand before this workflow** reads as stale on every source, because
 its files carry no hashes. Adopt the sources that are still good with `tim distil adopt`
@@ -47,8 +60,8 @@ and the first log line is the resolved configuration.
 | `workarea` | The programme's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ins-performance-testing`. Never starts with `workareas/` |
 | `only` | `null` to work every source that needs it. Or a list of source ids: only those are extracted and verified this launch. A listed source already verified is skipped, and the run stops before reconcile while any other source still needs work |
 | `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
-| `models` | `{}` for the default on every tier. `think` (default opus): reconcile, consolidate, report. `code` (default sonnet): extract, verify. `light` (default haiku): status, the checks, merge, working set, coverage. `"inherit"` uses the session model |
-| `verifyChunk` | The most claims one verify agent takes, such as 150. A 330-claim extract at 150 is verified by 3 agents in parallel, each writing its own part file |
+| `models` | `{}` for the default on every tier, which is the deep run. `think` (default opus): characterise, reconcile, consolidate, report. `code` (default opus): every extract part and every verifier. `light` (default haiku): status, the checks, both merges, working set, coverage. `"inherit"` uses the session model |
+| `verifyChunk` | The most claims one verify agent takes. Use 60: few enough that a verifier can re-check every claim against the source and read the slice for what was missed. A 330-claim extract at 60 is verified by 6 agents in parallel, each writing its own part file |
 
 The worked example for the INS performance testing programme:
 
@@ -59,7 +72,7 @@ The worked example for the INS performance testing programme:
   only: null,
   tim: 'tim',
   models: {},
-  verifyChunk: 150
+  verifyChunk: 60
 }
 ```
 
@@ -68,14 +81,17 @@ The worked example for the INS performance testing programme:
 | Stage | Agents | What it does |
 |---|---|---|
 | Status | 1 light | Resolves the workspace root's absolute form and runs `tim distil status`: the work list. A source verified with an unchanged scope hash and an unchanged extract is skipped |
-| Extract | 1 code, then 1 light check, per source | Only for a source whose next step is extract. The extractor follows `extract.md` and its kind's brief, writes `distil/extract/<slug>.json`, and stamps it with `tim distil stamp`. The check runs `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and removes old part files. A failed check sends the extractor back once with the problems, then the source fails |
-| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
+| Characterise | 1 think, then 1 light check, per source | Only for a source whose next step is extract. The characterise agent follows `characterise.md` and its kind's brief, and writes `distil/extract/<slug>.partition.json`: the source's structure and its parts, each with what to read in full, what it must cover and its claim id prefix, `<slug>-p<N>`. On a re-extract it shares the old claim ids out among the parts as `keeps`. The check runs `tim distil check --stage partition --clear-parts`, which removes old extract part files. A failed check, or a part without the prefix the workflow named, sends the agent back once with the problems, then the source fails at `characterise` |
+| Extract | 1 code per part, then 1 light merge, per source | One agent per part, side by side, follows `extract.md` and its kind's brief, reads its slice in full and writes `distil/extract/<slug>.part<N>.json`, checking it with `tim distil check --stage extract --part <N>`. The merge runs `tim distil merge-extract`, which joins the parts in order and stamps the scope hash, then `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and each part's range and removes old verify part files. A failed merge re-runs the parts that failed or that a problem names, once, then the source fails. A source whose next step is verify only has its extract checked; if that check fails it is characterised and extracted again |
+| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts its range came from so it re-reads that slice in full. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
 | Reconcile | 1 light, then 1 think and 1 light, up to 3 times | `tim distil working-set --write`, then the reconciler writes `requirements.json` and `conflicts.json`, and `tim distil coverage` checks them. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the consolidator. Up to 2 send-backs |
 | Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`, with `themes` when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
 | Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
 
-Extract and verify run as one `pipeline()` over the work list: a source moves on to verify as
-soon as its own extract checks out, and never waits for the others.
+Characterise, extract and verify run as one `pipeline()` over the work list: a source moves on
+to verify as soon as its own extract checks out, and never waits for the others. Within a
+source, the part agents and the verifiers each run in parallel, within the workflow's
+concurrency limit.
 
 **A failed source stops the run before reconcile**, and so does one that `only` left for
 later. Reconcile reads every source, so reconciling without one would leave its claims out
@@ -94,7 +110,7 @@ back to the consolidator as a problem.
 ```js
 {
   workarea, stopped,     // stopped: null, or { reason, detail }
-  sources,               // every source: outcome (verified, unchanged, failed, not-run) and its counts
+  sources,               // every source: outcome (verified, unchanged, failed, not-run), its counts, extractParts, and failedAt (characterise, extract or verify) when it failed
   failed,                // the ids of the sources that failed
   requirements, conflicts, questions,   // from tim distil coverage; each question with its default
   backlog,               // { path, total, byStatus, covered }

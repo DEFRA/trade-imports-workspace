@@ -53,6 +53,7 @@ const lastLines = (text) =>
  * @param {string} args.sourceId - A source of kind trace
  * @param {string[]} args.traceArgs - The subcommand and its arguments, such as ['actions']
  * @param {string} [args.out] - A file name, no folders, for the output
+ * @param {string} [args.folder] - A sub-folder of the working folder to run in, such as part3 or verify2, so agents reading one trace source side by side each open their own trace
  * @returns {Promise<{source: string, workFolder: string, command: string[], out: string|null, lines: number, stdout: string|null, stderr: string}>}
  * @throws {TimError} USAGE for no subcommand, a bad file name or a source that is not a trace, NOT_FOUND for an unknown source, UNKNOWN when the subcommand fails
  */
@@ -61,7 +62,8 @@ export const runTrace = async ({
   schemas,
   sourceId,
   traceArgs,
-  out
+  out,
+  folder
 }) => {
   if (!traceArgs.length) {
     throw new TimError(
@@ -75,12 +77,19 @@ export const runTrace = async ({
       `--out must be a file name with no folder, such as actions.txt. Got ${JSON.stringify(out)}.`
     )
   }
+  if (folder !== undefined && !FILE_NAME.test(folder)) {
+    throw new TimError(
+      'USAGE',
+      `--folder must be one folder name, such as part3. Got ${JSON.stringify(folder)}.`
+    )
+  }
   const source = traceSourceOf(
     readSources(layout, schemas.sources),
     sourceId,
     layout
   )
-  const workFolder = workFolderOf(layout, slugOf(source.id))
+  const sourceFolder = workFolderOf(layout, slugOf(source.id))
+  const workFolder = folder ? join(sourceFolder, folder) : sourceFolder
   mkdirSync(workFolder, { recursive: true })
   const command = ['trace', ...traceArgs]
   const result = await run(process.execPath, [playwrightCli(), ...command], {

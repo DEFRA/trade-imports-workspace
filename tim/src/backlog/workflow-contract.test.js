@@ -4038,17 +4038,65 @@ describe('distil', () => {
     problems: [],
     summary: 'read'
   })
-  const EXTRACTED = {
+  const EXTRACT_DIR = '/ws/workareas/shared/demo/distil/extract'
+  const CHARACTERISED = {
     ok: true,
-    claims: 3,
-    structure: 'Three specs.',
+    parts: 2,
+    structure: 'Two spec folders.',
     decisions: ['Left the admin specs out of scope.'],
-    summary: 'extracted'
+    summary: 'characterised'
   }
+  const partitionedAs = (slug) => ({
+    ok: true,
+    problems: [],
+    parts: [
+      {
+        part: 1,
+        title: 'Specs',
+        prefix: `${slug}-p1`,
+        path: `${EXTRACT_DIR}/${slug}.part1.json`
+      },
+      {
+        part: 2,
+        title: 'Fixtures',
+        prefix: `${slug}-p2`,
+        path: `${EXTRACT_DIR}/${slug}.part2.json`
+      }
+    ],
+    removedParts: [],
+    summary: 'in shape'
+  })
+  const PARTITIONED = partitionedAs('repo-tests')
+  const extractedPart = (part) => ({
+    ok: true,
+    part,
+    claims: part === 1 ? 2 : 1,
+    gaps: 0,
+    structure: `Part ${part}, read in full.`,
+    decisions: [`Claimed every test in part ${part}.`],
+    summary: 'extracted'
+  })
+  const PART_RANGES = [
+    {
+      part: 1,
+      title: 'Specs',
+      claims: 2,
+      from: 'repo-tests-p1-001',
+      to: 'repo-tests-p1-002'
+    },
+    {
+      part: 2,
+      title: 'Fixtures',
+      claims: 1,
+      from: 'repo-tests-p2-001',
+      to: 'repo-tests-p2-001'
+    }
+  ]
   const CHECKED = {
     ok: true,
     problems: [],
     claims: 3,
+    parts: PART_RANGES,
     chunks: [
       {
         part: 1,
@@ -4068,6 +4116,7 @@ describe('distil', () => {
     removedParts: [],
     summary: 'in shape'
   }
+  const MERGED_EXTRACT = { ...CHECKED, stage: 'done', summary: 'merged' }
   const verifiedPart = (part) => ({
     ok: true,
     part,
@@ -4157,7 +4206,11 @@ describe('distil', () => {
 
   const HAPPY_ANSWERS = {
     status: statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
-    'repo:tests extract': EXTRACTED,
+    'repo:tests characterise': CHARACTERISED,
+    'repo:tests check partition': PARTITIONED,
+    'repo:tests extract part 1/2': extractedPart(1),
+    'repo:tests extract part 2/2': extractedPart(2),
+    'repo:tests merge extract': MERGED_EXTRACT,
     'repo:tests check extract': CHECKED,
     'repo:tests verify 1/2': verifiedPart(1),
     'repo:tests verify 2/2': verifiedPart(2),
@@ -4248,13 +4301,42 @@ describe('distil', () => {
   })
 
   describe('the models and agents', () => {
-    test('runs status on the light tier, extract and verify on code, and reconcile on think', async () => {
+    test('runs characterise, every extract part and every verifier on opus when models is empty', async () => {
       const run = await runDistil()
 
-      expect(optionsOf(run, 'status').model).toBe('haiku')
-      expect(optionsOf(run, 'repo:tests extract').model).toBe('sonnet')
-      expect(optionsOf(run, 'repo:tests verify 1/2').model).toBe('sonnet')
-      expect(optionsOf(run, 'reconcile').model).toBe('opus')
+      expect({
+        characterise: optionsOf(run, 'repo:tests characterise').model,
+        part: optionsOf(run, 'repo:tests extract part 2/2').model,
+        verify: optionsOf(run, 'repo:tests verify 1/2').model,
+        reconcile: optionsOf(run, 'reconcile').model
+      }).toEqual({
+        characterise: 'opus',
+        part: 'opus',
+        verify: 'opus',
+        reconcile: 'opus'
+      })
+    })
+
+    test('runs status and the checks and merges on the light tier', async () => {
+      const run = await runDistil()
+
+      expect({
+        status: optionsOf(run, 'status').model,
+        partition: optionsOf(run, 'repo:tests check partition').model,
+        mergeExtract: optionsOf(run, 'repo:tests merge extract').model,
+        mergeVerify: optionsOf(run, 'repo:tests merge').model
+      }).toEqual({
+        status: 'haiku',
+        partition: 'haiku',
+        mergeExtract: 'haiku',
+        mergeVerify: 'haiku'
+      })
+    })
+
+    test('lets the code tier be lowered for the extract parts and verifiers', async () => {
+      const run = await runDistil({ models: { code: 'sonnet' } })
+
+      expect(optionsOf(run, 'repo:tests extract part 1/2').model).toBe('sonnet')
     })
 
     test('lets a tier be set to inherit the session model', async () => {
@@ -4286,8 +4368,11 @@ describe('distil', () => {
 
       expect(labelsOf(run)).toEqual([
         'status',
-        'repo:tests extract',
-        'repo:tests check extract',
+        'repo:tests characterise',
+        'repo:tests check partition',
+        'repo:tests extract part 1/2',
+        'repo:tests extract part 2/2',
+        'repo:tests merge extract',
         'repo:tests verify 1/2',
         'repo:tests verify 2/2',
         'repo:tests merge',
@@ -4344,31 +4429,85 @@ describe('distil', () => {
       )
     })
 
-    test('picks the extract brief by the source kind and names the claim id prefix', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+    test('has the characterise agent follow its brief and write the partition', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/characterise.md'
+      )
+      expect(prompt).toContain(
+        'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/extract/repo-tests.partition.json'
+      )
+    })
+
+    test('names each part its prefix', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        'PREFIXES: part N\'s prefix is "repo-tests-p<N>": repo-tests-p1, repo-tests-p2 and on.'
+      )
+    })
+
+    test('has tim clear old extract part files once the partition checks out', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests check partition')
+
+      expect(prompt).toContain(
+        '`tim distil check shared/demo --source repo:tests --stage partition --clear-parts --workspace ~/ws --json`'
+      )
+    })
+
+    test('gives each part agent its kind brief, its slice of the partition and its own file', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract part 2/2')
 
       expect(prompt).toContain(
         '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/extract-repo.md'
       )
       expect(prompt).toContain(
-        'Use the prefix "repo-tests": repo-tests-001, repo-tests-002 and on.'
+        "`jq '.parts[1]' ~/ws/workareas/shared/demo/distil/extract/repo-tests.partition.json`"
+      )
+      expect(prompt).toContain(
+        `THE FILE YOU WRITE: ${EXTRACT_DIR}/repo-tests.part2.json`
       )
     })
 
-    test('tells the extractor to stamp its file with the scope hash', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+    test('has each part agent check only its own part', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract part 2/2')
 
       expect(prompt).toContain(
-        '`tim distil stamp shared/demo --source repo:tests --workspace ~/ws --json`'
+        '`tim distil check shared/demo --source repo:tests --stage extract --part 2 --workspace ~/ws --json`'
       )
     })
 
-    test('asks the check for verify ranges of at most verifyChunk claims', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+    test('merges the extract parts, then asks for verify ranges of at most verifyChunk claims', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests merge extract')
+
+      expect(
+        prompt.indexOf(
+          '`tim distil merge-extract shared/demo --source repo:tests --workspace ~/ws --json`'
+        )
+      ).toBeLessThan(
+        prompt.indexOf(
+          '`tim distil check shared/demo --source repo:tests --stage extract --chunk 2 --clear-parts --workspace ~/ws --json`'
+        )
+      )
+    })
+
+    test('tells each verifier which parts its range came from', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests verify 2/2')
 
       expect(prompt).toContain(
-        '`tim distil check shared/demo --source repo:tests --stage extract --chunk 2 --clear-parts --workspace ~/ws --json`'
+        "your claims come from part 2 of the partition.\nRead `jq '.parts[1]' ~/ws/workareas/shared/demo/distil/extract/repo-tests.partition.json`"
       )
+    })
+
+    test('returns every decision, from characterise and from each part', async () => {
+      const run = await runDistil()
+
+      expect(run.result.sources[0].decisions).toEqual([
+        'Left the admin specs out of scope.',
+        'part 1: Claimed every test in part 1.',
+        'part 2: Claimed every test in part 2.'
+      ])
     })
 
     test('gives each verifier its own range of claims and its own part file', async () => {
@@ -4391,41 +4530,61 @@ describe('distil', () => {
     })
 
     test('has tim clear old verify part files, rather than an agent running rm', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+      const prompt = promptOf(await runDistil(), 'repo:tests merge extract')
 
       expect(prompt).toContain('--clear-parts')
       expect(prompt).not.toMatch(/`rm /)
     })
 
-    test('tells a trace extractor and its verifiers to run the trace CLI through tim, with no cd', async () => {
+    describe('a trace source', () => {
       const traceSource = {
         ...PENDING_SOURCE,
         id: 'trace:ched-p',
         kind: 'trace',
         slug: 'trace-ched-p'
       }
-      const run = await runDistil(
-        {},
-        {
-          status: statusWith([traceSource, VERIFIED_SOURCE]),
-          'trace:ched-p extract': EXTRACTED,
-          'trace:ched-p check extract': {
-            ...CHECKED,
-            chunks: CHECKED.chunks.map((chunk) => ({
-              ...chunk,
-              path: chunk.path.replace('repo-tests', 'trace-ched-p')
-            }))
-          },
-          'trace:ched-p verify 1/2': verifiedPart(1),
-          'trace:ched-p verify 2/2': verifiedPart(2),
-          'trace:ched-p merge': MERGED
-        }
-      )
+      const forTrace = (answer) =>
+        JSON.parse(
+          JSON.stringify(answer).replaceAll('repo-tests', 'trace-ched-p')
+        )
+      const runTrace = () =>
+        runDistil(
+          {},
+          {
+            status: statusWith([traceSource, VERIFIED_SOURCE]),
+            'trace:ched-p characterise': CHARACTERISED,
+            'trace:ched-p check partition': partitionedAs('trace-ched-p'),
+            'trace:ched-p extract part 1/2': extractedPart(1),
+            'trace:ched-p extract part 2/2': extractedPart(2),
+            'trace:ched-p merge extract': forTrace(MERGED_EXTRACT),
+            'trace:ched-p verify 1/2': verifiedPart(1),
+            'trace:ched-p verify 2/2': verifiedPart(2),
+            'trace:ched-p merge': MERGED
+          }
+        )
+      const traceCommand = (folder) =>
+        `\`tim distil trace shared/demo --source trace:ched-p${folder} [--out <file name>] --workspace ~/ws --json -- <subcommand and its arguments>\``
 
-      const command =
-        '`tim distil trace shared/demo --source trace:ched-p [--out <file name>] --workspace ~/ws --json -- <subcommand and its arguments>`'
-      expect(promptOf(run, 'trace:ched-p extract')).toContain(command)
-      expect(promptOf(run, 'trace:ched-p verify 1/2')).toContain(command)
+      test('has the characterise agent run the trace CLI through tim, in the source folder', async () => {
+        const run = await runTrace()
+
+        expect(promptOf(run, 'trace:ched-p characterise')).toContain(
+          traceCommand('')
+        )
+      })
+
+      test('gives each part agent and each verifier a trace folder of its own, so none opens over another', async () => {
+        const run = await runTrace()
+
+        expect({
+          part: promptOf(run, 'trace:ched-p extract part 2/2').includes(
+            traceCommand(' --folder part2')
+          ),
+          verify: promptOf(run, 'trace:ched-p verify 1/2').includes(
+            traceCommand(' --folder verify1')
+          )
+        }).toEqual({ part: true, verify: true })
+      })
     })
 
     test('merges the parts, then checks the verify stage', async () => {
@@ -4567,8 +4726,36 @@ describe('distil', () => {
         }
       )
 
-      expect(labelsOf(run)).not.toContain('repo:tests extract')
+      expect(labelsOf(run)).not.toContain('repo:tests characterise')
       expect(labelsOf(run)).toContain('repo:tests verify 1/2')
+    })
+
+    test('has a stale source characterised again, sharing its old claim ids out among the parts', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([
+            {
+              ...PENDING_SOURCE,
+              state: 'stale',
+              reason: 'The extract records no scope hash.'
+            },
+            VERIFIED_SOURCE
+          ])
+        }
+      )
+
+      expect(promptOf(run, 'repo:tests characterise')).toContain(
+        "`jq -c '.claims[] | {id, ref}' ~/ws/workareas/shared/demo/distil/extract/repo-tests.json`"
+      )
+    })
+
+    test('starts a pending source with no old claim ids to keep', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        'KEEPS: This source has no extract yet, so no part has "keeps".'
+      )
     })
 
     test('stops before any extract when only names a source sources.json does not have', async () => {
@@ -4617,37 +4804,97 @@ describe('distil', () => {
   })
 
   describe('a source that will not check out', () => {
-    const EXTRACT_PROBLEMS = {
+    const PARTITION_PROBLEMS = {
       ok: false,
-      problems: ['repo-tests.json claim 2 has "gap" as its kind.'],
-      chunks: [],
+      problems: [
+        'distil/extract/repo-tests.partition.json parts[1].read needs at least 1 item.'
+      ],
+      parts: [],
       removedParts: [],
       summary: 'out of shape'
     }
+    const PART_MISSING = {
+      ok: false,
+      stage: 'merge',
+      problems: [
+        'distil/extract/repo-tests.part2.json does not exist yet: part 2 (Fixtures) has no extract.'
+      ],
+      parts: [],
+      chunks: [],
+      removedParts: [],
+      summary: 'refused'
+    }
 
-    test('sends the extractor back once with the problems', async () => {
+    test('sends the characterise agent back once with the partition problems', async () => {
       const run = await runDistil(
         {},
         {
-          'repo:tests check extract': EXTRACT_PROBLEMS,
-          'repo:tests extract retry 1': EXTRACTED,
-          'repo:tests check extract 2': CHECKED
+          'repo:tests check partition': PARTITION_PROBLEMS,
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITIONED
         }
       )
 
-      expect(promptOf(run, 'repo:tests extract retry 1')).toContain(
-        '- repo-tests.json claim 2 has "gap" as its kind.'
+      expect(promptOf(run, 'repo:tests characterise retry 1')).toContain(
+        '- distil/extract/repo-tests.partition.json parts[1].read needs at least 1 item.'
       )
       expect(run.result.stopped).toBeNull()
     })
 
-    test('marks the source failed after one retry and stops before reconcile', async () => {
+    test('marks the source failed at characterise after one retry, and extracts no part', async () => {
       const run = await runDistil(
         {},
         {
-          'repo:tests check extract': EXTRACT_PROBLEMS,
-          'repo:tests extract retry 1': EXTRACTED,
-          'repo:tests check extract 2': EXTRACT_PROBLEMS
+          'repo:tests check partition': PARTITION_PROBLEMS,
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITION_PROBLEMS
+        }
+      )
+
+      expect(run.result.sources[0]).toMatchObject({
+        outcome: 'failed',
+        failedAt: 'characterise'
+      })
+      expect(labelsOf(run)).not.toContain('repo:tests extract part 1/2')
+    })
+
+    test('sends back a partition whose prefixes are not the ones the workflow names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check partition': partitionedAs('tests'),
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITIONED
+        }
+      )
+
+      expect(promptOf(run, 'repo:tests characterise retry 1')).toContain(
+        '- part 1 has the prefix tests-p1. Give it repo-tests-p1, the prefix the workflow names'
+      )
+    })
+
+    test('extracts again only the part a failed merge names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': PART_MISSING,
+          'repo:tests extract part 2/2 retry 1': extractedPart(2),
+          'repo:tests merge extract 2': MERGED_EXTRACT
+        }
+      )
+
+      const retries = labelsOf(run).filter((label) => label.includes('retry'))
+      expect(retries).toEqual(['repo:tests extract part 2/2 retry 1'])
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('marks the source failed at extract when the merge fails twice, and stops before reconcile', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': PART_MISSING,
+          'repo:tests extract part 2/2 retry 1': extractedPart(2),
+          'repo:tests merge extract 2': PART_MISSING
         }
       )
 
@@ -4655,9 +4902,34 @@ describe('distil', () => {
       expect(run.result.sources[0]).toMatchObject({
         outcome: 'failed',
         failedAt: 'extract',
-        problems: ['repo-tests.json claim 2 has "gap" as its kind.']
+        problems: PART_MISSING.problems
       })
       expect(labelsOf(run)).not.toContain('working set')
+    })
+
+    test('characterises and extracts again an extracted source whose extract no longer checks out', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([
+            { ...PENDING_SOURCE, state: 'extracted', next: 'verify' },
+            VERIFIED_SOURCE
+          ]),
+          'repo:tests check extract': {
+            ...PART_MISSING,
+            stage: undefined,
+            problems: [
+              'distil/extract/repo-tests.json is not its parts merged: a part changed after the merge, or the extract was written by hand.'
+            ]
+          }
+        }
+      )
+
+      expect(labelsOf(run).slice(1, 4)).toEqual([
+        'repo:tests check extract',
+        'repo:tests characterise',
+        'repo:tests check partition'
+      ])
     })
 
     test('verifies again only the part a failed merge names', async () => {

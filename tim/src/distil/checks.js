@@ -3,9 +3,13 @@ import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
 import {
   DISTIL_SCHEMA_FILES,
+  canonicalJsonOf,
   claimsHashOf,
+  extractPartPathOf,
+  extractPartsOf,
   extractPathOf,
   orphanFilesOf,
+  partitionPathOf,
   readJsonLenient,
   scopeHashOf,
   slugOf,
@@ -14,6 +18,15 @@ import {
   verifyPathOf
 } from './files.js'
 import { problemsError, schemaProblems } from './problems.js'
+import {
+  crossPartProblems,
+  extractPartLabelOf,
+  mergedStructureOf,
+  partClaimProblems,
+  partRangesOf,
+  partitionLabelOf,
+  partitionProblems
+} from './partition.js'
 
 export const STATES = ['pending', 'extracted', 'verified', 'stale', 'invalid']
 
@@ -133,6 +146,21 @@ export const readSources = (layout, schema) => {
 }
 
 /**
+ * Every source's extract, read without throwing, by source id.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {object} sources - The parsed sources.json, already in shape
+ * @returns {Map<string, {exists: boolean, value?: unknown, error?: string}>}
+ */
+export const extractReadsOf = (layout, sources) =>
+  new Map(
+    sources.sources.map((source) => [
+      source.id,
+      readJsonLenient(extractPathOf(layout, slugOf(source.id)))
+    ])
+  )
+
+/**
  * Which sources' extracts hold each claim id, so a claim id two sources use
  * is caught: requirements cite claims by id alone.
  *
@@ -181,10 +209,16 @@ const sourceMismatch = (label, value, source) =>
  * @param {unknown} args.value - The parsed extract
  * @param {object} args.schema - The parsed extract.schema.json
  * @param {Map<string, string[]>} args.claimOwners - From `claimOwnersOf`
+ * @param {string} [args.label] - The file as the reader knows it; the extract by default, or one of its part files
  * @returns {string[]}
  */
-export const extractProblems = ({ source, value, schema, claimOwners }) => {
-  const label = extractLabelOf(slugOf(source.id))
+export const extractProblems = ({
+  source,
+  value,
+  schema,
+  claimOwners,
+  label = extractLabelOf(slugOf(source.id))
+}) => {
   const ids = idsOf(value?.claims)
   return [
     ...schemaProblems({
@@ -242,6 +276,168 @@ export const scopeHashCheck = ({ source, value, workarea }) => {
     }
   }
   return { state: 'current', problem: null }
+}
+
+const readPartFile = ({ layout, schemas, source, entry, claimOwners }) => {
+  const slug = slugOf(source.id)
+  const label = extractPartLabelOf(slug, entry.part)
+  const path = extractPartPathOf(layout, slug, entry.part)
+  const read = readJsonLenient(path)
+  if (!read.exists) {
+    return {
+      entry,
+      path,
+      problems: [
+        `${label} does not exist yet: part ${entry.part} (${entry.title}) has no extract.`
+      ]
+    }
+  }
+  if (read.error) return { entry, path, problems: unreadable(label, read) }
+  return {
+    entry,
+    path,
+    value: read.value,
+    problems: [
+      ...extractProblems({
+        source,
+        value: read.value,
+        schema: schemas.extract,
+        claimOwners,
+        label
+      }),
+      ...partClaimProblems({ label, entry, value: read.value })
+    ]
+  }
+}
+
+/**
+ * Read one source's partition, if it has one, and judge it.
+ *
+ * @param {object} args
+ * @param {object} args.layout - From `distilLayout`
+ * @param {object} args.schemas - From `loadDistilSchemas`
+ * @param {object} args.source - The source from sources.json
+ * @returns {{exists: boolean, value?: unknown, problems: string[]}}
+ */
+export const readPartition = ({ layout, schemas, source }) => {
+  const slug = slugOf(source.id)
+  const label = partitionLabelOf(slug)
+  const read = readJsonLenient(partitionPathOf(layout, slug))
+  if (!read.exists) return { exists: false, problems: [] }
+  if (read.error) return { exists: true, problems: unreadable(label, read) }
+  return {
+    exists: true,
+    value: read.value,
+    problems: partitionProblems({
+      label,
+      source,
+      value: read.value,
+      schema: schemas.partition
+    })
+  }
+}
+
+const strayPartProblems = (slug, files, entries) =>
+  files
+    .filter((file) => !entries.some((entry) => entry.part === file.part))
+    .map(
+      (file) =>
+        `${extractPartLabelOf(slug, file.part)} is not a part of ${partitionLabelOf(slug)}, which has ${entries.length} part${entries.length === 1 ? '' : 's'}. It is left from an earlier partition: tim distil check --stage partition --clear-parts removes it.`
+    )
+
+/**
+ * Read and judge one source's partition and the extract part files it calls
+ * for. Each part is checked against extract.schema.json and its own prefix;
+ * across parts, every part has its file, no file is outside the partition,
+ * and no claim id is in two parts.
+ *
+ * @param {object} args
+ * @param {object} args.layout - From `distilLayout`
+ * @param {object} args.schemas - From `loadDistilSchemas`
+ * @param {object} args.source - The source from sources.json
+ * @param {Map<string, string[]>} args.claimOwners - From `claimOwnersOf`
+ * @param {number} [args.part] - Check only this part, and the partition
+ * @returns {{exists: boolean, partition?: object, parts: object[], problems: string[]}}
+ *   `parts` holds each part's entry, path, parsed file and problems
+ */
+export const inspectExtractParts = ({
+  layout,
+  schemas,
+  source,
+  claimOwners,
+  part
+}) => {
+  const slug = slugOf(source.id)
+  const label = partitionLabelOf(slug)
+  const read = readPartition({ layout, schemas, source })
+  if (!read.exists) return { exists: false, parts: [], problems: [] }
+  if (read.problems.length) {
+    return {
+      exists: true,
+      partition: read.value,
+      parts: [],
+      problems: read.problems
+    }
+  }
+  const entries = read.value.parts
+  const chosen =
+    part === undefined
+      ? entries
+      : entries.filter((entry) => entry.part === part)
+  if (!chosen.length) {
+    return {
+      exists: true,
+      partition: read.value,
+      parts: [],
+      problems: [
+        `${label} has no part ${part}. Its parts are 1 to ${entries.length}.`
+      ]
+    }
+  }
+  const parts = chosen.map((entry) =>
+    readPartFile({ layout, schemas, source, entry, claimOwners })
+  )
+  const whole = part === undefined
+  return {
+    exists: true,
+    partition: read.value,
+    parts,
+    problems: [
+      ...parts.flatMap((partRead) => partRead.problems),
+      ...(whole
+        ? [
+            ...strayPartProblems(slug, extractPartsOf(layout, slug), entries),
+            ...crossPartProblems(slug, parts)
+          ]
+        : [])
+    ]
+  }
+}
+
+/**
+ * The extract its parts make: the partition's structure and each part's,
+ * then every part's claims in part order.
+ *
+ * @param {{partition: object, parts: {entry: object, value: object}[]}} inspected - From `inspectExtractParts`, with no problems
+ * @returns {{structure: string, claims: object[]}}
+ */
+export const mergedExtractOf = ({ partition, parts }) => ({
+  structure: mergedStructureOf(partition, parts),
+  claims: parts.flatMap(({ value }) => value.claims)
+})
+
+const mergeMismatchProblem = ({ source, extract, inspected, workarea }) => {
+  const merged = mergedExtractOf(inspected)
+  const same =
+    canonicalJsonOf({
+      structure: extract.structure,
+      claims: extract.claims
+    }) === canonicalJsonOf(merged)
+  return same
+    ? []
+    : [
+        `${extractLabelOf(slugOf(source.id))} is not its parts merged: a part changed after the merge, or the extract was written by hand. Run: tim distil merge-extract ${workarea} --source ${source.id}`
+      ]
 }
 
 /**
@@ -425,9 +621,24 @@ const VERIFY_HASH_REASONS = {
   changed: 'The extract changed after it was verified.'
 }
 
-const stateOf = ({ extract, verifyRead, verify, parts }) => {
+const pendingReason = (partition) => {
+  if (!partition.exists) return 'No extract yet.'
+  const planned = Array.isArray(partition.value?.parts)
+    ? partition.value.parts.length
+    : null
+  const written = countOf(partition.written, 'part file')
+  return planned === null
+    ? `No extract yet. A partition is written, and ${written}.`
+    : `No extract yet. Its partition has ${countOf(planned, 'part')}, and ${written} ${partition.written === 1 ? 'is' : 'are'} written.`
+}
+
+const stateOf = ({ extract, verifyRead, verify, parts, partition }) => {
   if (!extract.exists) {
-    return { state: 'pending', next: 'extract', reason: 'No extract yet.' }
+    return {
+      state: 'pending',
+      next: 'extract',
+      reason: pendingReason(partition)
+    }
   }
   if (!extract.valid) {
     return {
@@ -500,12 +711,7 @@ const publicVerify = ({ path, read, verify, parts }) => ({
  *   `extract` and `verify` are set only when in shape; `raw` holds whatever parsed
  */
 export const inspectSources = ({ layout, schemas, sources, workarea }) => {
-  const reads = new Map(
-    sources.sources.map((source) => [
-      source.id,
-      readJsonLenient(extractPathOf(layout, slugOf(source.id)))
-    ])
-  )
+  const reads = extractReadsOf(layout, sources)
   const claimOwners = claimOwnersOf(reads)
   return sources.sources.map((source) => {
     const slug = slugOf(source.id)
@@ -528,6 +734,10 @@ export const inspectSources = ({ layout, schemas, sources, workarea }) => {
       workarea
     })
     const parts = verifyPartsOf(layout, slug)
+    const partition = {
+      ...readJsonLenient(partitionPathOf(layout, slug)),
+      written: extractPartsOf(layout, slug).length
+    }
     return {
       source,
       extract: extractValue,
@@ -549,7 +759,7 @@ export const inspectSources = ({ layout, schemas, sources, workarea }) => {
         kind: source.kind,
         slug,
         scopeHash: scopeHashOf(source),
-        ...stateOf({ extract, verifyRead, verify, parts }),
+        ...stateOf({ extract, verifyRead, verify, parts, partition }),
         extract: {
           path: extractPathOf(layout, slug),
           exists: extract.exists,
@@ -649,14 +859,43 @@ export const verifyChunksOf = ({ layout, slug, claims, size }) => {
   })
 }
 
-const STAGES = new Set(['extract', 'verify', 'all'])
+const STAGES = ['partition', 'extract', 'verify', 'all']
 
-const extractStageProblems = (entry) => {
+const partitionStageProblems = (entry, partition) =>
+  partition.exists
+    ? partition.problems
+    : [
+        `${partitionLabelOf(entry.report.slug)} does not exist yet. The characterise step writes it, before any part is extracted.`
+      ]
+
+const missingExtractProblem = (entry, inspected, workarea) => {
   const label = extractLabelOf(entry.report.slug)
-  if (!entry.report.extract.exists) return [`${label} does not exist yet.`]
+  return inspected.exists && inspected.problems.length === 0
+    ? `${label} does not exist yet. Merge its parts: tim distil merge-extract ${workarea} --source ${entry.report.id}`
+    : `${label} does not exist yet.`
+}
+
+const extractStageProblems = (entry, inspected, workarea) => {
+  if (!entry.report.extract.exists) {
+    return [
+      missingExtractProblem(entry, inspected, workarea),
+      ...inspected.problems
+    ]
+  }
+  const mergeProblems =
+    inspected.exists && inspected.problems.length === 0 && entry.extract
+      ? mergeMismatchProblem({
+          source: entry.source,
+          extract: entry.extract,
+          inspected,
+          workarea
+        })
+      : []
   return [
     ...entry.problems.extract,
-    ...(entry.problems.hash ? [entry.problems.hash] : [])
+    ...(entry.problems.hash ? [entry.problems.hash] : []),
+    ...inspected.problems,
+    ...mergeProblems
   ]
 }
 
@@ -681,11 +920,14 @@ const verifyStageProblems = (entry, workarea) => {
   ]
 }
 
-const checkedSource = (entry, { layout, stage, chunk }) => ({
+const checkedSource = (entry, inspected, { layout, stage, chunk }) => ({
   id: entry.report.id,
   slug: entry.report.slug,
   state: entry.report.state,
   claims: entry.report.extract.claims,
+  ...(stage !== 'verify' && inspected.exists
+    ? { parts: partRangesOf(inspected.parts) }
+    : {}),
   chunks:
     stage !== 'verify' && entry.extract
       ? verifyChunksOf({
@@ -706,33 +948,32 @@ const checkedSource = (entry, { layout, stage, chunk }) => ({
       : null
 })
 
-/**
- * Check one source, or every source, at one stage. Refuses with every
- * problem found, so a retry has the whole list to fix.
- *
- * @param {object} args
- * @param {object} args.layout - From `distilLayout`
- * @param {object} args.schemas - From `loadDistilSchemas`
- * @param {string} args.workarea
- * @param {'extract'|'verify'|'all'} args.stage
- * @param {string} [args.sourceId] - One source; every source when left out
- * @param {number} [args.chunk] - Claims per verify range, for `chunks`
- * @param {boolean} [args.clearParts] - Once the check passes, remove the chosen sources' verify part files, so a fresh verify run merges nothing left from an earlier one
- * @returns {{stage: string, sources: object[], removedParts?: string[]}}
- * @throws {TimError} USAGE for an unknown stage, NOT_FOUND for an unknown source, LINT with every problem
- */
-export const checkDistil = ({
-  layout,
-  schemas,
-  workarea,
-  stage,
-  sourceId,
-  chunk,
-  clearParts = false
-}) => {
-  if (!STAGES.has(stage)) {
-    throw new TimError('USAGE', `--stage must be one of: extract, verify, all.`)
+const partitionedSource = (entry, partition, layout) => ({
+  id: entry.report.id,
+  slug: entry.report.slug,
+  structure: partition.value.structure,
+  parts: partition.value.parts.map((part) => ({
+    part: part.part,
+    title: part.title,
+    prefix: part.prefix,
+    path: extractPartPathOf(layout, entry.report.slug, part.part)
+  }))
+})
+
+const usageProblem = ({ stage, part, clearParts }) => {
+  if (!STAGES.includes(stage)) {
+    return `--stage must be one of: ${STAGES.join(', ')}.`
   }
+  if (part !== undefined && stage !== 'extract') {
+    return '--part goes with --stage extract: it checks one extract part file.'
+  }
+  if (part !== undefined && clearParts) {
+    return '--clear-parts cannot go with --part: one part is checked while the others are still being written.'
+  }
+  return null
+}
+
+const chosenEntries = ({ layout, schemas, workarea, sourceId }) => {
   const sources = readSources(layout, schemas.sources)
   const entries = inspectSources({ layout, schemas, sources, workarea })
   const chosen = sourceId
@@ -744,30 +985,169 @@ export const checkDistil = ({
       `Can't find source ${sourceId} in ${layout.sources}.`
     )
   }
-  const problems = chosen.flatMap((entry) => {
-    if (stage === 'extract') return extractStageProblems(entry)
-    if (stage === 'verify') return verifyStageProblems(entry, workarea)
-    const extractSide = extractStageProblems(entry)
-    return entry.extract
-      ? [...extractSide, ...verifyStageProblems(entry, workarea)]
-      : extractSide
-  })
+  return {
+    chosen,
+    claimOwners: claimOwnersOf(extractReadsOf(layout, sources))
+  }
+}
+
+const refuseAny = (problems, layout) => {
   const uniqueProblems = [...new Set(problems)]
   if (uniqueProblems.length) {
     throw problemsError(uniqueProblems, `in ${layout.dir}`)
   }
-  return {
-    stage,
-    sources: chosen.map((entry) =>
-      checkedSource(entry, { layout, stage, chunk })
+}
+
+const checkPartitions = ({ layout, schemas, chosen, clearParts }) => {
+  const read = chosen.map((entry) => ({
+    entry,
+    partition: readPartition({ layout, schemas, source: entry.source })
+  }))
+  refuseAny(
+    read.flatMap(({ entry, partition }) =>
+      partitionStageProblems(entry, partition)
     ),
-    ...(clearParts ? { removedParts: removePartsOf(layout, chosen) } : {})
+    layout
+  )
+  return {
+    stage: 'partition',
+    sources: read.map(({ entry, partition }) =>
+      partitionedSource(entry, partition, layout)
+    ),
+    ...(clearParts
+      ? {
+          removedParts: removeFiles(chosen, (slug) =>
+            extractPartsOf(layout, slug)
+          )
+        }
+      : {})
   }
 }
 
-const removePartsOf = (layout, entries) =>
+const checkOnePart = ({ layout, schemas, chosen, claimOwners, part }) => {
+  const inspected = chosen.map((entry) => ({
+    entry,
+    parts: inspectExtractParts({
+      layout,
+      schemas,
+      source: entry.source,
+      claimOwners,
+      part
+    })
+  }))
+  refuseAny(
+    inspected.flatMap(({ entry, parts }) =>
+      parts.exists ? parts.problems : partitionStageProblems(entry, parts)
+    ),
+    layout
+  )
+  return {
+    stage: 'extract',
+    part,
+    sources: inspected.map(({ entry, parts }) => ({
+      id: entry.report.id,
+      slug: entry.report.slug,
+      parts: partRangesOf(parts.parts)
+    }))
+  }
+}
+
+/**
+ * Check one source, or every source, at one stage. Refuses with every
+ * problem found, so a retry has the whole list to fix.
+ *
+ * - `partition`: the source's partition, before any part is extracted.
+ * - `extract`: the extract, and, when the source was extracted in parts,
+ *   its partition, every part file and that the extract is its parts merged.
+ *   With `part`, only the partition and that one part file.
+ * - `verify`: the verification against the extract.
+ * - `all`: extract and verify.
+ *
+ * @param {object} args
+ * @param {object} args.layout - From `distilLayout`
+ * @param {object} args.schemas - From `loadDistilSchemas`
+ * @param {string} args.workarea
+ * @param {'partition'|'extract'|'verify'|'all'} args.stage
+ * @param {string} [args.sourceId] - One source; every source when left out
+ * @param {number} [args.chunk] - Claims per verify range, for `chunks`
+ * @param {number} [args.part] - With stage extract: check only this part file
+ * @param {boolean} [args.clearParts] - Once the check passes, remove the part files the next stage writes, so nothing from an earlier run is merged: the extract part files after the partition stage, the verify part files after any other
+ * @returns {{stage: string, sources: object[], part?: number, removedParts?: string[]}}
+ * @throws {TimError} USAGE for an unknown stage or options that do not go together, NOT_FOUND for an unknown source, LINT with every problem
+ */
+export const checkDistil = ({
+  layout,
+  schemas,
+  workarea,
+  stage,
+  sourceId,
+  chunk,
+  part,
+  clearParts = false
+}) => {
+  const usage = usageProblem({ stage, part, clearParts })
+  if (usage) throw new TimError('USAGE', usage)
+  const { chosen, claimOwners } = chosenEntries({
+    layout,
+    schemas,
+    workarea,
+    sourceId
+  })
+  if (stage === 'partition') {
+    return checkPartitions({ layout, schemas, chosen, clearParts })
+  }
+  if (part !== undefined) {
+    return checkOnePart({ layout, schemas, chosen, claimOwners, part })
+  }
+  const inspected = new Map(
+    chosen.map((entry) => [
+      entry.source.id,
+      stage === 'verify'
+        ? { exists: false, parts: [], problems: [] }
+        : inspectExtractParts({
+            layout,
+            schemas,
+            source: entry.source,
+            claimOwners
+          })
+    ])
+  )
+  refuseAny(
+    chosen.flatMap((entry) => {
+      const parts = inspected.get(entry.source.id)
+      if (stage === 'extract') {
+        return extractStageProblems(entry, parts, workarea)
+      }
+      if (stage === 'verify') return verifyStageProblems(entry, workarea)
+      const extractSide = extractStageProblems(entry, parts, workarea)
+      return entry.extract
+        ? [...extractSide, ...verifyStageProblems(entry, workarea)]
+        : extractSide
+    }),
+    layout
+  )
+  return {
+    stage,
+    sources: chosen.map((entry) =>
+      checkedSource(entry, inspected.get(entry.source.id), {
+        layout,
+        stage,
+        chunk
+      })
+    ),
+    ...(clearParts
+      ? {
+          removedParts: removeFiles(chosen, (slug) =>
+            verifyPartsOf(layout, slug)
+          )
+        }
+      : {})
+  }
+}
+
+const removeFiles = (entries, filesOf) =>
   entries
-    .flatMap((entry) => verifyPartsOf(layout, entry.report.slug))
+    .flatMap((entry) => filesOf(entry.report.slug))
     .map(({ path }) => {
       unlinkSync(path)
       return path

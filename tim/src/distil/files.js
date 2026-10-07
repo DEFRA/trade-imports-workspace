@@ -26,6 +26,7 @@ export const isEditableRow = (row) =>
 
 export const DISTIL_SCHEMA_FILES = {
   sources: 'sources.schema.json',
+  partition: 'partition.schema.json',
   extract: 'extract.schema.json',
   verify: 'verify.schema.json',
   requirements: 'requirements.schema.json',
@@ -36,7 +37,7 @@ export const DISTIL_SCHEMA_FILES = {
  * Read every DISTIL schema from the workspace.
  *
  * @param {string} workspaceRoot
- * @returns {{sources: object, extract: object, verify: object, requirements: object, conflicts: object}}
+ * @returns {{sources: object, partition: object, extract: object, verify: object, requirements: object, conflicts: object}}
  * @throws {TimError} NOT_FOUND when a schema is missing, PARSE when one is not JSON
  */
 export const loadDistilSchemas = (workspaceRoot) =>
@@ -119,13 +120,14 @@ export const claimsHashOf = (claims) =>
  * Every DISTIL file's path inside one workarea folder.
  *
  * @param {string} workareaDir
- * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, requirements: string, conflicts: string, workingSet: string, backlog: string}}
+ * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, supersededDir: string, requirements: string, conflicts: string, workingSet: string, backlog: string}}
  */
 export const distilLayout = (workareaDir) => ({
   dir: workareaDir,
   sources: join(workareaDir, 'sources.json'),
   extractDir: join(workareaDir, 'distil', 'extract'),
   verifyDir: join(workareaDir, 'distil', 'verify'),
+  supersededDir: join(workareaDir, 'distil', 'superseded'),
   requirements: join(workareaDir, 'distil', 'requirements.json'),
   conflicts: join(workareaDir, 'distil', 'conflicts.json'),
   workingSet: join(workareaDir, 'distil', 'working-set.json'),
@@ -140,6 +142,12 @@ export const verifyPathOf = (layout, slug) =>
 
 export const verifyPartPathOf = (layout, slug, part) =>
   join(layout.verifyDir, `${slug}.part${part}.json`)
+
+export const partitionPathOf = (layout, slug) =>
+  join(layout.extractDir, `${slug}.partition.json`)
+
+export const extractPartPathOf = (layout, slug, part) =>
+  join(layout.extractDir, `${slug}.part${part}.json`)
 
 /**
  * A source's own working folder, for the extract agent's scratch files and
@@ -163,8 +171,19 @@ export const backlogSnapshotPathOf = (layout, tag) =>
   join(layout.dir, 'distil', `backlog-snapshot.${tag}.json`)
 
 const PART_FILE = /^(.+)\.part([1-9][0-9]*)\.json$/
+const PARTITION_FILE = /^(.+)\.partition\.json$/
 
 const filesIn = (dir) => (existsSync(dir) ? readdirSync(dir).sort() : [])
+
+const partsIn = (dir, slug) =>
+  filesIn(dir)
+    .map((name) => name.match(PART_FILE))
+    .filter((match) => match && match[1] === slug)
+    .map((match) => ({
+      part: Number(match[2]),
+      path: join(dir, match[0])
+    }))
+    .sort((left, right) => left.part - right.part)
 
 /**
  * A source's verify part files, in part-number order.
@@ -173,15 +192,17 @@ const filesIn = (dir) => (existsSync(dir) ? readdirSync(dir).sort() : [])
  * @param {string} slug
  * @returns {{part: number, path: string}[]}
  */
-export const verifyPartsOf = (layout, slug) =>
-  filesIn(layout.verifyDir)
-    .map((name) => name.match(PART_FILE))
-    .filter((match) => match && match[1] === slug)
-    .map((match) => ({
-      part: Number(match[2]),
-      path: join(layout.verifyDir, match[0])
-    }))
-    .sort((left, right) => left.part - right.part)
+export const verifyPartsOf = (layout, slug) => partsIn(layout.verifyDir, slug)
+
+/**
+ * A source's extract part files, in part-number order: one per part of its
+ * partition, each written by that part's extract agent.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} slug
+ * @returns {{part: number, path: string}[]}
+ */
+export const extractPartsOf = (layout, slug) => partsIn(layout.extractDir, slug)
 
 /**
  * The extract and verify files whose slug no source in sources.json has:
@@ -193,7 +214,9 @@ export const verifyPartsOf = (layout, slug) =>
  */
 export const orphanFilesOf = (layout, slugs) => {
   const slugOfFile = (name) =>
-    name.match(PART_FILE)?.[1] ?? name.replace(/\.json$/, '')
+    name.match(PART_FILE)?.[1] ??
+    name.match(PARTITION_FILE)?.[1] ??
+    name.replace(/\.json$/, '')
   const orphansIn = (dir) =>
     filesIn(dir)
       .filter((name) => name.endsWith('.json') && !name.startsWith('.'))

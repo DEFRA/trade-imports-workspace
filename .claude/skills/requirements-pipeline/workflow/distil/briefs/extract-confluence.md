@@ -20,8 +20,12 @@ which is the page's storage-format HTML.
 
 ## Characterise the page
 
-Write into `structure`: the title and version, the sections in order, every table with its columns, and any
-annex, status macro or decision log. Say which sections the `scope` covers.
+The characterise step writes into the partition's `structure` the title and version, the sections in order, every
+table with its columns, and any annex, status macro or decision log, and says which sections the `scope` covers. It
+cuts the page on its headings into parts of a few sections each.
+
+An extract part reads every section its `read` names in full, every table row in them included, and its part file's
+`structure` names those sections and tables.
 
 A table is where a Confluence page keeps most of its detail. Record one claim per row that states a fact, and
 say in `ref` which table and row, such as `§4.7 Response times, row "Backend APIs"`.

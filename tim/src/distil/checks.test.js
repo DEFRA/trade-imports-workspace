@@ -3,9 +3,11 @@ import { existsSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { checkDistil, distilStatus, sourcesProblems } from './checks.js'
 import { scopeHashOf } from './files.js'
+import { mergeExtractParts } from './merge-extract.js'
 import {
   DEMO_WORKAREA,
-  makeDistilWorkspace
+  makeDistilWorkspace,
+  splitExtractIntoParts
 } from '../test-support/distil-workspace.js'
 
 let workspace
@@ -616,7 +618,199 @@ describe('checkDistil', () => {
     setUp()
 
     expect(() => check({ stage: 'reconcile' })).toThrow(
-      '--stage must be one of: extract, verify, all.'
+      '--stage must be one of: partition, extract, verify, all.'
     )
+  })
+})
+
+describe('checkDistil over a source extracted in parts', () => {
+  const setUpParts = () => {
+    setUp()
+    return splitExtractIntoParts(workspace)
+  }
+
+  const mergeParts = () =>
+    mergeExtractParts({
+      layout: workspace.layout,
+      schemas: workspace.schemas,
+      workarea: DEMO_WORKAREA,
+      sourceId: 'repo:tests'
+    })
+
+  test('passes the partition stage and lists each part with its prefix and file', () => {
+    const { partPath, whole } = setUpParts()
+
+    expect(
+      check({ sourceId: 'repo:tests', stage: 'partition' }).sources
+    ).toEqual([
+      {
+        id: 'repo:tests',
+        slug: 'repo-tests',
+        structure: whole.structure,
+        parts: [
+          {
+            part: 1,
+            title: 'Suite layout and config',
+            prefix: 'repo-tests-p1',
+            path: partPath(1)
+          },
+          {
+            part: 2,
+            title: 'Fixtures',
+            prefix: 'repo-tests-p2',
+            path: partPath(2)
+          }
+        ]
+      }
+    ])
+  })
+
+  test('says the partition does not exist yet, at the partition stage', () => {
+    setUp()
+
+    expect(
+      problemsOf(() => check({ sourceId: 'repo:tests', stage: 'partition' }))
+    ).toEqual([
+      'distil/extract/repo-tests.partition.json does not exist yet. The characterise step writes it, before any part is extracted.'
+    ])
+  })
+
+  test('clears old extract part files once the partition checks out', () => {
+    const { partPath } = setUpParts()
+
+    const result = check({
+      sourceId: 'repo:tests',
+      stage: 'partition',
+      clearParts: true
+    })
+
+    expect(result.removedParts).toEqual([partPath(1), partPath(2)])
+    expect(existsSync(partPath(1))).toBe(false)
+  })
+
+  test('checks one part on its own, before the others are written', () => {
+    const { partPath } = setUpParts()
+    rmSync(partPath(2))
+
+    expect(
+      check({ sourceId: 'repo:tests', stage: 'extract', part: 1 })
+    ).toEqual({
+      stage: 'extract',
+      part: 1,
+      sources: [
+        {
+          id: 'repo:tests',
+          slug: 'repo-tests',
+          parts: [
+            {
+              part: 1,
+              title: 'Suite layout and config',
+              claims: 3,
+              from: 'tests-001',
+              to: 'tests-005'
+            }
+          ]
+        }
+      ]
+    })
+  })
+
+  test('names a part the partition does not have', () => {
+    setUpParts()
+
+    expect(
+      problemsOf(() =>
+        check({ sourceId: 'repo:tests', stage: 'extract', part: 3 })
+      )
+    ).toEqual([
+      'distil/extract/repo-tests.partition.json has no part 3. Its parts are 1 to 2.'
+    ])
+  })
+
+  test('refuses --part at any stage but extract', () => {
+    setUpParts()
+
+    expect(() =>
+      check({ sourceId: 'repo:tests', stage: 'verify', part: 1 })
+    ).toThrow(
+      '--part goes with --stage extract: it checks one extract part file.'
+    )
+  })
+
+  test('points at merge-extract when the parts are written and the extract is not', () => {
+    setUpParts()
+
+    expect(
+      problemsOf(() => check({ sourceId: 'repo:tests', stage: 'extract' }))
+    ).toEqual([
+      `distil/extract/repo-tests.json does not exist yet. Merge its parts: tim distil merge-extract ${DEMO_WORKAREA} --source repo:tests`
+    ])
+  })
+
+  test('names every part with no file, at the extract stage', () => {
+    const { partPath } = setUpParts()
+    rmSync(partPath(1))
+
+    expect(
+      problemsOf(() => check({ sourceId: 'repo:tests', stage: 'extract' }))
+    ).toEqual([
+      'distil/extract/repo-tests.json does not exist yet.',
+      'distil/extract/repo-tests.part1.json does not exist yet: part 1 (Suite layout and config) has no extract.'
+    ])
+  })
+
+  test('gives the merged extract its verify ranges and each part its range', () => {
+    setUpParts()
+    mergeParts()
+
+    const [source] = check({
+      sourceId: 'repo:tests',
+      stage: 'extract',
+      chunk: 2
+    }).sources
+
+    expect({
+      parts: source.parts.map(({ part, claims }) => ({ part, claims })),
+      chunks: source.chunks.map(({ from, to }) => [from, to])
+    }).toEqual({
+      parts: [
+        { part: 1, claims: 3 },
+        { part: 2, claims: 1 }
+      ],
+      chunks: [
+        ['tests-001', 'tests-002'],
+        ['tests-005', 'tests-010']
+      ]
+    })
+  })
+
+  test('says the extract is no longer its parts merged when a part changed after the merge', () => {
+    const { partPath } = setUpParts()
+    mergeParts()
+    workspace.editJson(partPath(2), (part) => ({
+      ...part,
+      claims: [{ ...part.claims[0], statement: 'Used everywhere.' }]
+    }))
+
+    expect(
+      problemsOf(() => check({ sourceId: 'repo:tests', stage: 'extract' }))
+    ).toEqual([
+      `distil/extract/repo-tests.json is not its parts merged: a part changed after the merge, or the extract was written by hand. Run: tim distil merge-extract ${DEMO_WORKAREA} --source repo:tests`
+    ])
+  })
+
+  test('says how many parts are written while a source waits to be merged', () => {
+    const { partPath } = setUpParts()
+    rmSync(partPath(2))
+
+    expect(sourceStatus('repo:tests').reason).toBe(
+      'No extract yet. Its partition has 2 parts, and 1 part file is written.'
+    )
+  })
+
+  test('counts the partition as the source it belongs to, never an orphan', () => {
+    setUpParts()
+
+    expect(status().orphans).toEqual([])
   })
 })

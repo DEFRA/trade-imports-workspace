@@ -4,7 +4,8 @@ A `ruling` source is a decision from the owner of the work, written up by the ma
 `<workarea>/sources/`, usually named `ruling-<who>-<date>.md`. The `locator` is that file. Read
 [`extract.md`](extract.md) first: its rules all hold here.
 
-A ruling is short and is usually ranked first in `precedence`, so it settles conflicts. Every word counts.
+A ruling is short and is usually ranked first in `precedence`, so it settles conflicts. Every word counts. The
+characterise step almost always makes it one part: the whole file.
 
 ## Reading it
 

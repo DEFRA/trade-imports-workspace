@@ -16,7 +16,13 @@ Read the source's entry in `sources.json`, then the source itself, the same way 
 [`extract-image.md`](extract-image.md). Read the extract's `structure` too: it says how the extractor saw the
 source.
 
-Read only the claims in your range, with the `jq` command your prompt gives. Another agent checks the rest.
+The source was extracted in parts, and the extract's claims run in part order. Where your prompt names the parts
+your range came from, read their entries in the partition for what each read and had to cover, then read that slice
+of the source **in full** yourself. You check every claim against it, and you look for what the extract missed there:
+a page, field, option, hint, error, rule or branch in the slice that no claim records.
+
+Your range is small so that you can re-check every claim properly. Read only the claims in your range, with the `jq`
+command your prompt gives. Another agent checks the rest.
 
 ## A verdict on every claim in your range
 

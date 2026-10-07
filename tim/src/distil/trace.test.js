@@ -79,6 +79,31 @@ describe('runTrace', () => {
     )
   })
 
+  test('opens a trace in a sub-folder of its own, so agents side by side keep their traces apart', async () => {
+    withTraceSource()
+
+    await trace(['open', journeyTrace], { folder: 'part2' })
+
+    await expect(trace(['actions'])).rejects.toThrow('No trace opened')
+  })
+
+  test('reads the trace a sub-folder opened, from that sub-folder', async () => {
+    withTraceSource()
+    await trace(['open', journeyTrace], { folder: 'part2' })
+
+    const result = await trace(['actions'], { folder: 'part2', out: 'a.txt' })
+
+    expect(result.out).toBe(join(workFolder(), 'part2', 'a.txt'))
+  })
+
+  test('refuses a sub-folder that is a path', async () => {
+    withTraceSource()
+
+    await expect(trace(['actions'], { folder: '../x' })).rejects.toThrow(
+      '--folder must be one folder name, such as part3. Got "../x".'
+    )
+  })
+
   test('says what went wrong when the subcommand fails', async () => {
     withTraceSource()
 

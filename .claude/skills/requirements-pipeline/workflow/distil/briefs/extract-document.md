@@ -20,8 +20,11 @@ Your prompt names a working folder you may write to. Nothing else under the work
 
 ## Characterise the document
 
-Write into `structure`: what the document is (a policy paper, a decision record, meeting notes), its date and author
-where it says, its sections in order, and every table with its columns.
+The characterise step writes into the partition's `structure` what the document is (a policy paper, a decision
+record, meeting notes), its date and author where it says, its sections in order, and every table with its columns.
+It cuts the document into parts of consecutive sections or pages.
+
+An extract part reads every section or page its `read` names in full, and its part file's `structure` names them.
 
 ## Meeting notes
 

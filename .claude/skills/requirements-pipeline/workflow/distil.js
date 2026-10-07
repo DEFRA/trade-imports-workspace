@@ -1,11 +1,12 @@
 export const meta = {
   name: 'distil',
   description:
-    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → extract each pending or stale source and check it → verify its claims in ranges and merge the parts → reconcile every verified claim into requirements and conflicts → consolidate them into backlog.json → draft the report and return it',
+    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → characterise each pending or stale source and cut it into parts → extract every part exhaustively, side by side, and merge them → verify its claims in ranges and merge the parts → reconcile every verified claim into requirements and conflicts → consolidate them into backlog.json → draft the report and return it',
   whenToUse:
-    'After intake has written <workarea>/sources.json (goal, repos, reposWhy, precedence, sources). Launch by scriptPath with args; every key is required and a missing one stops the run before any agent starts. To fold in a new source or a ruling, edit sources.json and launch again: a source already verified with an unchanged scope is skipped, and reconcile and consolidate keep every existing id. The run returns the report as text for the main session to save.',
+    'After intake has written <workarea>/sources.json (goal, repos, reposWhy, precedence, sources). Launch by scriptPath with args; every key is required and a missing one stops the run before any agent starts. To fold in a new source or a ruling, edit sources.json and launch again: a source already verified with an unchanged scope is skipped, and reconcile and consolidate keep every existing id. To extract a source again with an unchanged scope, run tim distil reset first. The run returns the report as text for the main session to save.',
   phases: [
     { title: 'Status' },
+    { title: 'Characterise' },
     { title: 'Extract' },
     { title: 'Verify' },
     { title: 'Reconcile' },
@@ -29,12 +30,13 @@ export const meta = {
 //                passes its own, such as
 //                "npm --prefix ~/<clone>/tim run --silent tim --"
 //   models       {} for the default on every tier, or any of: think (default
-//                opus: reconcile, consolidate, report), code (default sonnet:
-//                extract, verify), light (default haiku: status, checks,
-//                merge, working set, coverage). A value is opus, sonnet, haiku,
-//                or "inherit" for the session model
-//   verifyChunk  the most claims one verify agent takes, such as 150. A longer
-//                extract is verified in parts, one agent a part
+//                opus: characterise, reconcile, consolidate, report), code
+//                (default opus: extract parts, verify), light (default haiku:
+//                status, checks, merges, working set, coverage). A value is
+//                opus, sonnet, haiku, or "inherit" for the session model
+//   verifyChunk  the most claims one verify agent takes, such as 60: few
+//                enough that it can re-check every one against the source. A
+//                longer extract is verified in ranges, one agent a range
 // ---------------------------------------------------------------------------
 // >>> args-contract: byte-identical in every workflow script (.claude/workflows/*.js, .claude/skills/*/workflow/*.js), checked by tim/src/backlog/workflow-contract.test.js
 const parseArgs = (workflowName, rawArgs) => {
@@ -107,13 +109,17 @@ if (!Number.isInteger(VERIFY_CHUNK) || VERIFY_CHUNK <= 0) {
 
 // ---------------------------------------------------------------------------
 // Models. Three tiers, each with a default matched to the work:
-//   think (opus)   reconcile, consolidate, report: the calls that decide
-//   code (sonnet)  extract, verify: reading a source closely
-//   light (haiku)  status, the checks, merge, working set, coverage: run a
+//   think (opus)   characterise, reconcile, consolidate, report: the calls
+//                  that decide
+//   code (opus)    extract parts, verify: reading every word of a slice of a
+//                  source. Opus by default, because a thin extract caps
+//                  everything downstream: a page or field never claimed never
+//                  reaches a requirement
+//   light (haiku)  status, the checks, merges, working set, coverage: run a
 //                  command and report what it printed
 // A tier left out takes its default; "inherit" uses the session model.
 // ---------------------------------------------------------------------------
-const MODEL_DEFAULTS = { think: 'opus', code: 'sonnet', light: 'haiku' }
+const MODEL_DEFAULTS = { think: 'opus', code: 'opus', light: 'haiku' }
 const MODEL_TIERS = Object.keys(MODEL_DEFAULTS)
 const KNOWN_MODEL_ALIASES = ['opus', 'sonnet', 'haiku']
 
@@ -153,6 +159,7 @@ const code = withTier('code')
 const light = withTier('light')
 
 // How many times a failed step goes back to its agent with the problems.
+const CHARACTERISE_RETRIES = 1
 const EXTRACT_RETRIES = 1
 const VERIFY_RETRIES = 1
 const SEND_BACKS = 2
@@ -270,16 +277,24 @@ const extractPath = (slug) => `${WORKAREA_ABS}/distil/extract/${slug}.json`
 const extractTilde = (slug) => `${WORKAREA_TILDE}/distil/extract/${slug}.json`
 const verifyPartTilde = (slug, part) => `${WORKAREA_TILDE}/distil/verify/${slug}.part${part}.json`
 
-// The trace CLI extracts into its working directory. tim runs it in the
-// source's own .work folder, so a trace step needs no cd.
-const traceCommand = (item) =>
-  `${TIM} distil trace ${WORKAREA} --source ${item.id} [--out <file name>] --workspace ${TILDE} --json -- <subcommand and its arguments>`
-const traceNote = (item) =>
+const partitionPath = (slug) => `${WORKAREA_ABS}/distil/extract/${slug}.partition.json`
+const partitionTilde = (slug) => `${WORKAREA_TILDE}/distil/extract/${slug}.partition.json`
+const extractPartPath = (slug, part) => `${WORKAREA_ABS}/distil/extract/${slug}.part${part}.json`
+const workFolderAbs = (slug) => `${WORKAREA_ABS}/distil/extract/${slug}.work`
+const workFolderTilde = (slug) => `${WORKAREA_TILDE}/distil/extract/${slug}.work`
+
+// The trace CLI is stateful and extracts into its working directory. tim runs
+// it in the source's own .work folder, or in a sub-folder of it named by
+// --folder, so agents reading one trace source side by side never open over
+// each other's trace, and no step needs a cd.
+const traceCommand = (item, folder) =>
+  `${TIM} distil trace ${WORKAREA} --source ${item.id}${folder ? ` --folder ${folder}` : ''} [--out <file name>] --workspace ${TILDE} --json -- <subcommand and its arguments>`
+const traceNote = (item, folder) =>
   item.kind === 'trace'
     ? `
-THE TRACE CLI: run every playwright trace subcommand as \`${traceCommand(item)}\`.
-tim runs it in ${WORKAREA_TILDE}/distil/extract/${item.slug}.work/, so the trace you open there is yours. --out writes
-the output to a file of that name in that folder, to Read with the Read tool; without it the output is in
+THE TRACE CLI: run every playwright trace subcommand as \`${traceCommand(item, folder)}\`.
+tim runs it in ${workFolderTilde(item.slug)}/${folder ? `${folder}/` : ''}, so the trace you open there is yours. --out
+writes the output to a file of that name in that folder, to Read with the Read tool; without it the output is in
 \`result.stdout\`. Never run npx or playwright yourself.`
     : ''
 
@@ -308,7 +323,7 @@ const alreadyVerified = status.sources.filter((source) => source.next === 'none'
 if (ONLY) {
   const skippedOnly = ONLY.filter((id) => alreadyVerified.some((source) => source.id === id))
   if (skippedOnly.length > 0) {
-    log(`${skippedOnly.join(', ')}: already verified with an unchanged scope, so skipped. Change the scope in sources.json, or remove the extract, to distil it again`)
+    log(`${skippedOnly.join(', ')}: already verified with an unchanged scope, so skipped. To distil it again, change its scope in sources.json, or run tim distil reset ${WORKAREA} --source <id> first`)
   }
 }
 log(
@@ -316,8 +331,11 @@ log(
 )
 
 // ---------------------------------------------------------------------------
-// Extract and verify, one pipeline over the work list. An item moves on to
-// verify as soon as its own extract checks out; it never waits for the others.
+// Characterise, extract and verify, one pipeline over the work list. Every
+// source is extracted the same way: characterised and cut into parts, one
+// agent per part, the parts merged by tim. A small source is one part. An
+// item moves on to verify as soon as its own extract checks out; it never
+// waits for the others.
 // ---------------------------------------------------------------------------
 phase('Extract')
 
@@ -333,69 +351,84 @@ const claimPrefixOf = (slug) =>
 
 const hasExtractAlready = (item) => item.state !== 'pending'
 
-const EXTRACT_SCHEMA = {
+// Each part's claim ids start with its own prefix, so parts written side by
+// side never clash, and tim checks every id against it.
+const partPrefixOf = (item, part) => `${claimPrefixOf(item.slug)}-p${part}`
+
+const problemList = (problems) => problems.map((problem) => `- ${problem}`).join('\n')
+
+const retryNote = (problems, what) =>
+  problems
+    ? `
+THIS IS A RETRY. ${what} found these problems. Fix every one, then check again:
+${problemList(problems)}`
+    : ''
+
+// ---------------------------------------------------------------------------
+// Characterise: one think-tier agent reads the whole source and cuts it into
+// parts, each small enough for one agent to read in full and claim
+// exhaustively. tim checks the partition and clears part files left from an
+// earlier run.
+// ---------------------------------------------------------------------------
+const CHARACTERISE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'claims', 'structure', 'decisions', 'summary'],
+  required: ['ok', 'parts', 'structure', 'decisions', 'summary'],
   properties: {
-    ok: { type: 'boolean', description: 'true when the check command passed on your file' },
-    claims: { type: 'integer' },
-    structure: { type: 'string', description: 'One line: the structure you found' },
+    ok: { type: 'boolean', description: 'true when the partition check passed on your file' },
+    parts: { type: 'integer', description: 'How many parts the partition has' },
+    structure: { type: 'string', description: 'One line: the structure you found and how you cut it' },
     decisions: STRINGS,
     summary: { type: 'string' }
   },
   additionalProperties: false
 }
 
-const problemList = (problems) => problems.map((problem) => `- ${problem}`).join('\n')
+const keepsRule = (item) =>
+  hasExtractAlready(item)
+    ? `An extract already exists for this source (state ${item.state}: ${item.reason}). List its claims with
+\`jq -c '.claims[] | {id, ref}' ${extractTilde(item.slug)}\`, and give each old claim id to the one part whose slice
+holds its ref, in that part's "keeps". The part keeps each id whose claim still says the same thing: a requirement may
+already cite it. An old id whose ref no part holds goes in no part.`
+    : 'This source has no extract yet, so no part has "keeps".'
 
-const extractPrompt = (item, problems) => {
+const characterisePrompt = (item, problems) => {
   const prefix = claimPrefixOf(item.slug)
-  const idRule = hasExtractAlready(item)
-    ? `An extract already exists for this source (state ${item.state}: ${item.reason}). Read it first. Keep its claim id
-prefix, and keep the id of every claim that still says the same thing: a requirement may already cite it. New claims
-take the next free number. Any change to the claims makes the old verification stale, so the source is verified again.`
-    : `Use the prefix "${prefix}": ${prefix}-001, ${prefix}-002 and on.`
-  const retry = problems
-    ? `
-THIS IS A RETRY. The check found these problems with the file. Fix every one, then stamp and check again:
-${problemList(problems)}`
-    : ''
-  return `You are the EXTRACT step of the DISTIL workflow for ONE source: ${item.id} (kind ${item.kind}).
+  return `You are the CHARACTERISE step of the DISTIL workflow for ONE source: ${item.id} (kind ${item.kind}).
+You write no claims. You work out what the source is and how it is laid out, and cut it into parts that one extract
+agent each can read in full and claim exhaustively. One agent per part extracts next, side by side.
 ${RAILS}
 READ FIRST, in full:
-1. ${BRIEFS_ABS}/extract.md: the rules every source shares.
-2. ${BRIEFS_ABS}/extract-${item.kind}.md: how to read a ${item.kind} source.
-3. ${REFERENCES_ABS}/extract.schema.json: the file's shape, field by field.
-THE SOURCE: the entry whose id is "${item.id}" in ${SOURCES_ABS} (Read it). Its scope narrows what you read. The
-file's goal says what the programme is for.
-THE FILE YOU WRITE: ${extractPath(item.slug)}
-YOUR WORKING FOLDER, for anything else you need to write: ${WORKAREA_ABS}/distil/extract/${item.slug}.work/
-(in Bash: ${WORKAREA_TILDE}/distil/extract/${item.slug}.work/). Nothing else in the workarea is yours to write.${traceNote(item)}
-CLAIM IDS: ${idRule}
-STAMP, after every write of the file: \`${timCommand('distil stamp', `--source ${item.id}`)}\`
-CHECK, after stamping: \`${timCommand('distil check', `--source ${item.id} --stage extract`)}\`
-It exits 1 and names every problem. Fix them and check again until it passes.${retry}
+1. ${BRIEFS_ABS}/characterise.md: how to cut a source of each kind into parts.
+2. ${BRIEFS_ABS}/extract-${item.kind}.md: how a ${item.kind} source is read, so your parts suit the method.
+3. ${REFERENCES_ABS}/partition.schema.json: the file's shape, field by field.
+THE SOURCE: the entry whose id is "${item.id}" in ${SOURCES_ABS} (Read it). Its scope narrows what the parts cover.
+The file's goal says what the programme is for.
+THE FILE YOU WRITE: ${partitionPath(item.slug)}
+YOUR WORKING FOLDER, for anything else you need to write: ${workFolderAbs(item.slug)}/
+(in Bash: ${workFolderTilde(item.slug)}/). Nothing else in the workarea is yours to write.${traceNote(item, null)}
+PREFIXES: part N's prefix is "${prefix}-p<N>": ${partPrefixOf(item, 1)}, ${partPrefixOf(item, 2)} and on.
+KEEPS: ${keepsRule(item)}
+CHECK, after every write of the file: \`${timCommand('distil check', `--source ${item.id} --stage partition`)}\`
+It exits 1 and names every problem. Fix them and check again until it passes.${retryNote(problems, 'The partition check')}
 Return the structured output only.`
 }
 
-const EXTRACT_CHECK_SCHEMA = {
+const PARTITION_CHECK_SCHEMA = {
   type: 'object',
-  required: ['ok', 'problems', 'chunks', 'removedParts', 'summary'],
+  required: ['ok', 'problems', 'parts', 'removedParts', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when tim distil check exited 0' },
     problems: STRINGS,
-    claims: { type: 'integer', description: 'result.sources[0].claims' },
-    chunks: {
+    parts: {
       type: 'array',
-      description: 'result.sources[0].chunks, exactly',
+      description: 'result.sources[0].parts, exactly',
       items: {
         type: 'object',
-        required: ['part', 'count', 'path'],
+        required: ['part', 'title', 'prefix', 'path'],
         properties: {
           part: { type: 'integer' },
-          from: { type: ['string', 'null'] },
-          to: { type: ['string', 'null'] },
-          count: { type: 'integer' },
+          title: { type: 'string' },
+          prefix: { type: 'string' },
           path: { type: 'string' }
         },
         additionalProperties: false
@@ -407,16 +440,314 @@ const EXTRACT_CHECK_SCHEMA = {
   additionalProperties: false
 }
 
+const partitionCheckPrompt = (item) => `You are a PARTITION CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
+${RAILS}
+\`${timCommand('distil check', `--source ${item.id} --stage partition --clear-parts`)}\`
+${ENVELOPE_RULE}
+On success: ok is true. Copy every entry of \`result.sources[0].parts\` exactly (part, title, prefix and path), and
+\`result.removedParts\` into removedParts. The command itself removed those old extract part files, so nothing from an
+earlier run is merged.
+On failure: ok is false, parts and removedParts are [], and problems holds every problem line.
+Change nothing yourself. Return the structured output only.`
+
+const nothingBack = (what) => ({ ok: false, problems: [`the ${what} agent returned nothing`], summary: '' })
+
+const runPartitionCheck = async (item, attempt) =>
+  (await agent(
+    partitionCheckPrompt(item),
+    light({ label: `${item.id} check partition${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Characterise', schema: PARTITION_CHECK_SCHEMA })
+  )) ?? nothingBack('partition check')
+
+// The parts must be 1..n, each with the prefix the workflow gave it and its
+// own part file: anything else is a check agent that copied them wrong, or a
+// partition that ignored its prefixes.
+const partitionShapeProblems = (item, checked) => {
+  if (!checked.ok) return checked.problems.length ? checked.problems : [`tim distil check --stage partition failed without naming a problem: ${checked.summary}`]
+  const parts = checked.parts ?? []
+  if (parts.length === 0) return ['the partition check reported no parts']
+  return parts.flatMap((part, index) => {
+    const number = index + 1
+    return [
+      ...(part.part === number && part.path.endsWith(`/${item.slug}.part${number}.json`)
+        ? []
+        : [`the partition check reported part ${JSON.stringify(part.part)} with the file ${part.path}, where part ${number} and ${item.slug}.part${number}.json belong`]),
+      ...(part.prefix === partPrefixOf(item, number)
+        ? []
+        : [`part ${number} has the prefix ${part.prefix}. Give it ${partPrefixOf(item, number)}, the prefix the workflow names`])
+    ]
+  })
+}
+
+const characteriseStage = async (item) => {
+  const characterised = [
+    await agent(characterisePrompt(item, null), think({ label: `${item.id} characterise`, phase: 'Characterise', schema: CHARACTERISE_SCHEMA }))
+  ]
+  let checked = await runPartitionCheck(item, 0)
+  let problems = partitionShapeProblems(item, checked)
+  for (let retry = 1; problems.length && retry <= CHARACTERISE_RETRIES; retry++) {
+    characterised.push(
+      await agent(characterisePrompt(item, problems), think({ label: `${item.id} characterise retry ${retry}`, phase: 'Characterise', schema: CHARACTERISE_SCHEMA }))
+    )
+    checked = await runPartitionCheck(item, retry)
+    problems = partitionShapeProblems(item, checked)
+  }
+  const decisions = characterised.filter(Boolean).flatMap((answer) => answer.decisions ?? [])
+  return problems.length ? { problems, decisions } : { parts: checked.parts, decisions }
+}
+
+// ---------------------------------------------------------------------------
+// Extract: one agent per part, side by side, each reading its slice in full.
+// tim merges the parts into the one extract the rest of the pipeline reads.
+// ---------------------------------------------------------------------------
+const EXTRACT_PART_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'part', 'claims', 'gaps', 'structure', 'decisions', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when the check command passed on your part file' },
+    part: { type: 'integer' },
+    claims: { type: 'integer' },
+    gaps: { type: 'integer', description: 'How many of your claims are gaps' },
+    structure: { type: 'string', description: 'One line: what your part read and covered' },
+    decisions: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const partPrompt = (item, part, partCount, problems) => {
+  const index = part.part - 1
+  return `You are an EXTRACT step of the DISTIL workflow: source ${item.id} (kind ${item.kind}), part ${part.part} of ${partCount}: ${part.title}.
+You read this one part of the source in full and claim everything in it. Another agent extracts each other part.
+${RAILS}
+READ FIRST, in full:
+1. ${BRIEFS_ABS}/extract.md: the rules every source shares, and what exhaustive means.
+2. ${BRIEFS_ABS}/extract-${item.kind}.md: how to read a ${item.kind} source.
+3. ${REFERENCES_ABS}/extract.schema.json: your file's shape. A part file has no scopeHash.
+THE SOURCE: the entry whose id is "${item.id}" in ${SOURCES_ABS} (Read it). The file's goal says what the programme is for.
+YOUR PART: \`jq '.parts[${index}]' ${partitionTilde(item.slug)}\`. Its scope is your slice; read every entry of its
+"read" in full, and claim everything its "covers" names and anything else the slice shows. The whole source's
+structure is \`jq -r .structure ${partitionTilde(item.slug)}\`: it tells you where your slice sits, never what to claim.
+THE FILE YOU WRITE: ${part.path}
+YOUR WORKING FOLDER, for anything else you need to write: ${workFolderAbs(item.slug)}/part${part.part}/
+(in Bash: ${workFolderTilde(item.slug)}/part${part.part}/). Nothing else in the workarea is yours to write.${traceNote(item, `part${part.part}`)}
+CLAIM IDS: new claims are ${part.prefix}-001, ${part.prefix}-002 and on. An id in your part's "keeps" is an earlier
+extract's claim from your slice: keep it where your claim still says the same thing.
+CHECK, after every write of the file: \`${timCommand('distil check', `--source ${item.id} --stage extract --part ${part.part}`)}\`
+It exits 1 and names every problem. Fix them and check again until it passes. Never merge the parts, and never write
+the source's extract file: the workflow merges every part once all of them are written.${retryNote(problems, 'Merging the parts')}
+Return the structured output only.`
+}
+
+const PART_RANGES = {
+  type: 'array',
+  description: 'result.sources[0].parts, exactly, or [] when it is absent',
+  items: {
+    type: 'object',
+    required: ['part', 'claims'],
+    properties: {
+      part: { type: 'integer' },
+      title: { type: 'string' },
+      claims: { type: 'integer' },
+      from: { type: ['string', 'null'] },
+      to: { type: ['string', 'null'] }
+    },
+    additionalProperties: false
+  }
+}
+
+const CHUNKS = {
+  type: 'array',
+  description: 'result.sources[0].chunks, exactly',
+  items: {
+    type: 'object',
+    required: ['part', 'count', 'path'],
+    properties: {
+      part: { type: 'integer' },
+      from: { type: ['string', 'null'] },
+      to: { type: ['string', 'null'] },
+      count: { type: 'integer' },
+      path: { type: 'string' }
+    },
+    additionalProperties: false
+  }
+}
+
+const MERGE_EXTRACT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'stage', 'problems', 'parts', 'chunks', 'removedParts', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when both commands exited 0' },
+    stage: { type: 'string', enum: ['merge', 'check', 'done'], description: 'merge or check: the command that failed. done: both passed' },
+    problems: STRINGS,
+    claims: { type: 'integer', description: 'result.sources[0].claims from the check' },
+    parts: PART_RANGES,
+    chunks: CHUNKS,
+    removedParts: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const mergeExtractPrompt = (item) => `You are a MERGE EXTRACT step of the DISTIL workflow for the source ${item.id}. Run two commands and report what they print.
+${RAILS}
+1. \`${timCommand('distil merge-extract', `--source ${item.id}`)}\`
+${ENVELOPE_RULE}
+   On failure: ok is false, stage is "merge", parts, chunks and removedParts are [], problems holds every problem line,
+   and you stop here.
+2. \`${timCommand('distil check', `--source ${item.id} --stage extract --chunk ${VERIFY_CHUNK} --clear-parts`)}\`
+   On success: ok is true, stage is "done". Copy \`result.sources[0].claims\`, every entry of
+   \`result.sources[0].parts\` and of \`result.sources[0].chunks\` exactly, and \`result.removedParts\` into
+   removedParts. The command itself removed those old verify part files, so nothing from an earlier run is merged.
+   On failure: ok is false, stage is "check", parts, chunks and removedParts are [], problems holds every problem line.
+Change nothing yourself. Return the structured output only.`
+
+const runMergeExtract = async (item, attempt) =>
+  (await agent(
+    mergeExtractPrompt(item),
+    light({ label: `${item.id} merge extract${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Extract', schema: MERGE_EXTRACT_SCHEMA })
+  )) ?? { ...nothingBack('merge extract'), stage: 'merge', parts: [], chunks: [], removedParts: [] }
+
+// Which parts to run again. After a failed merge the parts are still on disk,
+// so only the ones whose agent failed or that a problem names go again;
+// failing that, or after a failed check, every one does.
+const partsToRedo = (item, parts, answers, failed) => {
+  if (failed.stage === 'check') return parts
+  const named = parts.filter((part, index) => {
+    const answer = answers[index]
+    const partFile = `${item.slug}.part${part.part}.json`
+    return !answer || !answer.ok || failed.problems.some((problem) => problem.includes(partFile))
+  })
+  return named.length ? named : parts
+}
+
+const replaceRedone = (parts, answers, redo, redone) =>
+  parts.map((part, index) => {
+    const redoneAt = redo.indexOf(part)
+    return redoneAt === -1 ? answers[index] : redone[redoneAt]
+  })
+
+const runExtractPart = (item, part, partCount, problems, attempt) =>
+  agent(
+    partPrompt(item, part, partCount, problems),
+    code({
+      label: `${item.id} extract part ${part.part}/${partCount}${attempt > 0 ? ` retry ${attempt}` : ''}`,
+      phase: 'Extract',
+      schema: EXTRACT_PART_SCHEMA
+    })
+  )
+
+const extractPartsStage = async (item, parts) => {
+  let answers = await parallel(parts.map((part) => () => runExtractPart(item, part, parts.length, null, 0)))
+  let merged = await runMergeExtract(item, 0)
+  for (let retry = 1; !merged.ok && retry <= EXTRACT_RETRIES; retry++) {
+    const redo = partsToRedo(item, parts, answers, merged)
+    const redone = await parallel(redo.map((part) => () => runExtractPart(item, part, parts.length, merged.problems, retry)))
+    answers = replaceRedone(parts, answers, redo, redone)
+    merged = await runMergeExtract(item, retry)
+  }
+  return { merged, answers }
+}
+
+// ---------------------------------------------------------------------------
+// A source already extracted, whose next step is verify, only has its extract
+// checked: its verify ranges and part ranges come from the same check.
+// ---------------------------------------------------------------------------
+const EXTRACT_CHECK_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'problems', 'parts', 'chunks', 'removedParts', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil check exited 0' },
+    problems: STRINGS,
+    claims: { type: 'integer', description: 'result.sources[0].claims' },
+    parts: PART_RANGES,
+    chunks: CHUNKS,
+    removedParts: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
 const extractCheckPrompt = (item) => `You are an EXTRACT CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
 ${RAILS}
 \`${timCommand('distil check', `--source ${item.id} --stage extract --chunk ${VERIFY_CHUNK} --clear-parts`)}\`
 ${ENVELOPE_RULE}
-On success: ok is true. Copy \`result.sources[0].claims\`, every entry of \`result.sources[0].chunks\` exactly (part,
-from, to, count and path), and \`result.removedParts\` into removedParts. The command itself removed those old verify
-part files, so nothing from an earlier run is merged.
-On failure: ok is false, chunks and removedParts are [], and problems holds every problem line.
+On success: ok is true. Copy \`result.sources[0].claims\`, every entry of \`result.sources[0].parts\` (or [] when it is
+absent) and of \`result.sources[0].chunks\` exactly (part, from, to, count and path), and \`result.removedParts\` into
+removedParts. The command itself removed those old verify part files, so nothing from an earlier run is merged.
+On failure: ok is false, parts, chunks and removedParts are [], and problems holds every problem line.
 Change nothing yourself. Return the structured output only.`
 
+const runExtractCheck = async (item) =>
+  (await agent(extractCheckPrompt(item), light({ label: `${item.id} check extract`, phase: 'Extract', schema: EXTRACT_CHECK_SCHEMA }))) ??
+  { ...nothingBack('extract check'), parts: [], chunks: [], removedParts: [] }
+
+// The chunks must be parts 1..n, each writing <slug>.part<n>.json, and add up
+// to the claims: anything else is a check agent that copied them wrong.
+const chunkProblems = (item, checked) => {
+  const chunks = checked.chunks ?? []
+  if (chunks.length === 0) return ['the extract check reported no verify ranges']
+  const misnumbered = chunks.filter((chunk, index) => chunk.part !== index + 1 || !chunk.path.endsWith(`/${item.slug}.part${index + 1}.json`))
+  const counted = chunks.reduce((total, chunk) => total + chunk.count, 0)
+  const inParts = (checked.parts ?? []).reduce((total, part) => total + part.claims, 0)
+  return [
+    ...(misnumbered.length ? [`the extract check reported verify ranges out of order or with the wrong part files: ${JSON.stringify(misnumbered)}`] : []),
+    ...(Number.isInteger(checked.claims) && counted !== checked.claims ? [`the verify ranges cover ${counted} claims, but the extract has ${checked.claims}`] : []),
+    ...((checked.parts ?? []).length && Number.isInteger(checked.claims) && inParts !== checked.claims
+      ? [`the extract parts hold ${inParts} claims, but the extract has ${checked.claims}`]
+      : [])
+  ]
+}
+
+const failedSource = (item, failedAt, problems) => ({
+  id: item.id,
+  kind: item.kind,
+  slug: item.slug,
+  outcome: 'failed',
+  failedAt,
+  problems
+})
+
+const extractedSource = (item, checked, decisions) => ({
+  id: item.id,
+  outcome: 'extracted',
+  claims: checked.claims ?? null,
+  parts: checked.parts ?? [],
+  chunks: checked.chunks,
+  decisions
+})
+
+const characteriseAndExtract = async (item) => {
+  const partitioned = await characteriseStage(item)
+  if (partitioned.problems) return failedSource(item, 'characterise', partitioned.problems)
+  const { merged, answers } = await extractPartsStage(item, partitioned.parts)
+  if (!merged.ok) return failedSource(item, 'extract', merged.problems)
+  const shapeProblems = chunkProblems(item, merged)
+  if (shapeProblems.length) return failedSource(item, 'extract', shapeProblems)
+  return extractedSource(item, merged, [
+    ...partitioned.decisions,
+    ...answers.filter(Boolean).flatMap((answer) => (answer.decisions ?? []).map((decision) => `part ${answer.part}: ${decision}`))
+  ])
+}
+
+const extractStage = async (item) => {
+  if (!EXTRACT_KINDS.includes(item.kind)) {
+    return failedSource(item, 'extract', [`kind "${item.kind}" has no extract brief. Kinds: ${EXTRACT_KINDS.join(', ')}`])
+  }
+  if (item.next === 'extract') return characteriseAndExtract(item)
+  const checked = await runExtractCheck(item)
+  if (!checked.ok) {
+    log(`${item.id}: its extract no longer checks out (${checked.problems.join(' ')}), so it is characterised and extracted again`)
+    return characteriseAndExtract(item)
+  }
+  const shapeProblems = chunkProblems(item, checked)
+  if (shapeProblems.length) return failedSource(item, 'extract', shapeProblems)
+  return extractedSource(item, checked, [])
+}
+
+// ---------------------------------------------------------------------------
+// Verify: one agent per range of claims, each told which parts of the
+// partition its range came from, so it re-reads that slice of the source.
+// ---------------------------------------------------------------------------
 const VERIFY_SCHEMA = {
   type: 'object',
   required: ['ok', 'part', 'verdicts', 'held', 'refuted', 'missed', 'summary'],
@@ -432,7 +763,27 @@ const VERIFY_SCHEMA = {
   additionalProperties: false
 }
 
-const verifyPrompt = (item, chunk, chunkCount, problems) => {
+// The extract parts a verify range overlaps, from each part's claim count:
+// the claims run in part order, so part N holds a contiguous run of them.
+const extractPartsOverlapping = (parts, start, end) => {
+  const spans = parts.map((part, index) => {
+    const from = parts.slice(0, index).reduce((total, earlier) => total + earlier.claims, 0)
+    return { part: part.part, from, to: from + part.claims }
+  })
+  return spans.filter((span) => span.from < end && span.to > start && span.to > span.from).map((span) => span.part)
+}
+
+const sliceNote = (item, parts, start, end) => {
+  const overlapping = extractPartsOverlapping(parts, start, end)
+  if (!overlapping.length) return ''
+  const indexes = overlapping.map((part) => part - 1).join(',')
+  return `
+YOUR SLICE OF THE SOURCE: your claims come from part${overlapping.length === 1 ? '' : 's'} ${overlapping.join(', ')} of the partition.
+Read \`jq '.parts[${indexes}]' ${partitionTilde(item.slug)}\` for what each read and had to cover, then read that slice of
+the source in full yourself: you check every claim against it, and add every claim it makes that the extract missed.`
+}
+
+const verifyPrompt = (item, chunk, chunkCount, parts, problems) => {
   const start = (chunk.part - 1) * VERIFY_CHUNK
   const end = start + chunk.count
   const range =
@@ -455,9 +806,9 @@ READ FIRST, in full:
 3. ${REFERENCES_ABS}/verify.schema.json: your file's shape.
 THE SOURCE: the entry whose id is "${item.id}" in ${SOURCES_ABS} (Read it).
 THE EXTRACT: ${extractPath(item.slug)}. Its structure: \`jq -r .structure ${extractTilde(item.slug)}\`.
-YOUR RANGE: ${range}
+YOUR RANGE: ${range}${chunk.count > 0 ? sliceNote(item, parts, start, end) : ''}
 THE FILE YOU WRITE: ${chunk.path}, with "source": "${item.id}". In Bash it is ${verifyPartTilde(item.slug, chunk.part)}.
-It is the only file you write. Never merge parts and never write the full verify file.${traceNote(item)}${retry}
+It is the only file you write. Never merge parts and never write the full verify file.${traceNote(item, `verify${chunk.part}`)}${retry}
 Return the structured output only.`
 }
 
@@ -489,66 +840,9 @@ ${ENVELOPE_RULE}
    On failure: ok is false, stage is "check", problems holds every problem line.
 Change nothing yourself. Return the structured output only.`
 
-const nothingBack = (what) => ({ ok: false, problems: [`the ${what} agent returned nothing`], summary: '' })
-
-const runExtractCheck = async (item, attempt) =>
-  (await agent(
-    extractCheckPrompt(item),
-    light({ label: `${item.id} check extract${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Extract', schema: EXTRACT_CHECK_SCHEMA })
-  )) ?? nothingBack('extract check')
-
-// The chunks must be parts 1..n, each writing <slug>.part<n>.json, and add up
-// to the claims: anything else is a check agent that copied them wrong.
-const chunkProblems = (item, checked) => {
-  const chunks = checked.chunks ?? []
-  if (chunks.length === 0) return ['the extract check reported no verify ranges']
-  const misnumbered = chunks.filter((chunk, index) => chunk.part !== index + 1 || !chunk.path.endsWith(`/${item.slug}.part${index + 1}.json`))
-  const counted = chunks.reduce((total, chunk) => total + chunk.count, 0)
-  return [
-    ...(misnumbered.length ? [`the extract check reported verify ranges out of order or with the wrong part files: ${JSON.stringify(misnumbered)}`] : []),
-    ...(Number.isInteger(checked.claims) && counted !== checked.claims ? [`the verify ranges cover ${counted} claims, but the extract has ${checked.claims}`] : [])
-  ]
-}
-
-const failedSource = (item, failedAt, problems) => ({
-  id: item.id,
-  kind: item.kind,
-  slug: item.slug,
-  outcome: 'failed',
-  failedAt,
-  problems
-})
-
-const extractStage = async (item) => {
-  if (!EXTRACT_KINDS.includes(item.kind)) {
-    return failedSource(item, 'extract', [`kind "${item.kind}" has no extract brief. Kinds: ${EXTRACT_KINDS.join(', ')}`])
-  }
-  const extractions = []
-  if (item.next === 'extract') {
-    extractions.push(await agent(extractPrompt(item, null), code({ label: `${item.id} extract`, phase: 'Extract', schema: EXTRACT_SCHEMA })))
-  }
-  let checked = await runExtractCheck(item, 0)
-  for (let retry = 1; !checked.ok && retry <= EXTRACT_RETRIES; retry++) {
-    extractions.push(
-      await agent(extractPrompt(item, checked.problems), code({ label: `${item.id} extract retry ${retry}`, phase: 'Extract', schema: EXTRACT_SCHEMA }))
-    )
-    checked = await runExtractCheck(item, retry)
-  }
-  if (!checked.ok) return failedSource(item, 'extract', checked.problems)
-  const shapeProblems = chunkProblems(item, checked)
-  if (shapeProblems.length) return failedSource(item, 'extract', shapeProblems)
-  return {
-    id: item.id,
-    outcome: 'extracted',
-    claims: checked.claims ?? null,
-    chunks: checked.chunks,
-    decisions: extractions.filter(Boolean).flatMap((extraction) => extraction.decisions ?? [])
-  }
-}
-
-const runVerifier = (item, chunk, chunkCount, problems, attempt) =>
+const runVerifier = (item, chunk, chunkCount, parts, problems, attempt) =>
   agent(
-    verifyPrompt(item, chunk, chunkCount, problems),
+    verifyPrompt(item, chunk, chunkCount, parts, problems),
     code({
       label: `${item.id} verify ${chunk.part}/${chunkCount}${attempt > 0 ? ` retry ${attempt}` : ''}`,
       phase: 'Verify',
@@ -560,31 +854,15 @@ const runMerge = async (item, attempt) =>
   (await agent(mergePrompt(item), light({ label: `${item.id} merge${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Verify', schema: MERGE_SCHEMA }))) ??
   { ...nothingBack('merge'), stage: 'merge' }
 
-// Which parts to verify again. After a failed merge the parts are still on
-// disk, so only the ones that failed or that a problem names go again. After a
-// failed check the merge has already removed the parts, so every one goes.
-const partsToRedo = (item, chunks, verdicts, merged) => {
-  if (merged.stage === 'check') return chunks
-  const named = chunks.filter((chunk, index) => {
-    const verdict = verdicts[index]
-    const partFile = `${item.slug}.part${chunk.part}.json`
-    return !verdict || !verdict.ok || merged.problems.some((problem) => problem.includes(partFile))
-  })
-  return named.length ? named : chunks
-}
-
 const verifyStage = async (extracted, item) => {
   if (!extracted || extracted.outcome !== 'extracted') return extracted ?? failedSource(item, 'extract', ['the extract stage stopped without a result'])
-  const chunks = extracted.chunks
-  let verdicts = await parallel(chunks.map((chunk) => () => runVerifier(item, chunk, chunks.length, null, 0)))
+  const { chunks, parts } = extracted
+  let verdicts = await parallel(chunks.map((chunk) => () => runVerifier(item, chunk, chunks.length, parts, null, 0)))
   let merged = await runMerge(item, 0)
   for (let retry = 1; !merged.ok && retry <= VERIFY_RETRIES; retry++) {
     const redo = partsToRedo(item, chunks, verdicts, merged)
-    const redone = await parallel(redo.map((chunk) => () => runVerifier(item, chunk, chunks.length, merged.problems, retry)))
-    verdicts = chunks.map((chunk, index) => {
-      const redoneAt = redo.indexOf(chunk)
-      return redoneAt === -1 ? verdicts[index] : redone[redoneAt]
-    })
+    const redone = await parallel(redo.map((chunk) => () => runVerifier(item, chunk, chunks.length, parts, merged.problems, retry)))
+    verdicts = replaceRedone(chunks, verdicts, redo, redone)
     merged = await runMerge(item, retry)
   }
   if (!merged.ok) return failedSource(item, 'verify', merged.problems)
@@ -593,6 +871,7 @@ const verifyStage = async (extracted, item) => {
     kind: item.kind,
     slug: item.slug,
     outcome: 'verified',
+    extractParts: parts.length,
     parts: chunks.length,
     claims: merged.claims ?? extracted.claims,
     held: merged.held ?? null,

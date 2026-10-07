@@ -3,6 +3,8 @@ import { workareaDirFor } from '../../backlog/workarea.js'
 import { distilLayout, loadDistilSchemas } from '../../distil/files.js'
 import { checkDistil, distilStatus } from '../../distil/checks.js'
 import { mergeVerifyParts } from '../../distil/merge-verify.js'
+import { mergeExtractParts } from '../../distil/merge-extract.js'
+import { resetSources } from '../../distil/reset.js'
 import { workingSetOf, writeWorkingSet } from '../../distil/working-set.js'
 import { distilCoverage } from '../../distil/coverage.js'
 import { stampScopeHash } from '../../distil/stamp.js'
@@ -16,19 +18,37 @@ const sourceIdSchema = z
   .trim()
   .min(1, 'Name a source with --source, such as repo:tests.')
 
-const checkOptsSchema = z.object({
-  source: sourceIdSchema.optional(),
-  stage: z.enum(['extract', 'verify', 'all'], {
-    message: '--stage must be one of: extract, verify, all.'
-  }),
-  chunk: z
+const wholeNumberAbove0 = (option) =>
+  z
     .string()
-    .regex(/^[1-9][0-9]*$/, '--chunk must be a whole number above 0.')
+    .regex(/^[1-9][0-9]*$/, `${option} must be a whole number above 0.`)
     .transform(Number)
     .optional()
+
+const checkOptsSchema = z.object({
+  source: sourceIdSchema.optional(),
+  stage: z.enum(['partition', 'extract', 'verify', 'all'], {
+    message: '--stage must be one of: partition, extract, verify, all.'
+  }),
+  chunk: wholeNumberAbove0('--chunk'),
+  part: wholeNumberAbove0('--part')
 })
 
 const sourceOptsSchema = z.object({ source: sourceIdSchema })
+
+const RESET_CHOICE =
+  'Name the sources to reset with --source, once for each, or reset every source with --all. Not both.'
+
+const resetOptsSchema = z
+  .object({
+    source: z.array(sourceIdSchema),
+    all: z.boolean()
+  })
+  .refine(({ source, all }) => all !== source.length > 0, {
+    message: RESET_CHOICE
+  })
+
+const collect = (value, previous) => [...previous, value]
 
 const snapshotTagSchema = z
   .string()
@@ -44,11 +64,12 @@ const snapshotOptsSchema = z.object({
 
 const traceOptsSchema = z.object({
   source: sourceIdSchema,
-  out: z.string().optional()
+  out: z.string().optional(),
+  folder: z.string().optional()
 })
 
 /**
- * The workarea folder and every DISTIL path in it, and the five schemas,
+ * The workarea folder and every DISTIL path in it, and the six schemas,
  * resolved and read before any command's own work begins.
  *
  * @param {string} workspaceRoot
@@ -84,20 +105,66 @@ const renderStatus = (result) =>
 
 const countOf = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`
 
+const renderPartition = (source) =>
+  [
+    `${source.id}: ${countOf(source.parts.length, 'part')}. In shape.`,
+    ...source.parts.map(
+      (part) => `  part ${part.part}, ${part.title}: ${part.prefix}-001 on`
+    )
+  ].join('\n')
+
+const renderPartRange = (part) =>
+  `  part ${part.part}, ${part.title}: ${countOf(part.claims, 'claim')}${part.from ? `, ${part.from} to ${part.to}` : ''}`
+
 const renderCheck = (result) =>
   [
-    ...result.sources.map((source) => {
-      const verify = source.verify
-        ? `, ${source.verify.held} held, ${source.verify.refuted} refuted, ${source.verify.missed} missed`
-        : ''
-      return `${source.id}: ${source.claims} claims${verify}. In shape.`
-    }),
+    ...(result.stage === 'partition'
+      ? result.sources.map(renderPartition)
+      : []),
+    ...(result.part
+      ? result.sources.map(
+          (source) =>
+            `${source.id}: part ${result.part} in shape.\n${source.parts.map(renderPartRange).join('\n')}`
+        )
+      : []),
+    ...(result.stage === 'partition' || result.part
+      ? []
+      : result.sources.map(renderCheckedSource)),
     ...(result.removedParts
       ? [
-          `Removed ${countOf(result.removedParts.length, 'verify part file')}${result.removedParts.length ? `: ${result.removedParts.join(', ')}` : '.'}`
+          `Removed ${countOf(result.removedParts.length, 'part file')}${result.removedParts.length ? `: ${result.removedParts.join(', ')}` : '.'}`
         ]
       : [])
   ].join('\n')
+
+const renderMergeExtract = (result) =>
+  [
+    `Merged ${countOf(result.parts.length, 'part')} into ${result.path}: ${countOf(result.claims, 'claim')}, stamped with scope hash ${result.scopeHash}.`,
+    ...result.parts.map(renderPartRange),
+    'Kept the partition and the part files.'
+  ].join('\n')
+
+const renderReset = (result) =>
+  result.superseded
+    ? [
+        `Moved ${countOf(result.moved, 'file')} to ${result.superseded}:`,
+        ...result.sources.map(
+          (source) =>
+            `  ${source.id}: ${source.moved.length ? source.moved.map((file) => file.to).join(', ') : 'nothing to move'}`
+        ),
+        'These sources are pending: the next launch extracts and verifies them again.'
+      ].join('\n')
+    : `Nothing to move: ${result.sources.map((source) => source.id).join(', ')} had no extract or verify files.`
+
+const renderCheckedSource = (source) => {
+  const verify = source.verify
+    ? `, ${source.verify.held} held, ${source.verify.refuted} refuted, ${source.verify.missed} missed`
+    : ''
+  return [
+    `${source.id}: ${source.claims} claims${verify}. In shape.`,
+    ...(source.parts ?? []).map(renderPartRange)
+  ].join('\n')
+}
 
 const renderMerge = (result) =>
   [
@@ -195,25 +262,30 @@ export const register = (program, { timVersion }) => {
   distil
     .command('check <workarea>')
     .description(
-      'Check the extract and verify files of one source, or every source, against their schemas and each other'
+      'Check the partition, extract parts, extract and verify files of one source, or every source, against their schemas and each other'
     )
     .addHelpText(
       'after',
       '\nExamples:\n' +
-        '  tim distil check shared/my-programme --source repo:tests --stage extract --chunk 150 --json\n' +
+        '  tim distil check shared/my-programme --source repo:tests --stage partition --clear-parts --json\n' +
+        '  tim distil check shared/my-programme --source repo:tests --stage extract --part 2 --json\n' +
+        '  tim distil check shared/my-programme --source repo:tests --stage extract --chunk 60 --clear-parts --json\n' +
         '  tim distil check shared/my-programme --stage all --json\n' +
-        '  tim distil check shared/my-programme --source repo:tests --stage extract --chunk 150 --clear-parts --json\n' +
         'Exits 1 and names every problem when anything is out of shape.'
     )
     .option('--source <id>', 'One source id from sources.json')
-    .option('--stage <stage>', 'extract, verify or all', 'all')
+    .option('--stage <stage>', 'partition, extract, verify or all', 'all')
     .option(
       '--chunk <claims>',
       'Split each extract into verify ranges of at most this many claims'
     )
     .option(
+      '--part <n>',
+      'With --stage extract: check only the partition and this one extract part file'
+    )
+    .option(
       '--clear-parts',
-      "Once the check passes, remove the checked sources' verify part files and list them, so a new verify run merges nothing from an earlier one"
+      'Once the check passes, remove the part files the next stage writes and list them, so nothing from an earlier run is merged: the extract part files after --stage partition, the verify part files after any other stage'
     )
     .action(
       makeBacklogAction({
@@ -221,17 +293,85 @@ export const register = (program, { timVersion }) => {
           const parsed = parseOptions(checkOptsSchema, {
             source: opts.source,
             stage: opts.stage,
-            chunk: opts.chunk
+            chunk: opts.chunk,
+            part: opts.part
           })
           return checkDistil({
             ...contextFor(workspaceRoot, args[0]),
             stage: parsed.stage,
             sourceId: parsed.source,
             chunk: parsed.chunk,
+            part: parsed.part,
             clearParts: opts.clearParts === true
           })
         },
         renderText: renderCheck,
+        timVersion
+      })
+    )
+
+  distil
+    .command('merge-extract <workarea>')
+    .description(
+      "Join a source's extract part files into its one extract, in part order, and stamp it with the scope hash. Writes nothing unless the partition and every part are in shape and no claim id is in two places. Keeps the parts"
+    )
+    .addHelpText(
+      'after',
+      '\nExample: tim distil merge-extract shared/my-programme --source repo:frontend --json\n' +
+        'Exits 1 and names every problem when a part is missing or out of shape.'
+    )
+    .option('--source <id>', 'The source whose parts to merge')
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const parsed = parseOptions(sourceOptsSchema, {
+            source: opts.source
+          })
+          return mergeExtractParts({
+            ...contextFor(workspaceRoot, args[0]),
+            sourceId: parsed.source
+          })
+        },
+        renderText: renderMergeExtract,
+        timVersion
+      })
+    )
+
+  distil
+    .command('reset <workarea>')
+    .description(
+      'Set sources back to pending, so the next distil launch extracts and verifies them again even though their scope has not changed. Moves their extract, partition, parts and verify files to distil/superseded/<time>/, so nothing is lost'
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  tim distil reset shared/my-programme --source repo:frontend --source trace:recorded-run --json\n' +
+        '  tim distil reset shared/my-programme --all --json\n' +
+        'Use it when the extract method has changed. Requirements that cite the old claims are rewritten by the next reconcile.'
+    )
+    .option(
+      '--source <id>',
+      'A source to reset. Give it once for each source',
+      collect,
+      []
+    )
+    .option('--all', 'Reset every source in sources.json')
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const parsed = parseOptions(resetOptsSchema, {
+            source: opts.source,
+            all: opts.all === true
+          })
+          const { layout, schemas } = contextFor(workspaceRoot, args[0])
+          return resetSources({
+            layout,
+            schemas,
+            sourceIds: parsed.source,
+            all: parsed.all
+          })
+        },
+        renderText: renderReset,
         timVersion
       })
     )
@@ -407,6 +547,7 @@ export const register = (program, { timVersion }) => {
       '\nExamples:\n' +
         '  tim distil trace shared/my-programme --source trace:ched-p --json -- open ~/traces/abc.zip\n' +
         '  tim distil trace shared/my-programme --source trace:ched-p --out actions.txt --json -- actions\n' +
+        '  tim distil trace shared/my-programme --source trace:ched-p --folder part3 --json -- open ~/traces/abc.zip\n' +
         "Put tim's own options first and the trace subcommand after --."
     )
     .option('--source <id>', 'A source whose kind is trace')
@@ -414,12 +555,17 @@ export const register = (program, { timVersion }) => {
       '--out <file>',
       'Write the output to this file in the working folder, rather than printing it'
     )
+    .option(
+      '--folder <name>',
+      'Run in this sub-folder of the working folder, such as part3, so agents reading one source side by side each open their own trace'
+    )
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) => {
           const parsed = parseOptions(traceOptsSchema, {
             source: opts.source,
-            out: opts.out
+            out: opts.out,
+            folder: opts.folder
           })
           const context = contextFor(workspaceRoot, args[0])
           return runTrace({
@@ -427,7 +573,8 @@ export const register = (program, { timVersion }) => {
             schemas: context.schemas,
             sourceId: parsed.source,
             traceArgs: args[1] ?? [],
-            out: parsed.out
+            out: parsed.out,
+            folder: parsed.folder
           })
         },
         renderText: renderTrace,

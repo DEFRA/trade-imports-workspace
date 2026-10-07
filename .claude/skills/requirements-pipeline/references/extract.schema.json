@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "One source's extract",
-  "description": "workareas/<workarea>/distil/extract/<source slug>.json: what one source says, one claim per observable fact, with provenance, written by the extract agent before any reconciling. `tim distil check --stage extract` validates it against this file, and also checks what a schema cannot: `source` names this file's source, `scopeHash` matches the source's kind, locator and scope today, claim ids are unique across every extract in the workarea, and no claim id ends in -m<N> (that suffix is kept for claims a verifier finds missing).",
+  "description": "workareas/<workarea>/distil/extract/<source slug>.json: what one source says, one claim per observable fact, with provenance, before any reconciling. A source is extracted in parts: the characterise agent cuts it into the parts partition.schema.json defines, one extract agent per part writes distil/extract/<source slug>.part<N>.json in this same shape (its `structure` says what the part covered, and it has no `scopeHash`), and `tim distil merge-extract` joins the parts into this one file, in part order, and stamps its scope hash. `tim distil check --stage extract` validates the file and every part against this schema, and also checks what a schema cannot: `source` names this file's source, `scopeHash` matches the source's kind, locator and scope today, claim ids are unique across every extract in the workarea, no claim id ends in -m<N> (that suffix is kept for claims a verifier finds missing), each part's claims use its prefix or an id it keeps, and the file is exactly its parts merged.",
   "type": "object",
   "required": ["source", "structure", "claims"],
   "additionalProperties": false,
@@ -11,7 +11,7 @@
       "$ref": "#/$defs/text"
     },
     "structure": {
-      "description": "What the source is and how it is laid out, written before any claim: characterise first, extract second.",
+      "description": "What the source is and how it is laid out, written before any claim: characterise first, extract second. In the merged extract, the partition's structure followed by each part's own. In a part file, what the part read and what it covered.",
       "$ref": "#/$defs/text"
     },
     "scopeHash": {

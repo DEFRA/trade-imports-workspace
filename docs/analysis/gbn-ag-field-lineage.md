@@ -252,7 +252,7 @@ present in the original pass:
 | Field | Kind | Evidence |
 |---|---|---|
 | `exchangedDocument.issuer` | Hardcoded null. Two distinct sub-mappings target this one slot — see correction below | gap G1; `ExchangedDocument.java:33` |
-| `exchangedDocument.referenceDocument` | Hardcoded null — **and the source data exists and is PIMS-confirmed; see the 2026-09-28 finding below** | gap G3; `ExchangedDocument.java:34` |
+| `exchangedDocument.referenceDocument` | Hardcoded null — **and the source data exists and is PIMS-confirmed; see the 2026-09-28 finding below.** Closed by EUDPA-310 (2026-09-30): filled from the notification's scanned accompanying documents | gap G3 (closed); `ExchangedDocument.java:34` |
 | `exchangedDocument.notificationStatusCode` | From `NotificationAggregate.status`, not the `notification` subnode | — |
 | `exchangedDocument.issueDateTime` | Computed from `NotificationAggregate.updated` | — |
 | `firstSignatoryAuthentication.includedClause[INTERNAL_MARKET_PURPOSE].content` | Always null | gap G2 |
@@ -292,6 +292,14 @@ identity data is already captured at sign-in — and just not yet threaded into 
 outbound payload — before scoping the follow-up ticket as a data-entry problem.
 
 ### New finding (2026-09-28, prompted by a PIMS query): accompanying documents never reach the event at all
+
+> **Closed by EUDPA-310 (2026-09-30).** Every GBN-AG event now carries
+> `exchangedDocument.referenceDocument[]`: one entry per accompanying document that passed its
+> virus scan, with `typeCode` from `schemas/codelists/gbn-ag-document-types.json`, a `urlId`
+> naming that codelist, `identifier` and a date-only `issueDateTime`. The key
+> is omitted when there are none. The gateway forwards `typeCode`, `identifier` and
+> `issueDateTime` on the PIMS v0.2.0 stream; `urlId` for PIMS is a separate v0.3.0 story. The
+> finding below is kept as it was written.
 
 Surfaced while answering a PIMS question about fields missing from what they'd received
 (see §5). This is a **new gap, not previously recorded at any hop** — the original pass

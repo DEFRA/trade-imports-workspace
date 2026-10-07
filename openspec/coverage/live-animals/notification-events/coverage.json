@@ -58,6 +58,39 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-EVENTS-003",
+      "name": "Every event references the notification's scanned accompanying documents, coded by type",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-EVENTS-003-A",
+          "name": "A submitted notification references each scanned document with its type code and codelist",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts", "test": "references a scanned accompanying document on the NotificationSubmitted event, coded from the document-type codelist", "strength": "full", "notes": "real upload and virus scan, then the Mongo outbox entry: typeCode 853, the GBN-AG document-type codelist urlId, reference, date of issue" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgMapperTest.java", "test": "shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist", "strength": "full", "notes": "all fourteen document types pinned to their code, matching schemas/codelists/gbn-ag-document-types.json, and to the single codelist urlId" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-003-B",
+          "name": "A notification with no documents sends no document references",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals-admin/e2e/features/outbox-event-notification.spec.ts", "test": "records a NotificationSubmitted outbox event on UI submission", "strength": "full", "notes": "the journey uploads no document; asserts exchangedDocument has no referenceDocument property" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java", "test": "appendEvent_shouldStoreGbnAgPayloadInDataField", "strength": "full", "notes": "stored payload map has no referenceDocument key" }
+          ]
+        },
+        {
+          "id": "SCN-EVENTS-003-C",
+          "name": "A document still being scanned is not referenced",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldReferenceOnlyTheDocumentsThatPassedTheVirusScan", "strength": "full", "notes": "backend integration test against real Mongo (recorded as unit, the nearest type): one COMPLETE and one PENDING document saved, only the COMPLETE one on the submitted event" }
+          ]
+        }
+      ]
     }
   ]
 }

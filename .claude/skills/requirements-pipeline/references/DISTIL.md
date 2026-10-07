@@ -19,7 +19,7 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 | 7. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
 | 8. Save the report | The main session | [Section 5](#5-save-the-report) |
 | 9. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
-| 10. Split a themed backlog, one backlog per theme | The main session | [Section 7](#7-split-into-themes) |
+| 10. Split a themed backlog, one backlog per theme, once the questions are answered and the re-distil has landed | The main session | [Section 7](#7-split-into-themes) |
 
 Steps 1 to 7 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
@@ -314,7 +314,10 @@ everything, keeping every existing id, so the backlog grows rather than starting
 
 ## 7. Split into themes
 
-Only when `sources.json` has `themes`. Once `tim backlog check` and `tim distil coverage` pass, split the backlog:
+Only when `sources.json` has `themes`. Split last, never straight after the first launch. The answers to the report's
+questions move rows between themes, unblock rows and add new ones, so a split made before them is thrown away. Wait
+until every question has a ruling (even "keep the default"), the re-distil with those rulings has landed, and
+`tim backlog check` and `tim distil coverage` pass. Then split the backlog:
 
 ```bash
 tim backlog split <workarea> --json            # a dry run: what each theme's backlog would hold
@@ -343,8 +346,9 @@ Never edit a split backlog's rows by hand: re-distil the parent and split again.
 - `report.md` follows the structure in [`REPORT.md`](REPORT.md): the summary first, then any step before building,
   then the repos and precedence, then the questions.
 - The backlog envelope carries `repos`.
-- When `sources.json` has `themes`: the backlog carries `themes`, and `tim backlog split <workarea> --write` has
-  written every theme's backlog and `themes/themes.json`.
+- When `sources.json` has `themes`: the backlog carries `themes`. After the questions are answered and the
+  re-distil has landed, `tim backlog split <workarea> --write` has written every theme's backlog and
+  `themes/themes.json`.
 - Tell the user: the counts, the questions and their defaults, and how to build it:
   `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a themed backlog, give the
   landing order and each theme's workarea and branch: each theme builds from its own workarea. For a dry run of one

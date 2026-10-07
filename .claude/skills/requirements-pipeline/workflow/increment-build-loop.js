@@ -125,8 +125,8 @@ export const meta = {
 // Status names are BOARD CONFIGURATION, not constants — every board words them
 // differently and a workflow change renames them. They live here so a programme
 // never has to edit a stage. Confirm them against the board itself with
-// `tools/jira/transition-ticket.sh <ANY-KEY> --list`; the script's own --help
-// text is generic placeholder wording and is not board truth.
+// `tim jira transition <ANY-KEY> --list`, which names the status each
+// transition leads to.
 //
 // `jiraBoard` is the same kind of configuration. 13780 is the EUDPA board; a
 // programme on another board must say so, and the run throws at startup if the
@@ -290,7 +290,7 @@ if (!IS_BRANCH && (typeof EPIC !== 'string' || !/^[A-Z]+-\d+$/.test(EPIC))) {
 }
 if (!IS_BRANCH && (typeof STATUS_IN_DEV !== 'string' || !STATUS_IN_DEV.trim() || typeof STATUS_DONE !== 'string' || !STATUS_DONE.trim())) {
   throw new Error(
-    `increment-build-loop: config.jiraInDevStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tools/jira/transition-ticket.sh <ANY-KEY> --list\`. Got "${STATUS_IN_DEV}" and "${STATUS_DONE}"`
+    `increment-build-loop: config.jiraInDevStatus and config.jiraDoneStatus must both name a real status on the board. Confirm them with \`tim jira transition <ANY-KEY> --list\`. Got "${STATUS_IN_DEV}" and "${STATUS_DONE}"`
   )
 }
 if (!IS_BRANCH && !/^\d+$/.test(String(JIRA_BOARD))) {
@@ -550,7 +550,10 @@ where it is needed. It exits non-zero and says why if the write is refused — r
 const SKILLS = ABS + '/.claude/skills'
 const BRIEFS = ABS + '/.claude/skills/requirements-pipeline/workflow/codex'
 const BRIEFS_TILDE = TILDE + '/.claude/skills/requirements-pipeline/workflow/codex'
-const JIRA = TILDE + '/tools/jira'
+// Ticket moves go through tim too: `Bash(tim:*)` is allowed where the shell
+// scripts under tools/jira are not, so a done stage that called them never
+// moved a ticket.
+const jiraTransition = (key, statusOrList) => `tim jira transition ${key} ${statusOrList} --workspace ${TILDE} --json`
 
 const REPO_PATH = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].path]))
 const GH_REPO = Object.fromEntries(REPO_KEYS.map((key) => [key, REPOS[key].github]))
@@ -4307,13 +4310,13 @@ Return the structured output only.`,
     `Increment ${id} is merged into \`${BASE_BRANCH}\` and the base branch is green. Close out ${ticket.key}.
 ${guardrails()}
 TASK — this board's finished status is \`${STATUS_DONE}\`. That name is CONFIGURATION, given to you here.
-1. \`${JIRA}/transition-ticket.sh ${ticket.key} "${STATUS_DONE}"\`.
-   If it reports that status is not available, run \`${JIRA}/transition-ticket.sh ${ticket.key} --list\` and
+1. \`${jiraTransition(ticket.key, `"${STATUS_DONE}"`)}\`.
+   If it reports that status is not available, run \`${jiraTransition(ticket.key, '--list')}\` and
    report ok:false with BOTH the status you were asked for — \`${STATUS_DONE}\` — AND the full list of
    transitions the board actually offers, so the config fix is obvious from your report alone.
    Do NOT guess a nearby status, do NOT pick one off the list yourself, and do NOT edit the ticket some
    other way.
-2. Confirm it landed: \`${JIRA}/ticket.sh ${ticket.key} summary\` must now show status \`${STATUS_DONE}\`.
+2. Confirm it landed: \`tim jira ticket ${ticket.key} --workspace ${TILDE} --json\` must now show \`result.status\` \`${STATUS_DONE}\`.
 3. Mark it done: \`${setRow(id, '--status done')}\`. It leaves \`ticket\`, \`branch\`, \`commit\` and \`prs\` in place —
    they are the record of how it got there.
 Return the structured output only.`,

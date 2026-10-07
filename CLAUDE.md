@@ -106,6 +106,7 @@ tim backlog registry list # every registered programme, its profile and workarea
 tim jira create --from ticket.json --dry-run   # plan a Jira create from a tim-ticket/1 manifest; --confirm <planId> to create for real
 tim jira attach|link                           # the rest of the Jira write surface — also dry run by default; --confirm to write
 tim jira epics                                 # list open epics (read-only)
+tim jira transition EUDPA-X "Done"             # move a ticket's status straight away (no dry run); --list shows what it offers
 tim prototype setup               # onboard a designer session: CLAUDE.local.md note, upstream remote, install, auth readiness
 ```
 

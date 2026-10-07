@@ -2295,7 +2295,7 @@ describe('increment-build-loop', () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const jiraCallers = run.agents
           .filter(({ prompt }) =>
-            /tools\/jira|move-to-board|transition-ticket/.test(prompt)
+            /tools\/jira|move-to-board|transition-ticket|tim jira/.test(prompt)
           )
           .map(({ options }) => options.label)
 
@@ -2947,6 +2947,28 @@ describe('increment-build-loop', () => {
         expect(prompt).toContain(
           '`tim build start shared/args-fixture --id inc-014 --base main'
         )
+      })
+
+      test('closes the ticket through tim jira transition, in the form Bash(tim:*) allows', async () => {
+        const prompt = promptOf(await runPerf(), 'inc-014 done')
+
+        expect({
+          move: prompt.includes(
+            '`tim jira transition EUDPA-914 "Done" --workspace ~/ws --json`'
+          ),
+          list: prompt.includes(
+            '`tim jira transition EUDPA-914 --list --workspace ~/ws --json`'
+          ),
+          confirm: prompt.includes(
+            '`tim jira ticket EUDPA-914 --workspace ~/ws --json`'
+          ),
+          shellScript: prompt.includes('tools/jira')
+        }).toEqual({
+          move: true,
+          list: true,
+          confirm: true,
+          shellScript: false
+        })
       })
 
       test('builds in every repo tim build start branched, in the row’s order', async () => {

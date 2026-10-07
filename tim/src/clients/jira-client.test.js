@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
 import { installHttpMocks, closeHttpMocks } from '../test-support/http-mock.js'
-import { createJiraClient } from './jira-client.js'
+import { createJiraClient, describeTransitions } from './jira-client.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixturesDir = join(here, '..', 'test-support', 'fixtures', 'jira')
@@ -423,6 +423,190 @@ describe('transitionIssue', () => {
       code: 'USAGE',
       message: 'transitionIssue(EUDPA-300): Transition id 99 is not valid.'
     })
+  })
+})
+
+describe('moveToStatus', () => {
+  const client = () =>
+    createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+  const ticketIs = (status) =>
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300')
+      .reply(200, {
+        ...loadFixture('issue-in-dev.json'),
+        fields: {
+          ...loadFixture('issue-in-dev.json').fields,
+          status: { name: status }
+        }
+      })
+
+  const offersTransitions = (body = loadFixture('list-transitions.json')) =>
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300/transitions')
+      .reply(200, body)
+
+  const acceptsTransition = () => {
+    const posted = { body: null }
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-300/transitions', (body) => {
+        posted.body = body
+        return true
+      })
+      .reply(204)
+    return posted
+  }
+
+  test('moves the issue through the transition that leads to the status', async () => {
+    ticketIs('In Dev')
+    offersTransitions()
+    const posted = acceptsTransition()
+
+    const result = await client().moveToStatus('EUDPA-300', 'Done')
+
+    expect({ result, posted: posted.body }).toEqual({
+      result: {
+        key: 'EUDPA-300',
+        from: 'In Dev',
+        to: 'Done',
+        moved: true,
+        transition: 'Done'
+      },
+      posted: { transition: { id: '31' } }
+    })
+  })
+
+  test('leaves an issue already in the status alone', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300')
+      .reply(200, loadFixture('issue-in-dev.json'))
+
+    const result = await client().moveToStatus('EUDPA-300', 'In Dev')
+
+    expect(result).toEqual({
+      key: 'EUDPA-300',
+      from: 'In Dev',
+      to: 'In Dev',
+      moved: false,
+      transition: null
+    })
+  })
+
+  test('takes the current status from the caller instead of reading the issue', async () => {
+    offersTransitions()
+    acceptsTransition()
+
+    const result = await client().moveToStatus('EUDPA-300', 'In Dev', {
+      from: 'To Do'
+    })
+
+    expect(result).toMatchObject({ from: 'To Do', to: 'In Dev', moved: true })
+  })
+
+  test('matches on the status, not the transition name, by default', async () => {
+    ticketIs('To Do')
+    offersTransitions()
+
+    await expect(
+      client().moveToStatus('EUDPA-300', 'Start work')
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message:
+        'EUDPA-300 is To Do and offers no transition to "Start work". The board offers (transition -> status): Start work -> In Dev, Done -> Done.',
+      transitions: [
+        { id: '11', name: 'Start work', to: 'In Dev' },
+        { id: '31', name: 'Done', to: 'Done' }
+      ]
+    })
+  })
+
+  test('accepts a transition name when asked to', async () => {
+    ticketIs('To Do')
+    offersTransitions()
+    const posted = acceptsTransition()
+
+    const result = await client().moveToStatus('EUDPA-300', 'Start work', {
+      matchTransitionName: true
+    })
+
+    expect({ result, posted: posted.body }).toEqual({
+      result: {
+        key: 'EUDPA-300',
+        from: 'To Do',
+        to: 'In Dev',
+        moved: true,
+        transition: 'Start work'
+      },
+      posted: { transition: { id: '11' } }
+    })
+  })
+
+  test('compares status names exactly, so a different case does not match', async () => {
+    ticketIs('In Dev')
+    offersTransitions()
+
+    await expect(
+      client().moveToStatus('EUDPA-300', 'done')
+    ).rejects.toMatchObject({ code: 'USAGE' })
+  })
+
+  test('says "none" when the issue offers no transitions', async () => {
+    ticketIs('Done')
+    offersTransitions({ transitions: [] })
+
+    await expect(
+      client().moveToStatus('EUDPA-300', 'In Dev')
+    ).rejects.toMatchObject({
+      message:
+        'EUDPA-300 is Done and offers no transition to "In Dev". The board offers (transition -> status): none.',
+      transitions: []
+    })
+  })
+
+  test('maps a missing issue to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).get('/rest/api/2/issue/EUDPA-404').reply(404, {})
+
+    await expect(
+      client().moveToStatus('EUDPA-404', 'Done')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  test('maps rejected credentials to TimError(AUTH)', async () => {
+    mockPool(BASE).get('/rest/api/2/issue/EUDPA-300').reply(401, {})
+
+    await expect(
+      client().moveToStatus('EUDPA-300', 'Done')
+    ).rejects.toMatchObject({ code: 'AUTH' })
+  })
+
+  test('carries Jira’s reason when it refuses the move', async () => {
+    ticketIs('In Dev')
+    offersTransitions()
+    mockPool(BASE)
+      .post('/rest/api/2/issue/EUDPA-300/transitions')
+      .reply(400, { errorMessages: ['Resolution is required.'] })
+
+    await expect(
+      client().moveToStatus('EUDPA-300', 'Done')
+    ).rejects.toMatchObject({
+      code: 'USAGE',
+      message: 'transitionIssue(EUDPA-300): Resolution is required.'
+    })
+  })
+})
+
+describe('describeTransitions', () => {
+  test('lists each transition with the status it leads to', () => {
+    expect(
+      describeTransitions([
+        { name: 'Start work', to: 'In Dev' },
+        { name: 'Done', to: 'Done' }
+      ])
+    ).toBe('Start work -> In Dev, Done -> Done')
+  })
+
+  test('says none when there are none', () => {
+    expect(describeTransitions([])).toBe('none')
   })
 })
 

@@ -62,6 +62,35 @@ const authHeader = (user, token) =>
   `Basic ${Buffer.from(`${user}:${token}`).toString('base64')}`
 
 /**
+ * Each transition as `name -> status`, comma-separated, or `none`.
+ *
+ * @param {Array<{name: string, to: string|null}>} transitions
+ * @returns {string}
+ */
+export const describeTransitions = (transitions) =>
+  transitions.length === 0
+    ? 'none'
+    : transitions.map(({ name, to }) => `${name} -> ${to}`).join(', ')
+
+// Status names are compared as exact strings: a board's statuses say nothing
+// about the order its workflow runs in. A transition's own name is a
+// fallback only, because it can differ from the status it leads to.
+const findTransitionTo = (transitions, status, { matchTransitionName }) =>
+  transitions.find(({ to }) => to === status) ??
+  (matchTransitionName
+    ? transitions.find(({ name }) => name === status)
+    : undefined)
+
+const noTransitionError = ({ key, current, status, transitions }) => {
+  const error = new TimError(
+    'USAGE',
+    `${key} is ${current} and offers no transition to "${status}". The board offers (transition -> status): ${describeTransitions(transitions)}.`
+  )
+  error.transitions = transitions
+  return error
+}
+
+/**
  * Create a Jira REST client. Reads JIRA_USER + JIRA_TOKEN + JIRA_BASE_URL
  * from env by default — matches the contract used by ../tools/jira/auth.sh.
  *
@@ -195,6 +224,66 @@ export const createJiraClient = ({
     return parseBody(response, action)
   }
 
+  const getTicket = async (id) => {
+    const data = await get(
+      `/rest/api/2/issue/${encodeURIComponent(id)}`,
+      `getTicket(${id})`
+    )
+    return {
+      id: data.key,
+      summary: data.fields?.summary ?? '',
+      status: data.fields?.status?.name ?? null,
+      type: data.fields?.issuetype?.name ?? null,
+      assignee: data.fields?.assignee?.displayName ?? null,
+      priority: data.fields?.priority?.name ?? null,
+      description: data.fields?.description ?? ''
+    }
+  }
+
+  const listTransitions = async (key) => {
+    const data = await get(
+      `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
+      `listTransitions(${key})`
+    )
+    return (data.transitions ?? []).map((transition) => ({
+      id: transition.id,
+      name: transition.name,
+      to: transition.to?.name ?? null
+    }))
+  }
+
+  const transitionIssue = async (key, transitionId) => {
+    await postJson(
+      `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
+      { transition: { id: transitionId } },
+      `transitionIssue(${key})`
+    )
+  }
+
+  const moveToStatus = async (
+    key,
+    status,
+    { from, matchTransitionName = false } = {}
+  ) => {
+    const current = from === undefined ? (await getTicket(key)).status : from
+    if (current === status) {
+      return { key, from: current, to: current, moved: false, transition: null }
+    }
+    const transitions = await listTransitions(key)
+    const move = findTransitionTo(transitions, status, { matchTransitionName })
+    if (!move) {
+      throw noTransitionError({ key, current, status, transitions })
+    }
+    await transitionIssue(key, move.id)
+    return {
+      key,
+      from: current,
+      to: move.to,
+      moved: true,
+      transition: move.name
+    }
+  }
+
   return {
     whoami: async () => {
       const data = await get('/rest/api/2/myself', 'whoami')
@@ -204,21 +293,7 @@ export const createJiraClient = ({
       }
     },
 
-    getTicket: async (id) => {
-      const data = await get(
-        `/rest/api/2/issue/${encodeURIComponent(id)}`,
-        `getTicket(${id})`
-      )
-      return {
-        id: data.key,
-        summary: data.fields?.summary ?? '',
-        status: data.fields?.status?.name ?? null,
-        type: data.fields?.issuetype?.name ?? null,
-        assignee: data.fields?.assignee?.displayName ?? null,
-        priority: data.fields?.priority?.name ?? null,
-        description: data.fields?.description ?? ''
-      }
-    },
+    getTicket,
 
     getComments: async (id) => {
       const data = await get(
@@ -375,17 +450,7 @@ export const createJiraClient = ({
      * @param {string} key
      * @returns {Promise<Array<{id: string, name: string, to: string|null}>>}
      */
-    listTransitions: async (key) => {
-      const data = await get(
-        `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
-        `listTransitions(${key})`
-      )
-      return (data.transitions ?? []).map((transition) => ({
-        id: transition.id,
-        name: transition.name,
-        to: transition.to?.name ?? null
-      }))
-    },
+    listTransitions,
 
     /**
      * Move an issue through one of the transitions it offers.
@@ -394,13 +459,22 @@ export const createJiraClient = ({
      * @param {string} transitionId - From `listTransitions`
      * @returns {Promise<void>}
      */
-    transitionIssue: async (key, transitionId) => {
-      await postJson(
-        `/rest/api/2/issue/${encodeURIComponent(key)}/transitions`,
-        { transition: { id: transitionId } },
-        `transitionIssue(${key})`
-      )
-    },
+    transitionIssue,
+
+    /**
+     * Move an issue into the status with exactly this name. An issue already
+     * in it is left alone. The one implementation behind `tim jira
+     * transition` and `tim build start`'s move to the working status.
+     *
+     * @param {string} key
+     * @param {string} status - The status name, compared exactly
+     * @param {object} [options]
+     * @param {string} [options.from] - The issue's status, when the caller already read it
+     * @param {boolean} [options.matchTransitionName=false] - Also accept a transition with this name when no transition leads to a status with it
+     * @returns {Promise<{key: string, from: string|null, to: string|null, moved: boolean, transition: string|null}>}
+     * @throws {TimError} USAGE carrying `transitions` when the issue offers no way into that status
+     */
+    moveToStatus,
 
     /**
      * Move issues out of a board's backlog onto the board. Board membership

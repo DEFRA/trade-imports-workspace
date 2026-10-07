@@ -195,30 +195,21 @@ const raiseTicket = async ({ jira, path, workarea, row, config }) => {
   return { key: created.key, created: true, warning: null }
 }
 
-const describeTransitions = (transitions) =>
-  transitions.length === 0
-    ? 'none'
-    : transitions.map(({ name, to }) => `${name} -> ${to}`).join(', ')
+const offersNoTransition = (error) => Array.isArray(error?.transitions)
 
-// Status names are compared as exact strings: a board's statuses say nothing
-// about the order its workflow runs in.
 const setWorkingStatus = async ({ jira, key, status, config, id }) => {
-  if (status === config.inDevStatus) return { status, warning: null }
-  if (status === config.doneStatus) {
+  if (status === config.doneStatus && status !== config.inDevStatus) {
     return {
       status,
       warning: `${key} is already ${status}, but ${id} is not done in the backlog. A human needs to look at that mismatch.`
     }
   }
-  const transitions = await jira.listTransitions(key)
-  const move = transitions.find(({ to }) => to === config.inDevStatus)
-  if (!move) {
-    fail(
-      'ticket',
-      `${key} is ${status} and offers no transition to "${config.inDevStatus}". The board offers (transition -> status): ${describeTransitions(transitions)}. Fix jiraInDevStatus in the args.`
-    )
+  try {
+    await jira.moveToStatus(key, config.inDevStatus, { from: status })
+  } catch (error) {
+    if (!offersNoTransition(error)) throw error
+    fail('ticket', `${messageOf(error)} Fix jiraInDevStatus in the args.`)
   }
-  await jira.transitionIssue(key, move.id)
   return { status: config.inDevStatus, warning: null }
 }
 

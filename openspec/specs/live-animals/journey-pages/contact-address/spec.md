@@ -17,17 +17,20 @@ The system MUST ask the user to choose a contact address, offering every address
 - **THEN** it asks which contact address to use, offering every address in the book as an option naming it and showing its postal address, with a save-and-continue action
 - **AND** no address is shown as chosen
 
-### Requirement: A chosen contact address is accepted and persists
+### Requirement: A chosen contact address is copied onto the notification and shown as the current contact
 **ID**: REQ-CONTACT-002
-The system MUST accept a chosen contact address, saving it without error, and MUST show it still chosen when the user returns to the page.
+The system MUST accept a chosen contact address, copying it onto the notification without error, and when the user returns to the page MUST show it as the current contact address — with a way to edit its details on this notification — and still chosen in the list. Saving again MUST keep the current contact address.
 
-#### Scenario: Choosing a contact address saves without error and persists on return
+#### Scenario: Choosing a contact address saves without error and is shown as the current contact on return
 **ID**: SCN-CONTACT-002-A
 - **GIVEN** the user is on the contact address page
 - **WHEN** they choose an address and save and continue
 - **THEN** the answer is saved and no error summary is shown
 - **WHEN** they return to the contact address page
-- **THEN** the same address is still shown chosen
+- **THEN** the same address is shown as the current contact address, with a way to edit its details
+- **AND** it is still shown chosen in the list
+- **WHEN** they save and continue again
+- **THEN** the current contact address is kept
 
 ### Requirement: The contact address is optional, and saving without one returns to Overview
 **ID**: REQ-CONTACT-003

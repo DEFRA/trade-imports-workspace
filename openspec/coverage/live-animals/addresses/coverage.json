@@ -61,23 +61,94 @@
     },
     {
       "id": "REQ-ADDR-002",
-      "name": "Every role resolves live from the address book while a notification is not yet submitted",
+      "name": "A chosen address is copied onto the notification, and later changes to the address book never reach it",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-ADDR-002-A",
-          "name": "Editing a linked address changes what a draft notification shows",
+          "id": "SCN-ADDR-002-C",
+          "name": "Picking an address shows its full details on the notification",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-live-link.spec.ts", "test": "editing a linked address in the address book changes what the draft notification shows", "strength": "full", "notes": "asserts hub row name and check-your-answers town/postcode after an address-book edit (consignor)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-live-link.spec.ts", "test": "editing a linked place of origin in the address book changes what the draft notification shows", "strength": "full", "notes": "confirms place of origin now live-links the same as consignor, since the status-based freeze model replaced the old role-based linked/copied split" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "picking a record for a role with no address shows every field of that record on the review page", "strength": "full", "notes": "book record with every field set; picked for the consignor, review row asserts name, both lines, town, county, postcode, country name, telephone and email" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should expand party rows to the stored name, address lines, telephone and email", "strength": "partial", "notes": "renders a stored copy's fields on the review rows; does not drive the pick itself" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-002-A",
+          "name": "Editing the record in the address book leaves a draft notification unchanged",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "editing the record in the address book leaves the copy on a draft notification unchanged", "strength": "full", "notes": "renames the book record after picking; hub row keeps the original name and the review row keeps the original town and postcode" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render the copy for every status, never consulting the address book", "strength": "partial", "notes": "DRAFT/AMEND/SUBMITTED render the stored copy; address-book lookup never called" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-002-B",
+          "name": "Deleting the record in the address book leaves a draft notification unchanged, but removes it from the picker",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker", "strength": "full", "notes": "tombstones the record; hub and review still show it with no error summary, and the picker search no longer lists it" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-014",
+      "name": "A copied address can be edited on the notification without changing the address book",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-014-A",
+          "name": "Editing a copied address changes only this notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "editing a copied address changes only this notification, not the address book record or another notification", "strength": "full", "notes": "reads the book record back through the API and opens a second notification using the same record" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "editing the contact address from the contact page changes only this notification", "strength": "full", "notes": "the consignment contact" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should change only this notification, never the address book", "strength": "partial", "notes": "parametrised over the five roles and the contact; address-book client never called" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-014-B",
+          "name": "The edit form opens with the copied details, including the county",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "the edit form opens with the copied details, including the county", "strength": "full" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js", "test": "opens pre-filled from the copy, captioned with the role", "strength": "partial", "notes": "checks the name pre-fill and that the county field is present" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-014-C",
+          "name": "An edit that breaks the address book's rules is refused with its messages",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "an edit that breaks the address book rules is refused with its messages, at the top and against each field, and nothing is saved", "strength": "full" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/address-rules.test.js", "test": "Should require %s", "strength": "partial", "notes": "with the max-length, email-format and country-list cases in the same file" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js", "test": "shows the address-book messages for a field that breaks the rules", "strength": "partial", "notes": "empty postcode; summary link focuses the field" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-014-D",
+          "name": "Cancelling an edit leaves the copy unchanged",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "cancelling an edit returns to where it was started and leaves the copy as it was", "strength": "full" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/party-edit.fit.spec.js", "test": "cancel leaves the copy as it was", "strength": "full" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-014-E",
+          "name": "A copied address offers both choosing another address and editing its details",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "a copied address offers both Change and Edit details on the hub, the contact page and the review, and an unanswered role offers only Add", "strength": "full" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should render the name held on the copy, offering both Change and Edit details", "strength": "partial", "notes": "hub rows only" }
           ]
         }
       ]
     },
     {
       "id": "REQ-ADDR-013",
-      "name": "A submitted notification freezes its addresses, and resumes live resolution once amended",
+      "name": "A submitted notification keeps its copied addresses, through amendment and cancellation",
       "coverage": "full",
       "scenarios": [
         {
@@ -85,68 +156,39 @@
           "name": "A submitted notification's address is unaffected by a later edit to the record",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit does not change the submitted view, then shows live on amend", "strength": "full", "notes": "submits with a chosen place-of-origin address, renames the book record, and confirms the submitted view still shows the original name/town" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy", "strength": "full" }
           ]
         },
         {
           "id": "SCN-ADDR-013-B",
-          "name": "Amending a submitted notification returns its addresses to live resolution",
+          "name": "Amending a submitted notification keeps its copied addresses",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit does not change the submitted view, then shows live on amend", "strength": "full", "notes": "same test continues past the freeze assertion — starting amend shows the renamed address, cancelling the amendment reverts to the frozen original" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-ADDR-003",
-      "name": "Deleting an address behind a role clears it while the notification is not yet submitted, but leaves a submitted notification unaffected",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-ADDR-003-A",
-          "name": "Deleting a linked address clears it from a draft notification and hides it from the picker",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-live-link.spec.ts", "test": "deleting a linked address treats it as never entered and hides it from the picker", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy", "strength": "full", "notes": "same test continues into amend and cancel-amend" }
           ]
         },
         {
-          "id": "SCN-ADDR-003-B",
+          "id": "SCN-ADDR-013-C",
           "name": "Deleting the record behind a submitted notification's role leaves it unaffected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "deleting the book record after submit does not change the submitted view or error", "strength": "full", "notes": "submits with a chosen place-of-origin address, deletes the book record, and confirms the submitted view is unaffected with no error summary shown" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-ADDR-004",
-      "name": "An address book record that is unavailable is not treated as deleted",
-      "coverage": "partial",
-      "scenarios": [
-        {
-          "id": "SCN-ADDR-004-A",
-          "name": "An address book outage is not mistaken for a deletion",
-          "coverage": "partial",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/resolve-parties.test.js", "test": "Should let an address-book outage propagate rather than read as a deletion", "strength": "partial", "notes": "proves resolveParties throws on book failure instead of returning undefined (deletion shape); no UI/E2E asserts the failure is surfaced to the user" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "deleting the book record after submit changes neither the submitted view nor the amendment, and shows no error", "strength": "full" }
           ]
         }
       ]
     },
     {
       "id": "REQ-ADDR-005",
-      "name": "The review page blocks submission while a linked address has been deleted",
+      "name": "The review page blocks submission while a copied address breaks the address book's rules",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDR-005-A",
-          "name": "A deleted address is named on the review page and blocks submission until replaced",
+          "name": "An address that breaks the rules is named on the review page and blocks submission until corrected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-live-link.spec.ts", "test": "the review page names a deleted address, walks the trader to a replacement and lets the submit through once it is replaced", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "a copied address that breaks the address book rules is named on the review page, blocks continue and submit, and clears once corrected", "strength": "full", "notes": "a book record holding a country name rather than an ISO code gives a copy that breaks the country rule" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should refuse the submit while a copied address breaks the rules", "strength": "partial" }
           ]
         }
       ]
@@ -161,7 +203,7 @@
           "name": "Searching narrows the list and reports the count",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Showing 2 of 2 for a scoped search token" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, the row selected on a later page is the one that saves, and reopening starts with nothing chosen but keeps the copy on save", "strength": "full", "notes": "asserts Showing 2 of 2 for a scoped search token" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker search narrows the address book and preserves the query", "strength": "full", "notes": "" }
           ]
         },
@@ -170,7 +212,7 @@
           "name": "Clearing the search restores the whole book",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "clears the search and re-asserts the paginated Showing 5 of N caption" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, the row selected on a later page is the one that saves, and reopening starts with nothing chosen but keeps the copy on save", "strength": "full", "notes": "clears the search and re-asserts the paginated Showing 5 of N caption" }
           ]
         }
       ]
@@ -223,7 +265,7 @@
           "name": "Expanding an address shows its details in place",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "expands details in place and asserts London without leaving the list" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, the row selected on a later page is the one that saves, and reopening starts with nothing chosen but keeps the copy on save", "strength": "full", "notes": "expands details in place and asserts London without leaving the list" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker expands an address to show its full details", "strength": "full", "notes": "" }
           ]
         }
@@ -239,24 +281,34 @@
           "name": "A record found on a later page is chosen and saved",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, the row selected on a later page is the one that saves, and reopening starts with nothing chosen but keeps the copy on save", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker saves a later-page choice, reopens with nothing chosen and keeps it on save", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-ADDR-011",
-      "name": "A saved choice is carried and named when the list is reopened, even where its row is not shown",
-      "coverage": "full",
+      "name": "Reopening the list names the address already chosen and keeps it on save",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ADDR-011-A",
           "name": "Reopening the list names the saved choice and keeps it on save",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Selected address: name with the radio absent, then save keeps the hub row" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "asserts Selected address names the later-page record on reopen, its row absent, then save keeps the hub row" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker carries a later-page selection and keeps it selected off-page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-011-B",
+          "name": "Reopening the list names nothing once the address is edited here or deleted from the book",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts", "test": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker", "strength": "partial", "notes": "deleted-record branch only: asserts no Selected address on reopen" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "edited branch, first half: the edit save drops pickedFromId" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should open with nothing selected when the held copy has no record it was picked from", "strength": "partial", "notes": "edited branch, second half: no pickedFromId opens with nothing selected; no end-to-end test drives edit then reopen" }
           ]
         }
       ]

@@ -30,7 +30,7 @@ Does NOT own:
 
 ## Stack
 
-- **Runtime:** Node.js >=24, npm pinned via `packageManager` (`npm@11.6.2`) — install only with `tim workspace install --repo trade-imports-plants-prototype`, never a bare `npm install`/`npm ci`.
+- **Runtime:** Node.js and npm versions are pinned in the repo itself (`.nvmrc`, `engines` and `packageManager` in `package.json`), taken from `trade-imports-plants-frontend` by `sync:upstream` — install only with `tim workspace install --repo trade-imports-plants-prototype`, never a bare `npm install`/`npm ci`.
 - **Web framework:** Hapi (Nunjucks via Vision, Yar sessions, Crumb CSRF), govuk-frontend, the same build toolchain (webpack, Sass) as `trade-imports-plants-frontend`.
 - **Port:** 3103 (`src/config/config.js`; `PORT` env var), its real twin's (`trade-imports-plants-frontend`, 3003) plus 100, so both can run side by side on one machine. `DEFRA_ID_REDIRECT_URL` and `DEFRA_ID_SIGN_OUT_REDIRECT_URL` default to `http://localhost:3103/auth/...`, not 3003; they only matter if someone sets `STUB_MODE=false`, which no supported run does.
 

@@ -16,6 +16,9 @@ operator's attention.
 ## Inputs
 
 - `{run-id}` — Jira ticket, e.g. EUDPA-20578.
+- `{branch}` — the ticket's shared branch, e.g. `chore/EUDPA-668-npm-security-sweep`.
+- `{owner}`, `{expiry-days}` — who owns, and for how many days, any
+  allowlist entry the audit check writes (90 at most in practice).
 
 ---
 
@@ -24,14 +27,41 @@ operator's attention.
 One call runs all repos in parallel and aggregates exit codes:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2
+~/git/defra/trade-imports-workspace/tools/npm/start-upgrade.sh {run-id} --phase 2 --branch {branch} --allowlist-owner "{owner}" --expiry-days {expiry-days}
 ```
+
+For each package, in a repo that has `audit-ci.jsonc`,
+`upgrade-one-package.sh` audits the tree before the install (red there
+marks the package failed as a repo issue, without demoting it) and
+again after the tests pass:
+
+- green: commit.
+- red only on new advisories with no fixed version: each is allowlisted
+  with `audit-allowlist-add.sh` (owner and expiry from the flags above)
+  and `audit-ci.jsonc` goes in the upgrade's commit.
+- red on an advisory with a fix, or no owner given: roll back
+  `package.json`, `package-lock.json` and `audit-ci.jsonc`, and demote
+  to manual with the GHSA as the reason.
+
+A commit the repo's pre-commit hook refuses (animals-admin's runs the
+audit and the tests) also rolls back and demotes, with the hook's
+output as the reason.
+
+At the end of each repo's batch, even one with no auto packages,
+`run-automated-upgrades.sh` calls `refresh-lockfile.sh`: `npm update`
+within the existing ranges (`package.json` untouched), then test, lint
+and audit, then a "Refresh transitive dependencies" commit. This is how
+fixed transitive releases arrive; ncu only sees direct dependencies. A
+failure rolls the refresh back and is reported in the runner's log
+(`refresh-lockfile.{repo}.log` in the repo's workarea); the package
+upgrades stay committed. In trade-imports-ins-tests the E2E gate runs
+after the refresh.
 
 Stdout is one JSON object:
 
 ```json
 {
-  "status": "ok | cascade_failure | nothing_to_do",
+  "status": "ok | cascade_failure",
   "cascade_failures": ["{repo}", ...],
   "per_repo": [
     {"repo": "{repo}", "exit_code": 0}
@@ -39,8 +69,6 @@ Stdout is one JSON object:
 }
 ```
 
-- `status == "nothing_to_do"` — no auto packages awaiting upgrade.
-  Report that and finish.
 - `status == "ok"` — every per-repo runner returned 0. Per-package
   demotions are already recorded in `packages.{repo}.json`
   (classification flipped to `manual`, `demoted_from_auto: true`).
@@ -90,7 +118,7 @@ Pull the per-repo `{done}` / `{demoted}` numbers from
 ## Notes
 
 - Demotion is automatic inside `upgrade-one-package.sh` — when an
-  install or test fails, the row's classification flips to `manual`
+  install, test, audit or commit fails, the row's classification flips to `manual`
   with `demoted_from_auto: true` and a populated `failure_reason`.
   Phase 3 picks these up alongside the natively-manual packages.
 - The runners run sequentially within a repo (no parallel upgrades

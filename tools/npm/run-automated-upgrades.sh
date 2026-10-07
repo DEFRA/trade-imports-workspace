@@ -5,7 +5,7 @@
 # "todo", calling upgrade-one-package.sh per package.
 #
 # Usage:
-#   run-automated-upgrades.sh <repo-name> --run-id TICKET
+#   run-automated-upgrades.sh <repo-name> --run-id TICKET [--allowlist-owner NAME --expiry-days N]
 
 set -e
 
@@ -15,15 +15,20 @@ show_help() {
     cat << EOF
 Run automated upgrades for one repo (Phase 2).
 
-Usage: ./run-automated-upgrades.sh <repo-name> --run-id TICKET
+Usage: ./run-automated-upgrades.sh <repo-name> --run-id TICKET [--allowlist-owner NAME --expiry-days N]
 
 What it does:
   1. Pre-flight: git status clean.
   2. Loops every auto-classified, not-yet-attempted package:
-     - upgrade-one-package.sh installs, tests, commits, or
+     - upgrade-one-package.sh installs, tests, audits, commits, or
        rolls back + demotes to manual on failure.
-  3. Cascade failure (rollback also fails) stops the loop.
-  4. Final per-repo summary.
+  3. Cascade failure (rollback also fails) stops the loop (exit 1).
+     An audit that is red before the install, or cannot run, stops
+     the batch too (exit 3), without the lockfile refresh.
+  4. refresh-lockfile.sh: npm update within the existing ranges, then
+     test, lint, audit and commit (or roll back and report).
+  5. trade-imports-ins-tests only: npm run test:docker-compose once.
+  6. Final per-repo summary.
 
 State: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 
@@ -38,11 +43,15 @@ EOF
 
 REPO_NAME=""
 RUN_ID=""
+# Passed through to upgrade-one-package.sh, so a new advisory with no
+# fixed version is allowlisted rather than failing the upgrade.
+ALLOWLIST_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help|-h) show_help ;;
         --run-id) RUN_ID="$2"; shift 2 ;;
+        --allowlist-owner|--expiry-days) ALLOWLIST_ARGS+=("$1" "$2"); shift 2 ;;
         --no-discover|--discover) shift ;;  # legacy no-ops; we read JSON
         *)
             if [[ -z "$REPO_NAME" ]]; then
@@ -91,32 +100,33 @@ list_pending() {
 initial_count=$(list_pending | jq 'length')
 if [[ "$initial_count" -eq 0 ]]; then
     echo "No auto-classified packages awaiting upgrade in $REPO_NAME."
-    exit 0
+else
+    echo "Processing $initial_count package(s) sequentially..."
 fi
-
-echo "Processing $initial_count package(s) sequentially..."
 echo
 
+# Counters use $((x + 1)): `((x++))` returns status 1 when x is 0,
+# which stops the script under set -e.
 PROCESSED=0
 SUCCESS=0
 FAILED=0
 
-while true; do
+while [[ "$initial_count" -gt 0 ]]; do
     next_pkg=$(list_pending | jq -r 'first.package // empty')
     [[ -z "$next_pkg" ]] && break
 
-    ((PROCESSED++))
+    PROCESSED=$((PROCESSED + 1))
     echo "=== Package $PROCESSED/$initial_count ==="
 
-    if "$SCRIPT_DIR/upgrade-one-package.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg"; then
+    if "$SCRIPT_DIR/upgrade-one-package.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"}; then
         # Check whether it succeeded or controlled-failed.
         latest=$("$SCRIPT_DIR/packages-list.sh" \
             --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" --json | jq -r '.[0].implementation_status')
         if [[ "$latest" == "done" ]]; then
-            ((SUCCESS++))
+            SUCCESS=$((SUCCESS + 1))
             echo "✓ Success"
         else
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
             echo "✗ Failed (demoted to manual)"
         fi
     else
@@ -125,12 +135,34 @@ while true; do
             echo "✗ CRITICAL: Cascade failure — stopping" >&2
             exit 1
         fi
-        ((FAILED++))
+        if [[ $EXIT_CODE -eq 3 ]]; then
+            # The audit was red before the install, or could not run:
+            # every package after this one would fail the same way.
+            # Stop the batch (and skip the lockfile refresh, which
+            # audits too) rather than fail them all.
+            echo "✗ Repo-level stop: the audit is red or could not run (see $next_pkg's failure_reason). Fix the repo, then rerun phase 2." >&2
+            "$SCRIPT_DIR/packages-counts.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" || true
+            exit 3
+        fi
+        FAILED=$((FAILED + 1))
         echo "✗ Failed (unexpected exit $EXIT_CODE)"
     fi
 
     echo
 done
+
+# End-of-batch lockfile refresh: ncu never looks at transitive
+# dependencies, so take their fixed releases within the existing
+# ranges now. A failure rolls the refresh back and is reported; the
+# package upgrades above stay committed.
+echo "==========================================="
+echo "End-of-batch lockfile refresh"
+echo "==========================================="
+REFRESHED=0
+REFRESH_RESULT=$("$SCRIPT_DIR/refresh-lockfile.sh" --run-id "$RUN_ID" --repo "$REPO_NAME") || true
+echo "$REFRESH_RESULT"
+[[ "$(jq -r '.status // empty' <<<"$REFRESH_RESULT" 2>/dev/null)" == "committed" ]] && REFRESHED=1
+echo
 
 echo "==========================================="
 echo "Automated upgrades complete for $REPO_NAME"
@@ -139,6 +171,7 @@ echo
 echo "  Processed: $PROCESSED"
 echo "  ✅ Success: $SUCCESS"
 echo "  ❌ Failed:  $FAILED"
+echo "  Lockfile refresh: $(jq -r '.status // "error"' <<<"$REFRESH_RESULT" 2>/dev/null || echo error)"
 echo
 
 # Tests-repo end-of-batch gate: per-package npm test is skipped (the
@@ -149,7 +182,7 @@ echo
 # A failure here doesn't roll back individual upgrades — the operator
 # needs to investigate, since the failure could be in any of $SUCCESS
 # packages.
-if [[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && [[ $SUCCESS -gt 0 ]]; then
+if [[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && [[ $SUCCESS -gt 0 || $REFRESHED -eq 1 ]]; then
     echo "==========================================="
     echo "End-of-batch E2E gate (npm run test:docker-compose)"
     echo "==========================================="

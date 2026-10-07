@@ -93,18 +93,23 @@ isn't `I`, `D`, or `S` with a clear error and re-prompt.
 | Char | Action |
 |---|---|
 | `I` | Spawn `MANUAL_UPGRADE_IMPLEMENTOR` subagent (Step 4) |
-| `D` | Defer — mark status=todo with a "deferred" note in failure_reason and remind operator to file a follow-up ticket |
+| `D` | Defer (hold back on purpose) — ask why, store the reason, and remind operator to file a follow-up ticket |
 | `S` | Skip — leave pending |
 
-For `D`:
+For `D`: ask the user for the reason, in one plain question per
+deferred package (for example "Why hold back jsdom 30.0.1?"). Every
+held package needs one: the handoff report and the PR body list it.
+Then store it:
+
 ```bash
 ~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
   --run-id EUDPA-XXXXX --repo {repo} --package {pkg} \
-  --status failed --failure-reason "Deferred by walker — file follow-up ticket"
+  --status failed --failure-reason "Deferred by walker: {reason}"
 ```
-(We use `failed` rather than introducing a new status — failed +
-"Deferred" reason carries the same "needs human attention later"
-signal.)
+(We use `failed` rather than introducing a new status or a `held`
+classification — failed + a reason starting "Deferred by walker:"
+carries the same "needs human attention later" signal, and
+`start-upgrade.sh --phase 3` lists those rows under `held`.)
 
 For `S`: do nothing — the package row stays as it is.
 
@@ -143,7 +148,13 @@ Target: {target}
 Context bundle: ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/EUDPA-XXXXX/{repo}/.context/{normalized-package}/
 Files affected (from planner): {files_affected}
 Required changes (from planner): {changes_required_summary}
+Allowlist owner: {owner}
+Allowlist expiry days: {expiry-days}
 ```
+
+Ask the user for the owner and expiry once per walk if the run has
+not given them (the sweep's workflow args `allowlistOwner` and
+`expiryDays` carry them).
 
 The implementor returns one of `DONE`, `FAILED`, `SKIPPED`. It updates
 JSON state itself via `packages-set-status.sh`; you don't need to.
@@ -153,7 +164,8 @@ script-driven flow without an extra subagent:
 
 ```bash
 ~/git/defra/trade-imports-workspace/tools/npm/run-manual-upgrade.sh \
-  --run-id EUDPA-XXXXX --repo {repo} --package {package}
+  --run-id EUDPA-XXXXX --repo {repo} --package {package} \
+  --allowlist-owner "{owner}" --expiry-days {expiry-days}
 ```
 
 The script lays down the install + test + commit + rollback frame,

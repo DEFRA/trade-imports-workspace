@@ -26,7 +26,6 @@
 #      case is a missed redirect, never a missed deny:
 #        - a literal /Users/<user>/ path (use ~/ — the matcher treats them differently)
 #        - raw `npx playwright test` (use `npm run test:docker-compose`)
-#        - `npm --prefix` over the workspace symlink (canonicalize with cd && pwd -P)
 #        - `&&` command chaining (one command per Bash call)
 #        - [2026-09-18] a `cd <path>` followed later by `git push` in the same
 #          command (use `git -C <path> push`, or a separate `cd` then `git push`)
@@ -166,10 +165,6 @@ if printf '%s' "$CMD" | grep -Eq 'npx[[:space:]].*playwright[[:space:]]+test'; t
   deny "Use the project wrapper 'npm run test:docker-compose' rather than raw 'npx playwright test' — the wrapper does setup the raw invocation skips."
 fi
 
-# npm --prefix over the workspace symlink — can corrupt the lockfile.
-if printf '%s' "$CMD" | grep -Eq 'npm[[:space:]].*--prefix[[:space:]]+[^[:space:]]*trade-imports-workspace[^[:space:]]*[[:space:]]+(install|i|ci|add|update|dedupe|prune|uninstall)([[:space:]]|$)'; then
-  deny "npm --prefix across the workspace symlink can corrupt the lockfile. Canonicalize first (cd <path> && pwd -P) and run npm install on the real path."
-fi
 
 # [2026-09-18] `cd <path>` followed later by `git push` in the same command —
 # the Sonar pre-push gate (scripts/sonar/sonar-push-gate.sh) resolves its

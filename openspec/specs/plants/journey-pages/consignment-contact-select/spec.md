@@ -77,11 +77,11 @@ The system MUST accept a chosen contact address, return the user to Overview wit
 
 ### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen — on either save-and-continue or save-and-return-to-overview — returning the user to Overview without an error, and MUST leave the contact task not yet started.
+The system MUST allow the page to be saved with no address chosen — on either save-and-continue or save-and-return-to-overview — returning the user to Overview without an error, and MUST leave the contact task not yet started when no contact address is held. A contact address already held MUST be kept, as governed by `plants/addresses`.
 
 #### Scenario: A blank save returns to Overview with the task not yet started
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
-- **GIVEN** the user is on the contact page with no address chosen
+- **GIVEN** the user is on the contact page with no address chosen and no contact address held yet
 - **WHEN** they save and continue or save and return to overview
 - **THEN** they reach Overview with no error summary
 - **AND** the contact task shows not yet started

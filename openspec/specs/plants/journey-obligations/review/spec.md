@@ -39,16 +39,19 @@ The system MUST refuse to continue from check-your-answers when the saved countr
 - **THEN** they remain on check-your-answers, still Draft
 - **AND** an error summary offers a correction that opens origin under change context, naming the ware-potato countries
 
-### Requirement: A previously selected party whose address no longer resolves blocks continue
+### Requirement: A copied address that breaks the address book's rules blocks continue and submit
 **ID**: REQ-PLANTS-OB-REVIEW-004
-The system MUST refuse to continue from check-your-answers when a party role that was previously answered no longer resolves to an address, showing an error that asks the user to select an address for that role. How the unresolved role is shown on the page itself is governed by `plants/journey-pages/check-your-answers`.
+The system MUST refuse to continue from check-your-answers, and refuse the declaration's submit, while an address copied onto the notification breaks the address book's field rules (`plants/addresses`). Check-your-answers MUST name each such role in an error at the top of the page, linking to its edit page, which returns there. A refused submit MUST return to check-your-answers, still in draft. An unanswered role MUST NOT count as breaking the rules.
 
-#### Scenario: A deleted place of destination blocks continue
+#### Scenario: A copied address that breaks the rules blocks continue and submit until it is corrected
 **ID**: SCN-PLANTS-OB-REVIEW-004-A
-- **GIVEN** a complete draft notification is open on check-your-answers
-- **WHEN** the place-of-destination address is removed from the address book and the user continues
-- **THEN** they remain on check-your-answers
-- **AND** an error summary asks them to select an address for the place of destination
+- **GIVEN** a complete draft notification whose place-of-destination copy breaks the address book's rules
+- **WHEN** the user opens check-your-answers and continues
+- **THEN** they remain on check-your-answers, with an error at the top of the page asking them to correct the address details for the place of destination
+- **WHEN** they confirm the declaration and submit
+- **THEN** they are returned to check-your-answers, and the notification is not submitted
+- **WHEN** they follow the error, correct the address and save
+- **THEN** they return to check-your-answers with no error, and the notification can be submitted
 
 ### Requirement: A late notification is still accepted, judged against the commodity type's timing window
 **ID**: REQ-PLANTS-OB-REVIEW-005

@@ -5,15 +5,35 @@
   "requirements": [
     {
       "id": "REQ-PLANTS-ADDR-001",
-      "name": "The chosen address resolves live from the address book on every read",
+      "name": "A chosen address is copied onto the notification, and later changes to the address book never reach it",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ADDR-001-A",
-          "name": "Editing the address book record changes what the notification shows",
+          "name": "Editing the record in the address book leaves the notification unchanged",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "editing a linked address in the address book changes what the notification shows", "strength": "full", "notes": "picker inset name + CYA destination card name/town/postcode after updateAddress; contact is a copy so it is left alone" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "editing the record in the address book does not change what the notification shows", "strength": "full", "notes": "updateAddress then destination picker current card keeps original name; CYA destination card keeps name/Perth/PH1 5EX, not renamed/Dundee" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the copy held on the notification without reading the address book", "strength": "partial", "notes": "CYA renders the held copy's name and never calls the address book — mechanism behind the isolation" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-001-B",
+          "name": "Deleting the record in the address book leaves the copy on the notification, which can still be submitted",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a destination deleted from the address book keeps its copy on CYA and submits", "strength": "full", "notes": "deleteAddress then reload: destination card keeps name and PH1 5EX; submit reaches confirmation" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-001-C",
+          "name": "Picking an address copies every one of its details onto the notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the edit form opens from the picker with every field, including County", "strength": "full", "notes": "after picking the contact, the edit form shows every copied field: name, both lines, town, county, postcode, country, phone, email" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "stored answer equals the picked-party copy of the record — mechanism" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the place of destination" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the contact address" }
           ]
         }
       ]
@@ -94,14 +114,16 @@
           "name": "Saving a new choice replaces the old one",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "replaces the address already saved rather than keeping both", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "replaces the address already saved rather than keeping both", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should replace a copy already held rather than keeping both", "strength": "full", "notes": "stored consignor equals the new record's copy" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should replace the copy already held rather than keeping both", "strength": "full", "notes": "stored contact equals the new record's copy" }
           ]
         }
       ]
     },
     {
       "id": "REQ-PLANTS-ADDR-005",
-      "name": "Saving with nothing chosen, or a value not on the list, is refused and focuses the first row",
+      "name": "Saving with nothing chosen and no address held, or a value not on the list, is refused and focuses the first row",
       "coverage": "full",
       "scenarios": [
         {
@@ -118,7 +140,8 @@
           "name": "A deleted or missing address-book id is rejected and the search preserved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "rejects a missing address-book id and preserves the search", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js", "test": "rejects a missing address-book id and preserves the search", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should refuse a save naming a consignor the organisation has deleted", "strength": "partial", "notes": "deleted-record branch: 400 with the consignor error, nothing stored; no search term in play" }
           ]
         },
         {
@@ -148,33 +171,182 @@
       ]
     },
     {
-      "id": "REQ-PLANTS-ADDR-007",
-      "name": "Deleting a linked address clears it while the notification still resolves live",
+      "id": "REQ-PLANTS-ADDR-009",
+      "name": "A copied address can be edited on the notification without changing the address book",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-ADDR-007-A",
-          "name": "Deleting a linked address clears it from the notification",
+          "id": "SCN-PLANTS-ADDR-009-A",
+          "name": "Editing a copied address changes only this notification",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "deleting the chosen address takes the answer off the notification", "strength": "full", "notes": "hub Not yet started; selected inset gone" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/parties/parties.test.js", "test": "Should drop a reference to a record the organisation has deleted", "strength": "partial", "notes": "sanitiser mechanism for REFERENCE_PARTIES" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "partial", "notes": "CYA display/block half; hub clear is destination.spec" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Edit details on CYA changes only this notification, not the address book record or another notification", "strength": "full", "notes": "edited name/Dundee on this CYA; getAddress shows record unchanged; the other notification's CYA keeps the original name" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should change only this notification, never the address book", "strength": "partial", "notes": "describe.each 'Edit $id address details', per role: save never calls the address book" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should save the edited copy and return to where the trader came from", "strength": "partial", "notes": "describe.each per role: the edited copy is stored on this notification" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-B",
+          "name": "The edit form opens with the copied details, including the county",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the edit form opens from the picker with every field, including County", "strength": "full", "notes": "heading, role caption and every field's value, opened from the contact picker" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "opens pre-filled from the copy, captioned with the role, with County", "strength": "partial", "notes": "heading, caption, name, County present and country only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should pre-fill the form from the copy held on the notification", "strength": "full", "notes": "describe.each per role: role title and every field's value in the view model" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-C",
+          "name": "An edit that breaks the address book's rules is refused with its messages",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "an edit that breaks the address book rules is refused with its messages, and nothing is saved", "strength": "full", "notes": "required, max length and email format messages in the summary and against each field; CYA unchanged afterwards" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should re-render with the address-book error messages and save nothing", "strength": "full", "notes": "describe.each per role: 400, field errors and summary links, stored copy unchanged" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "shows the address-book message for a field that breaks the rules, and saves nothing", "strength": "partial", "notes": "summary link focuses postcode; no field-level message or persistence assert" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/address-rules.test.js", "test": "Should reject a country not in the list", "strength": "partial", "notes": "rule only" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/address-rules.test.js", "test": "Should reject an email in the wrong format", "strength": "partial", "notes": "rule only" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-D",
+          "name": "Cancelling an edit leaves the copy unchanged",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the edit form opens from the picker with every field, including County", "strength": "full", "notes": "cancel after changing the name returns to the contact picker, whose current card keeps the original name" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "cancel leaves the copy as it was", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should leave the copy unchanged on Cancel and return to the picker", "strength": "full", "notes": "describe.each per role" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-E",
+          "name": "Saving an edit opened from the picker returns to the picker",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "saves the edit to this notification and returns to the picker", "strength": "full", "notes": "contact picker URL; current card shows the edited name" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should keep the change context on the way back to the picker", "strength": "partial", "notes": "redirect target only" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-F",
+          "name": "Saving an edit opened from check your answers returns there",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Edit details on CYA changes only this notification, not the address book record or another notification", "strength": "full", "notes": "returns to CYA URL; destination card shows the edited name and town" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should save the edited copy and return to where the trader came from", "strength": "partial", "notes": "redirect to check your answers and stored copy; the page itself is not rendered" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-G",
+          "name": "A country from the address book's list is accepted even outside the origin countries",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should accept a country the address book allows outside the SPS origin block", "strength": "full", "notes": "unit-only — US saved on the consignor copy" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should offer the address-book country list on the form", "strength": "partial", "notes": "the list offered, not the save" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-009-H",
+          "name": "Editing a role with no address held sends the user to the picker",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should send the trader to pick an address when none has been copied yet", "strength": "full", "notes": "unit-only; describe.each per role" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should send the trader to pick an address, saving nothing, when a save arrives with no copy", "strength": "partial", "notes": "POST half" }
           ]
         }
       ]
     },
     {
-      "id": "REQ-PLANTS-ADDR-008",
-      "name": "An address book that cannot be reached is not treated as a deletion",
+      "id": "REQ-PLANTS-ADDR-010",
+      "name": "Each picker shows the address the notification holds, with a way to edit its details",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-ADDR-008-A",
-          "name": "An address book outage is not mistaken for a deletion",
+          "id": "SCN-PLANTS-ADDR-010-A",
+          "name": "The picker shows the address held, with Edit details",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/parties/parties.test.js", "test": "Should let an outage propagate rather than read it as a deletion", "strength": "full", "notes": "unit-only — mechanism confidence, not product observation" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show the copy, as edited, with a link to edit its details", "strength": "full", "notes": "Current consignor or exporter card: edited name, address summary, Edit details href" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should show the copy with a link to edit its details", "strength": "partial", "notes": "unedited copy" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should show the copy held with a link to edit its details", "strength": "partial", "notes": "unedited copy" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.fit.spec.js", "test": "saves the edit to this notification and returns to the picker", "strength": "partial", "notes": "Current contact address card shows the edited name; its Edit details link is followed in beforeEach" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-010-B",
+          "name": "A role with no address yet shows no current address card",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show no current address before one is picked", "strength": "full", "notes": "unit-only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-011",
+      "name": "A submitted notification keeps its copied addresses, through amendment",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-011-A",
+          "name": "The dashboard names the consignor from the copy, whatever the notification's status",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/services/persistence/records/real/real.amend-list.test.js", "test": "Should read the copied party name off a %s notification without reading the address book", "strength": "full", "notes": "unit-only; test.each over DRAFT, SUBMITTED, AMEND — consignor name from the notification, no address-book request" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-011-B",
+          "name": "A submitted notification's address is unaffected by a later change to the record",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the copy held on the notification without reading the address book", "strength": "partial", "notes": "draft only; the read-only and amend views share the read path, but no test edits or deletes the record behind a submitted or amending notification" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ADDR-012",
+      "name": "Reopening the picker names the record the address was chosen from, and keeps the address on a blank save",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ADDR-012-A",
+          "name": "Reopening the picker names the record the address was chosen from",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "row checked and named as selected" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should tick the record the copy was picked from", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "results are paged five at a time, and a row ticked on a later page is the one that saves", "strength": "partial", "notes": "reopen names the record in the selected inset; its row is not on page one, so no tick to assert" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-012-B",
+          "name": "Saving with nothing ticked keeps the address already held",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "full", "notes": "edited copy, no pickedFromId: redirect onward, copy unchanged" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should keep a copy already held when saved with nothing ticked", "strength": "partial", "notes": "copy unchanged; the redirect is not asserted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-012-C",
+          "name": "Reopening the picker names nothing once the record is deleted from the book",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/destination.spec.ts", "test": "deleting the chosen address from the address book leaves its copy on the notification", "strength": "full", "notes": "after deleteAddress: no selected inset; current address card shows name and PH1 5EX" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should show no selection for a record the book no longer holds", "strength": "partial", "notes": "no selection; current card not asserted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ADDR-012-D",
+          "name": "Reopening the picker names nothing once the address is edited on the notification",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "the edit save drops the source record; no test reopens the picker after an edit and asserts nothing is named" }
           ]
         }
       ]

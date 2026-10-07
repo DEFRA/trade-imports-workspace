@@ -177,7 +177,7 @@ These are Address Lookup, TIG, TRACES, Dynamics, PIMS and Entra ID.
 | inc-002 | The same smoke test in CDP dev and test, signing in through the Defra ID stub | 4 | perftests | 001 | Ready |
 | inc-003 | First small run in CDP perf-test, once INS is deployed there | 3 | perftests | 002 | **Blocked**. **Review point** |
 | inc-004 | Traffic follows the real journey: draft, many edits, submit, read back, update | 6 | perftests | 001 | Ready |
-| inc-005 | Different users and organisations, varied notifications, documents and address book use | 7 | perftests, idstub | 004 | Ready |
+| inc-005 | Varied notifications, documents and address book use (one stubbed user: no distinct identities, ruled 1 October 2026) | 6 | perftests | 004 | Ready |
 | inc-006 | 1 year of existing notifications loaded before any load run | 4 | perftests | 005 | Ready |
 | inc-007 | A delay profile for each stubbed system, switchable per run and named in every report | 7 | perftests, stub, idstub | 001 | Ready |
 | inc-008 | Each stub's capacity measured before its results are trusted | 4 | perftests, stub, idstub | 007 | Ready |

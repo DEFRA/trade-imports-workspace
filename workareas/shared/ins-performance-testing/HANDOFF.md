@@ -1,25 +1,29 @@
 # Handover: build the INS performance-testing backlog
 
-You are taking over the build of 19 increments of k6 load tests for the Import Notification Service (INS). You orchestrate and verify. The build loop and its agents write the code. Use the `requirements-pipeline` skill's BUILD phase.
+You are taking over the build of k6 load tests for the Import Notification Service (INS), epic EUDPA-641. You orchestrate and verify. The build loop and its agents write the code. Use the `requirements-pipeline` skill's BUILD phase.
 
-## Summary
+## Summary (6 October 2026)
 
-- **1 of 19 landed (5%).** 16 to do, 2 blocked.
-- **inc-001 is waiting for Sam's review.** Do not launch until he says to carry on.
-- **Next is inc-002:** the same smoke run, pointed at CDP dev and CDP test, signing in through the real OIDC flow against the Defra ID stub.
-- **Workspace PR DEFRA/trade-imports-workspace#77 is open,** waiting for Sam to merge. It holds this backlog, the new repo's set-up and the build-loop changes.
+- **16 of 23 landed (70%).** 3 to do, 3 blocked, 1 deferred. **Nothing is buildable.** inc-023, inc-011, inc-012 and inc-017 landed on 5 and 6 October; see `OVERNIGHT-2026-10-05.md`.
+- **inc-014 is deferred** until the frontends' npm security audit (another session) and ins-frontend's Lighthouse fix are on `main`. Lighthouse fails because ins-frontend's `.npmrc` has `ignore-scripts=true`. Sam ruled to remove only that line, but agents are denied access to `.npmrc`, so the edit is his. Then set inc-014 back to todo: the loop resumes it at `ci` on its 6 open PRs. inc-015 depends on it.
+- **inc-016 and inc-018** wait on inc-003 (INS deployed to CDP perf-test). **inc-022** waits on a test-environment `DEVELOPER_API_KEY`.
+- **Workspace #97 merged:** planners now write only check forms the deny list allows, and a plan with a denied form is sent back once, then refused.
+- **No approval gate anywhere (Sam, 6 October 2026: "we should have no such thing").** The workspace repo's `requireApproval: true` was taken out of the envelope. Pass `requireApproval: false` and no per-repo flag. Every green increment merges itself, the workspace included.
+- **Closing tickets:** the last run's done stage closed EUDPA-665 itself. If a run still ends at `done-failed`, close the ticket and mark the row done by hand (see "After every run").
 
 ## Where things stand
 
-- **Step 0 is done.** The k6 suite repo is set up (DEFRA/trade-imports-performance-tests#1, merged) and the build loop takes this backlog's repos.
-- **inc-001 landed:** DEFRA/trade-imports-performance-tests#2, merged; ticket EUDPA-642, Done. It is a review point, so the loop stopped after it. Sam is to:
-
-  > Look at the walking skeleton before anything builds on it: how the performance suite repo is laid out and runs in CDP, how a run is pointed at an environment, the smoke path through both journeys and the front door, the interim thresholds, and a pull-request run that fails on a deliberately breached threshold.
-
+- **Landed today:**
+  - inc-021: the smoke run reaches CDP dev from a laptop. Perf-tests #8, EUDPA-661. All four scenarios passed every threshold against CDP dev.
+  - inc-020: the IUU profile is removed everywhere. Perf-tests #9, EUDPA-666.
 - **Blocked:**
-  - inc-003 waits for INS to be deployed to CDP perf-test. inc-016 and inc-018 depend on it.
-  - inc-013 waits for the session API, permissions service and routing proxy to be built.
-- **Review points still to come:** inc-003 and inc-009. The loop lands each, then stops. Bring each to Sam with the row's `gate` text.
+  - inc-022 (CDP test run): needs a test-environment `DEVELOPER_API_KEY` from Sam. Set it to todo when he adds it to `repos/trade-imports-performance-tests/.env`.
+  - inc-003: INS is not deployed to CDP perf-test. inc-016 and inc-018 depend on it.
+  - inc-013: the session API, permissions service and routing proxy are not built yet.
+- **Factory fixes merged today:**
+  - workspace #90: `tim build start` keeps its JSON line small however dirty the workspace is. Before this, a workspace build stopped at `derive-failed`.
+  - workspace #91: the routing-golden test is 8× faster. It used to time out under gate load.
+- **Docker crashed once** during inc-020's first ladder, on the p99-burst run. The cause is unknown and it is not the Rosetta problem. The relaunch ran clean. If it happens again, investigate before retrying.
 
 Count the statuses from the workspace root:
 
@@ -27,39 +31,16 @@ Count the statuses from the workspace root:
 jq -r '[.increments[].status] | group_by(.) | map({(.[0]): length}) | add' workareas/shared/ins-performance-testing/backlog.json
 ```
 
-## Sam's answers
+## Not this programme's work
 
-- The epic is EUDPA-641.
-- Build every open-question default in `report.md` as written.
-- INS is not deployed to CDP perf-test yet.
+Leave these alone. They are tracked elsewhere:
 
-## Read first
-
-- `report.md`: the summary, the 12 open questions and their defaults, the increments, what is out of scope.
-- `backlog.json`: the rows. The envelope's `invariants` are rules every increment keeps.
-- `.claude/skills/requirements-pipeline/references/BUILD.md` and `workflow/README.md`: how the loop runs, its stop reasons and the stack lease.
-
-## Refresh the machine
-
-This machine already has the workspace, `tim` and credentials. Bring it up to date in this order.
-
-1. Get the workspace branch:
-   - `git -C ~/git/defra/trade-imports-workspace fetch origin`
-   - check out `feat/NO_JIRA-ins-performance-testing`, or `main` if #77 has merged, then `git -C ~/git/defra/trade-imports-workspace pull`
-2. Bring `tim` up to date if its lockfile changed. A hook blocks `npm --prefix … ci`, so run it by hand from inside `tim/`:
-   - `cd ~/git/defra/trade-imports-workspace/tim` then `npm ci`
-   - `npm --prefix ~/git/defra/trade-imports-workspace/tim link` if `tim` is not on your PATH, or `readlink -f "$(which tim)"` points at another clone
-3. `tim workspace setup` clones any repo that is missing, including `trade-imports-performance-tests` and `trade-imports-ins-tests`.
-4. `tim workspace update` pulls every repo.
-5. Install the programme's Node repos, one `--repo` each: `tim workspace install --repo trade-imports-ins-tests --repo trade-imports-animals-frontend --repo trade-imports-plants-frontend --repo trade-imports-ins-frontend --repo trade-imports-defra-id-stub --repo trade-imports-performance-tests`
-6. Check every repo is on `main` and clean: `tim workspace status --json`.
-7. Check the stack is down and unleased: `docker ps` lists nothing, and `tim docker lease status` shows no lease. FIT needs its ports free.
-8. Raise **Dynamic workflow size** in `/config`.
-9. Run the baseline gate: `tim build gate shared/ins-performance-testing --phase all`. It must be green before you launch. It starts and stops its own stack for the E2E phase.
+- **npm security audit** (the braces advisory) is failing on the frontends. Another session owns it. animals-frontend #386 and plants-frontend #85 wait on it, and then on Sam's go-ahead to merge.
+- **EUDPA-667** owns blank-save behaviour (mandatory to proceed vs mandatory to submit). animals-frontend #387 and ins-tests #11 were closed in its favour.
 
 ## Launch
 
-When Sam has reviewed inc-001 and says to carry on, launch the loop once, by `scriptPath`, never by name:
+Check that the stack is down and unleased (`tim docker lease status`). Then launch once, by `scriptPath`:
 
 ```
 Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js", args: <the object below> })
@@ -82,81 +63,40 @@ Workflow({ scriptPath: ".claude/skills/requirements-pipeline/workflow/increment-
   ciWatchMinutes: 30,
   requireApproval: false,
   approvalWaitMinutes: 20,
-  repos: {
-    perftests: { path: 'repos/trade-imports-performance-tests', github: 'DEFRA/trade-imports-performance-tests' },
-    stub: { path: 'repos/trade-imports-stub', github: 'DEFRA/trade-imports-stub' },
-    idstub: { path: 'repos/trade-imports-defra-id-stub', github: 'DEFRA/trade-imports-defra-id-stub' },
-    insfrontend: { path: 'repos/trade-imports-ins-frontend', github: 'DEFRA/trade-imports-ins-frontend' },
-    animalsfrontend: { path: 'repos/trade-imports-animals-frontend', github: 'DEFRA/trade-imports-animals-frontend' },
-    plantsfrontend: { path: 'repos/trade-imports-plants-frontend', github: 'DEFRA/trade-imports-plants-frontend' },
-    referencedata: { path: 'repos/trade-imports-reference-data', github: 'DEFRA/trade-imports-reference-data' },
-    gateway: { path: 'repos/trade-imports-dynamics-gateway', github: 'DEFRA/trade-imports-dynamics-gateway' },
-    instests: { path: 'repos/trade-imports-ins-tests', github: 'DEFRA/trade-imports-ins-tests' }
-  },
+  repos: <exactly what `jq '.repos' workareas/shared/ins-performance-testing/backlog.json` prints: 10 keys, including workspace, with no requireApproval anywhere>,
   models: {},
   increments: null,
-  stopAfter: 'all'
+  stopAfter: 1
 }
 ```
 
-These are the keys the loop requires today. If `increment-build-loop.js`'s `ALWAYS_REQUIRED` list has changed, follow it. `repos` must match the envelope exactly (`jq '.repos' backlog.json`): all 9 keys, including `instests`, which BUILD.md's example leaves out.
+Use `stopAfter: 1` while the Jira permission stops every run at `done-failed`.
+
+## After every run
+
+1. Check the PR merged: `gh pr view <n> -R <repo>`.
+2. Close the ticket: `tools/jira/transition-ticket.sh <KEY> Done`.
+3. Mark the row: `tim backlog set shared/ins-performance-testing <id> --status done --commit <merge sha>`.
+4. `tim build runs archive <runId>`, then `tim build runs report <runId>`.
+5. A killed run leaves its lease behind: `tim docker lease release --holder <run id>`.
 
 ## Rules that matter
 
-- **Orchestrate, never implement.** Every file change goes to a subagent, and every subagent prompt carries a GUARD RAILS block: tilde paths in Bash, absolute paths in Read and Write, one command per Bash call, no `cd`, `git -C` and `npm --prefix`, no `sonar`, no subagents or forks, finish your own task if a user message is relayed.
-- **Merging.** PRs in `trade-imports-performance-tests` may be merged without asking. Every other repo needs Sam's go-ahead.
-- **The stack lease.** One lease file per machine records who holds the workspace stack. The loop's stages and the gate take it and give it back. While it is held, `tim docker up`, `dev`, `down`, `restart` and `bounce-backend` refuse. Their `--force` is for a person only; never pass it. A stack started by hand has no lease, so it counts as somebody else's and stops the run at `stack-held`. Check with `tim docker lease status`.
-- **After every run,** run `tim build runs archive <runId>`, then `tim build runs report <runId>`.
-- **Status names.** Configure the board's status names, the right-hand column of `tools/jira/transition-ticket.sh <KEY> --list`, not the transition names.
-- **Keep sensitive material out of public repos.** `trade-imports-workspace` and `trade-imports-performance-tests` are public. Never push meeting transcripts, Confluence copies or detail of the access-control finding.
-- **Reporting.** Progress as N of 19 (P%), plain English. Flag the calls you made rather than waiting on them.
+- **Orchestrate, never implement.** Every file change goes to a subagent or the loop, with a GUARD RAILS block. If the loop cannot do something, fix the loop first.
+- **Merging.** The loop merges every green increment itself, in every repo, the workspace included. There is no human approval gate. A PR you raise by hand outside the loop (a factory fix, say) still waits for Sam's go-ahead.
+- **Scope.**
+  - One stubbed user, no distinct identities.
+  - IUU is out of scope.
+  - No stack performance work beyond inc-023.
+  - Address Lookup waits until it is wired in.
+  - The k6 smoke job keeps its own runner and stack.
+  - Leave the permission allowlist alone, and don't speed up gate layer 1.
+- **Missing access or tokens while Sam is away:** set the row to deferred with a note, chain its dependents, and relaunch.
+- **Public repos.** `trade-imports-workspace` and `trade-imports-performance-tests` are public. Never push transcripts, Confluence copies or security findings. `sources.json`, `sources/` and `distil/` stay local.
+- **Reports.** Progress as N of 23 (P%). Put only what needs Sam at the top. The review page is https://claude.ai/artifact/1oTLrwBCMQN8un1kxxQKs3 — republish it rather than creating a new one.
 
-## What stays on the old machine
+## Read first
 
-- `sources.json`, `sources/` and `distil/`. You only need them to re-distil. They hold a meeting transcript and a security finding, so they are never pushed; Sam copies them privately if wanted.
-- The build-telemetry archive, `workareas/build-telemetry/`.
-- The stack lease file.
-
-Claude Code deletes old sessions after 30 days unless `cleanupPeriodDays` is raised, so archive a run before then.
-
-## Open items
-
-- **Address Lookup.** The inc-014 dry run found that the INS backend calls Address Lookup outside the boundary. `trade-imports-ins-backend` is not in this programme's repos. Should a row measure it?
-- **Where the smoke job runs.** In the workspace E2E workflow the k6 smoke job runs on its own runner and stack, not beside the Playwright shards on one stack. Sam to confirm.
-- **Codex stages take no stack lease.**
-- **The branch lifecycle** still uses its separate derive and branch agents, not `tim build start`.
-
-## Loop snags already fixed
-
-You may see these in older logs. Each is fixed on the programme branch.
-
-- **Status name and transition name.** On EUDPA the In Progress transition leads to the status In Dev. A run given In Progress stopped at `ticket-failed`. The key is now `jiraInDevStatus`, set to the status name.
-- **A reviewer left the stack up.** On inc-001's first attempt the consistency reviewer started the stack and left it running, so the ladder's FIT phase found port 3000 taken. The stack lease now stops this.
-- **The PR stage checked every configured repo.** A one-repo increment raised its PR, then walked on to the other repos and stopped at `pr-failed`. It now checks only the row's repos.
-
-## The handover prompt
-
-````
-Resume the ins-performance-testing build with the requirements-pipeline skill's BUILD phase.
-
-workarea     shared/ins-performance-testing
-branch       main
-lifecycle    full
-scope        ins-performance-testing
-executor     claude
-jiraProject  EUDPA
-epic         EUDPA-641
-inDev        In Dev
-doneStatus   Done
-board        13780
-repos        {"perftests":{"path":"repos/trade-imports-performance-tests","github":"DEFRA/trade-imports-performance-tests"},"stub":{"path":"repos/trade-imports-stub","github":"DEFRA/trade-imports-stub"},"idstub":{"path":"repos/trade-imports-defra-id-stub","github":"DEFRA/trade-imports-defra-id-stub"},"insfrontend":{"path":"repos/trade-imports-ins-frontend","github":"DEFRA/trade-imports-ins-frontend"},"animalsfrontend":{"path":"repos/trade-imports-animals-frontend","github":"DEFRA/trade-imports-animals-frontend"},"plantsfrontend":{"path":"repos/trade-imports-plants-frontend","github":"DEFRA/trade-imports-plants-frontend"},"referencedata":{"path":"repos/trade-imports-reference-data","github":"DEFRA/trade-imports-reference-data"},"gateway":{"path":"repos/trade-imports-dynamics-gateway","github":"DEFRA/trade-imports-dynamics-gateway"},"instests":{"path":"repos/trade-imports-ins-tests","github":"DEFRA/trade-imports-ins-tests"}}
-models       {}, the recommended split (think opus, code sonnet, light haiku)
-stopAfter    all
-
-Stopped: gate. Last landed inc-001 (https://github.com/DEFRA/trade-imports-performance-tests/pull/2, EUDPA-642).
-16 todo remain, 2 blocked, 0 dropped.
-Owed to a human: Sam's review of inc-001's walking skeleton before the build continues.
-
-Read workareas/shared/ins-performance-testing/HANDOFF.md before the first increment.
-Raise Dynamic workflow size in /config first.
-````
+- `report.md`: the open questions, their defaults and what is out of scope.
+- `backlog.json`: the rows. The envelope's `invariants` are rules every increment keeps.
+- `.claude/skills/requirements-pipeline/references/BUILD.md`: how the loop runs, and its stop reasons.

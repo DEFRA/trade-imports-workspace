@@ -51,7 +51,7 @@ The system MUST redirect a request for the declaration page to the confirmation 
 
 ### Requirement: Confirming the declaration submits the notification and opens confirmation
 **ID**: REQ-PLANTS-DECLARATION-005
-The system MUST submit the notification when the user confirms the declaration and continues, opening the confirmation page, and MUST record whether the submission was late or on time as governed by `plants/journey-obligations/review`.
+The system MUST submit the notification when the user confirms the declaration and continues, opening the confirmation page, and MUST record whether the submission was late or on time as governed by `plants/journey-obligations/review`. A notification that check-your-answers would refuse to continue MUST NOT be submitted from here, as governed by `plants/journey-obligations/review`.
 
 #### Scenario: Confirming and continuing opens confirmation for an on-time notification
 **ID**: SCN-PLANTS-DECLARATION-005-A

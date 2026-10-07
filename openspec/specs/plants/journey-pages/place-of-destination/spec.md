@@ -95,13 +95,13 @@ The system MUST accept a chosen place of destination, saving it without error, M
 - **WHEN** the user chooses a different address and saves
 - **THEN** the saved destination is the new one, and the old one is no longer associated
 
-### Requirement: Saving with nothing chosen is refused
+### Requirement: Saving with nothing chosen is refused while no destination is held
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-005
-The system MUST refuse to save the page when nothing has been chosen, showing an error that names the missing place of destination, MUST focus the first row when results are shown, and MUST focus the search box when nothing matched.
+The system MUST refuse to save the page when nothing has been chosen and the notification holds no place of destination yet, showing an error that names the missing place of destination, MUST focus the first row when results are shown, and MUST focus the search box when nothing matched. A place of destination already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen focuses the first row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-A
-- **GIVEN** the user is on the place of destination page with nothing chosen and results showing
+- **GIVEN** the user is on the place of destination page with nothing chosen, no destination held yet, and results showing
 - **WHEN** they save and continue
 - **THEN** an error summary is shown
 - **WHEN** they follow the error
@@ -109,22 +109,22 @@ The system MUST refuse to save the page when nothing has been chosen, showing an
 
 #### Scenario: Saving with nothing found focuses the search box
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-B
-- **GIVEN** the user has searched for a term matching no address
+- **GIVEN** the user has searched for a term matching no address, with no destination held yet
 - **WHEN** they save and continue
 - **THEN** an error summary is shown
 - **WHEN** they follow the error
 - **THEN** the search box is focused
 
-### Requirement: Deleting the chosen address takes the answer off the notification
+### Requirement: Deleting the chosen address from the address book leaves the destination on the notification
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-006
-The system MUST treat a place of destination whose address-book record has since been deleted as never entered: the Overview task row MUST read not yet started, and the page MUST show no selected address. Live resolution of the record itself is governed by `plants/addresses`.
+The system MUST keep a place of destination whose address-book record has since been deleted: the Overview task row MUST stay completed, and the page MUST still show the held address as the current place of destination while naming no selected address in the list. The copy itself is governed by `plants/addresses`.
 
-#### Scenario: Deleting the chosen record clears the destination on Overview and the page
+#### Scenario: Deleting the chosen record leaves the destination on Overview and the page
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-006-A
 - **GIVEN** a place of destination has been saved from the address book
 - **WHEN** that address record is deleted from the organisation's address book
-- **THEN** the Overview destination task row reads not yet started
-- **AND** reopening the page shows no selected address
+- **THEN** the Overview destination task row still reads completed
+- **AND** reopening the page shows the held address as the current place of destination, with no selected address named
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007

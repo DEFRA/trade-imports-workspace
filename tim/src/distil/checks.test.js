@@ -106,6 +106,23 @@ describe('sourcesProblems', () => {
     ])
   })
 
+  test('accepts a rule for grouping the backlog into themes', () => {
+    const sources = demoSources()
+    sources.themes =
+      'Group increments by the code each touches, so themes build in parallel without conflicting pull requests.'
+
+    expect(sourcesProblems(sources, workspace.schemas.sources)).toEqual([])
+  })
+
+  test('refuses a themes rule that is blank', () => {
+    const sources = demoSources()
+    sources.themes = '  '
+
+    expect(sourcesProblems(sources, workspace.schemas.sources)).toEqual([
+      'sources.json themes is empty.'
+    ])
+  })
+
   test('refuses a source named twice', () => {
     const sources = demoSources()
     sources.sources.push(sources.sources[1])

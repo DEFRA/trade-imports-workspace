@@ -5,8 +5,35 @@ the row, what each field means, which are required, the statuses, and the recipe
 field has a `description` there. Read it for the fields; this file keeps only the rules a schema cannot check.
 
 `tim backlog check <workarea>` validates a backlog against that schema, then checks what a schema cannot: every
-`dependsOn` id is in the backlog, no row depends on itself, there is no cycle, no id appears twice, and every repo a
-row's `merge` names is in the row's `repos` and in the envelope's.
+`dependsOn` id is in the backlog, no row depends on itself, there is no cycle, no id appears twice, every repo a
+row's `merge` names is in the row's `repos` and in the envelope's, the theme rules below hold, and every
+`externalDependsOn` names a row that its workarea's backlog has.
+
+## Themes
+
+A backlog may group its rows into `themes`, so each theme builds on its own machine and its own branch at the same
+time as the others. DISTIL writes them when `sources.json` has a `themes` rule. `tim backlog split` then writes one
+backlog per theme.
+
+- **A theme's boundary is drawn by the code it touches.** Its `touches` names the code areas it owns, as
+  `<repoKey>:<path prefix>`. Its `why` gives the evidence: which requirements change that code. Two themes never
+  touch the same path, or one inside the other, in the same repo: overlapping code means conflicting pull requests.
+  Name the narrowest folder the rows change, never a whole repo another theme also builds in.
+- **A row belongs to exactly one theme.** Every `todo` or `blocked` row names it in `theme`, and builds only in
+  repos its theme touches. A row built or set aside may have no theme.
+- **A cross-theme dependency is a real ordering need.** A row may depend on a row in another theme only when it
+  cannot be built before that row lands. Its theme then depends on that theme, directly or through another. Each
+  one makes a theme wait for another machine, so prefer a boundary that needs none.
+- **Themes land in waves.** A theme lands after every theme it depends on. Themes with no ordering need between
+  them land in the same wave, in parallel. `tim backlog split` writes the order to `themes/themes.json`.
+- **A theme id is stable once its rows are built.** The split's workarea and branch are named by it. On a
+  re-distil, keep each row's theme unless the requirements behind it moved to another theme's code. A row built or
+  set aside never changes theme.
+
+A split backlog, at `workareas/<workarea>/themes/<theme id>/backlog.json`, has `theme`, `branch`, `parent` and
+`touches` in its envelope instead of `themes`, and only its theme's rows. A `dependsOn` on another theme's row
+becomes an `externalDependsOn` on that theme's split workarea; one on a row in no theme points at the parent. Never
+edit a split backlog's rows by hand: re-distil the parent and split again.
 
 ## Rows for the branch lifecycle
 

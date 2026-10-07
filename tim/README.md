@@ -156,20 +156,46 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
-Three commands work on any workarea's `backlog.json` in the one backlog shape,
+Four commands work on any workarea's `backlog.json` in the one backlog shape,
 with no registration. The shape is defined by
 `.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
 `check` reads from the workspace at runtime and validates against; it then checks
 what a schema cannot say (every dependency is in the backlog, no cycle, no
-duplicate id). The requirements-pipeline skill's DISTIL and BUILD phases and the
-build loop use them:
+duplicate id, the theme rules, and every `externalDependsOn` row is in its own
+workarea's backlog). The requirements-pipeline skill's DISTIL and BUILD phases
+and the build loop use them:
 
 ```bash
-tim backlog check shared/my-programme --json     # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape
-tim backlog next shared/my-programme --json      # the next buildable id, or NONE
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; exits 1 when out of shape
+tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
+tim backlog split shared/my-programme --json     # a dry run: one backlog per theme, and the landing order
+tim backlog split shared/my-programme --write --branch-prefix feat/EUDPA-123-plants --json
 ```
+
+`split` takes a backlog with `themes` and writes one backlog per theme at
+`workareas/<workarea>/themes/<theme id>/backlog.json`, plus
+`workareas/<workarea>/themes/themes.json`. Each split backlog carries the
+parent's envelope (its programme suffixed with the theme id), only the repos
+its rows use, its `theme`, `branch` (default `feat/NO_JIRA-<programme>-<theme id>`;
+`--branch-prefix` replaces the part before the theme id), `parent` (the parent
+workarea, its landing wave and the themes it lands after) and `touches`, and
+only its own rows. A `dependsOn` on another theme's row becomes an
+`externalDependsOn` on that theme's workarea; one on a row in no theme points
+at the parent. `themes.json` lists each theme's id, title, workarea, branch,
+wave, row count, `dependsOn` and `touches`, every cross-theme row dependency,
+the rows in no theme, and the landing order as waves: themes in one wave have
+no ordering need between them and build in parallel.
+
+It is a dry run unless given `--write`. It checks the parent and every split
+backlog first, and writes nothing if any fails (exit 1). It writes only the
+files that change, so a second run changes nothing. On a re-split, a row whose
+split copy the build loop has built or set aside (any status but `todo` or
+`blocked`) is kept as it is; a `todo` or `blocked` row is refreshed from the
+parent, keeping the ticket, branch, commit, pull requests, notes and open
+questions written on the split copy. It refuses, writing nothing, when the
+parent now puts a built row in another theme or in none.
 
 A programme is registered in `tools/backlog/registry.json` — including
 `fixture-requirements`, the tracked fixture this file's own tests re-ingest on

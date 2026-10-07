@@ -984,6 +984,8 @@ READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_AB
 ${existingBacklogNote(round)}
 THE FILE YOU WRITE: ${BACKLOG_ABS}. Nothing else.
 REPOS: ${repoKeysNote}
+THEMES: when ${SOURCES_ABS} has a "themes" rule, give every row a theme and write the envelope's "themes", as the
+brief's "Themes" section says. tim backlog check holds the themes to the rules in SHAPE.md.
 ${OBSERVABLE_RULE}
 CHECKS, both until both pass:
 - \`${timCommand('backlog check')}\`

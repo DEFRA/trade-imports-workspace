@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadBacklogSchema, statusesOf } from './backlog-schema.js'
@@ -9,12 +10,9 @@ import {
   setRowFields
 } from './shape.js'
 
-const workspaceRoot = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  '..'
-)
+const here = dirname(fileURLToPath(import.meta.url))
+
+const workspaceRoot = join(here, '..', '..', '..')
 
 const schema = loadBacklogSchema(workspaceRoot)
 
@@ -354,6 +352,91 @@ describe('checkBacklog', () => {
     })
   })
 
+  describe('themes', () => {
+    const themedBacklog = () =>
+      JSON.parse(
+        readFileSync(
+          join(here, '__fixtures__', 'themed', 'backlog.json'),
+          'utf8'
+        )
+      )
+
+    test('passes a themed backlog', () => {
+      expect(checkBacklog(themedBacklog()).problems).toEqual([])
+    })
+
+    test('names a theme rule a schema cannot check', () => {
+      const backlog = themedBacklog()
+      backlog.themes[2].touches.push('frontend:src/server')
+
+      expect(checkBacklog(backlog).problems).toEqual([
+        'Themes "origin" and "documents" overlap: frontend:src/server/origin (origin) and frontend:src/server (documents). Two themes that touch the same code raise conflicting pull requests.',
+        'Themes "commodity" and "documents" overlap: frontend:src/server/commodity (commodity) and frontend:src/server (documents). Two themes that touch the same code raise conflicting pull requests.'
+      ])
+    })
+
+    test('refuses a theme that does not say why or what it touches', () => {
+      const backlog = themedBacklog()
+      delete backlog.themes[0].why
+
+      expect(checkBacklog(backlog).problems).toEqual([
+        'The backlog "themes" must be a list of objects with "id", "title", "why", "touches", "dependsOn".'
+      ])
+    })
+
+    test('refuses a theme id that is not kebab-case', () => {
+      const backlog = themedBacklog()
+      backlog.themes[2].id = 'Documents'
+
+      expect(checkBacklog(backlog).problems).toContain(
+        'The backlog "themes" must be a list of objects with "id", "title", "why", "touches", "dependsOn".'
+      )
+    })
+
+    test("refuses a split backlog's parent with no wave", () => {
+      const split = {
+        theme: 'origin',
+        branch: 'feat/NO_JIRA-hrp-origin',
+        parent: { workarea: 'shared/hrp', landsAfter: [] },
+        increments: [row({ theme: 'origin' })]
+      }
+
+      expect(checkBacklog(split).problems).toEqual([
+        'The backlog "parent" must be an object.'
+      ])
+    })
+  })
+
+  describe('externalDependsOn', () => {
+    const waiting = backlogOf(
+      row({
+        externalDependsOn: [
+          { workarea: 'shared/hrp/themes/origin', id: 'inc-002' }
+        ]
+      })
+    )
+
+    test("follows each one into its own workarea's backlog when given a reader", () => {
+      const { problems } = checkAgainst(waiting, schema, {
+        readWorkareaBacklog: () => null
+      })
+
+      expect(problems).toEqual([
+        'inc-001 depends on inc-002 in shared/hrp/themes/origin, which has no backlog.json.'
+      ])
+    })
+
+    test('refuses one with no id', () => {
+      const stray = backlogOf(
+        row({ externalDependsOn: [{ workarea: 'shared/hrp' }] })
+      )
+
+      expect(checkBacklog(stray).problems).toEqual([
+        'inc-001 "externalDependsOn" must be a list of objects with "workarea", "id".'
+      ])
+    })
+  })
+
   test('counts rows by status', () => {
     expect(
       checkBacklog(backlogOf(row(), row({ id: 'inc-002', status: 'done' })))
@@ -406,6 +489,30 @@ describe('nextBuildable', () => {
 
   test('returns null when nothing is buildable', () => {
     expect(nextBuildable(backlogOf(row({ status: 'done' })))).toBeNull()
+  })
+
+  describe('a row with an externalDependsOn', () => {
+    const backlog = backlogOf(
+      row({
+        externalDependsOn: [
+          { workarea: 'shared/hrp/themes/origin', id: 'inc-009' }
+        ]
+      }),
+      row({ id: 'inc-002' })
+    )
+    const originWith = (status) => () =>
+      backlogOf(row({ id: 'inc-009', status }))
+
+    test("waits until the other workarea's row is done", () => {
+      expect([
+        nextBuildable(backlog, { readWorkareaBacklog: originWith('todo') }),
+        nextBuildable(backlog, { readWorkareaBacklog: originWith('done') })
+      ]).toEqual(['inc-002', 'inc-001'])
+    })
+
+    test('waits when nobody says how to read the other workarea', () => {
+      expect(nextBuildable(backlog)).toBe('inc-002')
+    })
   })
 })
 

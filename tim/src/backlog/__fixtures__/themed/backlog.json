@@ -1,0 +1,133 @@
+{
+  "programme": "hrp-origin-and-commodity",
+  "generatedFrom": [
+    "repo:frontend",
+    "repo:backend",
+    "repo:tests",
+    "confluence:6518997274"
+  ],
+  "invariants": ["Every page round-trips the CSRF token."],
+  "repos": {
+    "backend": {
+      "path": "repos/trade-imports-plants-backend",
+      "github": "DEFRA/trade-imports-plants-backend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "frontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "themes": [
+    {
+      "id": "origin",
+      "title": "Country of origin",
+      "why": "req-001 to req-004 change only the origin pages and the notification's origin fields.",
+      "touches": [
+        "frontend:src/server/origin",
+        "backend:src/main/java/uk/gov/defra/plants/origin",
+        "tests:tests/plants/origin"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "commodity",
+      "title": "Commodity details",
+      "why": "req-005 to req-008 change only the commodity pages; the region list reads the origin country.",
+      "touches": [
+        "frontend:src/server/commodity",
+        "backend:src/main/java/uk/gov/defra/plants/commodity",
+        "tests:tests/plants/commodity"
+      ],
+      "dependsOn": ["origin"]
+    },
+    {
+      "id": "documents",
+      "title": "Accompanying documents",
+      "why": "req-009 changes only the documents page and its tests.",
+      "touches": [
+        "frontend:src/server/documents",
+        "tests:tests/plants/documents"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "Ask for the country of origin",
+      "detail": "An importer says which country the plants come from, so the inspector knows which rules apply.",
+      "acceptanceCriteria": [
+        "The origin page asks \"Which country are the plants from?\" (confluence:6518997274 §Origin)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "repos": ["backend", "tests", "frontend"],
+      "theme": "origin",
+      "commit": "abc1234"
+    },
+    {
+      "id": "inc-002",
+      "title": "Ask for the region of origin",
+      "detail": "An importer whose country has regions says which one, so the inspector can check regional rules.",
+      "acceptanceCriteria": [
+        "The origin page asks for a region when the country has regions (confluence:6518997274 §Origin)"
+      ],
+      "dependsOn": ["inc-001"],
+      "status": "todo",
+      "repos": ["backend", "tests", "frontend"],
+      "theme": "origin"
+    },
+    {
+      "id": "inc-003",
+      "title": "Ask for the commodity code",
+      "detail": "An importer gives the commodity code, so the notification names what is imported.",
+      "acceptanceCriteria": [
+        "The commodity page asks for an 8-digit commodity code (confluence:6518997274 §Commodity)"
+      ],
+      "dependsOn": ["inc-002"],
+      "status": "todo",
+      "repos": ["backend", "tests", "frontend"],
+      "theme": "commodity"
+    },
+    {
+      "id": "inc-004",
+      "title": "Ask for the quantity",
+      "detail": "An importer gives how many plants arrive, so the inspector can plan the check.",
+      "acceptanceCriteria": [
+        "The commodity page asks for the number of plants (confluence:6518997274 §Commodity)"
+      ],
+      "dependsOn": ["inc-003"],
+      "status": "todo",
+      "repos": ["backend", "tests", "frontend"],
+      "theme": "commodity"
+    },
+    {
+      "id": "inc-005",
+      "title": "Upload a phytosanitary certificate",
+      "detail": "An importer uploads the certificate, so the inspector sees it before the plants arrive.",
+      "acceptanceCriteria": [
+        "The documents page accepts a PDF up to 10MB (confluence:6518997274 §Documents)"
+      ],
+      "dependsOn": ["inc-006"],
+      "status": "todo",
+      "repos": ["tests", "frontend"],
+      "theme": "documents"
+    },
+    {
+      "id": "inc-006",
+      "title": "Show the documents page",
+      "detail": "An importer reaches the documents page from the task list.",
+      "acceptanceCriteria": [
+        "The task list links to the documents page (confluence:6518997274 §Documents)"
+      ],
+      "dependsOn": [],
+      "status": "done",
+      "repos": ["tests", "frontend"],
+      "commit": "def5678"
+    }
+  ]
+}

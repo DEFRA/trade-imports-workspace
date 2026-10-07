@@ -18,6 +18,7 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 | 6. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
 | 7. Save the report | The main session | [Section 5](#5-save-the-report) |
 | 8. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
+| 9. Split a themed backlog, one backlog per theme | The main session | [Section 7](#7-split-into-themes) |
 
 Steps 1 to 6 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
@@ -81,6 +82,10 @@ defined in [`sources.schema.json`](sources.schema.json):
   somebody walked, so it is a lower bound on the service. The suite that drove it names the pages and
   fields no recorded run happened to reach. Add it as a `repo` source scoped to those specs, and the
   reconcile step raises the floor. Where the suite is gone, tell the user: the lower bound stands.
+- **Write `themes` only when the user asks for themes**, such as building on several machines at once. It is the
+  rule for drawing theme boundaries, in the user's words or as "Group increments by the code each touches, so themes
+  build in parallel without conflicting pull requests." The consolidator then gives every row a theme. Leave it out
+  otherwise: a backlog without themes builds as one.
 - `scope` narrows a large source. Distil a slice of a big source well rather than all of it thinly.
 - **Fetch each Confluence page** with
   `tim confluence page <id> --json > workareas/<workarea>/sources/<page-id>.json`, and make that file the
@@ -270,12 +275,40 @@ interrupt a run.
 On the next launch only the new or changed sources are extracted and verified. Reconcile and consolidate run over
 everything, keeping every existing id, so the backlog grows rather than starting again.
 
+## 7. Split into themes
+
+Only when `sources.json` has `themes`. Once `tim backlog check` and `tim distil coverage` pass, split the backlog:
+
+```bash
+tim backlog split <workarea> --json            # a dry run: what each theme's backlog would hold
+tim backlog split <workarea> --write --json    # write them
+```
+
+It writes one backlog per theme at `workareas/<workarea>/themes/<theme id>/backlog.json`, and
+`workareas/<workarea>/themes/themes.json` with each theme's workarea, branch, rows and landing wave. It checks every
+split backlog first and writes none if one fails. Each theme's branch is `feat/NO_JIRA-<programme>-<theme id>`;
+`--branch-prefix feat/EUDPA-123-plants` gives `feat/EUDPA-123-plants-<theme id>` instead.
+
+Split again after every re-distil. It is safe to run any number of times:
+
+- a theme's file is written only when it changes;
+- a row the build loop has built or set aside (any status but `todo` or `blocked`) is kept exactly as its split copy
+  has it;
+- a `todo` or `blocked` row is refreshed from the parent, keeping the ticket, branch, commit, pull requests, notes
+  and open questions the loop wrote on it;
+- it refuses, writing nothing, when the parent puts a built row in another theme, or in none.
+
+Never edit a split backlog's rows by hand: re-distil the parent and split again.
+
 ## Done means
 
 - `tim backlog check` and `tim distil coverage` both pass.
 - `report.md` follows the structure in [`REPORT.md`](REPORT.md): the summary first, then any step before building,
   then the repos and precedence, then the questions.
 - The backlog envelope carries `repos`.
+- When `sources.json` has `themes`: the backlog carries `themes`, and `tim backlog split <workarea> --write` has
+  written every theme's backlog and `themes/themes.json`.
 - Tell the user: the counts, the questions and their defaults, and how to build it:
-  `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a dry run of one increment's
-  plan, run the build loop with `planOnly: true`.
+  `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a themed backlog, give the
+  landing order and each theme's workarea and branch: each theme builds from its own workarea. For a dry run of one
+  increment's plan, run the build loop with `planOnly: true`.

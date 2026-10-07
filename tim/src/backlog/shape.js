@@ -2,6 +2,11 @@ import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
 import { followRef } from './schema-ref.js'
+import {
+  externalDependenciesDone,
+  externalDependencyProblems,
+  themeProblems
+} from './themes.js'
 import { validateJson } from './validate-json.js'
 
 /**
@@ -256,15 +261,21 @@ const envelopeProblems = (root, backlog, errors) =>
  * Every way a backlog departs from backlog.schema.json, the one shape the
  * distiller writes and the build loop reads, plus the rules a schema cannot
  * hold: ids are unique, every dependency names another row in the backlog
- * without a cycle, and every repo a row merges into is one of its own repos
- * and one the envelope names.
+ * without a cycle, every repo a row merges into is one of its own repos and
+ * one the envelope names, and the theme rules in `themes.js`. Given a way to
+ * read another workarea's backlog, every `externalDependsOn` must name a row
+ * that backlog has.
  *
  * @param {unknown} backlog - The parsed backlog.json
  * @param {object} schema - The parsed backlog.schema.json
+ * @param {object} [options]
+ * @param {(workarea: string) => object|null} [options.readWorkareaBacklog] -
+ *   Another workarea's parsed backlog, or null when it has none. Left out,
+ *   `externalDependsOn` is not followed
  * @returns {{problems: string[], counts: Record<string, number>, total: number}}
  * @throws {TimError} PARSE when the schema uses a keyword tim cannot check
  */
-export const checkBacklog = (backlog, schema) => {
+export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
   const errors = validateJson(schema, backlog)
   if (lacksIncrementsList(errors)) {
     return { problems: [NO_INCREMENTS], counts: {}, total: 0 }
@@ -294,18 +305,32 @@ export const checkBacklog = (backlog, schema) => {
   ]
   const cycle = findCycle(dependencyEdges(rows))
   if (cycle) problems.push(`A dependsOn cycle: ${cycle.join(' → ')}.`)
+  problems.push(...themeProblems(backlog))
+  if (readWorkareaBacklog) {
+    problems.push(...externalDependencyProblems(backlog, readWorkareaBacklog))
+  }
   return { problems, counts: countByStatus(rows), total: rows.length }
 }
 
+const NO_OTHER_BACKLOGS = () => null
+
 /**
- * The first row, in file order, that is not withheld and whose every
- * dependency is `done` — the same rule the BUILD phase's derive step
+ * The first row, in file order, that is not withheld, whose every
+ * dependency is `done`, and whose every `externalDependsOn` row is `done` in
+ * its own workarea's backlog — the same rule the BUILD phase's derive step
  * states.
  *
  * @param {{increments: object[]}} backlog
+ * @param {object} [options]
+ * @param {(workarea: string) => object|null} [options.readWorkareaBacklog] -
+ *   Another workarea's parsed backlog, or null when it has none. Left out, a
+ *   row with an `externalDependsOn` is never buildable
  * @returns {string|null}
  */
-export const nextBuildable = (backlog) => {
+export const nextBuildable = (
+  backlog,
+  { readWorkareaBacklog = NO_OTHER_BACKLOGS } = {}
+) => {
   const rows = backlog.increments ?? []
   const done = new Set(
     rows.filter((row) => row.status === 'done').map((row) => row.id)
@@ -313,7 +338,8 @@ export const nextBuildable = (backlog) => {
   const next = rows.find(
     (row) =>
       !WITHHELD_STATUSES.has(row.status) &&
-      (row.dependsOn ?? []).every((id) => done.has(id))
+      (row.dependsOn ?? []).every((id) => done.has(id)) &&
+      externalDependenciesDone(row, readWorkareaBacklog)
   )
   return next ? next.id : null
 }

@@ -71,7 +71,7 @@ The worked example for the INS performance testing programme:
 | Extract | 1 code, then 1 light check, per source | Only for a source whose next step is extract. The extractor follows `extract.md` and its kind's brief, writes `distil/extract/<slug>.json`, and stamps it with `tim distil stamp`. The check runs `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and removes old part files. A failed check sends the extractor back once with the problems, then the source fails |
 | Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
 | Reconcile | 1 light, then 1 think and 1 light, up to 3 times | `tim distil working-set --write`, then the reconciler writes `requirements.json` and `conflicts.json`, and `tim distil coverage` checks them. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the consolidator. Up to 2 send-backs |
-| Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
+| Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`, with `themes` when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
 | Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
 
 Extract and verify run as one `pipeline()` over the work list: a source moves on to verify as
@@ -242,7 +242,8 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
   `main-red` and the rest, each named in `../references/BUILD.md`.
 
 **A failure stops the whole run.** The loop never moves on to another increment after one
-goes wrong: `tim backlog next` selects on status and `dependsOn` alone, so a failed attempt
+goes wrong: `tim backlog next` selects on status, `dependsOn` and `externalDependsOn` alone
+(the last a row in another workarea's backlog, such as another theme's), so a failed attempt
 is still the next buildable increment, and carrying on would rebuild it or build on top of
 it. The `not-landed` stop is the backstop for that — an id that comes back twice ends the
 run.

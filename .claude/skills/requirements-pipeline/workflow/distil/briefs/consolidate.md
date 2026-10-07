@@ -58,6 +58,26 @@ reads as the change, not a restatement of what is there.
 - `repos`: the table the build loop takes, written from `sources.json`'s `repos`. Each key's `path` as it is there,
   and its `github` slug `DEFRA/<folder name>` unless the repo's remote says otherwise. Check each with the
   `git -C <workspace>/<path> remote get-url origin` command your prompt gives.
+- `themes`, only when `sources.json` has a `themes` rule (see "Themes" above).
+
+## Themes
+
+Only when `sources.json` has a `themes` rule. It says how to draw the boundaries; follow it. The rules a theme keeps
+are in `SHAPE.md`, "Themes".
+
+- **Work out what code each row's requirements touch** from the evidence: the `repo:` sources' extracts, and the
+  pages, records and specs the requirements name. Group rows whose code is the same, so no two themes touch the same
+  path.
+- **Give every row a `theme`.** Every `todo` and `blocked` row needs one. Give one to a row built or set aside only
+  when it already has one.
+- **Write the envelope's `themes`.** Each has an `id` in lower-case words joined by hyphens, a `title`, a `why`
+  citing the requirements and code behind the boundary, `touches` as `<repoKey>:<path prefix>` for every repo its
+  rows build in, and `dependsOn`.
+- **A row that depends on a row in another theme makes its theme depend on that theme.** Keep these few: each one
+  makes a machine wait. Where two themes would depend on each other, merge them, or redraw the boundary.
+- `tim backlog check` names every overlap, missing theme and missing theme dependency. Fix each one.
+- **On a re-distil, keep each row's theme**, unless the requirements behind it moved to another theme's code. Never
+  rename a theme whose rows are built: its split's workarea and branch are named by it.
 
 ## Re-distilling over an existing backlog
 

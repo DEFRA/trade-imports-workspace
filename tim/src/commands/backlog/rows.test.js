@@ -94,6 +94,18 @@ describe('tim backlog check', () => {
     )
   })
 
+  test('names an externalDependsOn whose workarea has no backlog', async () => {
+    writeBacklog([
+      row({ externalDependsOn: [{ workarea: 'shared/other', id: 'inc-001' }] })
+    ])
+
+    const run = await runTim(['check', WORKAREA])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      `1 problems in ${backlogPath()}:\ninc-001 depends on inc-001 in shared/other, which has no backlog.json.`
+    )
+  })
+
   test('refuses a workarea outside workareas/', async () => {
     const run = await runTim(['check', '../elsewhere'])
     expect(run.exitCode).toBe(2)

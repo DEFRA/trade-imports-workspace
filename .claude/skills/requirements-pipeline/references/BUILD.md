@@ -310,7 +310,10 @@ what lets one launch build many: a list chosen in advance throws away everything
 the first increment teaches, and a run that needed a turn from you per increment
 died whenever the session did.
 
-**Buildability is status and dependencies. Nothing else.** The six withheld
+**Buildability is status and dependencies. Nothing else.** A dependency is a
+`dependsOn` id in the same backlog, or an `externalDependsOn` row in another
+workarea's backlog, which must be `done` there ([Building one theme](#building-one-theme)).
+The six withheld
 statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
 are named explicitly and everything else counts as buildable, so an
 unknown status fails **loudly** — it gets picked up and you see it — rather than
@@ -623,6 +626,34 @@ asked.
 
 A run that stops short of `stopAfter` is not a failure — it is the loop telling
 you reality diverged from the plan.
+
+## Building one theme
+
+A themed backlog is split by `tim backlog split` ([`DISTIL.md`](DISTIL.md#7-split-into-themes)) into one backlog per
+theme, each at `workareas/<workarea>/themes/<theme id>/`. Each theme builds on its own machine, at the same time as
+the others. Its themes never touch the same code ([`SHAPE.md`](SHAPE.md#themes)), so their pull requests do not
+conflict.
+
+- **Build the theme's workarea, never the parent's.** The `workarea` arg is `<workarea>/themes/<theme id>`, and
+  `repos` is that split backlog's envelope `repos`, which holds only the repos the theme builds in. The parent
+  stays the source for re-distilling.
+- **Start in landing order.** `workareas/<workarea>/themes/themes.json` gives each theme's wave. Themes in wave 1
+  start at once; a later theme can start once the rows it waits for are `done`. `tim backlog next` on its workarea
+  prints NONE until then.
+- **`externalDependsOn` is a wait on another workarea.** A row with one is buildable only when each row it names is
+  `done` in that workarea's own `backlog.json`. `tim backlog next` and `tim build start` both read it there, so the
+  other theme's landed state must be on this machine: pull the workspace repo before you launch. The loop never
+  commits its `backlog.json` writes, so after a theme lands rows another theme waits for, commit and push that
+  theme's `backlog.json`.
+- **Which branch.** Under the full lifecycle each increment still cuts its own branch off `main` and merges there,
+  and the split's `branch` is not used. To build a theme onto one branch instead, create the split's `branch` in
+  every repo of its `repos`, open each pull request, and run `lifecycle: 'branch'` with `branch` set to it (see
+  [Branch lifecycle](#branch-lifecycle)). The branch name is the same in every repo, as the workspace's branch rule
+  needs.
+- **Keep the plan inside the theme.** The split envelope's `touches` names the code the theme owns. A plan that
+  must change code outside it would conflict with another theme: stop and re-distil instead.
+- **Re-distil the parent, then split again.** Never edit a split backlog's rows by hand. A re-split keeps every row
+  the loop has built or set aside, and the ticket, branch, commit and pull requests it wrote on the rest.
 
 ## Branch lifecycle
 

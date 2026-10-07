@@ -35,7 +35,7 @@ requirements-pipeline/
   references/
     backlog.schema.json    the one backlog.json shape: every envelope and row field, described
     SHAPE.md               what the schema cannot say: requirement not recipe, full-stack slice, what a criterion may name, provenance
-    sources.schema.json    DISTIL's sources.json: goal, repos, precedence, sources
+    sources.schema.json    DISTIL's sources.json: goal, repos, precedence, sources, and an optional themes rule
     extract.schema.json    one source's extract: its structure and claims
     verify.schema.json     one source's verification: a verdict per claim, and the claims it missed
     requirements.schema.json  the reconciled requirements
@@ -78,8 +78,9 @@ tim distil working-set <workarea> [--write] --json        # every claim that hel
 tim distil coverage <workarea> --json    # requirements and conflicts against the working set, and every adopted requirement in one increment; problems scoped reconcile or backlog
 tim distil backlog-snapshot <workarea> [--save <tag>] [--compare-to <tag>] --json   # rows removed, and rows built or set aside that changed, since a snapshot
 tim distil trace <workarea> --source <id> [--out <file>] --json -- <subcommand>     # the playwright trace CLI, in the source's own folder
-tim backlog check <workarea> --json      # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape
-tim backlog next <workarea> --json       # the next buildable id, or NONE
+tim backlog check <workarea> --json      # the shape, dependencies, cycles, recipe fields, themes and externalDependsOn; exits 1 when out of shape
+tim backlog next <workarea> --json       # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
+tim backlog split <workarea> [--write] [--branch-prefix <prefix>] --json   # a themed backlog into one backlog per theme, plus themes/themes.json with the landing order
 tim backlog set <workarea> <id> --status done --commit abc1234   # the loop's only way to write back
 tim backlog standards --files <repoKey>:<path> --json            # the standards the planner and implementor apply to a file
 ```
@@ -99,7 +100,8 @@ nothing else lists the fields. Change one and check the others in the same chang
 | The five DISTIL schemas (`references/*.schema.json`) | Define `sources.json`, each extract and verify file, `requirements.json` and `conflicts.json`, every field described |
 | `tim/src/distil/` (`tim distil`) | Validates every DISTIL file against those schemas at runtime, plus what a schema cannot say: unique ids, verdicts matching claims, missed ids, scope hashes, extract hashes, cited claims and conflicts, and every adopted requirement in exactly one increment. Merges verify parts, builds the working set, snapshots the backlog's rows and runs the trace CLI |
 | The distil workflow ([`workflow/distil.js`](workflow/distil.js)) and its briefs ([`workflow/distil/briefs/`](workflow/distil/briefs/)) | Runs `tim distil` for its work list and every check, and gives each agent the schema it writes to. Its consolidate step writes the backlog to its schema and runs `tim backlog check` and `tim distil coverage` until both pass |
-| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`) |
+| `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`), following `externalDependsOn` into other workareas |
+| `tim/src/backlog/themes.js` and `split.js` (`tim backlog split`) | The theme rules in SHAPE.md: unique ids, no theme cycle, no two themes touching the same code, every todo or blocked row in one theme, cross-theme dependencies matched by theme dependencies, and a split backlog's own envelope. `split.js` writes one backlog per theme, turning a cross-theme `dependsOn` into `externalDependsOn`, and the landing order |
 | The loop's `readIncrement` and plan stage ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row and envelope into every stage's prompt; the planner turns the row into `plans/<id>.md` |
 | The loop's branch stage, under `lifecycle: 'branch'` ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, and the envelope's `repos` keys. The script checks what it copied (`rowFieldProblems`) and drives the merge, gate and CI stages from it. A new lifecycle field starts in the schema and lands here, in its check and in [`references/BUILD.md`](references/BUILD.md#branch-lifecycle) |
 | BUILD's derive and landed checks ([`references/BUILD.md`](references/BUILD.md)) | Relies on `next`'s status-and-dependencies rule and the `status`/`commit`/`prs` fields the loop writes |

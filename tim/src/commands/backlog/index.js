@@ -12,6 +12,7 @@ import { resolveStandards, lintStandards } from '../../backlog/standards.js'
 import { TimError } from '../../errors.js'
 import { register as registerLedger } from './ledger.js'
 import { register as registerRows } from './rows.js'
+import { register as registerSplit } from './split.js'
 import {
   makeBacklogAction,
   parseProgrammeKey,
@@ -641,4 +642,5 @@ export const register = (program, { timVersion }) => {
 
   registerLedger(backlog, { timVersion })
   registerRows(backlog, { timVersion })
+  registerSplit(backlog, { timVersion })
 }

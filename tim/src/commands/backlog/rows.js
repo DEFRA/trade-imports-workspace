@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import { join } from 'node:path'
-import { workareaDirFor } from '../../backlog/workarea.js'
+import {
+  workareaBacklogReader,
+  workareaDirFor
+} from '../../backlog/workarea.js'
 import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
@@ -120,7 +123,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('check <workarea>')
     .description(
-      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, the one backlog shape the distiller writes and the build loop reads, and that every dependency is in the backlog with no cycle`
+      `Check a workarea's backlog.json against ${BACKLOG_SCHEMA_PATH}, the one backlog shape the distiller writes and the build loop reads, that every dependency is in the backlog with no cycle, that its themes keep to their own code, and that every externalDependsOn row is in its own workarea's backlog`
     )
     .addHelpText(
       'after',
@@ -132,7 +135,12 @@ export const register = (backlog, { timVersion }) => {
         run: ({ workspaceRoot, args }) => {
           const path = backlogPathFor(workspaceRoot, args[0])
           const schema = loadBacklogSchema(workspaceRoot)
-          const result = { path, ...checkBacklog(readJsonFile(path), schema) }
+          const result = {
+            path,
+            ...checkBacklog(readJsonFile(path), schema, {
+              readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+            })
+          }
           if (result.problems.length) {
             throw new TimError(
               'LINT',
@@ -149,7 +157,7 @@ export const register = (backlog, { timVersion }) => {
   backlog
     .command('next <workarea>')
     .description(
-      'The next buildable increment: the first not withheld whose every dependency is done. Prints NONE when there is none'
+      "The next buildable increment: the first not withheld whose every dependency is done, including each externalDependsOn row in its own workarea's backlog. Prints NONE when there is none"
     )
     .addHelpText(
       'after',
@@ -159,7 +167,12 @@ export const register = (backlog, { timVersion }) => {
       makeBacklogAction({
         run: ({ workspaceRoot, args }) => {
           const path = backlogPathFor(workspaceRoot, args[0])
-          return { path, next: nextBuildable(readJsonFile(path)) }
+          return {
+            path,
+            next: nextBuildable(readJsonFile(path), {
+              readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+            })
+          }
         },
         renderText: renderNext,
         timVersion

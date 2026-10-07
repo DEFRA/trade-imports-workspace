@@ -22,6 +22,44 @@
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/repo" }
     },
+    "themes": {
+      "description": "The groups the rows build in, so each group builds on its own machine and branch without conflicting pull requests. DISTIL writes it when sources.json has `themes`. A theme's boundary is drawn by the code it touches: no two themes touch the same path. Every `todo` or `blocked` row names one in its `theme`. `tim backlog split` writes one backlog per theme from it. The rules a schema cannot check are in SHAPE.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/theme" }
+    },
+    "theme": {
+      "description": "Split backlogs only: the id of the theme this backlog builds, written by `tim backlog split`. Every row here belongs to it. A split backlog also carries `branch` and `parent`, and never `themes`.",
+      "$ref": "#/$defs/text"
+    },
+    "branch": {
+      "description": "Split backlogs only: the branch the theme builds on, such as \"feat/NO_JIRA-hrp-origin-and-commodity-origin-pages\". `tim backlog split` writes it: `feat/NO_JIRA-<programme>-<theme id>` unless given another prefix. Every repo the theme touches uses the same name.",
+      "$ref": "#/$defs/text"
+    },
+    "parent": {
+      "description": "Split backlogs only: where the theme came from and when it lands, written by `tim backlog split`, such as { \"workarea\": \"shared/hrp\", \"wave\": 2, \"landsAfter\": [\"origin-pages\"] }.",
+      "type": "object",
+      "required": ["workarea", "wave", "landsAfter"],
+      "properties": {
+        "workarea": {
+          "description": "The workarea of the backlog it was split from, such as \"shared/hrp\". Re-distil and re-split there, never here.",
+          "$ref": "#/$defs/text"
+        },
+        "wave": {
+          "description": "Its place in the landing order: 1 lands first. Themes in the same wave have no ordering need between them, so they build in parallel.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "landsAfter": {
+          "description": "The theme ids it depends on: the themes whose rows its rows wait for. [] when it waits for none.",
+          "$ref": "#/$defs/textList"
+        }
+      }
+    },
+    "touches": {
+      "description": "Split backlogs only: the code areas the theme owns, copied from its entry in the parent's `themes`, such as [\"frontend:src/server/origin\"]. The plan keeps the theme's changes inside them.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/touch" }
+    },
     "increments": {
       "description": "The rows, in build order. `tim backlog next` returns the first one that is not withheld and whose every dependency is done.",
       "type": "array",
@@ -29,6 +67,61 @@
     }
   },
   "$defs": {
+    "themeId": {
+      "description": "A theme id: lower-case words joined by hyphens, such as \"origin-pages\".",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "touch": {
+      "description": "A code area: a repo key from the envelope's `repos`, a colon, then a path prefix inside that repo, such as \"frontend:src/server/origin\" or \"tests:tests/plants/origin\". A path of \".\" means the whole repo.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[^\\s]+$"
+    },
+    "theme": {
+      "description": "One theme: a group of rows that touch the same code and nobody else's.",
+      "type": "object",
+      "required": ["id", "title", "why", "touches", "dependsOn"],
+      "properties": {
+        "id": {
+          "description": "Stable once rows are built in it: its split backlog's workarea and branch are named by it.",
+          "$ref": "#/$defs/themeId"
+        },
+        "title": {
+          "description": "What the theme builds, in plain English.",
+          "$ref": "#/$defs/text"
+        },
+        "why": {
+          "description": "The evidence for the boundary: the code its rows' requirements touch, and why no other theme touches it.",
+          "$ref": "#/$defs/text"
+        },
+        "touches": {
+          "description": "The code areas the theme owns. No path here is inside, or the same as, another theme's path in the same repo.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/touch" }
+        },
+        "dependsOn": {
+          "description": "Theme ids that must land first, because one of this theme's rows depends on one of theirs. [] when it waits for none.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/themeId" }
+        }
+      }
+    },
+    "externalDependency": {
+      "description": "A row in another workarea's backlog that must be `done` first.",
+      "type": "object",
+      "required": ["workarea", "id"],
+      "properties": {
+        "workarea": {
+          "description": "The other backlog's workarea, such as \"shared/hrp/themes/origin-pages\".",
+          "$ref": "#/$defs/text"
+        },
+        "id": {
+          "description": "The row's id in that backlog.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
     "text": {
       "description": "Text that is not empty or only whitespace.",
       "type": "string",
@@ -91,6 +184,15 @@
         "dependsOn": {
           "description": "Ids that must be `done` first. A real ordering need, not a layer order. [] when it waits for nothing.",
           "$ref": "#/$defs/textList"
+        },
+        "externalDependsOn": {
+          "description": "Rows in other workareas' backlogs that must be `done` first, such as [{ \"workarea\": \"shared/hrp/themes/origin-pages\", \"id\": \"inc-003\" }]. `tim backlog split` writes it from a dependsOn on a row in another theme. `tim backlog next` reads each one's status in its own backlog.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/externalDependency" }
+        },
+        "theme": {
+          "description": "The id of the theme the row belongs to, one of the envelope's `themes`, or the envelope's `theme` in a split backlog. Required of every `todo` or `blocked` row once the backlog has themes.",
+          "$ref": "#/$defs/text"
         },
         "status": {
           "description": "`todo` is buildable. `done` is what a dependency waits for. `blocked`, `deferred`, `dropped`, `rejected` and `merged-into` are withheld: `tim backlog next` never picks them up.",

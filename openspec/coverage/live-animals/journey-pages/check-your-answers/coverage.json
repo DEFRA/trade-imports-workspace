@@ -152,7 +152,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue moves on to the declaration", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should redirect to the declaration once the notification is complete", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration once the notification is complete", "strength": "full", "notes": "drives the review's Continue as it posts to the declaration" }
           ]
         }
       ]
@@ -181,11 +181,11 @@
           "name": "Continuing from an unfinished review is refused, keeping the user on the page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue and keeps the trader on the review page", "strength": "full", "notes": "asserts the URL is unchanged and the summary is shown" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue and keeps the trader on the review page", "strength": "full", "notes": "asserts the trader lands back on the review URL and the summary is shown" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue while the notification is unfinished", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue on a brand-new draft, naming what is outstanding", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should move focus to the summary when Continue is refused", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should re-render the page with the summary when Continue is refused", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the summary when Continue is refused", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -219,6 +219,47 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "copies the submitted notification to a new draft", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-010",
+      "name": "The review names a document that is still being scanned or was found infected, and refuses to continue while it is",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-010-A",
+          "name": "Continuing while a document is still being scanned is refused, naming it on the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name the uploaded-documents card as still scanning when Continue is refused with a pending document", "strength": "full", "notes": "drives Continue through the declaration, asserts the refused redirect, then the review card's still-scanning error" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should refuse a notification whose stored document is still being scanned", "strength": "partial", "notes": "the refusal verdict only, not what the review shows" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-010-B",
+          "name": "An infected document is named on the review in preference to one still scanning",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep the rejected message on the uploaded-documents card when Continue is refused with a rejected document", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should name a REJECTED scan ahead of one still scanning", "strength": "partial", "notes": "the card error's precedence with both documents present, at helper level" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-011",
+      "name": "Continuing is refused if the notification has changed since the review was shown",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-011-A",
+          "name": "A change made in another tab after the review was shown sends the user back to the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses Continue and shows the current notification when it changed after the review rendered", "strength": "full", "notes": "edits the internal reference in a second page, then asserts the review URL with the banner and the changed value; fails with the token check disabled" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review with the changed banner when the notification changed after the review", "strength": "partial", "notes": "asserts the redirect, not the rendered review" }
           ]
         }
       ]

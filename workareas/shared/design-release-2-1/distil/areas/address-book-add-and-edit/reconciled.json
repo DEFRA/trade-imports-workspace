@@ -1,0 +1,2339 @@
+{
+  "area": "address-book-add-and-edit",
+  "requirements": [
+    {
+      "id": "req-address-book-add-and-edit-001",
+      "statement": "Adding and editing an address happen in the INS front door (trade-imports-ins-frontend) for a signed-in user, saved to the address-book service and scoped to the user's organisation: every address-book call carries the organisation id in the path and the Trade-Imports-Organisation-Id header, an address is only ever found inside that organisation, and a submit without an organisation on the session is refused.",
+      "why": "The address book moved out of the animals frontend to the INS front door, and organisation scoping is the only guard on whose addresses a user sees.",
+      "claims": [
+        "document-dr1-parity-notes-p1-009",
+        "document-dr1-parity-notes-p1-014",
+        "document-dr1-parity-notes-p1-015",
+        "repo-insfrontend-p3-001",
+        "repo-insfrontend-p3-002",
+        "repo-insfrontend-p3-039",
+        "repo-insfrontend-p3-040",
+        "repo-insfrontend-p3-070",
+        "repo-insfrontend-p3-072",
+        "repo-insfrontend-p3-073",
+        "repo-insfrontend-p3-074",
+        "repo-insfrontend-p3-075",
+        "repo-insfrontend-p3-079",
+        "repo-insfrontend-p3-091",
+        "repo-addressbook-p2-001",
+        "repo-addressbook-p2-003",
+        "repo-addressbook-p2-010",
+        "repo-addressbook-p2-011",
+        "repo-addressbook-p2-078",
+        "repo-addressbook-p2-093",
+        "repo-addressbook-p2-094",
+        "trace-ins-fit-p1-001",
+        "trace-ins-fit-p1-002",
+        "trace-ins-fit-p1-068",
+        "trace-ins-fit-p3-001"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-002, p3-039, p3-072 and repo-addressbook-p2-094 already serve add and edit from the INS front door, signed in and organisation-scoped.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-002",
+      "statement": "Adding an address starts on a new 'Choose an address type' page at /address-book/add, before any address fields, with a 'Back' link to the address book list.",
+      "why": "Design Release 2.1 asks what kind of address is being added first, because that decides the form and the uses offered next.",
+      "claims": [
+        "prototype-dr2-1-source-p16-001",
+        "prototype-dr2-1-source-p16-013",
+        "trace-prototype-dr2-1-p16-038",
+        "trace-prototype-dr2-1-p16-044",
+        "prototype-dr2-1-specs-p6-104",
+        "prototype-dr2-1-specs-p6-112",
+        "repo-insfrontend-p3-001",
+        "repo-insfrontend-p3-033",
+        "repo-insfrontend-p3-038",
+        "trace-ins-fit-p1-006",
+        "trace-e2e-p15-041",
+        "repo-tests-p5-090"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today /address-book/add is the address form itself, with no type step and no back link (repo-insfrontend-p3-001, p3-038).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-003",
+      "statement": "The 'Choose an address type' page shows the caption 'Add a new address' above its heading.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-003",
+        "trace-prototype-dr2-1-p16-039",
+        "prototype-dr2-1-specs-p6-106"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-004",
+      "statement": "The 'Choose an address type' page's heading and page title are 'Choose an address type', and the radio group's legend repeats the heading, visually hidden.",
+      "why": "Design Release 2.1 copy; the hidden legend names the radio group for screen readers.",
+      "claims": [
+        "prototype-dr2-1-source-p16-004",
+        "prototype-dr2-1-source-p16-005",
+        "trace-prototype-dr2-1-p16-039",
+        "prototype-dr2-1-specs-p6-105"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-005",
+      "statement": "The first address type option is the radio 'Origin or Consignor' with the hint 'Place of origin, Consignor'.",
+      "why": "Design Release 2.1 groups place of origin and consignor addresses under one type, worded with 'or'.",
+      "claims": [
+        "prototype-dr2-1-source-p16-006",
+        "prototype-dr2-1-source-p16-010",
+        "trace-prototype-dr2-1-p16-040",
+        "prototype-dr2-1-specs-p6-107",
+        "prototype-dr2-1-specs-p6-108"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-006",
+      "statement": "The second address type option is the radio 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-007",
+        "trace-prototype-dr2-1-p16-041",
+        "prototype-dr2-1-specs-p6-109"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-007",
+      "statement": "The third address type option is the radio 'Transporter' with the hint 'Private, Commercial'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-008",
+        "trace-prototype-dr2-1-p16-042",
+        "prototype-dr2-1-specs-p6-110"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-008",
+      "statement": "The fourth address type option is the radio 'Branch' with the hint 'Branch address'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-009",
+        "trace-prototype-dr2-1-p16-043",
+        "prototype-dr2-1-specs-p6-111"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-009",
+      "statement": "The 'Choose an address type' page submits with a 'Continue' button.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-012",
+        "prototype-dr2-1-specs-p6-113"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-010",
+      "statement": "Continuing with no address type chosen shows 'Select an address type' inline on the radios and in a 'There is a problem' error summary whose link goes to the first option.",
+      "why": "An address type is needed to know which form and uses to show.",
+      "claims": [
+        "prototype-dr2-1-source-p16-016",
+        "trace-prototype-dr2-1-p16-045",
+        "prototype-dr2-1-specs-p6-114",
+        "prototype-dr2-1-specs-p6-115"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-011",
+      "statement": "The add remembers the chosen address type between its steps, so coming back to 'Choose an address type' pre-selects it; opening the add afresh, and saving, clear the type, the entered address, the ticked uses and the search, so the next add starts empty.",
+      "why": "A two-step add needs the first answer kept while it is in progress and cleared when it ends.",
+      "claims": [
+        "prototype-dr2-1-source-p16-002",
+        "prototype-dr2-1-source-p16-011",
+        "prototype-dr2-1-source-p16-087",
+        "repo-insfrontend-p3-033"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the add is one page that always opens blank (repo-insfrontend-p3-033); there is no in-progress state to keep or clear.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-012",
+      "statement": "Choosing 'Transporter' and continuing leaves the address book add and goes to the add-a-transporter pages; reached this way, their 'Back' link returns to 'Choose an address type'.",
+      "why": "Design Release 2.1 adds transporters through their own pages, not the address form; the address book record has no transporter category.",
+      "claims": [
+        "prototype-dr2-1-source-p16-017",
+        "trace-prototype-dr2-1-p16-048",
+        "trace-prototype-dr2-1-p16-052",
+        "prototype-dr2-1-specs-p6-148",
+        "repo-addressbook-p1-054"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-013",
+      "statement": "The add-a-transporter page reached from the address book has the caption 'Add a new transporter' and the heading and page title 'Choose a transporter type'.",
+      "why": "Design Release 2.1 copy on the hand-over target.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-049",
+        "prototype-dr2-1-specs-p6-148"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-014",
+      "statement": "The add-a-transporter page shows the warning 'Check the transporter list before adding new transporters to avoid duplicates.'",
+      "why": "Design Release 2.1 copy; it steers users away from duplicate transporters.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-050"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-015",
+      "statement": "The add-a-transporter page offers the radios 'Private transporter' and 'Commercial' (hint 'This can only be a commercial transporter from Northern Ireland.'), posted as transporterType private or commercial, and a 'Continue' button.",
+      "why": "Design Release 2.1 copy and options.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-051",
+        "trace-prototype-dr2-1-p16-051-m1"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-016",
+      "statement": "Choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and continuing goes to the add-details step at /address-book/add/lookup, which posts back to itself.",
+      "why": "Design Release 2.1 flow: these three types use one add-details page whose content depends on the type.",
+      "claims": [
+        "prototype-dr2-1-source-p16-018",
+        "prototype-dr2-1-source-p16-019",
+        "prototype-dr2-1-source-p16-024",
+        "trace-prototype-dr2-1-p16-047",
+        "prototype-dr2-1-specs-p6-116",
+        "prototype-dr2-1-specs-p6-140",
+        "prototype-dr2-1-specs-p6-146"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-017",
+      "statement": "Opening the add-details step directly with no address type chosen redirects to 'Choose an address type'.",
+      "why": "The add-details step cannot be shown without knowing the type.",
+      "claims": [
+        "prototype-dr2-1-source-p16-020"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-018",
+      "statement": "The add-details step shows the caption 'Add new address' above its heading, and no notification status banner.",
+      "why": "Design Release 2.1 copy; the page is the address book's, not a notification's.",
+      "claims": [
+        "prototype-dr2-1-source-p16-021",
+        "prototype-dr2-1-source-p16-022",
+        "trace-prototype-dr2-1-p16-053",
+        "repo-insfrontend-p3-004",
+        "trace-ins-fit-p1-005"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the add page has no caption (repo-insfrontend-p3-004, trace-ins-fit-p1-005).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-019",
+      "statement": "The add-details step's heading and page title are 'Add address and contact details'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-021",
+        "trace-prototype-dr2-1-p16-053",
+        "prototype-dr2-1-specs-p6-117",
+        "prototype-dr2-1-specs-p6-118",
+        "repo-insfrontend-p3-003",
+        "trace-ins-fit-p1-003",
+        "trace-ins-fit-p1-004",
+        "trace-e2e-p15-041",
+        "repo-tests-p5-090"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the heading and title are 'Add address details' (repo-insfrontend-p3-003, trace-ins-fit-p1-004).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-020",
+      "statement": "The add-details step has a 'Back' link to 'Choose an address type'.",
+      "why": "Design Release 2.1 lets the user go back and change the type.",
+      "claims": [
+        "prototype-dr2-1-source-p16-023",
+        "trace-prototype-dr2-1-p16-069",
+        "repo-insfrontend-p3-038",
+        "trace-ins-fit-p1-006"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the add page has no back link (repo-insfrontend-p3-038).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-021",
+      "statement": "The add and edit pages' browser titles read '<page heading> - Import notification service - GOV.UK'.",
+      "why": "Design Release 2.1 title format.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-038",
+        "trace-prototype-dr2-1-p16-053",
+        "trace-prototype-dr2-1-p16-107",
+        "prototype-dr2-1-specs-p6-104",
+        "prototype-dr2-1-specs-p6-117",
+        "prototype-dr2-1-specs-p6-158",
+        "trace-ins-fit-p1-003",
+        "trace-ins-fit-p3-003"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today titles read '<heading> | Import notification service' (trace-ins-fit-p1-003, p3-003).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-022",
+      "statement": "For 'Origin or Consignor' the add-details step shows the address and contact fields straight away with no address search, and a section break separates them from the uses question.",
+      "why": "Design Release 2.1: origin and consignor addresses are often outside the UK, so they are entered by hand.",
+      "claims": [
+        "prototype-dr2-1-source-p16-025",
+        "prototype-dr2-1-source-p16-048",
+        "trace-prototype-dr2-1-p16-054",
+        "prototype-dr2-1-specs-p6-120"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-023",
+      "statement": "For 'Destination, Consignee or Importer' and 'Branch' the add-details step opens with only the address search; the address fields, contact fields and uses question stay hidden until an address is picked or manual entry is chosen, and open already revealed when an address or address line 1 is already present.",
+      "why": "Design Release 2.1: these are UK addresses, found by search first.",
+      "claims": [
+        "prototype-dr2-1-source-p16-025",
+        "prototype-dr2-1-source-p16-037",
+        "trace-prototype-dr2-1-p16-083",
+        "trace-prototype-dr2-1-p16-096",
+        "trace-prototype-dr2-1-p16-098",
+        "prototype-dr2-1-specs-p6-140",
+        "prototype-dr2-1-specs-p6-141",
+        "repo-insfrontend-p5-114"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "No real address book page offers an address search today (repo-insfrontend-p5-114).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-024",
+      "statement": "The address search is a text field labelled 'Search for an address' with the placeholder 'Start typing...' and a search icon button whose accessible name is 'Search'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-026",
+        "prototype-dr2-1-source-p16-027",
+        "trace-prototype-dr2-1-p16-084",
+        "prototype-dr2-1-specs-p6-140"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-025",
+      "statement": "Typing in the address search is a free-text type-ahead (not a postcode-then-pick step): matching addresses appear below the field in a list labelled 'Address search results', each shown as 'name, address, country' with the typed text in bold, and a screen-reader announcement gives the number of results (for example '1 result available').",
+      "why": "Design Release 2.1 search behaviour.",
+      "claims": [
+        "prototype-dr2-1-source-p16-027",
+        "prototype-dr2-1-source-p16-029",
+        "prototype-dr2-1-source-p16-030",
+        "prototype-dr2-1-source-p16-112",
+        "trace-prototype-dr2-1-p16-086",
+        "trace-prototype-dr2-1-p16-086-m1",
+        "prototype-dr2-1-specs-p6-143"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-address-book-add-and-edit-003"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-026",
+      "statement": "Picking a search result hides the search, announces 'Selected <name>' to screen readers, reveals the fields and fills address line 1, address line 2, town or city and postcode from the result (composed as c-address-book-add-and-edit-003 sets out), with country United Kingdom; email address and phone number stay blank for the user, and any field the user types over wins.",
+      "why": "Design Release 2.1 fills the address from the pick and leaves the contact details to the user.",
+      "claims": [
+        "prototype-dr2-1-source-p16-033",
+        "prototype-dr2-1-source-p16-034",
+        "prototype-dr2-1-source-p16-035",
+        "trace-prototype-dr2-1-p16-087",
+        "trace-prototype-dr2-1-p16-088",
+        "trace-prototype-dr2-1-p16-089",
+        "prototype-dr2-1-specs-p6-143",
+        "prototype-dr2-1-specs-p6-145",
+        "repo-insfrontend-p5-052",
+        "repo-insfrontend-p5-053",
+        "repo-insfrontend-p5-054",
+        "repo-insfrontend-p5-055",
+        "repo-insfrontend-p5-056",
+        "repo-insfrontend-p5-057",
+        "repo-insfrontend-p5-058",
+        "repo-insfrontend-p5-059"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "The dev-only spike maps a lookup result onto the address book's fields but saves nothing (repo-insfrontend-p5-052 to p5-059).",
+      "conflicts": ["c-address-book-add-and-edit-003"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-027",
+      "statement": "The address search finds real UK addresses from the address lookup the INS backend serves (GET /address-lookup with find=<term>, carrying the trace id), answered by the in-memory stub when the INS frontend runs in stub mode; a failed lookup leaves the user able to enter the address manually.",
+      "why": "The prototype's search list is made-up data shipped with the page; the real service must search real addresses through the lookup the spike proved.",
+      "claims": [
+        "prototype-dr2-1-source-p16-028",
+        "repo-insfrontend-p5-018",
+        "repo-insfrontend-p5-020",
+        "repo-insfrontend-p5-022",
+        "repo-insfrontend-p5-067",
+        "repo-insfrontend-p5-069",
+        "repo-insfrontend-p5-070",
+        "repo-insfrontend-p5-071",
+        "repo-insfrontend-p5-072",
+        "repo-insfrontend-p5-073",
+        "repo-insfrontend-p5-074",
+        "repo-insfrontend-p5-114",
+        "repo-insfrontend-p5-065"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Only the dev/local spike calls the lookup today (repo-insfrontend-p5-067, p5-114).",
+      "conflicts": ["c-address-book-add-and-edit-003"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-028",
+      "statement": "Below the address search an 'Enter address manually' link-styled button reveals the address and contact fields without picking a result.",
+      "why": "Design Release 2.1 gives a way out when the search does not find the address.",
+      "claims": [
+        "prototype-dr2-1-source-p16-036",
+        "trace-prototype-dr2-1-p16-085",
+        "trace-prototype-dr2-1-p16-130"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-029",
+      "statement": "For 'Destination, Consignee or Importer' and 'Branch' the country is fixed: the Country select holds only 'United Kingdom', pre-selected, and the save stores United Kingdom (GB) whatever is posted.",
+      "why": "Design Release 2.1: destination, consignee, importer and branch addresses are in the UK.",
+      "claims": [
+        "prototype-dr2-1-source-p16-046",
+        "trace-prototype-dr2-1-p16-090"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-030",
+      "statement": "The address fields on the add and edit forms sit under the section heading 'Address'.",
+      "why": "Design Release 2.1 copy, the same on both forms.",
+      "claims": [
+        "prototype-dr2-1-source-p16-038",
+        "prototype-dr2-1-source-p15-062",
+        "trace-prototype-dr2-1-p16-055",
+        "trace-prototype-dr2-1-p16-108",
+        "repo-insfrontend-p3-005",
+        "repo-insfrontend-p3-087",
+        "trace-ins-fit-p1-008",
+        "trace-ins-fit-p3-005-m1",
+        "trace-e2e-p15-042",
+        "trace-e2e-p15-061"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today add headed this section 'Enter address details' and edit has no section headings (repo-insfrontend-p3-005, p3-087).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-031",
+      "statement": "Email address and phone number on the add and edit forms sit under the section heading 'Contact details'.",
+      "why": "Design Release 2.1 copy, the same on both forms.",
+      "claims": [
+        "prototype-dr2-1-source-p16-049",
+        "prototype-dr2-1-source-p15-063",
+        "trace-prototype-dr2-1-p16-062",
+        "repo-insfrontend-p3-005",
+        "repo-insfrontend-p3-087",
+        "trace-ins-fit-p1-018",
+        "trace-ins-fit-p3-005-m1",
+        "trace-e2e-p15-042",
+        "trace-e2e-p15-061"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today add headed this section 'Enter contact details' and edit has no section headings (repo-insfrontend-p3-005, p3-087).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-032",
+      "statement": "On the add-details step the name field is labelled 'Name or organisation'.",
+      "why": "Design Release 2.1 copy; its specs assert the add and edit labels differ.",
+      "claims": [
+        "prototype-dr2-1-source-p16-039",
+        "trace-prototype-dr2-1-p16-056",
+        "prototype-dr2-1-specs-p6-121",
+        "prototype-dr2-1-specs-p6-161-m1",
+        "repo-insfrontend-p3-007",
+        "trace-ins-fit-p1-009",
+        "trace-e2e-p15-043",
+        "repo-tests-p5-091"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the add label is 'Name or organisation name' (repo-insfrontend-p3-007).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-033",
+      "statement": "On the edit page the name field is labelled 'Name or organisation name'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p15-062",
+        "trace-prototype-dr2-1-p16-108",
+        "prototype-dr2-1-specs-p6-160",
+        "trace-ins-fit-p3-005",
+        "trace-ins-fit-p3-007"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-ins-fit-p3-005 shows the edit label 'Name or organisation name'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-034",
+      "statement": "The add-details step has no County field.",
+      "why": "Design Release 2.1's add form leaves county out; county stays optional in the record.",
+      "claims": [
+        "prototype-dr2-1-source-p16-045",
+        "trace-prototype-dr2-1-p16-054",
+        "repo-insfrontend-p3-011",
+        "trace-ins-fit-p1-013",
+        "trace-e2e-p15-047"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the add form asks 'County (optional)' (repo-insfrontend-p3-011).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-035",
+      "statement": "The edit page keeps the 'County (optional)' field between 'Town or city' and 'Postcode or Zip code', prefilled from the stored address.",
+      "why": "Design Release 2.1's edit form keeps county.",
+      "claims": [
+        "prototype-dr2-1-source-p15-062",
+        "trace-prototype-dr2-1-p16-109",
+        "repo-insfrontend-p3-087",
+        "trace-ins-fit-p3-011",
+        "trace-e2e-p15-059",
+        "repo-tests-p5-103"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-ins-fit-p3-011 and repo-tests-p5-103 show the edit page's prefilled 'County (optional)'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-036",
+      "statement": "The add and edit forms ask 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code', 'Country' (a select), 'Email address' and 'Phone number' with the hint 'For international numbers include the country code', and no other field has a hint.",
+      "why": "These labels and the phone hint already match Design Release 2.1.",
+      "claims": [
+        "prototype-dr2-1-source-p16-040",
+        "prototype-dr2-1-source-p16-041",
+        "prototype-dr2-1-source-p16-042",
+        "prototype-dr2-1-source-p16-043",
+        "prototype-dr2-1-source-p16-044",
+        "prototype-dr2-1-source-p16-050",
+        "prototype-dr2-1-source-p16-051",
+        "prototype-dr2-1-source-p15-064",
+        "trace-prototype-dr2-1-p16-057",
+        "trace-prototype-dr2-1-p16-058",
+        "trace-prototype-dr2-1-p16-059",
+        "trace-prototype-dr2-1-p16-060",
+        "trace-prototype-dr2-1-p16-063",
+        "trace-prototype-dr2-1-p16-064",
+        "trace-prototype-dr2-1-p16-056-m1",
+        "prototype-dr2-1-specs-p6-122",
+        "prototype-dr2-1-specs-p6-123",
+        "prototype-dr2-1-specs-p6-124",
+        "prototype-dr2-1-specs-p6-125",
+        "prototype-dr2-1-specs-p6-126",
+        "prototype-dr2-1-specs-p6-127",
+        "prototype-dr2-1-specs-p6-161",
+        "repo-insfrontend-p3-006",
+        "repo-insfrontend-p3-008",
+        "repo-insfrontend-p3-009",
+        "repo-insfrontend-p3-010",
+        "repo-insfrontend-p3-012",
+        "repo-insfrontend-p3-013",
+        "repo-insfrontend-p3-014",
+        "repo-insfrontend-p3-015",
+        "repo-insfrontend-p3-016",
+        "repo-insfrontend-p3-017",
+        "trace-ins-fit-p1-010",
+        "trace-ins-fit-p1-011",
+        "trace-ins-fit-p1-012",
+        "trace-ins-fit-p1-014",
+        "trace-ins-fit-p1-019",
+        "trace-ins-fit-p1-020",
+        "trace-ins-fit-p1-021",
+        "trace-ins-fit-p1-022",
+        "trace-ins-fit-p3-008",
+        "trace-ins-fit-p3-009",
+        "trace-ins-fit-p3-010",
+        "trace-ins-fit-p3-012",
+        "trace-ins-fit-p3-014",
+        "trace-e2e-p15-044",
+        "trace-e2e-p15-045",
+        "trace-e2e-p15-046",
+        "trace-e2e-p15-048",
+        "trace-e2e-p15-052",
+        "repo-tests-p5-091"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-008 to p3-016 and trace-ins-fit-p1-010 to p1-022 already render these labels and the one phone hint.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-037",
+      "statement": "On the edit page 'Email address' comes before 'Phone number', as on the add form.",
+      "why": "Design Release 2.1 uses one field order for both forms.",
+      "claims": [
+        "prototype-dr2-1-source-p15-063",
+        "repo-insfrontend-p3-087",
+        "trace-ins-fit-p3-005",
+        "trace-ins-fit-p3-005-m1",
+        "trace-e2e-p15-061"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today edit puts Phone number before Email address (repo-insfrontend-p3-087, trace-ins-fit-p3-005-m1).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-038",
+      "statement": "On the add-details step 'Name or organisation', both address lines and 'Email address' are full width, 'Town or city' and 'Postcode or Zip code' are half width, and 'Phone number' is two-thirds width.",
+      "why": "Design Release 2.1 field widths.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-059",
+        "trace-prototype-dr2-1-p16-060",
+        "trace-prototype-dr2-1-p16-064-m1",
+        "repo-insfrontend-p3-019",
+        "trace-ins-fit-p1-012",
+        "trace-ins-fit-p1-020"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today phone is half width (repo-insfrontend-p3-019, trace-ins-fit-p1-020).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-039",
+      "statement": "The edit page lays its fields out like the add form: the same section headings, order and field widths.",
+      "why": "Design Release 2.1 builds both forms from the same Address and Contact details sections.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-108",
+        "repo-insfrontend-p3-088",
+        "trace-ins-fit-p3-007-m1",
+        "trace-e2e-p15-062"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today edit uses two-thirds text inputs, a width-10 postcode and a default-width country select, unlike add (repo-insfrontend-p3-088, trace-ins-fit-p3-007-m1).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-040",
+      "statement": "The Country select lists its countries in alphabetical order, with United Kingdom in its alphabetical place.",
+      "why": "Design Release 2.1 sorts the country options alphabetically.",
+      "claims": [
+        "prototype-dr2-1-source-p15-065",
+        "trace-prototype-dr2-1-p16-110",
+        "repo-insfrontend-p3-022",
+        "trace-e2e-p15-050"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today United Kingdom is always listed first (repo-insfrontend-p3-022, trace-e2e-p15-050).",
+      "conflicts": ["c-address-book-add-and-edit-002"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-041",
+      "statement": "For 'Origin or Consignor' the Country select opens with United Kingdom selected.",
+      "why": "Design Release 2.1 defaults the country to the United Kingdom.",
+      "claims": [
+        "prototype-dr2-1-source-p16-047-m1",
+        "trace-prototype-dr2-1-p16-078",
+        "repo-insfrontend-p3-021",
+        "trace-ins-fit-p1-015"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today no country is chosen by default (repo-insfrontend-p3-021, trace-ins-fit-p1-015).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-042",
+      "statement": "On the add-details step the Country select's blank first option reads 'Select one'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-047-m1",
+        "repo-insfrontend-p3-021",
+        "trace-e2e-p15-049"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the placeholder reads 'Select a country' (repo-insfrontend-p3-021).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-043",
+      "statement": "On the edit page the Country select has no blank placeholder option, and the stored country is selected.",
+      "why": "Design Release 2.1's edit form offers only real countries.",
+      "claims": [
+        "prototype-dr2-1-source-p15-065",
+        "trace-prototype-dr2-1-p16-110",
+        "trace-ins-fit-p3-013",
+        "trace-e2e-p15-063"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today edit keeps the 'Select a country' placeholder above the stored country (trace-ins-fit-p3-013).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-044",
+      "statement": "The countries offered come from the reference data service's country list (each option shows the name and submits its ISO alpha-2 code, stored as given), not from a list held in the address book pages; the stub's four countries are used in stub mode.",
+      "why": "Country lists are master reference data that the service takes from MDM, and DR1 already ruled their content is not edited page by page.",
+      "claims": [
+        "document-dr1-parity-notes-p1-037",
+        "document-dr1-parity-notes-p1-038",
+        "document-dr1-parity-notes-p1-040",
+        "repo-insfrontend-p3-023",
+        "repo-insfrontend-p3-024",
+        "repo-insfrontend-p3-024-m1",
+        "repo-insfrontend-p3-025",
+        "repo-insfrontend-p3-028",
+        "repo-insfrontend-p3-030",
+        "repo-addressbook-p1-004",
+        "repo-addressbook-p1-026",
+        "repo-addressbook-p1-027",
+        "repo-addressbook-p1-097",
+        "repo-addressbook-p2-019",
+        "repo-addressbook-p2-020",
+        "repo-addressbook-p2-021",
+        "trace-ins-fit-p1-016",
+        "trace-ins-fit-p1-017",
+        "trace-e2e-p15-049",
+        "trace-e2e-p15-050"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-024 and trace-e2e-p15-050 show the list read from reference data and submitted as alpha-2 codes.",
+      "conflicts": ["c-address-book-add-and-edit-002"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-045",
+      "statement": "Saving the add or edit form without a name shows 'Enter a name or organisation name', inline and in the error summary, and the address book API's blank-name message says the same.",
+      "why": "Design Release 2.1 copy; the API's message reaches the user when the service rejects a save.",
+      "claims": [
+        "prototype-dr2-1-source-p15-071",
+        "prototype-dr2-1-source-p16-066",
+        "trace-prototype-dr2-1-p16-070",
+        "trace-prototype-dr2-1-p16-114",
+        "prototype-dr2-1-specs-p6-129",
+        "prototype-dr2-1-specs-p6-162",
+        "repo-insfrontend-p3-044",
+        "trace-ins-fit-p1-034",
+        "trace-ins-fit-p3-023",
+        "repo-addressbook-p1-010"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the message is 'Enter a name' in the frontend and the API (repo-insfrontend-p3-044, repo-addressbook-p1-010).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-046",
+      "statement": "Saving without address line 1 shows 'Enter address line 1'.",
+      "why": "Design Release 2.1 copy, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p15-072",
+        "prototype-dr2-1-source-p16-067",
+        "trace-prototype-dr2-1-p16-071",
+        "prototype-dr2-1-specs-p6-130",
+        "repo-insfrontend-p3-046",
+        "trace-ins-fit-p1-035",
+        "repo-addressbook-p1-013"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-046 and trace-ins-fit-p1-035 show 'Enter address line 1'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-047",
+      "statement": "Saving without a town or city shows 'Enter a town or city'.",
+      "why": "Design Release 2.1 copy, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p15-073",
+        "prototype-dr2-1-source-p16-068",
+        "trace-prototype-dr2-1-p16-072",
+        "prototype-dr2-1-specs-p6-131",
+        "repo-insfrontend-p3-049",
+        "trace-ins-fit-p1-036",
+        "repo-addressbook-p1-017"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-049 and trace-ins-fit-p1-036 show 'Enter a town or city'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-048",
+      "statement": "Saving without a postcode shows 'Enter a postcode or Zip code', and the address book API's blank-postcode message says the same.",
+      "why": "Design Release 2.1 copy, matching the field's label.",
+      "claims": [
+        "prototype-dr2-1-source-p15-074",
+        "prototype-dr2-1-source-p16-069",
+        "trace-prototype-dr2-1-p16-073",
+        "prototype-dr2-1-specs-p6-132",
+        "repo-insfrontend-p3-052",
+        "trace-ins-fit-p1-037",
+        "repo-addressbook-p1-021"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the message is 'Enter a postcode' (repo-insfrontend-p3-052, repo-addressbook-p1-021).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-049",
+      "statement": "Saving without a country (or with one not in the list) shows 'Select a country', and the address book API's blank-country message says the same.",
+      "why": "Design Release 2.1 copy for a select.",
+      "claims": [
+        "prototype-dr2-1-source-p15-075",
+        "prototype-dr2-1-source-p16-070",
+        "repo-insfrontend-p3-055",
+        "repo-insfrontend-p3-056",
+        "trace-ins-fit-p1-038",
+        "trace-ins-fit-p1-038-m1",
+        "repo-addressbook-p1-025",
+        "repo-addressbook-p2-023"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the message is 'Enter a country' (repo-insfrontend-p3-055, repo-addressbook-p1-025).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-050",
+      "statement": "Saving without an email address shows 'Enter an email address'.",
+      "why": "Design Release 2.1 copy, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p15-076",
+        "prototype-dr2-1-source-p16-071",
+        "trace-prototype-dr2-1-p16-074",
+        "prototype-dr2-1-specs-p6-133",
+        "repo-insfrontend-p3-060",
+        "trace-ins-fit-p1-040",
+        "trace-ins-fit-p1-040-m1",
+        "repo-addressbook-p1-032"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-060 and trace-ins-fit-p1-040 show 'Enter an email address'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-051",
+      "statement": "Saving without a phone number shows 'Enter a phone number', and the address book API's blank-phone message says the same.",
+      "why": "Design Release 2.1 copy, matching the field's label.",
+      "claims": [
+        "prototype-dr2-1-source-p15-077",
+        "prototype-dr2-1-source-p16-072",
+        "trace-prototype-dr2-1-p16-075",
+        "prototype-dr2-1-specs-p6-134",
+        "repo-insfrontend-p3-057",
+        "trace-ins-fit-p1-039",
+        "repo-addressbook-p1-028"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the message is 'Enter a telephone number' (repo-insfrontend-p3-057, repo-addressbook-p1-028).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-052",
+      "statement": "Address line 2 and county are optional: blank values are accepted and saved as empty.",
+      "why": "Design Release 2.1 and the record agree these are optional.",
+      "claims": [
+        "prototype-dr2-1-source-p15-078",
+        "prototype-dr2-1-source-p16-073",
+        "repo-insfrontend-p3-009",
+        "repo-insfrontend-p3-048",
+        "repo-insfrontend-p3-051",
+        "repo-addressbook-p1-016",
+        "repo-addressbook-p1-016-m1",
+        "trace-e2e-p15-055"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p1-016-m1 and trace-e2e-p15-055 show blank optional fields accepted.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-053",
+      "statement": "Add and edit keep today's length limits and email format check, in the frontend and the address book API: name and both address lines 255 characters, town or city and county 100, postcode 12, phone 20 and email 254, each with its '<field> must be N characters or fewer' message, and 'Enter an email address in the correct format' for a malformed email; postcode and phone stay free text.",
+      "why": "Validation is a real constraint the prototype cannot express: the record's stored limits and a usable email address.",
+      "claims": [
+        "ruling-sam-2026-10-07-p1-010",
+        "repo-insfrontend-p3-045",
+        "repo-insfrontend-p3-047",
+        "repo-insfrontend-p3-048",
+        "repo-insfrontend-p3-050",
+        "repo-insfrontend-p3-051",
+        "repo-insfrontend-p3-053",
+        "repo-insfrontend-p3-054",
+        "repo-insfrontend-p3-058",
+        "repo-insfrontend-p3-059",
+        "repo-insfrontend-p3-061",
+        "repo-insfrontend-p3-062",
+        "repo-insfrontend-p3-063",
+        "repo-insfrontend-p3-121",
+        "repo-insfrontend-p3-126",
+        "repo-insfrontend-p3-127",
+        "repo-insfrontend-p3-134",
+        "trace-ins-fit-p1-041",
+        "trace-ins-fit-p1-042",
+        "trace-ins-fit-p1-043",
+        "trace-ins-fit-p1-044",
+        "trace-ins-fit-p1-045",
+        "trace-ins-fit-p1-046",
+        "trace-ins-fit-p1-047",
+        "trace-ins-fit-p1-048",
+        "trace-ins-fit-p1-049",
+        "trace-ins-fit-p1-050",
+        "trace-ins-fit-p1-053",
+        "trace-ins-fit-p1-025-m2",
+        "trace-ins-fit-p3-029",
+        "repo-addressbook-p1-011",
+        "repo-addressbook-p1-014",
+        "repo-addressbook-p1-018",
+        "repo-addressbook-p1-020",
+        "repo-addressbook-p1-022",
+        "repo-addressbook-p1-024",
+        "repo-addressbook-p1-029",
+        "repo-addressbook-p1-031",
+        "repo-addressbook-p1-033",
+        "repo-addressbook-p1-034",
+        "repo-addressbook-p1-083",
+        "repo-addressbook-p1-084",
+        "repo-addressbook-p1-085",
+        "repo-addressbook-p2-022",
+        "prototype-dr2-1-specs-p6-136",
+        "trace-prototype-dr2-1-p16-133"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-045 to p3-063 and repo-addressbook-p1-011 to p1-034 already enforce these limits and the email format.",
+      "conflicts": ["c-address-book-add-and-edit-004"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-054",
+      "statement": "On a validation error the add or edit page is shown again (HTTP 400, same URL) with a 'There is a problem' error summary listing every error in field order, each linking to and focusing its field, one message per field shown inline with a hidden 'Error:' prefix, and every value the user entered kept.",
+      "why": "Design Release 2.1 and GOV.UK error pattern, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p15-080",
+        "prototype-dr2-1-source-p16-075",
+        "trace-prototype-dr2-1-p16-076",
+        "prototype-dr2-1-specs-p6-128",
+        "repo-insfrontend-p3-041",
+        "repo-insfrontend-p3-042",
+        "repo-insfrontend-p3-064",
+        "repo-insfrontend-p3-065",
+        "repo-insfrontend-p3-066",
+        "repo-insfrontend-p3-067",
+        "repo-insfrontend-p3-086",
+        "repo-insfrontend-p3-125",
+        "repo-insfrontend-p3-133",
+        "trace-ins-fit-p1-028",
+        "trace-ins-fit-p1-030",
+        "trace-ins-fit-p1-031",
+        "trace-ins-fit-p1-032",
+        "trace-ins-fit-p1-033",
+        "trace-ins-fit-p1-039-m1",
+        "trace-ins-fit-p1-052",
+        "trace-ins-fit-p3-022",
+        "trace-ins-fit-p3-024",
+        "trace-ins-fit-p3-026",
+        "trace-ins-fit-p3-027",
+        "trace-ins-fit-p3-028",
+        "trace-ins-fit-p3-030",
+        "trace-ins-fit-p3-031",
+        "trace-ins-fit-p3-032",
+        "repo-tests-p5-092",
+        "trace-e2e-p15-057"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-041 to p3-067 and trace-ins-fit-p1-028 to p1-033 already behave this way.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-055",
+      "statement": "When the add or edit page shows errors, its browser title keeps the 'Error: ' prefix.",
+      "why": "Screen-reader users learn of the error from the title; the prototype's missing prefix is a gap, not a design choice.",
+      "claims": [
+        "ruling-sam-2026-10-07-p1-010",
+        "trace-ins-fit-p1-029",
+        "trace-ins-fit-p3-025"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-ins-fit-p1-029 and p3-025 show the 'Error: ' title prefix.",
+      "conflicts": ["c-address-book-add-and-edit-005"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-056",
+      "statement": "Every add and edit field is trimmed of surrounding spaces before it is validated and saved, so a field of only spaces counts as empty.",
+      "why": "Design Release 2.1 and today agree.",
+      "claims": [
+        "prototype-dr2-1-source-p15-070",
+        "repo-insfrontend-p3-043"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-043 trims every field before validation and saving.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-057",
+      "statement": "For 'Origin or Consignor' the uses question's legend is 'What can this address be used for?'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-052",
+        "trace-prototype-dr2-1-p16-065"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-058",
+      "statement": "For 'Destination, Consignee or Importer' and 'Branch' the uses question's legend is 'Address type'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-052",
+        "trace-prototype-dr2-1-p16-095",
+        "trace-prototype-dr2-1-p16-099"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-059",
+      "statement": "The uses question has the hint 'Select where this address can be used'.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-053",
+        "trace-prototype-dr2-1-p16-065",
+        "trace-prototype-dr2-1-p16-095"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-060",
+      "statement": "An 'Origin or Consignor' address offers the use checkboxes 'Place of origin' and 'Consignor'.",
+      "why": "Design Release 2.1 options.",
+      "claims": [
+        "prototype-dr2-1-source-p16-055",
+        "trace-prototype-dr2-1-p16-066",
+        "prototype-dr2-1-specs-p6-119"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-061",
+      "statement": "A 'Destination, Consignee or Importer' address offers the use checkboxes 'Place of destination', 'Consignee' and 'Importer'.",
+      "why": "Design Release 2.1 options.",
+      "claims": [
+        "prototype-dr2-1-source-p16-056",
+        "trace-prototype-dr2-1-p16-097",
+        "prototype-dr2-1-specs-p6-144"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-062",
+      "statement": "A 'Branch' address offers exactly one use checkbox, 'Branch address'.",
+      "why": "Design Release 2.1 options.",
+      "claims": [
+        "prototype-dr2-1-source-p16-057",
+        "trace-prototype-dr2-1-p16-099",
+        "prototype-dr2-1-specs-p6-147"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-063",
+      "statement": "The uses are one group of checkboxes (addressUses) showing only the chosen type's uses, with no hint on each option; any posted use that does not belong to the chosen type is ignored.",
+      "why": "Design Release 2.1 behaviour on the add-details step.",
+      "claims": [
+        "prototype-dr2-1-source-p16-054",
+        "prototype-dr2-1-source-p16-078",
+        "trace-prototype-dr2-1-p16-056-m1"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-064",
+      "statement": "The uses are checked only once the address and contact fields are valid: then, with no use ticked, saving shows 'Select what this address can be used for', linked to the first use option.",
+      "why": "Design Release 2.1 validation order.",
+      "claims": [
+        "prototype-dr2-1-source-p16-076",
+        "trace-prototype-dr2-1-p16-077",
+        "trace-prototype-dr2-1-p16-129",
+        "prototype-dr2-1-specs-p6-135"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-065",
+      "statement": "The address-book record and its create, read-one and update API carry the address's uses (every use ticked when it was added: place of origin, consignor, place of destination, consignee, importer, branch address), so the first use gives the address its primary type and its address book type; the locked API contract is updated with the new field.",
+      "why": "Design Release 2.1 records what each address can be used for; the record has nowhere to keep it today, and the DR1 address pickers wait on exactly this typed record.",
+      "claims": [
+        "prototype-dr2-1-source-p16-079",
+        "trace-prototype-dr2-1-p16-081",
+        "prototype-dr2-1-specs-p6-137",
+        "repo-addressbook-p1-001",
+        "repo-addressbook-p1-003",
+        "repo-addressbook-p1-039",
+        "repo-addressbook-p1-045",
+        "repo-addressbook-p1-054",
+        "repo-addressbook-p1-096",
+        "repo-addressbook-p2-071",
+        "repo-addressbook-p2-097",
+        "repo-addressbook-p2-098",
+        "repo-insfrontend-p3-071",
+        "trace-e2e-p9-098",
+        "trace-e2e-p9-099",
+        "document-dr1-parity-backlog-p7-064",
+        "document-dr1-parity-backlog-p7-065",
+        "document-dr1-parity-notes-p1-018",
+        "document-dr1-parity-notes-p1-019",
+        "document-dr1-parity-notes-p1-020",
+        "document-dr1-parity-notes-p1-022",
+        "document-dr1-parity-notes-p1-023"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the record is untyped and the API's request and response carry no type or use (repo-addressbook-p1-001, p1-096, trace-e2e-p9-099).",
+      "conflicts": ["c-address-book-add-and-edit-001"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-066",
+      "statement": "The add-details step's primary button is 'Save and continue'.",
+      "why": "Design Release 2.1 copy, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p16-064",
+        "trace-prototype-dr2-1-p16-067",
+        "prototype-dr2-1-specs-p6-138",
+        "repo-insfrontend-p3-034",
+        "trace-ins-fit-p1-023",
+        "trace-e2e-p15-053",
+        "repo-tests-p5-090"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-034 and trace-ins-fit-p1-023 show 'Save and continue'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-067",
+      "statement": "Below the 'Save and continue' button the add-details step has a 'Cancel and return to address book' link (not a button) that goes to the address book without saving.",
+      "why": "Design Release 2.1 makes cancel a link under the button.",
+      "claims": [
+        "prototype-dr2-1-source-p16-065",
+        "trace-prototype-dr2-1-p16-068",
+        "trace-prototype-dr2-1-p16-134",
+        "repo-insfrontend-p3-035",
+        "repo-insfrontend-p3-036",
+        "repo-insfrontend-p3-037",
+        "repo-insfrontend-p3-130",
+        "trace-ins-fit-p1-024",
+        "trace-ins-fit-p1-064",
+        "trace-ins-fit-p1-065",
+        "trace-ins-fit-p1-066",
+        "trace-e2e-p15-053",
+        "trace-e2e-p15-058"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today 'Cancel and return to address book' is a secondary submit button beside 'Save and continue' that posts cancel=true (repo-insfrontend-p3-036, trace-ins-fit-p1-024).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-068",
+      "statement": "Saving a new address from the address book returns the user to the address book list filtered to the new address's type (for example /address-book?category=origin-and-consignor), where it is listed first, with a 'View' link to its own page.",
+      "why": "Design Release 2.1 shows the user the address they just added among its kind.",
+      "claims": [
+        "prototype-dr2-1-source-p16-083",
+        "prototype-dr2-1-source-p16-086",
+        "trace-prototype-dr2-1-p16-079",
+        "trace-prototype-dr2-1-p16-081",
+        "trace-prototype-dr2-1-p16-082",
+        "prototype-dr2-1-specs-p6-137",
+        "prototype-dr2-1-specs-p6-139",
+        "repo-insfrontend-p3-076",
+        "repo-insfrontend-p3-129",
+        "trace-ins-fit-p1-054",
+        "trace-ins-fit-p1-057",
+        "trace-ins-fit-p1-060",
+        "trace-ins-fit-p1-061",
+        "trace-ins-fit-p1-062",
+        "repo-tests-p5-093",
+        "trace-e2e-p15-054"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today saving returns to the unfiltered list at /address-book (repo-insfrontend-p3-076, trace-ins-fit-p1-054).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-069",
+      "statement": "After adding an address the list shows a 'Success' notification banner reading '<name> address added to your address book' ('Address added to your address book' when there is no name).",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p16-085",
+        "trace-prototype-dr2-1-p16-080",
+        "repo-insfrontend-p3-077",
+        "repo-insfrontend-p3-078",
+        "trace-ins-fit-p1-055",
+        "trace-ins-fit-p1-056"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the banner reads '<name> added to your address book' (repo-insfrontend-p3-077, trace-ins-fit-p1-056).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-070",
+      "statement": "An added or edited address reads as address line 1, address line 2, town or city, county and postcode joined by commas, leaving out blanks, with the country shown separately.",
+      "why": "Design Release 2.1's formatted address keeps every line the user gave.",
+      "claims": [
+        "prototype-dr2-1-source-p16-080",
+        "prototype-dr2-1-source-p15-084",
+        "prototype-dr2-1-source-p15-079-m2",
+        "trace-ins-fit-p1-058",
+        "trace-ins-fit-p1-059"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the list's Address column shows only address line 1, town or city and postcode (trace-ins-fit-p1-058).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-071",
+      "statement": "A saved address can be found by the address book search on its name, its uses, its address and its country.",
+      "why": "Design Release 2.1 makes the uses searchable along with the address.",
+      "claims": [
+        "prototype-dr2-1-source-p16-082"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-072",
+      "statement": "Creating an address persists its full record in the address-book service: POST /organisation/{orgId}/addresses answers 201 with a Location header ending in the new id, the address starts ACTIVE (deleted false) with server-set id, organisation and timestamps, and server-owned or unknown fields in the body are ignored.",
+      "why": "The prototype keeps addresses only in the session; the real service must persist them.",
+      "claims": [
+        "repo-addressbook-p1-009",
+        "repo-addressbook-p1-040",
+        "repo-addressbook-p1-041",
+        "repo-addressbook-p1-042",
+        "repo-addressbook-p1-088",
+        "repo-addressbook-p2-004",
+        "repo-addressbook-p2-005",
+        "repo-addressbook-p2-006",
+        "repo-addressbook-p2-007",
+        "repo-addressbook-p2-009",
+        "repo-addressbook-p2-012",
+        "repo-addressbook-p2-013",
+        "repo-addressbook-p2-014",
+        "repo-addressbook-p2-015",
+        "repo-addressbook-p2-017",
+        "repo-addressbook-p2-018",
+        "repo-addressbook-p2-026",
+        "repo-tests-p5-094",
+        "repo-tests-p5-094-m1",
+        "trace-e2e-p15-056",
+        "trace-ins-fit-p1-063"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p2-006 and repo-tests-p5-094 show a created address persisted with its full record.",
+      "conflicts": ["c-address-book-add-and-edit-006"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-073",
+      "statement": "Saving an edit fully replaces the address's editable fields through PUT /organisation/{orgId}/addresses/{id}: a cleared optional field is cleared, id, organisation, status, createdAt and expiry are kept, modifiedAt moves on, and the record stays live.",
+      "why": "An edit must change the stored address in place, not add a new one.",
+      "claims": [
+        "repo-addressbook-p1-005",
+        "repo-addressbook-p1-006",
+        "repo-addressbook-p1-043",
+        "repo-addressbook-p1-044",
+        "repo-addressbook-p2-039",
+        "repo-addressbook-p2-040",
+        "repo-addressbook-p2-041",
+        "repo-addressbook-p2-042",
+        "repo-addressbook-p2-043",
+        "repo-tests-p5-104",
+        "repo-tests-p5-104-m1",
+        "trace-e2e-p15-066",
+        "trace-e2e-p15-067",
+        "trace-e2e-p15-068",
+        "trace-e2e-p15-069",
+        "trace-ins-fit-p3-033"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p2-039 and repo-tests-p5-104 show an edit replacing the record in place.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-074",
+      "statement": "An update is refused without change when the body is invalid (400 with per-field errors), the id is unknown, another organisation's or deleted (404 'Address not found'), or another write changed the address first (409 conflict); a stale write can never bring a deleted address back.",
+      "why": "Persistence and authorisation constraints the prototype cannot express.",
+      "claims": [
+        "repo-addressbook-p1-007",
+        "repo-addressbook-p2-044",
+        "repo-addressbook-p2-045",
+        "repo-addressbook-p2-046",
+        "repo-addressbook-p2-047",
+        "repo-addressbook-p2-048",
+        "repo-addressbook-p2-049",
+        "repo-addressbook-p2-050",
+        "repo-addressbook-p2-051",
+        "repo-addressbook-p2-052"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p2-044 to p2-052 prove these refusals.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-075",
+      "statement": "The address-book API answers errors as RFC 9457 problems (application/problem+json, CDP problem types, traceId from x-cdp-request-id, no instance field): a validation error carries a camelCase per-field errors map, a bad request carries none, a 500 never leaks the underlying message.",
+      "why": "The frontend maps these shapes to the form, and the shapes are a locked cross-service contract.",
+      "claims": [
+        "repo-addressbook-p1-036",
+        "repo-addressbook-p2-023",
+        "repo-addressbook-p2-024",
+        "repo-addressbook-p2-025",
+        "repo-addressbook-p2-072",
+        "repo-addressbook-p2-073",
+        "repo-addressbook-p2-074",
+        "repo-addressbook-p2-075",
+        "repo-addressbook-p2-076",
+        "repo-addressbook-p2-077",
+        "repo-addressbook-p2-079",
+        "repo-addressbook-p2-080",
+        "repo-addressbook-p2-081",
+        "repo-addressbook-p2-082",
+        "repo-addressbook-p2-083",
+        "repo-addressbook-p2-083-m1",
+        "repo-addressbook-p2-084",
+        "repo-addressbook-p2-085",
+        "repo-addressbook-p2-086",
+        "repo-addressbook-p2-087",
+        "repo-addressbook-p2-088",
+        "repo-addressbook-p2-089",
+        "repo-addressbook-p2-089-m1",
+        "repo-addressbook-p2-090",
+        "repo-addressbook-p2-091",
+        "repo-addressbook-p2-092"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p2-073 to p2-092 define and test these problem shapes.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-076",
+      "statement": "When the address-book service rejects a save the form is shown again with the service's first message per field and the values kept; any other save failure, or a failure loading the form, shows the recoverable error with the values kept; reference data being unavailable or empty gives a 503.",
+      "why": "Cross-service failures the prototype cannot express.",
+      "claims": [
+        "repo-insfrontend-p3-026",
+        "repo-insfrontend-p3-027",
+        "repo-insfrontend-p3-029",
+        "repo-insfrontend-p3-068",
+        "repo-insfrontend-p3-068-m1",
+        "repo-insfrontend-p3-069",
+        "repo-insfrontend-p3-111",
+        "repo-insfrontend-p3-139",
+        "trace-ins-fit-p1-067"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-026 to p3-029 and p3-068 to p3-069 already handle these failures.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-077",
+      "statement": "Outside prod, a new address can be given an expiry (ADDRESS_TTL_DAYS) after which Mongo removes it; updates and deletes keep the original expiry, and prod is protected by two safeguards and keeps addresses indefinitely.",
+      "why": "Test data must not build up outside prod while prod data is never expired.",
+      "claims": [
+        "repo-addressbook-p1-060",
+        "repo-addressbook-p1-069",
+        "repo-addressbook-p1-070",
+        "repo-addressbook-p1-071",
+        "repo-addressbook-p1-072",
+        "repo-addressbook-p1-073",
+        "repo-addressbook-p1-074",
+        "repo-addressbook-p1-075",
+        "repo-addressbook-p1-076",
+        "repo-addressbook-p1-077",
+        "repo-addressbook-p1-078-m1",
+        "repo-addressbook-p1-079",
+        "repo-addressbook-p1-080",
+        "repo-addressbook-p1-081",
+        "repo-addressbook-p1-082",
+        "repo-addressbook-p1-090",
+        "repo-addressbook-p1-091",
+        "repo-addressbook-p1-092",
+        "repo-addressbook-p1-092-m1",
+        "repo-addressbook-p1-093",
+        "repo-addressbook-p2-027",
+        "repo-addressbook-p2-028",
+        "repo-addressbook-p2-029",
+        "repo-addressbook-p2-030",
+        "repo-addressbook-p2-095"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p1-069 to p1-082 and p2-027 to p2-030 implement and test the non-prod expiry.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-078",
+      "statement": "The address-book service keeps its API surface and storage as built: the response fields (with deleted derived from status, and status, version and expireAt never returned), camelCase wire names, the hand-authored locked contract checked at build, the org_status_created index, Mongo over TLS with IAM in CDP, operation timers, and integration tests against a real Mongo.",
+      "why": "This is the system of record other services depend on; none of it differs from Design Release 2.1 visibly.",
+      "claims": [
+        "repo-addressbook-p1-002",
+        "repo-addressbook-p1-008",
+        "repo-addressbook-p1-012",
+        "repo-addressbook-p1-015",
+        "repo-addressbook-p1-019",
+        "repo-addressbook-p1-023",
+        "repo-addressbook-p1-030",
+        "repo-addressbook-p1-035",
+        "repo-addressbook-p1-046",
+        "repo-addressbook-p1-047",
+        "repo-addressbook-p1-048",
+        "repo-addressbook-p1-049",
+        "repo-addressbook-p1-050",
+        "repo-addressbook-p1-051",
+        "repo-addressbook-p1-052",
+        "repo-addressbook-p1-053",
+        "repo-addressbook-p1-055",
+        "repo-addressbook-p1-056",
+        "repo-addressbook-p1-057",
+        "repo-addressbook-p1-058",
+        "repo-addressbook-p1-059",
+        "repo-addressbook-p1-061",
+        "repo-addressbook-p1-062",
+        "repo-addressbook-p1-063",
+        "repo-addressbook-p1-064",
+        "repo-addressbook-p1-065",
+        "repo-addressbook-p1-066",
+        "repo-addressbook-p1-067",
+        "repo-addressbook-p1-068",
+        "repo-addressbook-p1-086",
+        "repo-addressbook-p1-087",
+        "repo-addressbook-p1-089",
+        "repo-addressbook-p1-094",
+        "repo-addressbook-p1-095",
+        "repo-addressbook-p2-002",
+        "repo-addressbook-p2-008",
+        "repo-addressbook-p2-067",
+        "repo-addressbook-p2-068",
+        "repo-addressbook-p2-069",
+        "repo-addressbook-p2-070",
+        "repo-addressbook-p2-096",
+        "repo-addressbook-p2-099",
+        "repo-addressbook-p2-100",
+        "repo-addressbook-p2-101",
+        "repo-addressbook-p2-102",
+        "repo-addressbook-p2-103",
+        "repo-addressbook-p2-085-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-addressbook-p1-045 to p1-068 and p2-067 to p2-102 describe the service as built.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-079",
+      "statement": "The edit page's heading and page title are 'Edit address and contact details', with no caption.",
+      "why": "Design Release 2.1 copy.",
+      "claims": [
+        "prototype-dr2-1-source-p15-057",
+        "trace-prototype-dr2-1-p16-107",
+        "prototype-dr2-1-specs-p6-158",
+        "prototype-dr2-1-specs-p6-159",
+        "repo-insfrontend-p3-004",
+        "repo-insfrontend-p3-083",
+        "trace-ins-fit-p3-002",
+        "trace-ins-fit-p3-003",
+        "repo-tests-p5-103",
+        "trace-e2e-p15-059"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the edit heading and title are 'Edit address details' (repo-insfrontend-p3-083, trace-ins-fit-p3-002).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-080",
+      "statement": "The edit page at /address-book/{id}/edit opens with the address and contact fields shown and prefilled from the stored address, with no address search.",
+      "why": "Design Release 2.1 and today agree.",
+      "claims": [
+        "prototype-dr2-1-source-p15-059",
+        "prototype-dr2-1-source-p15-060",
+        "prototype-dr2-1-specs-p6-160",
+        "prototype-dr2-1-specs-p6-161",
+        "repo-insfrontend-p3-079",
+        "repo-insfrontend-p3-085",
+        "repo-insfrontend-p3-131",
+        "trace-ins-fit-p3-006",
+        "trace-e2e-p15-059",
+        "repo-tests-p5-103"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-085 and trace-ins-fit-p3-006 show every field prefilled.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-081",
+      "statement": "The edit page's 'Back' link goes to the return path it was opened with, otherwise to the address's view page.",
+      "why": "Design Release 2.1 returns the user to where they came from.",
+      "claims": [
+        "prototype-dr2-1-source-p15-058",
+        "trace-prototype-dr2-1-p16-113",
+        "repo-insfrontend-p3-084",
+        "trace-ins-fit-p3-004",
+        "trace-ins-fit-p3-004-m1",
+        "trace-e2e-p15-060"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the Back link always goes to the view page; no return path is honoured (repo-insfrontend-p3-084).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-082",
+      "statement": "The edit page's buttons are 'Save changes' and a secondary 'Cancel', both submit buttons.",
+      "why": "Design Release 2.1 copy, already met.",
+      "claims": [
+        "prototype-dr2-1-source-p15-066",
+        "trace-prototype-dr2-1-p16-112",
+        "prototype-dr2-1-specs-p6-165",
+        "repo-insfrontend-p3-089",
+        "trace-ins-fit-p3-018",
+        "trace-ins-fit-p3-019",
+        "trace-e2e-p15-064"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-089 and trace-ins-fit-p3-019 show 'Save changes' and a secondary submit 'Cancel'.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-083",
+      "statement": "'Cancel' on the edit page saves nothing, clears any errors and returns to the return path, by default the address's view page.",
+      "why": "Design Release 2.1 sends the user back to the address they were looking at.",
+      "claims": [
+        "prototype-dr2-1-source-p15-067",
+        "prototype-dr2-1-source-p15-068",
+        "repo-insfrontend-p3-090",
+        "repo-insfrontend-p3-137",
+        "trace-ins-fit-p3-039",
+        "trace-ins-fit-p3-040",
+        "trace-ins-fit-p3-041"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today Cancel goes to the address book list at /address-book (repo-insfrontend-p3-090, trace-ins-fit-p3-039).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-084",
+      "statement": "The edit page does not show or change the address's uses: an edit keeps every use the address already has.",
+      "why": "Design Release 2.1 keeps the type off the edit form; the record must not lose uses on edit.",
+      "claims": [
+        "prototype-dr2-1-source-p15-061",
+        "trace-prototype-dr2-1-p16-111"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-address-book-add-and-edit-006"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-085",
+      "statement": "A valid edit returns the user to the address book list (its default view), which shows the edited values under the same address.",
+      "why": "Design Release 2.1 and today agree on the destination; the list must show what was saved.",
+      "claims": [
+        "prototype-dr2-1-source-p15-081",
+        "trace-prototype-dr2-1-p16-115",
+        "prototype-dr2-1-specs-p6-163",
+        "repo-insfrontend-p3-092",
+        "repo-insfrontend-p3-136",
+        "trace-ins-fit-p3-034",
+        "trace-ins-fit-p3-037",
+        "trace-ins-fit-p3-038",
+        "repo-tests-p5-105",
+        "repo-tests-p5-106",
+        "trace-e2e-p15-065",
+        "trace-e2e-p15-070"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-092 and trace-ins-fit-p3-034, p3-037 show the return to /address-book with the edited values.",
+      "conflicts": ["c-address-book-add-and-edit-006"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-086",
+      "statement": "After a valid edit the list shows a 'Success' notification banner reading '<Name> address updated', the name with its first letter capitalised and the rest lower case ('Address updated' when the name is blank).",
+      "why": "Design Release 2.1 copy, asserted by its specs and traces.",
+      "claims": [
+        "prototype-dr2-1-source-p15-083",
+        "trace-prototype-dr2-1-p16-116",
+        "prototype-dr2-1-specs-p6-164",
+        "repo-insfrontend-p3-092",
+        "trace-ins-fit-p3-035",
+        "trace-ins-fit-p3-036"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the banner reads '<name> updated in your address book' with the name as typed (repo-insfrontend-p3-092, trace-ins-fit-p3-035).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-087",
+      "statement": "Opening or saving the edit page for an address that is not in the user's address book (unknown, another organisation's, deleted or a malformed id) redirects to the return path or the address book list without saving.",
+      "why": "Design Release 2.1 sends the user back to the list rather than an error page.",
+      "claims": [
+        "prototype-dr2-1-source-p15-056",
+        "prototype-dr2-1-source-p15-069",
+        "repo-insfrontend-p3-080",
+        "repo-insfrontend-p3-081",
+        "repo-insfrontend-p3-082",
+        "repo-insfrontend-p3-093",
+        "repo-insfrontend-p3-140"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today these cases show the page not found error (repo-insfrontend-p3-080, p3-081, p3-093).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-088",
+      "statement": "Every new or changed English string on the add and edit pages gets a matching Welsh entry, still marked as an unreviewed machine draft that must not ship without Welsh Language Standards sign-off.",
+      "why": "The address book keeps English and Welsh copy side by side; changing only English would leave Welsh describing the old pages.",
+      "claims": [
+        "repo-insfrontend-p3-113",
+        "repo-insfrontend-p3-114",
+        "repo-insfrontend-p3-115",
+        "repo-insfrontend-p3-116",
+        "repo-insfrontend-p3-117",
+        "repo-insfrontend-p3-118",
+        "repo-insfrontend-p3-119",
+        "repo-insfrontend-p3-120"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today's Welsh copy mirrors today's English (repo-insfrontend-p3-114 to p3-120).",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-089",
+      "statement": "Every add and edit page highlights 'Address book' in the service navigation.",
+      "why": "Design Release 2.1 and today agree.",
+      "claims": [
+        "prototype-dr2-1-source-p16-014",
+        "trace-ins-fit-p1-007",
+        "trace-ins-fit-p3-021"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-ins-fit-p1-007 and p3-021 show 'Address book' active.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-090",
+      "statement": "The add and edit pages, and their error states, use only GOV.UK Frontend components and have no serious or critical axe violations against WCAG 2.0, 2.1 and 2.2 A and AA.",
+      "why": "Accessibility is a standing quality bar the new pages must keep.",
+      "claims": [
+        "repo-insfrontend-p3-124",
+        "repo-insfrontend-p3-128",
+        "repo-insfrontend-p3-132",
+        "repo-insfrontend-p3-135",
+        "trace-ins-fit-p1-026",
+        "trace-ins-fit-p1-027",
+        "trace-ins-fit-p1-051",
+        "trace-ins-fit-p1-051-m1",
+        "trace-ins-fit-p1-004-m1",
+        "trace-ins-fit-p1-001-m1",
+        "trace-ins-fit-p3-020",
+        "trace-ins-fit-p3-043",
+        "trace-ins-fit-p3-044"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-124 to p3-135 and trace-ins-fit-p1-027, p3-043 show no serious or critical violations.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-091",
+      "statement": "The add and edit forms post to themselves with browser validation off and a CSRF crumb, set autocomplete only on email, and are served with the INS security headers and session cookie; the add page is sent with Cache-Control: no-store.",
+      "why": "Security and form handling constraints the prototype cannot express.",
+      "claims": [
+        "repo-insfrontend-p3-018",
+        "repo-insfrontend-p3-020",
+        "repo-insfrontend-p3-031",
+        "trace-ins-fit-p1-025",
+        "trace-ins-fit-p1-025-m1",
+        "trace-ins-fit-p1-019-m1",
+        "trace-ins-fit-p1-054-m1",
+        "trace-ins-fit-p1-054-m2",
+        "trace-ins-fit-p3-015",
+        "trace-ins-fit-p3-016",
+        "trace-ins-fit-p3-017",
+        "trace-e2e-p15-051"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-020, p3-031 and trace-ins-fit-p1-025, p1-054-m1 show these protections.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-092",
+      "statement": "The edit page is sent without Cache-Control: no-store, unlike the add page, so a browser may cache a page holding an organisation's address and contact details.",
+      "why": "Not a Design Release 2.1 difference: a gap in today's service that this programme does not fix; it goes to the report.",
+      "claims": [
+        "repo-insfrontend-p3-032"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-032.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-093",
+      "statement": "A notification journey's 'add a new address' keeps handing over to the INS address book add through today's handshake (journey-type, notification-id, fulfilment-id and handshake-token; only the registered gbn-ag journey; the return URL built on the server; the new address id handed back; cancel returns without one; no address book banner), with the add page in journey mode following Design Release 2.1 as c-address-book-add-and-edit-007's default sets out.",
+      "why": "Design Release 2.1's journeys add addresses on their own pages, but the real address book is a separate service the animals journey reaches only through this handshake.",
+      "claims": [
+        "prototype-dr2-1-source-p16-088",
+        "prototype-dr2-1-source-p16-089",
+        "prototype-dr2-1-source-p16-090",
+        "prototype-dr2-1-source-p16-091",
+        "prototype-dr2-1-source-p16-092",
+        "prototype-dr2-1-source-p16-093",
+        "prototype-dr2-1-source-p16-094",
+        "prototype-dr2-1-source-p16-095",
+        "repo-insfrontend-p3-095",
+        "repo-insfrontend-p3-096",
+        "repo-insfrontend-p3-097",
+        "repo-insfrontend-p3-098",
+        "repo-insfrontend-p3-099",
+        "repo-insfrontend-p3-100",
+        "repo-insfrontend-p3-101",
+        "repo-insfrontend-p3-102",
+        "repo-insfrontend-p3-103",
+        "repo-insfrontend-p3-104",
+        "repo-insfrontend-p3-105",
+        "repo-insfrontend-p3-106",
+        "repo-insfrontend-p3-107",
+        "repo-insfrontend-p3-108",
+        "repo-insfrontend-p3-109",
+        "repo-insfrontend-p3-110",
+        "repo-insfrontend-p3-112",
+        "repo-insfrontend-p3-138",
+        "repo-tests-p5-034",
+        "repo-tests-p5-035",
+        "repo-tests-p5-036",
+        "trace-e2e-p15-006",
+        "trace-e2e-p15-007",
+        "trace-e2e-p15-008",
+        "trace-e2e-p15-009"
+      ],
+      "status": "question",
+      "delta": "change",
+      "deltaNote": "Today the handshake opens the single 'Add address details' form with 'Cancel and return to address page' (repo-insfrontend-p3-107, p3-108).",
+      "conflicts": ["c-address-book-add-and-edit-007"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-094",
+      "statement": "When the search layout ('Destination, Consignee or Importer', 'Branch') is saved with nothing picked or typed, the six field errors show and the address and contact fields are revealed, so each error summary link leads to a visible field; errors stay on the fields until the next save, and what was typed, the ticked uses and the search text are kept.",
+      "why": "An error summary link must reach its field; the prototype's hidden fields are a gap, not a design choice.",
+      "claims": [
+        "prototype-dr2-1-source-p16-077",
+        "trace-prototype-dr2-1-p16-092",
+        "trace-prototype-dr2-1-p16-094",
+        "prototype-dr2-1-specs-p6-142",
+        "repo-insfrontend-p3-065"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": ["c-address-book-add-and-edit-005"]
+    },
+    {
+      "id": "req-address-book-add-and-edit-095",
+      "statement": "No separate 'What can this address be used for?' usage page (/address-book/add/usage, with a hint on each use and a 'Save address' button) is built; the uses are asked on the add-details step.",
+      "why": "Design Release 2.1 holds this page but never reaches it: it redirects unless a pending address is held, and nothing sets one.",
+      "claims": [
+        "prototype-dr2-1-source-p16-058",
+        "prototype-dr2-1-source-p16-059",
+        "prototype-dr2-1-source-p16-060",
+        "prototype-dr2-1-source-p16-061",
+        "prototype-dr2-1-source-p16-062",
+        "prototype-dr2-1-source-p16-063",
+        "prototype-dr2-1-source-p16-107",
+        "prototype-dr2-1-source-p16-108",
+        "prototype-dr2-1-source-p16-109",
+        "prototype-dr2-1-source-p16-110",
+        "prototype-dr2-1-source-p16-111",
+        "trace-prototype-dr2-1-p16-100",
+        "trace-prototype-dr2-1-p16-128",
+        "prototype-dr2-1-specs-p6-149",
+        "prototype-dr2-1-specs-p6-150"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-096",
+      "statement": "The prototype's root 'Add address details' lookup page (full UK and EU search list, County field, 'Cancel and return to dashboard', single suggested type, no uses question) is not built as a separate page.",
+      "why": "Under Design Release 2.1 it is reached only by the non-DR2.1 journey hand-off; the address book's own add uses the 'Add address and contact details' step.",
+      "claims": [
+        "prototype-dr2-1-source-p16-096",
+        "prototype-dr2-1-source-p16-097",
+        "prototype-dr2-1-source-p16-098",
+        "prototype-dr2-1-source-p16-099",
+        "prototype-dr2-1-source-p16-099-m1",
+        "prototype-dr2-1-source-p16-100",
+        "prototype-dr2-1-source-p16-101",
+        "prototype-dr2-1-source-p16-102",
+        "prototype-dr2-1-source-p16-103",
+        "prototype-dr2-1-source-p16-103-m1",
+        "prototype-dr2-1-source-p16-104",
+        "prototype-dr2-1-source-p16-105",
+        "prototype-dr2-1-source-p16-105-m1",
+        "prototype-dr2-1-source-p16-106"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-097",
+      "statement": "Design Release 1's seven address types (Place of Origin to Branch Address with their hints), its 'What is the new address for?' chooser and its add-details form are not built.",
+      "why": "The DR1 parity backlog is not a source of requirements; Design Release 2.1's four types and their uses replace DR1's add journey.",
+      "claims": [
+        "document-dr1-parity-backlog-p7-063",
+        "document-dr1-parity-backlog-p7-066",
+        "document-dr1-parity-backlog-p7-067",
+        "document-dr1-parity-backlog-p7-068",
+        "document-dr1-parity-backlog-p7-069",
+        "document-dr1-parity-backlog-p7-070",
+        "document-dr1-parity-backlog-p7-071",
+        "document-dr1-parity-backlog-p7-072",
+        "document-dr1-parity-backlog-p7-073",
+        "document-dr1-parity-backlog-p7-077",
+        "document-dr1-parity-backlog-p7-078",
+        "ruling-sam-2026-10-07-p1-003",
+        "ruling-sam-2026-10-07-p1-004",
+        "ruling-sam-2026-10-07-p1-005"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-098",
+      "statement": "The dev/local-only address lookup spike page (/address-lookup-spike, EUDPA-390) is left as it is: its search form, outcome tags, timings, mapping summary, stub and Welsh draft copy are not changed to match Design Release 2.1.",
+      "why": "It is a temporary engineering spike users never reach, not part of any Design Release 2.1 page; the real search reuses its lookup client (req-address-book-add-and-edit-027).",
+      "claims": [
+        "repo-insfrontend-p5-001",
+        "repo-insfrontend-p5-002",
+        "repo-insfrontend-p5-003",
+        "repo-insfrontend-p5-004",
+        "repo-insfrontend-p5-005",
+        "repo-insfrontend-p5-006",
+        "repo-insfrontend-p5-007",
+        "repo-insfrontend-p5-008",
+        "repo-insfrontend-p5-009",
+        "repo-insfrontend-p5-010",
+        "repo-insfrontend-p5-011",
+        "repo-insfrontend-p5-012",
+        "repo-insfrontend-p5-013",
+        "repo-insfrontend-p5-014",
+        "repo-insfrontend-p5-015",
+        "repo-insfrontend-p5-016",
+        "repo-insfrontend-p5-017",
+        "repo-insfrontend-p5-019",
+        "repo-insfrontend-p5-021",
+        "repo-insfrontend-p5-023",
+        "repo-insfrontend-p5-024",
+        "repo-insfrontend-p5-025",
+        "repo-insfrontend-p5-026",
+        "repo-insfrontend-p5-027",
+        "repo-insfrontend-p5-028",
+        "repo-insfrontend-p5-029",
+        "repo-insfrontend-p5-030",
+        "repo-insfrontend-p5-031",
+        "repo-insfrontend-p5-032",
+        "repo-insfrontend-p5-033",
+        "repo-insfrontend-p5-034",
+        "repo-insfrontend-p5-035",
+        "repo-insfrontend-p5-036",
+        "repo-insfrontend-p5-037",
+        "repo-insfrontend-p5-038",
+        "repo-insfrontend-p5-039",
+        "repo-insfrontend-p5-040",
+        "repo-insfrontend-p5-041",
+        "repo-insfrontend-p5-042",
+        "repo-insfrontend-p5-043",
+        "repo-insfrontend-p5-044",
+        "repo-insfrontend-p5-045",
+        "repo-insfrontend-p5-046",
+        "repo-insfrontend-p5-047",
+        "repo-insfrontend-p5-048",
+        "repo-insfrontend-p5-049",
+        "repo-insfrontend-p5-050",
+        "repo-insfrontend-p5-051",
+        "repo-insfrontend-p5-060",
+        "repo-insfrontend-p5-061",
+        "repo-insfrontend-p5-062",
+        "repo-insfrontend-p5-063",
+        "repo-insfrontend-p5-064",
+        "repo-insfrontend-p5-066",
+        "repo-insfrontend-p5-068",
+        "repo-insfrontend-p5-075",
+        "repo-insfrontend-p5-076",
+        "repo-insfrontend-p5-077",
+        "repo-insfrontend-p5-078",
+        "repo-insfrontend-p5-079",
+        "repo-insfrontend-p5-080",
+        "repo-insfrontend-p5-081",
+        "repo-insfrontend-p5-082",
+        "repo-insfrontend-p5-083",
+        "repo-insfrontend-p5-084",
+        "repo-insfrontend-p5-085",
+        "repo-insfrontend-p5-086",
+        "repo-insfrontend-p5-087",
+        "repo-insfrontend-p5-088",
+        "repo-insfrontend-p5-089",
+        "repo-insfrontend-p5-090",
+        "repo-insfrontend-p5-091",
+        "repo-insfrontend-p5-092",
+        "repo-insfrontend-p5-093",
+        "repo-insfrontend-p5-094",
+        "repo-insfrontend-p5-095",
+        "repo-insfrontend-p5-096",
+        "repo-insfrontend-p5-097",
+        "repo-insfrontend-p5-098",
+        "repo-insfrontend-p5-099",
+        "repo-insfrontend-p5-100",
+        "repo-insfrontend-p5-101",
+        "repo-insfrontend-p5-102",
+        "repo-insfrontend-p5-103",
+        "repo-insfrontend-p5-104",
+        "repo-insfrontend-p5-105",
+        "repo-insfrontend-p5-106",
+        "repo-insfrontend-p5-107",
+        "repo-insfrontend-p5-108",
+        "repo-insfrontend-p5-109",
+        "repo-insfrontend-p5-110",
+        "repo-insfrontend-p5-111",
+        "repo-insfrontend-p5-112",
+        "repo-insfrontend-p5-113",
+        "repo-insfrontend-p5-017-m1",
+        "repo-insfrontend-p5-049-m1",
+        "repo-insfrontend-p5-058-m1",
+        "repo-insfrontend-p5-078-m1",
+        "repo-insfrontend-p5-079-m1",
+        "repo-insfrontend-p5-113-m1"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p5-003: registered in dev and local only.",
+      "conflicts": []
+    },
+    {
+      "id": "req-address-book-add-and-edit-099",
+      "statement": "The INS frontend's shared validators (UK postcode format, vehicle registration, UK phone, number ranges, dates and times) stay unused by the address form.",
+      "why": "Design Release 2.1 sets no format rule on postcode or phone, and today's form uses none of these validators; nothing changes.",
+      "claims": [
+        "repo-insfrontend-p3-121",
+        "repo-insfrontend-p3-122"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p3-121.",
+      "conflicts": []
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c-address-book-add-and-edit-001",
+      "about": "Whether an address-book record carries what the address can be used for (its uses), against the address book's ruling that it is untyped.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "The prototype wins by default over what the real services do today.",
+          "claim": "ruling-sam-2026-10-07-p1-008"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A saved address keeps every ticked use as its types, the first setting its primary type and address book type.",
+          "claim": "prototype-dr2-1-source-p16-079"
+        },
+        {
+          "source": "repo:addressbook",
+          "says": "Ruling cv-044: the address book is untyped and unroled, so a supplied type gets a 400.",
+          "claim": "repo-addressbook-p1-037"
+        },
+        {
+          "source": "repo:addressbook",
+          "says": "An address-book entry is untyped and owned by an organisation.",
+          "claim": "repo-addressbook-p1-001"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Design Release 2.1 wins: the record and its API gain the address's uses (req-address-book-add-and-edit-065). Storing them is something the prototype expresses, so no real constraint overrides it; it also meets cv-044's reason (one address used as consignor on one notification and consignee on the next) because an address carries several uses. cv-044's 'untyped and unroled' rule is set aside. repo-addressbook-p1-001 is not overruled: it is today's state, cited as the evidence for the new field. The rejection of stray 'type' and 'role' fields (repo-addressbook-p1-038, p2-016) can stay, since the new field carries its own name. DR1 inc-047 and inc-048 wait on exactly this typed record (document-dr1-parity-notes-p1-022, p1-023).",
+      "overruled": ["repo-addressbook-p1-037"]
+    },
+    {
+      "id": "c-address-book-add-and-edit-002",
+      "about": "Which countries the Country select offers: the prototype's fixed 42-country list with outermost regions, or the reference data list.",
+      "positions": [
+        {
+          "source": "document:dr1-parity-notes",
+          "says": "A fix that is the content of a master reference-data list is deferred to MDM, not made in a hard-coded list.",
+          "claim": "document-dr1-parity-notes-p1-038"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "says": "inc-081: the real country list holds only sovereign states where DR1 offers regions and territories; blocked on MDM.",
+          "claim": "document-dr1-parity-notes-p1-040"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "The Country select lists 'Select one' and 42 countries, including outermost regions and Crown dependencies.",
+          "claim": "trace-prototype-dr2-1-p16-061"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "Countries come from the reference data service's GET /countries.",
+          "claim": "repo-insfrontend-p3-024"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The DR1 judgement on the same difference (the country list's regions and territories, inc-081) wins: what the list holds stays with reference data and MDM (req-address-book-add-and-edit-044). The prototype still sets how the list is shown: alphabetical order (req-040), United Kingdom pre-selected on add (req-041), 'Select one' placeholder (req-042), no placeholder on edit (req-043).",
+      "overruled": ["trace-prototype-dr2-1-p16-061"]
+    },
+    {
+      "id": "c-address-book-add-and-edit-003",
+      "about": "Where the address search's addresses come from: the prototype's made-up list shipped with the page, or a real address lookup.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as cross-service behaviour, overrides the prototype.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The search list is 500 made-up UK and EU addresses held in the prototype.",
+          "claim": "prototype-dr2-1-source-p16-031"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The lookup data also holds 80 generated Northern Ireland addresses.",
+          "claim": "prototype-dr2-1-source-p16-032"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "Search runs in the browser over data that comes with the page; no lookup service is called.",
+          "claim": "trace-prototype-dr2-1-p16-091"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "The address lookup client calls the INS backend's GET /address-lookup with postcode= or find=, answered by a stub in stub mode.",
+          "claim": "repo-insfrontend-p5-067"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The ruling's real-constraint clause wins: real users need real addresses, which only the address lookup service holds. The search keeps Design Release 2.1's look and type-ahead behaviour (req-024, req-025) but its results come from the INS backend's /address-lookup (find=<term>), per environment: the INS frontend's in-memory stub (three London addresses) in stub mode and the local stack's stub, the INS backend's lookup in CDP environments. A picked result fills the fields by the spike's mapping (premises to line 1, street and locality to line 2, town, postcode); the lookup returns no organisation name, so the name is left for the user, and the country is United Kingdom because the search types are UK-only. Results show the lookup's formatted address line.",
+      "overruled": [
+        "prototype-dr2-1-source-p16-031",
+        "prototype-dr2-1-source-p16-032",
+        "trace-prototype-dr2-1-p16-091"
+      ]
+    },
+    {
+      "id": "c-address-book-add-and-edit-004",
+      "about": "Whether add and edit keep length limits and an email format check that Design Release 2.1 does not have.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as validation, overrides the prototype.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Only blank required fields are checked; no format rules and no length limits.",
+          "claim": "prototype-dr2-1-source-p16-074"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The edit form sets no format rule or message for email, phone or postcode, and no maximum lengths.",
+          "claim": "prototype-dr2-1-source-p15-079"
+        },
+        {
+          "source": "repo:addressbook",
+          "says": "The record enforces maximum lengths and a valid email format.",
+          "claim": "repo-addressbook-p1-033"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The ruling's validation clause wins: today's length limits and email format check stay in the frontend and the API (req-address-book-add-and-edit-053), because the stored record has these limits and a malformed email cannot be used. Postcode and phone stay free text, as in both sources.",
+      "overruled": [
+        "prototype-dr2-1-source-p16-074",
+        "prototype-dr2-1-source-p15-079"
+      ]
+    },
+    {
+      "id": "c-address-book-add-and-edit-005",
+      "about": "Error-state accessibility the prototype leaves out: no 'Error:' title prefix, and error summary links to fields that stay hidden on the search layout.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as validation, overrides the prototype.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "In the error state the page title has no 'Error:' prefix.",
+          "claim": "trace-prototype-dr2-1-p16-046"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "The add-address page title keeps no 'Error:' prefix when showing errors.",
+          "claim": "trace-prototype-dr2-1-p16-092-m1"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "The edit page title keeps no 'Error:' prefix when showing errors.",
+          "claim": "trace-prototype-dr2-1-p16-114-m1"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "On the search layout the fields the error summary links to stay hidden.",
+          "claim": "trace-prototype-dr2-1-p16-093"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "Errors prefix the title with 'Error: ', and each summary link moves focus to its field.",
+          "claim": "repo-insfrontend-p3-065"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The ruling's validation clause wins: how validation errors reach users of assistive technology is part of validation the prototype does not express. Titles keep the 'Error: ' prefix (req-address-book-add-and-edit-055) and the search layout reveals its fields when it shows field errors (req-094). Every error message and the page content otherwise follow Design Release 2.1.",
+      "overruled": [
+        "trace-prototype-dr2-1-p16-046",
+        "trace-prototype-dr2-1-p16-092-m1",
+        "trace-prototype-dr2-1-p16-114-m1",
+        "trace-prototype-dr2-1-p16-093"
+      ]
+    },
+    {
+      "id": "c-address-book-add-and-edit-006",
+      "about": "Prototype persistence behaviour: addresses held only in the session, edits that drop extra uses, and seeded addresses still shown with old details after an edit.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as persistence, overrides the prototype.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Saved addresses are kept only in the user's session.",
+          "claim": "prototype-dr2-1-source-p16-084"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Editing an address with several types saves it with only its first type.",
+          "claim": "prototype-dr2-1-source-p15-082"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A seeded address's edit is merged without replacing its stored lines, so the list can show the old address.",
+          "claim": "prototype-dr2-1-source-p15-085"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "After a seeded address is edited, the list's Name column can still show the old name.",
+          "claim": "prototype-dr2-1-source-p15-079-m1"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "After the edit the list still showed the old name and address.",
+          "claim": "trace-prototype-dr2-1-p16-117"
+        },
+        {
+          "source": "trace:ins-fit",
+          "says": "After saving, the list shows the edited values under the same address.",
+          "claim": "trace-ins-fit-p3-037"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The ruling's persistence clause wins: addresses persist in the address-book service (req-072), an edit keeps every use (req-084) and the list shows what was saved (req-085).",
+      "overruled": [
+        "prototype-dr2-1-source-p16-084",
+        "prototype-dr2-1-source-p15-082",
+        "prototype-dr2-1-source-p15-085",
+        "prototype-dr2-1-source-p15-079-m1",
+        "trace-prototype-dr2-1-p16-117"
+      ]
+    },
+    {
+      "id": "c-address-book-add-and-edit-007",
+      "about": "How a notification journey adds a new address: Design Release 2.1's journey adds it on its own pages, while today the animals journey hands off to the INS address book add and gets the new address id back.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Under DR2.1 the journey's own add-address pages handle the add; only non-DR2.1 sessions go to /address-book/add?from=<section>.",
+          "claim": "prototype-dr2-1-source-p16-095"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "/address-book/add?from=<section> records where to return, suggests the section's type and selects the new address in that section.",
+          "claim": "prototype-dr2-1-source-p16-088"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "Saving in journey mode returns to the journey's server-built return URL with the new address id.",
+          "claim": "repo-insfrontend-p3-108"
+        },
+        {
+          "source": "repo:tests",
+          "says": "The INS add page refuses a handshake with an unrecognised journey type.",
+          "claim": "repo-tests-p5-035"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Not settled by precedence: Design Release 2.1 wins by default, but adding on the journey's own pages would need the animals frontend to write to the address-book service, a cross-service change the ruling lets override the prototype, and the two readings build different things in two repos.",
+      "question": "When a user adds a new address from a live-animals journey page, does it keep handing over to the INS address book add page (today's handshake), or does the animals journey add it on its own Design Release 2.1 pages and write to the address-book service itself?",
+      "default": "Keep today's handshake (journey-type, notification-id, fulfilment-id, handshake-token; gbn-ag only; server-built return URL; new address id handed back; cancel returns without one). In journey mode the INS add page skips 'Choose an address type' and opens the Design Release 2.1 'Add address and contact details' step for the type the section implies, with the section's use ticked; its cancel stays 'Cancel and return to address page' and no address book banner shows. Outside a journey the address book add follows Design Release 2.1 in full."
+    }
+  ]
+}

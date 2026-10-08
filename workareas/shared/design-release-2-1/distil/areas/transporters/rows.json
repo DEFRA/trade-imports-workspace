@@ -1,0 +1,433 @@
+{
+  "area": "transporters",
+  "rows": [
+    {
+      "title": "The transporter list matches DR2.1: its layout, search, columns and shipped transporters",
+      "detail": "A trader choosing a transporter sees the list laid out as Design Release 2.1 lays it out: a visible 'Select a transporter' sub-heading above the search and the table, the 'Add a transporter' button beside the search rather than below the table, 'Not applicable' where a transporter has no approval number, and a search that also matches a transporter's type and status. The service ships DR2.1's eight transporters (four commercial, four private) with their addresses and approval numbers, replacing the two placeholder commercial records. The list's error and no-match search states are checked for accessibility like its other states.",
+      "acceptanceCriteria": [
+        "The transporter list shows a visible sub-heading 'Select a transporter' above the search box and the transporter table. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:73; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
+        "The radio group round the transporter table keeps the legend 'Select a transporter', visually hidden, so it is announced but not shown twice. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:107-108; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
+        "Searching the list for 'Commercial', 'Private', 'Approved' or 'New' leaves only the transporters of that type or status; searching by name, address or approval number still works as before. (prototype:dr2-1-source app/routes.js:3293-3301,3315-3320; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
+        "The secondary 'Add a transporter' button sits beside the search, above the transporter table, and still opens 'Choose a transporter type'. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:99-103; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:135)",
+        "A transporter with no approval number shows 'Not applicable' in the Approval number column. (prototype:dr2-1-source app/routes.js:3502-3511,3527-3538; trace:prototype-dr2-1 [private] action 97)",
+        "The list's commercial transporters are Yusen Logistics (Romania) SRL (Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania; RO/BUCHAREST/T1/00092010), Roadtrain Ltd (The Roadtrain Complex, Bluebell Industrial Estate, Dublin 12, D12 P046, Republic of Ireland; IE/DUBLIN/T1/00092011), Danish Meat Export ApS (Vesterbrogade 12, 1620 Copenhagen, Denmark; DK/COPENHAGEN/T1/00081002) and Portuguese Livestock Lda (Rua Augusta 250, 1100-053 Lisbon, Portugal; PT/LISBON/T1/00071003), each Commercial and Approved; García Livestock Transport SL and J & G Campbell LTD are no longer listed. (prototype:dr2-1-source app/data/transporters.js:2-11; prototype:dr2-1-specs e2e/support/journey.js:191-194; ruling:sam-2026-10-07)",
+        "The list's private transporters are Aberdeen Livestock Ltd (15 Union Street, Aberdeen, AB11 5BN, United Kingdom; UK/ABERDEEN/T1/00092001; Approved), Romanian Agri Exports SRL (Bulevardul Unirii 22, 03083 Bucharest, Romania; RO/BUCHAREST/T1/00061004; New), Slovak Farm Export (Obchodná 2, 811 06 Bratislava, Slovakia; SK/BRATISLAVA/T1/00051005; Approved) and Finnish Livestock Oy (Mannerheimintie 10, 00100 Helsinki, Finland; FI/HELSINKI/T1/00041006; New), each saved with its address parts and country when chosen. (prototype:dr2-1-source app/data/transporters.js:21-29; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
+        "Picking one of DR2.1's transporters from the list and saving keeps it chosen when the trader returns to the list. (prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:144-146; repo:tests tests/animals/e2e/pages/transporter.spec.ts:26)",
+        "The transporter list in its error state (saved with nothing chosen) and in a search that matches nothing has no serious or critical accessibility violations against WCAG 2.0, 2.1 and 2.2 A and AA rules, as its first and searched states already do. (repo:frontend fit/axe.js:4-19; trace:animals-fit trace a60a7 action call@5317)"
+      ],
+      "requirements": [
+        "req-transporters-008",
+        "req-transporters-009",
+        "req-transporters-012",
+        "req-transporters-014",
+        "req-transporters-019",
+        "req-transporters-020",
+        "req-transporters-021",
+        "req-transporters-092"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter.html; app/data/transporters.js; app/routes.js:3293-3320,3502-3538" },
+        { "source": "trace:prototype-dr2-1", "ref": "transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60; [private] action 97" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:128-146; e2e/support/journey.js:191-194" },
+        { "source": "repo:frontend", "ref": "features/transport/transporters; services/transporters/records.js" },
+        { "source": "repo:tests", "ref": "page-objects/animals/transporter-page.ts; tests/animals/e2e/pages/transporter.spec.ts" },
+        { "source": "trace:animals-fit", "ref": "traces 7f054, 66d2b, 79835, a60a7" },
+        { "source": "ruling:sam-2026-10-07", "ref": "goal: the real service changes to match DR2.1" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Check the eight shipped transporters on the list and that every E2E journey that picks a transporter now picks one of DR2.1's records: later rows and other areas' journeys rely on these records.",
+      "openQuestions": [],
+      "notes": "Combines the list page's layout and copy (req-008, -009, -014, -021), its search (req-012), its accessibility gap (req-092) and the shipped records (req-019, -020): all are observed on the one list page, and the shipped records change what every list criterion shows, so building them apart would repeat the same page set-up and review. c-transporters-007 (precedence) settled the commercial records: DR2.1's four replace the two placeholders. The tests repo today picks 'García Livestock Transport SL' by name and must move to a DR2.1 record in this row. How the search runs without JavaScript (req-transporters-011, c-transporters-001) is a question requirement not built here; this row changes only what the search matches. The transporter register stays in the frontend: reference data serves no transporters list (repo-referencedata-p1-091).",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "frontend:src/server/app/services/transporters",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+        "tests:page-objects/animals/transporter-page.ts",
+        "tests:tests/animals/e2e/pages/transporter.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/axe.js",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "'Choose a transporter type' matches DR2.1 and refuses a blank choice",
+      "detail": "The page where a trader picks Commercial or Private before adding a transporter takes DR2.1's warning, legend and button copy, and stops a trader who continues without choosing, instead of silently writing an empty type and going back to the list. The two add forms send a trader who reaches them without having chosen that type back to this page.",
+      "acceptanceCriteria": [
+        "The 'Choose a transporter type' page's warning reads 'Check the transporter list before adding new transporters to avoid duplicates.' (prototype:dr2-1-source app/views/design-release-2.1/transporter-add.html:35-38; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:173; trace:prototype-dr2-1 [type] action 55)",
+        "The transporter type radios' visually hidden legend reads 'Choose a transporter type'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add.html:49-81; trace:prototype-dr2-1 [type] action 55)",
+        "The page's only button reads 'Continue'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add.html:85-88; trace:prototype-dr2-1 [type] action 55)",
+        "Continuing with no option chosen keeps the trader on the page with the error 'Select a transporter type' in a 'There is a problem' summary linking to the first option and inline above the radios, and leaves any earlier choice of type as it was. (prototype:dr2-1-source app/routes.js:3398-3415,12685-12694; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:178-180; trace:prototype-dr2-1 [type] actions 64-68)",
+        "A submitted transporter type that is neither Private nor Commercial is refused with 'Select a transporter type'. (prototype:dr2-1-source app/routes.js:3398-3415,12685-12694)",
+        "Opening or posting 'Add a private transporter' without Private chosen, or 'Add a commercial transporter' without Commercial chosen, goes to 'Choose a transporter type'. (prototype:dr2-1-source app/routes.js:3424-3431,12714,12724,12767,12777)"
+      ],
+      "requirements": [
+        "req-transporters-038",
+        "req-transporters-039",
+        "req-transporters-042",
+        "req-transporters-043",
+        "req-transporters-044",
+        "req-transporters-047"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add.html; app/routes.js:3398-3431,12685-12777" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:173-180 'choose a transporter type'" },
+        { "source": "trace:prototype-dr2-1", "ref": "[type] actions 55, 64-68" },
+        { "source": "repo:frontend", "ref": "features/transport/transporter-add; copy/copy.en.js:166-182" },
+        { "source": "repo:tests", "ref": "page-objects/animals/transporter-add-page.ts; tests/animals/e2e/pages/transporter-add.spec.ts; page-objects/animals/private-transporter-page.ts:14-22" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the type page's copy (req-038, -039, -044), its validation (req-042, -043) and the add forms' guard that sends a trader back to it (req-047): one page and its entry guard, reviewed together. Whether this page keeps the notification status strip (req-transporters-049, c-transporters-003) is a question requirement not built here.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "tests:page-objects/animals/transporter-add-page.ts",
+        "tests:tests/animals/e2e/pages/transporter-add.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Saving an added transporter returns to the list with it chosen and a success banner; cancelling goes to the dashboard",
+      "detail": "After adding a private or commercial transporter from the journey, the trader goes back to the transporter list, where the new transporter is the first row, already chosen, under a one-time success banner, instead of being sent to the overview. Both add forms gain a 'Cancel and return to dashboard' button that abandons the add, and keep what the trader typed if a save failed validation and they come back to the form later. Added transporters stay on the organisation's list, offered on its later notifications.",
+      "acceptanceCriteria": [
+        "Saving a complete private or commercial transporter from the journey returns the trader to the transporter list, with the new transporter as the first row and already chosen. (prototype:dr2-1-source app/routes.js:3720-3726; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:206-215; trace:prototype-dr2-1 [private] actions 88-96)",
+        "The list then shows a GOV.UK success notification banner titled 'Success' reading '<name> transporter added', the name with only its first letter capitalised, so adding 'Hill Haulage' reads 'Hill haulage transporter added'. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:31-38; app/routes.js:3334-3339; trace:prototype-dr2-1 [private] action 97, [commercial] action 102)",
+        "The banner shows once: reloading the list or coming back to it later shows no banner. (prototype:dr2-1-source app/routes.js:3334-3339)",
+        "Both add forms end with a primary 'Save and continue' and a secondary 'Cancel and return to dashboard' button, and show no 'Save and return to overview' or 'Cancel and return to overview' control. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-private.html:45-48, transporter-add-commercial.html:49-52; document:dr1-parity-notes inc-161 lines 143-146)",
+        "'Cancel and return to dashboard' on either add form, even with invalid or partial values entered, shows no errors, adds no transporter, leaves the notification's chosen transporter as it was before the add began, and takes the trader to the dashboard. (prototype:dr2-1-source app/routes.js:3761-3773,12731-12737,12784-12790; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:219-226; trace:prototype-dr2-1 [cancel] actions 55-58)",
+        "Values entered on an add form whose save failed validation are shown again when the trader leaves and later returns to that form, until the form is saved or cancelled. (prototype:dr2-1-source app/routes.js:3433-3446,3540-3554,12753,12809)",
+        "A transporter added on one notification is on the transporter list of the organisation's next notification, ready to pick. (repo:frontend transporters.fit.spec.js 'a transporter added on one notification is on the list of the next one, ready to pick'; ruling:sam-2026-10-07)"
+      ],
+      "requirements": [
+        "req-transporters-035",
+        "req-transporters-036",
+        "req-transporters-062",
+        "req-transporters-063",
+        "req-transporters-064"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3334-3339,3433-3446,3540-3554,3720-3726,3761-3773; app/views/design-release-2.1/transporter.html:31-38; transporter-add-private.html:45-48; transporter-add-commercial.html:49-52" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:206-226" },
+        { "source": "trace:prototype-dr2-1", "ref": "[private] actions 88-97; [commercial] action 102; [cancel] actions 55-58" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-161 design decision, lines 143-146" },
+        { "source": "repo:frontend", "ref": "features/transport/transporter-details-save.js; transporters.fit.spec.js" },
+        { "source": "ruling:sam-2026-10-07", "ref": "persistence and authorisation constraints override the prototype" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at where a saved add lands, the success banner and the cancel button: the address-book add row reuses this save-and-cancel behaviour with other destinations.",
+      "openQuestions": [],
+      "notes": "Combines what happens when an add form is saved (req-035, -036), its buttons (req-062), cancelling (req-063) and keeping unsaved values (req-064): all are the shared save-and-cancel behaviour of the two add forms, built once in their common save path. c-transporters-006 (precedence): DR1's ruling still keeps the overview return controls off the add forms; DR2.1's 'Cancel and return to dashboard' is adopted. c-transporters-008 (precedence): added transporters stay on the organisation's list rather than the trader's session; the last criterion guards that the new return-to-list behaviour keeps it. Today's E2E journeys that expect the overview after an add must expect the transporter list.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "tests:page-objects/animals/private-transporter-page.ts",
+        "tests:page-objects/animals/commercial-transporter-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/shared/save-actions.njk",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "'Add a private transporter' matches DR2.1: heading, country select and required fields",
+      "detail": "The private transporter form takes DR2.1's heading and drops its intro line. Its country select opens on United Kingdom, with no placeholder, in alphabetical order. A completely blank form is refused, naming every required field, instead of saving nothing and carrying on.",
+      "acceptanceCriteria": [
+        "The private transporter page's heading reads 'Add a private transporter' and its browser title 'Add a private transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-private.html:8,30-31; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:185-189; trace:prototype-dr2-1 [private] action 66)",
+        "The page has no intro paragraph under its heading. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-private.html:8,30-31; trace:prototype-dr2-1 [private] action 66)",
+        "The Country select opens with United Kingdom chosen, has no 'Select a country' placeholder and no divider, and lists its countries in alphabetical order with United Kingdom in its alphabetical place. (prototype:dr2-1-source app/views/partials/transporter-add-private-fields.html:71-83; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:193; trace:prototype-dr2-1 [private] actions 64 and 67)",
+        "Saving a completely blank private transporter form keeps the trader on the form, and 'There is a problem' lists 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order. (prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:199-203; trace:prototype-dr2-1 [private] actions 77-81)"
+      ],
+      "requirements": [
+        "req-transporters-050",
+        "req-transporters-051",
+        "req-transporters-053",
+        "req-transporters-056"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add-private.html; app/views/partials/transporter-add-private-fields.html:71-83" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:185-203" },
+        { "source": "trace:prototype-dr2-1", "ref": "[private] actions 64-81" },
+        { "source": "repo:frontend", "ref": "features/transport/private-transporter-details; copy/copy.en.js:241-263" },
+        { "source": "repo:tests", "ref": "page-objects/animals/private-transporter-page.ts" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the private form's copy (req-050, -051), its country select's order and default (req-053) and its blank-form validation (req-056): one form, reviewed together. c-transporters-004 (precedence): DR1's MDM ruling covers the countries' content only, so the UK default, no placeholder and alphabetical order are built now on today's list, and DR2.1's own country list (req-transporters-054) waits for MDM in its own blocked row.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "tests:page-objects/animals/private-transporter-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/section-captions"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "'Add a commercial transporter' matches DR2.1: heading, guidance banner, postcode copy and required fields",
+      "detail": "The commercial transporter form takes DR2.1's heading, its 'Important' guidance banner, its 'Postcode or Zip code' wording and its authorisation-number message, and refuses a completely blank form, naming every required field, instead of saving nothing and carrying on.",
+      "acceptanceCriteria": [
+        "The commercial transporter page's heading reads 'Add a commercial transporter' and its browser title 'Add a commercial transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-commercial.html:8,32-33; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:229-233; trace:prototype-dr2-1 [commercial] action 59)",
+        "The authorisation guidance is a GOV.UK notification banner titled 'Important', whose content opens with the heading 'Help with transporter authorisation'. (prototype:dr2-1-source app/views/partials/transporter-authorisation-banner.html:3-20; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:235)",
+        "The postcode field is labelled 'Postcode or Zip code'. (prototype:dr2-1-source app/views/partials/transporter-add-commercial-fields.html:174-183; trace:prototype-dr2-1 [commercial] actions 59 and 83)",
+        "A blank postcode shows 'Enter a postcode or Zip code'. (prototype:dr2-1-source app/routes.js:3629-3635; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:249-254)",
+        "A postcode over 12 characters shows 'Postcode or Zip code must be 12 characters or less'. (prototype:dr2-1-source app/routes.js:3629-3635)",
+        "A blank authorisation number shows 'Enter a transporter authorisation number'. (prototype:dr2-1-source app/routes.js:3601-3607; trace:prototype-dr2-1 [commercial] action 83)",
+        "Saving a completely blank commercial transporter form keeps the trader on the form, and 'There is a problem' lists 'Enter a transporter authorisation number', 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order. (prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:249-254; trace:prototype-dr2-1 [commercial] actions 80-84)"
+      ],
+      "requirements": [
+        "req-transporters-065",
+        "req-transporters-066",
+        "req-transporters-069",
+        "req-transporters-070",
+        "req-transporters-071",
+        "req-transporters-072",
+        "req-transporters-073"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add-commercial.html; app/views/partials/transporter-add-commercial-fields.html; app/views/partials/transporter-authorisation-banner.html; app/routes.js:3601-3635" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:229-254" },
+        { "source": "trace:prototype-dr2-1", "ref": "[commercial] actions 59, 80-84" },
+        { "source": "repo:frontend", "ref": "features/transport/commercial-transporter-details; copy/copy.en.js:194-237" },
+        { "source": "repo:tests", "ref": "page-objects/animals/commercial-transporter-page.ts" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the commercial form's copy (req-065, -066, -069), its changed messages (req-070, -071, -072) and its blank-form validation (req-073): one form, reviewed together. A country other than Northern Ireland posted to this form is still refused with today's message (c-transporters-005, precedence). Whether the address fields start hidden (req-transporters-080) and the address search (req-078, -079) are left to other rows: the first is a question requirement, the second is blocked.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js",
+        "tests:page-objects/animals/commercial-transporter-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/section-captions"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Find a commercial transporter's address with an address search",
+      "detail": "DR2.1 lets a trader adding a commercial transporter search for a Northern Ireland address instead of typing it, and fills the blank address fields from the address chosen. The only address lookup today is a dev and local spike in the INS backend whose local stub answers every search with the same SW1A 1AA addresses, so this waits until a lookup exists that every environment the row is checked in can reach.",
+      "acceptanceCriteria": [
+        "The commercial transporter form offers an address search labelled 'Search for an address' with the placeholder 'Start typing...' and a search button named 'Search', and lists the addresses found under 'Address search results'. (prototype:dr2-1-source app/views/partials/transporter-add-commercial-fields.html:30-86; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:238-239; trace:prototype-dr2-1 [commercial] actions 59 and 61)",
+        "Choosing an address from the results fills the transporter's name, address line 1, address line 2, town or city, county and postcode wherever the trader left the field blank, and leaves fields the trader filled as they were. (prototype:dr2-1-source app/routes.js:3556-3582; trace:prototype-dr2-1 [commercial] action 59)"
+      ],
+      "requirements": ["req-transporters-078", "req-transporters-079"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/transporter-add-commercial-fields.html:30-86; app/routes.js:3556-3582,3794-3796,3827-3831" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:238-239" },
+        { "source": "trace:prototype-dr2-1", "ref": "[commercial] actions 59-61" },
+        { "source": "repo:frontend", "ref": "features/transport/commercial-transporter-details (no address search today)" }
+      ],
+      "repos": ["insbackend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: the only address lookup is the INS backend's address-lookup spike, served in dev and local only, whose local stub answers every search with the same SW1A 1AA addresses. DR2.1's search of Northern Ireland addresses cannot be observed on the local stack, and no lookup exists in CDP test or prod. Sam must say which lookup this search uses and what each environment gets, through the reconciler, before this row builds.",
+        "c-transporters-001 (default): with JavaScript the form opens with its address and contact fields hidden behind the search and 'Enter address manually'; without JavaScript the address and contact fields show from the start. Follow the default unless it is answered otherwise."
+      ],
+      "notes": "Combines the search (req-078) and filling the fields from the chosen address (req-079): one widget. Listed as unobservable in this draft so the combiner sends it back to the reconciler. The address and contact fields' hidden-until-revealed behaviour (req-transporters-080) is a question requirement and not built here.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The private transporter's country list holds DR2.1's countries, from MDM",
+      "detail": "DR2.1's private transporter country list holds the EU member states, their outermost regions and territories, the Crown Dependencies and the United Kingdom. DR1 ruled that country lists come from MDM, so the frontend's hard-coded list is not edited: this waits for the MDM integration to supply the list.",
+      "acceptanceCriteria": [
+        "The private transporter's Country select lists DR2.1's countries: the EU member states, their outermost regions and territories (such as the Azores, the Canary Islands, Ceuta, French Guiana and Guadeloupe), the Crown Dependencies (Guernsey, Isle of Man, Jersey) and the United Kingdom, as MDM supplies them. (prototype:dr2-1-source app/views/partials/transporter-add-private-fields.html:71-83, app/routes.js:10412-10423; trace:prototype-dr2-1 [private] actions 66 and 80; document:dr1-parity-notes lines 94-96)",
+        "A private transporter saved with one of the added regions, territories or Crown Dependencies keeps that country when the trader returns to it. (prototype:dr2-1-source app/routes.js:3441,3783)"
+      ],
+      "requirements": ["req-transporters-054"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/transporter-add-private-fields.html:71-83; app/routes.js:3441,3783,10412-10423" },
+        { "source": "trace:prototype-dr2-1", "ref": "[private] actions 66 and 80" },
+        { "source": "document:dr1-parity-notes", "ref": "Reference-data lists come from MDM, lines 94-96" }
+      ],
+      "repos": ["referencedata", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: the MDM integration supplies the countries list (Rhys's ruling of 2026-09-07); the frontend's hard-coded list is not edited in the meantime. Whoever owns the MDM integration must make DR2.1's countries available before this row builds."
+      ],
+      "notes": "Kept apart from the private form row so the blocker does not hold up the rest (c-transporters-004, precedence). Only the list's content waits; its order and UK default are built in the private form row.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/countries",
+        "referencedata:."
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Save and continue on the transporter list goes on to 'Upload documents'",
+      "detail": "In DR2.1 the transporter list is followed by 'Upload documents', so choosing a transporter and saving moves the trader on through the journey instead of landing on the overview.",
+      "acceptanceCriteria": [
+        "'Save and continue' on the transporter list, with a transporter chosen, goes to the 'Upload documents' page. (prototype:dr2-1-source app/routes.js:12853-12856; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:144-146; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list actions 69-72, request 320)",
+        "The chosen transporter is still chosen when the trader goes back to the list from 'Upload documents'. (prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:144-146)"
+      ],
+      "requirements": ["req-transporters-027"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:12853-12856" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:144-146" },
+        { "source": "trace:prototype-dr2-1", "ref": "transporter-details-select-a-transporter-from-the-list actions 69-72" },
+        { "source": "repo:frontend", "ref": "features/transport/transporters/transporters.controller.js:169-170" },
+        { "source": "repo:tests", "ref": "tests/animals/e2e/pages/transporter.spec.ts:26" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart because it needs the 'Upload documents' page (the documents area) and the journey's DR2.1 step order (the journey-flow area) to exist first; the combiner should set dependsOn on those rows. Today's E2E check that saving the list lands on the overview moves to 'Upload documents'.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "tests:tests/animals/e2e/pages/transporter.spec.ts",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The transporter list's buttons when amending a notification or editing a template",
+      "detail": "When the transporter list is reached while amending a submitted notification, or while editing a template from its review, it ends with the controls DR2.1 gives those modes, so the trader can return to where they came from.",
+      "acceptanceCriteria": [
+        "When the notification is being amended, the transporter list ends with a primary 'Save and return' that goes back to the review, a secondary 'Save and continue' and a link-style 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html isAmend branch)",
+        "When the transporter list is edited from a template review, it ends with a single 'Save and return' button, which goes back to the template, and a 'Cancel' link back to the template. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html isTemplateReview branch; app/routes.js:3335)"
+      ],
+      "requirements": ["req-transporters-029", "req-transporters-030"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/journey-form-actions.html; app/routes.js:3335" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the two alternative-mode control sets (req-029, -030): both change only the list's closing controls. Needs amending a notification (the manage-notifications area) and editing a template from its review (the templates area) to exist first; the combiner should set dependsOn on those rows, and may fold these criteria into those areas' rows if they change the shared save controls for every page at once.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/save-actions.njk"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Adding a transporter from the address book",
+      "detail": "DR2.1 lets a trader add a transporter from the address book through the same 'Choose a transporter type' page and add forms. Started that way, the pages lead back to the address book: the back link and cancel go there, and saving puts the new transporter at the top of the address book as a transporter entry.",
+      "acceptanceCriteria": [
+        "When adding a transporter was started from the address book, the 'Choose a transporter type' Back link goes to the address book's add page. (prototype:dr2-1-source app/routes.js:3380-3387)",
+        "When adding a transporter was started from the address book, both add forms' cancel button reads 'Cancel and return to address book' and goes to the address book showing its transporters. (prototype:dr2-1-source app/routes.js:3784-3786,3824-3826; app/views/design-release-2.1/transporter-add-private.html:50-55)",
+        "When adding a transporter was started from the address book, saving shows the address book's success message and the address book showing its transporters, with the new transporter at the top as a transporter entry carrying its type (Private or Commercial), address, approval number, country and contact details. (prototype:dr2-1-source app/routes.js:3675-3718,3734-3751)",
+        "The new address book entry is found by an address book search for its name, its type, its address, its approval number or its country. (prototype:dr2-1-source app/routes.js:3709-3716)",
+        "A transporter added from the address book is on the transporter list of the organisation's next notification, ready to pick. (ruling:sam-2026-10-07)"
+      ],
+      "requirements": [
+        "req-transporters-083",
+        "req-transporters-084",
+        "req-transporters-085"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3380-3387,3675-3751,3784-3786,3824-3826; app/views/design-release-2.1/transporter-add-private.html:50-55" },
+        { "source": "ruling:sam-2026-10-07", "ref": "persistence and cross-service behaviour override the prototype" }
+      ],
+      "repos": ["addressbook", "frontend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the address-book entry route's back link (req-083), cancel (req-084) and save (req-085): one alternative route through the same pages, observed from the address book. Today the address book holds no transporter entries, so this needs the address book's transporter entries and its add page offering a transporter (the address-book-list and address-book-add-and-edit areas) first; the combiner should set dependsOn on those rows. It also depends on this area's save-and-cancel row, whose cancel button and save path it reuses. The last criterion is my inference from c-transporters-008: a transporter the organisation adds stays on its list wherever the add started.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/transporters",
+        "insfrontend:src/server/app/features",
+        "addressbook:src/main"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Remove the unlinked commercial transporter register page",
+      "detail": "The old 'Search for an approved commercial transporter' page can still be opened by its address though nothing links to it, and DR2.1 has no such page. Removing it, with its tests, leaves one way to choose a transporter: the transporter list.",
+      "acceptanceCriteria": [
+        "Opening the notification's /transporters/select address shows the service's page not found, not 'Search for an approved commercial transporter'. (prototype:dr2-1-source app/routes.js:12698-12702; repo:frontend features/transport/transporters-select/transporters-select.controller.js:22-29)",
+        "Choosing a commercial transporter from the transporter list still saves it with its type. (repo:frontend transporters.fit.spec.js 'picking a commercial transporter saves it with its type and persists')"
+      ],
+      "requirements": ["req-transporters-094"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:12698-12702" },
+        { "source": "repo:frontend", "ref": "features/transport/transporters-select; page.js:27-30" },
+        { "source": "repo:tests", "ref": "page-objects/animals/transporter-selection-page.ts; tests/animals/e2e/pages/transporter-selection.spec.ts; flows/animals/journey.ts:303-311" },
+        { "source": "trace:e2e", "ref": "trace b3f84 action call@1230" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "chore",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart: it removes a whole page and its E2E spec, page object and journey helper, a different review from any copy change.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select",
+        "tests:page-objects/animals/transporter-selection-page.ts",
+        "tests:tests/animals/e2e/pages/transporter-selection.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": [
+    {
+      "requirement": "req-transporters-078",
+      "environment": "local stack and CDP test/prod",
+      "why": "The only address lookup is the INS backend's address-lookup spike, registered for dev and local only; on the local stack its stub answers every search with the same SW1A 1AA addresses, so a search of Northern Ireland addresses cannot be observed locally, and no lookup exists in CDP test or prod."
+    },
+    {
+      "requirement": "req-transporters-079",
+      "environment": "CDP test/prod",
+      "why": "Filling the fields from a looked-up address needs the address search of req-transporters-078, which has no lookup outside dev and local."
+    }
+  ]
+}

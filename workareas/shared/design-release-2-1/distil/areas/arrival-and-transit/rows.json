@@ -1,0 +1,351 @@
+{
+  "area": "arrival-and-transit",
+  "rows": [
+    {
+      "title": "Arrival details page moves to the 'arrival-details' address",
+      "detail": "Design Release 2.1 names the arrival details page by what it asks. Today it is served at .../port-of-entry. After this change the page is served at .../arrival-details, and every link into it from the overview and the review goes there, so the address a trader sees matches the page.",
+      "acceptanceCriteria": [
+        "Choosing the 'Arrival details' task on the notification overview opens the page at /live-animals/notifications/<notification id>/arrival-details (prototype:dr2-1-source prototype-dr2-1-source-p6-001; prototype:dr2-1-specs prototype-dr2-1-specs-p2-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-001)",
+        "The arrival details Change links on the notification review open the page at the same .../arrival-details address (prototype:dr2-1-source prototype-dr2-1-source-p6-011; repo:frontend repo-frontend-p11-001)",
+        "The page that comes before arrival details in the journey goes on to the .../arrival-details address, and arrival details still goes on to transit countries or Transporter details as it does today (trace:e2e trace-e2e-p4-063; trace:animals-fit trace-animals-fit-p16-001)"
+      ],
+      "requirements": ["req-271"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-001, p6-011" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-074" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-001" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-001" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-094" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-001" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-063, trace-e2e-p10-001" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 1 slice on its own: the slug is a journey-flow change (page registry, overview task row, review change link) that every later row in this area builds on, so it lands first and the later rows' criteria use the new address. No source says what the old .../port-of-entry address should do afterwards; the drafter's default is that it is not kept. The tests repo's arrival details page object follows the new address.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "tests:page-objects/animals/arrival-details-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/index.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js",
+        "tests:domain/animals/fixtures/seeded-journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Arrival details wording: labels, hints, placeholder and means of transport options",
+      "detail": "Bring the arrival details page's visible copy up to Design Release 2.1: medium-size question labels, the new port of entry hint and placeholder, the shorter means of transport options and the shorter transport identification lead-in. What the page submits and stores does not change: means of transport is still stored as its code, because the backend and other services read it (c-047).",
+      "acceptanceCriteria": [
+        "Each of the five question labels on arrival details (arrival date, port of entry, means of transport, transport identification, transport document reference) is set in the GOV.UK medium label size rather than the small bold size (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-028; trace:e2e trace-e2e-p10-006)",
+        "The port of entry hint reads 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.' (prototype:dr2-1-source prototype-dr2-1-source-p6-025; prototype:dr2-1-specs prototype-dr2-1-specs-p2-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-012)",
+        "The port of entry search shows the placeholder 'Select a port' when no port is chosen (prototype:dr2-1-source prototype-dr2-1-source-p6-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013)",
+        "The means of transport options read 'Air', 'Rail', 'Road' and 'Sea', in that order (prototype:dr2-1-source prototype-dr2-1-source-p6-036; prototype:dr2-1-specs prototype-dr2-1-specs-p2-077; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-023)",
+        "Choosing 'Air', 'Rail', 'Road' or 'Sea' still stores the means of transport as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL in the saved notification, and Rail or Road still leads to transit countries (conflict c-047; repo:frontend repo-frontend-p11-036)",
+        "The transport identification hint's lead-in reads 'Enter one of the following:' (prototype:dr2-1-source prototype-dr2-1-source-p6-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-025)"
+      ],
+      "requirements": ["req-278", "req-293", "req-294", "req-309", "req-310", "req-311", "req-312", "req-318"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-025, p6-026, p6-036, p6-043" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-076, p2-077, p4-027" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-012, p8-013, p8-023, p8-025, p8-028" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-025, p11-026, p11-036, p11-040" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-013, p16-041, p16-042, p16-059, p16-064" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-006, p10-014, p10-020, p10-022" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-114" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the copy slices for one page (req-278 labels, req-293 hint, req-294 placeholder, req-309 to req-312 means of transport options, req-318 lead-in): same page, same copy file and same review, so building them apart would repeat the set-up. The four option relabels are one criterion because the reviewer checks them together in one list; the stored code is a separate criterion (c-047). The prototype's label style is a custom heading class; GOV.UK's medium label is the in-toolbox equivalent. The transport copy file is shared with the transporters area.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "tests:tests/animals/e2e/pages/arrival-details.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "tests:page-objects/animals/arrival-details-page.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Port and transit country searches: 'name - code' options, a search button and the matched text in bold",
+      "detail": "Design Release 2.1 shows each port as its name, a dash and its code, gives the port and transit country type-aheads a search button, and bolds the part of each result that matches what was typed. The real service keeps submitting and storing the port code (c-047), and keeps a native select underneath that works without JavaScript (c-006).",
+      "acceptanceCriteria": [
+        "Each port of entry option reads '<port name> - <port code>', for example 'Port of Dover - GB DVR', with and without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p6-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014)",
+        "With JavaScript, once a port is chosen the search box shows it as '<port name> - <port code>' (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-084; trace:animals-fit trace-animals-fit-p16-050)",
+        "Choosing 'Port of Dover - GB DVR' still saves the port code GB DVR in the saved notification (conflict c-047; repo:frontend repo-frontend-p11-027)",
+        "With JavaScript, the port of entry search and the transit country search each have a search button beside the box whose accessible name is 'Search' (prototype:dr2-1-source prototype-dr2-1-source-p6-026, prototype-dr2-1-source-p6-070; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013, trace-prototype-dr2-1-p8-053)",
+        "With JavaScript, typing 'Dov' in the port search lists 'Port of Dover - GB DVR' with 'Dov' in bold (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014; trace:animals-fit trace-animals-fit-p16-048)",
+        "Without JavaScript, the port of entry and transit country questions are still labelled native selects that choose and save an answer (conflict c-006; repo:frontend repo-frontend-p11-103)"
+      ],
+      "requirements": ["req-295", "req-296", "req-299"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-026, p6-028, p6-070" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-013, p8-014, p8-053, p12-083, p12-084" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-027" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-095, p1-116" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-043, p16-045, p16-048, p16-050, p17-013" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-068, p4-070, p10-016" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the type-ahead's search button and bold match before other searches copy it: c-006 gives the origin country search the same search icon, so this sets the pattern for the shared type-ahead.",
+      "openQuestions": [],
+      "notes": "Combines req-295 (option text), req-296 (search button on both searches) and req-299 (bold match): all three change how the shared type-ahead renders, so they share one set-up and review. req-296 covers the transit search too, so this row also touches the transit countries page's search markup. The client type-ahead component is shared with the origin area's country search (c-006 outcome asks origin for the same search icon); the combiner should order this row with that one or put the component change in a foundation theme. The tests repo's port selection relies on the '(code)' text today and must follow the new option text.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "frontend:src/server/app/services/ports",
+        "tests:tests/animals/e2e/features/port-of-entry-select.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.njk",
+        "tests:page-objects/animals/arrival-details-page.ts",
+        "tests:domain/animals/fixtures/seeded-journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from",
+      "detail": "Design Release 2.1 makes means of transport the one required answer on arrival details, because it decides whether transit countries are asked. It also sends a trader back to where they started: the overview when they opened the page from the overview, the review when they came from the review. 'Save and return to overview' lets a trader leave a part-finished page without a means of transport. The real service keeps every field check it has today (c-045): a page with any error saves nothing and shows the entries back, and an answer that cannot be stored, such as an impossible date, is refused even on 'Save and return to overview' (c-211).",
+      "acceptanceCriteria": [
+        "Save and continue on arrival details with no means of transport chosen stays on the page and shows 'Select a means of transport to the port of entry' in the error summary, linking to the means of transport select, and above the select, which is shown in its error style (prototype:dr2-1-source prototype-dr2-1-source-p6-039, prototype-dr2-1-source-p6-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-030, trace-prototype-dr2-1-p8-031)",
+        "When that error shows, the page title starts 'Error: ', nothing is saved and the other answers entered are shown back (conflict c-006; conflict c-045)",
+        "When arrival details was opened from the overview's 'Arrival details' task, Save and continue with valid answers saves them and returns to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-012, prototype-dr2-1-source-p6-053)",
+        "When transit countries was opened from the overview's 'Transit countries' task, Save and continue saves the countries and returns to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-067; repo:frontend repo-frontend-p11-099)",
+        "When arrival details was reached from the page before it in the journey, Save and continue still goes on to transit countries for Rail or Road and to Transporter details otherwise (repo:frontend repo-frontend-p11-052; trace:e2e trace-e2e-p10-028)",
+        "When arrival details was opened from a Change link on the notification review, Save and continue saves and returns to the review (prototype:dr2-1-source prototype-dr2-1-source-p6-053, prototype-dr2-1-source-p6-083)",
+        "'Save and return to overview' on arrival details with no means of transport chosen saves the other answers, raises no error and goes to the overview, where 'Arrival details' is not Complete (prototype:dr2-1-source prototype-dr2-1-source-p6-051; conflict c-211)",
+        "'Save and return to overview' on arrival details with an impossible arrival date, such as 31 2 2027, stays on the page with 'Enter a real arrival date' and saves nothing (conflict c-211; conflict c-045; repo:frontend repo-frontend-p11-019)",
+        "'Save and return to overview' on transit countries saves the countries listed and goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-080; trace:animals-fit trace-animals-fit-p17-059)"
+      ],
+      "requirements": ["req-315", "req-327", "req-328", "req-329"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-012, p6-039, p6-040, p6-051, p6-053, p6-067, p6-080, p6-083" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-081, p2-082" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-030, p8-031, p8-032, p8-033, p8-046" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-003, p11-019, p11-047, p11-048, p11-052, p11-099" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-101, p1-102, p1-104" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-073, p16-079, p16-087, p16-088, p17-059" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-001, p10-028, p10-029, p10-041, p10-066" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines req-315 (means of transport required), req-327 (return to overview), req-328 (return to review) and req-329 (Save and return to overview): all four decide what Save and continue and Save and return do on the same two pages, and each criterion needs the others' set-up to observe. c-045 keeps today's field checks, so the prototype's soft-validation claims are not built; c-211 keeps format checks on 'Save and return to overview'. Where the journey-flow area builds a general 'return to where you came from' mechanism, the combiner should make this row depend on it rather than build a second one. The flow files are shared.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+        "tests:tests/animals/e2e/pages/arrival-details.spec.ts",
+        "tests:tests/animals/e2e/features/transit-means-scope.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/change-link.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Transit countries page: title, Back link, empty state and redirect when it does not apply",
+      "detail": "Design Release 2.1 names the page 'Transit countries' in the browser tab, steps Back to arrival details when the trader came from there, hides the list until a country is added, and sends anyone who opens the page when the means of transport is not overland back to the overview.",
+      "acceptanceCriteria": [
+        "The transit countries page title is 'Transit countries - Import notification service - GOV.UK', and 'Error: Transit countries - Import notification service - GOV.UK' when it shows an error (prototype:dr2-1-source prototype-dr2-1-source-p6-064-m1; prototype:dr2-1-specs prototype-dr2-1-specs-p2-089; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-047; conflict c-006)",
+        "When transit countries was reached by Save and continue on arrival details, its Back link goes to arrival details (prototype:dr2-1-source prototype-dr2-1-source-p6-061; prototype:dr2-1-specs prototype-dr2-1-specs-p2-092; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-051)",
+        "When transit countries was opened from the overview's 'Transit countries' task, its Back link goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-061; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-095)",
+        "Opening the transit countries page's address when the saved means of transport is Air or Sea, or none is saved, goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-060; prototype:dr2-1-specs prototype-dr2-1-specs-p2-088; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-042)",
+        "Submitting the transit countries form when the saved means of transport is Air or Sea, or none is saved, saves no countries and goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-045)",
+        "With no transit countries added, the page shows no country list and no 'You have not added any countries yet.' sentence (prototype:dr2-1-source prototype-dr2-1-source-p6-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055-m1)"
+      ],
+      "requirements": ["req-338", "req-343", "req-344", "req-356"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-060, p6-061, p6-064-m1, p6-073" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-088, p2-089, p2-092" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-042, p8-045, p8-047, p8-051, p8-055-m1, p12-095, p13-070" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-054, p11-059, p11-060, p11-088, p11-107" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-123" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-078, p17-005, p17-010, p17-020, p17-024" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-047, p10-048, p10-054, p10-062" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the transit countries page's server-rendered changes (req-338 title, req-343 Back link, req-344 redirect, req-356 empty state): one page, one controller and one review. The 'Error: ' title prefix is kept by c-006. The 'opened from the overview' Back link shares the return-to-origin marker with the save routing row in this area; build them in either order, but the combiner should keep them adjacent.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+        "tests:tests/animals/e2e/pages/transited-countries.spec.ts",
+        "tests:page-objects/animals/transited-countries-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Transit countries are added and removed in place with JavaScript, with 'Added' and 'Removed' announcements",
+      "detail": "With JavaScript, Design Release 2.1 adds a country as soon as it is picked and removes one without a page load. Without JavaScript the real service keeps the native select, the Add country button and the Remove buttons that submit the form (c-006). Screen reader announcements change to Design Release 2.1's wording. The saved answer is still a list of country codes (c-047), and every server check on transit countries stays (c-045).",
+      "acceptanceCriteria": [
+        "With JavaScript, choosing a country in the transit search adds it to the list straight away and clears the search box, and no 'Add country' button is shown (prototype:dr2-1-specs prototype-dr2-1-specs-p2-093, prototype-dr2-1-specs-p4-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055, trace-prototype-dr2-1-p8-056)",
+        "With JavaScript, Remove takes that country off the list without a page load and leaves the other countries listed (prototype:dr2-1-source prototype-dr2-1-source-p6-072; prototype:dr2-1-specs prototype-dr2-1-specs-p2-095; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-058)",
+        "Adding a country announces 'Added <country>' to screen readers, for example 'Added Germany' (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-072)",
+        "Adding the twelfth country announces 'Added <country>' and the 12-country limit message in the same announcement (repo:frontend repo-frontend-p11-096; trace:animals-fit trace-animals-fit-p17-048)",
+        "Removing a country announces 'Removed <country>' to screen readers, for example 'Removed Germany' (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-058; repo:frontend repo-frontend-p11-095)",
+        "Each Remove control's accessible name still includes the country, such as 'Remove Germany' (conflict c-006; repo:frontend repo-frontend-p11-091)",
+        "Countries added and removed with JavaScript are saved by Save and continue, and the saved notification holds their country codes (conflict c-047; repo:frontend repo-frontend-p11-102)",
+        "Without JavaScript, the transit search is a native select with an 'Add country' button, and Remove buttons submit the page, so a country can still be added, removed and saved (conflict c-006; repo:frontend repo-frontend-p11-103)",
+        "With JavaScript, a thirteenth country cannot be added and a country already listed cannot be added again (conflict c-045; repo:frontend repo-frontend-p11-074, repo-frontend-p11-077)"
+      ],
+      "requirements": ["req-348", "req-349", "req-353", "req-354"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-072" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-093, p2-095, p4-029" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-055, p8-056, p8-058, p12-094, p13-072, p13-074" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-070, p11-071, p11-072-m1, p11-091, p11-092, p11-093, p11-094, p11-095, p11-096, p11-102, p11-103" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-119, p1-120, p1-122" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p17-019, p17-043, p17-044, p17-048" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-053, p10-057, p10-058" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-001" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines req-348 (add on pick), req-349 (remove in place), req-353 ('Added' announcement, with the cap message) and req-354 ('Removed' announcement): the announcements are spoken by the same in-place add and remove, so they share one client script, one page and one review. c-006 keeps the no-JavaScript build and the visually hidden country name on Remove; c-047 keeps country codes as the saved answer; c-045 keeps the duplicate and 12-country checks. The status announcer component is shared.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+        "tests:tests/animals/e2e/pages/transited-countries.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/client/javascripts/components/status-announcer.js",
+        "frontend:src/client/javascripts/application.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "tests:page-objects/animals/transited-countries-page.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Arrival and transit task statuses on the overview, and transit countries on the review",
+      "detail": "The overview shows a task Complete only when it is. An arrival date measured from today can go stale, so a saved date more than 7 days in the past turns 'Arrival details' back to To do. 'Transit countries' is Complete only once a country is listed. The notification review lists the transit countries under Design Release 2.1's wording.",
+      "acceptanceCriteria": [
+        "A notification whose saved arrival date is now more than 7 days in the past shows 'Arrival details' as To do on the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-057; repo:frontend repo-frontend-p11-021)",
+        "A notification with Rail or Road and no transit countries saved shows 'Transit countries' as To do on the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-078)",
+        "A notification with Rail or Road and at least one transit country saved shows 'Transit countries' as Complete on the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-078; trace:e2e trace-e2e-p10-043)",
+        "The notification review shows the saved transit countries in a row headed 'Countries that the consignment will travel through', listing each country, with a Change link that opens the transit countries page (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-096)"
+      ],
+      "requirements": ["req-332", "req-372", "req-375"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-057, p6-078" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-096" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-021" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-043, p10-044" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines req-332 (stale arrival date status), req-372 (transit status) and req-375 (review row): all three are how the arrival and transit answers read back elsewhere, through the section's completion rules and the review card, so they share the same set-up of a saved notification. The stale-date criterion is observed with a notification whose arrival date is set up in the past through the backend, since the page refuses such a date; that is set-up for a one-page assertion, not a seeded journey. The transport obligations file is shared with the transporters area, and the review copy with the review area.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/transit-countries.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/movement/arrival-details.js",
+        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/obligations/sections/transport.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Arrival details while creating or editing a template",
+      "detail": "A template is reused across consignments, so a one-off arrival date does not belong in it: while a template is being created, arrival details does not ask for the arrival date and the section is complete without one. A trader editing a template from its review is sent back to the template review.",
+      "acceptanceCriteria": [
+        "While a template is being created, arrival details shows no arrival date question, and the other four questions are shown as usual (prototype:dr2-1-source prototype-dr2-1-source-p6-022; repo:frontend repo-frontend-p11-007)",
+        "While a template is being created, saving arrival details saves no arrival date, and the template's arrival details count as complete once the port of entry, means of transport, transport identification and transport document reference are given (prototype:dr2-1-source prototype-dr2-1-source-p6-023, prototype-dr2-1-source-p6-056)",
+        "When arrival details is opened to edit a template from its review, the Back link goes to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-006; repo:frontend repo-frontend-p11-006)",
+        "When arrival details is opened to edit a template from its review, Save and continue saves and returns to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-053, prototype-dr2-1-source-p6-083)"
+      ],
+      "requirements": ["req-290", "req-291"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-006, p6-022, p6-023, p6-053, p6-056, p6-083" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-006, p11-007" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines req-290 (no arrival date in a template) and req-291 (return to template review): both are arrival details' behaviour in template mode. The frontend has no templates today, so this row depends on the templates area's rows that create a template through the journey and add the template review page; the combiner must set that dependsOn. If the templates area adds backend fields, they land there, not here. Kept apart from the other arrival rows so they are not held up by templates.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/obligations/sections/transport.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Design Release 2.1's port of entry and transit country lists, from MDM",
+      "detail": "Design Release 2.1 is the target content for both lists: its UK and Crown Dependency airports and UK seaports, correctly spelt, airports first then seaports alphabetically, and a transit list of EU member states, outermost regions and Crown Dependencies. List content is master reference data that MDM supplies, so by the DR1 ruling (c-048) it waits for the MDM integration; until then the pages keep today's reference-data lists.",
+      "acceptanceCriteria": [
+        "The port of entry list offers Design Release 2.1's ports: the UK and Crown Dependency airports with their IATA codes and the UK seaports with their UN/LOCODEs, with Pembroke Port and Port of Sheerness each listed once (prototype:dr2-1-source prototype-dr2-1-source-p6-029, prototype-dr2-1-source-p6-030, prototype-dr2-1-source-p6-031; document:dr1-parity-backlog document-dr1-parity-backlog-p8-018; trace:e2e trace-e2e-p4-074)",
+        "Port names read 'Teesport', 'Tilbury' and 'Portsmouth Port' (with one space), and typing 'Teesport' in the port search finds it; their codes do not change (document:dr1-parity-backlog document-dr1-parity-backlog-p8-024, document-dr1-parity-backlog-p8-029; trace:e2e trace-e2e-p4-076)",
+        "The port list shows airports first, then seaports in alphabetical order of name, ignoring letter case (prototype:dr2-1-source prototype-dr2-1-source-p6-029; repo:referencedata repo-referencedata-p1-030)",
+        "The transit country search offers the EU member states, the EU outermost regions named with their parent country (for example 'Canary Islands (Spain)') and the Crown Dependencies named with 'United Kingdom' (for example 'Jersey (United Kingdom)'), in alphabetical order, and does not offer Iceland, Liechtenstein, Norway or Switzerland (prototype:dr2-1-source prototype-dr2-1-source-p6-071; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-061; document:dr1-parity-notes document-dr1-parity-notes-p1-040)"
+      ],
+      "requirements": ["req-302", "req-303", "req-304", "req-370"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-029, p6-030, p6-031, p6-071" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-018, p8-019, p8-061, p12-085" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-007-m2, p8-018 to p8-029" },
+        { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-040, p1-043, p1-046 to p1-050" },
+        { "source": "repo:referencedata", "ref": "repo-referencedata-p1-030" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-066, p11-067" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-043, p16-043-m1, p16-044, p17-015, p17-016" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-074, p4-075, p4-076, p10-016, p10-017, p10-052" }
+      ],
+      "repos": ["referencedata", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Ports (req-302, req-304): the MDM integration of master reference data (Rhys's ruling of 2026-09-07) must supply the port list and each port's type (airport or seaport), or a fresh ruling must release the list content for editing before then.",
+        "Port names (req-303): MDM must correct 'Teestort', 'TILBURY' and 'Portsmouth  Port' (raised with them as a data-quality report), or the MDM integration must land.",
+        "Transit countries (req-370): the MDM integration must supply Design Release 2.1's country list, or a fresh ruling must release it for editing before then."
+      ],
+      "notes": "Combines the four list-content requirements, all blocked by the same DR1 ruling (c-048), so the rows that can build now are not held up. Kept apart from the search display row (which builds now on today's lists). When MDM lands, the build may need only reference-data and the tests; the frontend is listed because the transit list comes through the frontend's countries service today. Nothing here is overruled: Design Release 2.1's lists stay the target.",
+      "touches": [
+        "referencedata:src/main/java/uk/gov/defra/trade/imports/portsofentry",
+        "referencedata:src/main/java/uk/gov/defra/trade/imports/countries",
+        "frontend:src/server/app/services/countries"
+      ],
+      "shared": [
+        "referencedata:src/main/java/uk/gov/defra/trade/imports/client",
+        "frontend:src/server/app/services/ports",
+        "tests:domain/animals/fixtures/seeded-journey.ts"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

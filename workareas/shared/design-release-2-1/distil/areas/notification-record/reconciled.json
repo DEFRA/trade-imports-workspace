@@ -1,0 +1,1226 @@
+{
+  "area": "notification-record",
+  "requirements": [
+    {
+      "id": "req-notification-record-001",
+      "statement": "The stored notification record, its validation at the API, its lifecycle writes and what it publishes stay as the animals backend has them today: Design Release 2.1 shows no persistence, API, event or PIMS behaviour, so no part of this area differs from it.",
+      "why": "The ruling lets a real constraint the prototype cannot express (persistence, validation, cross-service behaviour) override the prototype default; every claim in this area is one of those constraints, and no prototype or DR1 claim touches it.",
+      "claims": ["ruling-sam-2026-10-07-p1-002", "ruling-sam-2026-10-07-p1-008", "ruling-sam-2026-10-07-p1-010", "ruling-sam-2026-10-07-p1-011", "ruling-sam-2026-10-07-p1-021", "ruling-sam-2026-10-07-p1-022"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Met by the backend behaviour the requirements below record from repo:backend, repo:tests and trace:e2e; DR2.1 carries no claim in this area to differ from it.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-002",
+      "statement": "A notification is stored as one document in the MongoDB collection 'notification', with a string id, its identity and metadata (reference number, status, timestamps, fulfilments) at the document root and its answers nested under a notification sub-object.",
+      "why": "Every page reads and writes this one record, and the tests and the INS read model rely on its shape.",
+      "claims": ["repo-backend-p1-001", "repo-backend-p1-002", "repo-backend-p1-003", "repo-tests-p3-145", "repo-tests-p3-147", "trace-e2e-p14-122"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-001 and p1-002 (Notification document) and repo-tests-p3-147 (persistence spec) show the shape today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-003",
+      "statement": "A notification's reference number is unique across all notifications, through a sparse unique index that lets records without a reference number coexist.",
+      "why": "The reference number is how traders, PIMS and every endpoint find a notification.",
+      "claims": ["repo-backend-p1-004"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-004: the sparse unique index on referenceNumber.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-004",
+      "statement": "The service, never the caller, gives a new notification its reference number in the form GBN-AG-{YY}-{XXXXXX}: YY the last two digits of the current year, then six random Crockford base32 characters (0-9, A-Z without I, L, O, U) drawn from a cryptographically secure source; several notifications created without a reference each get their own.",
+      "why": "References must be unguessable, readable aloud and unique per notification.",
+      "claims": ["repo-backend-p1-090", "repo-backend-p1-091", "repo-backend-p1-092", "repo-backend-p1-093", "repo-backend-p2-006", "repo-backend-p2-012"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-090 to p1-093 (ReferenceNumberGenerator) and p2-006, p2-012 (create assigns it).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-005",
+      "statement": "When a generated reference number collides with an existing one, create retries with a new number up to 3 attempts in all, then fails with a 500.",
+      "why": "The generator does not guarantee a new number; the caller handles the clash.",
+      "claims": ["repo-backend-p1-094", "repo-backend-p2-007"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-007: createNotification retries 3 times then throws IllegalStateException (500).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-006",
+      "statement": "Every endpoint that takes a reference number in its path refuses one that does not match ^GBN-AG-\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$ with a 400 Validation Error whose errors map holds referenceNumber: must match \"^GBN-AG-\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$\", before any lookup; lower-case references fail and any two-digit year passes.",
+      "why": "A malformed reference is turned away before it reaches the store.",
+      "claims": ["repo-backend-p1-095", "repo-backend-p1-096", "repo-backend-p1-095-m1", "repo-backend-p1-095-m2", "repo-backend-p2-023", "repo-backend-p3-025", "repo-backend-p3-093", "repo-backend-p5-073"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-095 and p2-023: @Pattern on every path referenceNumber in NotificationController.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-007",
+      "statement": "Every notification carries a concurrency token, returned in each response, that is its optimistic-lock version: it advances on each write, and a save is checked against the token the caller sends, not the stored one.",
+      "why": "Two people or tabs editing one notification must not silently overwrite each other.",
+      "claims": ["repo-backend-p1-005", "repo-backend-p2-028", "repo-backend-p2-029"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-028 and p2-029: the caller's concurrencyToken is set as the @Version before the write.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-008",
+      "statement": "A save sent with a stale concurrency token changes nothing and answers 409 with title 'Stale Concurrency Token', type https://api.cdp.defra.cloud/problems/stale-concurrency-token, code STALE_CONCURRENCY_TOKEN and detail 'The record was modified by another request; refresh and try again.'; the first writer's change stands.",
+      "why": "The second of two concurrent writers is told to refresh rather than losing the first writer's work.",
+      "claims": ["repo-backend-p1-120", "repo-backend-p1-121", "repo-backend-p2-030", "repo-backend-p2-031", "repo-backend-p2-032"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-120, p1-121 (GlobalExceptionHandler) and p2-030 to p2-032 (NotificationIT).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-009",
+      "statement": "Submit, amend and cancel-amend take no concurrency token from the caller, so they act on the version stored when the call arrives.",
+      "why": "Records today's behaviour: only save and copy are checked against the version the user last saw.",
+      "claims": ["repo-backend-p2-033"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-033: only save and copy signatures carry a token.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-010",
+      "statement": "A notification has exactly one of four statuses, DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and its fulfilments view alike; there is no cancelled, rejected, in-progress or template status.",
+      "why": "Every lifecycle rule and every published event keys off these four values.",
+      "claims": ["repo-backend-p1-006", "repo-backend-p1-085", "repo-backend-p1-086", "repo-backend-p1-087", "repo-backend-p1-088", "repo-backend-p1-089", "repo-tests-p3-059"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-085 to p1-089 (NotificationStatus enum) and repo-tests-p3-059.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-011",
+      "statement": "The server stamps created on creation and updated on every write, as instants; a client cannot set the database id, created, updated, submittedAt or expireAt through a save request.",
+      "why": "Audit times and expiry must not be forgeable by a caller.",
+      "claims": ["repo-backend-p1-007", "repo-backend-p1-008", "repo-backend-p1-023-m1", "repo-backend-p2-074", "repo-backend-p1-104"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-008 and p1-023-m1: NotificationDto has none of those fields; p2-074 updated set to now on every write.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-012",
+      "statement": "submittedAt records the most recent submission: set to now on the first submit from DRAFT and on each re-submit from AMEND, left unchanged by starting or cancelling an amendment, and set by no other action.",
+      "why": "PIMS and the dashboard show when the notification was last submitted.",
+      "claims": ["repo-backend-p1-009", "repo-backend-p1-010", "repo-backend-p2-073"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-009, p1-010 and p2-073 (submitNotification).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-013",
+      "statement": "In a non-prod environment with NOTIFICATION_TTL_DAYS set, each new notification (copies included) gets an expireAt that many days after its created time; nothing (save, submit, amend) extends it; no expiry is stamped in prod (ENVIRONMENT 'prod' in any case, 'local' when unset), when the setting is unset, or on records created before expiry existed; a zero or negative window fails startup.",
+      "why": "Test environments clear out old notifications without any risk to production data.",
+      "claims": ["repo-backend-p1-011", "repo-backend-p1-012", "repo-backend-p2-009", "repo-backend-p3-056", "repo-backend-p3-057", "repo-backend-p3-058", "repo-backend-p3-059", "repo-backend-p3-061", "repo-backend-p3-074", "repo-backend-p3-090"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-009 and p3-056 to p3-059 (stampExpiry in createNotification).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-014",
+      "statement": "The expiry sweep runs only where NOTIFICATION_TTL_SWEEP_ENABLED is true (off by default, so prod is protected twice), once an hour by default from the end of the last run (notification.ttl.sweep.interval-ms read straight from configuration), with one instance at a time under the shared lock notification-expiry-sweeper (held 1 to 30 seconds).",
+      "why": "Expiry must never run in prod and must not double-delete across instances.",
+      "claims": ["repo-backend-p3-064", "repo-backend-p3-065", "repo-backend-p3-066", "repo-backend-p3-072", "repo-backend-p3-091", "repo-backend-p3-075-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-064 to p3-066 and p3-072 (NotificationExpirySweeper).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-015",
+      "statement": "Each sweep permanently deletes, at most 10 at a time by default (a zero or negative batch falls back to 10), every notification of any status whose expireAt is at or before the sweep time, together with its accompanying documents, in one transaction per batch; it leaves notifications not yet due and those with no expireAt, and tolerates documents vanishing mid-batch. It uses a plain index, not a Mongo TTL index, so documents go too.",
+      "why": "Expired test data and its uploads are removed together without failing on races.",
+      "claims": ["repo-backend-p1-013", "repo-backend-p3-060", "repo-backend-p3-062", "repo-backend-p3-063", "repo-backend-p3-067", "repo-backend-p3-068", "repo-backend-p3-071", "repo-backend-p3-087", "repo-backend-p3-089"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-060 to p3-068 and NotificationExpiryIT (p3-067, p3-087).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-016",
+      "statement": "The expiry sweep writes no audit record and no outbox event, and leaves existing audit records naming the expired notification untouched.",
+      "why": "Records today's behaviour: other services are not told when a test notification expires.",
+      "claims": ["repo-backend-p3-069", "repo-backend-p3-070"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-069 and p3-070: deleteExpired calls neither the audit nor the outbox service.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-017",
+      "statement": "A sweep that deletes notifications logs 'Expiring <n> notification(s)' before and 'Expiry sweeper deleted <n> notification(s)' after; a sweep that deletes nothing logs nothing.",
+      "why": "Operators can see what expiry removed.",
+      "claims": ["repo-backend-p3-073", "repo-backend-p3-088"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-073 and p3-088 (NotificationExpirySweeper log lines).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-018",
+      "statement": "expireAt and the pre-amend notification and fulfilment snapshots are never shown in any JSON response.",
+      "why": "They are server-only state.",
+      "claims": ["repo-backend-p1-014", "repo-backend-p1-018", "repo-backend-p3-020"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-014, p1-018 (@JsonIgnore) and p3-020 (fulfilment view).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-019",
+      "statement": "The fulfilments payload (each obligation id holding a single value or a list of records with their own fulfilment id and value) is stored exactly as sent, byte for byte; the backend never interprets it, and date-shaped strings inside it or in plain text fields are not converted.",
+      "why": "The frontend journey engine owns the fulfilment model and rehydrates the journey from it.",
+      "claims": ["repo-backend-p1-015", "repo-backend-p1-133", "repo-tests-p3-174"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-015 and p1-133 (opaque fulfilments) and repo-tests-p3-174.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-020",
+      "statement": "Starting an amendment snapshots the notification content (inline parties included) and, separately, the fulfilments payload; cancelling restores both, submitting the amendment clears both while keeping the edited content; a notification never amended, or submitted, holds no snapshot.",
+      "why": "Cancel-amend must be able to restore exactly what was submitted.",
+      "claims": ["repo-backend-p1-016", "repo-backend-p1-017", "repo-backend-p2-083", "repo-tests-p3-158", "trace-e2e-p14-130"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-016, p1-017 and p2-083; repo-tests-p3-158 and trace-e2e-p14-130 show no snapshot after submit.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-021",
+      "statement": "Wherever the backend needs a notification's content, a record with no content sub-object fails at once, which the catch-all handler answers as a 500.",
+      "why": "Records today's behaviour on a corrupt record.",
+      "claims": ["repo-backend-p1-019"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-019.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-022",
+      "statement": "A save body (POST /notifications and PUT /notifications/{referenceNumber}) is a wrapper holding a required, validated notification object (content fields plus referenceNumber, status, concurrencyToken and fulfilments) and an optional actor; a body without notification is refused with 400 Validation Error naming notification. The request shape is inbound only and also carries a copy internally.",
+      "why": "The frontend sends this one shape for every save.",
+      "claims": ["repo-backend-p1-020", "repo-backend-p1-021", "repo-backend-p1-023", "repo-backend-p1-024", "repo-backend-p1-025", "repo-backend-p1-028", "repo-backend-p2-002"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-020 to p1-025 and p2-002 (SaveNotificationDto).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-023",
+      "statement": "The backend enforces no rule on the notification's content: no required field, length or format on any section or free-text field (CPH number, email, phone, postcode), and submit checks only the status, not completeness; the frontend's obligations decide what must be answered before submit.",
+      "why": "DR2.1's validation is built in the frontend journey, and the backend accepts drafts at any depth.",
+      "claims": ["repo-backend-p1-026", "repo-backend-p1-027", "repo-backend-p2-071"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-026, p1-027 (no Bean Validation on domain types) and p2-071 (submit checks status only).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-024",
+      "statement": "The record's origin section holds the country of origin code, whether a region code is required (as a string, for example 'yes'), the region of origin code with its country prefix (for example FR-75), the country subdivision code and the trader's internal reference.",
+      "why": "The origin page saves here and the GBN-AG payload reads it.",
+      "claims": ["repo-backend-p1-029", "repo-backend-p1-030", "repo-backend-p1-031", "repo-backend-p1-032", "repo-backend-p1-033", "repo-backend-p1-034", "repo-backend-p2-011", "repo-tests-p3-148", "trace-e2e-p14-123"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-029 to p1-034 (Origin) and repo-tests-p3-148 / trace-e2e-p14-123 (stored FR, yes, FR-75, Imports456GB).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-025",
+      "statement": "The record's commodity section holds a commodity name and a list of commodity complements, each with a free-text type of commodity, whole-number totals of animals and packages, and species lines each holding a species code and display text and whole-number animal and package counts; per-species counts the frontend sends as strings are stored as numbers.",
+      "why": "One notification can carry several commodity lines and species, and PIMS receives a trade line per species.",
+      "claims": ["repo-backend-p1-035", "repo-backend-p1-036", "repo-backend-p1-037", "repo-backend-p1-038", "repo-backend-p1-039", "repo-backend-p1-040", "repo-backend-p1-041", "repo-backend-p1-042", "repo-backend-p1-043", "repo-backend-p1-044", "repo-tests-p3-150", "repo-tests-p3-152", "repo-tests-p3-152-m1", "repo-tests-p3-171", "trace-e2e-p14-125"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-035 to p1-044 (Commodity, CommodityComplement, Species) and repo-tests-p3-150, p3-152.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-026",
+      "statement": "Each species line holds a list of animal identifier units, one per animal (every unit kept), each with microchip, passport, tattoo, ear tag, horse name and a permanent address as a full party; an identifier the journey did not ask for is stored as an empty string or left out, and the two are treated alike. The line also keeps legacy single ear tag, passport and microchip fields carrying its first unit.",
+      "why": "PIMS needs each animal's identifiers, and records saved before per-animal identifiers still map.",
+      "claims": ["repo-backend-p1-045", "repo-backend-p1-046", "repo-backend-p1-047", "repo-backend-p1-048", "repo-backend-p1-049", "repo-backend-p1-050", "repo-backend-p1-051", "repo-backend-p1-052", "repo-backend-p1-137", "repo-tests-p3-151", "repo-tests-p3-167", "repo-tests-p3-168", "trace-e2e-p14-124", "trace-e2e-p14-136"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-045 to p1-052 (Species, AnimalIdentifier) and repo-tests-p3-151, p3-167, p3-168.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-027",
+      "statement": "The record holds the reason for import (for example internalMarket) and the purpose in the internal market (for example breeding) as free text.",
+      "why": "The import reason page saves here.",
+      "claims": ["repo-backend-p1-053", "repo-backend-p1-081", "repo-tests-p3-153"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-053, p1-081 and repo-tests-p3-153.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-028",
+      "statement": "The record's additional details hold what the animals are certified for (free text, for example slaughter) and whether there are unweaned animals (as a string, for example 'no').",
+      "why": "The additional details page saves here and the GBN-AG payload reads it.",
+      "claims": ["repo-backend-p1-054", "repo-backend-p1-055", "repo-backend-p1-056", "repo-tests-p3-154", "trace-e2e-p14-126"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-054 to p1-056 and repo-tests-p3-154 / trace-e2e-p14-126.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-029",
+      "statement": "The record holds six parties, each with an optional name, email, phone and address: placeOfOrigin, consignor, consignee, importer, destination and consignment (the consignment contact); an unanswered role stores none of them.",
+      "why": "The party pickers save here and the GBN-AG payload maps each role.",
+      "claims": ["repo-backend-p1-057", "repo-backend-p1-057-m1", "repo-backend-p1-058", "repo-backend-p1-059", "repo-backend-p1-060", "repo-backend-p1-061", "repo-tests-p3-157", "repo-tests-p3-156-m1", "trace-e2e-p14-129"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-057 to p1-061 (ConsignmentParty) and repo-tests-p3-157.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-030",
+      "statement": "Each party is stored as a literal copy of the address-book record picked for it, with no address id linking back, so later address-book edits or deletions never change the notification; a draft still holding an old address-book id submits, and the id is dropped on that save.",
+      "why": "A submitted notification must keep what the trader declared.",
+      "claims": ["repo-backend-p1-062", "repo-backend-p2-079", "repo-tests-p3-155", "trace-e2e-p14-127-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-062 and p2-079; repo-tests-p3-155 and trace-e2e-p14-127-m1 prove no addressId is stored.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-031",
+      "statement": "An address is a Standard Address Block named as the address book names it: address line 1, optional address line 2, town or city, optional county, postcode and an ISO 3166-1 alpha-2 country code (any country, not only the UK); there is no address line 3, city or free-text country.",
+      "why": "Addresses copy across from the address book without translation and PIMS gets a country code.",
+      "claims": ["repo-backend-p1-063", "repo-backend-p1-064", "repo-backend-p1-065", "repo-backend-p1-066", "repo-backend-p1-136", "repo-tests-p3-156", "repo-tests-p3-169", "trace-e2e-p14-128"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-063 to p1-066 (Address) and repo-tests-p3-156, p3-169.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-032",
+      "statement": "The CPH number is stored as one free-text string, the county, parish and holding parts joined with no separator (12, 345, 6789 stored as '123456789').",
+      "why": "The CPH page saves here and the GBN-AG final destination reads it.",
+      "claims": ["repo-backend-p1-067", "repo-tests-p3-159", "trace-e2e-p14-131"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-067 and repo-tests-p3-159 / trace-e2e-p14-131.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-033",
+      "statement": "The record's transport section holds the port of entry, the arrival date, the means of transport, the transport identification, the transport document reference and the transited countries in the order added.",
+      "why": "The arrival and transit pages save here and the GBN-AG transport movement reads it.",
+      "claims": ["repo-backend-p1-068", "repo-backend-p1-069", "repo-backend-p1-070", "repo-backend-p1-071", "repo-backend-p1-074", "repo-backend-p1-075", "repo-backend-p1-076", "repo-tests-p3-160", "repo-tests-p3-161", "repo-tests-p3-162", "trace-e2e-p14-132", "trace-e2e-p14-132-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-068 to p1-076 (Transport) and repo-tests-p3-160, p3-161; trace-e2e-p14-132 stores FR then BE.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-034",
+      "statement": "The means of transport is one of AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL; any other value is refused as a 400 Malformed Request.",
+      "why": "PIMS needs a mode code for each value.",
+      "claims": ["repo-backend-p1-072", "repo-backend-p1-073"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-072, p1-073 (MeansOfTransport enum).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-035",
+      "statement": "The transport section holds one transporter with a name, an address, an approval number and a free-text type (for example 'Commercial' or 'Private') and no email or phone; it is not an address-book party, and picking it from the one list also settles its type.",
+      "why": "The transporter page saves here and the GBN-AG carrier reads it.",
+      "claims": ["repo-backend-p1-077", "repo-backend-p1-078", "repo-backend-p1-079", "repo-backend-p1-080", "repo-tests-p3-163", "repo-tests-p3-170"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-077 to p1-080 (Transporter) and repo-tests-p3-163, p3-170.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-036",
+      "statement": "The record holds a destination country, a port of exit and an exit date (the calendar day chosen, with no time or zone).",
+      "why": "The exit pages save here.",
+      "claims": ["repo-backend-p1-082", "repo-backend-p1-083", "repo-backend-p1-084", "repo-tests-p3-166"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-082 to p1-084 and repo-tests-p3-166.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-037",
+      "statement": "Every date-only field (arrival date, exit date and any added later) accepts only YYYY-MM-DD; a date-time sent where a date is wanted, or a date where a timestamp is wanted, is a 400 Malformed Request, never a 500 or a silently dropped time.",
+      "why": "A calendar date must never shift by a day between the user's choice and PIMS.",
+      "claims": ["repo-backend-p1-097", "repo-backend-p1-098", "repo-backend-p1-099", "repo-backend-p1-100"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-097 to p1-100 (strict LocalDate deserialiser).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-038",
+      "statement": "Calendar dates are stored as ISO-8601 strings ('2026-07-21'), so they read back as the chosen date in any time zone and sort in date order; timestamps are stored as dates.",
+      "why": "Fixes EUDPA-282, where UK summer time stored the previous day.",
+      "claims": ["repo-backend-p1-101", "repo-backend-p1-102", "repo-backend-p1-103", "repo-tests-p3-164", "trace-e2e-p14-133"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-101, p1-102 and repo-tests-p3-164 / trace-e2e-p14-133.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-039",
+      "statement": "The API returns dates and timestamps as ISO-8601 strings, never epoch numbers or arrays, and its schema describes arrivalDate, exitDate and dateOfIssue as format date and created, updated and submittedAt as format date-time.",
+      "why": "Callers can parse every date the same way.",
+      "claims": ["repo-backend-p1-105", "repo-backend-p1-106"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-105, p1-106.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-040",
+      "statement": "Every error the backend's exception handler answers is an RFC 7807 problem detail (application/problem+json), carries traceId when the request has one, and is logged with the trace id: client errors as warnings, upstream, outbox-write and unexpected errors as errors.",
+      "why": "Callers get one error shape and support can follow a request.",
+      "claims": ["repo-backend-p1-107-m1", "repo-backend-p1-108", "repo-backend-p1-134"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-107-m1, p1-108, p1-134 (GlobalExceptionHandler).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-041",
+      "statement": "A body or parameter that fails validation gets 400 with title 'Validation Error', detail 'Validation failed for one or more fields', type https://api.cdp.defra.cloud/problems/validation-error and an errors map from each failing field (a parameter by its own name) to every message it raised, in order.",
+      "why": "The caller can tell which fields failed.",
+      "claims": ["repo-backend-p1-109", "repo-backend-p1-110", "repo-backend-p1-111", "repo-backend-p1-135"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-109 to p1-111, p1-135.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-042",
+      "statement": "A body that cannot be read gets 400 with title 'Malformed Request', type https://api.cdp.defra.cloud/problems/malformed-request, no errors map, and detail 'Request body could not be read. Check the JSON is well-formed, that each date-only field is a date, for example 2026-12-12, and that each timestamp is an RFC 3339 instant, for example 2026-12-12T00:00:00Z'; the parser's own message is only logged.",
+      "why": "The caller learns what to fix without the response echoing submitted values or internal types.",
+      "claims": ["repo-backend-p1-112", "repo-backend-p1-113", "repo-backend-p1-114", "repo-backend-p1-115"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-112 to p1-115.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-043",
+      "statement": "A payload that binds but the application rejects gets 400 with title 'Bad Request', type https://api.cdp.defra.cloud/problems/bad-request and the exception's message as detail.",
+      "why": "Lifecycle refusals (wrong status, missing token) reach the caller with their reason.",
+      "claims": ["repo-backend-p1-116", "repo-backend-p1-138"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-116, p1-138.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-044",
+      "statement": "A missing resource gets 404 with title 'Resource Not Found', type https://api.cdp.defra.cloud/problems/not-found and the exception's message as detail.",
+      "why": "One not-found shape for every endpoint.",
+      "claims": ["repo-backend-p1-117"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-117.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-045",
+      "statement": "An upstream failure (unreachable, timed out or non-2xx) gets 502 with title 'Upstream Service Error', type https://api.cdp.defra.cloud/problems/upstream-error and the exception's message as detail.",
+      "why": "Callers can tell an upstream fault from the backend's own.",
+      "claims": ["repo-backend-p1-118"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-118.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-046",
+      "statement": "A resource conflict such as a duplicate key gets 409 with title 'Resource Conflict', type https://api.cdp.defra.cloud/problems/conflict and the exception's message as detail.",
+      "why": "One conflict shape for duplicate writes.",
+      "claims": ["repo-backend-p1-119"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-119.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-047",
+      "statement": "An oversized upload gets 413 with title 'Payload Too Large', type https://api.cdp.defra.cloud/problems/payload-too-large and detail 'Uploaded file exceeds the maximum permitted size'.",
+      "why": "One shape for an oversized document upload.",
+      "claims": ["repo-backend-p1-122"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-122.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-048",
+      "statement": "A failure to write the outbox event or to get a notification's write lock (three attempts, waiting lock-at-least-for of 50ms between them) gets 500 with title 'Internal Server Error', type https://api.cdp.defra.cloud/problems/internal-error and detail 'An error occurred during submission. Please try again.', whichever lifecycle action failed; it reveals no lock keys, database codes, aggregate id or reference, which are only logged.",
+      "why": "The user is asked to retry without internal detail leaking.",
+      "claims": ["repo-backend-p1-123", "repo-backend-p1-124", "repo-backend-p5-027", "repo-backend-p5-028", "repo-backend-p2-088-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-123, p1-124, p5-028 and p2-088-m1.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-049",
+      "statement": "Any other unexpected error gets 500 with title 'Internal Server Error', type https://api.cdp.defra.cloud/problems/internal-error and detail 'An unexpected error occurred. Please try again later.'; framework-level errors, such as an unknown endpoint, are left to Spring (for example 404).",
+      "why": "Unexpected faults never leak internals and unknown paths are not turned into 500s.",
+      "claims": ["repo-backend-p1-125", "repo-backend-p1-126"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-125, p1-126.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-050",
+      "statement": "The backend stores its data in MongoDB (credentials from CDP environment variables), owns the local Floci provisioning of its S3 buckets, SQS queues and quarantine-bucket event notification, runs in the workspace stack or alone with MongoDB, Floci and Redis, and will not start without TRADE_IMPORTS_ANIMALS_BACKEND_BASE_URL.",
+      "why": "Records the runtime the record depends on.",
+      "claims": ["repo-backend-p1-127", "repo-backend-p1-128", "repo-backend-p1-129", "repo-backend-p1-130", "repo-backend-p1-132"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p1-128 to p1-130 and p1-132; README (p1-127) describes only the template.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-051",
+      "statement": "The backend README describes its tests as using no mocking of any sort and says nothing about the notification record, though GlobalExceptionHandlerTest uses Mockito; correcting the README is not part of this programme.",
+      "why": "Out of scope: a documentation inaccuracy the DR2.1 goal does not cover; it goes to the report.",
+      "claims": ["repo-backend-p1-131"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p1-131: the README claims no mocking; the tests do mock.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-052",
+      "statement": "POST /notifications with no reference number creates a notification: status DRAFT, created and updated now, every sent field stored and returned (origin with region and country subdivision, commodity with complements and species, reason for import, additional details, CPH number, transport), and writes a NotificationCreated outbox event at aggregate version 1; under /notifications in the live-animals frontend this redirects to the new notification's origin page.",
+      "why": "Starting a notification creates the record the journey then fills.",
+      "claims": ["repo-backend-p2-001", "repo-backend-p2-005", "repo-backend-p2-008", "repo-backend-p2-010", "repo-backend-p5-013", "repo-tests-p3-179"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-001, p2-005, p2-008, p2-010 (NotificationIT) and repo-tests-p3-179.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-053",
+      "statement": "Every one of the six write endpoints answers 200 with the whole stored notification aggregate.",
+      "why": "The frontend picks up the new concurrency token and state from each write.",
+      "claims": ["repo-backend-p2-003"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-003.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-054",
+      "statement": "POST /notifications with a reference number updates that notification: it replaces the whole content (origin, commodity, reason for import, additional details, the six parties, CPH number, transport, purpose in internal market, destination country, port of exit, exit date and fulfilments), so a field left out is cleared (for example transited countries when the means of transport needs none), keeps the status, creates no second notification and writes a NotificationEdited event; each frontend page route accepts only its own page's fields.",
+      "why": "Each page save sends the whole record built from the journey.",
+      "claims": ["repo-backend-p2-013", "repo-backend-p2-014", "repo-backend-p2-015", "repo-backend-p2-016", "repo-backend-p2-020", "repo-backend-p5-015", "repo-tests-p3-178"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-013 to p2-016, p2-020 and repo-tests-p3-178.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-055",
+      "statement": "Updating through POST /notifications answers 404 'Cannot find notification with reference number: <ref>' for an unknown reference, 400 'Cannot save notification with status: <status>' unless the notification is DRAFT or AMEND, and 400 'concurrencyToken is required to update a notification' without a token.",
+      "why": "Only an editable notification the caller has the current version of can be saved.",
+      "claims": ["repo-backend-p2-017", "repo-backend-p2-018", "repo-backend-p2-019"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-017 to p2-019.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-056",
+      "statement": "PUT /notifications/{referenceNumber} replaces the content and fulfilments of the notification named in the path (any body reference is ignored), keeps its DRAFT or AMEND status and writes a NotificationEdited event on every save; it answers 404 for an unknown reference, 400 'Cannot replace notification content with status: <status>' unless DRAFT or AMEND, and 400 'concurrencyToken is required to replace a notification' without a token.",
+      "why": "The frontend engine's save path.",
+      "claims": ["repo-backend-p2-021", "repo-backend-p2-022", "repo-backend-p2-024", "repo-backend-p2-025", "repo-backend-p2-026", "repo-backend-p2-027", "repo-backend-p5-016"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-021 to p2-027 (replace).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-057",
+      "statement": "Each write endpoint takes an optional x-cdp-request-id header (empty string when absent) and stamps it as the correlationId of the outbox event it writes.",
+      "why": "An event can be traced back to the request that caused it, through to PIMS.",
+      "claims": ["repo-backend-p2-004", "repo-backend-p5-045"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-004, p5-045.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-058",
+      "statement": "POST /notifications/{referenceNumber}/submit, with only an optional actor as its body, moves a DRAFT or AMEND notification to SUBMITTED; it answers 404 with the reference in the detail (writing no event) when the notification does not exist and 400 'Cannot submit notification with status: <status>' when it is SUBMITTED or DELETED. After submission the stored status is SUBMITTED and the notification view reloads read-only as Submitted.",
+      "why": "Submission is the one action that sends the notification to PIMS.",
+      "claims": ["repo-backend-p2-067", "repo-backend-p2-068", "repo-backend-p2-069", "repo-backend-p2-070", "repo-tests-p3-146", "repo-tests-p3-165", "trace-e2e-p14-134"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-067 to p2-070; repo-tests-p3-146, p3-165 and trace-e2e-p14-134.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-059",
+      "statement": "Submitting from the declaration lands on /notifications/{id}/confirmation under the live-animals base, with the heading 'Import notification submitted' and a panel showing the reference number; a refused submission redirects back to check your answers.",
+      "why": "The trader sees their reference once the notification is sent.",
+      "claims": ["repo-tests-p3-124", "repo-tests-p3-189"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-124 and p3-189 (submit journey specs).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-060",
+      "statement": "A first submission (from DRAFT) writes a NotificationSubmitted event and a re-submission (from AMEND) writes NotificationSubmissionAmended; only these two count as submissions.",
+      "why": "PIMS tells a first submission from an amendment by the event type.",
+      "claims": ["repo-backend-p2-072", "repo-backend-p5-012", "repo-backend-p5-017", "repo-backend-p5-018"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-072 and p5-012, p5-017, p5-018.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-061",
+      "statement": "Submit stores the notification as it stands and its event carries the GBN-AG payload identified by the reference number, with the consignor published exactly as stored (name, address, email, phone) and the stored consignor unchanged.",
+      "why": "PIMS gets what the trader declared.",
+      "claims": ["repo-backend-p2-075", "repo-backend-p2-078"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-075, p2-078.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-062",
+      "statement": "Every event's payload lists only the accompanying documents whose virus scan is COMPLETE, oldest first, read as the event is written; pending and rejected documents are left out without refusing the submit, and with none the referenceDocument key is left out rather than sent empty.",
+      "why": "PIMS is never sent a document that has not passed the scan.",
+      "claims": ["repo-backend-p2-076", "repo-backend-p2-077", "repo-backend-p5-039", "repo-backend-p5-040", "repo-backend-p6-016"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-076, p2-077, p5-039, p5-040, p6-016.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-063",
+      "statement": "An actor sent with a write (inside the save body for POST and PUT, as the optional body of copy, submit, amend, cancel-amend and soft delete) is stamped on that event and its status change: id, source, userType, displayName, organisationId and onBehalfOfOrganisationId, with empty fields left out of the published JSON; without one the actor is empty.",
+      "why": "PIMS records who submitted or changed the notification.",
+      "claims": ["repo-backend-p1-022", "repo-backend-p2-080", "repo-backend-p5-048", "repo-backend-p5-049", "repo-backend-p5-050", "repo-tests-p3-201"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-080, p5-048 to p5-050 and repo-tests-p3-201.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-064",
+      "statement": "A submission event's versionId is the count of earlier submission events plus one (1, then 2 on the next); amendment-requested, amendment-cancelled and submission-deleted events carry the current count forward; created, edited and deleted events carry no versionId.",
+      "why": "PIMS orders the versions of one notification by versionId.",
+      "claims": ["repo-backend-p2-081", "repo-backend-p5-041", "repo-backend-p5-042", "repo-backend-p5-043"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-081 and p5-041 to p5-043.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-065",
+      "statement": "Each event for a notification takes the next aggregateVersion, starting at 1 on creation; two events can never share one ('Duplicate aggregateVersion on outbox insert').",
+      "why": "Consumers apply one notification's events in order.",
+      "claims": ["repo-backend-p2-082", "repo-backend-p5-035", "repo-backend-p5-036"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-082, p5-035, p5-036.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-066",
+      "statement": "Every write to one notification (create, save, copy's new draft, submit, amend, cancel-amend) runs one at a time under a lock for that notification held at most 10 seconds, and its outbox write under a lock named outbox-write:<aggregate id>, retried with lock-at-least-for (50ms) between tries.",
+      "why": "Concurrent writes cannot interleave their events.",
+      "claims": ["repo-backend-p2-086", "repo-backend-p2-087", "repo-backend-p5-026"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-086, p2-087, p5-026.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-067",
+      "statement": "For PUT, copy, submit, amend, cancel-amend and soft delete, saving the notification and writing its outbox event happen in one transaction: both land or neither does.",
+      "why": "A change and its event are never out of step.",
+      "claims": ["repo-backend-p2-089"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p2-089 (@Transactional on those service methods).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-068",
+      "statement": "Creating or saving a notification through POST /notifications should save the notification and its outbox event in one transaction, as PUT and submit do; today they are separate writes, so an event failure can leave a saved change with no event.",
+      "why": "Out of scope: a reliability defect in the backend that the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p5-025-m1"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p5-025-m1: saveNotification carries no @Transactional.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-069",
+      "statement": "The notification write and read endpoints should tie a notification to the calling user or organisation; today any caller holding a reference number can change, submit, amend, read the fulfilments of or read the outbox events of that notification, and any caller can list every reference, though the API description lists 401 responses.",
+      "why": "Out of scope: an access-control weakness in the backend that the DR2.1 parity goal does not fix (authentication is a real constraint, not a design difference); it goes to the report.",
+      "claims": ["repo-backend-p2-084", "repo-backend-p2-085", "repo-backend-p3-024", "repo-backend-p3-032", "repo-backend-p3-055", "repo-backend-p5-074"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p2-085 and p3-024: every lookup is by reference alone; p3-055: only DELETE and replay are guarded.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-070",
+      "statement": "GET /notifications/{referenceNumber}/fulfilments returns referenceNumber, concurrencyToken, status, created and submittedAt (exact UTC instants with a Z suffix) and the fulfilments payload, for a notification in any status, soft-deleted included; it backs the frontend's rehydrate, and an unknown reference answers 404 'Cannot find notification with reference number: <reference>'.",
+      "why": "The frontend journey engine rebuilds every page from this view.",
+      "claims": ["repo-backend-p3-019", "repo-backend-p3-021", "repo-backend-p3-022", "repo-backend-p3-023", "repo-tests-p3-175"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-019 to p3-023 and repo-tests-p3-175.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-071",
+      "statement": "The backend offers no read of one notification's full content by reference other than the fulfilment view, and its notification API echoes unreached sections as null beside status, created, updated, submittedAt, fulfilments and the concurrency token.",
+      "why": "Pages that show stored answers read them from the fulfilments payload or the list item.",
+      "claims": ["repo-backend-p3-076", "repo-tests-p3-172", "repo-tests-p3-173"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-076 (GET mappings) and repo-tests-p3-172, p3-173.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-072",
+      "statement": "GET /notifications/reference-numbers returns reference strings only, 50 per page, newest created first, across every status (soft-deleted included), with a 0-based page parameter (default 0, at least 0) and a response of content, page, size, numberOfElements, totalElements and totalPages.",
+      "why": "Admin and test tooling enumerate every reference without loading content.",
+      "claims": ["repo-backend-p3-026", "repo-backend-p3-027", "repo-backend-p3-028", "repo-backend-p3-029", "repo-backend-p3-030", "repo-backend-p3-031", "repo-backend-p3-081"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-026 to p3-031 and p3-081.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-073",
+      "statement": "DELETE /notifications permanently removes the notifications named in a JSON array of references with their accompanying documents and answers 204, in any status, all or nothing: an empty list or a missing x-cdp-request-id or User-Id header is 400 with nothing deleted, and any unknown reference is 404 'Cannot find notifications with reference numbers: <missing, comma-separated>' with nothing deleted.",
+      "why": "Admins and the test suite clear notifications without leaving orphaned documents.",
+      "claims": ["repo-backend-p3-043", "repo-backend-p3-044", "repo-backend-p3-045", "repo-backend-p3-046", "repo-backend-p3-047", "repo-backend-p3-082"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-043 to p3-047 and p3-082.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-074",
+      "statement": "Every DELETE /notifications request writes a DELETE_NOTIFICATIONS audit record with its result (SUCCESS, or FAILURE kept even when the request fails on a missing reference), the references, their count, the trace id, the user id and a timestamp; it writes no outbox event, so other services are not told.",
+      "why": "Hard deletes are audited; the lack of an event is today's behaviour.",
+      "claims": ["repo-backend-p3-048", "repo-backend-p3-049", "repo-backend-p5-024"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-048, p3-049 and p5-024.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-075",
+      "statement": "Any DELETE whose path begins /notifications, and POST /notifications/{reference}/replay, require the Trade-Imports-Animals-Admin-Secret header to match TRADE_IMPORTS_ANIMALS_ADMIN_SECRET (a local default when unset), compared in constant time and checked before almost every other filter; a missing or wrong secret, or a blank configured one, gets 401 with an empty body.",
+      "why": "Destructive and replay operations are kept to holders of the admin secret.",
+      "claims": ["repo-backend-p3-050", "repo-backend-p3-051", "repo-backend-p3-052", "repo-backend-p3-053", "repo-backend-p3-054", "repo-backend-p3-084", "repo-backend-p3-085", "repo-backend-p3-086", "repo-backend-p5-079", "repo-backend-p5-080"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p3-050 to p3-054, p3-084, p3-085 (AdminSecretFilter).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-076",
+      "statement": "The soft-delete controller test pins a 400 'Cannot delete notification with status: DELETED' that the service never produces, because a repeat soft delete is a no-op; aligning that test is not part of this programme.",
+      "why": "Out of scope: a misleading test in the backend that the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p3-083"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p3-083: the test mocks the service.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-077",
+      "statement": "No backend test proves the status filter or the sort order of GET /notifications against a real store; that list belongs to the notification-list area.",
+      "why": "Out of scope for this area: the list API is notification-list's.",
+      "claims": ["repo-backend-p3-092"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p3-092: only mocked list tests.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-078",
+      "statement": "The backend defines eight notification lifecycle event types, each with the wire value uk.gov.defra.imports.notification.<Type> and a schema in DEFRA/trade-imports-schemas under schemas/profiles/imports/gb/events/: NotificationCreated, NotificationEdited, NotificationSubmitted, NotificationSubmissionAmended, NotificationAmendmentRequested, NotificationAmendmentCancelled, NotificationDeleted and NotificationSubmissionDeleted (gbn-ag-event-notification-<kebab type>-v1.schema.json).",
+      "why": "Consumers discover and validate every event against its governing schema.",
+      "claims": ["repo-backend-p5-001", "repo-backend-p5-002", "repo-backend-p5-003", "repo-backend-p5-004", "repo-backend-p5-005", "repo-backend-p5-006", "repo-backend-p5-007", "repo-backend-p5-008", "repo-backend-p5-009", "repo-backend-p5-010", "repo-backend-p5-011"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-001 to p5-011 (OutboxEventType).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-079",
+      "statement": "Each lifecycle action writes its event: amend NotificationAmendmentRequested, cancel-amend NotificationAmendmentCancelled, soft delete of a DRAFT NotificationDeleted and of a SUBMITTED or AMEND notification NotificationSubmissionDeleted, a repeat soft delete none; a copy or a template use appears only as the new draft's NotificationCreated, and the source gets no event.",
+      "why": "Downstream services follow every change of state.",
+      "claims": ["repo-backend-p5-014", "repo-backend-p5-019", "repo-backend-p5-020", "repo-backend-p5-021", "repo-backend-p5-022", "repo-backend-p5-023", "repo-backend-p5-103"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-014, p5-019 to p5-023, p5-103.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-080",
+      "statement": "Outbox events are stored in the MongoDB collection outbox, each with eventId (a new random UUID), aggregateId 'Imports.Notification.GBN-AG.<reference>', aggregateType Notification, subType GBN-AG, aggregateVersion, eventType, timestamp (write time to the millisecond), data (the GBN-AG payload built from the whole notification after the action, for every event type), metadata (correlationId, schemaVersion 1, schemaUrl), actor and statusChanges.",
+      "why": "Every consumer reads this envelope.",
+      "claims": ["repo-backend-p5-029", "repo-backend-p5-030", "repo-backend-p5-031", "repo-backend-p5-032", "repo-backend-p5-033", "repo-backend-p5-034", "repo-backend-p5-037", "repo-backend-p5-038", "repo-backend-p5-044", "repo-backend-p5-046", "repo-backend-p5-047", "repo-tests-p3-200", "repo-tests-p3-202"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-029 to p5-047 (OutboxEvent) and repo-tests-p3-200, p3-202.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-081",
+      "statement": "Each event carries the notification's full status history so far, copied from its latest earlier event, adding a status change (status, the event's time, the actor) only when the status differs from the last recorded.",
+      "why": "PIMS sees who moved the notification between statuses and when.",
+      "claims": ["repo-backend-p5-051", "repo-backend-p5-052", "repo-backend-p5-053"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-051 to p5-053.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-082",
+      "statement": "An event's publish time is stored with it but left out of the published message and of the outbox-events read.",
+      "why": "Records today's behaviour: a caller of the read cannot tell whether an event has been published.",
+      "claims": ["repo-backend-p5-054", "repo-backend-p5-071-m1"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-054, p5-071-m1 (@JsonIgnore publishedAt).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-083",
+      "statement": "A poller (on unless outbox.poller.enabled is false) publishes waiting events every outbox.poller.interval-ms (2000 ms by default), one instance at a time under the lock outbox-poller (1 to 30 seconds), reading 10 at a time up to 500 per run (OUTBOX_POLLER_MAX_EVENTS_PER_RUN; zero or less falls back), oldest written first then by aggregateVersion, marking each published event with its publish time so it is never published again, and stopping when none wait, a publish fails or the limit is reached.",
+      "why": "Events reach consumers in order, once, from one publisher.",
+      "claims": ["repo-backend-p5-055", "repo-backend-p5-056", "repo-backend-p5-057", "repo-backend-p5-058", "repo-backend-p5-059", "repo-backend-p5-062", "repo-backend-p5-065", "repo-backend-p5-066"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-055 to p5-066 (OutboxPoller).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-084",
+      "statement": "Events are published to the one SNS FIFO topic set by OUTBOX_SNS_TOPIC_ARN (none published while it is unset), each message the whole event as JSON with group id the aggregateId, deduplication id the eventId, and string attributes eventType, correlationId, schemaVersion and schemaUrl (empty string when missing).",
+      "why": "One notification's events stay ordered while different notifications flow independently.",
+      "claims": ["repo-backend-p5-060", "repo-backend-p5-061", "repo-backend-p5-063", "repo-backend-p5-064"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-060 to p5-064.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-085",
+      "statement": "An event with no payload is skipped and logged as an error; an event SNS rejects or that cannot be serialised stays waiting, stops the run and is tried again on the next poll (a serialisation failure asks for manual investigation).",
+      "why": "No event is lost on a failed publish.",
+      "claims": ["repo-backend-p5-067", "repo-backend-p5-068", "repo-backend-p5-069"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-067 to p5-069.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-086",
+      "statement": "A poison event should not block every later event: today an event that always fails, or a batch of payload-less events at the head of the queue, stops publication for every notification, with no dead-letter, retry limit or alerting beyond error logs.",
+      "why": "Out of scope: an operability defect in the backend publisher that the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p5-070", "repo-backend-p5-067-m1", "repo-backend-p5-102"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p5-070, p5-067-m1 and p5-102: stop-on-error with no skip or dead-letter.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-087",
+      "statement": "Integration tests prove publication: create then submit publishes 2 events, the NotificationSubmitted message at aggregateVersion 2 with its eventId, aggregateId, aggregateType, subType, timestamp, correlationId, schemaVersion 1, a payload for the reference, no publishedAt and matching attributes; nothing is republished; create, page save and submit publish versions 1, 2, 3 (edited at 2 with the save's correlationId); a double submit publishes 1 to 3 with each request's correlationId; queues order by write time; and two notifications' events are in flight at once.",
+      "why": "Records what is proven today.",
+      "claims": ["repo-backend-p5-085", "repo-backend-p5-086", "repo-backend-p5-087", "repo-backend-p5-088", "repo-backend-p5-089", "repo-backend-p5-090", "repo-backend-p5-091"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-085 to p5-091 (OutboxPollerIT).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-088",
+      "statement": "No backend test proves that amend, cancel-amend, copy or soft-delete events reach SNS, or calls the outbox-events read through the API; adding them is not part of this programme.",
+      "why": "Out of scope: a test gap in the backend the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p5-099", "repo-backend-p5-100"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p5-099, p5-100.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-089",
+      "statement": "GET /notifications/{referenceNumber}/outbox-events returns all the notification's events in aggregateVersion order, and an empty list (not 404) when it has none or does not exist.",
+      "why": "Support can see what was sent for a notification.",
+      "claims": ["repo-backend-p5-071", "repo-backend-p5-072"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-071, p5-072.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-090",
+      "statement": "POST /notifications/{referenceNumber}/replay, with the admin secret and a User-Id header, re-publishes every event for the notification to the SNS FIFO topic in aggregateVersion order with the original group and deduplication ids, changes nothing in the outbox, answers 200 with eventsReplayed, answers 404 with no audit when there are no events and 401 with no audit without the secret, and writes a REPLAY_EVENTS audit record (result, reference, 1 notification, event count, trace id, user id, timestamp); events published under five minutes earlier are suppressed by FIFO deduplication.",
+      "why": "Support can resend a notification to PIMS.",
+      "claims": ["repo-backend-p5-075", "repo-backend-p5-076", "repo-backend-p5-077", "repo-backend-p5-078", "repo-backend-p5-081", "repo-backend-p5-082", "repo-backend-p5-092", "repo-backend-p5-093", "repo-backend-p5-094", "repo-backend-p5-095", "repo-backend-p5-096", "repo-backend-p5-097", "repo-backend-p5-098"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p5-075 to p5-082 and ReplayIT (p5-092 to p5-098).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-091",
+      "statement": "Replay should report failures truthfully: today a serialisation failure stops replay and audits FAILURE yet reports every event as replayed, and an SNS rejection fails the request with no audit record.",
+      "why": "Out of scope: a defect in the backend's admin replay that the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p5-083", "repo-backend-p5-084"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p5-083, p5-084.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-092",
+      "statement": "A submitted notification reaches PIMS Dynamics by way of the backend outbox, an SQS queue, the dynamics gateway and Azure Service Bus; the backend repo itself does not say which services subscribe to its topic.",
+      "why": "Records the cross-service route a submission takes.",
+      "claims": ["repo-tests-p3-126-m1", "repo-backend-p5-101"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-126-m1 (animals-dynamics config); repo-backend-p5-101.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-093",
+      "statement": "A submitted notification appears in PIMS Dynamics as exactly one importer-notification row named with its reference number, status code 714100001, a submission date within tolerance of the backend's submit time, and the importer ('Import Co UK'), consignor ('Astra Rosales') and consignee ('British Livestock Ltd') company names as submitted.",
+      "why": "The end-to-end proof that submission reaches the case-working system.",
+      "claims": ["repo-tests-p3-126", "repo-tests-p3-127", "repo-tests-p3-128", "repo-tests-p3-128-m1", "repo-tests-p3-129", "repo-tests-p3-130", "repo-tests-p3-131"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-126 to p3-131 (animals Dynamics specs).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-094",
+      "statement": "The PIMS Dynamics tests read through the Dataverse Web API (OData 4.0) with an app-only Entra ID client-credentials token, filtering by reference, run only against a CDP environment (the compose stack has no PIMS Dynamics), and run with Playwright tracing off so the token and secret are not recorded; the Mongo persistence tests run only on the compose stack, where Mongo is exposed, with queues on Floci in eu-west-2.",
+      "why": "Each end-to-end proof runs where its dependency exists.",
+      "claims": ["repo-tests-p3-133", "repo-tests-p3-134", "repo-tests-p3-135", "repo-tests-p3-197", "repo-tests-p3-199"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-133 to p3-135, p3-197, p3-199.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-095",
+      "statement": "Proving that the other PIMS Dynamics columns (identity, audit, party, person-responsible, journey, compliance, commodity and system columns, with lookups as _<name>_value, option sets as codes and dates as ISO strings) carry the submitted data is not part of this programme; today only the reference, status, submission date and three company names are proven.",
+      "why": "Out of scope: widening the PIMS data test is not a DR2.1 difference; the gap goes to the report.",
+      "claims": ["repo-tests-p3-132", "repo-tests-p3-136", "repo-tests-p3-137", "repo-tests-p3-138", "repo-tests-p3-139", "repo-tests-p3-140", "repo-tests-p3-140-m1", "repo-tests-p3-141", "repo-tests-p3-142", "repo-tests-p3-143", "repo-tests-p3-143-m1", "repo-tests-p3-144"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-tests-p3-132: the data test is a starting set.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-096",
+      "statement": "A submitted-notification outbox event can be placed straight onto the dead-letter FIFO queue (message group id and deduplication id required), where the admin UI shows the event id as the message Id.",
+      "why": "The admin dead-letter tooling is proven with a real event shape.",
+      "claims": ["repo-tests-p3-198"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-198.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-097",
+      "statement": "No tests-repo spec proves the contents of the outbox event: its model types only the GBN-AG sections a smoke check reads; adding such a spec is not part of this programme.",
+      "why": "Out of scope: a test gap the DR2.1 parity goal does not fix; it goes to the report.",
+      "claims": ["repo-tests-p3-207"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-tests-p3-207.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-098",
+      "statement": "The GBN-AG event data always carries $model 'defra/certificate-internal/1' and $type 'gbn-ag', and two sections, exchangedDocument and specifiedConsignment, built from the stored notification, a caller-supplied version id and the accompanying documents; no notification produces no data, and a near-empty one maps without error with every section absent.",
+      "why": "PIMS reads the GBN-AG certificate model.",
+      "claims": ["repo-backend-p6-001", "repo-backend-p6-002", "repo-backend-p6-003", "repo-backend-p6-004", "repo-backend-p6-005", "repo-backend-p6-006", "repo-tests-p3-202"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-001 to p6-006 (GbnAgMapper).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-099",
+      "statement": "exchangedDocument carries identifier (the reference number), traderAssignedId (the internal reference), notificationStatusCode (the status name), versionId (may be absent) and issueDateTime (the last-updated moment as an ISO-8601 UTC instant, sub-millisecond digits kept), leaving out any field with no value.",
+      "why": "PIMS identifies and versions the notification from this block.",
+      "claims": ["repo-backend-p6-007", "repo-backend-p6-008", "repo-backend-p6-009", "repo-backend-p6-010", "repo-backend-p6-011", "repo-backend-p6-012", "repo-backend-p6-014", "repo-tests-p3-203"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-007 to p6-014 and repo-tests-p3-203.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-100",
+      "statement": "exchangedDocument.issuer should carry the consignment contact; today it is never filled because where the contact belongs on the event is open (gap G1).",
+      "why": "Out of scope: an open GBN-AG mapping gap that no DR2.1 or DR1 source settles and the parity goal does not fix; it goes to the report.",
+      "claims": ["repo-backend-p6-013"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p6-013: issuer deliberately unmapped.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-101",
+      "statement": "Each accompanying document is sent as one referenceDocument entry, in the order given, with urlId https://refdata.tbc.defra.gov.uk/gbn-ag-document-types, its reference as identifier, its date of issue as a date-only issueDateTime (left out when absent), no relationshipTypeCode, and no null fields.",
+      "why": "PIMS receives each scanned supporting document.",
+      "claims": ["repo-backend-p6-015", "repo-backend-p6-079", "repo-backend-p6-080", "repo-backend-p6-081", "repo-backend-p6-082", "repo-backend-p6-083", "repo-backend-p6-084"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-015 and p6-079 to p6-084.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-102",
+      "statement": "Each accompanying-document type is sent with its typeCode: veterinary health certificate 853, health certificate 636, air waybill 740, sea waybill 710, rail waybill 720, bill of lading 705, commercial invoice 380, ITAHC 856, import permit 911, letter of authority GBN1, catch certificate GBN2, aflatoxin laboratory results 4, journey log GBN3, and Other 916 (only when chosen); the lookup is exhaustive and pinned at 14 types, so a new type needs a code first.",
+      "why": "PIMS classifies documents by these codes.",
+      "claims": ["repo-backend-p6-085", "repo-backend-p6-086", "repo-backend-p6-087", "repo-backend-p6-088", "repo-backend-p6-089", "repo-backend-p6-090", "repo-backend-p6-091", "repo-backend-p6-092", "repo-backend-p6-093", "repo-backend-p6-094", "repo-backend-p6-095", "repo-backend-p6-096", "repo-backend-p6-097", "repo-backend-p6-098", "repo-backend-p6-099"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-085 to p6-099 (document type code switch).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-103",
+      "statement": "exchangedDocument.firstSignatoryAuthentication lists declaration clauses with no urlId: PURPOSE (the reason for import, always first), INTERNAL_MARKET_PURPOSE (only when the reason is INTERNAL_MARKET, always with empty content), and GOODS_CERTIFIED_AS (what the goods are certified for, empty when unanswered), so a non-internal-market notification sends exactly two.",
+      "why": "PIMS receives the trader's declaration.",
+      "claims": ["repo-backend-p6-017", "repo-backend-p6-018", "repo-backend-p6-019", "repo-backend-p6-021", "repo-backend-p6-022", "repo-backend-p6-023"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-017 to p6-023.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-104",
+      "statement": "The GBN-AG payload should carry the record's purpose in the internal market in the INTERNAL_MARKET_PURPOSE clause; today it is always sent empty (gap G2), though the record now holds purposeInInternalMarket.",
+      "why": "Out of scope: a GBN-AG mapping gap no DR2.1 or DR1 source asks to close; the parity goal does not fix it, and it goes to the report.",
+      "claims": ["repo-backend-p6-020", "repo-backend-p6-121"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p6-020, p6-121: no file in outbox/gbnag/ reads purposeInInternalMarket.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-105",
+      "statement": "specifiedConsignment maps the consignor to consignorParty, the consignee to consigneeParty, the place of origin to despatchParty, the destination to deliveryParty, the importer to importer and the transporter to carrier; each consignment party is sent with its name, a postalAddress from its own address (none when it has no address), and exactly one definedContact with emailURIUniversalCommunication and telephoneUniversalCommunication when it has either (none when neither), never a personName, and no identifier, urlId, partyRoleCode or partyTypeCode (gap G6).",
+      "why": "PIMS receives every party the trader named.",
+      "claims": ["repo-backend-p6-024", "repo-backend-p6-025", "repo-backend-p6-026", "repo-backend-p6-027", "repo-backend-p6-028", "repo-backend-p6-029", "repo-backend-p6-042", "repo-backend-p6-043", "repo-backend-p6-044", "repo-backend-p6-045", "repo-backend-p6-046", "repo-backend-p6-047", "repo-tests-p3-204"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-024 to p6-029 and p6-042 to p6-047.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-106",
+      "statement": "The carrier is sent with the approval number as identifier (urlId https://refdata.tbc.defra.gov.uk/uk_transporter_authorisation when present), the transporter's name, a partyTypeCode holding the stored type as is with urlId https://traces-codelists.ec.europa.eu/operator_activity_type (absent when no type), its address as postalAddress, and no partyRoleCode or definedContact.",
+      "why": "PIMS identifies the authorised transporter.",
+      "claims": ["repo-backend-p6-048", "repo-backend-p6-049", "repo-backend-p6-050", "repo-backend-p6-051", "repo-backend-p6-053"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-048 to p6-053.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-107",
+      "statement": "Unconfirmed GBN-AG code mappings stay open outside this programme: whether stored transporter types match the TRACES operator_activity_type codelist (EUDPA-274, G9), and the type of commodity passed through unchecked as the CN classCode (G15).",
+      "why": "Out of scope: open GBN-AG codelist gaps no DR2.1 or DR1 source settles; they wait on the PIMS mapping work and go to the report.",
+      "claims": ["repo-backend-p6-052", "repo-backend-p6-103"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p6-052, p6-103: values passed through raw.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-108",
+      "statement": "A postalAddress is sent as lineOne (address line 1), lineTwo (address line 2), cityName (town or city), postcodeCode, countryId (the ISO code) and countrySubDivisionName (county), never countryName.",
+      "why": "PIMS derives the country name from the code.",
+      "claims": ["repo-backend-p6-054", "repo-backend-p6-055", "repo-backend-p6-056", "repo-backend-p6-057", "repo-backend-p6-058", "repo-backend-p6-059", "repo-backend-p6-060", "repo-backend-p6-061"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-054 to p6-061.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-109",
+      "statement": "originCountry is sent as code.value, the ISO country of origin (absent with none), with the region of origin, when held and not blank, as subordinateTradeCountrySubDivision with the region code as identifier and functionTypeCode '106'.",
+      "why": "PIMS receives where the animals come from.",
+      "claims": ["repo-backend-p6-030", "repo-backend-p6-062", "repo-backend-p6-063", "repo-backend-p6-064", "repo-backend-p6-065", "repo-tests-p3-205"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-030, p6-062 to p6-065.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-110",
+      "statement": "unloadingBaseportLocation is the port of entry code alone (absent with no transport or port); finalDestinationLocation is the CPH number with urlId https://refdata.tbc.defra.gov.uk/cph_number, left out when missing or blank.",
+      "why": "PIMS receives where the animals arrive and the destination holding.",
+      "claims": ["repo-backend-p6-031", "repo-backend-p6-032", "repo-backend-p6-034"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-031, p6-032, p6-034.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-111",
+      "statement": "The transport movement is sent as one mainCarriageLogisticsTransportMovement whenever there is a transport section, with no identifier or urlId: modeCode from the means of transport (vessel 1, railway 2, road 3, airplane 4; absent when none), usedLogisticsTransportMeans.name the transport identification, one transportContractRelatedReferencedDocument holding the document reference with a typeCode inferred from the mode (705, 720, 730, 740; none when the mode is unknown) and no urlId, relationshipTypeCode or issueDateTime, and one arrivalEvent whose scheduledOccurrenceDateTime is the arrival date at 00:00:00Z UTC; the transited countries go as transitTradeCountry codes in order, left out when none.",
+      "why": "PIMS receives how and when the animals travel.",
+      "claims": ["repo-backend-p6-035", "repo-backend-p6-036", "repo-backend-p6-037", "repo-backend-p6-066", "repo-backend-p6-067", "repo-backend-p6-068", "repo-backend-p6-069", "repo-backend-p6-070", "repo-backend-p6-071", "repo-backend-p6-072", "repo-backend-p6-073", "repo-backend-p6-074", "repo-backend-p6-075", "repo-backend-p6-076", "repo-backend-p6-077", "repo-backend-p6-078"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-035 to p6-037 and p6-066 to p6-078.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-112",
+      "statement": "isOrHasUnweanedAnimals is sent as true or false from the stored answer ('true' case-insensitive is true, anything else false), and is absent when unanswered.",
+      "why": "PIMS receives the unweaned-animals answer.",
+      "claims": ["repo-backend-p6-038"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-038.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-113",
+      "statement": "includedConsignmentItem holds one consignment item carrying a trade line per species of every complement, with that species' counts (the complement totals are sent only on a complement with no species, which yields one line without scientific name or animals); each line has a CN applicableClassification of the type of commodity (none when absent), a one-item description and commonName of the commodity name (none when absent), scientificName the species display text, no typeCode or urlId, productUnitQuantity.content the head count (delivery left out when missing) and physicalReferencedLogisticsPackage.itemQuantity the package count (left out when missing).",
+      "why": "PIMS receives what is being imported, line by line.",
+      "claims": ["repo-backend-p6-039", "repo-backend-p6-100", "repo-backend-p6-101", "repo-backend-p6-102", "repo-backend-p6-104", "repo-backend-p6-105", "repo-backend-p6-106", "repo-backend-p6-107", "repo-backend-p6-108", "repo-backend-p6-109", "repo-backend-p6-110", "repo-backend-p6-111", "repo-backend-p6-112", "repo-backend-p6-110-m1", "repo-tests-p3-206"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-039 and p6-100 to p6-112.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-114",
+      "statement": "A species trade line has one individualTradeProductInstance per animal: identifiers as typeCode/content pairs in the order EAR_TAG, PASSPORT, MICROCHIP, TATTOO with no urlId, blank ones skipped and no list when there are none; name the horse's name; permanentLocation the animal's permanent address as a party (none when absent); a species saved before per-animal identifiers yields one instance from its line-level ear tag, passport and microchip.",
+      "why": "PIMS receives each animal's identity.",
+      "claims": ["repo-backend-p6-113", "repo-backend-p6-114", "repo-backend-p6-115", "repo-backend-p6-116", "repo-backend-p6-117", "repo-backend-p6-118", "repo-backend-p6-119", "repo-backend-p6-120"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p6-113 to p6-120.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-115",
+      "statement": "The GBN-AG payload should carry what the record holds and PIMS needs; today it leaves out the destination country, port of exit, exit date, requires-region-code answer, country subdivision code, species code, created and submitted moments, pre-amend snapshot, fulfilments, document files and scan status, and the final destination location has no postal address although the schema requires one.",
+      "why": "Out of scope: GBN-AG payload gaps no DR2.1 or DR1 source asks to close and the parity goal does not fix; they go to the report for the PIMS mapping work.",
+      "claims": ["repo-backend-p6-033", "repo-backend-p6-122", "repo-backend-p6-123", "repo-backend-p6-124", "repo-backend-p6-125", "repo-backend-p6-126", "repo-backend-p6-127", "repo-backend-p6-128", "repo-backend-p6-128-m1", "repo-backend-p6-129"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p6-122 to p6-129: no file in outbox/gbnag/ reads those fields; p6-033 no postal address on the CPH location.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-116",
+      "statement": "GBN-AG mapping edge cases should be safe: today only exchangedDocument and referenced documents drop null fields (NON_NULL serialisation 'pending'), a document held with no type would fail the whole mapping, a blank port of entry is sent as the identifier, and a commodity with an empty complement list sends an item with no trade lines.",
+      "why": "Out of scope: latent mapping defects the DR2.1 parity goal does not fix; they go to the report.",
+      "claims": ["repo-backend-p6-041", "repo-backend-p6-099-m1", "repo-backend-p6-031-m1", "repo-backend-p6-040-m1"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "repo-backend-p6-041, p6-099-m1, p6-031-m1, p6-040-m1.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-117",
+      "statement": "A notification seeded through the animals frontend's save-and-continue routes, as a signed-in user, stores the same status, notification content and fulfilments as the same journey walked in the browser; seeding never writes to the backend directly, because only the frontend writes the record beside its fulfilments; the seeded parties are 'Origin Farm', 'Astra Rosales', 'British Livestock Ltd', 'Import Co UK', 'Tech Imports Ltd' and 'Animal and Plant Health Agency'.",
+      "why": "Test set-up builds records exactly as a user would.",
+      "claims": ["repo-tests-p3-125", "repo-tests-p3-176", "repo-tests-p3-177", "repo-tests-p3-195", "repo-tests-p3-196", "trace-e2e-p14-135"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-176, p3-177 and trace-e2e-p14-135 (seed parity spec).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-118",
+      "statement": "The journey's page routes, in order, are origin, commodities, consignment-details, commodities/identification, import-reason, additional-details, consignors/select, destinations/select, place-of-origin/select, consignees/select, importers/select, addresses, cph-number, port-of-entry, transit-countries, transporters, consignment/contact/select and declaration; an empty post to the addresses hub moves past the pickers; '/' redirects 302 to the default set, which serves its dashboard at its base path.",
+      "why": "Records the route map today's record is filled through; the journey areas own any change to it.",
+      "claims": ["repo-tests-p3-180", "repo-tests-p3-186", "repo-tests-p3-192"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-180, p3-186, p3-192.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-119",
+      "statement": "The page form fields saved into the record today are: origin countryOfOrigin, regionOfOriginCodeRequirement, regionOfOriginCodeSuffix (the country prefix filled in, so '75' becomes 'FR-75') and internalReferenceNumber; commodities 'commodity|speciesId' checkboxes; per-line animal and package counts and ear tags suffixed by line index; reasonForImport and purposeInInternalMarket; animalsCertifiedFor and containsUnweanedAnimals; the chosen address id as 'party' (or 'contactAddress'); arrivalDateAtPort, portOfEntry, meansOfTransport, transportIdentification and transportDocumentReference; repeated 'transitedCountries' and a 'transporter' id; and declaration=confirmed.",
+      "why": "Records how each page feeds the record; the journey areas own any change to the pages.",
+      "claims": ["repo-tests-p3-149", "repo-tests-p3-181", "repo-tests-p3-182", "repo-tests-p3-183", "repo-tests-p3-184", "repo-tests-p3-185", "repo-tests-p3-187", "repo-tests-p3-188"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-149 and p3-181 to p3-188 (test-data builders).",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-120",
+      "statement": "A page that rejects its submission re-renders with 200 and an error summary; a successful save, and a refused transition (amend, cancel, delete), redirect, the outcome shown by where they land; every form post carries a CSRF 'crumb' matching the cookie, minted by loading the live-animals dashboard in a signed-in session.",
+      "why": "Records today's save contract the record's writes go through.",
+      "claims": ["repo-tests-p3-191", "repo-tests-p3-191-m1", "repo-tests-p3-193", "repo-tests-p3-194"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-191, p3-193, p3-194.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-121",
+      "statement": "A notification with only origin and commodity answered reports arrival details as the next thing to complete; seed depth 'draft' answers through arrival, and 'readyToSubmit' adds transit countries, transporter and contact address.",
+      "why": "Records the depths tests seed the record to.",
+      "claims": ["repo-tests-p3-190"],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p3-190.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-122",
+      "statement": "The persistence traces do not record the Mongo document reads, so the stored shapes rest on the spec assertions rather than captured documents; capturing them is not part of this programme.",
+      "why": "Out of scope: an evidence limitation, not a behaviour the programme changes.",
+      "claims": ["trace-e2e-p14-150"],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "trace-e2e-p14-150.",
+      "conflicts": []
+    }
+  ],
+  "conflicts": []
+}

@@ -1,0 +1,370 @@
+{
+  "area": "cph-permanent-and-contact",
+  "rows": [
+    {
+      "title": "The CPH number page follows Design Release 2.1: who is asked, its help and hint, a blank save, and where it goes",
+      "detail": "Design Release 2.1 asks for a county parish holding (CPH) number for every live animal kept on a holding, not only today's list, and lets every commodity code but the pet, horse and germinal-cattle codes in. The page's help gains a second place to find the number, the hint loses its punctuation, the boxes stop browsers offering saved values and bring up the digit keypad, and a trader can save the page blank and move on, with the gap held at submission instead. The page is a step of the consignment addresses section: it is opened from that page and always returns to it. Every changed English string gets its Welsh machine draft in the same change.",
+      "acceptanceCriteria": [
+        "A consignment holding cattle, ornamental fish, pigs, sheep, goats, chickens, turkeys, ducks, geese, guinea fowl, rabbits, camels, ostriches, parrots, reptiles or bees is asked for a CPH number; one holding only horses, cats, dogs, ferrets, other live mammals, cattle semen (05111000) or cattle embryos/ova (05119985) is not, and its consignment addresses page has no CPH section (prototype:dr2-1-source p9-001, p9-002; trace:prototype-dr2-1 p7-106; prototype:dr2-1-specs p3-110; trace:e2e p6-068, p6-070)",
+        "Opening the CPH number page for a consignment the question does not apply to sends the trader to the consignment addresses page (prototype:dr2-1-source p9-001; trace:prototype-dr2-1 p7-106)",
+        "The CPH help's second paragraph reads 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA) or by checking your holding details on GOV.UK.', with 'checking your holding details on GOV.UK' a link to https://www.gov.uk/guidance/get-a-county-parish-holding-cph-number (prototype:dr2-1-source p9-009 cph-number.html:50; trace:animals-fit p13-018; trace:e2e p6-084)",
+        "The CPH question's hint reads 'For example 12/345/6789', with no comma and no full stop, and still describes the whole group of three boxes (prototype:dr2-1-source p9-010; trace:prototype-dr2-1 p13-119; prototype:dr2-1-specs p3-040; trace:animals-fit p13-007)",
+        "Each of the three CPH boxes turns browser autocomplete off and asks for the digit keypad, with the pattern [0-9]* alongside the numeric input mode (prototype:dr2-1-source p9-012; trace:animals-fit p13-014)",
+        "Saving the CPH page with all three boxes empty shows no error: any saved CPH number is cleared, the trader returns to the consignment addresses page, the CPH section there stays incomplete, and the notification cannot be submitted until a number is added (prototype:dr2-1-source p9-014, p9-015, p9-004, p8-135)",
+        "The CPH page's back link goes to the consignment addresses page however the page was reached (prototype:dr2-1-source p9-021; trace:prototype-dr2-1 p13-117; prototype:dr2-1-specs p3-043; trace:e2e p6-078)",
+        "'Save and continue' with a valid CPH number saves it and returns to the consignment addresses page, never on to the contact address page or the notification overview (prototype:dr2-1-source p9-018; prototype:dr2-1-specs p3-045; trace:e2e p6-074)",
+        "With the Welsh language chosen, the changed help paragraph and hint show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050, p10-051, p10-052, p10-053)"
+      ],
+      "requirements": ["req-699", "req-706", "req-708", "req-710", "req-714", "req-719", "req-720", "req-725"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/cph-number.html; app/data/consignment-address-sections.js:100-159; app/routes.js:12859-12873, 3177-3280" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-106, p13-117, p13-119" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/consignment-parties.fit.spec.js (p3-040, p3-043, p3-045, p3-110)" },
+        { "source": "repo:frontend", "ref": "cph-number feature (p10-003, p10-012, p10-017, p10-043, p10-050 to p10-053)" },
+        { "source": "trace:animals-fit", "ref": "p13-007, p13-014, p13-018" },
+        { "source": "trace:e2e", "ref": "p6-068, p6-070, p6-074, p6-078, p6-084" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the CPH page's applicability (req-699), copy (req-706, req-708), box attributes (req-710), blank save (req-714, c-113) and navigation (req-719, req-720, c-115): all one page, one review. The Welsh rule req-725 sits here but covers the permanent address and contact rows too; each of those rows carries its own Welsh criterion. The combiner may prefer req-725 as an envelope invariant.",
+        "Conflicts followed: c-113 (a blank save moves on, with no error), c-115 (back and continue always to the addresses page), c-117 (GOV.UK guidance URL in place of the prototype's '#').",
+        "Depends on the commodities area's catalogue rows (req-093 germinal products, req-094 pigs to bees, req-099 ferret and other live mammals, req-100 ornamental fish): the first criterion names commodities today's five-commodity stub catalogue lacks. The combiner wires that dependsOn. The exempt list grows from codes 0101 and 01061900 to add 05111000 and 05119985.",
+        "The stored CPH number stays nine bare digits (c-112); only the display changes, in the addresses-page row."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number",
+        "tests:tests/animals/e2e/pages/cph-number.spec.ts",
+        "tests:page-objects/animals/cph-number-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/services/commodities/stub.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/misc.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The consignment addresses page shows the CPH number as 12/345/6789 and continues to the contact address",
+      "detail": "On the consignment addresses page the empty CPH row's bare 'Add' becomes the link 'Add a CPH number', and a saved number reads in the slashed county/parish/holding form traders know, on that page and on the review page. 'Save and continue' on the addresses page moves on to the contact address page whether or not the CPH number applies: the CPH page is one of the addresses page's sections, reached from its own link, not a step after it.",
+      "acceptanceCriteria": [
+        "Before a CPH number is saved, the consignment addresses page's 'County parish holding (CPH) number' section, after the place of destination, offers the link 'Add a CPH number' to the CPH page (prototype:dr2-1-source p9-003; prototype:dr2-1-specs p3-038; trace:prototype-dr2-1 p12-135; trace:e2e p6-073)",
+        "A saved CPH number shows on the consignment addresses page as '12/345/6789', with a 'Change' link to the CPH page (prototype:dr2-1-source p9-004; trace:prototype-dr2-1 p12-138; prototype:dr2-1-specs p3-045; trace:e2e p6-075, p6-076)",
+        "The review page shows the saved CPH number as '12/345/6789', with a 'Change' link to the CPH page (trace:prototype-dr2-1 p13-120; prototype:dr2-1-specs p4-037)",
+        "'Save and continue' on the consignment addresses page goes to the contact address page, for a consignment with a CPH number and for one without (trace:prototype-dr2-1 p13-121, p12-144)",
+        "Reopening the CPH page after saving '12/345/6789' shows 12, 345 and 6789 in its three boxes (repo:frontend p10-038, p10-039)"
+      ],
+      "requirements": ["req-700", "req-701", "req-722"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/consignment-address-sections.js:70-78; app/routes.js:2458-2468, 2585-2587" },
+        { "source": "trace:prototype-dr2-1", "ref": "p12-135, p12-138, p12-144, p13-120, p13-121" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-038, p3-045, p4-037" },
+        { "source": "trace:e2e", "ref": "p6-071 to p6-076" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the addresses page's CPH section (req-700, req-701) with its onward step (req-722, c-116): the same page and the same review.",
+        "c-112: the stored value stays nine bare digits; only the display is slashed. The last criterion guards that the round trip still holds.",
+        "Shares the addresses page template and the journey flow with the consignment-parties area, and the review page with review-and-submit."
+      ],
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "tests:tests/animals/e2e/pages/cph-number.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "With JavaScript, the CPH boxes keep out non-digits and one paste fills all three",
+      "detail": "Traders often copy the whole CPH number from an APHA document. With JavaScript, each box drops anything that is not a digit as it is typed and stops at its length, and pasting a whole number, with or without slashes, spreads its digits across that box and the ones after it. Without JavaScript the page works as today, with the server's checks as the backstop. Focus is not moved automatically as a box fills (c-006).",
+      "acceptanceCriteria": [
+        "With JavaScript, typing a letter, space or slash into a CPH box leaves it out, and County, Parish and Holding stop taking digits at 2, 3 and 4 (prototype:dr2-1-source p9-011, p9-012)",
+        "With JavaScript, pasting '123456789' or '12/345/6789' into County fills County with 12, Parish with 345 and Holding with 6789 (prototype:dr2-1-source p9-012-m3)",
+        "With JavaScript, pasting '3456789' into Parish fills Parish with 345 and Holding with 6789, leaving County as it was (prototype:dr2-1-source p9-012-m3)",
+        "Filling a box does not move focus to the next box (prototype:dr2-1-source p9-012)",
+        "Without JavaScript, '12/345/6789' pasted into County stays there and saving it shows today's errors, starting with 'County must be 2 digits' (repo:frontend p10-033)"
+      ],
+      "requirements": ["req-711", "req-712"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/cph-number.html (p9-011, p9-012, p9-012-m3)" },
+        { "source": "repo:frontend", "ref": "cph-number feature (p10-033)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Kept apart from the CPH page row: it is the first client script on this page, needs its own bundle entry and its own with- and without-JavaScript proof, and would push that row past one sitting.",
+        "c-006: build the digit filtering and paste spreading, not the automatic focus moves the prototype script makes.",
+        "Depends on the CPH page row only in that both change the CPH page; no ordering need, so dependsOn is left empty."
+      ],
+      "touches": [
+        "frontend:src/client/javascripts/components/cph-number-input.js"
+      ],
+      "shared": [
+        "frontend:src/client/javascripts/application.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number/template.njk",
+        "tests:tests/animals/e2e/pages/cph-number.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "A permanent address page for cats, dogs and ferrets, with one card per animal and a same-as-destination choice",
+      "detail": "Design Release 2.1 asks for each pet's permanent address on its own page in the consignment parties section, opened from the consignment addresses page, instead of inside the animal identification form. The page has a card for each cat, dog or ferret (not other live mammals), showing the identifiers already given, and asks for each one whether the animal lives at the place of destination or at a new address, revealing the address fields only when a new address is chosen. Each animal's choice and address are stored with the notification, every field in its own place, and a trader can save what they know and come back.",
+      "acceptanceCriteria": [
+        "A consignment with cats, dogs or ferrets has a 'Permanent address' section on the consignment addresses page explaining 'A permanent address is where an animal:' with the bullets 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)', and the link 'Add a permanent address' to the permanent address page; for cats alone there is no CPH section (prototype:dr2-1-source p9-023, p9-025; trace:prototype-dr2-1 p7-085, p7-106; prototype:dr2-1-specs p3-081)",
+        "A consignment of other live mammals alone has no permanent address section, and opening the permanent address page for it sends the trader to the consignment addresses page (prototype:dr2-1-source p9-023, p9-024; trace:prototype-dr2-1 p7-109)",
+        "The permanent address page has the caption 'Consignment parties', the heading 'Permanent address', the browser title 'Permanent address - Import notification service - GOV.UK' and a back link to the consignment addresses page (prototype:dr2-1-source p9-021, p9-032, p9-033; trace:prototype-dr2-1 p13-109, p13-110; prototype:dr2-1-specs p3-082, p3-108)",
+        "The animal identification page no longer asks for any address field (document:dr1-parity-backlog p6-058; trace:e2e p6-028)",
+        "The page shows one card for each animal that needs a permanent address, as many as were entered for each species, headed with the scientific name and a running number such as 'Felis catus 1'; species that do not need one get no card (prototype:dr2-1-source p9-037, p9-038; trace:prototype-dr2-1 p7-091, p13-111; prototype:dr2-1-specs p3-084)",
+        "Each card shows the animal's entered identifiers in inset text as 'label: value', such as 'Microchip: MICROCHIP-1', leaving out blank ones, and shows no inset when none are entered (prototype:dr2-1-source p9-039; trace:prototype-dr2-1 p13-111)",
+        "Each card asks 'Select an address' with the options 'Same as the place of destination (POD)' and 'Enter a new address', neither chosen when the page first opens; once a place of destination is given, the first option's hint is that address on one line, such as 'Riverside Holding Facility, East Farm Road, Leeds, LS25 3EB, United Kingdom' (prototype:dr2-1-source p9-040, p9-041, p9-042; trace:prototype-dr2-1 p7-092, p7-094, p7-095, p13-112; prototype:dr2-1-specs p3-085)",
+        "'Enter a new address' has the hint 'This is where they will stay after spending 48 hours at the place of destination.', and choosing it reveals that animal's own address fields inside its card, with 'Email address' before 'Phone number' (prototype:dr2-1-source p9-042, p9-043, p9-050, p9-051; trace:prototype-dr2-1 p7-093, p7-097, p7-098; prototype:dr2-1-specs p3-086, p3-090)",
+        "The page ends with the 'Save and continue' button alone, which saves and returns to the consignment addresses page (document:dr1-parity-notes p1-055, p1-056, p1-058; trace:prototype-dr2-1 p7-104)",
+        "An animal saved as 'Same as the place of destination (POD)' carries the place of destination's name, address, country, email and phone as its permanent address; reopening the page shows that option selected (prototype:dr2-1-source p9-067, p9-068; trace:prototype-dr2-1 p13-115)",
+        "A new address saved with a county and no address line 2 reopens with 'Enter a new address' selected, each value in its own field: the county in 'County', the town in 'Town or city' and the postcode in 'Postcode or Zip code', with country United Kingdom (ruling:sam-2026-10-07 p1-010; prototype:dr2-1-source p9-068; trace:e2e p6-032)",
+        "An animal left with no option chosen raises no error: the page saves the other animals and returns to the consignment addresses page, and the permanent address section stays incomplete, holding the notification back from submission, until every animal that needs one has an address with a name (prototype:dr2-1-source p9-062, p9-063, p9-074; trace:prototype-dr2-1 p7-102; prototype:dr2-1-specs p3-089)",
+        "With the Welsh language chosen, every new string on the permanent address page and the addresses page's permanent address section shows in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050, p10-083)"
+      ],
+      "requirements": ["req-726", "req-727", "req-728", "req-732", "req-733", "req-734", "req-735", "req-736", "req-737", "req-739", "req-743", "req-746", "req-747", "req-748"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/permanent-address-animals.html; app/views/partials/permanent-address-new-address-fields.html; app/data/consignment-address-sections.js:79-88, 124-131; app/routes.js:2422-2451, 2867-3157, 12899-13006" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-085 to p7-109, p13-109 to p13-115" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/consignment-parties.fit.spec.js (p3-081 to p3-090, p3-108, p4-038, p4-039)" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-057, inc-058 (p6-004 to p6-015, p6-058)" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-161 rule (b) (p1-055, p1-056, p1-058)" },
+        { "source": "ruling:sam-2026-10-07", "ref": "p1-010" },
+        { "source": "trace:e2e", "ref": "p6-028, p6-032" }
+      ],
+      "repos": ["backend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the new permanent address page and the slimmed animal identification page together: it sets the per-animal card pattern the validation and summary rows copy, and it moves the address out of identification (c-044, c-119). Check a cat, a dog and other live mammals each behave as stated.",
+      "openQuestions": [],
+      "notes": [
+        "Combines the page, its addresses-page section, the per-animal cards, the same-as-destination choice, the new-address fields and how each is stored (req-726 to req-748 less validation and summaries): building them apart would build the same page and the same stored record three times. Validation and the summaries are their own rows after it, to keep this one to one sitting.",
+        "Conflicts followed: c-119 (built now, despite DR1's address-space block), c-044 (the address fields leave the identification page), c-111 ('Save and continue' alone, not the prototype's return controls), c-126 (county saved and every field read back in place; the prototype's field loss is not copied).",
+        "Backend: each animal's permanent address must carry which choice was made, and for the same-as-destination choice the place of destination's address-book id (req-746), so the choice reopens selected. Today's per-animal permanent address holds only name, email, phone and address. The plan decides the stored shape.",
+        "Depends on the commodities area's ferret row (req-099), since ferrets are not in today's catalogue, and touches the animal identification area's form; the combiner orders it after that area's rows that change the identification page."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address",
+        "tests:tests/animals/e2e/pages/permanent-address.spec.ts",
+        "tests:page-objects/animals/permanent-address-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js",
+        "frontend:src/server/app/sets/live-animals/services/commodities/stub.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/services/persistence/records/notification-mapper",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification",
+        "tests:tests/animals/e2e/features/animal-identifiers-conditional.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The permanent address page checks each new address and names the animal in every error",
+      "detail": "With several animals on one page, the trader must be told which animal each error is about. A new address's name, first line, town, postcode, email and phone are required exactly when 'Enter a new address' is chosen, and the same-as-destination choice cannot be used before a place of destination exists. What the trader chose and typed is kept through an error and when the page is reopened, and the page explains what to do when no animals have been counted yet.",
+      "acceptanceCriteria": [
+        "With 'Enter a new address' chosen and the fields left blank, saving shows 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number' on those fields; address line 2 and county are optional, and email, phone and postcode are checked only for being blank (prototype:dr2-1-source p9-054 to p9-061; trace:prototype-dr2-1 p7-101; prototype:dr2-1-specs p3-105)",
+        "Each address error in the error summary names its animal, such as 'Enter address line 1 for Felis catus 1', and links to the field; the message on the field itself leaves the animal out (prototype:dr2-1-source p9-054 to p9-059; trace:prototype-dr2-1 p7-100; prototype:dr2-1-specs p3-091)",
+        "Choosing 'Same as the place of destination (POD)' before a place of destination is given shows 'Add a place of destination before you can continue' on that animal's radios and in an error summary titled 'There is a problem', linked to the radios (prototype:dr2-1-source p9-053, p9-053-m1; trace:prototype-dr2-1 p7-096, p7-096-m1; prototype:dr2-1-specs p3-088)",
+        "When the page shows errors, every animal's chosen option stays selected and a chosen 'Enter a new address' stays open with what was typed; reopening the page later shows each animal's saved choice selected and its saved address filled in (prototype:dr2-1-source p9-064, p9-064-m1; trace:prototype-dr2-1 p7-100-m1; trace:e2e p6-043)",
+        "With no animals that need a permanent address counted, the page shows 'Add the number of animals on consignment details before you can continue.', with 'consignment details' linking to that page, in place of the cards; saving from there saves nothing and returns to the consignment addresses page (prototype:dr2-1-source p9-065, p9-066)",
+        "With the Welsh language chosen, every new error message and the no-animals message show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050)"
+      ],
+      "requirements": ["req-740", "req-741", "req-742", "req-744", "req-745"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:2946-3157, 12953-13006; app/views/design-release-2.1/permanent-address-animals.html:98-101" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-096, p7-100, p7-101" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-088, p3-091, p3-105" },
+        { "source": "trace:e2e", "ref": "p6-036 to p6-043" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the page's field validation, per-animal error summary, same-as-destination guard, value retention and empty state (req-740, req-741, req-742, req-744, req-745): all are the page's error and edge behaviour, built on the same card pattern.",
+        "Depends on the permanent address page row (same page; the cards must exist). The combiner gives it that dependsOn.",
+        "c-119: built now. Today's identification-form address messages (trace:e2e p6-036 to p6-042) are the same texts; they now fire on the choice, not on any field being filled."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address",
+        "tests:tests/animals/e2e/pages/permanent-address.spec.ts"
+      ],
+      "shared": [],
+      "existingRow": null
+    },
+    {
+      "title": "Permanent addresses are summarised on the consignment addresses page and listed per animal on the review page",
+      "detail": "Once permanent addresses are given, the trader sees at a glance what was given: one address when every animal shares it, or a count when they differ, with a Change link back to the page. The review page lists each animal's permanent address so the trader can check them before submitting.",
+      "acceptanceCriteria": [
+        "When every animal is saved as 'Same as the place of destination (POD)', or only one animal has an address, the consignment addresses page's permanent address section shows that one address with a 'Change' link to the permanent address page (prototype:dr2-1-source p9-071, p9-072, p9-073; trace:prototype-dr2-1 p7-104, p7-105, p13-116; prototype:dr2-1-specs p3-092, p3-106)",
+        "Otherwise it shows 'Permanent addresses added for N animals', N being the number of animals that need one, with a 'Change' link straight to the permanent address page (prototype:dr2-1-source p9-075, p9-075-m1; trace:prototype-dr2-1 p7-108, p13-116-m1)",
+        "The review page shows the permanent address as one row per animal, labelled with the species' common name and number, such as 'Domestic dog 1', whose value is that animal's saved address (prototype:dr2-1-source p9-079, p9-080; prototype:dr2-1-specs p4-039)",
+        "With no animals counted, the review page shows a single permanent address row labelled 'Address' (prototype:dr2-1-source p9-080)",
+        "With the Welsh language chosen, the new summary text and review labels show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050)"
+      ],
+      "requirements": ["req-729", "req-749"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/consignment-address-sections.js; app/routes.js (p9-071 to p9-080)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-104, p7-105, p7-108, p13-116" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-092, p3-106, p4-039" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the two read-back views of the saved permanent addresses (req-729, req-749): same stored data, same reviewer check.",
+        "Depends on the permanent address page row (it shows what that row saves). The combiner gives it that dependsOn.",
+        "Shares the addresses page with the consignment-parties area and the review page with review-and-submit."
+      ],
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses",
+        "tests:tests/animals/e2e/pages/permanent-address.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The contact address page follows Design Release 2.1: intro, 'Select an address', required choice, no edit card, and on to review",
+      "detail": "Design Release 2.1's contact page says whose address this is, puts the choice under its own 'Select an address' heading, shows each address without its country, requires a choice before moving on, and goes from there to the review page, its back link returning to the consignment addresses page. It drops today's 'Current contact address' card and the 'Edit details' route: the notification still stores the chosen contact as a copy of its address-book record, shown on the review page, but that copy can no longer be edited apart from its record.",
+      "acceptanceCriteria": [
+        "Directly under the contact page's heading, body text reads 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.'; the hint 'Selecting a contact copies their name and address into this notification.' is gone (prototype:dr2-1-source p8-117; trace:prototype-dr2-1 p7-067, p12-140, p13-123; prototype:dr2-1-specs p3-095; trace:e2e p7-006)",
+        "Below the intro the page has the sub-heading 'Select an address', and the radios' legend 'Select an address' is visually hidden, so the page heading is no longer the radios' legend (prototype:dr2-1-source p8-118; trace:prototype-dr2-1 p7-068; repo:frontend p10-058)",
+        "Each address option is labelled with the address's name and hinted with its address lines joined by commas, without the country, such as '15 Union Street, Aberdeen, AB11 5BN' (prototype:dr2-1-source p8-122; trace:prototype-dr2-1 p7-070, p13-125; prototype:dr2-1-specs p3-098; trace:e2e p7-010, p7-011)",
+        "The page shows the address options alone, the current contact pre-selected, with no 'Current contact address' card and no 'Edit details' link, and the contact edit page no longer opens (prototype:dr2-1-source p8-122; trace:e2e p7-026, p8-077)",
+        "'Save and continue' with no address chosen shows 'Select a contact address' in the error summary and on the radios, linked to the first option, and saves nothing (prototype:dr2-1-source p8-126; trace:prototype-dr2-1 p7-075; prototype:dr2-1-specs p3-100)",
+        "Choosing an address and pressing 'Save and continue' saves it and opens the review page, 'Review your notification', whose contact row shows the chosen address (prototype:dr2-1-source p8-128; trace:prototype-dr2-1 p7-076, p12-144, p13-126; prototype:dr2-1-specs p3-101)",
+        "The contact page's back link goes to the consignment addresses page, or to the review page when the page was opened from review (prototype:dr2-1-source p8-132; trace:prototype-dr2-1 p7-074, p12-143, p13-122; prototype:dr2-1-specs p3-112)",
+        "A notification with no contact address cannot be submitted (prototype:dr2-1-source p8-135; repo:frontend p10-055)",
+        "With the Welsh language chosen, the new intro, 'Select an address' heading and error message show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-083, p10-084)"
+      ],
+      "requirements": ["req-753", "req-754", "req-761", "req-764", "req-766", "req-767", "req-772", "req-774", "req-775"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/contact-address-for-consignment.html; app/routes.js:1257-1370, 1523-1527, 13066-13090" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-067 to p7-076, p12-140 to p12-144, p13-122 to p13-126" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/consignment-parties.fit.spec.js (p3-095 to p3-101, p3-112)" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-046 (p7-023 to p7-027, p6-042)" },
+        { "source": "repo:frontend", "ref": "contact feature (p10-055, p10-058, p10-062, p10-065, p10-066, p10-083, p10-084)" },
+        { "source": "trace:e2e", "ref": "p7-006, p7-010, p7-011, p7-026, p8-077" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the contact page's copy and structure (req-753, req-754, req-761), required choice (req-764), navigation (req-766, req-767), submission rule (req-772) and the removal of the current-contact card and edit route (req-774, req-775): one page, one review.",
+        "Conflicts followed: c-120 (built now despite DR1's address-space hold), c-122 (a choice is required), c-123 (on to review; back to addresses), c-125 (no card, no edit route; the stored copy stays). The tests repo's contact-page and address-book edit specs change to match.",
+        "The add-a-branch link and branch-only list are the next row, which waits on the address book's typed records."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/contact",
+        "tests:tests/animals/e2e/pages/contact-address.spec.ts",
+        "tests:page-objects/animals/contact-address-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "tests:tests/animals/e2e/features/address-book/addresses-edit.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The contact address page offers only the trader's own branch addresses and adds a new branch through the address book",
+      "detail": "The contact is the trader's own branch responsible for the consignment in Great Britain, so the page lists only the organisation's branch addresses, not overseas consignors and other parties. When the right branch is missing, the page tells the trader how to add one: the link opens the address book ready to add a branch address, and on saving the address book returns the trader to the contact page with the new branch chosen and a success banner.",
+      "acceptanceCriteria": [
+        "The contact page offers only the signed-in organisation's own branch addresses, newest added first; consignors, places of origin, consignees, importers, places of destination and transporters in the same address book are not offered (prototype:dr2-1-source p8-123; trace:prototype-dr2-1 p12-141, p13-125; prototype:dr2-1-specs p3-097; document:dr1-parity-backlog p6-039 to p6-045; document:dr1-parity-notes p1-019 to p1-023)",
+        "On the full stack, under 'Select an address' the page says 'If the correct address is not shown, add a new branch address, then return to this page.', with 'add a new branch address' as the link, and the 'Add a new address' link above the heading is gone; in stub mode, with no address book service, the page offers no way to add an address, as today (prototype:dr2-1-source p8-118; trace:prototype-dr2-1 p7-069, p12-141, p13-124; prototype:dr2-1-specs p3-096; trace:e2e p7-031; repo:tests p1-155)",
+        "On the full stack, the link opens the address book's add-address page set to add a 'Branch' address (prototype:dr2-1-source p8-119, p8-120; trace:prototype-dr2-1 p7-079, p7-082; prototype:dr2-1-specs p3-102; trace:e2e p7-032, p7-080)",
+        "On the full stack, saving the new branch address returns the trader to the contact page, where the new address is in the list and selected, and the success banner '<name> address added to your address book' shows once and is gone on reload (prototype:dr2-1-source p8-121; trace:prototype-dr2-1 p7-083, p7-084)",
+        "With the Welsh language chosen, the add-a-branch sentence and the success banner show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-084)"
+      ],
+      "requirements": ["req-755", "req-756", "req-757", "req-760"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1233-1251, 1336-1343, 2388, 9904-9914, 12647-12655; app/views/design-release-2.1/contact-address-for-consignment.html:64-68" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-069, p7-079 to p7-084, p12-141, p13-124, p13-125" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-096, p3-097, p3-102" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-047 (p6-039 to p6-045)" },
+        { "source": "document:dr1-parity-notes", "ref": "p1-019 to p1-023" },
+        { "source": "trace:e2e", "ref": "p7-014, p7-031 to p7-033, p7-080, p7-081" },
+        { "source": "repo:tests", "ref": "tests/animals/e2e/pages/contact-address.spec.ts (p1-155, p1-156)" }
+      ],
+      "repos": ["insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the branch-only list (req-760) with the add-a-branch path (req-755, req-756, req-757): both rest on address-book records carrying a type, and on the same round trip through the address book.",
+        "c-121: built once the address book's typed record lands, not blocked. Depends on the address-book-add-and-edit area's rows for the 'Branch' type and the record's uses (req-1199, req-1207, req-1253, req-1256); the combiner wires that dependsOn. c-120: the sentence and add path are built now.",
+        "Decision: in stub mode (no INS address book, the fit environment) the page keeps today's behaviour of offering no add link, so the add-a-branch criteria are written for the full stack only.",
+        "The INS front door's add page must accept the branch type from the handshake; the return already runs through the journey's address-return step by fulfilment id."
+      ],
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/contact",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return",
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/server/app/features/address-book/handshake-context.js",
+        "tests:tests/animals/e2e/pages/contact-address.spec.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-edit.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "While a notification is amended, the CPH, permanent address and contact pages offer 'Save and return' to review",
+      "detail": "Design Release 2.1 sends an amending trader back to the review page rather than the hub. While a notification is being amended, these three pages end with a primary 'Save and return' to review and a secondary 'Save and continue', without any return-to-overview control; the CPH page also offers the cancel-amend dialog. Outside an amend they keep the primary 'Save and continue' alone.",
+      "acceptanceCriteria": [
+        "While a notification is being amended, the CPH number page ends with a primary 'Save and return', which saves and opens the review page, and a secondary 'Save and continue', with no 'Save and return to overview' control, and offers the cancel-amend dialog (prototype:dr2-1-source p9-020)",
+        "While a notification is being amended, the permanent address page ends with a primary 'Save and return' to the review page and a secondary 'Save and continue', with no return-to-overview control or cancel link (prototype:dr2-1-source p9-078)",
+        "While a notification is being amended, the contact address page ends with a primary 'Save and return' to the review page and a secondary 'Save and continue', with no return-to-overview control or cancel link (prototype:dr2-1-source p8-131)",
+        "Outside an amend, each of the three pages ends with the primary 'Save and continue' alone (document:dr1-parity-notes p1-055, p1-056)"
+      ],
+      "requirements": ["req-770"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/cph-number.html:55-59, 74-76 (p9-020); permanent address (p9-078); contact address (p8-131)" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-161 rule (b) (p1-055, p1-056)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "One requirement across three pages, kept apart because it needs an amend in progress to observe and follows c-210, the cross-page amend ruling, which the manage-notifications area and the party pickers share.",
+        "Depends on the CPH page row, the permanent address page row and the contact page row (each page must exist in its new form), and on the manage-notifications area's amend rows. The combiner wires those dependsOn.",
+        "c-210: amend shows 'Save and return' (primary, to review) and 'Save and continue' (secondary) only; DR1 rule (b) keeps the hub control off these pages."
+      ],
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/shared/save-actions.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/contact",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

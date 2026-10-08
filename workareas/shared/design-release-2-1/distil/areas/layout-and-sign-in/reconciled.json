@@ -1,0 +1,1548 @@
+{
+  "area": "layout-and-sign-in",
+  "requirements": [
+    {
+      "id": "req-layout-and-sign-in-001",
+      "statement": "On both the animals frontend and the INS frontend, a signed-in user's service navigation gains a 'Templates' item between Dashboard and Address book, so the items read Dashboard, Templates, Address book, Manage account, Log out. Templates links to the notification templates page and is marked as the current item on the templates pages. Like every other navigation label it has a Welsh copy entry beside the English one.",
+      "why": "Design Release 2.1 adds Templates to the service navigation as the way into notification templates. DR1's judgement on the navigation fixed only DR1's own list and says a later release can change it, so nothing overrides the prototype here.",
+      "claims": [
+        "prototype-dr2-1-source-p1-018",
+        "prototype-dr2-1-source-p1-021",
+        "prototype-dr2-1-source-p1-023",
+        "trace-prototype-dr2-1-p1-011",
+        "document-dr1-parity-backlog-p1-029-m1",
+        "ruling-sam-2026-10-07-p1-001",
+        "repo-frontend-p1-008",
+        "repo-frontend-p1-157",
+        "trace-animals-fit-p1-015",
+        "trace-e2e-p1-035",
+        "trace-e2e-p9-082",
+        "repo-insfrontend-p4-006",
+        "repo-insfrontend-p4-038",
+        "repo-insfrontend-p4-039",
+        "repo-insfrontend-p4-040",
+        "repo-insfrontend-p4-041",
+        "trace-e2e-p9-086",
+        "trace-e2e-p15-002"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today both frontends show four items, Dashboard, Address book, Manage account, Log out, with no Templates item (repo-frontend-p1-008, repo-insfrontend-p4-006, trace-e2e-p1-035, trace-e2e-p15-002). Where the templates pages live, and so the item's href on each frontend, is the templates area's to settle; the navigation points there.",
+      "conflicts": ["c-layout-and-sign-in-001"]
+    },
+    {
+      "id": "req-layout-and-sign-in-002",
+      "statement": "The service navigation keeps 'Log out' as its last item on both frontends, linking to /auth/sign-out, even though Design Release 2.1 drops it.",
+      "why": "The real services sign users in through Defra ID, and Log out is the only way to end that session. Authentication is a real constraint the prototype cannot express, so it overrides the prototype's navigation here.",
+      "claims": [
+        "ruling-sam-2026-10-07-p1-010",
+        "document-dr1-parity-backlog-p1-036",
+        "repo-frontend-p1-014",
+        "repo-frontend-p1-161",
+        "trace-animals-fit-p1-023",
+        "trace-e2e-p1-039",
+        "repo-insfrontend-p4-010",
+        "repo-tests-p4-055",
+        "repo-tests-p4-058"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Both frontends already end the navigation with Log out to /auth/sign-out (repo-frontend-p1-014, repo-insfrontend-p4-010, trace-e2e-p1-039).",
+      "conflicts": ["c-layout-and-sign-in-001"]
+    },
+    {
+      "id": "req-layout-and-sign-in-003",
+      "statement": "Log out ends the user's session with the service and sends them to Defra ID's sign-out page, headed 'You have signed out'. Opening the dashboard again afterwards asks them to sign in again with their user ID and password. A user who is not signed in and opens /auth/sign-out goes to the service root.",
+      "why": "Ending a real session properly is an authentication behaviour the prototype cannot show. It already works and is proven end to end.",
+      "claims": [
+        "repo-insfrontend-p4-096",
+        "repo-insfrontend-p4-096-m1",
+        "repo-insfrontend-p4-097",
+        "repo-insfrontend-p4-098",
+        "trace-e2e-p1-041",
+        "trace-e2e-p1-042",
+        "trace-e2e-p1-043",
+        "trace-e2e-p1-045",
+        "trace-e2e-p1-046",
+        "trace-e2e-p1-046-m1",
+        "trace-e2e-p1-063",
+        "trace-animals-fit-p1-024",
+        "repo-tests-p4-056",
+        "repo-tests-p4-059",
+        "repo-tests-p6-105",
+        "repo-tests-p6-120"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-041 to p1-046 show Log out reaching Defra ID's signed-out page and the dashboard asking for sign-in again; repo-insfrontend-p4-096 to p4-098 give the INS routes.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-004",
+      "statement": "The Manage account navigation item is a placeholder on both frontends: it links to '#', leads nowhere, and is never marked as the current item.",
+      "why": "Design Release 2.1 shows Manage account as a placeholder with no destination, which is what both frontends do today.",
+      "claims": [
+        "prototype-dr2-1-source-p1-024",
+        "prototype-dr2-1-source-p1-085",
+        "trace-prototype-dr2-1-p1-013",
+        "repo-frontend-p1-013",
+        "repo-frontend-p1-179",
+        "trace-animals-fit-p1-021",
+        "trace-animals-fit-p1-022",
+        "trace-e2e-p1-038",
+        "trace-e2e-p9-087",
+        "trace-e2e-p15-003",
+        "trace-e2e-p1-066-m1",
+        "repo-insfrontend-p4-009",
+        "repo-insfrontend-p4-014"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Both frontends link Manage account to '#' (repo-frontend-p1-013, repo-insfrontend-p4-009, trace-e2e-p15-003), as the prototype does (trace-prototype-dr2-1-p1-013).",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-005",
+      "statement": "The first navigation item, Dashboard, links to the dashboard, which is the service's home, and is marked as the current item on the dashboard pages. On the animals frontend it also stays current on every page inside a notification. A back link that returns to the dashboard goes to that same dashboard home.",
+      "why": "In Design Release 2.1 the dashboard is the home: it is the Dashboard item's target and where the back link to the dashboard goes. Both frontends already work this way, each with its own dashboard.",
+      "claims": [
+        "prototype-dr2-1-source-p1-082",
+        "prototype-dr2-1-source-p1-083",
+        "trace-prototype-dr2-1-p1-012",
+        "document-dr1-parity-notes-p1-014",
+        "repo-frontend-p1-010",
+        "repo-frontend-p1-011",
+        "repo-frontend-p1-158",
+        "repo-frontend-p1-159",
+        "repo-frontend-p1-160",
+        "trace-animals-fit-p1-017",
+        "trace-animals-fit-p1-018",
+        "trace-animals-fit-p1-019",
+        "trace-e2e-p1-036",
+        "trace-e2e-p9-083",
+        "repo-insfrontend-p4-007",
+        "repo-insfrontend-p4-012"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The animals Dashboard item goes to /live-animals and stays current inside a notification (repo-frontend-p1-010, p1-011, trace-e2e-p9-083); the INS item goes to / and is current there (repo-insfrontend-p4-007). Which frontend owns the dashboard (Rhys's ruling moves it to INS, document-dr1-parity-notes-p1-014) is the dashboard area's to settle; the item follows it.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-006",
+      "statement": "The Address book navigation item takes the user to the INS frontend's address book at /address-book, and is marked as the current item on the address book and every page under it. From the animals frontend this is a link to the INS frontend's origin, and a user with no INS session goes through INS sign-in first.",
+      "why": "Design Release 2.1 treats the address book as part of one service. In the real services it is a shared capability in the INS frontend, a cross-service constraint the prototype cannot express.",
+      "claims": [
+        "document-dr1-parity-notes-p1-014",
+        "repo-frontend-p1-012",
+        "trace-animals-fit-p1-020",
+        "trace-e2e-p1-037",
+        "trace-e2e-p9-084",
+        "trace-e2e-p9-085",
+        "trace-e2e-p9-083-m1",
+        "repo-insfrontend-p4-008",
+        "repo-insfrontend-p4-013",
+        "repo-insfrontend-p4-179"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The animals item already links out to the INS /address-book (trace-e2e-p9-084), and the INS item goes to /address-book and is current under it (repo-insfrontend-p4-008, p4-013).",
+      "conflicts": ["c-layout-and-sign-in-002"]
+    },
+    {
+      "id": "req-layout-and-sign-in-007",
+      "statement": "The service navigation items appear only to a signed-in user; a signed-out page shows the service name with no items.",
+      "why": "The navigation leads to pages that need a signed-in user. This is a real authentication constraint, and it already works.",
+      "claims": [
+        "repo-frontend-p1-007",
+        "repo-insfrontend-p4-005"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-007 and repo-insfrontend-p4-005 hide the items when signed out.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-008",
+      "statement": "Every page uses the GOV.UK service navigation component, which shows the service name 'Import notification service' in the navigation bar rather than in the header. On narrow screens the items collapse behind a 'Menu' button, and the navigation landmark is named 'Menu'.",
+      "why": "Design Release 2.1 names the service 'Import notification service' and uses GOV.UK service navigation with the name in the bar. Both frontends already do this.",
+      "claims": [
+        "prototype-dr2-1-source-p1-019",
+        "repo-frontend-p1-003",
+        "repo-frontend-p1-009",
+        "trace-animals-fit-p1-016",
+        "trace-animals-fit-p1-027",
+        "trace-animals-fit-p1-028",
+        "trace-e2e-p1-034",
+        "repo-insfrontend-p4-004",
+        "repo-insfrontend-p4-011",
+        "repo-insfrontend-p4-031",
+        "repo-insfrontend-p4-037",
+        "repo-insfrontend-p4-118",
+        "trace-e2e-p15-001"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p1-016 and trace-e2e-p15-001 show the service navigation component carrying the name on both frontends.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-009",
+      "statement": "The GOV.UK header logo and the service name in the service navigation link to the destinations conflict c-layout-and-sign-in-003 settles. By default the logo keeps linking to https://www.gov.uk/ and the service name to that frontend's dashboard home: /live-animals on the animals frontend and / on the INS frontend.",
+      "why": "Design Release 2.1 sends both links to its prototype index, which is a picker for design releases with no counterpart in a real service. So the prototype cannot be met as written, and nothing ranked above it says what to use instead.",
+      "claims": [
+        "prototype-dr2-1-source-p1-020",
+        "trace-prototype-dr2-1-p1-010",
+        "repo-frontend-p1-005",
+        "repo-frontend-p1-006",
+        "trace-animals-fit-p1-029",
+        "repo-insfrontend-p4-003"
+      ],
+      "status": "question",
+      "delta": "change",
+      "deltaNote": "Today the logo links to https://www.gov.uk/ on both frontends (repo-frontend-p1-005, repo-insfrontend-p4-003). The service name links to /live-animals on the animals frontend (repo-frontend-p1-006) and to / on the INS frontend (repo-insfrontend-p4-004). The prototype links both to its index.",
+      "conflicts": ["c-layout-and-sign-in-003"]
+    },
+    {
+      "id": "req-layout-and-sign-in-010",
+      "statement": "The prototype's service index at /index is not built: its 'Prototypes' caption, its introduction, its four release cards (Design release 1, Design release 2, Design release 2.1, Testing version) with tags, 'What the journey contains' details and start buttons, and its title without the GOV.UK suffix.",
+      "why": "The index is the prototype's own way to choose between design releases. A real service has one live version, so the page has no purpose there. It is prototype tooling, not part of the service the goal brings into line.",
+      "claims": [
+        "prototype-dr2-1-source-p1-031",
+        "prototype-dr2-1-source-p1-032",
+        "prototype-dr2-1-source-p1-033",
+        "prototype-dr2-1-source-p1-034",
+        "prototype-dr2-1-source-p1-034-m1",
+        "prototype-dr2-1-source-p1-035",
+        "prototype-dr2-1-source-p1-036",
+        "prototype-dr2-1-source-p1-037",
+        "prototype-dr2-1-source-p1-038",
+        "trace-prototype-dr2-1-p1-001",
+        "trace-prototype-dr2-1-p1-002",
+        "trace-prototype-dr2-1-p1-003",
+        "trace-prototype-dr2-1-p1-004",
+        "trace-prototype-dr2-1-p1-005",
+        "trace-prototype-dr2-1-p1-006",
+        "trace-prototype-dr2-1-p1-007",
+        "trace-prototype-dr2-1-p1-008",
+        "trace-prototype-dr2-1-p1-015",
+        "trace-prototype-dr2-1-p1-120"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-011",
+      "statement": "The prototype kit's tooling is not built: the footer's 'Manage your prototype' and 'Clear data' links, and the kit's absence of custom Nunjucks filters and default session data.",
+      "why": "These belong to the prototype kit, not to the service the design describes.",
+      "claims": [
+        "trace-prototype-dr2-1-p1-016",
+        "prototype-dr2-1-source-p1-084"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-012",
+      "statement": "Every page shows a GOV.UK phase banner with a grey 'Alpha' tag reading 'This is a new service. Help us improve it and give your feedback by email.', where 'give your feedback by email' is the link.",
+      "why": "Design Release 2.1 shows an Alpha phase banner. Both frontends already show one on every page, and DR1 judged its wording.",
+      "claims": [
+        "document-dr1-parity-backlog-p1-002",
+        "document-dr1-parity-backlog-p1-003",
+        "document-dr1-parity-backlog-p1-004",
+        "document-dr1-parity-backlog-p1-005",
+        "repo-frontend-p1-015",
+        "repo-frontend-p1-016",
+        "trace-animals-fit-p1-031",
+        "repo-insfrontend-p4-015",
+        "repo-insfrontend-p4-016",
+        "repo-insfrontend-p4-034",
+        "repo-insfrontend-p4-035",
+        "repo-insfrontend-p4-036",
+        "trace-e2e-p15-005",
+        "repo-tests-p1-178"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-015 and p1-016 and repo-insfrontend-p4-015 and p4-016 render the Alpha banner with this text.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-013",
+      "statement": "The phase banner's feedback link is an email link to APHAServiceDesk@apha.gov.uk on both frontends, not the prototype's placeholder '#', and no /feedback route or survey URL is invented for it.",
+      "why": "DR1 already judged this same difference, a placeholder feedback link in the design: the real link goes to the APHA service desk. That judgement outranks the prototype default.",
+      "claims": [
+        "document-dr1-parity-backlog-p1-006",
+        "document-dr1-parity-backlog-p1-007",
+        "document-dr1-parity-backlog-p1-008",
+        "document-dr1-parity-backlog-p1-009",
+        "document-dr1-parity-backlog-p1-009-m1",
+        "ruling-sam-2026-10-07-p1-006",
+        "ruling-sam-2026-10-07-p1-009",
+        "repo-frontend-p1-017",
+        "repo-insfrontend-p4-017"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-017 and repo-insfrontend-p4-017 already mail APHAServiceDesk@apha.gov.uk. The service team has still to confirm that mailbox as the feedback destination (document-dr1-parity-backlog-p1-009); that is for the report, not a build.",
+      "conflicts": ["c-layout-and-sign-in-004"]
+    },
+    {
+      "id": "req-layout-and-sign-in-014",
+      "statement": "On the animals frontend, every page's browser title reads the page name, then 'Import notification service', then 'GOV.UK', joined by ' - '.",
+      "why": "Design Release 2.1 sets no title pattern for its journey pages, so the animals frontend's existing pattern stands.",
+      "claims": [
+        "prototype-dr2-1-source-p1-086",
+        "repo-frontend-p1-001",
+        "repo-frontend-p1-004",
+        "repo-frontend-p1-155",
+        "trace-animals-fit-p1-001"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-001 and trace-animals-fit-p1-001 show the pattern.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-015",
+      "statement": "On the INS frontend, every page's browser title reads the page's title, a vertical bar, then the service name: 'X | Import notification service'.",
+      "why": "Design Release 2.1 sets no title pattern for these pages, so the INS frontend's existing pattern stands.",
+      "claims": [
+        "repo-insfrontend-p4-001",
+        "trace-e2e-p15-004"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-001 and trace-e2e-p15-004 show the pattern.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-016",
+      "statement": "When a page shows an error summary, its browser title starts with 'Error: ' ('Gwall: ' in Welsh) in front of the whole title, on both frontends.",
+      "why": "This is the GOV.UK pattern for telling screen-reader users there are errors, and it already exists.",
+      "claims": [
+        "repo-frontend-p1-002",
+        "repo-frontend-p1-156",
+        "trace-animals-fit-p1-002",
+        "repo-insfrontend-p4-002",
+        "repo-insfrontend-p4-032"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-002 and repo-insfrontend-p4-002 add the prefix.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-017",
+      "statement": "The animals dashboard's browser title repeats the service name: 'Import notification service - Import notification service - GOV.UK'.",
+      "why": "The dashboard's page name is the service name. Design Release 2.1 gives no dashboard title to replace it, so today's title stands until the dashboard area changes the page.",
+      "claims": [
+        "trace-animals-fit-p1-003",
+        "trace-e2e-p1-033"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-033 records the title.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-018",
+      "statement": "Page content sits in a two-thirds-width column by default, and a page that shows a table or other display content can use the full width.",
+      "why": "Design Release 2.1 lays journey pages out in a two-thirds column. Both frontends already default to it.",
+      "claims": [
+        "prototype-dr2-1-source-p1-025",
+        "repo-frontend-p1-020",
+        "repo-insfrontend-p4-019"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-020 and repo-insfrontend-p4-019 default to two-thirds.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-019",
+      "statement": "A page shows a GOV.UK back link labelled 'Back' ('Yn ôl' in Welsh), below the phase banner, only when it supplies a back-link target. No page shows breadcrumbs.",
+      "why": "Each page gets one route back (the back link) and one route up (the service navigation). This already exists.",
+      "claims": [
+        "repo-frontend-p1-018",
+        "repo-frontend-p1-019",
+        "repo-insfrontend-p4-018",
+        "repo-insfrontend-p4-033",
+        "repo-insfrontend-p4-168",
+        "repo-tests-p1-178"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-019 and repo-insfrontend-p4-018 render the back link only when one is set.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-020",
+      "statement": "A journey page on the animals frontend names its section in a caption directly above its heading, such as 'About the consignment' above 'Main reason for import'. Where the question legend is visually hidden, the caption still sits directly above the page heading. The dashboard has an extra-large 'Dashboard' caption above its heading, and the overview has no caption.",
+      "why": "Section captions already exist on the animals frontend. No source in this area's working set from Design Release 2.1 says otherwise.",
+      "claims": [
+        "repo-frontend-p1-150",
+        "repo-frontend-p1-151",
+        "repo-frontend-p1-152",
+        "repo-frontend-p1-153",
+        "trace-animals-fit-p1-007",
+        "trace-animals-fit-p1-009",
+        "trace-animals-fit-p1-010",
+        "trace-animals-fit-p1-011",
+        "trace-animals-fit-p1-012"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p1-007 to p1-012 show the captions as rendered. Each page's own caption wording against Design Release 2.1 belongs to that page's area.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-021",
+      "statement": "A page with validation errors shows a GOV.UK error summary titled 'There is a problem' ('Mae problem' in Welsh) at the top of the content, above the caption and heading. It lists one entry per field, using the first failing rule's message, and each entry links to its field. The summary is exposed as an alert and takes focus when the user has just been refused. Each field shows the same message inline, read out with a visually hidden 'Error:' prefix. A page with no errors shows no summary.",
+      "why": "This is the GOV.UK error summary pattern, shared by every page, and it already exists on both frontends.",
+      "claims": [
+        "repo-frontend-p1-050",
+        "repo-frontend-p1-051",
+        "repo-frontend-p1-052",
+        "repo-frontend-p1-053",
+        "repo-frontend-p1-054",
+        "trace-animals-fit-p1-005",
+        "trace-animals-fit-p1-006",
+        "repo-insfrontend-p4-049",
+        "repo-insfrontend-p4-066",
+        "repo-insfrontend-p4-067",
+        "repo-insfrontend-p4-068",
+        "repo-insfrontend-p4-069",
+        "repo-insfrontend-p4-070",
+        "repo-insfrontend-p4-071",
+        "repo-tests-p6-055"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-050 to p1-054 and repo-insfrontend-p4-068 to p4-071 implement the summary.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-022",
+      "statement": "Where a field's own copy gives no message, the shared default validation messages apply: 'Select a valid option', 'Enter a valid postcode', 'Enter a valid registration number', 'Enter a valid UK telephone number', 'Enter a valid date', 'Enter a real time, like 14:30', 'Enter a whole number', 'Enter N characters or fewer' and 'Enter a number between MIN and MAX'.",
+      "why": "These are the fallbacks every page shares. Each page's own messages against Design Release 2.1 belong to that page's area.",
+      "claims": [
+        "repo-frontend-p1-062",
+        "repo-frontend-p1-063",
+        "repo-frontend-p1-064",
+        "repo-frontend-p1-065",
+        "repo-frontend-p1-066",
+        "repo-frontend-p1-067",
+        "repo-frontend-p1-068",
+        "repo-frontend-p1-069",
+        "repo-frontend-p1-070",
+        "repo-insfrontend-p4-057",
+        "repo-insfrontend-p4-058",
+        "repo-insfrontend-p4-059",
+        "repo-insfrontend-p4-060",
+        "repo-insfrontend-p4-061",
+        "repo-insfrontend-p4-062",
+        "repo-insfrontend-p4-063",
+        "repo-insfrontend-p4-064",
+        "repo-insfrontend-p4-065"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The same defaults exist in both frontends' shared copy (repo-frontend-p1-062 to p1-070, repo-insfrontend-p4-057 to p4-065).",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-023",
+      "statement": "On the animals frontend, a save that hits a recoverable backend failure re-renders the page with an alert banner titled 'There is a problem' that reads 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.' The banner sits at the top of the content column.",
+      "why": "Real persistence can fail, which the prototype cannot express. The banner tells the user their answers are safe.",
+      "claims": [
+        "repo-frontend-p1-021",
+        "repo-frontend-p1-022",
+        "repo-frontend-p1-024-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-021 and p1-022 render the banner.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-024",
+      "statement": "On the INS frontend, a page whose service call fails is re-rendered with status 500 and a notification banner with role 'alert', titled 'There is a problem' and reading 'Sorry, there is a problem with the service. Try again in a few minutes.'",
+      "why": "Real upstream services can fail, which the prototype cannot express, and the user is kept on the page.",
+      "claims": [
+        "repo-insfrontend-p4-020",
+        "repo-insfrontend-p4-021",
+        "repo-insfrontend-p4-050",
+        "repo-insfrontend-p4-051"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-020 and p4-021 render the banner.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-025",
+      "statement": "On the animals frontend, a form post refused because the notification changed after the page was opened sends the user back to the same page. There an alert banner titled 'The notification has been updated' reads 'This notification was updated since you opened it. Review the details and try again.'",
+      "why": "Concurrent edits to a stored notification are a persistence constraint the prototype cannot express.",
+      "claims": [
+        "repo-frontend-p1-023",
+        "repo-frontend-p1-024",
+        "repo-frontend-p1-025"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-023 and p1-024 implement the refusal and banner.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-026",
+      "statement": "A page inside a notification can show a strip above its content with the notification's status tag and its reference in bold: blue 'Draft', green 'Submitted', yellow 'Amending' or grey 'Deleted'. The INS layout supports the strip, but no INS page uses it.",
+      "why": "This is shared page chrome that already exists. Each page's use of it belongs to that page's area.",
+      "claims": [
+        "repo-frontend-p1-026",
+        "repo-frontend-p1-027",
+        "repo-frontend-p1-028",
+        "repo-frontend-p1-029",
+        "repo-frontend-p1-030",
+        "repo-insfrontend-p4-022",
+        "repo-insfrontend-p4-022-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-026 to p1-030 render the strip.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-027",
+      "statement": "Every page's footer offers 'Privacy', 'Cookies' and 'Accessibility statement' links to the GOV.UK help pages, with the OGL v3.0 licence line and Crown copyright. The service has no cookies page, privacy notice or accessibility statement of its own.",
+      "why": "This is the shared footer, and it already exists on both frontends.",
+      "claims": [
+        "repo-frontend-p1-031",
+        "repo-frontend-p1-032",
+        "repo-frontend-p1-033",
+        "trace-animals-fit-p1-032",
+        "repo-insfrontend-p4-023",
+        "repo-insfrontend-p4-024",
+        "repo-insfrontend-p4-025",
+        "repo-insfrontend-p4-026",
+        "repo-insfrontend-p4-042",
+        "repo-insfrontend-p4-043",
+        "repo-insfrontend-p4-044"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-031 to p1-033 and repo-insfrontend-p4-023 to p4-025 render the footer links.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-028",
+      "statement": "No page shows a cookie banner.",
+      "why": "This is how the service is today. No source asks for a banner.",
+      "claims": [
+        "trace-animals-fit-p1-033"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p1-033 shows no cookie banner on any page walked.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-029",
+      "statement": "Pages are in English, with no language toggle. Copy falls back to English, and each copy file has a Welsh twin with the same keys and no empty values. The shared Welsh copy is an unreviewed machine draft that must not ship without Welsh Language Standards sign-off.",
+      "why": "This is how the shared copy works today on both frontends. Design Release 2.1 has no Welsh.",
+      "claims": [
+        "repo-frontend-p1-034",
+        "repo-frontend-p1-035",
+        "repo-frontend-p1-036",
+        "repo-frontend-p1-037",
+        "repo-insfrontend-p4-028",
+        "repo-insfrontend-p4-029",
+        "repo-insfrontend-p4-030",
+        "repo-insfrontend-p4-155",
+        "repo-insfrontend-p4-156",
+        "repo-insfrontend-p4-157"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-034 to p1-036 and repo-insfrontend-p4-028 to p4-030 describe the copy.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-030",
+      "statement": "Every page offers the standard GOV.UK 'Skip to main content' link, targeting #main-content.",
+      "why": "This is a GOV.UK accessibility requirement, and it already exists.",
+      "claims": [
+        "repo-frontend-p1-038",
+        "trace-animals-fit-p1-030",
+        "repo-insfrontend-p4-027"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p1-030 records the link.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-031",
+      "statement": "No page shows who is signed in: no email, name or 'signed in as' strip, and no 'Sign out' link apart from the navigation's Log out.",
+      "why": "Design Release 2.1's header and navigation show no signed-in identity, and both frontends already match.",
+      "claims": [
+        "document-dr1-parity-backlog-p1-037",
+        "repo-frontend-p1-039",
+        "repo-frontend-p1-161-m1",
+        "trace-animals-fit-p1-025",
+        "trace-e2e-p1-040",
+        "repo-insfrontend-p4-117",
+        "repo-tests-p4-057"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-039, trace-e2e-p1-040 and repo-insfrontend-p4-117 show no identity.",
+      "conflicts": ["c-layout-and-sign-in-005"]
+    },
+    {
+      "id": "req-layout-and-sign-in-032",
+      "statement": "On the animals frontend, when sign-in fails the user sees a page titled and headed 'Sorry, we are unable to sign you in', asking them to 'Please try again', where 'try again' links to sign-in.",
+      "why": "A failed Defra ID sign-in is an authentication case the prototype cannot express, and the page already exists.",
+      "claims": [
+        "repo-frontend-p1-040",
+        "repo-frontend-p1-041",
+        "repo-tests-p1-179",
+        "repo-tests-p4-092"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-040 and p1-041 give the page.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-033",
+      "statement": "On the INS frontend, a failed sign-in shows the unauthorised page: browser title 'Unable to sign in', heading 'Sorry, we are unable to sign you in.' and body 'Please try again.', where 'try again' links to /auth/sign-in. The page has no back link. It is shown when the Defra ID callback fails, the token carries no organisation or fails verification, or the user's role and permissions cannot be loaded.",
+      "why": "These are authentication failures the prototype cannot express, and the page already exists.",
+      "claims": [
+        "repo-insfrontend-p4-045",
+        "repo-insfrontend-p4-046",
+        "repo-insfrontend-p4-047",
+        "repo-insfrontend-p4-048",
+        "repo-insfrontend-p4-080",
+        "repo-insfrontend-p4-081",
+        "repo-insfrontend-p4-082",
+        "repo-insfrontend-p4-083",
+        "repo-insfrontend-p4-084",
+        "repo-insfrontend-p4-085",
+        "repo-insfrontend-p4-086"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-080 and p4-083 to p4-086 give the page and when it shows.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-034",
+      "statement": "An error response is shown as the shared error page with the error's own HTTP status. The page's large heading is the status number, and a paragraph below it, which is also the browser title, reads 'Page not found' (404), 'Forbidden' (403), 'You need to sign in to view this page' (401), 'There is a problem with your request' (400) or 'Something went wrong' (any other). It shows no back link. An error inside a journey set uses that set's chrome; a path under no set uses set-free chrome whose home link is the root.",
+      "why": "Real errors are a constraint the prototype cannot express, and both frontends already share this page.",
+      "claims": [
+        "repo-frontend-p1-042",
+        "repo-frontend-p1-042-m1",
+        "repo-frontend-p1-043",
+        "repo-frontend-p1-044",
+        "repo-frontend-p1-045",
+        "repo-frontend-p1-046",
+        "repo-frontend-p1-047",
+        "repo-frontend-p1-048",
+        "repo-frontend-p1-048-m1",
+        "repo-insfrontend-p4-052",
+        "repo-insfrontend-p4-053",
+        "repo-insfrontend-p4-054",
+        "repo-insfrontend-p4-055",
+        "repo-insfrontend-p4-056",
+        "repo-insfrontend-p4-072",
+        "repo-insfrontend-p4-073",
+        "repo-insfrontend-p4-073-m1",
+        "repo-insfrontend-p4-074",
+        "repo-insfrontend-p4-075",
+        "repo-insfrontend-p4-076",
+        "repo-insfrontend-p4-077",
+        "repo-insfrontend-p4-078",
+        "repo-insfrontend-p4-079"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-042 to p1-048 and repo-insfrontend-p4-072 to p4-078 render the page.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-035",
+      "statement": "On the animals frontend, the service root / sends a signed-in user to the default set's dashboard, /live-animals.",
+      "why": "This is how the animals frontend reaches its home today.",
+      "claims": [
+        "repo-frontend-p1-049",
+        "repo-tests-p4-054",
+        "trace-e2e-p1-047",
+        "trace-e2e-p1-065"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-047 records the redirect.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-036",
+      "statement": "The shared notification actions read 'Copy as new' and 'Delete'. After a copy, a success message titled 'Notification copied' reads 'A new draft notification has been created.' After a delete, one titled 'Notification deleted' reads 'The notification has been deleted.'",
+      "why": "This is shared copy the dashboard and notification pages already use. Comparing it with Design Release 2.1 belongs to the dashboard and notification-actions areas.",
+      "claims": [
+        "repo-frontend-p1-055",
+        "repo-frontend-p1-056",
+        "repo-frontend-p1-057",
+        "repo-frontend-p1-058"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-055 to p1-058 give the copy.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-037",
+      "statement": "Address pickers offer a shared 'Add a new address' link. When a chosen address is not in the user's address book, the error reads 'The address could not be found in your address book. Select another address or try adding it again.' When the address book cannot be reached, it reads 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
+      "why": "This is shared copy the journey's address pickers already use. Comparing the pickers with Design Release 2.1 belongs to the addresses area.",
+      "claims": [
+        "repo-frontend-p1-059",
+        "repo-frontend-p1-060",
+        "repo-frontend-p1-061"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-059 to p1-061 give the copy.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-038",
+      "statement": "A signed-out user who opens any page is sent to the service's /auth/sign-in, with the page they asked for kept in a 'redirect' parameter. After signing in they return to that page, such as a journey page with its saved answers intact, or to the dashboard when none was asked for. A redirect is followed only when it is a relative path on the same service, and it is used once.",
+      "why": "Design Release 2.1 signs the user straight in to the dashboard. The real services must also bring a signed-out user back to a deep link, an authentication behaviour the prototype cannot express. Landing on the dashboard after sign-in already matches the prototype.",
+      "claims": [
+        "prototype-dr2-1-source-p1-039",
+        "trace-e2e-p1-001",
+        "trace-e2e-p1-029",
+        "trace-e2e-p1-030",
+        "trace-e2e-p1-048",
+        "trace-e2e-p1-049",
+        "trace-e2e-p1-050",
+        "trace-e2e-p1-051",
+        "repo-tests-p1-181",
+        "repo-tests-p4-047",
+        "repo-tests-p4-051",
+        "repo-tests-p4-060",
+        "repo-tests-p4-061",
+        "repo-tests-p4-062",
+        "repo-insfrontend-p4-088",
+        "repo-insfrontend-p4-088-m1",
+        "repo-insfrontend-p4-089",
+        "repo-insfrontend-p4-090",
+        "repo-insfrontend-p4-092",
+        "trace-e2e-p15-013",
+        "trace-e2e-p15-017"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-001, p1-029 and p1-048 to p1-050 prove it on the animals frontend; repo-insfrontend-p4-088 to p4-090 and trace-e2e-p15-017 on the INS frontend.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-039",
+      "statement": "Sign-in hands off to Defra ID with an OpenID Connect authorisation-code request (scope openid offline_access, query response mode, policy b2c_1a_cui_cpdev_signupsigninsfi), naming each frontend's own serviceId and its own /auth/sign-in-oidc callback. On success, the user's organisation, CRN and name are taken from the token and held in a server-side session.",
+      "why": "Real sign-in through Defra ID is an authentication constraint the prototype's sign-in page cannot express.",
+      "claims": [
+        "trace-e2e-p1-002",
+        "trace-e2e-p1-003",
+        "trace-e2e-p1-004",
+        "trace-e2e-p1-028",
+        "trace-e2e-p15-012",
+        "trace-e2e-p15-112",
+        "repo-insfrontend-p4-087",
+        "repo-insfrontend-p4-091",
+        "repo-insfrontend-p4-093",
+        "repo-insfrontend-p4-094",
+        "repo-insfrontend-p4-095",
+        "repo-insfrontend-p4-150",
+        "repo-insfrontend-p4-151"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-002 to p1-004 and trace-e2e-p15-012 record the handoff.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-040",
+      "statement": "After signing in, a user who belongs to more than one organisation is asked by Defra ID to 'Choose your organisation' from radios labelled with each organisation's name and SBI. A user with one organisation never sees that choice. The chosen organisation reaches the service through the sign-in callback, and the user lands on the page they asked for. No page in the service offers a way to switch organisation, and a page that needs an organisation returns 403 when the session has none.",
+      "why": "Organisation choice is part of real Defra ID authentication, which the prototype cannot express.",
+      "claims": [
+        "repo-tests-p1-180",
+        "repo-tests-p4-063",
+        "repo-tests-p4-063-m1",
+        "repo-tests-p4-064",
+        "trace-e2e-p1-064",
+        "trace-e2e-p15-016",
+        "trace-e2e-p15-018",
+        "trace-e2e-p15-019",
+        "trace-e2e-p15-020",
+        "repo-insfrontend-p4-099",
+        "repo-insfrontend-p4-100",
+        "repo-insfrontend-p4-101",
+        "repo-insfrontend-p4-104"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p15-016 to p15-020 record the single-organisation and multi-organisation paths on the INS frontend.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-041",
+      "statement": "Signing in to one frontend signs the user in to the others without asking for credentials again, because Defra ID answers their requests straight away. Each frontend keeps its own session cookie on the shared host (sid for animals, ins-sid for INS, plants-sid for plants, all HttpOnly), so all three sessions are kept side by side. Each service has its own landing page after sign-in.",
+      "why": "Moving between the animals journey and the INS dashboard and address book is cross-service behaviour the prototype cannot express. It already works.",
+      "claims": [
+        "repo-tests-p4-065",
+        "repo-tests-p4-066",
+        "repo-tests-p4-091",
+        "repo-tests-p4-093",
+        "repo-tests-p4-094",
+        "repo-tests-p4-111-m1",
+        "trace-e2e-p15-111",
+        "trace-e2e-p15-113",
+        "trace-e2e-p15-114"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p15-111 and p15-113 prove single sign-on and kept sessions across the three frontends. Whether signing out of one ends the others is not proven (repo-tests-p4-111-m1).",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-042",
+      "statement": "A session is valid only while it is in the server-side cache (Redis when deployed). The session cookie lasts 4 hours and is HttpOnly. An expired token is refreshed when refresh is on, and otherwise the user is treated as signed out. Every route needs a signed-in user unless it opts out.",
+      "why": "Real sessions are an authentication constraint the prototype cannot express, and they already work this way.",
+      "claims": [
+        "trace-e2e-p1-031",
+        "trace-e2e-p1-031-m1",
+        "trace-e2e-p1-032",
+        "trace-e2e-p1-062",
+        "repo-insfrontend-p4-102",
+        "repo-insfrontend-p4-102-m1",
+        "repo-insfrontend-p4-103",
+        "repo-insfrontend-p4-177",
+        "repo-insfrontend-p4-093-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-031 and p1-032 record the cookies, and repo-insfrontend-p4-102 and p4-103 the session rules. What a user sees when a session lapses is not recorded (trace-e2e-p1-062).",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-043",
+      "statement": "In stub mode the INS frontend signs a user in at once with no sign-in page, as 'Stub User' in the organisation given by an organisationId parameter (default 'stub-org-1'). The stub session lasts four hours, sign-out goes straight to /, and the Defra ID callback and organisation routes do not exist. Stub mode is refused in production.",
+      "why": "This is how the INS frontend runs locally and in its own browser tests. It is part of today's real authentication set-up.",
+      "claims": [
+        "repo-insfrontend-p4-105",
+        "repo-insfrontend-p4-106",
+        "repo-insfrontend-p4-107",
+        "repo-insfrontend-p4-108",
+        "repo-insfrontend-p4-109",
+        "repo-insfrontend-p4-110",
+        "repo-insfrontend-p4-111",
+        "repo-insfrontend-p4-112",
+        "repo-insfrontend-p4-113",
+        "repo-insfrontend-p4-170"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-106 to p4-113 give the stub mode.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-044",
+      "statement": "Every form post must carry a valid CSRF token (except under /health, /assets and /public). Every page carries the token in a csrf-token meta tag, every form has a hidden 'crumb' input, and the CSRF cookie is HttpOnly and SameSite Strict.",
+      "why": "Protection against cross-site request forgery is a real security constraint, and it already exists.",
+      "claims": [
+        "repo-frontend-p1-001-m1",
+        "trace-e2e-p1-033-m1",
+        "repo-insfrontend-p4-114",
+        "repo-insfrontend-p4-115",
+        "repo-insfrontend-p4-116"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-033-m1 and repo-insfrontend-p4-114 to p4-116 show the token.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-045",
+      "statement": "The animals frontend sends a Content-Security-Policy on its pages, redirects and sign-in callback. It limits scripts, styles, fonts, images and the base URL to its own origin (plus one hashed inline script), lets forms post to itself and the address book origin, and forbids framing and plugins. It also sends Strict-Transport-Security for a year, X-Frame-Options DENY, X-Content-Type-Options nosniff, X-Download-Options noopen, X-XSS-Protection and Cache-Control no-cache.",
+      "why": "Security headers are a real constraint the prototype cannot express, and they already exist.",
+      "claims": [
+        "trace-e2e-p1-052",
+        "trace-e2e-p1-053",
+        "trace-e2e-p1-054",
+        "trace-e2e-p1-055",
+        "trace-e2e-p1-056",
+        "trace-e2e-p1-056-m1",
+        "trace-e2e-p1-057",
+        "trace-e2e-p1-058",
+        "trace-e2e-p1-059",
+        "trace-e2e-p1-060",
+        "repo-insfrontend-p4-134"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p1-052 to p1-060 record the headers.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-046",
+      "statement": "Security-header and cookie defects found on the way are not fixed by this programme: the CSP's connect-src lists 'wss' without a colon, the animals frontend sends no Referrer-Policy, Permissions-Policy, COOP or COEP header, and the animals and plants frontends share one 'crumb' CSRF cookie on localhost.",
+      "why": "These are problems in today's services that bringing the services up to Design Release 2.1 does not touch. They go to the report.",
+      "claims": [
+        "trace-e2e-p1-056-m2",
+        "trace-e2e-p1-059-m1",
+        "trace-e2e-p15-114-m1"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-047",
+      "statement": "The Defra ID stub's own pages are not changed by this programme: its sign-in page ('Sign in using Government Gateway', user ID and password, 'Help signing in', the 'I have forgotten my password' placeholder, the CRN error message and its non-standard error summary), its title, phase banner and doubled service name, its signed-out page and its own security headers.",
+      "why": "The stub stands in for Defra ID and is not one of the programme's repos. Its defects go to the report.",
+      "claims": [
+        "trace-e2e-p1-005",
+        "trace-e2e-p1-006",
+        "trace-e2e-p1-007",
+        "trace-e2e-p1-008",
+        "trace-e2e-p1-009",
+        "trace-e2e-p1-010",
+        "trace-e2e-p1-011",
+        "trace-e2e-p1-012",
+        "trace-e2e-p1-013",
+        "trace-e2e-p1-014",
+        "trace-e2e-p1-015",
+        "trace-e2e-p1-016",
+        "trace-e2e-p1-017",
+        "trace-e2e-p1-018",
+        "trace-e2e-p1-019",
+        "trace-e2e-p1-020",
+        "trace-e2e-p1-021",
+        "trace-e2e-p1-022",
+        "trace-e2e-p1-023",
+        "trace-e2e-p1-024",
+        "trace-e2e-p1-025",
+        "trace-e2e-p1-026",
+        "trace-e2e-p1-027",
+        "trace-e2e-p1-027-m1",
+        "trace-e2e-p1-027-m2",
+        "trace-e2e-p1-044",
+        "trace-e2e-p1-044-m1",
+        "trace-e2e-p1-057-m1",
+        "trace-e2e-p1-061",
+        "trace-e2e-p1-067",
+        "trace-e2e-p15-014",
+        "trace-e2e-p15-015",
+        "repo-tests-p4-048",
+        "repo-tests-p4-049",
+        "repo-tests-p4-050",
+        "repo-tests-p4-052",
+        "repo-tests-p4-053"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-048",
+      "statement": "The tests repo's accessibility suite holds every scanned page to WCAG 2.2 AA. It runs axe with the wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa tags and fails on any violation, attaching a report per page. Only justified upstream or not-owned defects are excluded: govuk-frontend's conditional-reveal aria-expanded and the sign-in stub's error list. The suite scans selected states, tagged @a11y.",
+      "why": "Every page this programme changes must keep passing this suite. It already exists.",
+      "claims": [
+        "repo-tests-p6-001",
+        "repo-tests-p6-002",
+        "repo-tests-p6-003",
+        "repo-tests-p6-004",
+        "repo-tests-p6-005",
+        "repo-tests-p6-006",
+        "repo-tests-p6-007",
+        "repo-tests-p6-008",
+        "repo-tests-p6-009",
+        "repo-tests-p6-010",
+        "repo-tests-p6-011",
+        "repo-tests-p6-012",
+        "repo-tests-p6-013",
+        "repo-tests-p6-014",
+        "repo-tests-p6-015",
+        "repo-tests-p6-016",
+        "repo-tests-p6-017",
+        "repo-tests-p6-018",
+        "repo-tests-p6-019",
+        "repo-tests-p6-020"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p6-001 to p6-020 define the suite.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-049",
+      "statement": "The accessibility suite walks the live-animals journey from the dashboard to the submitted page and scans every journey page, both on initial load and with its answers filled.",
+      "why": "This is the existing end-to-end accessibility proof of the journey. Each page Design Release 2.1 changes must still pass it.",
+      "claims": [
+        "repo-tests-p6-021",
+        "repo-tests-p6-022",
+        "repo-tests-p6-023",
+        "repo-tests-p6-024",
+        "repo-tests-p6-025",
+        "repo-tests-p6-026",
+        "repo-tests-p6-027",
+        "repo-tests-p6-028",
+        "repo-tests-p6-029",
+        "repo-tests-p6-030",
+        "repo-tests-p6-031",
+        "repo-tests-p6-032",
+        "repo-tests-p6-033",
+        "repo-tests-p6-034",
+        "repo-tests-p6-035",
+        "repo-tests-p6-036",
+        "repo-tests-p6-037",
+        "repo-tests-p6-038",
+        "repo-tests-p6-039",
+        "repo-tests-p6-040",
+        "repo-tests-p6-041",
+        "repo-tests-p6-042",
+        "repo-tests-p6-043",
+        "repo-tests-p6-044",
+        "repo-tests-p6-045",
+        "repo-tests-p6-046",
+        "repo-tests-p6-047",
+        "repo-tests-p6-048",
+        "repo-tests-p6-049",
+        "repo-tests-p6-050",
+        "repo-tests-p6-051",
+        "repo-tests-p6-052",
+        "repo-tests-p6-053"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p6-021 and p6-042 define the two walks.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-050",
+      "statement": "The accessibility suite scans the error summary state on the origin, CPH number, arrival details, transited countries and declaration pages, and the edit address details page.",
+      "why": "This is the existing accessibility proof of the shared error summary on journey pages.",
+      "claims": [
+        "repo-tests-p6-054",
+        "repo-tests-p6-056",
+        "repo-tests-p6-057",
+        "repo-tests-p6-058",
+        "repo-tests-p6-059",
+        "repo-tests-p6-060",
+        "repo-tests-p6-085"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p6-054 to p6-060 define the scans.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-051",
+      "statement": "The accessibility suite also scans the import reason reveals, the private transporter pages, the commercial transporter register, the dashboard (populated, sorted, searched, paged, and at 320 by 568 and 568 by 320), review, submitted review, confirmation, the cancel-amendment and delete confirmations, the copied-address edit page, the contact page and the sign-in page.",
+      "why": "This is the existing accessibility proof of the rest of the animals service.",
+      "claims": [
+        "repo-tests-p6-062",
+        "repo-tests-p6-063",
+        "repo-tests-p6-064",
+        "repo-tests-p6-065",
+        "repo-tests-p6-066",
+        "repo-tests-p6-067",
+        "repo-tests-p6-068",
+        "repo-tests-p6-069",
+        "repo-tests-p6-070",
+        "repo-tests-p6-071",
+        "repo-tests-p6-072",
+        "repo-tests-p6-074",
+        "repo-tests-p6-075",
+        "repo-tests-p6-076",
+        "repo-tests-p6-077",
+        "repo-tests-p6-078",
+        "repo-tests-p6-079",
+        "repo-tests-p6-080",
+        "repo-tests-p6-081",
+        "repo-tests-p6-082",
+        "repo-tests-p6-083",
+        "repo-tests-p6-084",
+        "repo-tests-p6-086",
+        "repo-tests-p6-087"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p6-062 to p6-087 define the scans.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-052",
+      "statement": "The animals frontend's own browser tests check that a captioned page and the dashboard with its service navigation have no serious or critical WCAG 2 A or AA violations. They exclude govuk-frontend's conditional-reveal false positive. The INS frontend checks every page's initial render and validation-error state against WCAG 2.0, 2.1 and 2.2 AA.",
+      "why": "These are the existing in-repo accessibility checks that a navigation or layout change must keep passing.",
+      "claims": [
+        "repo-frontend-p1-154",
+        "repo-frontend-p1-162",
+        "trace-animals-fit-p1-013",
+        "trace-animals-fit-p1-014",
+        "trace-animals-fit-p1-026",
+        "repo-insfrontend-p4-167"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p1-013 and p1-026 record the passing checks.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-053",
+      "statement": "Gaps in today's accessibility proof are not closed by this programme. The INS dashboard, sign-in and address book have no WCAG scan in the tests repo. The dashboard's copy action, the amending overview and an uploaded document are not scanned. Only five pages' error states are scanned, and only the dashboard at narrow viewports. No INS browser test proves sign-out, the unauthorised page, the error page or the banner and footer links.",
+      "why": "These are coverage gaps in today's suites, not differences from Design Release 2.1. They go to the report.",
+      "claims": [
+        "repo-tests-p6-061",
+        "repo-tests-p6-073",
+        "repo-tests-p6-088",
+        "repo-tests-p6-089",
+        "repo-insfrontend-p4-184"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-054",
+      "statement": "The tests repo's security suite runs a traffic-driven OWASP ZAP scan of the animals frontend, animals admin, INS frontend, animals backend and address book API. Playwright drives real signed-in journeys through it: sign-in and sign-out on both frontends, change mode, reveals, dashboard search, sort and paging, document upload, amend, copy, cancel and delete, submission, and the INS address book lifecycle. The run fails on any FAIL-rated alert, a capped scan or an unreached context. The active scan is refused on CDP.",
+      "why": "Every route this programme adds or changes must be driven through this scan to be attacked. The suite already exists.",
+      "claims": [
+        "repo-tests-p6-090",
+        "repo-tests-p6-091",
+        "repo-tests-p6-092",
+        "repo-tests-p6-092-m1",
+        "repo-tests-p6-093",
+        "repo-tests-p6-093-m1",
+        "repo-tests-p6-093-m2",
+        "repo-tests-p6-094",
+        "repo-tests-p6-095",
+        "repo-tests-p6-096",
+        "repo-tests-p6-097",
+        "repo-tests-p6-098",
+        "repo-tests-p6-099",
+        "repo-tests-p6-100",
+        "repo-tests-p6-101",
+        "repo-tests-p6-101-m1",
+        "repo-tests-p6-102",
+        "repo-tests-p6-104",
+        "repo-tests-p6-106",
+        "repo-tests-p6-107",
+        "repo-tests-p6-108",
+        "repo-tests-p6-109",
+        "repo-tests-p6-110",
+        "repo-tests-p6-110-m1",
+        "repo-tests-p6-111",
+        "repo-tests-p6-112",
+        "repo-tests-p6-113",
+        "repo-tests-p6-114",
+        "repo-tests-p6-115",
+        "repo-tests-p6-116",
+        "repo-tests-p6-117",
+        "repo-tests-p6-118",
+        "repo-tests-p6-119",
+        "repo-tests-p6-121",
+        "repo-tests-p6-122",
+        "repo-tests-p6-123"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p6-090 to p6-123 define the suite.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-055",
+      "statement": "Gaps in today's security scan are not closed by this programme. Plants has no security specs. The accepted path of the address book hand-off is not attacked. The animals copied-address edit page is not driven. The INS dashboard is in the scan only as a bare GET.",
+      "why": "These are coverage gaps in today's suite, not differences from Design Release 2.1. They go to the report.",
+      "claims": [
+        "repo-tests-p6-103",
+        "repo-tests-p6-124",
+        "repo-tests-p6-125-m1",
+        "repo-tests-p6-125-m2"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-056",
+      "statement": "The tests repo signs each worker in once and reuses the session. Its sign-in and cross-service tests start with no stored session. It keeps the sign-in password out of traces, and it sends only internet-bound calls through the CDP proxy.",
+      "why": "Any new end-to-end proof of sign-in or navigation has to work within these existing suite rules.",
+      "claims": [
+        "repo-tests-p1-182",
+        "repo-tests-p1-183",
+        "repo-tests-p4-109",
+        "repo-tests-p4-110"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-tests-p1-182 and p4-110 give the session rules.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-057",
+      "statement": "The INS frontend serves a fixed list of routes, all behind sign-in: the dashboard at /, and the address book list, add, view, edit and delete pages. It also serves /health, /auth/* and static files, plus a dev-only address lookup spike. It owns no journey, notification editing, upload or event publishing, and no database. Its target direction is to become the front door for every journey.",
+      "why": "This is the shell that the dashboard, templates and address book pages Design Release 2.1 changes are added to.",
+      "claims": [
+        "repo-insfrontend-p4-119",
+        "repo-insfrontend-p4-120",
+        "repo-insfrontend-p4-122",
+        "repo-insfrontend-p4-123",
+        "repo-insfrontend-p4-124",
+        "repo-insfrontend-p4-125",
+        "repo-insfrontend-p4-130",
+        "repo-insfrontend-p4-131",
+        "repo-insfrontend-p4-131-m1",
+        "repo-insfrontend-p4-132",
+        "repo-insfrontend-p4-160",
+        "repo-insfrontend-p4-161"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-119 and p4-124 list the routes.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-058",
+      "statement": "Each INS dashboard row links out to the animals frontend, which owns that notification: to /notifications/{reference}, or to .../notification-view when it is submitted. Only the animals journey is linked today.",
+      "why": "This is how the INS dashboard hands off across services today. Design Release 2.1's dashboard is weighed in the dashboard area.",
+      "claims": [
+        "repo-insfrontend-p4-127",
+        "repo-insfrontend-p4-128",
+        "repo-insfrontend-p4-129",
+        "repo-insfrontend-p4-147",
+        "repo-insfrontend-p4-178"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-127 and p4-128 give the links.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-059",
+      "statement": "The INS dashboard at / is not scoped to the user's organisation: a signed-in user sees every organisation's notifications. This area does not fix that.",
+      "why": "Organisation scoping of the dashboard is an authorisation defect owned by the dashboard area and an existing security ticket, not a layout or sign-in change. It goes to the report.",
+      "claims": [
+        "repo-insfrontend-p4-126"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-060",
+      "statement": "The INS address book always sends the signed-in organisation to the address book API, and refuses to call it with none. Its ids are 24-character hex, and an unknown or deleted id gives 404. API field errors are mapped back to the form. Only the nine validated address fields are saved. The country list comes from reference data with GB first. A success banner shows once. A journey hand-off (journeyType, notificationId, fulfilmentId, handshakeToken) returns to the animals frontend for 'gbn-ag'.",
+      "why": "These are the real persistence, validation and authorisation rules behind the address book that the navigation leads to. The address book area weighs its pages against Design Release 2.1.",
+      "claims": [
+        "repo-insfrontend-p4-121",
+        "repo-insfrontend-p4-133",
+        "repo-insfrontend-p4-136",
+        "repo-insfrontend-p4-137",
+        "repo-insfrontend-p4-138",
+        "repo-insfrontend-p4-139",
+        "repo-insfrontend-p4-140",
+        "repo-insfrontend-p4-141",
+        "repo-insfrontend-p4-142",
+        "repo-insfrontend-p4-143",
+        "repo-insfrontend-p4-144",
+        "repo-insfrontend-p4-145",
+        "repo-insfrontend-p4-146",
+        "repo-insfrontend-p4-148",
+        "repo-insfrontend-p4-180",
+        "repo-insfrontend-p4-181",
+        "repo-insfrontend-p4-182",
+        "repo-insfrontend-p4-183"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-136 to p4-145 give the rules, and the smoke tests p4-180 to p4-182 prove them.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-061",
+      "statement": "Every change to the INS frontend follows its build rules. It stays in the govuk-frontend toolbox and keeps its four import boundaries. Each new page gets a URL builder, a route-list entry, English and Welsh copy with tests, unit tests mocked only at the network boundary, a browser test with axe checks and a Lighthouse audit. Format, lint, unit and browser suites must all pass, with cross-repo branches sharing one name. Every outside call is measured.",
+      "why": "Templates and the navigation change land in the INS frontend, and these are the rules it holds every change to.",
+      "claims": [
+        "repo-insfrontend-p4-135",
+        "repo-insfrontend-p4-135-m1",
+        "repo-insfrontend-p4-149",
+        "repo-insfrontend-p4-154",
+        "repo-insfrontend-p4-158",
+        "repo-insfrontend-p4-159",
+        "repo-insfrontend-p4-159-m1",
+        "repo-insfrontend-p4-163",
+        "repo-insfrontend-p4-163-m1",
+        "repo-insfrontend-p4-164",
+        "repo-insfrontend-p4-165",
+        "repo-insfrontend-p4-166",
+        "repo-insfrontend-p4-169",
+        "repo-insfrontend-p4-171",
+        "repo-insfrontend-p4-171-m1",
+        "repo-insfrontend-p4-171-m2",
+        "repo-insfrontend-p4-172",
+        "repo-insfrontend-p4-173",
+        "repo-insfrontend-p4-173-m1",
+        "repo-insfrontend-p4-174",
+        "repo-insfrontend-p4-175",
+        "repo-insfrontend-p4-176",
+        "repo-insfrontend-p4-176-m1",
+        "repo-insfrontend-p4-176-m2"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-insfrontend-p4-158, p4-163 and p4-163-m1 state the rules.",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-062",
+      "statement": "Drift in the INS frontend's documentation and dependencies is not fixed by this programme. The workspace page names INS_MODE and AUTH_STUB_MODE where the repo uses STUB_MODE, and Vite where the repo uses webpack. It also calls the README template text when the README now describes the service. Some code imports Joi without declaring it as a dependency.",
+      "why": "These are housekeeping defects, not differences from Design Release 2.1. They go to the report.",
+      "claims": [
+        "repo-insfrontend-p4-152",
+        "repo-insfrontend-p4-153",
+        "repo-insfrontend-p4-162",
+        "repo-insfrontend-p4-185"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-layout-and-sign-in-063",
+      "statement": "DR1 judgements that meet no Design Release 2.1 difference in this area build nothing here. These are the section-caption rows, the navigation row's details, the return-control rename and rule (b) on which pages end with the return controls, and the animals admin app keeping its own 'Sign out'. Each stands only where its own area finds the real frontend and Design Release 2.1 clashing on that same difference.",
+      "why": "The owner's ruling makes the DR1 parity backlog a source of judgements, never of requirements. Nothing is built because DR1 says so on its own.",
+      "claims": [
+        "ruling-sam-2026-10-07-p1-003",
+        "ruling-sam-2026-10-07-p1-004",
+        "ruling-sam-2026-10-07-p1-005",
+        "ruling-sam-2026-10-07-p1-007",
+        "document-dr1-parity-backlog-p1-001",
+        "document-dr1-parity-backlog-p1-010",
+        "document-dr1-parity-backlog-p1-011",
+        "document-dr1-parity-backlog-p1-012",
+        "document-dr1-parity-backlog-p1-013",
+        "document-dr1-parity-backlog-p1-014",
+        "document-dr1-parity-backlog-p1-015",
+        "document-dr1-parity-backlog-p1-016",
+        "document-dr1-parity-backlog-p1-017",
+        "document-dr1-parity-backlog-p1-018",
+        "document-dr1-parity-backlog-p1-019",
+        "document-dr1-parity-backlog-p1-020",
+        "document-dr1-parity-backlog-p1-021",
+        "document-dr1-parity-backlog-p1-022",
+        "document-dr1-parity-backlog-p1-023",
+        "document-dr1-parity-backlog-p1-024",
+        "document-dr1-parity-backlog-p1-025",
+        "document-dr1-parity-backlog-p1-026",
+        "document-dr1-parity-backlog-p1-027",
+        "document-dr1-parity-backlog-p1-028",
+        "document-dr1-parity-backlog-p1-029",
+        "document-dr1-parity-backlog-p1-030",
+        "document-dr1-parity-backlog-p1-031",
+        "document-dr1-parity-backlog-p1-032",
+        "document-dr1-parity-backlog-p1-033",
+        "document-dr1-parity-backlog-p1-033-m1",
+        "document-dr1-parity-backlog-p1-034",
+        "document-dr1-parity-backlog-p1-035",
+        "document-dr1-parity-backlog-p1-038",
+        "document-dr1-parity-backlog-p1-039",
+        "document-dr1-parity-backlog-p1-040",
+        "document-dr1-parity-backlog-p1-041",
+        "document-dr1-parity-backlog-p1-042",
+        "document-dr1-parity-backlog-p1-043",
+        "document-dr1-parity-backlog-p1-044",
+        "document-dr1-parity-backlog-p1-045",
+        "document-dr1-parity-backlog-p1-046",
+        "document-dr1-parity-backlog-p1-047",
+        "document-dr1-parity-backlog-p1-048",
+        "document-dr1-parity-backlog-p1-049",
+        "document-dr1-parity-backlog-p1-050",
+        "document-dr1-parity-backlog-p1-051",
+        "document-dr1-parity-backlog-p1-052",
+        "document-dr1-parity-backlog-p1-053",
+        "document-dr1-parity-backlog-p1-054",
+        "document-dr1-parity-backlog-p1-054-m1",
+        "document-dr1-parity-backlog-p1-055",
+        "document-dr1-parity-backlog-p1-056",
+        "document-dr1-parity-backlog-p1-057",
+        "document-dr1-parity-backlog-p1-058",
+        "document-dr1-parity-backlog-p1-059",
+        "document-dr1-parity-backlog-p1-060",
+        "document-dr1-parity-backlog-p1-061",
+        "document-dr1-parity-backlog-p1-062",
+        "document-dr1-parity-backlog-p1-063",
+        "document-dr1-parity-backlog-p1-064",
+        "document-dr1-parity-backlog-p1-065",
+        "document-dr1-parity-backlog-p1-066",
+        "document-dr1-parity-backlog-p1-067",
+        "document-dr1-parity-notes-p1-013",
+        "document-dr1-parity-notes-p1-055",
+        "document-dr1-parity-notes-p1-056",
+        "document-dr1-parity-notes-p1-057",
+        "document-dr1-parity-notes-p1-058",
+        "document-dr1-parity-notes-p1-059",
+        "document-dr1-parity-notes-p1-060",
+        "document-dr1-parity-notes-p1-060-m1",
+        "document-dr1-parity-notes-p1-061",
+        "document-dr1-parity-notes-p1-062"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "",
+      "conflicts": []
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c-layout-and-sign-in-001",
+      "about": "Whether the service navigation keeps a Log out item: Design Release 2.1 drops it, and the real services have it.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "In DR2.1 the service navigation has no Log out item, unlike design release 2.",
+          "claim": "prototype-dr2-1-source-p1-022"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as authentication, overrides the prototype default.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "says": "DR1 judged that sign-out sits in the service navigation as 'Log out', replacing the separate 'Sign out' link.",
+          "claim": "document-dr1-parity-backlog-p1-036"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The Log out navigation item links to /auth/sign-out.",
+          "claim": "repo-frontend-p1-014"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Log out stays as the last navigation item on both frontends (req-layout-and-sign-in-002). The prototype has no real session to end, so leaving it out does not show a decision about sign-out. In the real services, Log out is the only way to end a Defra ID session, and the ruling lets an authentication constraint override the prototype. The rest of the prototype's list (Dashboard, Templates, Address book, Manage account) is adopted, so prototype-dr2-1-source-p1-021 and p1-018 still back the Templates requirement. Only the claim that drops Log out is set aside.",
+      "overruled": ["prototype-dr2-1-source-p1-022"]
+    },
+    {
+      "id": "c-layout-and-sign-in-002",
+      "about": "Where the Address book navigation item goes: inside the same service in Design Release 2.1, or the INS frontend's address book in the real services.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Under DR2.1 the address book sits under the service's own base path, at /design-release-2.1/address-book.",
+          "claim": "prototype-dr2-1-source-p1-081"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "says": "Rhys ruled that the dashboard and the address book are temporary in the animals frontend and move to trade-imports-ins-frontend.",
+          "claim": "document-dr1-parity-notes-p1-014"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "Cross-service behaviour the prototype cannot express overrides the prototype default.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The Address book item goes to the INS frontend's /address-book from both frontends (req-layout-and-sign-in-006). The address book is a shared capability in a separate service, which the single-service prototype cannot express. The prototype claim that places it under the service's own base is set aside. The item, its label and its place in the order still stand.",
+      "overruled": ["prototype-dr2-1-source-p1-081"]
+    },
+    {
+      "id": "c-layout-and-sign-in-003",
+      "about": "Where the GOV.UK header logo and the service name link: Design Release 2.1 sends both to its index of design releases, which has no counterpart in a real service.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The GOV.UK logo links to the service index (/design-release-2.1/index), and the service name in the service navigation does too.",
+          "claim": "prototype-dr2-1-source-p1-020"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "On DR2.1 pages the header logo and the service name both link to the prototype index.",
+          "claim": "trace-prototype-dr2-1-p1-010"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The GOV.UK header logo links to https://www.gov.uk/.",
+          "claim": "repo-frontend-p1-005"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The service name links to the set's dashboard at /live-animals.",
+          "claim": "repo-frontend-p1-006"
+        },
+        {
+          "source": "repo:insfrontend",
+          "says": "The GOV.UK header logo links to https://www.gov.uk/.",
+          "claim": "repo-insfrontend-p4-003"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The prototype wins by default, but its target, the index of design releases, is prototype tooling that will not be built (req-layout-and-sign-in-010). So the prototype cannot be met as written. No DR1 judgement or ruling names a replacement, and the two links could each go to more than one real page.",
+      "question": "With no index of design releases in the real services, should the GOV.UK logo and the service name keep their current targets, or should they go somewhere else, such as the INS front door?",
+      "default": "Keep the current targets. The GOV.UK logo links to https://www.gov.uk/ on both frontends, as the GOV.UK header pattern does. The service name links to each frontend's dashboard home: /live-animals on the animals frontend and / on the INS frontend, wherever the dashboard area finally puts the dashboard."
+    },
+    {
+      "id": "c-layout-and-sign-in-004",
+      "about": "Where the phase banner's feedback link goes: a placeholder '#' in Design Release 2.1, or the APHA service desk mailbox in the real services.",
+      "positions": [
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "DR2.1 dashboard pages show an Alpha phase banner whose feedback link is a placeholder '#'.",
+          "claim": "trace-prototype-dr2-1-p1-014"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "says": "Because the design's feedback link is a placeholder, DR1 ruled it to be mailto:APHAServiceDesk@apha.gov.uk, and forbade inventing a /feedback route or survey URL.",
+          "claim": "document-dr1-parity-backlog-p1-006"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The phase banner's feedback link is an email link to the APHA service desk.",
+          "claim": "repo-frontend-p1-017"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The feedback link stays mailto:APHAServiceDesk@apha.gov.uk on both frontends (req-layout-and-sign-in-013). DR1 already judged this same difference, a placeholder feedback link in the design, and a DR1 judgement on the same difference outranks the prototype. The INS frontend already uses the same destination. The Alpha banner itself is shown by today's claims, so setting aside the prototype's placeholder claim loses nothing.",
+      "overruled": ["trace-prototype-dr2-1-p1-014"]
+    },
+    {
+      "id": "c-layout-and-sign-in-005",
+      "about": "Whether service pages show the signed-in user's email and 'Home' and 'About' links, as the tests repo's shared page object suggests.",
+      "positions": [
+        {
+          "source": "repo:frontend",
+          "says": "The signed-in user's email or name is shown nowhere, and there is no 'Sign out' link outside the navigation's Log out.",
+          "claim": "repo-frontend-p1-039"
+        },
+        {
+          "source": "repo:tests",
+          "says": "Every service page offers Home, About, Log out, Address book and Dashboard links and shows the signed-in user's email (inferred from the shared base page object).",
+          "claim": "repo-tests-p1-177"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "No page shows the signed-in identity (req-layout-and-sign-in-031). The frontend outranks the tests repo, the end-to-end traces show no identity (trace-e2e-p1-040), and the tests repo's own dashboard spec asserts no email (repo-tests-p4-057). The base page object's Home, About and email locators are stale helpers that no spec asserts. They can be removed whenever the tests repo is next touched.",
+      "overruled": ["repo-tests-p1-177"]
+    }
+  ]
+}

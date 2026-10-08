@@ -1,0 +1,279 @@
+{
+  "area": "documents",
+  "rows": [
+    {
+      "draftRef": "documents-1",
+      "title": "Upload documents page moves to the upload-documents address and opens once the origin is answered",
+      "detail": "Design Release 2.1 names the documents page upload-documents and lets the trader open it as soon as the origin of the import is answered. The real page lives at accompanying-documents and its overview task only unlocks after origin, commodities and commodity details are complete. The page, its scan-status refresh and its file downloads move to the new address within the notification's journey (the notification reference stays in the path, because the real journey is keyed by it), every link to the page follows, and the overview's 'Upload documents' link can be followed once the origin is answered.",
+      "acceptanceCriteria": [
+        "Following 'Upload documents' from a notification's overview opens the page at /live-animals/notifications/{reference}/upload-documents. (prototype:dr2-1-source app/routes.js:12182; prototype:dr2-1-specs e2e/documents.fit.spec.js:37-40; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields action 30)",
+        "With JavaScript, a document added on the page shows 'Scanning for virus' and changes to 'Check completed' without a reload, and its 'View file' link downloads the file; both the status refresh and the download are served from addresses under /live-animals/notifications/{reference}/upload-documents. (prototype:dr2-1-source app/routes.js:12182; conflict c-059)",
+        "The review page's change link for documents opens the page at its new address. (prototype:dr2-1-source app/routes.js:12182; conflict c-059)",
+        "On a new notification with only the origin of the import answered, the overview's 'Upload documents' link can be followed and opens the page, before the commodity or any later section is complete. (prototype:dr2-1-specs e2e/documents.fit.spec.js:29-34; prototype:dr2-1-specs e2e/documents.fit.spec.js:114-119)",
+        "On a new notification with only the origin answered, opening the page's address directly shows the page rather than sending the trader elsewhere. (prototype:dr2-1-specs e2e/documents.fit.spec.js:29-34 beforeEach)"
+      ],
+      "requirements": ["req-477", "req-544"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:12182" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/documents.fit.spec.js:29-40, 114-119" },
+        { "source": "trace:prototype-dr2-1", "ref": "documents--upload-documents-renders-the-upload-guidance-and-document-fields action 30" },
+        { "source": "repo:frontend", "ref": "features/documents/page.js:1-4; fit/upload.fit.spec.js:26-31" },
+        { "source": "repo:tests", "ref": "page-objects/animals/accompanying-documents-page.ts:6; tests/animals/e2e/features/documents-refresh-no-js.spec.ts:22" },
+        { "source": "trace:animals-fit", "ref": "p22-001, p24-001, p24-002" },
+        { "source": "trace:e2e", "ref": "promo-ba4a7 network call@599" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the page-address slice (req-477) and the entry-guard slice (req-544): both are about how the trader reaches the page, share the same overview-to-page set-up and the same tests-repo page object, and together make five criteria. The old path is also named outside this area's code: the tests repo's ZAP automation configs, the frontend's lighthouse audit targets and journey smoke fit spec, the check-answers tests, and the performance-tests repo's k6 documents script (repos/trade-imports-performance-tests src/k6/documents.js), which is not a programme repo key in sources.json; the combiner should decide whether to add it, otherwise the k6 script breaks when this lands. The entry guard sits in the journey's shared flow, which the journey-flow and notification-hub areas also change.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "tests:page-objects/animals/accompanying-documents-page.ts",
+        "tests:tests/animals/e2e/features/documents-refresh-no-js.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers",
+        "frontend:fit/journey-smoke.fit.spec.js",
+        "frontend:scripts/lighthouse/audit-targets.js",
+        "tests:page-objects/animals/index.ts",
+        "tests:zap"
+      ],
+      "dependsOn": [],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-2",
+      "title": "Upload documents guidance, hints, table and maximum-documents error match Design Release 2.1",
+      "detail": "The real page's wording differs from Design Release 2.1 in the additional-documents table, the Document reference and Date of issue hints, the two Attachment hint bullets, the hidden heading of the added-documents table and the empty state, and it reports the 15-file limit against the documents table rather than the Attachment field. Each changes to the design's wording and placement so the trader sees what the design shows.",
+      "acceptanceCriteria": [
+        "In the additional-documents table, the row 'Animals that do not need a health certificate' reads 'Exporter's declaration that they are fit to travel', with no leading 'An'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:65-66; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 row 1)",
+        "The row 'Rodents imported for research purposes' reads 'RM39 licence and supplementary health certificate', with no leading 'An'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:73-74; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 row 3)",
+        "The 'Document reference' field has no hint: 'For example, GBHC1234567890.' no longer shows. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:104-117; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 40, 48)",
+        "The 'Date of issue' hint reads 'For example, 27/3/2026'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:139-155; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48)",
+        "The Attachment size bullet reads 'files that are smaller than 10MB'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:171; prototype:dr2-1-specs e2e/documents.fit.spec.js:50-52; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 43-48)",
+        "The Attachment file-type bullet reads 'PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', with no leading 'a'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:172; trace:prototype-dr2-1 documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 43-48)",
+        "The added-documents table's column headings are 'Document reference', 'Document type', 'Date of issue', 'Status' and a visually hidden 'Action'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:195-213; prototype:dr2-1-specs e2e/documents.fit.spec.js:90-97; trace:prototype-dr2-1 documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 46, 51)",
+        "With no documents added, and again after the last document is removed, the File upload card shows no table and no 'You have not added any documents yet.' text. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:195; prototype:dr2-1-specs e2e/documents.fit.spec.js:107-109; trace:prototype-dr2-1 documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 60-62)",
+        "Trying to save a sixteenth document shows 'You can upload a maximum of 15 files' in the error summary, linked to the Attachment field, and the same message inline on the Attachment field. (prototype:dr2-1-source app/routes.js:10949-10957)"
+      ],
+      "requirements": ["req-488", "req-489", "req-494", "req-505", "req-508", "req-510", "req-527", "req-528", "req-530"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/upload-documents.html:65-213; app/routes.js:10949-10957" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/documents.fit.spec.js:50-52, 90-97, 107-109" },
+        { "source": "trace:prototype-dr2-1", "ref": "documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 40-48; documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 46-62" },
+        { "source": "repo:frontend", "ref": "features/documents/copy/copy.en.js; template.njk; upload-config.js; form/errors.js" },
+        { "source": "repo:tests", "ref": "tests/animals/e2e/features/documents-limits.spec.ts; documents-reject.spec.ts; promoted-documents.spec.ts" },
+        { "source": "trace:animals-fit", "ref": "p22-015, p22-021, p22-027, p22-028, p22-033, p22-041, p22-072, p22-073, p24-014, p24-016" },
+        { "source": "trace:e2e", "ref": "p12-014, p12-023, p12-029, p12-060, p12-066" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the copy slices req-488, req-489, req-494, req-505, req-508, req-510, req-528 and req-530 with the error-placement slice req-527: all are on the same page template and copy, reviewed against the same render, and the tests-repo specs that assert the empty-state text and the summary-only capacity error change together. The size bullet's number stays at the current limit here; the 50MB row (req-509, blocked) changes the number. Welsh copy keeps step with each English change where it has an equivalent.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "tests:tests/animals/e2e/features/documents-limits.spec.ts",
+        "tests:tests/animals/e2e/features/documents-reject.spec.ts",
+        "tests:tests/animals/e2e/features/promoted-documents.spec.ts"
+      ],
+      "shared": [],
+      "dependsOn": [],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-3",
+      "title": "Document references accept punctuation, and the document type list drops Health certificate",
+      "detail": "Design Release 2.1 accepts any non-blank document reference, such as 'ITAHC-001', and offers thirteen document types with no 'Health certificate'. Today a reference with a hyphen reaches the trader only as 'The file could not be uploaded. Try again.', and the select offers fourteen types. After this a reference with hyphens, slashes, spaces or other punctuation is accepted end to end, and the select offers the design's thirteen types in its order. Documents already saved as Health certificate still load and are still coded on the outbound event, because the backend keeps that type.",
+      "acceptanceCriteria": [
+        "A document with the reference 'ITAHC-001' is added and listed in the added-documents table with that reference, with no upload error. (trace:prototype-dr2-1 TRACE C actions 92-95; prototype:dr2-1-specs e2e/support/journey.js:196-206)",
+        "A document whose reference has slashes and spaces, such as 'GB/HC 2026 01', is added and listed with that reference, with no upload error. (trace:prototype-dr2-1 documents--upload-documents-a-date-of-issue-that-is-not-a-real-date action 39; conflict c-065)",
+        "The 'Document type' select offers, in this order after its placeholder: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other. (prototype:dr2-1-source app/routes.js:10843-10861; prototype:dr2-1-specs e2e/documents.fit.spec.js:11-26; document:dr1-parity-backlog backlog.json inc-136)",
+        "'Health certificate' is not among the Document type options. (prototype:dr2-1-source app/routes.js:10843-10856; document:dr1-parity-backlog backlog.json inc-136)"
+      ],
+      "requirements": ["req-497", "req-499"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:10843-10861" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/documents.fit.spec.js:11-26; e2e/support/journey.js:196-206" },
+        { "source": "trace:prototype-dr2-1", "ref": "TRACE C actions 92-95; documents--upload-documents-a-date-of-issue-that-is-not-a-real-date action 39; poultry-by-rail action 90" },
+        { "source": "document:dr1-parity-backlog", "ref": "backlog.json inc-136" },
+        { "source": "repo:backend", "ref": "accompanyingdocument/DocumentUploadRequest.java:21-27; accompanyingdocument/DocumentType.java:5-9" },
+        { "source": "repo:frontend", "ref": "features/documents/copy/copy.en.js:76-92; controller.js:82-91" },
+        { "source": "trace:animals-fit", "ref": "p22-017, p23-082, p23-087, p24-024" },
+        { "source": "trace:e2e", "ref": "p12-016, p14-139" }
+      ],
+      "repos": ["backend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the reference-characters slice (req-497, backend validation of the document-upload request, proved through the page) and the document-type list slice (req-499, the frontend's options): both decide what a document may be, share the same add-a-document set-up, and are proved by the same tests-repo document specs. The backend keeps its Health certificate type so saved documents still load and are coded on the outbound event (conflict c-085); the review page keeps its label for that type. The page's own 58-character limit on the reference is unchanged. Re-raise req-497 if a downstream codelist proves to need a narrower character set.",
+      "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "frontend:src/server/app/services/document-types",
+        "tests:tests/animals/e2e/features/documents-scan-lifecycle.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/mapper-a-enum-contract.test.js"
+      ],
+      "dependsOn": [],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-4",
+      "title": "Upload documents remembers where the trader came from and returns them there",
+      "detail": "Design Release 2.1 carries where the trader came from (the overview or the review page) through every reload of the page, so its Back link and Save and continue return the trader where they started, and otherwise Save and continue goes to the next journey step, Consignment addresses. Amending a submitted notification always counts as coming from review. The real page has no return context: Back and Save and continue always go to the overview.",
+      "acceptanceCriteria": [
+        "Reached through the journey from the step before it, Save and continue on the page goes to the next step, Consignment addresses (roles and addresses), including when no document is chosen. (prototype:dr2-1-source app/routes.js:1517-1525, 12275-12278; prototype:dr2-1-specs e2e/documents.fit.spec.js:81-84; prototype:dr2-1-specs e2e/journeys.fit.spec.js:103-112; trace:prototype-dr2-1 documents--upload-documents-documents-are-optional-continuing-with-nothing-chosen-moves-on actions 31-33)",
+        "Opened from the overview, the page's Back link and Save and continue both return the trader to the overview. (prototype:dr2-1-source app/routes.js:11089, 11093, 1588-1602; prototype:dr2-1-specs e2e/documents.fit.spec.js:120-122)",
+        "Opened from the review page, the page's Back link and Save and continue both return the trader to the review page. (prototype:dr2-1-source app/routes.js:11089, 11093, 1588-1602)",
+        "While amending a submitted notification, the page's Back link and Save and continue both go to the review page, however the page was opened. (prototype:dr2-1-source app/routes.js:11069-11079, 11089, 11093)",
+        "After Save and add another and after Remove, the page still remembers where the trader came from: Back and Save and continue go to the overview or review page the trader started from. (prototype:dr2-1-source app/routes.js:11069-11079, 12239; prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:84-89; trace:prototype-dr2-1 documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub action 24)"
+      ],
+      "requirements": ["req-542", "req-481", "req-539"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1517-1525, 1588-1602, 11069-11093, 12239, 12275-12278; app/views/design-release-2.1/upload-documents.html:84-89" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/documents.fit.spec.js:81-84, 120-122; e2e/journeys.fit.spec.js:103-112" },
+        { "source": "trace:prototype-dr2-1", "ref": "documents--upload-documents-documents-are-optional-continuing-with-nothing-chosen-moves-on actions 31-33; documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub actions 24-27; pet-cats-by-air actions 94-97" },
+        { "source": "repo:frontend", "ref": "features/documents/view-model/render.js:39-43; template.njk:59-63; controller.js:265" },
+        { "source": "trace:animals-fit", "ref": "p22-064, p23-018" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the return-context slice (req-542), the Back link slice (req-481) and the Save and continue destination slice (req-539): all three read the same return context and share one set-up (open the page from the overview, from review, while amending). req-539's return to a template review is not a criterion: req-543 keeps the page out of template creation, so a trader can never reach it from a template review. The next-step criterion rests on the journey's step order putting Upload documents after the transporter and before Consignment addresses; the journey-flow area owns that order in the shared flow, so the combiner should order this row after any journey-flow row that changes it. The shared change-context helpers are also used by other pages.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "tests:tests/animals/e2e/features/documents-refresh-no-js.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/shared/kit.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/change-context.test.js",
+        "tests:tests/animals/e2e/features/change-from-cya.spec.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
+      ],
+      "dependsOn": [],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-5",
+      "title": "Save and continue no longer waits for virus scans, and Save and return to overview keeps a typed-in document",
+      "detail": "Design Release 2.1 saves a complete document and moves the trader on at once when they press Save and continue, even while a document is still being scanned, and applies the same check before Save and return to overview, saving a document whose type is chosen. Today Save and continue saves the document and brings the trader back to the page, any document not yet scanned clean holds them, and Save and return to overview leaves at once and drops a part-filled document. Waiting for the scan is not a constraint, because the backend only publishes documents that scanned clean, so pending scans stop holding the trader; a document the scan rejected still does.",
+      "acceptanceCriteria": [
+        "Save and continue with a document type chosen and every field valid saves the document and moves the trader on straight away, without returning to the page first; going back to the page lists the document. (prototype:dr2-1-source app/routes.js:11046-11067, 12262-12273; prototype:dr2-1-specs e2e/journeys.fit.spec.js:103-112)",
+        "With a document still showing 'Scanning for virus', Save and continue moves the trader on, and 'You cannot continue until all documents have been scanned or removed' no longer appears. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:103-112; conflict c-080)",
+        "With a document listed as 'Virus found', Save and continue keeps the trader on the page with '<filename> contains a virus. Remove it and try again with a different file.' in the error summary. (conflict c-080; repo:backend accompanyingdocument/AccompanyingDocumentRepository.java:14-15)",
+        "Save and return to overview with a document type chosen and every field valid saves the document and goes to the overview; returning to the page lists it. (prototype:dr2-1-source app/routes.js:12242-12257, 1564-1586)",
+        "Save and return to overview with a document type chosen but another field missing or invalid keeps the trader on the page with that field's error, and the chosen type stays selected. (prototype:dr2-1-source app/routes.js:12242-12257, 1564-1586)",
+        "Save and return to overview with no document type chosen goes straight to the overview and adds no document. (prototype:dr2-1-source app/routes.js:12242-12257; trace:prototype-dr2-1 documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub actions 25-27)",
+        "While amending a submitted notification, Save and return with a valid document whose type is chosen saves it and goes to the review page. (prototype:dr2-1-source app/routes.js:12242-12257, 1564-1586)"
+      ],
+      "requirements": ["req-538", "req-540"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1564-1586, 11046-11067, 12242-12273" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/journeys.fit.spec.js:103-112" },
+        { "source": "trace:prototype-dr2-1", "ref": "documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub actions 24-27" },
+        { "source": "repo:frontend", "ref": "features/documents/controller.js:256-295; scan/summary-errors.js:21-24" },
+        { "source": "repo:backend", "ref": "accompanyingdocument/AccompanyingDocumentRepository.java:14-15" },
+        { "source": "trace:animals-fit", "ref": "p22-035, p22-037, p22-061, p22-062, p23-007, p23-008, p23-009, p23-014, p23-083, p24-045" },
+        { "source": "trace:e2e", "ref": "p12-024, p12-025, p12-026" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the Save and continue slice (req-538) and the Save and return to overview slice (req-540): both decide what the page's save buttons do with a typed-in document and with documents still scanning, share one controller path and one set-up. Kept apart from the return-context row because that row's criteria rest on the journey's step order, which another area owns. A document needs every field, its file included, to be stored, so req-540's full check before leaving stands with the cross-page ruling in conflict c-211. The tests-repo scan-lifecycle spec that expects the scan to hold Save and continue changes here.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "tests:tests/animals/e2e/features/documents-scan-lifecycle.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/kit.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js",
+        "tests:tests/animals/e2e/features/task-page-exits.spec.ts"
+      ],
+      "dependsOn": [],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-6",
+      "title": "Template creation leaves out Upload documents",
+      "detail": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment: while a trader is creating a template, Upload documents is not a step of the journey, and opening or submitting the page goes to the overview without saving anything. No real service has templates yet, so this lands once the templates area has built template creation.",
+      "acceptanceCriteria": [
+        "While creating a template, Save and continue on the transporter step goes to Consignment addresses, passing over Upload documents. (prototype:dr2-1-source app/routes.js:1517-1525)",
+        "While creating a template, opening the Upload documents page's address goes to the template's overview. (prototype:dr2-1-source app/routes.js:12185-12187)",
+        "While creating a template, submitting the Upload documents page goes to the template's overview and the template holds no document. (prototype:dr2-1-source app/routes.js:12207-12209)"
+      ],
+      "requirements": ["req-543"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1517-1525, 12185-12187, 12207-12209" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart: it can only be observed once template creation exists, which the templates area builds. The combiner must make this row depend on the templates area's row that lets a trader create a template and walk its journey; that is a real ordering need, not a layer split. Where template mode lives in the shared flow is for the templates area's rows to set.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js"
+      ],
+      "dependsOn": [],
+      "dependsOnAreas": ["templates"],
+      "existingRow": null
+    },
+    {
+      "draftRef": "documents-7",
+      "title": "Attach files up to 50MB",
+      "detail": "Design Release 2.1 allows files up to 50MB, and DR1's inc-138 judged the same change. The backend already accepts 50MB. The frontend holds the limit at 10MB only because CDP's nginx ingress caps request bodies at 10 MiB; one limit applies in every environment, so the change waits until CDP raises that cap.",
+      "acceptanceCriteria": [
+        "The Attachment size bullet reads 'files that are smaller than 50MB'. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:171; trace:prototype-dr2-1 TRACE C action 92; document:dr1-parity-backlog backlog.json inc-138)",
+        "A file of exactly 50,000,000 bytes is added and scans to 'Check completed' with no error, on the local stack and in every CDP environment. (document:dr1-parity-backlog backlog.json inc-138 finding.correction; trace:prototype-dr2-1 pet-cats-by-air action 89)",
+        "With JavaScript, choosing a file one byte over 50MB and submitting shows 'The selected file must be smaller than 50MB' in the error summary and inline on the Attachment field, and no document is added. (prototype:dr2-1-source app/views/design-release-2.1/upload-documents.html:171; document:dr1-parity-backlog backlog.json inc-138 finding.frontend)",
+        "Without JavaScript, submitting a file well over 50MB redraws the page with 'The selected file must be smaller than 50MB' in the error summary and inline on the Attachment field, rather than an error page, and no document is added. (document:dr1-parity-backlog backlog.json inc-138 finding.frontend; document:dr1-parity-notes Pins, lines 211-217)"
+      ],
+      "requirements": ["req-509"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/upload-documents.html:171" },
+        { "source": "trace:prototype-dr2-1", "ref": "TRACE C action 92; pet-cats-by-air action 89" },
+        { "source": "document:dr1-parity-backlog", "ref": "backlog.json inc-138" },
+        { "source": "document:dr1-parity-notes", "ref": "Pins, lines 211-217" },
+        { "source": "repo:frontend", "ref": "features/documents/upload-config.js:39-50; form/errors.js:34-36; client/oversize-validation" },
+        { "source": "repo:backend", "ref": "src/main/resources/application.yml:27-30, 52" },
+        { "source": "repo:tests", "ref": "resources/file-upload/constants.ts; tests/animals/e2e/features/documents-limits.spec.ts; documents-reject.spec.ts" },
+        { "source": "trace:animals-fit", "ref": "p22-007, p23-071 to p23-078, p24-020, p24-021, p24-057" },
+        { "source": "trace:e2e", "ref": "p12-061 to p12-065, p14-140" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "CDP must raise the nginx ingress request-body cap in front of trade-imports-animals-frontend to at least 50,001,024 bytes, and the service team must record the confirmation against EUDPA-518, before this is built and deployed. Until then the limit stays at 10MB everywhere."
+      ],
+      "notes": "Kept apart from the copy row so the wording change (req-508) is not held up by the platform blocker. The route's payload cap is the limit plus 1KiB of multipart allowance. A configurable limit was rejected by DR1 because it gives no parity anywhere. The backend needs no change: it already accepts 50MB.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
+        "tests:resources/file-upload",
+        "tests:tests/animals/e2e/features/documents-limits.spec.ts",
+        "tests:tests/animals/e2e/features/documents-reject.spec.ts"
+      ],
+      "shared": [],
+      "dependsOn": [],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

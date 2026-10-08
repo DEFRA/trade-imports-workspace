@@ -1,0 +1,349 @@
+{
+  "area": "manage-notifications",
+  "rows": [
+    {
+      "title": "Amend this notification asks for confirmation in a dialog, then opens the amend review",
+      "detail": "Design Release 2.1 asks a trader to confirm before amending a submitted notification, in a dialog over the view page, and then takes them straight to the notification's review page so they can see and change their answers. Today the amend action has no confirmation and lands on the overview hub, one step away from the review. After this change 'Amend this notification' opens a modal dialog ('Amend notification', 'Are you sure you want to change this notification?') whose 'Yes, continue' starts the amendment and lands on the amend review, the dashboard card's Amend lands on the same review, and an amend that cannot happen returns the trader to the overall dashboard. Because a state change must stay a form post carrying the CSRF token (c-189), the dialog's confirm submits a form, and without script the same control reaches a confirmation page with the dialog's heading, question and buttons (c-190).",
+      "acceptanceCriteria": [
+        "On a Submitted notification's view page, 'Amend this notification' opens, without leaving the page, a dialog with the level-1 heading 'Amend notification' and the question 'Are you sure you want to change this notification?' (prototype:dr2-1-source prototype-dr2-1-source-p12-046, prototype-dr2-1-source-p12-047; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-181, trace-prototype-dr2-1-p13-175, trace-prototype-dr2-1-p14-056, trace-prototype-dr2-1-p14-057; prototype:dr2-1-specs prototype-dr2-1-specs-p5-108)",
+        "The dialog's 'Yes, continue' button starts the amendment and the trader lands on that notification's review page, showing it is being amended, not on its overview hub (prototype:dr2-1-source prototype-dr2-1-source-p12-048, prototype-dr2-1-source-p12-081; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-058, trace-prototype-dr2-1-p14-062; prototype:dr2-1-specs prototype-dr2-1-specs-p5-110, prototype-dr2-1-specs-p5-124; c-191)",
+        "Amend on a submitted notification's card in the notification list also lands on that notification's review page, not on its overview hub (prototype:dr2-1-source prototype-dr2-1-source-p12-081; prototype:dr2-1-specs prototype-dr2-1-specs-p5-124; c-191)",
+        "The dialog's link-styled 'No, go back' button closes the dialog, leaving the notification Submitted and the trader on the view page, from where 'Amend this notification' opens the dialog again (prototype:dr2-1-source prototype-dr2-1-source-p12-049; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-059; prototype:dr2-1-specs prototype-dr2-1-specs-p5-109-m1)",
+        "The dialog is hidden until opened; once open it is announced as a modal dialog named by its heading and described by its question, with a Close (X) button announced as 'Close' and an overlay behind it; the Close button, the overlay and 'No, go back' each dismiss it without amending (prototype:dr2-1-source prototype-dr2-1-source-p1-029, prototype-dr2-1-source-p1-030, prototype-dr2-1-source-p12-050, prototype-dr2-1-source-p12-054, prototype-dr2-1-source-p12-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-183, trace-prototype-dr2-1-p14-060, trace-prototype-dr2-1-p14-061, trace-prototype-dr2-1-p14-084)",
+        "With JavaScript turned off, 'Amend this notification' reaches a confirmation page carrying the dialog's heading, question, 'Yes, continue' and 'No, go back', and 'Yes, continue' there starts the amendment and lands on the amend review (c-189; c-190)",
+        "Amend for a notification that is not Submitted (such as one already being amended from another tab) or whose reference is unknown changes nothing and returns the trader, with no message, to the overall dashboard: on the workspace stack and in CDP the INS front door's dashboard; in the animals frontend's own fit run, which has no INS front-door URL configured, /live-animals (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-091; prototype:dr2-1-specs prototype-dr2-1-specs-p5-129; prototype:dr2-1-source prototype-dr2-1-source-p12-075; repo:backend repo-backend-p2-092, repo-backend-p2-093; c-198)",
+        "With the service in Welsh, the dialog's heading, question and buttons show Welsh text (repo:frontend repo-frontend-p3-089, repo-frontend-p2-115)"
+      ],
+      "requirements": ["req-1391", "req-1392", "req-1393", "req-1394", "req-1487"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-029, p1-030, p12-046 to p12-050, p12-054, p12-055, p12-075, p12-081" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-181, p12-183, p13-175, p14-056 to p14-062, p14-084, p14-091" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-108, p5-109-m1, p5-110, p5-124, p5-129" },
+        { "source": "repo:backend", "ref": "repo-backend-p2-092, p2-093" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p3-089, p2-115" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-071, p3-082, p4-098" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-027, p3-031" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-053, p14-054" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the confirmation dialog: its markup, focus handling, how Close, the overlay and the go-back button dismiss it, and its no-script confirmation page. The cancel-amendment dialog and the Amend status bar's Cancel amend reuse it.",
+      "openQuestions": [],
+      "notes": "Pass 2 combines the dialog (req-1391, req-1392, req-1393), the landing on the amend review (req-1394) and the amend guard (req-1487): one route, one dialog, one review and ladder. req-1393 covers both dialogs; this row builds the shared dialog, and the cancel-amendment row shows it holds there too. The dialog is a custom component (GOV.UK Frontend has no modal) because the prototype wins under c-190; keep to govuk-* classes for its contents. Cross-area ordering: the 'Amend this notification' button on the view page comes from the review-and-submit row 'View header offers Amend, Copy as new and Delete' (req-895), and the INS front-door URL with its /live-animals fallback from the row 'A notification opened from the dashboard has a view header ... Back link to the overall dashboard' (req-899); this row needs both landed. The tests repo's amend flows and amend-resubmit spec follow the new landing (review, not hub) and the dialog. Welsh strings here are part of req-1480, which the delete page row carries.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/amend",
+        "frontend:src/server/app/shared/confirmation-dialog.njk",
+        "frontend:src/client/javascripts/components/confirmation-dialog.js",
+        "frontend:src/client/stylesheets/components/_confirmation-dialog.scss"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js",
+        "frontend:src/server/app/shared/paths.js",
+        "frontend:src/client/javascripts/application.js",
+        "frontend:src/client/stylesheets/components/_index.scss",
+        "frontend:src/config/config.js",
+        "tests:flows/animals/seeded-journey.ts",
+        "tests:flows/animals/notification-actions.ts",
+        "tests:page-objects/animals/notification-view-page.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts",
+        "tests:tests/animals/e2e/features/promoted-lifecycle.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Cancel amendment is a dialog over the current page and returns to the submitted view with no banner",
+      "detail": "Design Release 2.1 confirms cancelling an amendment in the same kind of dialog as amending, with a shorter heading, no explanatory paragraph and a link-styled 'Go back', and then shows the restored submitted notification without a success banner. Today 'Cancel amendment' navigates to a separate page with the journey strip, a Back link, an explanatory paragraph and a 'No, return to notification' button, and the restored view carries ?cancelled=1 and a Success banner. After this change the cancel confirmation opens as a dialog over the page, keeps a no-script confirmation page at today's route (c-190), lands on the plain read-only Submitted view, and a cancel for a notification not being amended returns to the overall dashboard.",
+      "acceptanceCriteria": [
+        "'Cancel amend' on the amend review opens, over the page, a dialog with the level-2 heading 'Are you sure you want to cancel this amendment?' and no description line (prototype:dr2-1-source prototype-dr2-1-source-p1-027, prototype-dr2-1-source-p12-052; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-083, trace-prototype-dr2-1-p14-085; prototype:dr2-1-specs prototype-dr2-1-specs-p5-125; c-195)",
+        "Cancelling an amendment shows no paragraph saying the changes will be discarded and the submitted version restored (prototype:dr2-1-source prototype-dr2-1-source-p12-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-085; c-195)",
+        "The dialog's way back is a link-styled 'Go back' button that closes it and leaves the amendment in progress with its changed answers; no 'No, return to notification' button appears (prototype:dr2-1-source prototype-dr2-1-source-p1-029, prototype-dr2-1-source-p12-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-084; c-190; c-195)",
+        "The cancel-amendment dialog is hidden until opened, is announced as a modal dialog named by its heading, and has a Close (X) button announced as 'Close' and an overlay; the Close button and the overlay dismiss it without cancelling (prototype:dr2-1-source prototype-dr2-1-source-p1-029, prototype-dr2-1-source-p1-030, prototype-dr2-1-source-p12-050; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-061, trace-prototype-dr2-1-p14-084)",
+        "With JavaScript turned off, 'Cancel amend' reaches a confirmation page carrying only the dialog's heading, 'Yes, cancel amendment' and 'Go back': no journey strip and no Back link (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086; c-190)",
+        "After 'Yes, cancel amendment' the trader lands on the notification's view page, read only and showing Submitted, with no success banner and with no 'cancelled' marker in its address (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-088)",
+        "Opening the cancel-amendment confirmation by its address, or posting it, for a notification that is not being amended (such as a Submitted one) changes nothing and returns the trader, with no message, to the overall dashboard: on the workspace stack and in CDP the INS front door's dashboard; in the animals frontend's own fit run, with no INS front-door URL configured, /live-animals (prototype:dr2-1-source prototype-dr2-1-source-p12-085; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-128; c-198)",
+        "With the service in Welsh, the dialog's heading and 'Go back' show Welsh text (repo:frontend repo-frontend-p3-089)"
+      ],
+      "requirements": ["req-1410", "req-1411", "req-1413", "req-1414", "req-1416", "req-1417"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-027, p1-029, p1-030, p12-050, p12-052, p12-054 to p12-056, p12-085" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-061, p14-083 to p14-086, p14-088, p14-090" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-125, p5-128" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-024" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p3-078 to p3-084, p3-087, p3-089, p3-094-m1, p3-124, p3-125" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-075 to p3-078, p3-080" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-035 to p3-037, p3-039, p3-040, p3-042, p3-044, p3-045, p3-054" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-034 to p14-037, p14-039 to p14-041, p14-043" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 2 combines the cancel dialog's copy (req-1410, req-1411, req-1413), the dialog itself (req-1414), the landing (req-1416) and the guard (req-1417): one route and one confirmation, reviewed once. 'Yes, cancel amendment' stays a standard primary button (req-1412, already met). Depends on the amend dialog row, whose dialog it reuses. The 'Cancel amend' button at the end of the amend review comes from the review-and-submit row 'Review ends with Continue and Delete, and an amendment's review offers Cancel amend' (req-889), which this row needs landed. The tests repo's cancel-amendment page object and spec move from today's copy ('Cancel this amendment?', 'No, return to notification', ?cancelled=1) to these, keeping the smoke-tagged cancel case. Welsh strings here are part of req-1480, which the delete page row carries.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend",
+        "tests:page-objects/animals/notification-cancel-amend-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/confirmation-dialog.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js",
+        "frontend:src/config/config.js",
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "An amendment shows an 'Amend' status bar with Cancel amend on the review and every question page",
+      "detail": "Design Release 2.1 marks a notification being amended with an 'Amend' tag, and puts a status bar above the caption and heading of the review page and every question page carrying that tag, the reference and a 'Cancel amend' button, so the trader can abandon the amendment from wherever they are. Today the tag reads 'Amending', and the only way to cancel is a link under the review page heading. After this change every page of an amendment carries the status bar, and its 'Cancel amend' opens the cancel-amendment dialog over that page. The notification list keeps its own 'Amending' tag (req-1060); this row changes the journey pages only. Whether the hub's own status line carries Cancel amend is req-782, in the notification-hub area.",
+      "acceptanceCriteria": [
+        "While a notification is being amended, its status tag on the amend review and on its question pages reads 'Amend', not 'Amending' (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063; prototype:dr2-1-specs prototype-dr2-1-specs-p5-111)",
+        "During an amendment the review page and every question page show, above the caption and heading, a status bar with the 'Amend' tag, the notification's reference and a link-styled 'Cancel amend' button (prototype:dr2-1-source prototype-dr2-1-source-p1-026, prototype-dr2-1-source-p1-079, prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063, trace-prototype-dr2-1-p14-070, trace-prototype-dr2-1-p14-086; prototype:dr2-1-specs prototype-dr2-1-specs-p5-112)",
+        "'Cancel amend' in a question page's status bar opens the cancel-amendment dialog over that page, and its 'Go back' leaves the trader on the same question page with the amendment in progress (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086)",
+        "Confirming the cancellation from a question page's status bar restores the submitted answers and lands on the read-only Submitted view (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086, trace-prototype-dr2-1-p14-088)",
+        "With JavaScript turned off, the status bar's 'Cancel amend' reaches the cancel-amendment confirmation page (c-190)",
+        "With the service in Welsh, the 'Amend' tag and 'Cancel amend' show Welsh text (repo:frontend repo-frontend-p2-115)"
+      ],
+      "requirements": ["req-1397", "req-1398"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-026, p1-079, p12-056" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-063, p14-070, p14-086, p14-088" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-111, p5-112" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-074" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p1-048, p3-029, p3-029-m1, p3-032" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-030, p14-031, p14-055, p14-071" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 2 combines the tag copy (req-1397) and the status bar (req-1398): the bar carries the tag, and both render through the same journey strip on the same pages. Kept apart from the cancel dialog row because it changes the shared journey strip on every question page, a different review. Depends on the cancel-amendment dialog row: the bar's button opens that dialog. The declaration page carries no status bar (req-917, review-and-submit area). The tests repo's reference-strip and cancel-amend specs move from 'Amending' to 'Amend' on journey pages and find Cancel amend in the bar.",
+      "touches": [
+        "frontend:src/server/app/shared/amend-status-bar.njk"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/kit.js",
+        "frontend:src/server/app/shared/layout.njk",
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/shared/confirmation-dialog.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "tests:tests/animals/e2e/features/reference-strip.spec.ts",
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
+        "tests:page-objects/animals/notification-view-page.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "During an amendment, pages end with Save and return, Save and continue and Save and return to overview, and Continue on the amend review is held while anything is incomplete",
+      "detail": "While amending, Design Release 2.1 lets the trader save a page and go straight back to the amend review, carry on to the next page, or return to the overview, and it quietly holds Continue on the amend review until every answer is complete and valid. Today a Change link opens a question in change mode and saving always returns to the notification view, and an amendment reaches the declaration only once every task row is fulfilled. After this change each overview-linked page ends with 'Save and return' (to the amend review), 'Save and continue' and a link-styled 'Save and return to overview' while amending; the party pickers, the CPH number page and the permanent address page show the first two only (c-210); question pages keep their usual Back links; and Continue on an incomplete amend review leaves the trader there with no error summary (c-201).",
+      "acceptanceCriteria": [
+        "While a notification is being amended, each page the overview links to ends with a primary 'Save and return' button, a secondary 'Save and continue' button and a link-styled 'Save and return to overview' button, with no cancel link (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-071, trace-prototype-dr2-1-p14-072; prototype:dr2-1-specs prototype-dr2-1-specs-p5-114, prototype-dr2-1-specs-p5-115, prototype-dr2-1-specs-p5-116; prototype:dr2-1-source prototype-dr2-1-source-p1-067, prototype-dr2-1-source-p1-074)",
+        "'Save and return' saves the page and goes to the amend review, which shows the changed answer; 'Save and continue' saves and goes to the next page; 'Save and return to overview' saves and goes to the overview hub (prototype:dr2-1-specs prototype-dr2-1-specs-p5-114, prototype-dr2-1-specs-p5-115, prototype-dr2-1-specs-p5-116, prototype-dr2-1-specs-p5-119; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-071, trace-prototype-dr2-1-p14-072)",
+        "A question page opened from a Change link on the amend review ends with the same three controls, and 'Save and return' brings the trader back to the amend review (prototype:dr2-1-specs prototype-dr2-1-specs-p5-119; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-072)",
+        "While amending, the party pickers, the CPH number page and the permanent address page end with 'Save and return' (primary, to the amend review) and 'Save and continue' (secondary) only, without 'Save and return to overview'; outside an amendment they keep their single primary button (c-210; document:dr1-parity-notes document-dr1-parity-notes-p1-055)",
+        "During an amendment, question pages keep the journey's usual Back links (arrival details back to the overview hub, for example), never a Back link to the amend review (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-073)",
+        "Continue on the amend review while an answer is incomplete or invalid (for example after changing the main reason for import to one whose follow-up questions are not yet answered) leaves the trader on the amend review with no error summary and no error message, and the notification stays being amended (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-074; prototype:dr2-1-specs prototype-dr2-1-specs-p5-117, prototype-dr2-1-specs-p5-118; c-201)"
+      ],
+      "requirements": ["req-1403", "req-1404", "req-1406"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-067, p1-074" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-071 to p14-074" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-114 to p5-119" },
+        { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-055" },
+        { "source": "repo:tests", "ref": "repo-tests-p2-152, p3-079, p3-085" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p1-050, p3-030-m1" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-047" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the amend endings on one overview-linked page and on the CPH number page, and at the held Continue: every page area's own rows keep these endings while amending.",
+      "openQuestions": [],
+      "notes": "Pass 2 combines the page endings (req-1403), the Back links (req-1404) and the held Continue (req-1406): all three are how an amendment moves between its pages, built and reviewed through the same amend walk. The draft review's error summary is not carried over to the amend review (c-201 overrules the draft-review claim for the amend review). Continue on a valid amend review already reaches the Declaration (req-1407, already met). Depends on nothing in this area, though the 'Amend this notification' landing on the review (amend dialog row) makes it easier to reach. Page areas that change a page's ending outside amend (for example cph-permanent-and-contact) share the save-actions partial. The tests repo's change-from-cya and amend-resubmit specs move from the ?change=1 return to these controls.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/save-actions.njk",
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number",
+        "tests:tests/animals/e2e/features/change-from-cya.spec.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts",
+        "tests:tests/animals/e2e/features/task-page-exits.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Copy as new carries over exactly Design Release 2.1's list, from the submitted version",
+      "detail": "Design Release 2.1 says what a copy keeps (origin, internal reference, what is imported with its species, the reasons and their follow-ups, the additional animal details, the parties and CPH) and what it leaves for the trader to fill in again (numbers of animals and packages, identifiers, arrival, transit, transporter, documents and contact address). Today the backend copy mapper and the pages disagree: the record clears the internal reference, the species, the unweaned answer and the exit date, yet the copy's overview shows counts, identification, arrival, transit, transport and contact address as Complete because the whole answer payload is copied. c-196 settles that a copy carries exactly Design Release 2.1's list, in the record and on the pages alike, and c-197 that copying an amendment in progress copies its submitted version. After this change a copy keeps and clears what Design Release 2.1 says, and a certified-for value no longer offered is mapped to a current one.",
+      "acceptanceCriteria": [
+        "A copy's origin of the import comes back with the source's internal reference number, and the copy's review shows it (prototype:dr2-1-source prototype-dr2-1-source-p12-063; c-196)",
+        "A copy's commodity pages come back with the source's commodity, its commodity selections and the selected species, and the copy has the source's notification type (prototype:dr2-1-source prototype-dr2-1-source-p12-064, prototype-dr2-1-source-p12-071; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101; c-196)",
+        "A copy's import reason pages come back with the main reason for import and its follow-ups: internal market purpose, transhipment destination country, transit exit border control post, transit destination country, and the temporary admission exit date and port of exit (prototype:dr2-1-source prototype-dr2-1-source-p12-065; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101; c-196)",
+        "A copy's additional details come back with what the animals are certified for, whether unweaned animals are included and the storage temperature (prototype:dr2-1-source prototype-dr2-1-source-p12-066; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101; c-196)",
+        "On the workspace stack and in CDP, copying a notification stored through the backend API with certified-for 'Breeding' or 'Breeding and/or production' gives a copy certified for 'Further keeping', 'Slaughter' stays 'Slaughter', and any other value not offered gives 'Further keeping' (prototype:dr2-1-source prototype-dr2-1-source-p12-070)",
+        "A copy's overview shows Commodity details as To do, its Animals total reads 0 and its Packages/boxes total shows no figure (prototype:dr2-1-source prototype-dr2-1-source-p12-068; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101, trace-prototype-dr2-1-p14-102, trace-prototype-dr2-1-p14-102-m1; c-196)",
+        "A copy's overview shows Identification details, Arrival details, Transport details and Contact address as To do (prototype:dr2-1-source prototype-dr2-1-source-p12-068; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101; c-196)",
+        "A copy's transit countries page comes back with none of the source's transit countries (prototype:dr2-1-source prototype-dr2-1-source-p12-068; c-196)",
+        "Copying a notification that is being amended copies its submitted version: an answer changed during the amendment and not yet resubmitted does not appear on the copy, and the submitted answer does (prototype:dr2-1-source prototype-dr2-1-source-p12-058, prototype-dr2-1-source-p12-059; c-197)"
+      ],
+      "requirements": ["req-1424", "req-1425", "req-1426", "req-1427", "req-1428", "req-1429", "req-1430", "req-1432", "req-1433", "req-1434", "req-1435", "req-1437"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p12-058, p12-059, p12-063 to p12-066, p12-068, p12-070, p12-071" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-101, p14-102, p14-102-m1" },
+        { "source": "repo:backend", "ref": "repo-backend-p2-046, p2-048 to p2-054, p2-059 to p2-063, p2-066" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p3-075, p13-109" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p2-077, p2-078" }
+      ],
+      "repos": ["backend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 1 had two slices, what a copy keeps (req-1424, req-1425, req-1428, req-1429, req-1430) and what it clears (req-1426, req-1427, req-1432 to req-1435); pass 2 merges them with copying the submitted version of an amendment (req-1437) because every one changes the same copy mapping in the backend and the same copy in the frontend's stub persistence, and is proven by copying one full notification and reading the copy. What a copy already keeps or clears correctly (req-1423, req-1431, req-1436) stays as it is. The copy must clear the cleared answers from the copied answer payload as well as the record, so the overview's task statuses follow (c-196). The frontend's stub persistence copy mirrors the backend so the fit run shows the same. The tests repo gains an end-to-end copy-as-new case on the stack that reads the copy's overview and pages.",
+      "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
+        "frontend:src/server/app/services/persistence/records/stub/lifecycle/create.js"
+      ],
+      "shared": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "tests:flows/animals/notification-actions.ts",
+        "tests:adapters/http/notification-api-client.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "A stale Copy as new from the view page returns to the view page with the updated banner",
+      "detail": "Copy as new is checked against the version of the notification the trader was looking at, so a copy of something that has changed since is refused with 'The notification has been updated'. Started from the dashboard this works today, but started from the view page it redirects to a check-answers address no route serves. After this change a stale copy returns the trader to where they started, the dashboard or the notification's view page, with the banner, and copies nothing.",
+      "acceptanceCriteria": [
+        "When the notification changed after the trader opened its view page (for example amended from another tab), Copy as new on that view page copies nothing and returns the trader to the notification's view page showing 'The notification has been updated' (repo:frontend repo-frontend-p3-074, repo-frontend-p3-075-m1; repo:backend repo-backend-p2-040, repo-backend-p2-040-m1)",
+        "When the notification changed after the trader opened the notification list, Copy as new on its card copies nothing and returns the trader to the notification list showing 'The notification has been updated' (repo:frontend repo-frontend-p3-074; repo:backend repo-backend-p2-035, repo-backend-p2-040)",
+        "After a refused stale copy, no new draft appears in the notification list (repo:backend repo-backend-p2-040; repo:tests repo-tests-p4-106)"
+      ],
+      "requirements": ["req-1439"],
+      "sources": [
+        { "source": "repo:frontend", "ref": "repo-frontend-p3-074, p3-075, p3-075-m1" },
+        { "source": "repo:backend", "ref": "repo-backend-p2-035, p2-040, p2-040-m1" },
+        { "source": "repo:tests", "ref": "repo-tests-p4-106" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p13-106-m1, p14-061" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "fix",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart from the copy carry-over row: it is a frontend redirect fix with its own set-up (two tabs and a stale version), and the carry-over row is a backend mapping change. Small on purpose. The view page's Copy as new button comes from the review-and-submit row 'View header offers Amend, Copy as new and Delete' (req-896), which this row needs landed.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+        "tests:flows/animals/notification-actions.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The delete confirmation page identifies the notification in a summary and takes Design Release 2.1's wording and buttons",
+      "detail": "Design Release 2.1 shows which notification is about to be deleted, in a summary of its reference, commodity, number and origin, and words the page and its buttons more briefly, with a plain 'No, cancel' link back to the notification. Today the page has only a heading, one sentence and two buttons, shows the journey strip, and its way back goes to the dashboard. c-195 settles that Design Release 2.1 is the DR2 comparison DR1 left these pages for, so its copy is adopted. After this change the page shows the summary list, the new wording and buttons, and Back and 'No, cancel' return to the notification's view page.",
+      "acceptanceCriteria": [
+        "The delete confirmation page shows a GOV.UK summary list with the rows 'Reference number', 'Commodity', 'Number' and 'Origin', the Origin row showing the country of origin (prototype:dr2-1-source prototype-dr2-1-source-p11-173, prototype-dr2-1-source-p11-176; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-107, trace-prototype-dr2-1-p14-111; prototype:dr2-1-specs prototype-dr2-1-specs-p5-138; c-195)",
+        "The Commodity row lists each commodity's common name with its species' Latin names in brackets, comma-separated, such as 'Sheep (Ovis Aries), Goat (Capra Hircus)'; for other live mammals it uses each species' common name (prototype:dr2-1-source prototype-dr2-1-source-p11-174; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-107; prototype:dr2-1-specs prototype-dr2-1-specs-p5-139)",
+        "The Number row shows the total number of packages for a notification of germinal products only, and otherwise the total number of animals (prototype:dr2-1-source prototype-dr2-1-source-p11-175)",
+        "A summary row the notification has no value for shows what the notification list shows for that notification, and 'Not applicable' when that is empty too (prototype:dr2-1-source prototype-dr2-1-source-p11-177)",
+        "Below the summary the page says 'Confirm that you want to delete this notification.' (prototype:dr2-1-source prototype-dr2-1-source-p11-178; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-108; prototype:dr2-1-specs prototype-dr2-1-specs-p5-140; c-195)",
+        "The page warns 'This action cannot be undone.' (prototype:dr2-1-source prototype-dr2-1-source-p11-178; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-108; prototype:dr2-1-specs prototype-dr2-1-specs-p5-141; c-195)",
+        "The red warning button reads 'Yes, delete' (prototype:dr2-1-source prototype-dr2-1-source-p11-179; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-109; c-195)",
+        "Beside 'Yes, delete', in the same button group, a plain link reads 'No, cancel'; no 'No, return to dashboard' button appears (prototype:dr2-1-source prototype-dr2-1-source-p11-180; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-110; prototype:dr2-1-specs prototype-dr2-1-specs-p5-142; c-195)",
+        "The page's Back link and 'No, cancel' both return to the notification's view page, and the notification is not deleted (prototype:dr2-1-source prototype-dr2-1-source-p11-168, prototype-dr2-1-source-p11-170, prototype-dr2-1-source-p11-171; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-110; prototype:dr2-1-specs prototype-dr2-1-specs-p5-143)",
+        "The page shows no journey strip (status tag and reference) above its heading (prototype:dr2-1-source prototype-dr2-1-source-p11-171; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-111)",
+        "With the service in Welsh, every new or changed string on the delete confirmation page (the summary row keys, 'Not applicable', the confirmation sentence, the warning, 'Yes, delete' and 'No, cancel') shows Welsh text (repo:frontend repo-frontend-p3-104, repo-frontend-p2-115; trace:animals-fit trace-animals-fit-p3-060)"
+      ],
+      "requirements": ["req-1442", "req-1443", "req-1444", "req-1445", "req-1446", "req-1447", "req-1448", "req-1449", "req-1450", "req-1451", "req-1480"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-168, p11-170, p11-171, p11-173 to p11-180" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-107 to p14-111" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-138 to p5-143" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-023" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p3-089, p3-092 to p3-097, p3-094-m1, p3-104, p3-129, p3-130, p2-115" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-095" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-007 to p3-012, p3-022, p3-026, p3-060" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p3-060 to p3-064" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 2 combines every change to the delete confirmation page (req-1442 to req-1451): one page, one template and copy file, reviewed together. The title, heading and serving every deletable status already hold (req-1452). req-1480 (Welsh for every new or changed string on the delete and cancel-amendment confirmations, the amend dialog and the view page) sits here because this page carries most of the new strings; the amend dialog, cancel-amendment and status bar rows each carry a Welsh criterion for their own strings, and the view page's strings belong to the review-and-submit rows that change them. The Commodity and Number rows reuse what the notification list already derives for a notification, so the fallback in req-1445 reads the same values. The tests repo's delete flow and spec move from 'Yes, delete notification', 'This cannot be undone.' and 'No, return to dashboard' to the new copy, and prove the way back to the view page.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/delete-notification"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js",
+        "frontend:src/server/app/shared/kit.js",
+        "tests:flows/animals/notification-actions.ts",
+        "tests:tests/animals/e2e/features/notification-delete.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "After a delete the trader lands on the overall dashboard, and the notification list then says '<reference> has been deleted'; an amending notification can be deleted",
+      "detail": "Design Release 2.1 sends the trader to the overall dashboard after a delete, with no banner there, and shows '<reference> has been deleted' on the live-animals notification list the next time they open it. Today the trader lands on the live-animals dashboard at ?deleted=1 with the banner 'The notification has been deleted.' (req-1707 records today's shared copy). Deleting a notification being amended already works, but nothing proves it and the backend's API description still says only drafts and submitted notifications can be deleted. After this change the delete lands per c-198, the message moves to the list's next visit with the reference in it, the API description lists AMEND, and the end-to-end suite proves deleting an amending notification and the guard redirects of amend, cancel amendment, copy and delete, keeping its smoke-tagged cancel and delete cases.",
+      "acceptanceCriteria": [
+        "A notification being amended can be deleted from the amend review's Delete button: after 'Yes, delete' it no longer appears in the notification list (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-118; repo:backend repo-backend-p3-034; repo:frontend repo-frontend-p3-091)",
+        "The backend's published API description for deleting a notification says DRAFT, SUBMITTED and AMEND notifications can be deleted (repo:backend repo-backend-p3-034, repo-backend-p3-035)",
+        "On the workspace stack and in CDP, after 'Yes, delete' the trader lands on the INS front door's overall dashboard, which shows no banner; in the animals frontend's own fit run, with no INS front-door URL configured, the trader lands on /live-animals (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-094, trace-prototype-dr2-1-p14-113; prototype:dr2-1-specs prototype-dr2-1-specs-p5-144; c-198)",
+        "On the workspace stack and in CDP, the next time the trader opens the live-animals notification list after a delete, it shows the success message '<reference> has been deleted' with the deleted notification's reference; in the fit run the /live-animals landing shows it (prototype:dr2-1-source prototype-dr2-1-source-p11-183; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-114; prototype:dr2-1-specs prototype-dr2-1-specs-p5-145; c-198)",
+        "No page address after a delete carries a 'deleted' marker (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-113; repo:frontend repo-frontend-p3-099)",
+        "The end-to-end suite on the workspace stack proves that an amending notification can be deleted, and that amend, cancel amendment, copy as new and delete for a notification that cannot take that action return to the overall dashboard with no message; its smoke-tagged cancel-amendment and delete cases still run in the smoke suite and assert the Design Release 2.1 copy, dialogs and landings (repo:tests repo-tests-p3-094 to repo-tests-p3-096, repo-tests-p3-099, repo-tests-p3-209, repo-tests-p3-209-m1; repo:frontend repo-frontend-p3-135-m1; trace:e2e trace-e2e-p14-080)"
+      ],
+      "requirements": ["req-1441", "req-1454", "req-1455", "req-1479"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-183" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-094, p14-113, p14-114, p14-118" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-144, p5-145" },
+        { "source": "repo:backend", "ref": "repo-backend-p3-034, p3-035" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p3-091, p3-099, p3-131, p3-135-m1" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-074 to p3-078, p3-080, p3-084, p3-094 to p3-096, p3-099, p3-209, p3-209-m1, p4-100" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-016, p3-018, p3-057 to p3-059" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p3-066, p3-068, p14-080" }
+      ],
+      "repos": ["backend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 2 combines where a delete lands (req-1454), the deferred success message (req-1455), deleting an amending notification (req-1441) and the tests-repo proof (req-1479): all are proven by the same delete walk on the stack, and req-1479's guard redirects can only be proven once the amend and cancel-amendment rows have landed, so this row depends on the amend dialog row, the cancel-amendment row and the delete page row (whose 'Yes, delete' it presses). Each earlier row updates the tests repo specs for its own behaviour; this row adds what goes unproven today. req-1455's fallback wording 'Notification has been deleted', for a delete whose reference is not known, is a defensive fallback no trader can reach (every notification has a reference), so it is built but has no criterion. The change replaces the shared deletion copy req-1707 records ('The notification has been deleted.'). The live-animals list is the notification-list area's page; this row adds only the message. Needs the INS front-door URL from the review-and-submit row behind req-899.",
+      "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+        "tests:tests/animals/e2e/features/notification-actions-guards.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy",
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/config/config.js",
+        "tests:tests/animals/e2e/features/notification-delete.spec.ts",
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
+        "tests:flows/animals/notification-actions.ts"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

@@ -1,0 +1,417 @@
+{
+  "area": "dashboard-home",
+  "rows": [
+    {
+      "title": "The INS front door's home becomes the Design Release 2.1 overall dashboard",
+      "detail": "Today the INS front door's root page is a 'Dashboard' table of every notification with a reference search and an 'Update sort' form. Design Release 2.1 makes the service's home an overall dashboard: a 'Dashboard' caption over the service-name heading, then one section per notification category, each linking to that category's own dashboard. This row replaces the table with that home and its category sections (Live animals and Plants, plant products or other objects; the Germinal products section waits for its journey), keeps the old /dashboard address working, and carries the home's error handling, Welsh copy and accessibility proof. Glance cards, Create new and Use template are added by later rows. The table's removal (req-dashboard-home-002, out of scope to keep) means today's 'view a submitted notification from the INS dashboard' end-to-end proof is rewritten to start from the live-animals dashboard instead.",
+      "acceptanceCriteria": [
+        "Opening the INS front door's home (/) as a signed-in trader shows no table of notifications, no 'Search by notification reference' field, no 'Update sort' form and no 'Showing x-y of z' label (prototype:dr2-1-source app/routes.js:11539-11545; trace:prototype-dr2-1 overall-dashboard action 8-9; conflicts:c-dashboard-home-001)",
+        "The home's browser title reads 'Dashboard - Import notification service - GOV.UK' (prototype:dr2-1-specs e2e/dashboard.fit.spec.js:14; trace:prototype-dr2-1 overall-dashboard action 8-9; conflicts:c-dashboard-home-002)",
+        "The home shows the caption 'Dashboard' directly above the h1 'Import notification service' (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:23-24; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:15-16; conflicts:c-dashboard-home-002)",
+        "The home shows no 'Messages' link and no unread message count, following the default of the open question on messages (conflicts:c-dashboard-home-006; prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:27-31)",
+        "Below the heading the home shows a 'Live animals' section then a 'Plants, plant products or other objects' section, each with an h2 heading and a 'View dashboard' link (trace:prototype-dr2-1 overall-dashboard action 27-31; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:34-38)",
+        "The Live animals section's 'View dashboard' goes to the live-animals dashboard on the animals frontend (/live-animals), and the trader lands there signed in once they have an animals session (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:46-53; trace:e2e p15 /live-animals; repo:tests tests/ins/e2e/features/cross-service-sessions.spec.ts:9)",
+        "The plants section's heading reads 'Plants, plant products or' with a line break before 'other objects', in the section's plants style, and its 'View dashboard' goes to the high-risk plants dashboard at the plants frontend's /high-risk-plants (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:100-131; repo:tests tests/ins/e2e/features/cross-service-sessions.spec.ts:38; conflicts:c-dashboard-home-007)",
+        "Opening /dashboard with no query redirects to the home; opening /dashboard?tab=drafts redirects to the animals frontend's /live-animals?tab=drafts (trace:prototype-dr2-1 dashboard-redirects requests 1-2, 41-42; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:52-57)",
+        "When the notification read model cannot be loaded, the home still shows its caption and heading, shows the service's recoverable error message and responds with HTTP status 500 (repo:insfrontend src/server/app/features/dashboard/controller.js:113-126)",
+        "With the Welsh language selected, the home's caption, heading and section text are shown in Welsh (repo:insfrontend src/server/app/features/dashboard/copy/copy.cy.js:1-35)",
+        "The home has no serious or critical axe violations against the WCAG 2.0, 2.1 and 2.2 A and AA tags (repo:insfrontend src/server/app/features/dashboard/dashboard.fit.spec.js:8-20)"
+      ],
+      "requirements": [
+        "req-dashboard-home-001",
+        "req-dashboard-home-003",
+        "req-dashboard-home-004",
+        "req-dashboard-home-005",
+        "req-dashboard-home-009",
+        "req-dashboard-home-021",
+        "req-dashboard-home-022",
+        "req-dashboard-home-030",
+        "req-dashboard-home-031",
+        "req-dashboard-home-066",
+        "req-dashboard-home-073",
+        "req-dashboard-home-074",
+        "req-dashboard-home-075"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-home.html; app/routes.js:8870-8904, 11539-11545" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one; dashboard--overall-dashboard-dashboard-redirects-to-the-overall-dashboard-or-to-live-animals-with-a-query" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:12-57" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/dashboard" },
+        { "source": "repo:tests", "ref": "page-objects/ins/dashboard-page.ts; tests/ins/e2e/features/cross-service-sessions.spec.ts; tests/ins/e2e/features/notification-dashboard-navigation.spec.ts" },
+        { "source": "trace:ins-fit", "ref": "p4-003, p4-005" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the new home on a local stack before the glance cards and drill-downs are built on it: the caption and heading, the two category sections and their links into the animals and plants frontends, the /dashboard redirects, and that the rewritten INS end-to-end specs no longer depend on the removed table.",
+      "openQuestions": [
+        "Should the real home show the 'Messages' link and unread count before a messages page is designed and any service records messages? Default followed: leave the Messages link and count off the home until both exist (conflicts:c-dashboard-home-006)."
+      ],
+      "notes": "Combines the home shell (title, caption, heading, no Messages link), the category sections' headings and View dashboard links, the /dashboard redirect and the home's error, Welsh and accessibility requirements: all are the same page and template, so building them apart would repeat the same set-up. The Germinal products section (req-dashboard-home-029) is blocked and sits between the two sections once its row lands; req-dashboard-home-021's full three-section order completes then. The page-title format ' - Import notification service - GOV.UK' comes from the shared layout, which the layout-and-sign-in area may change for every page; if that area's row lands first this row only sets the 'Dashboard' title. req-dashboard-home-073, -074 and -075 also apply to the drill-downs; each drill-down row proves its own page against them. Removing the table breaks the tests repo's INS dashboard page object (it finds the page by the h1 'Dashboard' and the reference search) and notification-dashboard-navigation.spec.ts (View from the table): both are rewritten in this row.",
+      "touches": [
+        "insfrontend:src/server/app/features/dashboard",
+        "tests:page-objects/ins/dashboard-page.ts",
+        "tests:tests/ins/e2e/features/overall-dashboard"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/shared/paths.js",
+        "insfrontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/common/constants/journey-set-bases.js",
+        "insfrontend:src/config/config.js",
+        "insfrontend:src/client/stylesheets/components",
+        "tests:tests/ins/e2e/features/cross-service-sessions.spec.ts",
+        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Action needed drill-down lists the organisation's notifications still missing a required document",
+      "detail": "Design Release 2.1 adds an 'Action needed' page, reached from each category's Action needed card, listing the notifications the trader must act on. No real service records an 'Action required' status, so following the open question's default a submitted notification still missing a required document (such as the ITAHC) counts as action needed: the animals backend works this out and carries it into the INS read model, and the INS front door lists it at /actions, filtered by ?category=. This is also the first INS list scoped to the signed-in organisation: today the read model holds no organisation and every trader sees every notification. The page carries DR2.1's intro block and results line, pages 8 at a time, and each notification is shown with the category dashboard's card, keeping its status-driven links (DR1 ruling). Search and sort follow in their own row.",
+      "acceptanceCriteria": [
+        "/actions on the INS front door has the browser title 'Tasks requiring your attention - Import notification service - GOV.UK', the caption 'Action needed', the h1 'Tasks requiring your attention' and the description 'Add missing information or upload documents to prevent your consignment from being delayed.', in Design Release 2.1's intro block (prototype:dr2-1-source app/routes.js:11708-11710; app/views/design-release-2.1/dashboard-actions.html:34-36; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:153-159; conflicts:c-dashboard-home-013)",
+        "A live-animals notification submitted without its ITAHC is listed on /actions?category=live-animals with an 'Action required' status tag and the message 'ITAHC is missing'; once the ITAHC is uploaded it is no longer listed. A draft notification, and a submitted one with every required document, are never listed (conflicts:c-dashboard-home-005; trace:prototype-dr2-1 action-needed action 14-16; trace:e2e p15 submission confirmation)",
+        "A trader signed in for one organisation never sees another organisation's notifications on /actions, and a fresh organisation with none sees 'Show 0 of 0 results' (repo:insfrontend src/server/app/services/ins-backend/client.js:9-31; trace:ins-fit p4-046; ruling:sam-2026-10-07 claim 10)",
+        "/actions with no category lists action-needed notifications of every category; with ?category=live-animals it lists only live-animals ones; an unrecognised category lists every category (prototype:dr2-1-source app/routes.js:6745-6747, 9027-9028; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:162-169)",
+        "The page's Back link goes to the animals frontend's /live-animals when ?category=live-animals, to the home when there is no category, and to /live-animals for an unrecognised category (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:12-24; app/routes.js:6715-6743; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:156, 167)",
+        "The list sits under a visually hidden h2 'Notifications needing action', preceded by the line 'Show 1-8 of <total> results' (or 'Show 0 of 0 results' when there are none) (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:43-89; trace:prototype-dr2-1 action-needed action 13-14; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:160-161)",
+        "With more than 8 action-needed notifications the list shows 8 a page, and following a page link keeps the category (prototype:dr2-1-source app/routes.js:6630-6688, 9050)",
+        "Each listed notification shows the same card as the live-animals dashboard, with its status-driven links rather than a fixed 'Copy as new' and 'View' pair (trace:prototype-dr2-1 action-needed action 15-16; document:dr1-parity-notes inc-030; conflicts:c-dashboard-home-011)",
+        "The page shows no 'Create new' or 'Use template' button, no glance cards, no Additional filters, no tabs and no Today / Next 3 days / Already delayed filter, and adding ?delayFilter= changes nothing (trace:prototype-dr2-1 action-needed snapshot 14; prototype:dr2-1-source app/routes.js:9022-9023, 9043-9045)",
+        "The service navigation's 'Dashboard' item is marked current on /actions (prototype:dr2-1-source app/routes.js:8876, 9063; repo:insfrontend src/server/app/shared/paths.js:11)",
+        "If the read model cannot be loaded, /actions still shows its intro, the recoverable error message and responds with HTTP status 500; in Welsh its copy is shown in Welsh; it has no serious or critical axe violations against the WCAG 2.0, 2.1 and 2.2 A and AA tags (repo:insfrontend src/server/app/features/dashboard/controller.js:113-126; copy.cy.js; dashboard.fit.spec.js:8-20)"
+      ],
+      "requirements": [
+        "req-dashboard-home-017",
+        "req-dashboard-home-033",
+        "req-dashboard-home-034",
+        "req-dashboard-home-035",
+        "req-dashboard-home-036",
+        "req-dashboard-home-037",
+        "req-dashboard-home-038",
+        "req-dashboard-home-039",
+        "req-dashboard-home-043",
+        "req-dashboard-home-044",
+        "req-dashboard-home-045",
+        "req-dashboard-home-046",
+        "req-dashboard-home-064",
+        "req-dashboard-home-065",
+        "req-dashboard-home-069",
+        "req-dashboard-home-072"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-actions.html; app/routes.js:6630-6747, 9020-9066, 11708-11710" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:153-169" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-030 (card links)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/services/ins-backend/client.js; src/server/app/shared/paths.js:11" },
+        { "source": "trace:ins-fit", "ref": "p4-046" },
+        { "source": "ruling:sam-2026-10-07", "ref": "claim 10" }
+      ],
+      "repos": ["backend", "insbackend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at what 'Action needed' means in practice before the glance-card counts and the search build on it: which submitted notifications the missing-document rule lists, the 'Action required' tag and '<document> is missing' message, and that the INS read model is now scoped to the signed-in organisation.",
+      "openQuestions": [
+        "Should 'Action needed' count and list the organisation's submitted notifications still missing a required document (such as the ITAHC), or only notifications the authorities flag as needing action? Default followed: missing documents, worked out in the animals backend and carried into the INS read model; authority-flagged actions are added only when an outcome feed exists (conflicts:c-dashboard-home-005)."
+      ],
+      "notes": "Combines the Action needed page, its list rule, the organisation scoping of the INS read model and the read-model request (req-dashboard-home-069, -072): the page is the first INS list after the table goes, so scoping cannot be observed apart from it. The read model gains the organisation (the animals backend's outbox events already carry the actor's organisation), the notification's category and its missing required documents. req-dashboard-home-037 also covers the Status updated drill-down's Back link, built with that blocked row on the same rule. req-dashboard-home-044 and -045's Inspection required half is proven in that blocked row. The card is the INS front door's own copy of the live-animals dashboard card (frontends stay duplicated); if the notification-list area changes that card, this row follows its latest markup.",
+      "touches": [
+        "insfrontend:src/server/app/features/action-needed",
+        "tests:tests/ins/e2e/features/action-needed"
+      ],
+      "shared": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insfrontend:src/server/app/services/ins-backend",
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/shared/paths.js",
+        "insfrontend:src/client/stylesheets/components",
+        "tests:page-objects/ins"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Search and sort the Action needed list",
+      "detail": "Design Release 2.1's Action needed page has a 'Search by' box and a 'Sort by:' select, but the prototype applies neither. The ruling lets the real constraint win: the real page applies both. The search matches a notification's number, commodity, consignee or consignor, which needs the INS read model to hold the consignee and consignor; the sort is always applied, newest first by default, with no unsorted state (DR1 judgement).",
+      "acceptanceCriteria": [
+        "/actions has a search form that submits to /actions with a 'Search by' field and the hint 'Keyword, notification number, commodity, consignee or consignor', and a search made on /actions?category=live-animals stays in live animals (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:43-87; trace:prototype-dr2-1 action-needed snapshot 14, action 25)",
+        "Searching for part of a listed notification's number, its commodity, its consignee's name or its consignor's name lists only the notifications that match; a search with surrounding spaces finds the same notifications, and a blank search lists them all (conflicts:c-dashboard-home-012; repo:insfrontend src/server/app/features/dashboard/controller.js:89-90; repo:tests domain/ins/models/db/aggregated-notification-document.ts:1-10)",
+        "A search that matches nothing shows 'Show 0 of 0 results' (prototype:dr2-1-source app/routes.js:7644-7658)",
+        "The 'Sort by:' select offers 'Newest first', 'Oldest first' and 'Arrival date', with 'Newest first' selected by default and no 'Select one' option; choosing each re-orders the list accordingly (trace:prototype-dr2-1 action-needed snapshot 14; document:dr1-parity-notes inc-031; conflicts:c-dashboard-home-014)",
+        "Searching from page 2 keeps the page as a hidden field, and page links keep the chosen sort and category (prototype:dr2-1-source app/views/design-release-2.1/dashboard-actions.html:43-87; trace:prototype-dr2-1 action-needed action 25)"
+      ],
+      "requirements": [
+        "req-dashboard-home-040",
+        "req-dashboard-home-041",
+        "req-dashboard-home-042"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-actions.html:43-87; app/routes.js:9020-9055" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--at-a-glance-drill-downs-action-needed-lists-notifications-needing-action snapshot 14, action 25" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-031 (always sorted)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/dashboard/controller.js:86-99; src/server/app/services/ins-backend/client.js:24-26" },
+        { "source": "repo:tests", "ref": "domain/ins/models/db/aggregated-notification-document.ts" },
+        { "source": "ruling:sam-2026-10-07", "ref": "claim 10" }
+      ],
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart from the Action needed page row so that row stays reviewable and because this one changes what the read model stores (consignee and consignor, from the trade parties already in the animals backend's published notification) and how it searches. The same search form, sort select and results line are reused by the blocked Inspection required drill-down, which proves its own half of req-dashboard-home-040 and -042. Depends on the Action needed page row.",
+      "touches": [
+        "insfrontend:src/server/app/features/action-needed",
+        "tests:tests/ins/e2e/features/action-needed"
+      ],
+      "shared": [
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insfrontend:src/server/app/services/ins-backend"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Glance cards on the home's category sections",
+      "detail": "Design Release 2.1 summarises each category on the home with glance cards. The Live animals section gets its Action needed card, counted from the same set its drill-down lists for the signed-in organisation (the prototype's fixed numbers are overruled). The plants section gets its three cards, linked as the live-animals ones are (open question default); their counts wait until plants notifications reach the INS read model, so they show no number yet. The live-animals Status updates card waits with its blocked drill-down. Cards carry DR2.1's styling.",
+      "acceptanceCriteria": [
+        "The Live animals section shows an 'Action needed' glance card reading 'Tasks requiring your attention', with a count and a 'View tasks' link to /actions?category=live-animals (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:57-62; trace:prototype-dr2-1 overall-dashboard action 34; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:43)",
+        "The Action needed count equals the number of results /actions?category=live-animals lists for the signed-in organisation: it is 0 for a fresh organisation, and goes up by one when that organisation submits a live-animals notification without its ITAHC (conflicts:c-dashboard-home-004; conflicts:c-dashboard-home-005)",
+        "The Live animals section shows no Inspection required card (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:125-130; trace:prototype-dr2-1 overall-dashboard action 30)",
+        "The plants section shows three glance cards: 'Action needed' with 'View tasks' to /actions?category=plants, 'Status updates' with 'View updates' to /changes?category=plants, and 'Inspection required' reading 'Consignments due at the BCP' with 'View requirements' to /inspection; none shows a count (conflicts:c-dashboard-home-008; prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:100-131; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:40, 46-48)",
+        "Following the plants 'View tasks' opens the Action needed page listing no plants notifications ('Show 0 of 0 results') (conflicts:c-dashboard-home-008; trace:e2e p15 only live-animals notifications reach INS)",
+        "The Action needed card's count uses the default count colour and the Status updates and Inspection required counts and cards use Design Release 2.1's blue styling, matching the prototype's glance cards (trace:prototype-dr2-1 overall-dashboard action 30 .app-dr2-dashboard-glance-card; conflicts:c-dashboard-home-013)",
+        "The home with its glance cards still has no serious or critical axe violations against the WCAG 2.0, 2.1 and 2.2 A and AA tags, and its card copy is shown in Welsh with Welsh selected (repo:insfrontend src/server/app/features/dashboard/dashboard.fit.spec.js:8-20; copy.cy.js)"
+      ],
+      "requirements": [
+        "req-dashboard-home-023",
+        "req-dashboard-home-025",
+        "req-dashboard-home-026",
+        "req-dashboard-home-028",
+        "req-dashboard-home-032"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-home.html:57-131" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 28-38" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:34-49" },
+        { "source": "ruling:sam-2026-10-07", "ref": "claim 10" },
+        { "source": "trace:e2e", "ref": "p15-109" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [
+        "Should the plants glance cards link like the live-animals ones, or stay without links as DR2.1's placeholders do? Default followed: link them ('View tasks' to /actions?category=plants, 'View updates' to /changes?category=plants, 'View requirements' to /inspection); their counts wait until the plants services send their notifications to the INS read model (conflicts:c-dashboard-home-008).",
+        "What makes a notification 'Action needed'? Default followed: a submitted notification still missing a required document; the count is the size of that list (conflicts:c-dashboard-home-005)."
+      ],
+      "notes": "Combines every glance card that can be built now: they share the home template and the card styling. Depends on the home row (sections) and the Action needed page row (the count is that list's total). The plants 'View updates' and 'View requirements' links point at the Status updated and Inspection required drill-downs, which are blocked; until they land those two links lead to a not-found page, as the default accepts. The live-animals Status updates card (req-dashboard-home-024) is held with its blocked drill-down, following c-dashboard-home-004: a card whose state no service records waits rather than shipping an always-zero count.",
+      "touches": [
+        "insfrontend:src/server/app/features/dashboard",
+        "tests:tests/ins/e2e/features/overall-dashboard"
+      ],
+      "shared": [
+        "insfrontend:src/client/stylesheets/components",
+        "insfrontend:src/server/app/services/ins-backend"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Create new starts every notification at the type question",
+      "detail": "Today the INS home offers 'Start a new notification' only when the trader has no notifications, and it goes straight to the live-animals journey. Design Release 2.1 always shows a primary 'Create new' button under the heading, which goes to the create-notification route and the 'What are you importing?' question with nothing preselected, so the home is not tied to one journey.",
+      "acceptanceCriteria": [
+        "The home always shows a primary 'Create new' button (a standard button, not a start button) under the heading, whether or not the organisation has any notifications; 'Start a new notification' is no longer shown (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:34-42; trace:prototype-dr2-1 overall-dashboard action 24; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:30; conflicts:c-dashboard-home-003)",
+        "Pressing 'Create new' shows the 'What are you importing?' question with no option selected, before any origin page (prototype:dr2-1-source app/routes.js:8879-8880; prototype:dr2-1-specs e2e/support/journey.js:121-127; conflicts:c-dashboard-home-003)"
+      ],
+      "requirements": [
+        "req-dashboard-home-010",
+        "req-dashboard-home-012",
+        "req-dashboard-home-013"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-home.html:34-42; app/routes.js:8879-8880" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 24" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:30; e2e/support/journey.js:121-127" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/dashboard/template.njk:47-52; view-model/list.js:97-102" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on the home row and on the start-and-origin area's row 'Ask What are you importing? before a notification is created', which builds the type question in the INS front door and whose first criterion is starting a notification from this dashboard. The combiner should merge this row into that one if they would build the same link; kept apart here so the home row does not wait on the type question. req-dashboard-home-012's 'Use template' half is built in the Use template row.",
+      "touches": [
+        "insfrontend:src/server/app/features/dashboard"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/notification-type",
+        "insfrontend:src/server/common/constants/journey-set-bases.js",
+        "tests:tests/ins/e2e/features/overall-dashboard"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Use template button and Templates navigation item",
+      "detail": "Design Release 2.1 lets the trader start from a saved template: the home has a secondary 'Use template' button beside 'Create new', and the service navigation gains a 'Templates' item between 'Dashboard' and 'Address book'. Both go to the templates list, which the templates area builds.",
+      "acceptanceCriteria": [
+        "The home always shows a secondary 'Use template' button beside 'Create new', and pressing it opens the templates list (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:34-42; trace:prototype-dr2-1 overall-dashboard action 25; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:31)",
+        "The service navigation reads 'Dashboard', 'Templates', 'Address book', 'Manage account', 'Log out' on every INS page, and 'Templates' opens the templates list (prototype:dr2-1-specs e2e/dashboard.fit.spec.js:22-24; trace:prototype-dr2-1 overall-dashboard snapshot 30; trace:ins-fit p4-007 to p4-010; conflicts:c-dashboard-home-010)"
+      ],
+      "requirements": [
+        "req-dashboard-home-014",
+        "req-dashboard-home-015"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-home.html:34-42" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 22, 25" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:22-31" },
+        { "source": "trace:ins-fit", "ref": "p4-007 to p4-010" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on the home row and on the templates area's row that builds the templates list page; both criteria open that page, so they cannot be observed before it lands. The combiner may merge this row into that templates row. The navigation lives in the shared layout and paths, which the layout-and-sign-in area also changes.",
+      "touches": [
+        "insfrontend:src/server/app/features/dashboard"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/app/shared/paths.js",
+        "insfrontend:src/server/app/shared/copy.en.js",
+        "insfrontend:src/server/app/shared/copy.cy.js",
+        "tests:tests/ins/e2e/features/overall-dashboard"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Status updates card and the Status updated drill-down",
+      "detail": "Design Release 2.1 shows, per category, a 'Status updates' card counting changes in the past 24 hours, opening a 'Changes in past 24 hours' page that groups notifications as Passed inspection, Needs inspection or Delayed. No service in the workspace receives inspection or delay outcomes and the INS read model holds no such state, so the card and page wait for the authorities' outcome feed rather than ship an always-empty page and a zero count.",
+      "acceptanceCriteria": [
+        "The Live animals section shows a 'Status updates' glance card reading 'Changes in the past 24 hours', with a count and a 'View updates' link to /changes?category=live-animals; the count equals the number of notifications the page lists (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:64-69; trace:prototype-dr2-1 overall-dashboard action 35; conflicts:c-dashboard-home-004)",
+        "/changes has the browser title 'Changes in past 24 hours - Import notification service - GOV.UK', the caption 'Status updated', the h1 'Changes in past 24 hours' and the description 'Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.' in Design Release 2.1's intro block (prototype:dr2-1-source app/routes.js:11712-11714; app/views/design-release-2.1/dashboard-changes.html:31-33; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:174-179)",
+        "/changes groups the organisation's notifications whose outcome changed in the past 24 hours under h2 sections 'Passed inspection', 'Needs inspection', 'Delayed', in that order, leaving out any section with none (prototype:dr2-1-source app/routes.js:6809-6825; trace:prototype-dr2-1 status-updated action 12-14, 21-22)",
+        "/changes has no search, sort, results count or pagination, and its Back link follows the Action needed page's rule for ?category= (prototype:dr2-1-source app/views/design-release-2.1/dashboard-changes.html:9-53; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:173-188)",
+        "/changes shows the recoverable error with HTTP status 500 when the read model cannot be loaded, shows its copy in Welsh with Welsh selected, and has no serious or critical axe violations (repo:insfrontend src/server/app/features/dashboard/controller.js:113-126; dashboard.fit.spec.js:8-20)"
+      ],
+      "requirements": [
+        "req-dashboard-home-024",
+        "req-dashboard-home-027",
+        "req-dashboard-home-047",
+        "req-dashboard-home-048",
+        "req-dashboard-home-049",
+        "req-dashboard-home-050",
+        "req-dashboard-home-051",
+        "req-dashboard-home-052"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-changes.html; app/routes.js:6809-6825, 9071-9088, 11712-11714" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--at-a-glance-drill-downs-status-updated-lists-changes-in-the-past-24-hours" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:173-188" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-014 (counts not worth shipping until real)" }
+      ],
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: the authorities' import-checking systems, outside this programme, must send inspection and delay outcomes (passed inspection, needs inspection, delayed) for each notification to the services; no service in the workspace receives them today and the INS read model holds no such state (DR1 inc-014). Who: the programme owner must agree the outcome feed with the authorities' systems team before this row can build."
+      ],
+      "notes": "Card and page kept together: the count is the page's list, and both wait on the same blocker. Kept apart from every buildable row so they are not held up. The plants section's 'View updates' link (built in the glance-cards row) lands here once this row is built. The outcome feed's own integration will need a further repo (a stub or gateway) once it is agreed; this row's repos are a floor.",
+      "touches": [
+        "insfrontend:src/server/app/features/status-updated",
+        "tests:tests/ins/e2e/features/status-updated"
+      ],
+      "shared": [
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insfrontend:src/server/app/features/dashboard",
+        "insfrontend:src/server/app/services/ins-backend",
+        "insfrontend:src/server/app/features/index.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Inspection required drill-down",
+      "detail": "Design Release 2.1 has an 'Inspection required' page listing the organisation's consignments chosen for inspection at the border control post, across every category, with guidance on what to do at a border inspection. No service in the workspace receives which notifications are chosen for inspection, so the page waits for the authorities' feed rather than ship a list that is always empty.",
+      "acceptanceCriteria": [
+        "/inspection has the browser title 'Consignments due at the border control post (BCP) - Import notification service - GOV.UK', the caption 'Inspection required', the h1 'Consignments due at the border control post (BCP)' and the description 'Consignments that must go to your chosen BCP for inspection.' in Design Release 2.1's intro block (prototype:dr2-1-source app/routes.js:11716-11718; app/views/design-release-2.1/dashboard-inspection.html:35-37; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:191-196)",
+        "A closed details component 'What to do at a border inspection' opens to read 'If your consignments need to have sanitary or phytosanitary checks, you or the transporter must take it to your chosen border control post (BCP).' and ends with the link 'Read the guidance on what you need to do at a border inspection', which opens https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps in a new tab with no '(opens in new tab)' text (prototype:dr2-1-source app/views/design-release-2.1/dashboard-inspection.html:40-46; trace:prototype-dr2-1 inspection-required action 22-25; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:202-209)",
+        "The page's Back link goes to the home whatever the category (prototype:dr2-1-source app/views/design-release-2.1/dashboard-inspection.html:13-25; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:190-212)",
+        "The page lists, under a visually hidden h2 'Notifications chosen for inspection', every one of the organisation's notifications chosen for inspection across all categories, including ones whose status has moved on such as Completed, with no category filter (prototype:dr2-1-source app/routes.js:6753-6755, 9094, 7442; trace:prototype-dr2-1 inspection-required snapshot 14)",
+        "The page has the same search form, hint, 'Sort by:' select and 'Show <first>-<last> of <total> results' line as the Action needed page, pages 8 at a time, and its page links keep only the sort (prototype:dr2-1-source app/views/design-release-2.1/dashboard-inspection.html:52-95; app/routes.js:6757-6807, 9108)",
+        "The page shows no 'Create new' or 'Use template' button and no glance cards; it shows the recoverable error with HTTP status 500 when the read model cannot be loaded, shows its copy in Welsh with Welsh selected, and has no serious or critical axe violations (trace:prototype-dr2-1 action-needed snapshot 14; repo:insfrontend src/server/app/features/dashboard/controller.js:113-126)"
+      ],
+      "requirements": [
+        "req-dashboard-home-054",
+        "req-dashboard-home-055",
+        "req-dashboard-home-056",
+        "req-dashboard-home-057",
+        "req-dashboard-home-058",
+        "req-dashboard-home-059",
+        "req-dashboard-home-060",
+        "req-dashboard-home-061",
+        "req-dashboard-home-062",
+        "req-dashboard-home-063"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-inspection.html; app/routes.js:6753-6807, 9090-9122, 11716-11718" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--at-a-glance-drill-downs-inspection-required-lists-consignments-due-at-the-bcp" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:190-212" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-014" }
+      ],
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: the authorities' import-checking systems, outside this programme, must send which notifications are chosen for inspection to the services; no service in the workspace receives that today and the INS read model holds no such state (DR1 inc-014). Who: the programme owner must agree that feed with the authorities' systems team before this row can build."
+      ],
+      "notes": "Kept as one row: the page without its list would always show 'Show 0 of 0 results'. Reuses the search form, sort select and results line built for the Action needed page (req-dashboard-home-040, -042, -044 are covered there). The plants section's 'View requirements' link (built in the glance-cards row) lands here once this row is built. The feed's own integration will need a further repo once agreed.",
+      "touches": [
+        "insfrontend:src/server/app/features/inspection-required",
+        "tests:tests/ins/e2e/features/inspection-required"
+      ],
+      "shared": [
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insfrontend:src/server/app/services/ins-backend",
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/features/action-needed"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Germinal products section on the home",
+      "detail": "Design Release 2.1's home has a Germinal products section, in a muted style, between Live animals and Plants, with its own dashboard link and Action needed and Status updates cards. No service builds a germinal products journey or dashboard today, and this programme covers the live-animals journey, so the section waits until one exists and its notifications reach the INS read model.",
+      "acceptanceCriteria": [
+        "The home shows a 'Germinal products' section between 'Live animals' and 'Plants, plant products or other objects', in its muted style, with an h2 heading and a 'View dashboard' link to the germinal products dashboard (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:73-98; trace:prototype-dr2-1 overall-dashboard action 33, 36; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:42, 45)",
+        "The section shows an 'Action needed' card with 'View tasks' to /actions?category=germinal-products and a 'Status updates' card with 'View updates' to /changes?category=germinal-products, and no Inspection required card; each count equals what its drill-down lists for germinal products (prototype:dr2-1-source app/routes.js:8888-8894; conflicts:c-dashboard-home-004)"
+      ],
+      "requirements": [
+        "req-dashboard-home-029"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-home.html:73-98; app/routes.js:8888-8894" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 30-36" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js:42, 45" },
+        { "source": "repo:insfrontend", "ref": "src/server/common/constants/journey-set-bases.js:1-3" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked: a germinal products notification journey and its dashboard must exist, with its notifications reaching the INS read model; no service builds one today and this programme covers the live-animals journey. Who: the programme owner must commission that journey before this row can build."
+      ],
+      "notes": "Completes req-dashboard-home-021's three-section order once built. Its Status updates card also waits on the outcome feed blocking the Status updated row.",
+      "touches": [
+        "insfrontend:src/server/app/features/dashboard"
+      ],
+      "shared": [
+        "insfrontend:src/server/common/constants/journey-set-bases.js",
+        "tests:tests/ins/e2e/features/overall-dashboard"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

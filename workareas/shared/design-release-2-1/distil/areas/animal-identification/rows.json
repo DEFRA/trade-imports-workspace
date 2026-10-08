@@ -1,0 +1,376 @@
+{
+  "area": "animal-identification",
+  "rows": [
+    {
+      "title": "Identification details takes its place in the linear journey after Commodity details",
+      "detail": "DR2.1 runs the journey page to page: Commodity details continues to Identification details when a selected species has identifier fields, Back returns to Commodity details, and Save and continue moves on to the next journey page. Today the page is reached only from the Overview task row, its Back link and Save and continue both go to the Overview, and a direct visit with nothing to identify lands on the Overview. Afterwards the page is a real journey step that is skipped when there is nothing to identify, while the hub, review and template-review entry points keep returning where they came from.",
+      "acceptanceCriteria": [
+        "When at least one selected species has identifier fields (such as cattle), 'Save and continue' on Commodity details goes to Identification details. (prototype:dr2-1-source prototype-dr2-1-source-p5-010; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-068; prototype:dr2-1-specs prototype-dr2-1-specs-p4-017)",
+        "When no selected species has identifier fields (such as a fish-only consignment), 'Save and continue' on Commodity details skips Identification details and goes to the next journey page after it, and a direct GET or POST of the identification page redirects to that same next page, not to the Overview. (prototype:dr2-1-source prototype-dr2-1-source-p5-011; repo:frontend repo-frontend-p6-009; trace:e2e trace-e2e-p6-004)",
+        "In the linear journey the page's 'Back' link goes to Commodity details. (prototype:dr2-1-source prototype-dr2-1-source-p5-007; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-051; prototype:dr2-1-specs prototype-dr2-1-specs-p2-045)",
+        "When the page was opened from the Overview, Check your answers or template review, its 'Back' link follows the journey's back-link rule for that entry point, as the journey's other pages do. (prototype:dr2-1-source prototype-dr2-1-source-p5-007; repo:frontend repo-frontend-p6-005)",
+        "In the linear journey, 'Save and continue' on a valid page goes to Additional details where that page applies to the consignment, otherwise to Arrival details. (prototype:dr2-1-source prototype-dr2-1-source-p5-012; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-063; prototype:dr2-1-specs prototype-dr2-1-specs-p2-053)",
+        "When the page was opened from the Overview, Check your answers or template review, 'Save and continue' on a valid page returns there instead. (prototype:dr2-1-source prototype-dr2-1-source-p5-012; repo:frontend repo-frontend-p6-074)"
+      ],
+      "requirements": ["req-animal-identification-006", "req-animal-identification-007", "req-animal-identification-008"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:10730-10732, 1796-1800, 1495-1511 (prototype-dr2-1-source-p5-007, p5-010, p5-011, p5-012)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-051, p5-063, p5-068" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-045, p2-053, p4-017" },
+        { "source": "repo:frontend", "ref": "animal-identification.controller.js (repo-frontend-p6-005, p6-009, p6-074)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-004, p6-057" },
+        { "source": "repo:tests", "ref": "flows/animals/journey.ts answerAnimalIdentification (repo-tests-p1-066-m1)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines three thin slices on the same page and the same flow entry (back link, entry into the step and skipping it, exit from the step): each needs the same flow change and the same journey walk to prove. Depends on whichever area's row turns the linear journey into page-to-page navigation from Commodity details onwards and makes Additional details and Arrival details the pages after this one; the combiner sets that dependsOn. The germinal-only exit to Arrival details (part of req-animal-identification-008) is proved in the germinal panel row, because no germinal product can be chosen until the commodities area offers one. The tests repo's shared journey flow helper today expects the identification save to return to the Overview and must follow the new next page.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.js",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Selected commodities summary with a Species column, and identification grouped by commodity then species",
+      "detail": "DR2.1 adds a Species column to the Selected commodities summary and groups the identification panels into one section per commodity, headed '<commodity name> (<commodity code>)', with one panel per species inside it. Today the summary has no Species column, shows one row per commodity line, names the line 'Domestic cattle' in the summary but 'Cow' on its card, and heads each card '<name> (<code>) — <species>'. A species with no number of animals still gets a card with an uncapped counter today; DR2.1 gives it no panel until there is a number to count against.",
+      "acceptanceCriteria": [
+        "The 'Selected commodities' summary has one row per selected commodity with the columns 'Commodity code', 'Common name', 'Species' and 'Number of animals'. (prototype:dr2-1-source prototype-dr2-1-source-p5-035; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-048)",
+        "A commodity with several selected species lists each species on its own line in its Species cell, and its quantity cell shows the row's number of animals. (prototype:dr2-1-source prototype-dr2-1-source-p5-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-058)",
+        "A cattle line reads 'Cattle' in the summary's 'Common name' cell, and its identification section is headed 'Cattle (0102)'. (prototype:dr2-1-source prototype-dr2-1-source-p5-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-052; trace:e2e trace-e2e-p6-014)",
+        "Identification is shown as one section per commodity headed '<commodity name> (<commodity code>)', and inside it one panel per selected species with identifier fields, in selection order, each headed with the species name, such as 'Bos taurus'. (prototype:dr2-1-source prototype-dr2-1-source-p5-040, prototype-dr2-1-source-p5-041; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-051)",
+        "A species with identifier fields but no number of animals gets no panel and no 'Enter details for <species>' form. (prototype:dr2-1-source prototype-dr2-1-source-p5-041, prototype-dr2-1-source-p5-043; repo:frontend repo-frontend-p6-063)",
+        "A live species with 3 animals takes exactly 3 entries, its form headed 'Enter details for <species> 1 of 3' for the first. (prototype:dr2-1-source prototype-dr2-1-source-p5-043)"
+      ],
+      "requirements": ["req-animal-identification-014", "req-animal-identification-015", "req-animal-identification-020", "req-animal-identification-022"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/animal-identification-details.html:56-98; app/routes.js:1781-1794, 1888-1905, 1964-1993 (prototype-dr2-1-source-p5-035, p5-037, p5-040, p5-041, p5-043)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-048, p5-052, p12-058, p13-051" },
+        { "source": "repo:frontend", "ref": "_selected-commodities-summary.njk, summary/selected-commodities.js, _identification-card.njk, card/view-model.js (repo-frontend-p6-058, p6-063, p6-095, p6-096)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-010, p6-014, p6-015" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the summary columns, the commodity/panel naming and the commodity-then-species grouping: all three change the same summary and panel structure on the same page and share one proof. The several-species-per-commodity criterion can only be observed once the commodities area lets one commodity carry several species; the combiner sets that dependsOn. The 'Number of packages' heading (req-animal-identification-016) sits in the germinal panel row, because it needs a germinal product to observe. The count-drop refusal on Commodity details (req-animal-identification-054, exists) links to the species panel, so its link target must still resolve to the new panel.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/summary",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_selected-commodities-summary.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk",
+        "tests:page-objects/animals/animal-identification-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/services/commodities/index.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Each species panel saves only its own animal, with the saved-animals table below the form",
+      "detail": "DR2.1 saves a multi-animal species one animal at a time through its own panel button, and the page's own buttons save only species with one animal. Today any save, the page's Save and continue included, validates every card and appends a record for every card that holds data, so one card's failure can leave earlier cards' records saved. DR2.1 also puts the saved-animals table under the form, shows only the table once every animal is entered (no completion message), and makes the panel button primary.",
+      "acceptanceCriteria": [
+        "Pressing a species panel's 'Save and add another' or 'Save and finish' validates and saves only that species' current animal, then reloads the page with that species' form empty for its next animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-051; prototype:dr2-1-specs prototype-dr2-1-specs-p4-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-063)",
+        "With an over-long value typed into a second species' form, pressing the first species' panel button saves the first species' animal and shows no error for the second species, whose typed value is not saved. (prototype:dr2-1-source prototype-dr2-1-source-p5-051-m1, prototype-dr2-1-source-p5-067; repo:frontend repo-frontend-p6-073)",
+        "'Save and continue' and 'Save and return to overview' save the typed identifiers of a species with one animal; values typed into the form of a species with more than one animal are not saved and do not appear in its saved-animals table when the page is opened again. (prototype:dr2-1-source prototype-dr2-1-source-p5-054, prototype-dr2-1-source-p5-055; repo:frontend repo-frontend-p6-072)",
+        "While a species still has animals to enter, its saved-animals table sits below the entry form and the panel button. (prototype:dr2-1-source prototype-dr2-1-source-p5-063; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-061)",
+        "Once every animal of a species is entered, its panel shows only the saved-animals table: no entry form, no panel button, and no 'You have entered details for all …' message. (prototype:dr2-1-source prototype-dr2-1-source-p5-048; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-061, trace-prototype-dr2-1-p13-055)",
+        "The panel's 'Save and add another' / 'Save and finish' button is a primary (green) button. (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-055-m1)",
+        "The Welsh copy for this page no longer carries the removed 'You have entered details for all …' message, and stays a machine draft not shown to users. (repo:frontend repo-frontend-p6-135)"
+      ],
+      "requirements": ["req-animal-identification-010", "req-animal-identification-011", "req-animal-identification-043", "req-animal-identification-047", "req-animal-identification-050"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js (prototype-dr2-1-source-p5-048, p5-051, p5-051-m1, p5-054, p5-055, p5-063, p5-067)" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-022" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-055-m1, p5-061, p12-061, p12-063, p13-055" },
+        { "source": "repo:frontend", "ref": "records/append.js, _identification-card.njk, card/view-model.js (repo-frontend-p6-065, p6-070, p6-072, p6-073, p6-084)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-050, p6-053" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the per-species save, the page buttons' narrower save, the table position, the all-entered state and the primary button: all are the species panel's save and layout, change the same records-append and panel template, and are proved by one multi-species walk. Keeps the real cap-reached error and the 400 for a bad remove (c-animal-identification-002). Builds after the grouping row in this area, whose panel structure it lays out.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_saved-animals-table.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+      ],
+      "dependsOnDraft": ["Selected commodities summary with a Species column, and identification grouped by commodity then species"],
+      "existingRow": null
+    },
+    {
+      "title": "A live animal is entered only when every identifier its species asks for has a value",
+      "detail": "DR2.1 counts a live animal as entered only when every identifier its species asks for is filled; today one identifier is enough (a cow with only an ear tag saves). DR1 deferred this difference without judging it, so the prototype wins (c-animal-identification-003). DR2.1 shows no message when a panel save has blanks; the open question c-animal-identification-004 defaults to an error per blank identifier, replacing today's 'Enter at least one identifier for this animal'. The saved-animals table lists complete animals only.",
+      "acceptanceCriteria": [
+        "Pressing a cattle panel's 'Save and add another' with an ear tag but no passport does not save the animal: the panel stays on the same animal with the ear tag kept. (prototype:dr2-1-source prototype-dr2-1-source-p5-046, prototype-dr2-1-source-p5-052; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-060)",
+        "Each blank identifier on a panel save shows its own error in the 'There is a problem' summary and inline on its field, linked to that field: 'Enter an ear tag', 'Enter a passport', 'Enter a microchip', 'Enter a tattoo' or 'Enter a horse name'. (conflict c-animal-identification-004 default; document:dr1-parity-backlog document-dr1-parity-backlog-p5-018)",
+        "'Enter at least one identifier for this animal' no longer appears on the page. (conflict c-animal-identification-004 default; repo:frontend repo-frontend-p6-027)",
+        "'Save and continue' with a single cow given only an ear tag does not block: the page moves on, and when the page is opened again that cow is still to enter, with its ear tag kept, and is not listed in the saved-animals table. (prototype:dr2-1-source prototype-dr2-1-source-p5-071, prototype-dr2-1-source-p5-072; conflict c-animal-identification-004 default)",
+        "The saved-animals table lists only animals whose every identifier has a value; a dog with only a microchip is not listed. (prototype:dr2-1-source prototype-dr2-1-source-p5-062; trace:e2e trace-e2e-p6-102)",
+        "The Welsh copy for this page carries a machine-draft Welsh version of each new 'Enter …' error, and stays not shown to users. (repo:frontend repo-frontend-p6-100)"
+      ],
+      "requirements": ["req-animal-identification-040", "req-animal-identification-041", "req-animal-identification-042"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1850-1856 (prototype-dr2-1-source-p5-046, p5-052, p5-062, p5-071, p5-072)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-059, p5-060, p5-065" },
+        { "source": "repo:frontend", "ref": "identifier/fields.js, card/error-summary.js (repo-frontend-p6-027, p6-028, p6-123, p6-124)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-102, p6-106" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p5-014, p5-018" },
+        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-008, p1-010" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the per-identifier blank errors built to c-animal-identification-004's default, and at a partly entered single animal staying incomplete, before the completion and submit rules build on the every-identifier rule.",
+      "openQuestions": [
+        "c-animal-identification-004: when a trader presses 'Save and add another' or 'Save and finish' with some of the animal's identifiers blank, should each blank identifier show its own error, or should the page keep them on the animal silently as DR2.1 does? Default, built here: each blank identifier shows its own error ('Enter an ear tag', 'Enter a passport', 'Enter a microchip', 'Enter a tattoo', 'Enter a horse name'), nothing is saved, and it replaces 'Enter at least one identifier for this animal'; the page's Save and continue and Save and return never block on missing identifiers; germinal fields stay optional."
+      ],
+      "notes": "Combines the every-identifier rule, its error feedback and the complete-only table: they are one rule seen three ways and share one proof. Kept apart from the completion-and-submit row because it carries the open question c-animal-identification-004 the others do not. req-animal-identification-041 is a question requirement with a default, so the row is todo and the builder follows the default and says so. Builds after the per-species save row in this area, whose panel save it validates.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/card/error-summary.js",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js"
+      ],
+      "dependsOnDraft": ["Each species panel saves only its own animal, with the saved-animals table below the form"],
+      "existingRow": null
+    },
+    {
+      "title": "Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected",
+      "detail": "Today the hub's Identification details row shows Complete straight after Commodity details, before any animal is identified, and stays Complete at 1 of 2. DR2.1 counts identification complete only when every animal of every selected species with identifier fields has a complete entry. For submitting, DR2.1 makes identification optional for a single species but needs at least one complete entry per species when more than one species is selected; the identification page itself shows no message for that rule.",
+      "acceptanceCriteria": [
+        "Straight after Commodity details, with no animals entered, the hub's Identification details row does not show Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-002; trace:animals-fit trace-animals-fit-p10-003-m1)",
+        "With 1 of 2 cattle entered, the row does not show Complete; once both are entered with ear tag and passport it shows Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-066)",
+        "A selected species with identifier fields but no number of animals keeps the row from showing Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068)",
+        "With one species selected and no identification entered, the notification can be submitted. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)",
+        "With two species with identifier fields selected and one of them without any complete entry, submitting is refused; once each has at least one complete entry, submitting goes ahead. (prototype:dr2-1-source prototype-dr2-1-source-p5-070; document:dr1-parity-backlog document-dr1-parity-backlog-p5-020)",
+        "The identification page shows no message about the submit rule. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)"
+      ],
+      "requirements": ["req-animal-identification-055", "req-animal-identification-056"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p5-068, p5-070" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p10-002, p10-003, p10-003-m1, p10-091" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-002, p6-066" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p5-020" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the hub completion rule and the submit rule: both read the same 'complete entry' definition from the every-identifier row and change the same obligation evaluation. The submit refusal's place and wording belong to the review-and-submit area, which owns the submit gate and its messages (req-animal-identification-056's why); the criterion asserts only that submitting is refused or goes ahead. If that area drafts a row for the same gate, the combiner should merge this submit criterion into it or set dependsOn. The germinal half of the completion rule (a germinal species counts once its entry is saved) is proved in the germinal panel row. Builds after the every-identifier row in this area.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers",
+        "frontend:src/server/app/sets/live-animals/bridge/applicability.js"
+      ],
+      "dependsOnDraft": ["A live animal is entered only when every identifier its species asks for has a value"],
+      "existingRow": null
+    },
+    {
+      "title": "Identifier labels and hints follow DR2.1, length errors say 'or less', and values are trimmed before the length check",
+      "detail": "DR2.1 labels the microchip field 'Microchip', gives the text identifier fields no hints, and words the kept 58-character limit as '<label> must be 58 characters or less'. Today the field is 'Microchip number', each identifier has a 'For example, …' hint, the length errors say 'or fewer', and the limit is checked against the untrimmed value. The 58-character limit itself stays (c-animal-identification-002). Every English change is mirrored in the Welsh machine draft.",
+      "acceptanceCriteria": [
+        "The microchip field is labelled 'Microchip', not 'Microchip number'. (prototype:dr2-1-source prototype-dr2-1-source-p5-014; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-052; trace:e2e trace-e2e-p6-024)",
+        "The Microchip, Passport, Tattoo and Ear tag fields show no hint text. (prototype:dr2-1-source prototype-dr2-1-source-p5-024; trace:e2e trace-e2e-p6-021, trace-e2e-p6-022, trace-e2e-p6-025, trace-e2e-p6-026)",
+        "An identifier over 58 characters shows, in the error summary and on the field, 'Microchip must be 58 characters or less', 'Passport must be 58 characters or less', 'Tattoo must be 58 characters or less', 'Ear tag must be 58 characters or less' or 'Horse name must be 58 characters or less'. (prototype:dr2-1-source prototype-dr2-1-source-p5-028; conflict c-animal-identification-002)",
+        "An identifier of 58 characters typed with spaces before and after it saves with no length error and reads back without the spaces. (prototype:dr2-1-source prototype-dr2-1-source-p5-027; repo:frontend repo-frontend-p6-026-m1)",
+        "The Welsh copy for this page mirrors each of these English changes as a machine draft (the microchip label, the removed hints, the five length errors), and stays not shown to users until Welsh Language Standards sign-off. (repo:frontend repo-frontend-p6-130, repo-frontend-p6-133, repo-frontend-p6-134)"
+      ],
+      "requirements": ["req-animal-identification-029", "req-animal-identification-030", "req-animal-identification-031", "req-animal-identification-032", "req-animal-identification-033", "req-animal-identification-036", "req-animal-identification-037", "req-animal-identification-074"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:4-8; app/views/design-release-2.1/animal-identification-details.html:140-149; app/routes.js:2118-2120, 2143-2145 (prototype-dr2-1-source-p5-014, p5-024, p5-027, p5-028)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p13-052, p5-054-m1" },
+        { "source": "repo:frontend", "ref": "copy/copy.en.js:83-86, copy/copy.cy.js, identifier/fields.js (repo-frontend-p6-012 to p6-015, p6-021 to p6-026, p6-130 to p6-135)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-021, p6-022, p6-024, p6-025, p6-026" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the label, the four hint removals, the length-error wording and the trim-before-check: all are the live-animal identifier field definitions and their copy, reviewed together. Each copy change is its own criterion for the reviewer. Carries req-animal-identification-074 (Welsh mirroring); the other rows in this area that change copy each carry their own Welsh criterion as well. Welsh is not rendered to users in any environment (no locale selection exists yet), so every Welsh criterion is a reviewer check of the Welsh copy, not of a rendered page.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/identifier/fields.js",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Pigs, sheep and goats are identified by ear tag only",
+      "detail": "DR2.1 identifies pigs (0103), sheep (010410) and goats (010420) per animal by 'Ear tag' only. The real service does not offer these commodities yet; once the commodities area adds them, each selected pig, sheep or goat species gets a panel asking for one ear tag per animal.",
+      "acceptanceCriteria": [
+        "A selected pig species (0103) gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-017)",
+        "A selected sheep (010410) or goat (010420) species gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-021)",
+        "Their saved-animals table has an 'Animal' column, an 'Ear tag' column and a 'Remove' action, and the hub's Identification details row shows Complete once every pig, sheep or goat has an ear tag. (prototype:dr2-1-source prototype-dr2-1-source-p5-017, prototype-dr2-1-source-p5-021, prototype-dr2-1-source-p5-068)"
+      ],
+      "requirements": ["req-animal-identification-026", "req-animal-identification-027"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:18-20; app/routes.js:1774-1778 (prototype-dr2-1-source-p5-017, p5-021)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart from the label/hint row because it can only be observed once the commodities area offers pigs, sheep and goats; the combiner sets dependsOn on that area's row. The ear tag is already stored by the backend, so no backend change is expected. Builds after the completion row in this area, so 'Complete' means the DR2.1 rule.",
+      "touches": [
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/services/commodities/index.js",
+        "frontend:src/server/app/sets/live-animals/bridge/applicability.js"
+      ],
+      "dependsOnDraft": ["Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected"],
+      "existingRow": null
+    },
+    {
+      "title": "Germinal products are identified once per species with donor, dates and identification number",
+      "detail": "DR2.1 identifies a germinal product (05111000 or 05119985) once per species, whatever its quantity: one editable form headed 'Enter details for <species>' asking for 'Donor name/ID', 'Collection date', 'Production date' and 'Identification number/mark', saved by the page's own buttons and prefilled with what was saved. Every field is optional and the species counts as identified once its entry is saved. Germinal products are counted in packages, so the summary's quantity column reads 'Number of packages' when every selected commodity is germinal. The real service stores none of these fields today, so the notification record gains them.",
+      "acceptanceCriteria": [
+        "The summary's quantity column is headed 'Number of packages' when every selected commodity is a germinal product, and 'Number of animals' otherwise. (prototype:dr2-1-source prototype-dr2-1-source-p5-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-070, trace-prototype-dr2-1-p12-067)",
+        "A selected germinal species gets one form headed 'Enter details for <species>' with no count, whatever its quantity, and no panel button and no saved-animals table. (prototype:dr2-1-source prototype-dr2-1-source-p5-044, prototype-dr2-1-source-p5-047; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-069; prototype:dr2-1-specs prototype-dr2-1-specs-p2-054)",
+        "The form asks for 'Donor name/ID', 'Collection date', 'Production date' and 'Identification number/mark', in that order. (prototype:dr2-1-source prototype-dr2-1-source-p5-018, prototype-dr2-1-source-p5-019; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-072, trace-prototype-dr2-1-p5-075)",
+        "'Collection date' and 'Production date' are each a single text input with the hint 'For example, 27/03/2026'. (prototype:dr2-1-source prototype-dr2-1-source-p5-020, prototype-dr2-1-source-p5-023; prototype:dr2-1-specs prototype-dr2-1-specs-p2-055)",
+        "Values entered and saved with 'Save and continue' or 'Save and return to overview' are shown prefilled in the form when the page is opened again. (prototype:dr2-1-source prototype-dr2-1-source-p5-047; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-083)",
+        "Saving the form with every germinal field blank shows no error, and the hub's Identification details row counts that species as identified. (prototype:dr2-1-source prototype-dr2-1-source-p5-026, prototype-dr2-1-source-p5-069; prototype:dr2-1-specs prototype-dr2-1-specs-p2-060, prototype-dr2-1-specs-p2-061)",
+        "The germinal species panel keeps its species heading and its 'Change number of animals' link, worded as for live animals. (prototype:dr2-1-source prototype-dr2-1-source-p5-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-071)",
+        "On a germinal-products-only consignment, 'Save and continue' goes to Arrival details. (prototype:dr2-1-source prototype-dr2-1-source-p5-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-085, trace-prototype-dr2-1-p5-087)",
+        "The Welsh copy for this page carries a machine-draft Welsh version of each new germinal label, hint and the 'Number of packages' heading, and stays not shown to users. (repo:frontend repo-frontend-p6-100)"
+      ],
+      "requirements": ["req-animal-identification-016", "req-animal-identification-057", "req-animal-identification-058", "req-animal-identification-059", "req-animal-identification-068", "req-animal-identification-069"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:21-32; app/routes.js:1788-1791, 1928-1957, 2147-2151, 10736-10740 (prototype-dr2-1-source-p5-018, p5-019, p5-020, p5-023, p5-026, p5-036, p5-044, p5-047, p5-056, p5-069, p5-074)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-069 to p5-075, p5-083, p5-085, p5-087, p12-066, p12-067" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-054, p2-055, p2-060, p2-061, p4-021" }
+      ],
+      "repos": ["backend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the germinal panel shape, its four fields, saving through the page buttons, optional fields and the packages heading: one germinal walk proves them all, and the same notification-record change carries them. Also proves the germinal halves of req-animal-identification-008 (germinal-only exit to Arrival details) and req-animal-identification-055 (a germinal species counts once saved), whose requirements sit in other rows. Needs the backend notification record (each species' identification entry) to store donor name/ID, collection date, production date and identification number/mark, today it holds only microchip, passport, tattoo, ear tag, horse name and permanent address. Can only be observed once the commodities area offers germinal products 05111000 and 05119985; the combiner sets dependsOn on that area's row. Builds after the per-species save and completion rows in this area.",
+      "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/services/commodities/index.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js"
+      ],
+      "dependsOnDraft": [
+        "Each species panel saves only its own animal, with the saved-animals table below the form",
+        "Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Germinal dates get the date picker and DR2.1's date and length validation",
+      "detail": "DR2.1 gives each germinal date a 'Choose date' calendar (the MOJ date picker) and checks the germinal fields: Donor name/ID and Identification number/mark at most 58 characters, and each date in day/month/four-digit-year form and a real date. Dates may be past or future, accept one- or two-digit day and month, are not checked against each other, and read back as entered. A failed save keeps the typed values and saves nothing, as the page does today.",
+      "acceptanceCriteria": [
+        "Each germinal date field has a 'Choose date' toggle that opens a month grid with previous and next year and month buttons, 'Select' and 'Close' (the MOJ date picker). (prototype:dr2-1-source prototype-dr2-1-source-p5-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-076)",
+        "A Donor name/ID over 58 characters shows 'Donor name/ID must be 58 characters or less'. (prototype:dr2-1-source prototype-dr2-1-source-p5-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-077; prototype:dr2-1-specs prototype-dr2-1-specs-p2-056)",
+        "An Identification number/mark over 58 characters shows 'Identification number/mark must be 58 characters or less'. (prototype:dr2-1-source prototype-dr2-1-source-p5-018, prototype-dr2-1-source-p5-028)",
+        "A Collection date not in the form day/month/four-digit year shows 'Enter a collection date in the format DD/MM/YYYY'. (prototype:dr2-1-source prototype-dr2-1-source-p5-029)",
+        "A Production date not in the form day/month/four-digit year shows 'Enter a production date in the format DD/MM/YYYY'. (prototype:dr2-1-source prototype-dr2-1-source-p5-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-079; prototype:dr2-1-specs prototype-dr2-1-specs-p2-058)",
+        "A Collection date in the right format that is not a real date, such as 31/02/2026, shows 'Collection date must be a real date'. (prototype:dr2-1-source prototype-dr2-1-source-p5-030; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-078; prototype:dr2-1-specs prototype-dr2-1-specs-p2-057)",
+        "A Production date in the right format that is not a real date, such as 31/02/2026, shows 'Production date must be a real date'. (prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
+        "A collection date of 1/9/2026, a production date in the past or the future, and a production date earlier than the collection date all save with no error and read back exactly as entered. (prototype:dr2-1-source prototype-dr2-1-source-p5-031; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-081, trace-prototype-dr2-1-p12-069; prototype:dr2-1-specs prototype-dr2-1-specs-p2-062)",
+        "When a germinal save fails validation, the errors appear in the 'There is a problem' summary and inline, the typed values are kept in the form, and nothing is saved. (conflict c-animal-identification-001; repo:frontend repo-frontend-p6-073)",
+        "The Welsh copy for this page carries a machine-draft Welsh version of each new germinal error and the 'Choose date' toggle text, and stays not shown to users. (repo:frontend repo-frontend-p6-100)"
+      ],
+      "requirements": ["req-animal-identification-060", "req-animal-identification-061", "req-animal-identification-062", "req-animal-identification-063", "req-animal-identification-064", "req-animal-identification-065", "req-animal-identification-066", "req-animal-identification-067"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/animal-identification-details.html:121-150; app/routes.js:2113-2135, 4301-4323 (prototype-dr2-1-source-p5-022, p5-028, p5-029, p5-030, p5-031)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-076 to p5-081, p12-069" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-056, p2-057, p2-058, p2-062" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Split from the germinal panel row so neither increment is too big to review in one sitting: this row is the germinal fields' validation and the date picker, the panel row is their shape and storage. The MOJ frontend package is already a dependency of the frontend. Dates are stored as entered, as text, so no backend change beyond the panel row's. Builds after the germinal panel row in this area.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/germinal",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+      ],
+      "dependsOnDraft": ["Germinal products are identified once per species with donor, dates and identification number"],
+      "existingRow": null
+    },
+    {
+      "title": "The permanent address leaves the identification page",
+      "detail": "Today cat and dog panels carry a fraud warning, a permanent-address definition, the question 'Where will their permanent address be?' and eight address fields under the identifiers, validate them all-or-nothing, store the address on each animal and show it as a 'Permanent address' column. DR2.1 asks each animal's permanent address on its own permanent address page in consignment parties, so it leaves this page with its validation, its table column and its storage from here. The 2026-10-07 ruling is the fresh ruling DR1's address block waited for (c-animal-identification-006).",
+      "acceptanceCriteria": [
+        "Cat and dog panels no longer show 'Providing a false address is an act of fraud', the permanent-address definition, the question 'Where will their permanent address be?' or any of its eight address fields. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-008; repo:frontend repo-frontend-p6-029; trace:e2e trace-e2e-p6-028)",
+        "A dog saved with microchip, passport and tattoo and no address saves with no address error; none of the address 'Enter …' or address length errors can appear on this page. (repo:frontend repo-frontend-p6-044; trace:e2e trace-e2e-p6-036)",
+        "The cat and dog saved-animals table has no 'Permanent address' column. (repo:frontend repo-frontend-p6-082; trace:e2e trace-e2e-p6-046)",
+        "A permanent address given on the permanent address page in consignment parties is still shown there after animals are saved or removed on this page. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-008; conflict c-animal-identification-006)",
+        "The Welsh copy for this page no longer carries the removed address guidance, question, labels and errors, and stays a machine draft not shown to users. (repo:frontend repo-frontend-p6-136, repo-frontend-p6-137)"
+      ],
+      "requirements": ["req-animal-identification-070", "req-animal-identification-071", "req-animal-identification-072"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-008" },
+        { "source": "repo:frontend", "ref": "address/fields.js, records/append.js:11-24, _identification-card.njk, copy/copy.cy.js:120-143 (repo-frontend-p6-029 to p6-057, p6-082, p6-136, p6-137)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p10-039 to p10-050, p11-017 to p11-035" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p6-028 to p6-047" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines removing the address block, its validation and its table column and storage: one removal from the same panel, proved by one cat/dog walk. Must not land before the consignment-parties area's row that asks each animal's permanent address on the permanent address page, or the service would stop capturing the address; the combiner sets that dependsOn. DR1's buildable address increments on this page (inc-009, inc-059, inc-066) are out of scope with it (req-animal-identification-073). The backend's per-animal permanent address field stays: the permanent address page may still use it.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/address",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/records/append.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/_identification-card.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

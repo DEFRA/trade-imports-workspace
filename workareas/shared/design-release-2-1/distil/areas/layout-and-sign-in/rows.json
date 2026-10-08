@@ -1,0 +1,50 @@
+{
+  "area": "layout-and-sign-in",
+  "rows": [
+    {
+      "title": "Templates item in the service navigation on both frontends",
+      "detail": "Design Release 2.1 makes the service navigation the way into notification templates. On both the animals frontend and the INS frontend, a signed-in user's service navigation gains a 'Templates' item between Dashboard and Address book, so the items read Dashboard, Templates, Address book, Manage account, Log out. Templates opens the Manage templates page and is marked as the current item while the user is on any templates page. Log out stays last, because in the real services it is the only way to end a Defra ID session (conflict c-layout-and-sign-in-001). Like every other navigation label, Templates has a Welsh draft beside its English copy.",
+      "acceptanceCriteria": [
+        "On the animals frontend, a signed-in user's service navigation shows five items in this order: Dashboard, Templates, Address book, Manage account, Log out. (prototype:dr2-1-source app/views/layouts/main.html:71-98; trace:prototype-dr2-1 dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one snapshot 30 .govuk-service-navigation; ruling:sam-2026-10-07 claim 1 and claim 10)",
+        "On the INS frontend, a signed-in user's service navigation shows the same five items in the same order: Dashboard, Templates, Address book, Manage account, Log out. (prototype:dr2-1-source app/views/layouts/main.html:71-98; ruling:sam-2026-10-07 claim 1)",
+        "The new item's label reads 'Templates'. (prototype:dr2-1-source app/views/layouts/main.html:71-98; trace:prototype-dr2-1 snapshot 30 .govuk-service-navigation)",
+        "Choosing Templates from the service navigation on either frontend opens the Manage templates page, headed 'Manage templates'. (prototype:dr2-1-source app/lib/design-release-2.1-version.js:23-26; trace:prototype-dr2-1 snapshot 30 .govuk-service-navigation)",
+        "On every templates page, Templates is the item marked as current in the service navigation, and Dashboard and Address book are not. (prototype:dr2-1-source app/views/layouts/main.html:79-95)",
+        "On the dashboard and on the address book pages, Templates is not marked as current: Dashboard and Address book keep their own current marking as today. (prototype:dr2-1-source app/views/layouts/main.html:79-95; trace:e2e c4eb9 snapshot call@56)",
+        "A signed-out visitor sees no Templates item, as with every other navigation item. (prototype:dr2-1-source app/views/layouts/main.html:71-98; trace:e2e 0b934 action call@259 ul#navigation)",
+        "On both frontends the Templates label has a Welsh draft translation beside its English copy, differing from the English, as every other navigation label does; a reviewer sees it in the change. (prototype:dr2-1-source app/views/layouts/main.html:71-98; ruling:sam-2026-10-07 claim 1)"
+      ],
+      "requirements": ["req-layout-and-sign-in-001"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/layouts/main.html:71-98" },
+        { "source": "prototype:dr2-1-source", "ref": "app/lib/design-release-2.1-version.js:23-26" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one snapshot 30 .govuk-service-navigation" },
+        { "source": "document:dr1-parity-backlog", "ref": "inc-007 finding.prototype" },
+        { "source": "ruling:sam-2026-10-07", "ref": "claims 1 and 10" },
+        { "source": "trace:e2e", "ref": "0b934 call@259; c4eb9 call@30 and call@56; 3157d call@35" }
+      ],
+      "repos": ["frontend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "One slice: the item, its order, its destination, its current marking and its copy are the same set-up on the same shared layout in both frontends, so they build together (8 criteria). It must land after the templates area's row that serves the Manage templates page (req-templates-001), since the item's destination and its current marking can only be observed once templates pages exist: the combiner sets that dependsOn, or merges this row into that one. req-templates-005 ('on every templates page the service navigation marks Templates as active') states the same current marking from the templates side; the combiner should cover it once, here or there, not twice. The item's href on each frontend is wherever the templates area puts Manage templates (deltaNote of req-layout-and-sign-in-001); on the INS frontend that is a cross-service link to the animals frontend, like the Address book item is cross-service the other way. Today's navigation tests assert exactly four items on both frontends and in the end-to-end suite; they change to five. Not built here: req-layout-and-sign-in-009 (logo and service-name links) is status question whose default keeps today's targets, so it builds nothing; req-layout-and-sign-in-010, -011, -046, -053, -055 are out of scope (prototype index and kit tooling); every other requirement in this area is exists.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js",
+        "tests:tests/animals/e2e/features/auth.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/layout.njk",
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/config/nunjucks/context/context.js",
+        "insfrontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/app/shared/copy.en.js",
+        "insfrontend:src/server/app/shared/copy.cy.js",
+        "insfrontend:src/config/nunjucks/context/context.js"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

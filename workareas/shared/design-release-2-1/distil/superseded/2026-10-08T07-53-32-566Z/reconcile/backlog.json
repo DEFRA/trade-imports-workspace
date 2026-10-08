@@ -1,0 +1,1191 @@
+{
+  "programme": "design-release-2-1",
+  "generatedFrom": [
+    "ruling:sam-2026-10-07",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:tests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Journey pages the overview links to end with 'Save and continue', a secondary 'Save and return to overview' and a 'Cancel and return to overview' link; pages reached from another page (party pickers, CPH number, transporter type and add pages, permanent address, journey add-address) end with 'Save and continue' alone; no control says 'hub' or 'Cancel and return to dashboard'. Pages this programme adds follow the same rule. While a notification is being amended, the amending page endings (inc-013) apply instead. (req-008; document:dr1-parity-backlog rule (b))",
+    "Every page keeps the Alpha phase banner whose feedback link emails APHAServiceDesk@apha.gov.uk, and Manage account stays a placeholder that links nowhere and is never shown as active. (req-002, req-003)",
+    "The real services keep their validation where DR2.1 has none or less (arrival date window and real-date checks, list membership, CPH digits and lengths, 58-character identifier and reference limits, address field lengths and email format, document file checks), using DR2.1's wording where DR2.1 has a message for the same rule. (req-115)",
+    "A real feature DR2.1 does not show is kept, unless DR2.1 shows another way to do the same job; then DR2.1's way replaces it and the real feature stays only as the route without JavaScript where one is needed. Copy DR2.1 leaves out of a page is removed. Every route that works without JavaScript today keeps working without it. (req-114; conflict c-020 default)",
+    "Country and port list contents come from reference-data and master data, never from DR2.1's lists, and the port of exit keeps the port of entry list; how the lists are presented follows DR2.1. (req-112, req-113)",
+    "The address book only ever shows, changes or deletes the signed-in organisation's addresses. (req-053)",
+    "Only the live-animals journey is built: no notification type page, no germinal-products journey, no plants dashboard section, no inspection pages and none of the prototype's scaffolding. (req-015, req-016, req-017, req-018)",
+    "What already matches DR2.1 stays as it is: the overview, the origin page's region question, the commodity numbers and removals, what each of today's commodities is asked (identifiers, packages, unweaned, CPH and permanent address by commodity code), the identification inset, counters and buttons, the reason page and its reveals, additional details, transit countries, the arrival date window, the upload guidance and cap, the minimum-identifier rule, the declaration, the confirmation panel and help, delete for every status, and a copy opening as a new draft. (req-067, req-068, req-078, req-081, req-083, req-086, req-087, req-089, req-092, req-097, req-098, req-104, req-107, req-109, req-111)"
+  ],
+  "repos": {
+    "frontend": { "path": "repos/trade-imports-animals-frontend", "github": "DEFRA/trade-imports-animals-frontend" },
+    "backend": { "path": "repos/trade-imports-animals-backend", "github": "DEFRA/trade-imports-animals-backend" },
+    "insfrontend": { "path": "repos/trade-imports-ins-frontend", "github": "DEFRA/trade-imports-ins-frontend" },
+    "insbackend": { "path": "repos/trade-imports-ins-backend", "github": "DEFRA/trade-imports-ins-backend" },
+    "addressbook": { "path": "repos/trade-imports-address-book", "github": "DEFRA/trade-imports-address-book" },
+    "referencedata": { "path": "repos/trade-imports-reference-data", "github": "DEFRA/trade-imports-reference-data" },
+    "tests": { "path": "repos/trade-imports-ins-tests", "github": "DEFRA/trade-imports-ins-tests" }
+  },
+  "themes": [
+    {
+      "id": "live-animals-journey",
+      "title": "The live-animals journey, templates, the address book and transporters",
+      "why": "The animals frontend's journey is one app whose shared flow, layout, back links, save controls and template mode reach every journey page (req-005, req-006, req-009, req-038), so its pages cannot be split between themes without conflicting pull requests. The address book (req-043 to req-052), transporters (req-074), the journey add-address page (req-059) and the deleted banner (req-033) each change the address-book service, the INS frontend's address-book feature, shared layout and client scripts, and the animals frontend in single rows, so they build here too. Templates (req-037 to req-042) and action required (req-036) live in the animals backend (conflicts c-025 and c-006 defaults), and the commodity list in reference-data (req-080). The INS backend's part is only its address lookup (conflict c-010 default).",
+      "touches": [
+        "frontend:.",
+        "backend:.",
+        "referencedata:.",
+        "addressbook:.",
+        "insfrontend:src/server/app/features/address-book",
+        "insfrontend:src/server/app/features/address-lookup-spike",
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/routes.js",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/services/address-lookup",
+        "insfrontend:src/server/app/services/countries",
+        "insfrontend:src/server/app/shared",
+        "insfrontend:src/server/common",
+        "insfrontend:src/client",
+        "insfrontend:src/config",
+        "insfrontend:webpack.config.js",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "insbackend:src/test/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "tests:tests/animals",
+        "tests:page-objects/animals",
+        "tests:flows/animals",
+        "tests:tests/ins/e2e/features/address-book",
+        "tests:tests/ins/security/address-book",
+        "tests:page-objects/ins/address-book",
+        "tests:tests/ins/e2e/features/cross-service-sessions.spec.ts"
+      ],
+      "dependsOn": []
+    },
+    {
+      "id": "dashboard",
+      "title": "The DR2.1 notifications dashboard in the INS frontend",
+      "why": "The DR2.1 dashboard (req-019, req-021 to req-032, req-034, req-035) changes only the INS read model and its list API (the ins-backend notification and service packages, whose record today holds eight fields: repo-insbackend-p1-002) and the INS frontend's dashboard feature and its ins-backend client (repo-insfrontend-p1-001). The read model takes the organisation from the events' actor and everything else from the published aggregate, so no animals-backend change is needed beyond action required. No other theme touches this code. Its rows wait for the journey theme's notification page amend (inc-012), action required (inc-014), dashboard links (inc-016) and Manage templates (inc-017).",
+      "touches": [
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/service",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/configuration",
+        "insbackend:src/main/resources",
+        "insbackend:src/test/java/uk/gov/defra/trade/imports/ins/backend/notification",
+        "insbackend:src/test/java/uk/gov/defra/trade/imports/ins/backend/service",
+        "insbackend:src/test/java/uk/gov/defra/trade/imports/ins/backend/integration",
+        "insfrontend:src/server/app/features/dashboard",
+        "insfrontend:src/server/app/services/ins-backend",
+        "tests:tests/ins/e2e/features/dashboard",
+        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts",
+        "tests:tests/ins/e2e/features/aggregated-notification.spec.ts",
+        "tests:page-objects/ins/dashboard-page.ts",
+        "tests:tests/ins/a11y"
+      ],
+      "dependsOn": ["live-animals-journey"]
+    }
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "The journey runs in DR2.1's order, with DR2.1's step names and captions",
+      "detail": "DR2.1 asks the main import reason before the commodity details, treats the CPH number and permanent address as parts of the consignment addresses page rather than steps of their own, continues from the addresses page to the contact address, names the reason step 'Main import reason' everywhere and captions Commodity details 'Description of the goods'. Today the opening run asks commodity details before the reason, steps from the addresses page to the CPH page, drops the trader on the overview after the addresses page, and says 'Main reason for import'.",
+      "acceptanceCriteria": [
+        "On a new notification, 'Save and continue' moves through the pages in this order: origin, 'What are you importing?', 'Main import reason', Commodity details, identification details (only when a selected commodity needs identifiers), Additional details, Arrival details, transit countries (only for rail or road), Transporter, Upload documents, Consignment addresses, Contact address, the review, the declaration. (prototype:dr2-1-source p1-054, p1-055, p4-060; trace:prototype-dr2-1 p13-180, p4-001; prototype:dr2-1-specs p1-066)",
+        "The CPH number page and the permanent address page are never a step of their own in that run; they are reached only from the Consignment addresses page. (prototype:dr2-1-source p1-062, p1-064)",
+        "'Save and continue' on the Consignment addresses page saves and opens the Contact address page, or the overview when every overview section is already complete. (prototype:dr2-1-source p8-043, p1-066)",
+        "The Commodity details page is captioned 'Description of the goods'; every other journey page keeps the caption it has. (prototype:dr2-1-source p3-003; trace:prototype-dr2-1 p5-003, p12-048; prototype:dr2-1-specs p2-016)",
+        "The reason page's title and heading read 'Main import reason', and the overview task and the review card for it read 'Main import reason'. (prototype:dr2-1-source p4-002, p4-003, p12-023, p11-074; trace:prototype-dr2-1 p4-002, p11-015; prototype:dr2-1-specs p1-067, p1-068)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js linear journey under /design-release-2.1; views/design-release-2.1 commodity details and import reason" },
+        { "source": "trace:prototype-dr2-1", "ref": "linear journey traces p4, p5, p11, p13" },
+        { "source": "prototype:dr2-1-specs", "ref": "journey order and reason page specs p1, p2" },
+        { "source": "repo:frontend", "ref": "live-animals flow opening run and section captions" }
+      ],
+      "requirements": ["req-004", "req-006", "req-007", "req-088"],
+      "notes": "Combines the journey-order slice (req-006, req-007) with the naming slices (req-004, req-088): they change the same pages and the same overview and review entries, so one ladder covers them. The Back-link rule (req-005) is kept apart in inc-021 because it also needs template mode.",
+      "gate": "Check the new page order end to end: every later journey row, template mode included, is built on it."
+    },
+    {
+      "id": "inc-002",
+      "title": "The origin page's country, region hint, live region prefix and reference hint follow DR2.1",
+      "detail": "DR2.1 shows the country of origin as a search box under its own sub-heading, words the region and internal reference hints differently, and changes the region code's country prefix as soon as the trader picks a country. Today the prefix appears only after the page is submitted.",
+      "acceptanceCriteria": [
+        "The country of origin sits under the sub-heading 'Country of origin' as a search box with the placeholder 'Search for a country' and no hint; the countries offered are the ones reference-data serves. (prototype:dr2-1-source p2-031, p2-032, p2-034; repo:frontend p4-075)",
+        "The region question is hinted 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' (prototype:dr2-1-source p2-041, p2-042)",
+        "With JavaScript, picking a country changes the region of origin code's country prefix straight away, before the page is submitted. (prototype:dr2-1-source p2-047, p2-048, p2-052; document:dr1-parity-backlog p4-005)",
+        "Without JavaScript, the prefix is set when the page is saved, as it is today. (repo:frontend p4-092)",
+        "The internal reference is hinted 'Enter any internal reference you want to use to identify this consignment, or leave blank.', and a reference over 58 characters is still refused with today's error. (prototype:dr2-1-source p2-062; repo:frontend p4-101)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 origin page and its country-prefix script" },
+        { "source": "document:dr1-parity-backlog", "ref": "deferred live region prefix row" },
+        { "source": "repo:frontend", "ref": "features/origin" }
+      ],
+      "requirements": ["req-093", "req-094", "req-095", "req-096"],
+      "openQuestions": [
+        "c-020: Where a real service has a feature DR2.1 does not show at all, is it removed? Default followed: no; it is kept unless DR2.1 shows another way to do the same job, and then stays only as the route without JavaScript (here, the prefix set on save)."
+      ],
+      "notes": "Combines every origin-page difference: one page, one ladder.",
+      "gate": null
+    },
+    {
+      "id": "inc-003",
+      "title": "Commodity search hint and the Commodity details table follow DR2.1",
+      "detail": "DR2.1 words the commodity search hint around common name, code and Latin name, names the species in the Commodity details summary table, and heads each commodity's fields with its name and code.",
+      "acceptanceCriteria": [
+        "The commodity search hint reads 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' (prototype:dr2-1-source p2-076; repo:frontend p5-007)",
+        "The Commodity details page's 'Selected commodities' table has the columns Commodity code, Common name and Species. (prototype:dr2-1-source p3-008, p3-009; trace:prototype-dr2-1 p12-048)",
+        "On Commodity details each commodity's fields sit under a '<commodity name> (<commodity code>)' heading, with a heading for each species. (prototype:dr2-1-source p3-018, p3-019; repo:frontend p5-060)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 commodity search and commodity details" },
+        { "source": "repo:frontend", "ref": "features/commodities search and consignment-details" }
+      ],
+      "requirements": ["req-079", "req-082"],
+      "notes": "Combines the search hint and the details table: the two pages of 'What are you importing?' share a feature and its copy.",
+      "gate": null
+    },
+    {
+      "id": "inc-004",
+      "title": "What each commodity is asked follows DR2.1's rules by commodity code",
+      "detail": "DR2.1 decides by commodity code which identifiers an animal needs, whether packages and unweaned animals are asked, whether a CPH number is asked and whether a permanent address is needed. The rules apply now to whatever commodities the list offers; the list's contents wait for master data (inc-010). Rules for codes the list does not offer yet (0103, 010410, 010420) and for ferrets take effect when master data supplies them.",
+      "acceptanceCriteria": [
+        "A 0102 (cattle) commodity asks for an ear tag then a passport for each animal, asks the number of packages, asks 'Does the consignment contain any unweaned animals?' and asks for a CPH number. (prototype:dr2-1-source p5-014, p5-015, p3-026, p3-064, p9-002)",
+        "A 0101 (horses) commodity asks for a microchip, a passport and a horse name for each animal, asks the number of packages, and asks neither the unweaned question nor a CPH number. (prototype:dr2-1-source p5-016, p3-026, p9-002)",
+        "A 01061900 (cats and dogs) commodity asks for a microchip, a passport and a tattoo for each animal, asks the number of packages, asks no CPH number, and is the only kind that needs a permanent address. (prototype:dr2-1-source p5-017, p5-021, p3-026, p9-002, p9-023)",
+        "A commodity outside chapter 01's mammals, such as fish, asks no identifiers, no number of packages and no unweaned question, and is asked for a CPH number. (prototype:dr2-1-source p3-026, p3-064, p9-002; repo:frontend p2-106)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "dropped",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data commodity rules; identification, commodity details and CPH views" },
+        { "source": "document:dr1-parity-notes", "ref": "per-commodity identifier findings are local, not MDM" },
+        { "source": "repo:frontend", "ref": "commodity stub and obligations for identifiers, packages, unweaned and CPH" }
+      ],
+      "requirements": ["req-081"],
+      "openQuestions": [
+        "c-023: Does the live-animals commodity and species list take DR2.1's contents, or wait for master data through reference-data? Default followed: the list's contents wait for master data; DR2.1's per-commodity rules by commodity code apply now to whatever commodities the list holds."
+      ],
+      "notes": "Dropped: the reconciler, under the c-023 default, adopted req-081 as exists. The animals frontend already asks cattle, horses, cats, dogs and fish what DR2.1's rules for their codes say (repo:frontend p2-096 to p2-109). The rules for pigs, sheep, goats and ferrets are req-116, which waits for master data with inc-010.",
+      "gate": null
+    },
+    {
+      "id": "inc-005",
+      "title": "An animal counts as identified only when every identifier is filled, with DR2.1's identification layout",
+      "detail": "DR2.1 counts an animal as identified only when every identifier its commodity asks for has a value, keeps a partly filled animal without an error, groups species under their commodity and labels the identifier fields plainly.",
+      "acceptanceCriteria": [
+        "An animal is listed in the saved-animals table only when every identifier its commodity asks for has a value. (prototype:dr2-1-source p5-046, p5-052)",
+        "Saving an animal with some identifiers filled keeps what was entered and shows its form again, with no error. (prototype:dr2-1-source p5-062; document:dr1-parity-backlog p5-017)",
+        "The identification page groups species under a '<commodity name> (<commodity code>)' section, with one panel per species headed with its name and a 'Change number of animals' link. (prototype:dr2-1-source p5-040, p5-041, p5-042)",
+        "Text identifier fields are labelled 'Microchip', 'Passport', 'Tattoo', 'Ear tag' and 'Horse name', with no hint. (prototype:dr2-1-source p5-024, p5-014; repo:frontend p6-058)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 identification details" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-103 left the identified rule undecided" },
+        { "source": "repo:frontend", "ref": "features/commodities/animal-identification" }
+      ],
+      "requirements": ["req-084", "req-085"],
+      "notes": "Combines the identified rule with the layout and labels: both change the identification page. The identifier set each commodity asks for already follows DR2.1 (req-081, met today), so the row no longer waits for inc-004, which is dropped.",
+      "gate": null
+    },
+    {
+      "id": "inc-006",
+      "title": "Reason selects open on 'Select one' and the certified-for hint follows DR2.1",
+      "detail": "DR2.1 opens the destination country and port of exit selects on 'Select one' with no divider, and words the certified-for hint differently.",
+      "acceptanceCriteria": [
+        "The destination country and port of exit selects in the main import reason reveals open on 'Select one', with no divider line. (prototype:dr2-1-source p4-042, p4-045; repo:frontend p7-035, p7-037)",
+        "'What are the animals certified for?' is hinted 'You can find this information on the ITAHC.' (prototype:dr2-1-source p3-061; repo:frontend p7-087)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 import reason and additional details" },
+        { "source": "repo:frontend", "ref": "features/import-reason and features/additional-details" }
+      ],
+      "requirements": ["req-090", "req-091"],
+      "notes": "Combines two small copy differences on neighbouring pages so they share one ladder.",
+      "gate": null
+    },
+    {
+      "id": "inc-007",
+      "title": "Arrival details copy follows DR2.1 and the means of transport is required to continue",
+      "detail": "DR2.1 words the arrival details hints, the port placeholder and the transport options differently, and needs the means of transport before continuing because it decides whether transit countries are asked. The stored transport codes and the port list stay as they are.",
+      "acceptanceCriteria": [
+        "The arrival date is hinted 'The expected date of arrival at the port of entry. For example, 27/3/2026'. (prototype:dr2-1-source p6-014)",
+        "The port of entry is hinted 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.', its placeholder reads 'Select a port', and ports show as 'name - code'. (prototype:dr2-1-source p6-025, p6-026, p6-028)",
+        "The means of transport options read Air, Rail, Road and Sea, and a notification saved with each is stored and published with the same transport code as before. (prototype:dr2-1-source p6-036; repo:backend p1-072)",
+        "The transport identification hint reads 'Enter one of the following:' followed by the four bullets. (prototype:dr2-1-source p6-043)",
+        "'Save and continue' with no means of transport shows 'Select a means of transport to the port of entry' and keeps everything else entered. (prototype:dr2-1-source p6-039, p6-040, p6-041)",
+        "'Save and return to overview' still saves the page with no means of transport. (prototype:dr2-1-source p6-051)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 arrival details; app/routes.js arrival handler" },
+        { "source": "repo:frontend", "ref": "features/transport/port-of-entry" },
+        { "source": "repo:backend", "ref": "transport codes" }
+      ],
+      "requirements": ["req-065", "req-066"],
+      "openQuestions": [
+        "c-013: Is the arrival date the trader gives the arrival at the port of entry or at the place of destination? Default followed: the port of entry ('Arrival date at port of entry' on the question page, the review card and the validation messages)."
+      ],
+      "notes": "Combines the arrival copy with the new required check: one page, one ladder.",
+      "gate": null
+    },
+    {
+      "id": "inc-008",
+      "title": "Upload documents field copy and document types follow DR2.1",
+      "detail": "DR2.1 drops the document reference hint, uses its date example, and offers thirteen document types without Health certificate.",
+      "acceptanceCriteria": [
+        "'Document reference' has no hint and 'Date of issue' is hinted 'For example, 27/3/2026'. (prototype:dr2-1-source p10-026, p10-032)",
+        "The document type select opens on 'Select one' and offers DR2.1's thirteen types in order, from 'Intra Trade Animal Health Certificate (ITAHC)' to 'Other', with no 'Health certificate'. (prototype:dr2-1-source p10-028, p10-029, p10-030)",
+        "A document already saved as Health certificate keeps that type on the documents page and the review. (repo:backend p4-083)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 upload documents" },
+        { "source": "repo:frontend", "ref": "features/documents" }
+      ],
+      "requirements": ["req-075", "req-076"],
+      "notes": "Combines the field copy and the type list: both are on the File upload card.",
+      "gate": null
+    },
+    {
+      "id": "inc-009",
+      "title": "The document size limit follows DR2.1's 50MB once the platform allows it",
+      "detail": "DR2.1 allows 50MB attachments, but the hosting platform's ingress caps requests at 10 MiB. Until the cap is confirmed raised, the limit stays 10MB with its hint and error; then it becomes 50MB everywhere at once.",
+      "acceptanceCriteria": [
+        "Once the platform accepts uploads of 50MB, the attachment hint and the too-large error say 50MB, in every environment at once. (prototype:dr2-1-source p10-036; document:dr1-parity-backlog p5-031)",
+        "A file just under 50MB then uploads and is scanned like any other. (prototype:dr2-1-source p10-036; repo:backend p4-022)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 upload documents attachment hint" },
+        { "source": "document:dr1-parity-backlog", "ref": "50MB rows held on the ingress cap" },
+        { "source": "repo:frontend", "ref": "features/documents size limit" }
+      ],
+      "requirements": ["req-077"],
+      "openQuestions": [
+        "c-019: Has the CDP ingress request-body cap in front of the animals frontend been raised to at least 50MB (EUDPA-518), so the document limit can follow DR2.1? Default: the limit stays 10MB, with its hint and error, until the cap is confirmed; it then becomes 50MB in every environment at once."
+      ],
+      "notes": "Blocked until the CDP platform confirms the ingress cap is at least 50,001,024 bytes (EUDPA-518). Somebody outside the loop must confirm it first.",
+      "gate": null
+    },
+    {
+      "id": "inc-010",
+      "title": "The live-animal commodity and species list comes from master data",
+      "detail": "Which commodities and species are offered, and how each is named, is master reference data. The frontend's five-commodity stub gives way to what reference-data serves from master data once master data carries the live-animal commodities and species. The commodities that then arrive for the first time (pigs, sheep, goats and ferrets) take DR2.1's rules for their codes.",
+      "acceptanceCriteria": [
+        "The commodity search offers the live-animal commodities and species reference-data serves from master data, named as master data names them, and no longer the five built-in commodities. (repo:referencedata p1-085, p1-089; document:dr1-parity-notes p1-038)",
+        "Each commodity offered is asked what DR2.1's rules for its commodity code say. (prototype:dr2-1-source p5-014; repo:frontend p2-112)",
+        "Pigs (0103), sheep (010410) and goats (010420) are asked an ear tag for each animal, the number of packages and a CPH number, and only pigs are asked 'Does the consignment contain any unweaned animals?'. (prototype:dr2-1-source p5-014, p3-026, p3-064, p9-002)",
+        "Ferrets are asked a microchip, a passport and a tattoo for each animal, the number of packages and a permanent address, and no CPH number. (prototype:dr2-1-source p5-017, p5-021, p3-026, p9-002, p9-023)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": ["referencedata", "frontend", "tests"],
+      "sources": [
+        { "source": "repo:referencedata", "ref": "managed domains served from MDM" },
+        { "source": "document:dr1-parity-notes", "ref": "master reference-data lists wait for MDM" },
+        { "source": "repo:frontend", "ref": "services/commodities stub" },
+        { "source": "prototype:dr2-1-source", "ref": "app/data commodity rules for 0103, 010410, 010420 and ferrets" }
+      ],
+      "requirements": ["req-080", "req-116"],
+      "openQuestions": [
+        "c-023: Does the live-animals commodity and species list take DR2.1's contents, or wait for master data through reference-data? Default: the list's contents wait for master data, as DR1 ruled for master reference lists, and in every environment the list stays today's five commodities; the rules for pigs, sheep, goats and ferrets are built when master data supplies them."
+      ],
+      "notes": "Blocked until master data (MDM) carries the live-animal commodities and species for reference-data to serve; nothing in this programme supplies them. Carries req-116 (DR2.1's rules for pigs, sheep, goats and ferrets) because no environment offers those commodities until then, so their rules can be built and observed only with this row. No longer depends on inc-004, which is dropped: the rules for today's five commodities are already met (req-081).",
+      "gate": null
+    },
+    {
+      "id": "inc-011",
+      "title": "The review page uses DR2.1's sections, cards and errors, and a draft can be deleted from it",
+      "detail": "DR2.1 reorganises the review around what the trader answered, words its incomplete-card errors after each card, and lets a trader delete a draft from its review.",
+      "acceptanceCriteria": [
+        "The review's sections are '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents', '5. Consignment addresses' and '6. Contact address'. (prototype:dr2-1-source p11-069, p11-070; trace:prototype-dr2-1 p11-065)",
+        "The cards are 'Origin of import' (Country of origin, Region of origin code, Internal reference number), 'What are you importing?' (Commodity code, Common name, Species) and 'Main import reason' (with Purpose in the market, Destination country, Exit border control post, Exit date and Port of exit as they apply). (prototype:dr2-1-source p11-071, p11-075, p11-077, p11-078)",
+        "Each commodity has a card titled '<name> (<code>)' with a block per species showing its numbers and an identification table. (prototype:dr2-1-source p11-080, p11-086; trace:prototype-dr2-1 p13-139)",
+        "Then 'Additional details', 'Arrival details' with a 'Transit countries' part, 'Transport details', a 'Document <n>' card per document (reference, type, date of issue, Attachment), 'Addresses' and 'Contact address'; each card has one Change link. (prototype:dr2-1-source p11-099, p11-100, p11-103, p11-104, p11-108, p11-109, p11-113; prototype:dr2-1-specs p4-048)",
+        "An unfinished card says 'Complete' and its title in lower case: 'Complete origin of import', 'Complete what are you importing?', 'Complete main import reason', 'Complete commodity details', 'Complete additional details', 'Complete arrival details', 'Complete transport details', 'Complete roles and addresses', 'Complete contact address for this consignment'. (prototype:dr2-1-source p11-044, p11-045, p11-046, p11-048, p11-049)",
+        "With several species needing identifiers, a species with none reads 'Enter at least 1 animal identifier for <species>'; transit countries and documents never show an error. (prototype:dr2-1-source p11-054, p11-055, p11-056, p11-058)",
+        "A draft's review shows a red 'Delete' button beside Continue that opens the delete confirmation. (prototype:dr2-1-source p11-118, p11-029)"
+      ],
+      "dependsOn": ["inc-001"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 check-answers" },
+        { "source": "trace:prototype-dr2-1", "ref": "review traces p11, p13" },
+        { "source": "prototype:dr2-1-specs", "ref": "review spec p4" },
+        { "source": "repo:frontend", "ref": "features/check-answers" }
+      ],
+      "requirements": ["req-099", "req-100", "req-101"],
+      "openQuestions": [
+        "c-013: Is the arrival date the trader gives the arrival at the port of entry or at the place of destination? Default followed: the port of entry, so the Arrival details card reads 'Arrival date at port of entry'."
+      ],
+      "notes": "Combines the card layout, the error wording and the draft delete button: all on the review page. Depends on inc-001 for the 'Main import reason' naming and section order.",
+      "gate": "Check the review cards: template pages (inc-018) reuse them."
+    },
+    {
+      "id": "inc-012",
+      "title": "A submitted notification's page shows its import reference numbers and starts an amendment with a confirmation",
+      "detail": "DR2.1 gives a submitted notification a page headed with its reference, the numbers the trader needs for the customs declaration, and its actions; amending starts there, after a confirmation, and lands on the review page.",
+      "acceptanceCriteria": [
+        "A submitted notification's page is headed with its reference and shows its status tag and 'Date submitted:'. (prototype:dr2-1-source p11-005, p11-021, p11-022; trace:prototype-dr2-1 p13-176)",
+        "It offers 'Amend this notification', 'Copy as new' and a red 'Delete', and its Back link goes to the dashboard. (prototype:dr2-1-source p11-023, p11-025, p11-027; prototype:dr2-1-specs p5-094)",
+        "An 'Import reference numbers' section warns 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.' and shows the Notification reference and the Customs document code C640, each with a Copy button. (prototype:dr2-1-source p11-036, p11-037, p11-038; prototype:dr2-1-specs p5-095, p5-096)",
+        "'Amend this notification' opens a dialog headed 'Amend notification' asking 'Are you sure you want to change this notification?' with 'Yes, continue' and 'No, go back'. (prototype:dr2-1-source p12-046, p12-047, p12-048, p12-049; trace:prototype-dr2-1 p12-181)",
+        "'Yes, continue' puts the notification into amendment and opens its review page; 'No, go back' leaves it submitted. (prototype:dr2-1-source p12-081; trace:prototype-dr2-1 p14-062; prototype:dr2-1-specs p5-107)"
+      ],
+      "dependsOn": ["inc-011"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 notification page and amend dialog" },
+        { "source": "trace:prototype-dr2-1", "ref": "amend traces p12, p14" },
+        { "source": "repo:frontend", "ref": "features/check-answers and notification-actions" }
+      ],
+      "requirements": ["req-012", "req-102"],
+      "notes": "Combines the submitted notification page with starting an amendment from it: the amend control lives on that page. The backend is listed for the submitted date if the view does not carry it yet.",
+      "gate": null
+    },
+    {
+      "id": "inc-013",
+      "title": "Amending shows the 'Amend' strip, cancels through a dialog and ends pages with 'Save and return'",
+      "detail": "DR2.1 keeps an amending trader close to the review they are re-submitting from: the status strip says 'Amend' with a 'Cancel amend' control, pages end with 'Save and return', the review says when it is about to re-submit a changed notification, and cancelling is confirmed in a dialog on the page the trader is on.",
+      "acceptanceCriteria": [
+        "While a notification is amended, the status strip shows the tag 'Amend' and the reference, with a link-styled 'Cancel amend' button beside them. (prototype:dr2-1-source p1-078, p1-079, p12-009)",
+        "'Cancel amend' opens a modal dialog headed 'Are you sure you want to cancel this amendment?' with 'Yes, cancel amendment', a link-styled 'Go back' button and a Close button; Close and 'Go back' change nothing. (prototype:dr2-1-source p1-027, p1-028, p1-029, p1-030, p12-052)",
+        "'Yes, cancel amendment' cancels the amendment, and without JavaScript the cancel-amendment page still does so. (prototype:dr2-1-source p12-055; repo:frontend p3-082)",
+        "While amending, each journey page ends with a primary 'Save and return' to the review page, a secondary 'Save and continue' and a link-styled 'Save and return to overview', with no cancel link. (prototype:dr2-1-source p1-074, p7-043, p8-048, p3-048)",
+        "While amending, the review page shows a secondary 'Cancel amend' button beside Continue, which opens the same dialog. (prototype:dr2-1-source p11-117; prototype:dr2-1-specs p7-187)",
+        "When the amended answers differ from the submitted version, the review page is headed 'Review before re-submitting'; a change to anything that is not an answer does not count. (prototype:dr2-1-source p11-019, p12-082, p12-083; trace:prototype-dr2-1 p14-065)"
+      ],
+      "dependsOn": ["inc-012"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 layout status strip, save buttons, cancel-amend dialog, check-answers" },
+        { "source": "trace:prototype-dr2-1", "ref": "amend trace p14" },
+        { "source": "repo:frontend", "ref": "journey strip, save actions, features/cancel-amend" }
+      ],
+      "requirements": ["req-009", "req-010", "req-011", "req-013", "req-014"],
+      "openQuestions": [
+        "c-020: Where a real service has a feature DR2.1 does not show at all, is it removed? Default followed: kept where DR2.1 shows no other way; the cancel-amendment page stays as the route without JavaScript."
+      ],
+      "notes": "Combines every amending-state difference (strip, dialog, page endings, review heading and button): they share the amending state and one ladder. The backend is listed in case the submitted version is not yet available for the 'Review before re-submitting' comparison.",
+      "gate": null
+    },
+    {
+      "id": "inc-014",
+      "title": "Submission records what is still owed, and the notification and confirmation pages say what to add",
+      "detail": "DR2.1 derives 'Submitted action required' from what a notification still owes at submission (no ITAHC document; required animal identifiers incomplete). The animals backend records it and publishes it with its other events, and the notification and confirmation pages tell the trader exactly what to add.",
+      "acceptanceCriteria": [
+        "Submitting a notification with no ITAHC document attached, or with required animal identifiers incomplete, records it as submitted with action required, with each outstanding item, and the published notification event carries that status and those items for the INS read model. (prototype:dr2-1-source p11-145, p11-146, p11-147, p12-096)",
+        "Submitting a notification with nothing outstanding records it as plain submitted. (prototype:dr2-1-source p12-096)",
+        "A notification needing action shows a warning naming what is missing: 'You need to complete animal identifiers and upload a health certificate', 'You need to complete animal identifiers' or 'You need to upload a health certificate'. (prototype:dr2-1-source p11-006, p11-030, p11-031, p11-032)",
+        "On that page a species without identifiers is marked 'Enter a minimum of 1 identifier', an empty documents section reads 'Upload a valid health certificate', and the page ends with Continue to the overview. (prototype:dr2-1-source p11-033, p11-090, p11-107, p11-120)",
+        "The confirmation page's 'Before the consignment is imported' list shows 'upload the ITAHC and any other required documents' when no ITAHC document is attached. (prototype:dr2-1-source p11-146, p11-154)",
+        "It shows 'complete the animal identifier information in the notification' when required identifiers are incomplete. (prototype:dr2-1-source p11-147; document:dr1-parity-backlog p8-060)"
+      ],
+      "dependsOn": ["inc-012"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js submission handler; views/design-release-2.1 notification page and confirmation" },
+        { "source": "document:dr1-parity-backlog", "ref": "held-back identifier bullet" },
+        { "source": "repo:backend", "ref": "notification statuses and submission" },
+        { "source": "repo:frontend", "ref": "features/confirmation" }
+      ],
+      "requirements": ["req-036", "req-103", "req-105"],
+      "openQuestions": [
+        "c-006: DR2.1's dashboard shows Action required, Completed, Delayed, status changes, inspection and messages; what is built for each when no real service records most of them? Default followed: Action required is built from the items outstanding at submission (no ITAHC document; required animal identifiers incomplete), recorded by the animals backend and carried to the INS read model."
+      ],
+      "notes": "Combines recording action required with the two pages that tell the trader about it: one rule, read three ways. The notification page warning sits on the page inc-012 builds.",
+      "gate": "Check how action required is derived, stored and published: the dashboard's Action required tag, message and Action needed page (inc-039) are built on it."
+    },
+    {
+      "id": "inc-015",
+      "title": "'Copy as new' carries what DR2.1 carries",
+      "detail": "DR2.1 copies what a repeat consignment keeps and drops what changes every time.",
+      "acceptanceCriteria": [
+        "A notification made with 'Copy as new' keeps the origin details with the internal reference, the species chosen with their numbers cleared, the import reason and every follow-up with the exit date, what the animals are certified for and the unweaned answer, the five consignment parties, the CPH number and the permanent addresses. (prototype:dr2-1-source p12-063, p12-064, p12-065, p12-066, p12-067; trace:prototype-dr2-1 p14-101)",
+        "It leaves out the numbers of animals and packages, the identifiers, the port and arrival date, transport, transit countries, the transporter, documents and the contact address. (prototype:dr2-1-source p12-068; repo:backend p2-055)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js copy-as-new handler" },
+        { "source": "trace:prototype-dr2-1", "ref": "copy trace p14" },
+        { "source": "repo:backend", "ref": "notification copy" }
+      ],
+      "requirements": ["req-110"],
+      "notes": "One slice: the copy rule lives in the backend and shows on the new draft's pages.",
+      "gate": null
+    },
+    {
+      "id": "inc-016",
+      "title": "Deleting shows what is deleted, and the journey's dashboard links go to the INS dashboard with a deleted banner",
+      "detail": "DR2.1 has one dashboard. The journey's dashboard links go to the INS dashboard (the animals frontend's own dashboard stays until a ruling retires it), the delete page shows what is about to be deleted, and after a delete the dashboard confirms it.",
+      "acceptanceCriteria": [
+        "The delete page is headed 'Delete this notification?', shows Reference number, Commodity, Number and Origin, says 'Confirm that you want to delete this notification.' and 'This action cannot be undone.', and offers a red 'Yes, delete' and a 'No, cancel' link back to where the trader came from. (prototype:dr2-1-source p11-170, p11-172, p11-173, p11-174, p11-175, p11-178, p11-179, p11-180)",
+        "The animals frontend's Dashboard navigation item, the overview's 'Return to dashboard', the confirmation page's 'Return to your dashboard' and the landing after a delete go to the INS dashboard. (prototype:dr2-1-source p12-042, p11-159, p11-183; repo:frontend p1-010, p4-052, p14-050)",
+        "The animals frontend's own live-animals dashboard still opens and works as it does today. (repo:frontend p1-010)",
+        "The confirmation page's 'How to view or amend this notification' reads 'You can view or change this notification from your dashboard.' (prototype:dr2-1-source p11-158)",
+        "After a delete, the INS dashboard shows a green 'Success' banner reading '<reference> has been deleted', or 'Notification has been deleted' when the reference is unknown, once only. (prototype:dr2-1-source p13-020, p11-183)",
+        "With JavaScript, the banner dismisses itself after 5 seconds. (prototype:dr2-1-source p13-020)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insfrontend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 delete page, confirmation and dashboard banner" },
+        { "source": "repo:frontend", "ref": "navigation, overview, confirmation and delete-notification" },
+        { "source": "repo:insfrontend", "ref": "dashboard landing" }
+      ],
+      "requirements": ["req-020", "req-033", "req-106", "req-108"],
+      "openQuestions": [
+        "c-004: Once the DR2.1 dashboard is built in the INS frontend, where do the live-animals journey's dashboard links go, and does the animals frontend's own dashboard at /live-animals stay? Default followed: the journey's dashboard links go to the INS dashboard; the animals frontend's dashboard stays in place, unchanged, until a ruling retires it."
+      ],
+      "notes": "Combines the delete page, the dashboard links and the deleted banner: one trip from the journey back to the INS dashboard. The dashboard's own pages belong to the dashboard theme, so the banner must show on the INS dashboard without a change to them (the INS shared layout and client scripts are this theme's).",
+      "gate": null
+    },
+    {
+      "id": "inc-017",
+      "title": "Templates: navigation, Manage templates and creating a template through the journey",
+      "detail": "DR2.1 adds templates so a trader can start repeat consignments without re-entering them. Templates are stored by the animals backend as records apart from notifications, owned by the signed-in organisation; the template pages and template-mode journey are in the animals frontend; both frontends' navigation gains Templates.",
+      "acceptanceCriteria": [
+        "In both the animals frontend and the INS frontend a signed-in trader's navigation offers, in order, Dashboard, Templates, Address book, Manage account and Log out; Templates is active on every template page and Address book on every address-book page. (prototype:dr2-1-source p1-021, p1-023; trace:prototype-dr2-1 p1-011, p15-015; prototype:dr2-1-specs p6-011; ruling:sam-2026-10-07 p1-010)",
+        "A 'Manage templates' page (heading and title 'Manage templates', description 'Select, manage or create new notification templates', a 'Create new template' button) lists the organisation's templates under 'My templates' with a 'Show 1-N of N results' count and a 'Sort by:' select. (prototype:dr2-1-source p14-001, p14-002, p14-003, p14-006, p14-007; trace:prototype-dr2-1 p15-002, p15-003; prototype:dr2-1-specs p6-002, p6-003)",
+        "Each template card is labelled 'Template <title>', shows its category and title with 'View template' and 'Use template' links, and lists Commodity, Origin, Consignee and Consignor. (prototype:dr2-1-source p14-008, p14-014, p14-015, p14-016; prototype:dr2-1-specs p6-004, p6-005)",
+        "A trader never sees another organisation's templates. (ruling:sam-2026-10-07 p1-010)",
+        "'Create new template' asks 'Enter template name' (caption 'Create a new template'); a blank name saves as 'Untitled template'. (prototype:dr2-1-source p14-023, p14-024, p14-027)",
+        "The journey then runs from the origin page in template mode: the overview shows a 'Template' tag and the template name, is headed 'Template tasklist', has no Documents section, and ends with 'Review template' and 'Return to manage templates'. (prototype:dr2-1-source p14-029, p12-007, p12-017, p12-033, p12-040, p12-043; trace:prototype-dr2-1 p15-057, p15-061)",
+        "In template mode the arrival date, documents and declaration are not asked. (prototype:dr2-1-source p6-022, p10-003, p1-063)",
+        "The template review is headed 'Review your template' and ends with 'Save template', which returns to Manage templates with the banner '<name> saved to templates'. (prototype:dr2-1-source p11-018, p11-116, p14-018; trace:prototype-dr2-1 p15-094; prototype:dr2-1-specs p6-068)",
+        "A saved template keeps the origin, commodity and species, numbers, identifiers, reason and purpose, certified for, unweaned answer, port of entry, transport, transporter, place of origin, CPH and contact address, and never an arrival date or documents. (prototype:dr2-1-source p14-041, p14-042, p14-043, p14-044, p14-045)"
+      ],
+      "dependsOn": ["inc-001", "inc-011"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 manage templates, template name, template-mode overview and review" },
+        { "source": "trace:prototype-dr2-1", "ref": "template traces p15" },
+        { "source": "prototype:dr2-1-specs", "ref": "templates spec p6" },
+        { "source": "repo:frontend", "ref": "service navigation" },
+        { "source": "repo:insfrontend", "ref": "service navigation" },
+        { "source": "repo:backend", "ref": "no template status or record today" }
+      ],
+      "requirements": ["req-001", "req-037", "req-038", "req-039"],
+      "openQuestions": [
+        "c-025: Where are templates stored, who can see them, and which frontend serves the template pages? Default followed: the animals backend stores templates as records separate from notifications, owned by the signed-in organisation; the Manage templates, template name, view and delete pages and the template-mode journey live in the animals frontend; the Templates navigation item and the dashboard's 'Use template' button in both frontends link to Manage templates.",
+        "c-005: Does any notification type other than live animals come into this programme? Default followed: no; templates are Live animals only."
+      ],
+      "notes": "Combines the Templates navigation item (req-001) with the Manage templates page, creating a template and what it keeps: the navigation item cannot be observed until the page it opens exists, and a list cannot be observed until a template can be made. Log out stays in the navigation because the prototype has no sign-in (conflict c-001).",
+      "gate": "Check template storage, organisation scoping and template mode across the journey pages: inc-018 to inc-021 and the dashboard's 'Use template' button build on them."
+    },
+    {
+      "id": "inc-018",
+      "title": "A template's page shows its answers and each section can be changed in place",
+      "detail": "DR2.1 lets a trader check and correct a template from its own page.",
+      "acceptanceCriteria": [
+        "A template's page has the caption 'Templates', the template's title as its heading, 'Date created:', 'Use template' and a red 'Delete' button, and a Back link to Manage templates. (prototype:dr2-1-source p14-046, p14-047, p14-048, p14-049; trace:prototype-dr2-1 p15-024)",
+        "It shows the template's answers in the review's cards. (prototype:dr2-1-source p14-051; trace:prototype-dr2-1 p15-025)",
+        "Each card's Change link edits that section in template mode and returns to the template's page with the banner '<title> has been updated'. (prototype:dr2-1-source p14-052, p14-056, p1-051)"
+      ],
+      "dependsOn": ["inc-017"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 view template" },
+        { "source": "trace:prototype-dr2-1", "ref": "template traces p15" }
+      ],
+      "requirements": ["req-040"],
+      "openQuestions": [
+        "c-025: Where are templates stored, who can see them, and which frontend serves the template pages? Default followed: the animals backend stores them, owned by the organisation; the pages are in the animals frontend."
+      ],
+      "notes": "Kept apart from inc-017 so the template-mode pattern can be reviewed at its gate first.",
+      "gate": null
+    },
+    {
+      "id": "inc-019",
+      "title": "'Use template' starts a new draft notification from a template",
+      "detail": "DR2.1 turns a template into a notification in one step.",
+      "acceptanceCriteria": [
+        "'Use template', from Manage templates or the template's page, starts a new draft notification with a new reference and opens its overview. (prototype:dr2-1-source p14-059, p14-060, p14-062)",
+        "The draft carries the template's answers, its consignment parties from the template's addresses and its contact address from the template's contact or, without one, its place of origin. (prototype:dr2-1-source p14-066, p14-067, p14-071, p14-072, p14-074, p14-075)",
+        "The draft has no arrival date and no documents, and the template is unchanged. (prototype:dr2-1-source p14-041)"
+      ],
+      "dependsOn": ["inc-017"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js use-template handler" }
+      ],
+      "requirements": ["req-041"],
+      "openQuestions": [
+        "c-025: Where are templates stored, who can see them, and which frontend serves the template pages? Default followed: the animals backend stores them, owned by the organisation; the pages are in the animals frontend."
+      ],
+      "notes": "One slice: a template becomes a notification.",
+      "gate": null
+    },
+    {
+      "id": "inc-020",
+      "title": "A template can be deleted, or discarded while it is being created",
+      "detail": "DR2.1 confirms template deletion the same way as notification and address deletion.",
+      "acceptanceCriteria": [
+        "Deleting a template asks 'Delete this template?' with a 'Name' row, 'Confirm that you want to delete this template.' and 'This action cannot be undone.', a red 'Yes, delete' and a 'No, cancel' link. (prototype:dr2-1-source p14-076, p14-077, p14-078, p14-079; trace:prototype-dr2-1 p15-110; prototype:dr2-1-specs p6-048)",
+        "'Yes, delete' returns to Manage templates with '<title> has been deleted' and the template is no longer listed. (prototype:dr2-1-source p14-082, p14-085; prototype:dr2-1-specs p6-049)",
+        "Discarding a template being created asks the same question, and 'No, cancel' changes nothing. (prototype:dr2-1-source p14-087)"
+      ],
+      "dependsOn": ["inc-017"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["backend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 delete template" },
+        { "source": "trace:prototype-dr2-1", "ref": "template delete trace p15" },
+        { "source": "prototype:dr2-1-specs", "ref": "templates spec p6" }
+      ],
+      "requirements": ["req-042"],
+      "openQuestions": [
+        "c-025: Where are templates stored, who can see them, and which frontend serves the template pages? Default followed: the animals backend stores them, owned by the organisation; the pages are in the animals frontend."
+      ],
+      "notes": "One slice: deleting a template.",
+      "gate": null
+    },
+    {
+      "id": "inc-021",
+      "title": "Journey Back links follow DR2.1's rule",
+      "detail": "DR2.1 sets one Back-link rule for the journey: back to the overview when the page was opened from it, back to the template when opened from one, and otherwise to the page before it. Today the commodity search, Commodity details and import reason pages always go back to the overview.",
+      "acceptanceCriteria": [
+        "A journey page opened from the overview has a Back link to the overview. (prototype:dr2-1-source p1-052, p4-007)",
+        "A journey page opened from a template's page has a Back link to that template. (prototype:dr2-1-source p1-052)",
+        "Otherwise a page's Back link goes to the page before it in the journey: the main import reason page and Commodity details both go back to 'What are you importing?'. (prototype:dr2-1-source p4-008, p3-005; prototype:dr2-1-specs p1-075)"
+      ],
+      "dependsOn": ["inc-001", "inc-018"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "back-link rule in app/routes.js and journey views" },
+        { "source": "prototype:dr2-1-specs", "ref": "journey spec p1" },
+        { "source": "repo:frontend", "ref": "journey page Back links" }
+      ],
+      "requirements": ["req-005"],
+      "notes": "Kept apart from inc-001 because it also needs template mode (inc-018); depends on inc-001 for the page order the rule follows.",
+      "gate": null
+    },
+    {
+      "id": "inc-022",
+      "title": "Saved addresses carry uses, and the address book lists them by category with a full search",
+      "detail": "DR2.1 and DR1 both type saved addresses so each picker offers only the addresses that fit the role. The address-book service stores one or more uses per address, and the INS address book lists addresses under DR2.1's category tabs with a search over everything the list shows.",
+      "acceptanceCriteria": [
+        "The address-book API accepts, stores, returns and filters by an address's uses (Place of origin, Consignor, Consignee, Importer, Place of destination, Branch address), grouped into the categories Origin and Consignor; Destination, Consignee and Importer; and Branch. (prototype:dr2-1-source p16-079, p15-024, p15-027; document:dr1-parity-backlog p7-063, p6-050)",
+        "The address book is headed 'Address book' with the intro 'Manage your addresses for use across all your import notifications' and an 'Add a new address' button. (prototype:dr2-1-source p15-004, p15-005, p15-006; trace:prototype-dr2-1 p16-006)",
+        "It has four category tabs (Origin and Consignor; Destination, Consignee and Importer; Transporter; Branch), each with its own heading and a 'Showing <start>-<end> of <total>' line, and 8 addresses a page. (prototype:dr2-1-source p15-022, p15-023, p15-029, p15-038; trace:prototype-dr2-1 p16-008, p16-009; prototype:dr2-1-specs p6-090)",
+        "A collapsible 'Filter addresses' panel offers a Search (placeholder 'Search by name, address or country') and a Type select listing the open tab's uses. (prototype:dr2-1-source p15-008, p15-011, p15-013; prototype:dr2-1-specs p6-091)",
+        "The address tabs show a table of Name, Type, Address (one line per address line) and Country with a 'View' link per row, and a one-time success banner after a change. (prototype:dr2-1-source p15-030, p15-031)",
+        "A search matches, case-insensitively and anywhere in the text, an address's name, use labels, address lines and country. (prototype:dr2-1-source p15-018, p15-019, p15-020; repo:addressbook p3-032)"
+      ],
+      "dependsOn": [],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 address book list; app/routes.js address types" },
+        { "source": "document:dr1-parity-backlog", "ref": "typed addresses rows inc-048, inc-062" },
+        { "source": "repo:addressbook", "ref": "address record, API and search" },
+        { "source": "repo:insfrontend", "ref": "features/address-book/list" }
+      ],
+      "requirements": ["req-043", "req-044", "req-045"],
+      "openQuestions": [
+        "c-009: Where are the transporters an organisation adds kept, so the journey's list and the address book's Transporter tab show the same records? Default followed: in the address-book service, owned by the organisation; the Transporter tab lists them once inc-023 lands."
+      ],
+      "notes": "Combines typing addresses (req-043) with the list that shows them by type (req-044) and the search over them (req-045): typed records cannot be observed without the tabs. The Transporter tab's table and the approval-number search come with transporters in inc-023. Tests may give a one-page assertion its typed addresses through the API.",
+      "gate": "Check the address uses and categories: role-scoped pickers (inc-029), the contact address (inc-031), the add pages (inc-023, inc-024) and the address page (inc-026) rest on them."
+    },
+    {
+      "id": "inc-023",
+      "title": "Adding an address starts with its type, and transporters are kept in the address book",
+      "detail": "DR2.1 asks what an address is for before collecting it, and shows transporters an organisation adds both on the journey's transporter list and on the address book's Transporter tab. Transporters move from the animals frontend's memory into the address-book service as Commercial or Private transporter entries owned by the organisation.",
+      "acceptanceCriteria": [
+        "'Add a new address' opens 'Choose an address type' (caption 'Add a new address') offering Origin or Consignor ('Place of origin, Consignor'), Destination, Consignee or Importer ('Place of destination, Consignee, Importer'), Transporter ('Private, Commercial') and Branch ('Branch address'). (prototype:dr2-1-source p16-003, p16-004, p16-006, p16-007, p16-008, p16-009; trace:prototype-dr2-1 p16-038; prototype:dr2-1-specs p6-104, p6-105)",
+        "Continuing with no type chosen shows 'Select an address type'. (prototype:dr2-1-source p16-016; trace:prototype-dr2-1 p16-039; prototype:dr2-1-specs p6-112)",
+        "Choosing Transporter goes to adding a transporter, which saves it to the address book. (prototype:dr2-1-source p16-017, p7-110)",
+        "A transporter added from the journey or the address book is kept as a Commercial or Private transporter entry with its approval number and the status New, owned by the organisation, and is still there after the services restart. (prototype:dr2-1-source p7-108, p7-110, p7-111)",
+        "The address book's Transporter tab lists the organisation's transporters with Name, Address, Approval number and Type. (prototype:dr2-1-source p15-031, p15-036)",
+        "The journey's transporter list shows the organisation's added transporters alongside the shipped ones, and another organisation's never. (prototype:dr2-1-source p7-108; repo:frontend p12-113)",
+        "An address-book search also matches a transporter's approval number. (prototype:dr2-1-source p15-020)"
+      ],
+      "dependsOn": ["inc-022"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["addressbook", "insfrontend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 choose address type, address book transporter tab, add transporter" },
+        { "source": "trace:prototype-dr2-1", "ref": "address book traces p16" },
+        { "source": "repo:frontend", "ref": "features/transport transporter store" },
+        { "source": "repo:addressbook", "ref": "address record" }
+      ],
+      "requirements": ["req-050", "req-074"],
+      "openQuestions": [
+        "c-009: Where are the transporters an organisation adds kept, so that the journey's transporter list and the address book's Transporter tab show the same records? Default followed: in the address-book service, as transporter entries (type Commercial or Private, approval number, status New) owned by the organisation; the journey's transporter list reads them alongside the shipped transporters, the INS address book lists and adds them, and the animals frontend's in-memory store is retired."
+      ],
+      "notes": "Combines the type question with transporters in the address book: the Transporter type's destination is the transporter store, and a Transporter tab cannot be observed without it.",
+      "gate": null
+    },
+    {
+      "id": "inc-024",
+      "title": "The add-details step follows DR2.1 for each address type",
+      "detail": "DR2.1 collects origin-side addresses anywhere in the world and destination-side and branch addresses in the UK, asks what else an address can be used for, and returns to the list on the new address's category.",
+      "acceptanceCriteria": [
+        "The add-details step is headed 'Add address and contact details' (caption 'Add new address'), with fields under 'Address' and 'Contact details'. (prototype:dr2-1-source p16-019, p16-021, p16-046)",
+        "For Origin or Consignor it shows the manual address fields with a country select. (prototype:dr2-1-source p16-025)",
+        "For Destination and Branch it offers 'Search for an address' and 'Enter address manually', with the country fixed to United Kingdom. (prototype:dr2-1-source p16-036, p16-049, p16-052)",
+        "Every address form asks 'County (optional)'. (prototype:dr2-1-source p15-062)",
+        "A uses question (hint 'Select where this address can be used') needs at least one use: 'Select what this address can be used for'. (prototype:dr2-1-source p16-053, p16-055, p16-056, p16-057)",
+        "'Save and continue' saves the address with its uses and returns to the list on its category with '<name> address added to your address book'. (prototype:dr2-1-source p16-064, p16-065, p16-076)",
+        "'Cancel and return to address book' leaves without saving. (prototype:dr2-1-source p16-085, p16-086)"
+      ],
+      "dependsOn": ["inc-023"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 add address details" },
+        { "source": "repo:insfrontend", "ref": "features/address-book/add" }
+      ],
+      "requirements": ["req-051"],
+      "openQuestions": [
+        "c-012: DR2.1 asks for a County on its edit and permanent-address forms but not on its add forms; does every address form ask for 'County (optional)'? Default followed: yes, every address form keeps 'County (optional)'."
+      ],
+      "notes": "Kept apart from inc-023 to keep both reviewable; the address search's results come in inc-025, so 'Enter address manually' is the route this row proves.",
+      "gate": null
+    },
+    {
+      "id": "inc-025",
+      "title": "'Search for an address' finds real UK addresses as the trader types",
+      "detail": "DR2.1 finds UK addresses by search. The INS backend's address lookup (the EUDPA-390 spike) is made production-ready and answers the type-ahead; picking a result fills the address, and manual entry is always offered.",
+      "acceptanceCriteria": [
+        "'Search for an address' (placeholder 'Start typing...') lists matching UK addresses from the address lookup as the trader types. (prototype:dr2-1-source p16-026, p16-027; repo:insfrontend p5-067)",
+        "Picking a result fills the name, address lines, town or city, postcode and country, and leaves email and phone to the trader. (prototype:dr2-1-source p16-033, p16-034)",
+        "'Enter address manually' is always offered, and without JavaScript it is the way to add the address. (prototype:dr2-1-source p8-086, p8-089)",
+        "When the address lookup finds nothing or fails, the trader can still enter the address manually. (repo:insfrontend p5-114)"
+      ],
+      "dependsOn": ["inc-024"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/assets address-book lookup search; add address details view" },
+        { "source": "repo:insfrontend", "ref": "address-lookup spike and its client" }
+      ],
+      "requirements": ["req-052"],
+      "openQuestions": [
+        "c-010: What real address source answers DR2.1's 'Search for an address' type-ahead in the address book, the journey's add-address pages and the commercial transporter page? Default followed: the INS backend's address lookup (the EUDPA-390 spike, made production-ready) answers every search, the chosen result fills the address, and 'Enter address manually' is always offered and is the route without JavaScript. On the local workspace stack it answers from trade-imports-stub unchanged, so UK searches return its England addresses; in CDP environments it answers from the real address gateway. trade-imports-stub is not changed by this programme."
+      ],
+      "notes": "On the workspace stack the lookup answers from the trade-imports-stub address-lookup simulator. The CDP environments' lookup credentials live in cdp-app-config, which only Sam changes.",
+      "gate": null
+    },
+    {
+      "id": "inc-026",
+      "title": "An address's page, editing, deleting and the form messages follow DR2.1",
+      "detail": "DR2.1 shows only the facts an address has, groups the edit form, confirms edits and deletes on the list, and words the required-field messages differently in the INS frontend and the address-book API.",
+      "acceptanceCriteria": [
+        "An address's page is headed with its name and lists Name or organisation name, Address line 1, Address line 2 (optional) and County (optional) only when filled, Town or city, Postcode or Zip code, Country, Email address and Phone number, with a secondary 'Edit' and a warning 'Delete' button and a Back link to where the trader came from. (prototype:dr2-1-source p15-048, p15-050, p15-051, p15-052, p15-054)",
+        "Editing is headed 'Edit address and contact details', groups the fields under 'Address' and 'Contact details', keeps the address's uses, and ends with 'Save changes' and a secondary 'Cancel' back to the address's page. (prototype:dr2-1-source p15-057, p15-062, p15-063, p15-066, p15-068)",
+        "After saving, the list shows '<Name> address updated'. (prototype:dr2-1-source p15-081, p15-083)",
+        "Deleting asks 'Delete this address?' with an 'Address' row (name, lines and country), 'Confirm that you want to delete this address.' and 'This action cannot be undone.', a warning 'Yes, delete' button and a 'No, cancel' link; afterwards the list shows '<Name> address deleted'. (prototype:dr2-1-source p15-088, p15-089, p15-091, p15-092, p15-093, p15-095; trace:prototype-dr2-1 p16-118, p16-120; prototype:dr2-1-specs p6-167, p6-169)",
+        "Every address form, in the INS frontend and from the address-book API, uses 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Select a country', 'Enter an email address' and 'Enter a phone number'. (prototype:dr2-1-source p15-071, p15-074, p15-075, p15-077, p16-066)"
+      ],
+      "dependsOn": ["inc-022"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 view, edit and delete address" },
+        { "source": "trace:prototype-dr2-1", "ref": "address book traces p16" },
+        { "source": "repo:insfrontend", "ref": "features/address-book view, edit and delete" },
+        { "source": "repo:addressbook", "ref": "validation messages" }
+      ],
+      "requirements": ["req-046", "req-047", "req-048", "req-049"],
+      "openQuestions": [
+        "c-012: DR2.1 asks for a County on its edit and permanent-address forms but not on its add forms; does every address form ask for 'County (optional)'? Default followed: yes; the view page shows it only when it has a value."
+      ],
+      "notes": "Combines the address page with editing, deleting and the shared messages: the same record's pages and one form's wording. Depends on inc-022 because editing keeps the uses it introduces.",
+      "gate": null
+    },
+    {
+      "id": "inc-027",
+      "title": "The consignment addresses page shows each party in full and offers DR2.1's 'Same as' copies",
+      "detail": "DR2.1 shows each chosen address in full, names each add link, and saves the trader picking the same address twice.",
+      "acceptanceCriteria": [
+        "The page has the caption 'Consignment parties', the heading 'Consignment addresses', the intro 'Add all the addresses that are involved in the consignment.' and the warning 'Providing a false address is an act of fraud' with no full stop. (prototype:dr2-1-source p8-002, p8-003, p8-004, p8-005)",
+        "Each party shows as a heading with its hint; the consignor party is named 'Consignor'. (prototype:dr2-1-source p8-017, p8-032; document:dr1-parity-backlog p6-034)",
+        "An unanswered party shows a named link: 'Add a place of origin', 'Add a consignor', 'Add a consignee', 'Add an importer' or 'Add a place of destination'. (prototype:dr2-1-source p8-019, p8-020)",
+        "An answered party shows its name, address lines and country in an inset with a 'Change' link. (prototype:dr2-1-source p8-021; document:dr1-parity-backlog p6-025, p6-030)",
+        "Once a place of origin is chosen, the empty consignor row offers 'Same as place of origin'; once a consignee is chosen, the empty importer and place of destination rows each offer 'Same as consignee'. (prototype:dr2-1-source p8-033, p8-034, p8-035, p8-036; trace:prototype-dr2-1 p6-042, p6-043; prototype:dr2-1-specs p3-049, p3-050)",
+        "Pressing one copies that address into the row and reloads the page; the copy does not change if the source party changes later. (prototype:dr2-1-source p8-037, p8-038; trace:prototype-dr2-1 p6-046, p6-047; prototype:dr2-1-specs p7-168, p7-169)"
+      ],
+      "dependsOn": ["inc-001"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 consignment addresses" },
+        { "source": "trace:prototype-dr2-1", "ref": "addresses traces p6" },
+        { "source": "document:dr1-parity-backlog", "ref": "blocked party page rows, now built (conflict c-022)" },
+        { "source": "repo:frontend", "ref": "features/addresses" }
+      ],
+      "requirements": ["req-054", "req-055"],
+      "notes": "Combines the page layout with the 'Same as' copies: both render on the party rows of one page. The editing of a party's copy on the notification is kept (invariant on real features).",
+      "gate": null
+    },
+    {
+      "id": "inc-028",
+      "title": "The CPH number is a section of the consignment addresses page with DR2.1's CPH page",
+      "detail": "DR2.1 treats the CPH number as part of the consignment parties and helps the trader enter it, keeping the real digit and length checks.",
+      "acceptanceCriteria": [
+        "Where the CPH applies, the consignment addresses page has a 'County parish holding (CPH) number' section with its hint and an 'Add a CPH number' link; once entered it shows the number in an inset with a 'Change' link. (prototype:dr2-1-source p8-028, p8-029, p9-003, p9-004)",
+        "The CPH page says the number is on documents from APHA or can be found by checking holding details on GOV.UK, linked. (prototype:dr2-1-source p9-006, p9-008)",
+        "The boxes sit under the legend 'CPH number' with the hint 'For example 12/345/6789'. (prototype:dr2-1-source p9-009, p9-010)",
+        "With JavaScript each box keeps only digits, moves to the next box when full, moves back on Backspace, and spreads a pasted number across the three boxes. (prototype:dr2-1-source p9-011, p9-012-m1, p9-012-m2, p9-012-m3)",
+        "Saving returns to the consignment addresses page, and the CPH page ends with 'Save and continue' alone. (prototype:dr2-1-source p9-018; document:dr1-parity-backlog rule (b))"
+      ],
+      "dependsOn": ["inc-027"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 consignment addresses CPH section and CPH page" },
+        { "source": "repo:frontend", "ref": "features/cph-number" }
+      ],
+      "requirements": ["req-063", "req-064"],
+      "notes": "Combines the CPH section with the CPH page: one party section and the page it opens. Depends on inc-027 for the section layout it joins.",
+      "gate": null
+    },
+    {
+      "id": "inc-029",
+      "title": "Party pickers show every address for their role on one page and can be left without choosing",
+      "detail": "DR2.1 and DR1 filter each picker to its role, show the whole role list on one page with a live search, link each row to the saved address, and let the trader back out without an error.",
+      "acceptanceCriteria": [
+        "A party picker has the caption 'Consignment parties', the party's heading and hint, and a secondary 'Add a new address' button. (prototype:dr2-1-source p8-051, p8-053)",
+        "Its search ('Search', hint 'Name, address or country'; the place of origin picker searches by country) filters the table as the trader types. (prototype:dr2-1-source p8-054, p8-056, p8-057)",
+        "A 'Select an address' heading shows 'Showing <visible> out of <total> results' above every address for the role on one page, in a table of a radio ('Select <name>'), Name, Address (one line per line) and Country with a 'View' link to that address's page in the address book. (prototype:dr2-1-source p8-059, p8-060, p8-061, p8-062; document:dr1-parity-backlog p7-017, p7-018)",
+        "Each picker lists only addresses whose uses include its role (the consignor picker also accepts consignor-or-exporter and exporter), and an address with several uses appears on every matching picker. (prototype:dr2-1-source p8-063, p8-064, p8-065; document:dr1-parity-backlog p6-047)",
+        "Saving a picker with no address chosen shows no error and returns to the consignment addresses page, leaving that party as it was. (prototype:dr2-1-source p8-072, p8-073)"
+      ],
+      "dependsOn": ["inc-022", "inc-027"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 party picker" },
+        { "source": "document:dr1-parity-backlog", "ref": "picker rows inc-048 and successors" },
+        { "source": "repo:frontend", "ref": "features/addresses/party-picker" }
+      ],
+      "requirements": ["req-056", "req-057", "req-058"],
+      "openQuestions": [
+        "c-020: Where a real service has a feature DR2.1 does not show at all, is it removed? Default followed: DR2.1's one-page list and live search replace server pagination and the in-place details; the server search stays as the route without JavaScript."
+      ],
+      "notes": "Combines the picker layout, role filtering and the no-choice save: all on the picker page. Depends on inc-022 for address uses.",
+      "gate": null
+    },
+    {
+      "id": "inc-030",
+      "title": "Adding an address from a picker uses DR2.1's journey add-address page and selects it",
+      "detail": "DR2.1 adds and selects a missing address without leaving the journey. The address book has one writer, so the INS frontend's add page, reached through the existing journey handshake, shows DR2.1's journey add-address content and returns to the animals journey with the address selected or not as the trader chose.",
+      "acceptanceCriteria": [
+        "A picker's 'Add a new address' opens a page captioned 'Add new address' and headed 'Add address and contact details'. (prototype:dr2-1-source p8-077, p8-079; trace:prototype-dr2-1 p7-022)",
+        "Origin-side parties enter an address in any country by hand; destination-side parties search UK addresses or enter one by hand. (prototype:dr2-1-source p8-081, p8-082)",
+        "'What else should this address be used for?' (hint 'This address is being added as a <role> address...') offers the other roles on the same side. (prototype:dr2-1-source p8-092, p8-094, p8-095)",
+        "'Save and select' saves the address to the address book with the role and the ticked uses, selects it and returns to the consignment addresses page with '<name> address added to your address book'. (prototype:dr2-1-source p8-110, p8-009; trace:prototype-dr2-1 p7-027; prototype:dr2-1-specs p3-080)",
+        "'Save and return to address page' saves it and returns to the picker, where it is listed and not yet selected. (prototype:dr2-1-source p8-111)"
+      ],
+      "dependsOn": ["inc-029", "inc-025"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insfrontend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 journey add-address" },
+        { "source": "trace:prototype-dr2-1", "ref": "add-address traces p7" },
+        { "source": "repo:frontend", "ref": "features/addresses/address-return" },
+        { "source": "repo:insfrontend", "ref": "features/address-book/add journey mode" }
+      ],
+      "requirements": ["req-059"],
+      "openQuestions": [
+        "c-011: Does DR2.1's journey add-address page live in the animals frontend, or in the INS frontend's add page reached through the existing handshake? Default followed: in the INS frontend, through the existing journey handshake; the animals frontend stays read-only.",
+        "c-010: What real address source answers 'Search for an address'? Default followed: the INS backend's address lookup made production-ready (inc-025).",
+        "c-012: Does every address form ask for 'County (optional)'? Default followed: yes, the journey add-address page included."
+      ],
+      "notes": "One slice across both frontends: the INS add page in journey mode and the animals journey's return. Depends on inc-029 for the picker and on inc-025 for the UK search.",
+      "gate": null
+    },
+    {
+      "id": "inc-031",
+      "title": "The contact address is chosen from the organisation's branch addresses",
+      "detail": "DR2.1 and DR1 limit the contact to the trader's own branch addresses and explain who the contact is.",
+      "acceptanceCriteria": [
+        "The contact address page is headed 'Contact address for consignment' with no caption and opens with 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.' (prototype:dr2-1-source p8-116, p8-117, p8-118)",
+        "It then shows 'Select an address' and 'If the correct address is not shown, add a new branch address, then return to this page.', linking to adding an address in the address book. (prototype:dr2-1-source p8-119, p8-121)",
+        "It lists only the organisation's branch addresses, as radios with the name as label and the address as hint. (prototype:dr2-1-source p8-122, p8-123; document:dr1-parity-backlog p7-024; document:dr1-parity-notes p1-020)",
+        "Continuing with no address chosen shows 'Select a contact address'. (prototype:dr2-1-source p8-126)",
+        "A branch address added from this page is selected on return. (prototype:dr2-1-source p8-126; document:dr1-parity-backlog p7-006)"
+      ],
+      "dependsOn": ["inc-022", "inc-024"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insfrontend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 contact address" },
+        { "source": "document:dr1-parity-backlog", "ref": "contact branch address rows" },
+        { "source": "repo:frontend", "ref": "features/contact" }
+      ],
+      "requirements": ["req-060"],
+      "notes": "One page. Depends on inc-022 for branch uses and inc-024 for adding a branch address.",
+      "gate": null
+    },
+    {
+      "id": "inc-032",
+      "title": "The permanent address becomes a consignment party, answered for every animal at once",
+      "detail": "DR2.1 asks the permanent address of cats, dogs and ferrets as a consignment party on its own page instead of inside each identification record. Today's commodity list offers cats and dogs; ferrets join when master data supplies them (inc-010).",
+      "acceptanceCriteria": [
+        "When cats or dogs are in the consignment, the consignment addresses page has a 'Permanent address' section (hint 'A permanent address is where an animal:' with two bullets, link 'Add a permanent address'), which reads 'Permanent addresses added for N animals' once answered. (prototype:dr2-1-source p8-030, p9-023, p9-073)",
+        "The 'Permanent address' page (caption 'Consignment parties', the fraud warning, the definition, 'Where will their permanent address be?') has one card per animal headed '<species> <n>' showing its identifiers. (prototype:dr2-1-source p9-024, p9-033, p9-034, p9-036)",
+        "Each card offers 'Same as the place of destination (POD)' (hinted with the destination address) and 'Enter a new address' (hint 'This is where they will stay after spending 48 hours at the place of destination.'), which reveals name, address, town, county, postcode, email and phone with no country. (prototype:dr2-1-source p9-037, p9-038, p9-039, p9-041, p9-042)",
+        "Summary errors add 'for <animal>', and choosing the destination before one is added shows 'Add a place of destination before you can continue'. (prototype:dr2-1-source p9-043, p9-052, p9-053, p9-054)",
+        "The identification page no longer collects a permanent address, and its saved-animals table has no 'Permanent address' column. (prototype:dr2-1-source p5-060; document:dr1-parity-backlog p6-058)",
+        "A notification's permanent addresses are still saved and shown on the review. (repo:frontend p6-105)"
+      ],
+      "dependsOn": ["inc-027"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 permanent address section and page" },
+        { "source": "document:dr1-parity-backlog", "ref": "permanent address rows, now built (conflict c-022)" },
+        { "source": "repo:frontend", "ref": "features/commodities/animal-identification address and features/addresses" }
+      ],
+      "requirements": ["req-061", "req-062"],
+      "openQuestions": [
+        "c-012: Does every address form ask for 'County (optional)'? Default followed: yes, the permanent address included."
+      ],
+      "notes": "Combines adding the permanent address page with taking it off the identification page: one move, so the address is never asked twice or lost. Depends on inc-027 (the section layout). Which commodities need a permanent address already follows DR2.1 for today's list (req-081, met), so it no longer waits for inc-004, which is dropped. Under the c-023 default no environment offers ferrets yet, so acceptance names cats and dogs; ferrets take the same section once inc-010 lands (req-116).",
+      "gate": null
+    },
+    {
+      "id": "inc-033",
+      "title": "The transporter type and add pages follow DR2.1 and check required fields",
+      "detail": "DR2.1 words the transporter type and add pages differently, requires a type, checks every required field even on a blank form, and offers an address search over Northern Ireland addresses for commercial transporters.",
+      "acceptanceCriteria": [
+        "The transporter type page warns 'Check the transporter list before adding new transporters to avoid duplicates.', has the visually hidden legend 'Choose a transporter type', offers 'Private transporter' and 'Commercial' (hint 'This can only be a commercial transporter from Northern Ireland.') and refuses no choice with 'Select a transporter type'. (prototype:dr2-1-source p7-049, p7-050, p7-053, p7-054, p7-055, p7-057)",
+        "The private transporter page is headed 'Add a private transporter' with no intro sentence, and its country select starts on United Kingdom with no blank option. (prototype:dr2-1-source p7-062, p7-066, p7-072)",
+        "The commercial transporter page is headed 'Add a commercial transporter' and asks 'Postcode or Zip code'. (prototype:dr2-1-source p7-086, p7-091)",
+        "Saving either add page, even left blank, checks every required field; the commercial page's errors read 'Enter a transporter authorisation number' and 'Enter a postcode or Zip code'. (prototype:dr2-1-source p7-075, p7-076, p7-096, p7-103)",
+        "The commercial page offers 'Search for an address' with 'Enter address manually', which is always offered and adds the transporter without a search result. (prototype:dr2-1-source p7-093)",
+        "On the local workspace stack, a commercial transporter search offers no address outside Northern Ireland: a search the address lookup answers with its England addresses lists none of them. (prototype:dr2-1-source p7-093; repo:insfrontend p5-074)",
+        "In CDP environments, a commercial transporter search lists Northern Ireland addresses from the address lookup and no address outside Northern Ireland. (prototype:dr2-1-source p7-093; repo:insfrontend p5-067)"
+      ],
+      "dependsOn": ["inc-023", "inc-025"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 transporter type, private and commercial transporter" },
+        { "source": "repo:frontend", "ref": "features/transport transporter-add, private and commercial details" }
+      ],
+      "requirements": ["req-071", "req-072", "req-073"],
+      "openQuestions": [
+        "c-010: What real address source answers the commercial transporter page's 'Search for an address', and should trade-imports-stub gain Northern Ireland addresses? Default followed: the INS backend's address lookup answers it; on the local workspace stack it answers from trade-imports-stub unchanged, so the search returns no address and only the exclusion of addresses outside Northern Ireland and manual entry are shown there; in CDP environments it returns Northern Ireland addresses only. trade-imports-stub is not changed by this programme.",
+        "c-020: Where a real service has a feature DR2.1 does not show at all, is it removed? Default followed: kept unless DR2.1 shows another way to do the same job.",
+        "c-012: Does every address form ask for 'County (optional)'? Default followed: yes, the transporter forms included."
+      ],
+      "notes": "Combines the type page and both add pages: one add-a-transporter flow. Depends on inc-023 (transporters saved to the address book) and inc-025 (the address lookup). Acceptance for the search is written per environment, as the c-010 default settles it: the workspace stack's address-lookup simulator in trade-imports-stub holds only England addresses and is not changed by this programme, so locally the test proves only that none is offered and that manual entry works; a Northern Ireland result is observed in CDP environments.",
+      "gate": null
+    },
+    {
+      "id": "inc-034",
+      "title": "The journey's transporter list searches as the trader types, links each transporter and confirms an addition",
+      "detail": "DR2.1's transporter list filters as the trader types, places 'Add a transporter' above the table, links each row to the transporter's page in the address book, and confirms a newly added transporter.",
+      "acceptanceCriteria": [
+        "The 'Transporter details' search ('Search', hint 'Name, address or approval number') filters the rows as the trader types, and the server search still works without JavaScript. (prototype:dr2-1-source p7-015, p7-016, p7-017)",
+        "The secondary 'Add a transporter' button sits above the table. (prototype:dr2-1-source p7-020)",
+        "Each row has a 'View details' link to that transporter's page in the address book, with a way back to the list. (prototype:dr2-1-source p7-021, p7-026; document:dr1-parity-backlog p8-016)",
+        "After a transporter is added from the journey, the list shows a one-time 'Success' banner '<Name> transporter added' (first letter capital, the rest lower case), or 'Transporter added' when it has no name. (prototype:dr2-1-source p7-045, p7-046, p7-047)"
+      ],
+      "dependsOn": ["inc-023"],
+      "theme": "live-animals-journey",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["frontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 transporter details list" },
+        { "source": "document:dr1-parity-backlog", "ref": "transporter record page left out until the address book settled" },
+        { "source": "repo:frontend", "ref": "features/transport/transporters" }
+      ],
+      "requirements": ["req-069", "req-070"],
+      "openQuestions": [
+        "c-020: Where a real service has a feature DR2.1 does not show at all, is it removed? Default followed: the server search stays as the route without JavaScript."
+      ],
+      "notes": "Combines the list's search, layout and links with its success banner: one page. Depends on inc-023 for transporters' pages in the address book.",
+      "gate": null
+    },
+    {
+      "id": "inc-035",
+      "title": "The dashboard shows the organisation's own notifications as DR2.1 cards",
+      "detail": "DR2.1 identifies a consignment by what, from where, when and between whom, and shows a trader only their own work. The INS read model takes the consignee and consignor names, number of animals, commodity common name, arrival date, status and organisation from the animals backend's events, and the dashboard's table becomes cards.",
+      "acceptanceCriteria": [
+        "Every dashboard list, tab, count and search shows only the signed-in organisation's notifications; a notification another organisation made never appears. (repo:insbackend p1-068, p1-069; ruling:sam-2026-10-07 p1-010)",
+        "Each notification shows as a card labelled for screen readers 'Notification <reference>', with the reference as its heading. (prototype:dr2-1-source p13-046; trace:prototype-dr2-1 p1-065)",
+        "A card's first row shows Commodity, Arrival date (dd/mm/yyyy), Consignee and Notification status, and its second row Number of animals, Origin and Consignor. (prototype:dr2-1-source p13-053, p13-054, p13-055)",
+        "A submitted notification's status reads 'Submitted' as plain text and a draft shows a 'Draft' tag. (prototype:dr2-1-source p13-061, p13-062)",
+        "A change saved in the journey, such as a new consignee, shows on the notification's card. (prototype:dr2-1-source p12-097; repo:insbackend p1-002)"
+      ],
+      "dependsOn": [],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard notification card" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard trace p1" },
+        { "source": "repo:insbackend", "ref": "notification read model and list" },
+        { "source": "repo:insfrontend", "ref": "features/dashboard" }
+      ],
+      "requirements": ["req-028", "req-034", "req-035"],
+      "openQuestions": [
+        "c-007: Is organisation scoping of the dashboard lists, counts and searches built in this programme, though ins-backend deferred it to a later ticket? Default followed: yes; the INS read model records each notification's organisation from its events and the INS frontend sends the session's organisation.",
+        "c-013: Is the arrival date the arrival at the port of entry or at the place of destination? Default followed: the port of entry, labelled 'Arrival date' on the dashboard card.",
+        "c-006: What is built for states no real service records? Default followed: action required comes from the animals backend (inc-014); the card shows it from inc-039."
+      ],
+      "notes": "Combines organisation scoping, the read-model fields and the cards: the fields cannot be observed without the cards, and the cards must never show another organisation's work. Built on today's INS dashboard page; inc-040 moves it into DR2.1's home and Live animals pages.",
+      "gate": "Check organisation scoping and the read-model fields: every later dashboard row filters, counts and searches them."
+    },
+    {
+      "id": "inc-036",
+      "title": "The notification list has DR2.1's tabs, search, sort and pages of eight",
+      "detail": "DR2.1 separates work in flight from drafts and finished notifications, lets a trader find a notification by what they remember about it, sorts the list, and pages it in eights. The list is always sorted, as DR1 ruled.",
+      "acceptanceCriteria": [
+        "The list has one search field labelled 'Search by' with the hint 'Keyword, notification number, commodity, consignee or consignor' and a magnifying-glass Search button. (prototype:dr2-1-source p13-026, p13-027)",
+        "A search matches any part of a notification's reference, commodity, consignee or consignor, and the searched text stays in the field. (prototype:dr2-1-source p13-027; repo:insbackend p1-059)",
+        "A 'Sort by:' select offers 'Newest first', 'Oldest first' and 'Arrival date' and orders the list; the list is always sorted, Newest first by default, with no 'Select one' option. (prototype:dr2-1-source p13-043; document:dr1-parity-notes p1-012)",
+        "Three tabs read 'In progress (N)', 'Draft' and 'Completed', each with a subheading ('Notifications in progress', 'Draft notifications', 'Completed notifications'); In progress lists submitted and action-required notifications, Draft lists drafts and Completed lists completed ones. (prototype:dr2-1-source p13-037, p13-038, p13-039, p13-040; trace:prototype-dr2-1 p1-061, p1-062, p1-063; prototype:dr2-1-specs p5-042, p5-043)",
+        "Lists show 8 notifications a page with numbered pagination and Previous and Next links, and page links keep the tab and the sort. (prototype:dr2-1-source p13-041, p13-042, p13-043)"
+      ],
+      "dependsOn": ["inc-035"],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard list" },
+        { "source": "document:dr1-parity-notes", "ref": "inc-031 rejected: always sorted" },
+        { "source": "repo:insbackend", "ref": "list search, sort and page size" },
+        { "source": "repo:insfrontend", "ref": "features/dashboard" }
+      ],
+      "requirements": ["req-023", "req-024", "req-026", "req-027"],
+      "openQuestions": [
+        "c-002: Do DR1's rulings inc-030 and inc-031, made on the animals-frontend dashboard, apply to the DR2.1 dashboard in the INS frontend? Default followed: yes; every list is always sorted, Newest first by default, with no 'Select one' option.",
+        "c-006: What is built for states no real service records? Default followed: the Completed tab is built and stays empty until a service records completion."
+      ],
+      "notes": "Combines search, sort, tabs and paging: they share one list query and one set of page links.",
+      "gate": null
+    },
+    {
+      "id": "inc-037",
+      "title": "The notification list can be narrowed by arrival and status",
+      "detail": "DR2.1 lets a trader narrow the list by arrival date and status; a real service applies the filters the prototype only displays.",
+      "acceptanceCriteria": [
+        "The list has a collapsible 'Additional filters' section, open when any filter is set. (prototype:dr2-1-source p13-030)",
+        "'By arrival date' radios (Today, Tomorrow, Next 7 days) narrow the list to notifications arriving then. (prototype:dr2-1-source p13-031)",
+        "'By date range' start and end dates, each hinted 'For example, 27/3/2026', narrow the list to notifications arriving in that range. (prototype:dr2-1-source p13-032)",
+        "A 'Status' select (Select one, Action required, Submitted, Completed) narrows the list to that status. (prototype:dr2-1-source p13-035, p13-036; repo:insbackend p1-044)"
+      ],
+      "dependsOn": ["inc-036"],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard additional filters" },
+        { "source": "repo:insbackend", "ref": "list filters" }
+      ],
+      "requirements": ["req-025"],
+      "openQuestions": [
+        "c-006: What is built for states no real service records? Default followed: Action required comes from the animals backend; Completed stays empty until a service records completion."
+      ],
+      "notes": "Kept apart from inc-036 so each stays reviewable. The INS frontend's client scripts belong to the live-animals-journey theme, so the date range must work as plain date fields.",
+      "gate": null
+    },
+    {
+      "id": "inc-038",
+      "title": "Dashboard cards offer actions by status",
+      "detail": "DR1 rejected flattening the card to Copy as new and View; that judgement carries to the INS dashboard's cards.",
+      "acceptanceCriteria": [
+        "A draft's card offers Resume, Copy as new and Delete. (document:dr1-parity-notes p1-011; document:dr1-parity-backlog p3-041)",
+        "A submitted notification's card offers View, Amend, Copy as new and Delete; Amend leads to the notification's 'Amend this notification' confirmation. (document:dr1-parity-backlog p3-042; prototype:dr2-1-source p13-048)",
+        "A card for a notification being amended offers Resume, Copy as new, Cancel amendment and Delete. (document:dr1-parity-backlog p3-044; prototype:dr2-1-source p13-049)",
+        "Each action does what the same action does in the journey: Resume opens the overview, View the notification's page, Copy as new a new draft, Cancel amendment the cancel-amendment confirmation and Delete the delete page. (repo:frontend p3-047, p3-050, p3-052)"
+      ],
+      "dependsOn": ["inc-035", "inc-012"],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "document:dr1-parity-notes", "ref": "inc-030 rejected: status-driven card links" },
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard card actions" },
+        { "source": "repo:frontend", "ref": "animals dashboard status-driven actions" }
+      ],
+      "requirements": ["req-029"],
+      "openQuestions": [
+        "c-002: Do DR1's rulings inc-030 and inc-031 apply to the DR2.1 dashboard in the INS frontend? Default followed: yes; cards keep status-driven actions."
+      ],
+      "notes": "Depends on inc-012 for the notification page's amend confirmation that Amend leads to. The read model must tell a draft, a submitted notification and one being amended apart.",
+      "gate": null
+    },
+    {
+      "id": "inc-039",
+      "title": "Notifications needing action are flagged on their cards and gathered on an Action needed page",
+      "detail": "DR2.1 flags submitted notifications that still owe something before import and gathers them on a 'View tasks' drill-down.",
+      "acceptanceCriteria": [
+        "A notification needing action shows on its card in the error style with a red marker, an 'Action required' tag and its message: 'ITAHC is missing' when no ITAHC document is attached, otherwise 'Information is missing' when required animal identifiers are incomplete. (prototype:dr2-1-source p13-052, p13-063, p13-064, p11-148, p11-149; trace:prototype-dr2-1 p1-071)",
+        "An 'Action needed' page (caption 'Action needed', heading 'Tasks requiring your attention', description 'Add missing information or upload documents to prevent your consignment from being delayed.') lists the notifications needing action for its category. (prototype:dr2-1-source p13-079, p13-080, p13-081, p13-082; trace:prototype-dr2-1 p1-088, p1-089; prototype:dr2-1-specs p5-065)",
+        "It has the same search and sort as the list, a 'Show <first>-<last> of <total> results' count, 8 a page, and a Back link to the category list. (prototype:dr2-1-source p13-083, p13-085, p13-086; trace:prototype-dr2-1 p1-094; prototype:dr2-1-specs p5-066)"
+      ],
+      "dependsOn": ["inc-036", "inc-014"],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard card action-required state and action needed page" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard trace p1" }
+      ],
+      "requirements": ["req-030", "req-031"],
+      "openQuestions": [
+        "c-006: What is built for states no real service records? Default followed: Action required is built from the items outstanding at submission, recorded by the animals backend (inc-014) and carried to the INS read model."
+      ],
+      "notes": "Combines the card flag with the page that gathers flagged notifications: one state, two views. Depends on inc-014 for action required and inc-036 for the shared search and sort.",
+      "gate": null
+    },
+    {
+      "id": "inc-040",
+      "title": "The dashboard home and the Live animals page follow DR2.1",
+      "detail": "DR2.1 makes the dashboard a signed-in landing page that sends the trader to what needs attention, with a page per notification category. Only live animals is built; states no real service records are built empty or not at all.",
+      "acceptanceCriteria": [
+        "The Dashboard navigation item of both frontends opens the dashboard home, and the Address book item of both opens the INS address book. (document:dr1-parity-notes p1-014; prototype:dr2-1-source p1-083)",
+        "The home has the caption 'Dashboard' above the heading 'Import notification service', a primary 'Create new' button and a secondary 'Use template' button to Manage templates. (prototype:dr2-1-source p13-001, p13-004, p13-006, p13-007; trace:prototype-dr2-1 p1-028; prototype:dr2-1-specs p6-012)",
+        "'Create new' starts a live-animals notification straight on its origin page, with no notification type page. (prototype:dr2-1-source p13-006)",
+        "The home's 'Live animals' section has a 'View dashboard' link and two glance cards, 'Action needed' ('Tasks requiring your attention', a count, 'View tasks') and 'Status updates' ('Changes in the past 24 hours', a count, 'View updates'), counted from the organisation's notifications. (prototype:dr2-1-source p13-008, p13-009, p13-013)",
+        "The Live animals page has the caption 'Dashboard', the heading 'Live animals', a Back link to the home, 'Create new' and 'Use template' buttons, a 'Summary' of the two glance cards counted for live animals, and a 'Notifications' section holding the list. (prototype:dr2-1-source p13-015, p13-019, p13-021, p13-022, p13-024, p13-025; trace:prototype-dr2-1 p1-043; prototype:dr2-1-specs p5-037)",
+        "The Status updates count is 0 and its 'Changes in past 24 hours' page is built and empty; there are no Delayed states, no inspection card or page and no Messages link. (prototype:dr2-1-source p13-087, p13-088, p13-090; repo:insbackend p1-022)",
+        "The home shows no section for any notification type other than live animals. (prototype:dr2-1-source p13-010)"
+      ],
+      "dependsOn": ["inc-039", "inc-017", "inc-016"],
+      "theme": "dashboard",
+      "status": "todo",
+      "kind": "feat",
+      "repos": ["insbackend", "insfrontend", "tests"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "views/design-release-2.1 dashboard home and live animals" },
+        { "source": "trace:prototype-dr2-1", "ref": "dashboard trace p1" },
+        { "source": "prototype:dr2-1-specs", "ref": "dashboard specs p5, p6" },
+        { "source": "document:dr1-parity-notes", "ref": "dashboard and address book live in the INS frontend" },
+        { "source": "repo:insfrontend", "ref": "features/dashboard" }
+      ],
+      "requirements": ["req-015", "req-019", "req-021", "req-022", "req-032"],
+      "openQuestions": [
+        "c-005: Does any notification type other than live animals come into this programme? Default followed: no; 'Create new' starts the live-animals journey with no type page, and the home shows only the Live animals section.",
+        "c-004: Where do the live-animals journey's dashboard links go? Default followed: to the INS dashboard; the animals frontend's own dashboard stays unchanged until a ruling retires it.",
+        "c-006: What is built for states no real service records? Default followed: the Status updates card and its changes page are built but stay empty (count 0); Delayed, inspection and Messages are not built."
+      ],
+      "notes": "Combines the home, the Live animals page and the empty states: one page structure around the list inc-035 to inc-039 build. Depends on inc-039 (the Action needed count and page), inc-017 (Manage templates, which 'Use template' opens) and inc-016 (the animals frontend's Dashboard item goes to the INS dashboard).",
+      "gate": null
+    }
+  ]
+}

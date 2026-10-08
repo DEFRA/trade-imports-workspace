@@ -1,0 +1,245 @@
+{
+  "area": "reason-and-additional-details",
+  "rows": [
+    {
+      "title": "Main import reason and additional details copy matches Design Release 2.1",
+      "detail": "Design Release 2.1 renames the reason page 'Main import reason', opens both of its selects on 'Select one' with no divider line, and rewords the certification hint on the additional details page. The review keeps the reason answers under 'Main import reason' and the additional details answers as 'Certified for' and 'Includes unweaned animals'. Traders see the same names on the pages and on the review, in English and Welsh.",
+      "acceptanceCriteria": [
+        "The main import reason page's h1 reads 'Main import reason' and its browser title reads 'Main import reason - Import notification service - GOV.UK'; 'Main reason for import' no longer appears on the page (prototype:dr2-1-source prototype-dr2-1-source-p4-001; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-002; prototype:dr2-1-specs prototype-dr2-1-specs-p1-067)",
+        "Every 'Destination country' select on the reason page starts with an empty option reading 'Select one', selected when nothing is chosen, followed straight by the countries with no divider line (prototype:dr2-1-source prototype-dr2-1-source-p4-042; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-030)",
+        "Every 'Port of exit' select on the reason page starts with an empty option reading 'Select one', selected when nothing is chosen, followed straight by the ports with no divider line (prototype:dr2-1-source prototype-dr2-1-source-p4-045; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-034)",
+        "The certification question on the additional details page is hinted 'You can find this information on the ITAHC.' (prototype:dr2-1-source prototype-dr2-1-source-p3-061; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-090; prototype:dr2-1-specs prototype-dr2-1-specs-p2-066)",
+        "The review shows the reason answers under 'Main import reason', with the internal market purpose labelled 'Purpose in the market' and, for Temporary admission horses, 'Exit date' and 'Port of exit' rows (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-042, trace-prototype-dr2-1-p12-046)",
+        "The review shows the additional details answers as 'Certified for' and, where the unweaned question was asked, 'Includes unweaned animals' (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-077)",
+        "With the language set to Welsh, the reason page's heading and title, both select placeholders and the certification hint show Welsh text in place of the old wording, not English (prototype:dr2-1-source prototype-dr2-1-source-p4-001; repo:frontend repo-frontend-p7-003)"
+      ],
+      "requirements": ["req-131", "req-145", "req-148", "req-173", "req-183", "req-184"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-001, p4-042, p4-045, p3-061" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p4-002, p4-030, p4-034, p5-090, p12-042, p12-046, p12-077" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-067, p2-066" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p7-003, p7-035, p7-037, p7-087" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-067" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the heading slice (req-131), the two select placeholder slices (req-145, req-148), the certification hint (req-173) and the review labels (req-183, req-184): all copy on the same two pages and their review rows, reviewed in one sitting. Today 'Purpose in the market', 'Exit date', 'Port of exit', 'Certified for' and 'Includes unweaned animals' are already the review's labels; only the 'Main reason for import' heading of the review's reason block changes. The review area's rows for req-833, req-834, req-836, req-849 and req-851 make the same review label changes: the combiner should merge req-183 and req-184 into that review row if it keeps them apart from this one. The tests repo's import reason page object and spec assert 'Main reason for import' today (repo-tests-p1-067) and change with it.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details",
+        "tests:page-objects/animals/import-reason-page.ts",
+        "tests:page-objects/animals/additional-details-page.ts",
+        "tests:tests/animals/e2e/pages/import-reason.spec.ts",
+        "tests:tests/animals/e2e/pages/additional-details.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Reason and additional details sit in Design Release 2.1's journey order",
+      "detail": "Design Release 2.1 follows the main import reason with Commodity details, and places Additional details in the commodity section after Identification details (or Commodity details when no identifiers are needed), going on to Arrival details. Both pages' Back links go to the page before them in the journey instead of always to the overview. Opened from the overview, each page still returns to the overview.",
+      "acceptanceCriteria": [
+        "In the linear journey, 'Save and continue' on a valid main import reason page goes to Commodity details (prototype:dr2-1-source prototype-dr2-1-source-p4-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-033)",
+        "The main import reason page's Back link goes to What are you importing in the linear journey (prototype:dr2-1-source prototype-dr2-1-source-p4-007; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-007; prototype:dr2-1-specs prototype-dr2-1-specs-p1-075)",
+        "Opened from the overview, the main import reason page's Back link and its 'Save and continue' both go to the overview (prototype:dr2-1-source prototype-dr2-1-source-p4-008, prototype-dr2-1-source-p4-061)",
+        "In the linear journey the additional details page is reached from Identification details when a selected species needs identifiers, and from Commodity details otherwise, never straight from the main import reason page (prototype:dr2-1-source prototype-dr2-1-source-p3-059; prototype:dr2-1-specs prototype-dr2-1-specs-p2-070)",
+        "In the linear journey, 'Save and continue' on the additional details page goes to Arrival details; opened from the overview it returns to the overview (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-093; prototype:dr2-1-specs prototype-dr2-1-specs-p2-071)",
+        "The additional details page's Back link goes to Identification details when any selected species needs identifiers, and to Commodity details otherwise (prototype:dr2-1-source prototype-dr2-1-source-p3-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-094, trace-prototype-dr2-1-p5-096; prototype:dr2-1-specs prototype-dr2-1-specs-p2-069)",
+        "A cattle notification walked from the start through the linear journey visits, in order, What are you importing, Main import reason, Commodity details, Identification details, Additional details and Arrival details (prototype:dr2-1-specs prototype-dr2-1-specs-p2-070; trace:e2e trace-e2e-p5-061)"
+      ],
+      "requirements": ["req-163", "req-164", "req-178", "req-179"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-007, p4-008, p4-057, p4-060, p4-061, p3-059, p3-073" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p4-007, p4-033, p5-093, p5-094, p5-096, p12-080" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-075, p2-069, p2-070, p2-071" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p7-002, p7-055, p7-065, p7-083, p7-101, p7-107" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-075" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p5-061, trace-e2e-p5-070" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Walk the linear journey from What are you importing to Arrival details for a cattle and a horses-only notification, and check both Back links, before rows that rely on the new order build.",
+      "openQuestions": [],
+      "notes": "Combines the reason page's Back and next slices (req-163, req-164) with the additional details page's Back and position slices (req-178, req-179): they are one reorder of the same journey run and its section membership, so building them apart would repeat the flow change and its ladder. The prototype wins c-030, c-031, c-036 and c-037 by default. Moving Additional details out of the reason's section and after Identification changes the journey's shared flow and run; the commodities area's rows for req-117, req-118 and req-201 change the same order from the commodity side, and the journey-flow area may own the shared run. The combiner should put the shared flow change in the foundation theme or merge these with those rows. Today's fit tests pin both Back links to the overview (repo-frontend-p7-065, repo-frontend-p7-107) and the tests repo's journey flow goes reason then Additional details (repo-tests-p1-075); both change with this row.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "tests:flows/animals/journey.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does",
+      "detail": "Design Release 2.1 judges the main import reason task on the reason's own answers, with Additional details its own task. 'Save and return to overview' saves what is valid and returns to the overview without the page's required-answer checks, so a trader can leave part-way through. An answer that breaks its own format rule, such as an impossible exit date, is still refused, because the service cannot store it.",
+      "acceptanceCriteria": [
+        "With an allowed reason and its valid follow-ups saved (Internal market with a purpose; Transhipment or onward travel with a listed country; Transit with a listed port and country; Temporary admission horses with a real exit date and a listed port; Re-entry alone), the overview shows the main import reason task as complete while Additional details is still unanswered (prototype:dr2-1-source prototype-dr2-1-source-p4-080, prototype-dr2-1-source-p4-081)",
+        "With no reason saved, the overview does not show the main import reason task as complete (prototype:dr2-1-source prototype-dr2-1-source-p4-081)",
+        "'Save and return to overview' on the main import reason page with Transit chosen and no port of exit shows no error, goes to the overview, and the reason page then shows Transit chosen with the destination country given (prototype:dr2-1-source prototype-dr2-1-source-p4-075, prototype-dr2-1-source-p4-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-051)",
+        "'Save and return to overview' after changing the reason from Internal market to Transit clears the saved internal market purpose: the reason page shows no purpose when Internal market is chosen again (prototype:dr2-1-source prototype-dr2-1-source-p4-077)",
+        "'Save and return to overview' with no reason chosen leaves every earlier saved reason answer as it was (prototype:dr2-1-source prototype-dr2-1-source-p4-079)",
+        "'Save and return to overview' with Temporary admission horses chosen and an exit date that is not a real calendar date, such as 31/2/2026, is refused with the exit date's own error and stays on the page (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010)",
+        "When amending, the main import reason page's 'Save and return' action saves the same way and goes to the review page (prototype:dr2-1-source prototype-dr2-1-source-p4-075)",
+        "'Save and return to overview' on the additional details page with both questions unanswered shows no error, goes to the overview, and keeps any earlier answer to each question (prototype:dr2-1-source prototype-dr2-1-source-p3-071)"
+      ],
+      "requirements": ["req-166", "req-168", "req-180"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-075, p4-076, p4-077, p4-079, p4-080, p4-081, p3-071" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p4-051" },
+        { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-112, trace-e2e-p4-116" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p7-054, p7-079, p12-068" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the completion slice (req-168, c-038: the prototype wins, the reason task no longer waits for Additional details) with the two soft-save slices (req-166, req-180): all three are the save and status behaviour of the same two pages, observed on the overview. c-211 settles 'Save and return to overview': it saves without the required-answer checks, but an answer failing its own format rule, such as an impossible date, is still refused (ruling:sam-2026-10-07); the overruled prototype spec claim is not used. No today source shows what 'Save and return to overview' does on these pages (trace-animals-fit-p7-079, trace-animals-fit-p12-068): the builder reads the shared save actions and changes only what differs. Kept apart from the journey-order row because it changes no route.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/import-reason.js",
+        "tests:tests/animals/e2e/features/reason-purpose-scope.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Unweaned question is asked for cattle and pigs",
+      "detail": "Design Release 2.1 asks 'Does the consignment contain any unweaned animals?' of every commodity that carries unweaned options, which is cattle and pig. Today only cattle are asked. Once pigs can be chosen, a consignment with any pig is asked too; every other commodity still is not.",
+      "acceptanceCriteria": [
+        "A notification with a pig commodity selected sees 'Does the consignment contain any unweaned animals?' on the additional details page (prototype:dr2-1-source prototype-dr2-1-source-p3-064; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-095; prototype:dr2-1-specs prototype-dr2-1-specs-p2-072)",
+        "A notification with cattle selected still sees the unweaned question (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-075)",
+        "A notification whose commodities are only horses, cats, dogs, poultry or fish sees the certification question and no unweaned question (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-099, trace-prototype-dr2-1-p13-059)",
+        "The review shows 'Includes unweaned animals' for a pig notification once the question is answered (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-077)"
+      ],
+      "requirements": ["req-175"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p3-064" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-095, p5-099, p12-075, p13-059" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-072" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p7-095, p7-096, p7-108" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart from the other rows because it needs the commodities area's row that adds Pig (0103) to the live-animal catalogue (req-094): the combiner should make this row depend on that one, since a pig consignment cannot be chosen before it lands. The prototype wins c-035 by default. The unweaned list lives with the commodity catalogue, which the commodities area also changes.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details",
+        "tests:tests/animals/e2e/features/additional-details-scope.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/services/commodities"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Germinal-products-only notifications get narrowed reasons and no additional details page",
+      "detail": "Design Release 2.1 narrows the main import reason for a notification whose every selected species is a germinal product to Internal market and Transit, and the internal market purpose to four. Such a notification never sees the additional details page: its certification purpose is set to 'Germinal products' automatically and shown on the review without a Change link. A mix of live animals and germinal products keeps the full lists and the page.",
+      "acceptanceCriteria": [
+        "When every selected species is a germinal product, the main import reason page offers only Internal market and Transit, with the legend and hints in their animal wording (prototype:dr2-1-source prototype-dr2-1-source-p4-023, prototype-dr2-1-source-p4-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-044; prototype:dr2-1-specs prototype-dr2-1-specs-p1-100)",
+        "A notification with both live animals and germinal products selected is offered all five reasons (prototype:dr2-1-source prototype-dr2-1-source-p4-025)",
+        "When every selected species is a germinal product, Internal market offers only the purposes Transfer of ownership - Sale/gift, Breeding, Research and Production; submitting any other purpose shows 'Select a purpose in the internal market' (prototype:dr2-1-source prototype-dr2-1-source-p4-040, prototype-dr2-1-source-p4-065; prototype:dr2-1-specs prototype-dr2-1-specs-p1-101)",
+        "A germinal-products-only notification whose saved reason or purpose is outside the germinal lists shows the main import reason task as not complete on the overview (prototype:dr2-1-source prototype-dr2-1-source-p4-082, prototype-dr2-1-source-p4-088)",
+        "A germinal-products-only notification has no Additional details task on the overview, its Identification details 'Save and continue' goes straight to Arrival details, and opening the additional details page's address redirects onward (prototype:dr2-1-source prototype-dr2-1-source-p3-058, prototype-dr2-1-source-p3-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-078; prototype:dr2-1-specs prototype-dr2-1-specs-p2-063)",
+        "The review of a germinal-products-only notification shows an Additional details block reading 'Certified for' 'Germinal products', with no Change link (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-079)"
+      ],
+      "requirements": ["req-169", "req-170", "req-181", "req-182"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-023, p4-024, p4-025, p4-040, p4-065, p4-082, p4-088, p3-058, p3-060" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-044, p12-045, p12-078, p12-079" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-100, p1-101, p2-063" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the four germinal-products slices of this area (req-169, req-170, req-181, req-182): all turn on the same 'every selected species is a germinal product' test and are walked with the same germinal notification. The real frontend offers no germinal-product commodity today, so this row needs the commodities area's rows that add germinal products to the commodity search (req-092, req-093): the combiner should make it depend on them. The overview task list and the review block are shared with the hub and review areas; the certification purpose 'Germinal products' is already one of the service's offered values.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/import-reason.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Main import reason page edits a template from its review",
+      "detail": "Design Release 2.1 lets a trader edit a template page by page from the template's review. Opened that way, the main import reason page's Back link goes to the template's review, and saving saves the template and returns there with a confirmation.",
+      "acceptanceCriteria": [
+        "Opened from a template's review, the main import reason page's Back link goes to that template's review (prototype:dr2-1-source prototype-dr2-1-source-p4-009)",
+        "Opened from a template's review, a valid 'Save and continue' saves the reason to the template and returns to the template's review, showing '<title> has been updated' with the template's title (prototype:dr2-1-source prototype-dr2-1-source-p4-009)",
+        "The template's review then shows the reason just saved, and the notification the template came from is unchanged (prototype:dr2-1-source prototype-dr2-1-source-p4-009)"
+      ],
+      "requirements": ["req-167"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-009" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart because it needs the templates area's rows that let a template be created and edited from its review (req-1327, req-1331, req-1352): the combiner should make it depend on them, or merge it into the templates row that brings editing to each journey page if that row covers every page. No template mode exists in the real frontend today.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason"
+      ],
+      "shared": [],
+      "existingRow": null
+    },
+    {
+      "title": "Destination country and port of exit lists come from master reference data",
+      "detail": "Design Release 2.1 offers the 27 EU member states, EU outermost regions as '<territory> (<parent country>)' and the Crown Dependencies with '(United Kingdom)' as destination countries, and only the exit border control posts approved for animals as ports of exit, one list serving transit and temporary admission. DR1 already ruled that list content comes from MDM master reference data, so these lists change only once that integration lands.",
+      "acceptanceCriteria": [
+        "The transhipment and transit 'Destination country' selects offer the EU member states, EU outermost regions shown as '<territory> (<parent country>)' and the Crown Dependencies shown with '(United Kingdom)', alphabetically, taken from the master reference data (prototype:dr2-1-source prototype-dr2-1-source-p4-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-031; prototype:dr2-1-specs prototype-dr2-1-specs-p1-083)",
+        "The transit and temporary admission 'Port of exit' selects offer the same list, holding only the exit border control posts approved for animals, worded as master reference data words them, instead of the port of entry list (prototype:dr2-1-source prototype-dr2-1-source-p4-046, prototype-dr2-1-source-p4-047; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-035; prototype:dr2-1-specs prototype-dr2-1-specs-p1-084)"
+      ],
+      "requirements": ["req-147", "req-149"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p4-043, p4-046, p4-047, p4-048" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p4-031, p4-035, p12-040, p13-035, p13-036" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-083, p1-084, p1-086" },
+        { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-037 to p1-051" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p4-037 to p4-040" }
+      ],
+      "repos": ["referencedata", "frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "req-147: the MDM master reference-data integration for countries, regions and territories must land before the destination country list changes (Rhys's 2026-09-07 ruling defers list content until then; DR1's inc-081 stays blocked).",
+        "req-149: MDM must supply the port reference data with an approved-for-animals attribute, and the service must integrate with it, before the port of exit list changes (Rhys's 2026-09-07 ruling; DR1's inc-071 stays blocked)."
+      ],
+      "notes": "Both requirements carry blockedBy and wait on the same MDM integration, so they sit together in one blocked row, apart from the rows that can build now. c-026 and c-027: DR1's judgement overrides the prototype's list content. Take each entry's wording from MDM, not the prototype's hand-typed list (which repeats a code in the Airpets entry). The repos are a best guess pending the integration's design: reference data serves the lists, the frontend renders them.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason"
+      ],
+      "shared": [
+        "referencedata:."
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

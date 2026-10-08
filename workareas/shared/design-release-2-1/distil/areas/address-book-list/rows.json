@@ -1,0 +1,376 @@
+{
+  "area": "address-book-list",
+  "rows": [
+    {
+      "title": "Address book list: Design Release 2.1 intro, filter disclosure, search control, table cells, empty state and a banner that stays",
+      "detail": "The INS address book list changes to Design Release 2.1's layout and copy. The intro is reworded and set in large body text, 'Add a new address' moves directly under it, and search moves into a collapsed 'Filter addresses' disclosure with a plain 'Search' label, a placeholder instead of a hint and an icon-only search button. The 'Clear search' link goes. The table shows a multi-word name on two lines and every stored address line on its own line. An empty book or a search with no match shows the same table with 'Showing 0 of 0' instead of a message, and the success banner no longer hides itself after 3 seconds. All of this is the same list page and template, so it is one review.",
+      "acceptanceCriteria": [
+        "Under the 'Address book' heading the list shows, in large body text, 'Manage your addresses for use across all your import notifications' in place of 'Manage addresses used across import and export services.' (prototype:dr2-1-source app/views/address-book.html:35-41; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:27)",
+        "The 'Add a new address' button comes directly under the intro, above the 'Filter addresses' disclosure. (prototype:dr2-1-source app/views/address-book.html:44-48,54-58)",
+        "The search field sits inside a collapsible 'Filter addresses' disclosure with a chevron, built on the GOV.UK details component and collapsed when the list loads, so the search field is hidden until the user opens it. (prototype:dr2-1-source app/views/address-book.html:54-58; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 69-70; prototype:dr2-1-specs e2e/address-book.fit.spec.js:29,59-61)",
+        "The search field is labelled 'Search', in place of 'Search addresses'. (prototype:dr2-1-source app/views/address-book.html:64-76; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 71-72; prototype:dr2-1-specs e2e/address-book.fit.spec.js:62)",
+        "The search field shows the placeholder 'Search by name, address or country' and has no hint. (prototype:dr2-1-source app/views/address-book.html:64-76; prototype:dr2-1-specs e2e/address-book.fit.spec.js:63)",
+        "The search field has an icon-only search button whose accessible name is 'Search', and no visible 'Search' text button; with JavaScript off, pressing Enter in the search field submits the search. (trace:prototype-dr2-1 list-categories-pagination-and-filters actions 71-72)",
+        "No 'Clear search' link shows, whether a search found addresses or found none. (prototype:dr2-1-source app/views/address-book.html:50-139)",
+        "When the book is empty, or a search matches nothing, the list shows 'Showing 0 of 0' and the table with its column headers and no rows; 'You have no addresses yet.' and 'No addresses match \"<term>\".' no longer show. (prototype:dr2-1-source app/views/address-book.html:164-256, app/routes.js:9185-9191)",
+        "In the Name column a name of more than one word shows on two lines, the first word then the rest, such as 'Green' then 'valley farm'; a one-word name shows on one line. (prototype:dr2-1-source app/data/address-book.js:103-111; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20)",
+        "In the Address column each stored address line (line 1, line 2, town or city, county, postcode) shows on its own line, each but the last ending in a comma, with blank lines left out, so line 2 and county now show when they hold a value. (prototype:dr2-1-source app/views/address-book.html:207-215; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20)",
+        "After an add, edit or delete the success banner is still showing 10 seconds after the list loads; it no longer hides itself. (prototype:dr2-1-source app/views/address-book.html:24-31, app/routes.js:10014-10026)"
+      ],
+      "requirements": ["req-1112", "req-1114", "req-1115", "req-1116", "req-1117", "req-1118", "req-1132", "req-1133", "req-1136", "req-1137", "req-1147"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/address-book.html" },
+        { "source": "prototype:dr2-1-source", "ref": "app/data/address-book.js:103-111" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:27-63" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/list (repo-insfrontend-p2-004 to p2-018, p2-030)" },
+        { "source": "repo:tests", "ref": "page-objects/ins/address-book/list-page.ts:15-29 (repo-tests-p5-107)" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines three thin slices on the same list page and template: the heading area and search control (req-1112, 1114, 1115, 1116, 1117, 1118, 1133), the table cells (req-1136, 1137) and the empty state and banner (req-1132, 1147). Built apart they would repeat the same list template, copy file, fit spec and E2E page object for little gain. c-171 settled that the empty and no-match messages, the Clear search link and the timed banner go. The Type select joins the 'Filter addresses' disclosure in the Type-filter row; until then the disclosure holds the search field alone. Live filtering as the user types belongs to the search row (req-1121); here the search still submits as a GET form. Each new English string gets a Welsh machine draft as it is added; req-1186's completeness check is the Welsh row. The success-banner client script is removed or stops hiding the banner; the client entry file is shared.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/client/javascripts/address-book-success-banner.js",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:page-objects/ins/address-book/list-page.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/client/javascripts/application.js",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
+      "detail": "The address book pages take Design Release 2.1's page titles, with the GOV.UK suffix and a hyphen separator. The view page leaves out an empty address line 2 or county, labels county 'County (optional)', styles Edit as a secondary button beside Delete, and sends a user who opens a dead address link (unknown, malformed, another organisation's or deleted) back to the list instead of showing a 404 page.",
+      "acceptanceCriteria": [
+        "The page titles read 'Address book - Import notification service - GOV.UK' on the list, '<address name> - Import notification service - GOV.UK' on the view page and 'Delete this address? - Import notification service - GOV.UK' on the delete page, in place of today's pipe-separated titles. (trace:prototype-dr2-1 list-categories-pagination-and-filters action 9, entry-view-edit-and-save action 13, entry-delete-confirm action 8; prototype:dr2-1-specs e2e/address-book.fit.spec.js:23-24,163,205-206)",
+        "The view page shows the 'Address line 2 (optional)' row after Address line 1 only when the address has a line 2, and the county row after Town or city only when it has a county; neither shows blank. (prototype:dr2-1-source app/routes.js:9449-9466)",
+        "The view page's county row is labelled 'County (optional)'. (prototype:dr2-1-source app/routes.js:9449-9466)",
+        "The view page's 'Edit' button, to /address-book/{id}/edit, is a secondary (grey) button, beside the 'Delete' button in one button group. (prototype:dr2-1-source app/views/address-book-view.html:35-49; trace:prototype-dr2-1 entry-view-edit-and-save action 13; prototype:dr2-1-specs e2e/address-book.fit.spec.js:178-179)",
+        "Opening the view page for an id that is not a live address in the user's organisation's book (an unknown id, a malformed id, another organisation's address or a deleted address) takes the user to the address book list, with no 'Page not found' page. (prototype:dr2-1-source app/routes.js:9516-9530)"
+      ],
+      "requirements": ["req-1110", "req-1161", "req-1162", "req-1164", "req-1168"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:9437-9530; app/views/address-book-view.html" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--an-address-book-entry-view-edit-and-save.zip action 13" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:163-179" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view (repo-insfrontend-p2-033 to p2-051)" },
+        { "source": "repo:tests", "ref": "page-objects/ins/address-book/view-page.ts (repo-tests-p5-108)" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the view-page slices (req-1161, 1162, 1164, 1168), which share one controller, template and fit spec. req-1110 (titles for the list, view and delete pages) rides here because it is one copy change to the shared page-title pattern and the view page is its biggest part; it touches the list and delete controllers' title only. req-1168 sends a dead link to the view page's back link: until the return-path row lands that is always the list, and that row extends it to an honoured return. The not-live checks live in the shared address-id params and stored-address helpers, which the add-and-edit area's edit page also uses.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/view",
+        "insfrontend:src/server/app/features/address-book/fit/view.fit.spec.js",
+        "tests:page-objects/ins/address-book/view-page.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/address-id-params.js",
+        "insfrontend:src/server/app/features/address-book/stored-address.js",
+        "insfrontend:src/server/app/features/address-book/list/list.controller.js",
+        "insfrontend:src/server/app/features/address-book/delete/delete.controller.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
+      "detail": "The delete page becomes Design Release 2.1's confirmation: the heading 'Delete this address?', a summary of the address being deleted, a confirmation line, a warning that it cannot be undone, a red 'Yes, delete' button and a 'No, cancel' link. A delete for an address that is no longer live redirects instead of showing a 404. After a delete the list's banner reads '<Name> address deleted'.",
+      "acceptanceCriteria": [
+        "The delete page's heading is 'Delete this address?', in place of 'Delete address'. (prototype:dr2-1-source app/views/partials/design-release-2.1/delete-confirmation.html:4; trace:prototype-dr2-1 entry-delete-confirm action 8; prototype:dr2-1-specs e2e/address-book.fit.spec.js:207)",
+        "The delete page shows a summary list with one row, 'Address', holding the name, each address line and the country on separate lines, leaving out any line that repeats one already shown (ignoring case) and never showing the email or phone; with none of those it shows 'Not applicable'. (prototype:dr2-1-source app/routes.js:6209-6265; trace:prototype-dr2-1 entry-delete-confirm action 13; prototype:dr2-1-specs e2e/address-book.fit.spec.js:209)",
+        "Below the summary the delete page says 'Confirm that you want to delete this address.', and 'Are you sure you want to delete <name> from your address book?' no longer shows. (prototype:dr2-1-source delete-confirmation.html:10-11; trace:prototype-dr2-1 entry-delete-confirm action 11; prototype:dr2-1-specs e2e/address-book.fit.spec.js:210)",
+        "The delete page warns 'This action cannot be undone.' (prototype:dr2-1-source delete-confirmation.html:10-11; trace:prototype-dr2-1 entry-delete-confirm action 12; prototype:dr2-1-specs e2e/address-book.fit.spec.js:211)",
+        "The confirm button is a red warning button reading 'Yes, delete', in place of 'Yes, delete this address'. (prototype:dr2-1-source delete-confirmation.html:13-18; trace:prototype-dr2-1 entry-delete-confirm action 13; prototype:dr2-1-specs e2e/address-book.fit.spec.js:214-215)",
+        "Beside the confirm button a 'No, cancel' link, in place of the secondary 'Cancel' button, goes to the address's view page; the address is still in the book and no banner shows. (prototype:dr2-1-source delete-confirmation.html:20; trace:prototype-dr2-1 entry-delete-confirm action 13; prototype:dr2-1-specs e2e/address-book.fit.spec.js:212)",
+        "After 'Yes, delete' the list's banner reads '<Name> address deleted' with the name's first letter capitalised and the rest lower-cased, such as 'Green valley farm address deleted' for 'Green Valley Farm', or 'Address deleted' when the name is blank. (prototype:dr2-1-source app/routes.js:9671-9679; trace:prototype-dr2-1 entry-delete-confirm action 24; prototype:dr2-1-specs e2e/address-book.fit.spec.js:216)",
+        "Opening the delete page for an id that is not a live address in the organisation's book takes the user to the address book list, with no 'Page not found' page; posting a delete for such an id changes nothing, shows no banner and lands on the list. (prototype:dr2-1-source app/routes.js:9532-9540,12034-12039)"
+      ],
+      "requirements": ["req-1148", "req-1169", "req-1175", "req-1176", "req-1177", "req-1178", "req-1179", "req-1180"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/delete-confirmation.html; app/routes.js:6209-6265,9532-9604,12024-12040" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--an-address-book-entry-delete-confirm-then-the-list-says-it-was-deleted.zip" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:205-217" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/delete (repo-insfrontend-p2-053 to p2-062)" },
+        { "source": "repo:tests", "ref": "page-objects/ins/address-book/delete-page.ts; tests/ins/e2e/features/address-book/address-book-delete.spec.ts (repo-tests-p5-098 to p5-102)" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines every delete-page slice (req-1169, 1175 to 1180) with the delete banner wording (req-1148), which is the page's outcome. They share one controller, template, fit spec and E2E page object. The delete stays a soft delete through the address book API, which already tombstones and has no restore, so the warning is true. The redirect for a dead link goes to the list until the return-path row extends it to an honoured return. The tests repo's delete page object reads 'Yes, delete this address' today and changes with this row.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/delete",
+        "insfrontend:src/server/app/features/address-book/fit/delete.fit.spec.js",
+        "tests:page-objects/ins/address-book/delete-page.ts",
+        "tests:tests/ins/e2e/features/address-book/address-book-delete.spec.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/server/app/features/address-book/address-id-params.js",
+        "insfrontend:src/server/app/features/address-book/stored-address.js"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "View and delete pages return the user to where they opened the address from, including an animals journey page",
+      "detail": "A user who opens an address from somewhere other than the list, such as an animals journey page, goes back there. The view and delete pages honour a return query: an INS path, or an absolute URL on exactly the configured animals frontend origin. Anything else falls back to the list (view page) or the view page (delete page). This replaces today's always-back-to-the-list behaviour.",
+      "acceptanceCriteria": [
+        "Opening the view page with a return that starts with a single /, such as ?return=/dashboard, makes its Back link go to that page, and its Edit and Delete links carry the same return on. (prototype:dr2-1-source app/views/address-book-view.html:18-21, app/routes.js:9322-9345)",
+        "On the delete page reached that way, Back and 'No, cancel' go to the view page still carrying the return. (prototype:dr2-1-source delete-confirmation.html:20, app/routes.js:9304-9310)",
+        "After 'Yes, delete' the user lands on the return page, unless it is one of the deleted address's own pages, when they land on the address book list. (prototype:dr2-1-source app/routes.js:12031,12039)",
+        "Locally, on the compose stack and in CDP, a return that is an absolute URL whose origin exactly equals that environment's animals frontend base URL is honoured: opening an address with a return to an animals journey page and pressing Back lands on that animals page. (prototype:dr2-1-source app/routes.js:9322-9345; repo:tests tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6-23)",
+        "Any other return (another origin, one starting with //, or one not starting with /) is ignored: the view page's Back goes to the address book list and the delete page's Back and 'No, cancel' go to the view page. (prototype:dr2-1-source app/routes.js:9322-9345)",
+        "In the INS frontend's stub mode only returns that start with a single / are honoured; an absolute animals frontend URL falls back as any other return does. (prototype:dr2-1-source app/routes.js:9322-9345)",
+        "A dead view or delete link carrying an honoured return lands on that return rather than the list. (prototype:dr2-1-source app/routes.js:9516-9530,12034-12039)"
+      ],
+      "requirements": ["req-1167"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:9304-9345,9516-9540,12028-12040" },
+        { "source": "repo:tests", "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6-23 (repo-tests-p5-001)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view/view.controller.js:58; delete/delete.controller.js:45-49" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Kept apart from the view and delete rows because it carries a cross-origin, per-environment rule (c-170) the copy changes do not, and its own security review: the allow-list is exactly the animals frontend origin, never any origin, and never the plants frontend. Depends on the view-page row and the delete-page row (it changes the Back, Edit, Delete, 'No, cancel' and dead-link behaviour those rows settle). The INS config already holds the animals frontend base URL (tradeImportsAnimalsFrontend.baseUrl), so no new setting is expected. The last criterion completes req-1168 and req-1169's 'back link' fallback once a return exists.",
+      "dependsOnRows": [
+        "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
+        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner"
+      ],
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/view",
+        "insfrontend:src/server/app/features/address-book/delete",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "shared": [
+        "insfrontend:src/config/config.js",
+        "insfrontend:src/server/app/shared/kit.js",
+        "tests:tests/animals/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Address book list split into four category tabs with a Type column",
+      "detail": "The list is split by what each address is used for: four tabs, 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', each a link with its own panel heading. An address shows on every tab whose category holds one of its types, so the address book API learns to return one category's addresses. Non-transporter tabs gain a Type column with the address's type labels. The tests repo's shared address book fixtures carry a type so they land on the right tab and the journeys still find them.",
+      "acceptanceCriteria": [
+        "The list shows four tabs in this order: 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', each a link to /address-book?category=origin-and-consignor, destination-consignee-importer, transporter or branch, with the selected one marked. (prototype:dr2-1-source app/data/address-book.js:21-57, app/views/address-book.html:147-160; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:30-31)",
+        "Each tab panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' or 'Branch addresses'. (prototype:dr2-1-source app/views/address-book.html:163; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 18,42,51,60)",
+        "With no category in the URL, or an unknown one, the list opens on the Origin and Consignor tab. (prototype:dr2-1-source app/routes.js:9948-9951; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20)",
+        "An address shows on every tab whose category holds one of its types: Origin and Consignor holds place of origin, consignor, consignor or exporter and exporter; Destination, Consignee and Importer holds consignee, importer, place of destination, contact and packer; Branch holds branch addresses. An address held as both place of origin and consignee shows on both tabs, and the Transporter tab shows none of these addresses. (prototype:dr2-1-source app/data/address-book.js:21-57,89-97; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 20,33)",
+        "The address book list API, asked for a category, returns only the caller's organisation's live addresses with a type in that category, paged as before. (prototype:dr2-1-source app/data/address-book.js:21-57; repo:addressbook OperatorController list endpoint)",
+        "On every tab except Transporter the table's columns are Name, Type, Address and Country, then an action column whose header 'Action' is visually hidden. (prototype:dr2-1-source app/views/address-book.html:170,175-182; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:35)",
+        "The Type column shows the address's type labels joined by ', ', using 'Place of origin', 'Consignor' (for consignor, consignor or exporter and exporter), 'Consignee', 'Importer', 'Place of destination', 'Transporter', 'Branch', 'Contact address' and 'Packer', such as 'Place of origin, Consignor'. (prototype:dr2-1-source app/data/address-book.js:7-19,133-134; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 20,33,60)",
+        "The tests repo's shared address book fixtures each carry an address type, so each shows on its category's tab and the animals journeys' party pickers still find them; the pre-run reconcile reports a fixture with a missing or different type as drift and puts it right. (repo:tests domain/shared/fixtures/e2e-address-book.ts:5-166)"
+      ],
+      "requirements": ["req-1123", "req-1124", "req-1125", "req-1126", "req-1134", "req-1139", "req-1187"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/data/address-book.js:7-134; app/views/address-book.html:147-182; app/routes.js:9948-9997" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip actions 18-60" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:30-35" },
+        { "source": "repo:addressbook", "ref": "OperatorController/OperatorService list (repo-addressbook-p3-046, p3-027)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/list; src/server/app/services/address-book (repo-insfrontend-p2-016, p2-068, p2-070)" },
+        { "source": "repo:tests", "ref": "domain/shared/fixtures/e2e-address-book.ts (repo-tests-p5-095, p5-117 to p5-121)" }
+      ],
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": "Look at the category tabs, the category-to-type mapping and the list API's category filter before the Type filter, search and Transporter-tab rows build on them.",
+      "openQuestions": [],
+      "notes": "Combines the tab slices (req-1123, 1124, 1125, 1126), the Type column (req-1134, 1139) and the typed fixtures (req-1187): all rest on the same new category filter and the same list template, and the fixtures must be typed in the same change or the E2E specs that find them break. Real ordering need on another area: the address book record must carry its types first, which is the address-book-add-and-edit area's row for req-1256 (the record and API carry the address's uses); the combiner should set that dependency. The Transporter tab's positive content (transporter entries listed there) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands; here the Transporter tab is observed holding none of the other addresses. The tab links' search-keeping and Type-dropping (req-1127) are in the Type-filter row. The in-memory stub learns the category filter here as far as the fit suite needs; req-1185 is closed by the search row. Gate set because the following three rows copy this pattern.",
+      "dependsOnOtherAreas": ["address-book-add-and-edit: the row covering req-1256 (address record and API carry its uses)"],
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:domain/shared/fixtures/e2e-address-book.ts",
+        "tests:page-objects/ins/address-book/list-page.ts"
+      ],
+      "shared": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "tests:adapters/http/address-book-api-client.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Type filter within a category tab, with tab and pagination links that keep the user's filters",
+      "detail": "Inside the 'Filter addresses' disclosure a 'Type' select narrows the current tab to one type, across the whole category rather than just the page. Tab links keep the search but drop the Type, which is per category, and pagination keeps the category, search and Type.",
+      "acceptanceCriteria": [
+        "The 'Filter addresses' disclosure holds a select labelled 'Type' whose first option is 'Select one' (no value), then the current tab's options only: 'Place of Origin' and 'Consignor' on Origin and Consignor; 'Consignee', 'Importer' and 'Place of Destination' on Destination, Consignee and Importer; 'Commercial' and 'Private' on Transporter; 'Branch Address' on Branch. (prototype:dr2-1-source app/views/address-book.html:83-96, app/routes.js:9193-9225; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 21,42,51,60; prototype:dr2-1-specs e2e/address-book.fit.spec.js:36)",
+        "Choosing a Type keeps, across the whole category and not only the current page, the organisation's live addresses one of whose types equals the choice, and drops the rest. (prototype:dr2-1-source app/routes.js:9227-9241; repo:addressbook list API, repo-addressbook-p3-046)",
+        "The filter form carries the selected category, so filtering stays on the current tab. (prototype:dr2-1-source app/views/address-book.html:50-53)",
+        "Each tab link goes to page 1 of that category, keeps the current search and drops the Type. (prototype:dr2-1-source app/routes.js:9991-9994)",
+        "Pagination links keep the category, search and Type, and add a page number only for pages after the first. (prototype:dr2-1-source app/routes.js:9124-9147)"
+      ],
+      "requirements": ["req-1127", "req-1129", "req-1130", "req-1143"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/address-book.html:50-96; app/routes.js:9124-9147,9193-9241,9991-9994" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip actions 21-60" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:36" },
+        { "source": "repo:addressbook", "ref": "list API filters (repo-addressbook-p3-027, p3-046)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view-model/list.js; services/address-book/client.js (repo-insfrontend-p2-022, p2-068)" }
+      ],
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the Type select and its matching (req-1129, 1130) with the links that carry or drop it (req-1127, 1143): one filter, one form, one set of links. Kept apart from the tabs row so that row stays reviewable and its gate lands first. req-1130's transporter half (a transporter matches on its transporter type, Commercial or Private) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands. The type filter runs in the address book API (c-169), organisation-scoped and without deleted addresses. Depends on the category-tabs row.",
+      "dependsOnRows": ["Address book list split into four category tabs with a Type column"],
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:page-objects/ins/address-book/list-page.ts"
+      ],
+      "shared": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Search the whole row, 8 addresses a page and live filtering as the user types",
+      "detail": "Search finds an address by anything the row shows: name, type labels, every address line and country, not only name, town and postcode. The list pages at 8 through the address book service's server-side page size setting. With JavaScript the list re-requests as the user types or changes Type and swaps in the results without a reload; without it, Enter submits the GET form. A stale page number shows a real page. The INS frontend's in-memory stub behaves the same, so the fit suite exercises the Design Release 2.1 list, and the E2E specs walk the address book through its own links.",
+      "acceptanceCriteria": [
+        "Search matches the trimmed text, ignoring case and anywhere inside a word, against an address's name, type labels, address line 1, address line 2, town or city, county, postcode and country name, so 'ballymore' finds an address whose line 2 is 'Ballymore Road' and 'france' finds the addresses in France; a blank search is no search. (prototype:dr2-1-source app/routes.js:9721-9726,9945-9972, app/data/address-book.js:159-197; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 73-75; prototype:dr2-1-specs e2e/address-book.fit.spec.js:64-67)",
+        "Locally, on the compose stack and in CDP the list shows 8 addresses a page, with no page-size parameter on the request: the address book service's server-side page size is 8. (prototype:dr2-1-source app/data/address-book.js:412; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 19,33; prototype:dr2-1-specs e2e/address-book.fit.spec.js:34)",
+        "With JavaScript off, pressing Enter in the search field, or choosing a Type and pressing Enter, submits a GET to /address-book carrying the category, search and Type, and the list shows that category's matches across all its pages. (prototype:dr2-1-source app/views/address-book.html:50-139; trace:prototype-dr2-1 list-categories-pagination-and-filters page 1 filter form)",
+        "With JavaScript on, typing in the search field or changing Type re-requests the list after a short pause and replaces the table, the results line and the pagination without a full page reload; there is no apply button. (trace:prototype-dr2-1 list-categories-pagination-and-filters actions 73-75; prototype:dr2-1-specs e2e/address-book.fit.spec.js:64-67)",
+        "While a search or Type filter is active the results line counts the matches, such as 'Showing 1-2 of 2', and pagination shows only when the matches run past one page of 8; with JavaScript both update as the list is re-requested. (trace:prototype-dr2-1 list-categories-pagination-and-filters action 75)",
+        "A page number below 1 or not a number shows page 1, and a page number beyond the last page shows the last page's addresses rather than an empty table. (prototype:dr2-1-source app/routes.js:9953,9975-9976)",
+        "In the INS frontend's stub mode the list behaves the same: 8 a page, filtered by search, category and Type, and a deleted address reads back as deleted rather than vanishing. (repo:insfrontend src/server/app/services/address-book/stub.js)",
+        "The E2E specs reach every address book page through the list's own links (list, category tab, search, View, Delete, 'No, cancel', 'Yes, delete') rather than by URL, and cover the empty and no-match state. (repo:tests tests/ins/e2e/features/address-book; repo:insfrontend src/server/app/features/address-book/fit/list.fit.spec.js)"
+      ],
+      "requirements": ["req-1119", "req-1121", "req-1122", "req-1141", "req-1144", "req-1185", "req-1188"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:9721-9726,9945-9976; app/data/address-book.js:159-197,412" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip actions 19-75" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:34,64-67" },
+        { "source": "repo:addressbook", "ref": "list q fields and page-size setting (repo-addressbook-p3-009 to p3-063)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/list; src/server/app/services/address-book/stub.js (repo-insfrontend-p2-008 to p2-024, p2-075 to p2-081)" },
+        { "source": "repo:tests", "ref": "tests/ins/e2e/features/address-book (repo-tests-p5-102, p5-109-m1)" }
+      ],
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combines the server-side search widening (req-1119), the live filter (req-1121, 1122, settled by c-169: search on the server, the prototype's live behaviour on top, never the whole category held in the page), the page size of 8 (req-1141, c-168: the server setting changes, ruling cv-025 keeps it off the request), the page clamp (req-1144), the stub (req-1185) and the E2E walk-through (req-1188). They share the list API query, the list controller, the stub and the specs. Kept apart from the Type-filter row so neither is too big to review. The search over a transporter's approval number is observed in the Transporter-tab row. Depends on the Type-filter row (the form carries category and Type) and the delete-page row (the E2E walk-through presses 'No, cancel' and 'Yes, delete'). Page size: set address-book.list.page-size to 8 in the service's own configuration so every environment gets it; if CDP's app config overrides it, that change is drafted for Sam to commit, never written by the loop.",
+      "dependsOnRows": [
+        "Type filter within a category tab, with tab and pagination links that keep the user's filters",
+        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
+        "Address book list: Design Release 2.1 intro, filter disclosure, search control, table cells, empty state and a banner that stays"
+      ],
+      "touches": [
+        "addressbook:src/main/resources/application.yml",
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "insfrontend:src/client/javascripts/address-book-filter.js",
+        "tests:tests/ins/e2e/features/address-book",
+        "tests:page-objects/ins/address-book"
+      ],
+      "shared": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/client/javascripts/application.js",
+        "tests:adapters/http/address-book-api-client.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Transporter tab: transporters listed with approval number and type, filtered and searched",
+      "detail": "The Transporter tab lists the organisation's transporter entries with Design Release 2.1's columns: Name, Address, Approval number and Type, with the country as the address's last line. The Type filter's Commercial and Private options and the search reach them.",
+      "acceptanceCriteria": [
+        "On the Transporter tab the table's columns are Name, Address, Approval number and Type, then the visually hidden Action column, with no Country column; the country shows as the address's last line, the approval number reads like 'RO/BUCHAREST/T1/00092010' and Type is 'Commercial' or 'Private'. (prototype:dr2-1-source app/views/address-book.html:171-174,205-218, app/data/address-book.js:170-184; trace:prototype-dr2-1 list-categories-pagination-and-filters action 51)",
+        "A transporter added to the address book shows on the Transporter tab and on no other tab. (prototype:dr2-1-source app/data/address-book.js:21-57; trace:prototype-dr2-1 list-categories-pagination-and-filters action 51)",
+        "Choosing Type 'Commercial' on the Transporter tab keeps only commercial transporters, and 'Private' only private ones. (prototype:dr2-1-source app/routes.js:9227-9241)",
+        "Searching a transporter's approval number, or part of it, finds that transporter. (prototype:dr2-1-source app/data/address-book.js:159-166; prototype:dr2-1-specs e2e/address-book.fit.spec.js:65)"
+      ],
+      "requirements": ["req-1135"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/address-book.html:171-218; app/data/address-book.js:159-184; app/routes.js:9227-9241" },
+        { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip action 51" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:65" }
+      ],
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Holds req-1135 and the transporter halves of req-1125 (Transporter holds transporters), req-1130 (a transporter matches on its transporter type) and req-1119 (search covers the approval number), whose rows sit in the tabs, Type-filter and search rows. Kept apart because transporter entries only exist in the address book once the transporters area's row for req-463 lands (saving a transporter added from the address book adds it as a transporter entry); the combiner should set that dependency. Depends on the search row (and so on the tabs and Type-filter rows). Where transporter entries are stored is that row's call; this row lists them.",
+      "dependsOnRows": ["Search the whole row, 8 addresses a page and live filtering as the user types"],
+      "dependsOnOtherAreas": ["transporters: the row covering req-463 (a transporter added from the address book becomes a transporter entry)"],
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:page-objects/ins/address-book/list-page.ts"
+      ],
+      "shared": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Welsh for the redesigned address book list, view and delete pages",
+      "detail": "Every new or changed English string on the address book list, view and delete pages has a Welsh counterpart, marked as an unreviewed machine draft until it has Welsh Language Standards sign-off, so a Welsh user sees the same Design Release 2.1 page rather than today's.",
+      "acceptanceCriteria": [
+        "With Welsh selected, the list, view and delete pages show a Welsh string for every piece of copy the Design Release 2.1 rows added or changed (intro, 'Filter addresses', 'Search', the placeholder, tab names and headings, column headers, Type labels and options, 'Delete this address?', 'Confirm that you want to delete this address.', 'This action cannot be undone.', 'Yes, delete', 'No, cancel', the banners and the page titles), and no English string is left. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js)",
+        "Today's Welsh strings for the replaced copy, such as 'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.', 'Chwilio cyfeiriadau' and 'Dileu cyfeiriad', no longer show. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js:4-70)",
+        "Each new Welsh string is visibly marked, where the Welsh copy is kept, as an unreviewed machine draft awaiting Welsh Language Standards sign-off. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js:1)"
+      ],
+      "requirements": ["req-1186"],
+      "sources": [
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/copy/copy.cy.js (repo-insfrontend-p2-098 to p2-105)" }
+      ],
+      "repos": ["insfrontend"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "A requirement sits in one row, and req-1186 spans the copy every other row in this area changes, so it is the last row and checks the whole set. Builders of the earlier rows add a Welsh machine draft beside each English string they add, so the Welsh page never falls back to English for long; this row completes and verifies it. Depends on every other row in this area.",
+      "dependsOnRows": [
+        "Address book list: Design Release 2.1 intro, filter disclosure, search control, table cells, empty state and a banner that stays",
+        "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
+        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
+        "View and delete pages return the user to where they opened the address from, including an animals journey page",
+        "Address book list split into four category tabs with a Type column",
+        "Type filter within a category tab, with tab and pagination links that keep the user's filters",
+        "Search the whole row, 8 addresses a page and live filtering as the user types",
+        "Transporter tab: transporters listed with approval number and type, filtered and searched"
+      ],
+      "touches": [],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": []
+}

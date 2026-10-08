@@ -1,0 +1,476 @@
+{
+  "area": "address-book-add-and-edit",
+  "rows": [
+    {
+      "title": "The address book record carries what an address can be used for",
+      "detail": "Design Release 2.1 records what each address can be used for (its uses), and the first use gives the address its primary type and the address book tab it sits on. Today the address-book record is untyped and its API carries no type or use, so nothing can keep the answer to the add form's uses question, and the address book list's category tabs and the DR1 address pickers have nothing to filter on. Conflict c-address-book-add-and-edit-001 settles it: the record and its create, read-one and update API gain the address's uses, and the 'untyped and unroled' ruling cv-044 is set aside. Afterwards an API caller can create, read and update an address with its uses, and addresses saved before the change still read back, with no uses.",
+      "acceptanceCriteria": [
+        "Creating an address through the address book API with one or more uses (place of origin, consignor, place of destination, consignee, importer, branch address) stores them, and reading the address back by id returns the same uses in the order given, the first being the address's primary type (prototype:dr2-1-source p16-079; trace:prototype-dr2-1 p16-081; prototype:dr2-1-specs p6-137; repo:addressbook p1-096)",
+        "Updating an address through the API with a different set of uses replaces its uses with the new set, and the read-back shows the new set (prototype:dr2-1-source p16-079; repo:addressbook p2-071)",
+        "A create or update carrying a use outside those six is refused with a 400 validation problem whose errors name the uses field, and nothing is saved (repo:addressbook p1-039, p1-045; prototype:dr2-1-source p16-079)",
+        "An address created without uses, and every address saved before this change, is still accepted and reads back with no uses (repo:addressbook p1-001, p1-003)",
+        "A request carrying a stray 'type' or 'role' field is still refused with a 400, as today (repo:addressbook p1-038, p2-016; c-address-book-add-and-edit-001)",
+        "The address book's locked API contract describes the uses field on the create and update requests and on the read response, with its six allowed values (repo:addressbook p2-097, p2-098; document:dr1-parity-backlog p7-064, p7-065)"
+      ],
+      "requirements": ["req-address-book-add-and-edit-065"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-079 (app/routes.js address book save)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-081" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-137" },
+        { "source": "repo:addressbook", "ref": "p1-001, p1-003, p1-038, p1-039, p1-045, p1-096, p2-016, p2-071, p2-097, p2-098" },
+        { "source": "trace:e2e", "ref": "p9-098, p9-099" },
+        { "source": "document:dr1-parity-backlog", "ref": "p7-064, p7-065" }
+      ],
+      "repos": ["addressbook", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": "Check the uses field's wire name, its six values and how a missing field reads back in the locked contract before the add form, the address book list's category tabs and Type filter (address-book-list area) and the DR1 address pickers build on it.",
+      "openQuestions": [],
+      "notes": "Pass 1 slice on its own: the typed record is the foundation the add form's uses question (this area), the list's category tabs and Type filter (req-address-book-list-016 to 023) and DR1 inc-047/inc-048 all rest on, so it lands first and gates. Observable through the API in every environment the tests repo's address book API client reaches (local stack and CDP). Uses stay optional on the API so a notification journey's add (today's handshake, req-address-book-add-and-edit-093, still a question) and every existing record keep saving; the add form makes a use required outside a journey (row 'Saving a new address with its uses'). Updates fully replace the editable fields today (req-073), so the edit page must post the stored uses back; that is the edit row's criterion. Decision: refuse an unknown use with a 400, because the record only means something with known values (validation clause of ruling:sam-2026-10-07).",
+      "touches": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "addressbook:docs/openapi/api-contract.locked.yaml",
+        "tests:adapters/http/address-book-api-client.ts",
+        "tests:domain/ins/models/db/address-document.ts"
+      ],
+      "shared": [
+        "tests:tests/ins/e2e/features/address-book",
+        "tests:domain/shared/fixtures/e2e-address-book.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Address validation messages match Design Release 2.1, on the form and in the API",
+      "detail": "Four required-field messages change wording to match Design Release 2.1 and their field labels. The address book API's messages change with them, because the API's message reaches the user when the service rejects a save. Afterwards the add and edit forms, and the API's validation problem, give the new wording.",
+      "acceptanceCriteria": [
+        "Saving the add or edit form without a name shows 'Enter a name or organisation name' inline and in the 'There is a problem' summary, and the address book API's blank-name validation message is 'Enter a name or organisation name' (prototype:dr2-1-source p15-071, p16-066; trace:prototype-dr2-1 p16-070, p16-114; prototype:dr2-1-specs p6-129, p6-162; repo:addressbook p1-010)",
+        "Saving without a postcode shows 'Enter a postcode or Zip code', and the API's blank-postcode message is the same (prototype:dr2-1-source p15-074, p16-069; trace:prototype-dr2-1 p16-073; prototype:dr2-1-specs p6-132; repo:addressbook p1-021)",
+        "Saving without a country, or with a country not in the list, shows 'Select a country', and the API's blank-country message is the same (prototype:dr2-1-source p15-075, p16-070; repo:insfrontend p3-055, p3-056; repo:addressbook p1-025, p2-023)",
+        "Saving without a phone number shows 'Enter a phone number', and the API's blank-phone message is the same (prototype:dr2-1-source p15-077, p16-072; trace:prototype-dr2-1 p16-075; prototype:dr2-1-specs p6-134; repo:addressbook p1-028)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-045",
+        "req-address-book-add-and-edit-048",
+        "req-address-book-add-and-edit-049",
+        "req-address-book-add-and-edit-051"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p15-071, p15-074, p15-075, p15-077, p16-066, p16-069, p16-070, p16-072" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-070, p16-073, p16-075, p16-114" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-129, p6-132, p6-134, p6-162" },
+        { "source": "repo:insfrontend", "ref": "p3-044, p3-052, p3-055, p3-056, p3-057" },
+        { "source": "repo:addressbook", "ref": "p1-010, p1-021, p1-025, p1-028, p2-023" },
+        { "source": "trace:ins-fit", "ref": "p1-034, p1-037, p1-038, p1-039, p3-023" }
+      ],
+      "repos": ["addressbook", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Pass 1 had one slice per message; pass 2 combines them because each makes the same two edits (the form's copy and the API's message) on the same review and ladder. Kept apart from the record-uses row because it carries no structural change and can land in parallel. The other required-field messages ('Enter address line 1', 'Enter a town or city', 'Enter an email address') already match (req-046, req-047, req-050, exists). Welsh drafts for the new strings are the Welsh row's (req-088).",
+      "touches": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:page-objects/ins/address-book/form-page.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Adding an address starts by choosing its type",
+      "detail": "Design Release 2.1 asks what kind of address is being added before any fields, because the type decides the form and the uses offered next. Today /address-book/add is the address form itself. Afterwards 'Add a new address' opens a 'Choose an address type' page; choosing Origin or Consignor, Destination, Consignee or Importer, or Branch moves to the add-details step at /address-book/add/lookup, retitled 'Add address and contact details', which can go back to the type page. The chosen type is remembered while the add is in progress and cleared when it starts afresh or saves. Transporter is its own row.",
+      "acceptanceCriteria": [
+        "From the address book, 'Add a new address' opens /address-book/add showing the caption 'Add a new address', the heading 'Choose an address type', a radio group whose legend repeats the heading visually hidden, and a 'Back' link to the address book list (prototype:dr2-1-source p16-001, p16-003, p16-004, p16-005, p16-013; trace:prototype-dr2-1 p16-038, p16-039; prototype:dr2-1-specs p6-104, p6-105, p6-106, p6-112)",
+        "The options are, in order: 'Origin or Consignor' (hint 'Place of origin, Consignor'), 'Destination, Consignee or Importer' (hint 'Place of destination, Consignee, Importer'), 'Transporter' (hint 'Private, Commercial') and 'Branch' (hint 'Branch address'), with a 'Continue' button (prototype:dr2-1-source p16-006 to p16-010, p16-012; trace:prototype-dr2-1 p16-040 to p16-043; prototype:dr2-1-specs p6-107 to p6-111, p6-113)",
+        "Continuing with no type chosen shows 'Select an address type' inline on the radios and in a 'There is a problem' summary whose link goes to the first option (prototype:dr2-1-source p16-016; trace:prototype-dr2-1 p16-045; prototype:dr2-1-specs p6-114, p6-115)",
+        "Choosing 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and continuing opens /address-book/add/lookup, which posts back to itself and shows the caption 'Add new address', the heading 'Add address and contact details', no notification status banner, and a 'Back' link to 'Choose an address type' (prototype:dr2-1-source p16-018, p16-019, p16-021, p16-022, p16-023, p16-024; trace:prototype-dr2-1 p16-047, p16-053, p16-069; prototype:dr2-1-specs p6-116, p6-117, p6-118)",
+        "Opening /address-book/add/lookup with no address type chosen redirects to 'Choose an address type' (prototype:dr2-1-source p16-020)",
+        "Going back from the add-details step to 'Choose an address type' shows the chosen type selected; opening 'Add a new address' again from the address book starts with no type selected and empty fields, and after a save the next add starts empty (prototype:dr2-1-source p16-002, p16-011, p16-087)",
+        "The browser titles read 'Choose an address type - Import notification service - GOV.UK', 'Add address and contact details - Import notification service - GOV.UK', and on the edit page '<edit heading> - Import notification service - GOV.UK', keeping the 'Error: ' prefix when a page shows errors (trace:prototype-dr2-1 p16-038, p16-053, p16-107; prototype:dr2-1-specs p6-104, p6-117, p6-158; trace:ins-fit p1-003, p3-003; c-address-book-add-and-edit-005)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-002",
+        "req-address-book-add-and-edit-003",
+        "req-address-book-add-and-edit-004",
+        "req-address-book-add-and-edit-005",
+        "req-address-book-add-and-edit-006",
+        "req-address-book-add-and-edit-007",
+        "req-address-book-add-and-edit-008",
+        "req-address-book-add-and-edit-009",
+        "req-address-book-add-and-edit-010",
+        "req-address-book-add-and-edit-011",
+        "req-address-book-add-and-edit-016",
+        "req-address-book-add-and-edit-017",
+        "req-address-book-add-and-edit-018",
+        "req-address-book-add-and-edit-019",
+        "req-address-book-add-and-edit-020",
+        "req-address-book-add-and-edit-021"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-001 to p16-024, p16-087 (app/views/address-book-add.html; app/data/address-book-add-categories.js; app/views/design-release-2.1/consignment-add-address.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-038 to p16-047, p16-053, p16-069, p16-107 (address-book--add-an-address-to-the-address-book-choose-an-address-type.zip)" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-104 to p6-118, p6-158 (e2e/address-book.fit.spec.js)" },
+        { "source": "repo:insfrontend", "ref": "p3-001, p3-003, p3-004, p3-033, p3-038" },
+        { "source": "trace:ins-fit", "ref": "p1-003, p1-004, p1-005, p1-006, p3-003" },
+        { "source": "repo:tests", "ref": "p5-090" },
+        { "source": "trace:e2e", "ref": "p15-041" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": "Check the two-step add and its in-progress state, which the add-details, search and transporter rows copy, and that a notification journey's handshake into the INS add still opens the address form directly and returns the new address id (c-address-book-add-and-edit-007's default).",
+      "openQuestions": [
+        "c-address-book-add-and-edit-007: does a live-animals journey's 'add a new address' keep handing over to the INS address book add, or add on its own Design Release 2.1 pages? Default followed here: keep today's handshake; in journey mode the INS add skips 'Choose an address type' and opens the add-details step for the type the section implies; outside a journey the address book add follows Design Release 2.1 in full."
+      ],
+      "notes": "Pass 1 slices combined: the type page, its error, its options, the hop to the add-details step and the add-details step's caption, heading and back link all share one route pair and one review. The add-details step reuses today's form at first; its content changes in the next rows. Journey mode (handshake parameters on /address-book/add) is req-address-book-add-and-edit-093, still a question: it must keep working unchanged, so the handshake entry bypasses the type step. Title format: the suffix comes from the shared INS layout, which the address book list (req-address-book-list-003) and the layout area also change; make the change once there. Welsh drafts are the Welsh row's (req-088).",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/server/app/features/address-book/handshake-context.js",
+        "tests:page-objects/ins/address-book/add-page.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:tests/ins/e2e/features/address-book",
+        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The add-details form for an address entered by hand",
+      "detail": "The add-details step's address and contact fields take Design Release 2.1's layout and copy: 'Address' and 'Contact details' section headings (also on the edit form), the 'Name or organisation' label, no County field, new widths, an alphabetical country list with United Kingdom pre-selected for Origin or Consignor and a 'Select one' placeholder, and cancel as a link under the button. Today the add form has 'Enter address details' and 'Enter contact details' headings, a County field, United Kingdom always first and a secondary cancel button.",
+      "acceptanceCriteria": [
+        "On the add-details step and the edit page the address fields sit under the section heading 'Address' and Email address and Phone number under 'Contact details' (prototype:dr2-1-source p16-038, p16-049, p15-062, p15-063; trace:prototype-dr2-1 p16-055, p16-062, p16-108; trace:ins-fit p1-008, p1-018, p3-005-m1)",
+        "On the add-details step the name field is labelled 'Name or organisation', while the edit page keeps 'Name or organisation name' (prototype:dr2-1-source p16-039; trace:prototype-dr2-1 p16-056; prototype:dr2-1-specs p6-121, p6-161-m1)",
+        "The add-details step has no County field (prototype:dr2-1-source p16-045; trace:prototype-dr2-1 p16-054)",
+        "On the add-details step 'Name or organisation', both address lines and 'Email address' are full width, 'Town or city' and 'Postcode or Zip code' half width, and 'Phone number' two-thirds width (trace:prototype-dr2-1 p16-059, p16-060, p16-064-m1)",
+        "On the add and edit forms the Country select lists its countries in alphabetical order, with United Kingdom in its alphabetical place (prototype:dr2-1-source p15-065; trace:prototype-dr2-1 p16-110; c-address-book-add-and-edit-002)",
+        "For 'Origin or Consignor' the Country select opens with United Kingdom selected, and its blank first option reads 'Select one' (prototype:dr2-1-source p16-047-m1; trace:prototype-dr2-1 p16-078)",
+        "Below 'Save and continue' the add-details step has a 'Cancel and return to address book' link, not a button, that goes to the address book and saves nothing (prototype:dr2-1-source p16-065; trace:prototype-dr2-1 p16-068, p16-134)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-030",
+        "req-address-book-add-and-edit-031",
+        "req-address-book-add-and-edit-032",
+        "req-address-book-add-and-edit-034",
+        "req-address-book-add-and-edit-038",
+        "req-address-book-add-and-edit-040",
+        "req-address-book-add-and-edit-041",
+        "req-address-book-add-and-edit-042",
+        "req-address-book-add-and-edit-067"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p15-062, p15-063, p15-065, p16-038, p16-039, p16-045, p16-047-m1, p16-049, p16-065 (app/views/partials/design-release-2.1/consignment-manual-address-fields.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-054 to p16-064-m1, p16-068, p16-078, p16-108, p16-110, p16-134" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-121, p6-161-m1" },
+        { "source": "repo:insfrontend", "ref": "p3-005, p3-007, p3-011, p3-019, p3-021, p3-022, p3-035, p3-036, p3-087" },
+        { "source": "trace:ins-fit", "ref": "p1-008, p1-009, p1-012, p1-013, p1-015, p1-018, p1-020, p1-024, p3-005-m1" },
+        { "source": "trace:e2e", "ref": "p15-042, p15-043, p15-047, p15-049, p15-050, p15-053" },
+        { "source": "repo:tests", "ref": "p5-091" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [
+        "c-address-book-add-and-edit-007 (default followed): in journey mode the cancel stays 'Cancel and return to address page' and returns to the journey without an address id."
+      ],
+      "notes": "Depends on the row 'Adding an address starts by choosing its type' (the add-details step it changes). Pass 1 slices combined: section headings, label, County, widths, country order and default, placeholder and cancel are all copy and layout on the same form and review together. The section headings and the alphabetical country order are asserted on both forms because each requirement says 'add and edit'; the edit page's own order, widths and placeholder are the edit row's. What the country list holds stays with reference data (c-address-book-add-and-edit-002, req-044 exists).",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/server/app/features/address-book/address-countries.js",
+        "tests:page-objects/ins/address-book/form-page.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/fields.js",
+        "insfrontend:src/server/app/features/address-book/edit",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Saving a new address with its uses",
+      "detail": "Design Release 2.1 asks what an address can be used for on the add-details step and saves the ticked uses with it, then shows the user the new address among its kind. Afterwards an Origin or Consignor address offers 'Place of origin' and 'Consignor' after a section break, a use is required once the fields are valid, the save stores the ticked uses in the address book, and the user lands on the list's tab for that type, with the new address first, a reworded success banner, its full address and searchable by its uses.",
+      "acceptanceCriteria": [
+        "For 'Origin or Consignor' the address and contact fields show straight away with no address search, then a section break, then the uses question with the legend 'What can this address be used for?', the hint 'Select where this address can be used' and the checkboxes 'Place of origin' and 'Consignor', with no hint on either option (prototype:dr2-1-source p16-025, p16-048, p16-052, p16-053, p16-054, p16-055; trace:prototype-dr2-1 p16-054, p16-065, p16-066; prototype:dr2-1-specs p6-119, p6-120)",
+        "With the address and contact fields valid and no use ticked, saving shows 'Select what this address can be used for' inline and in the error summary, linked to the first use option; while any field is invalid the uses are not checked (prototype:dr2-1-source p16-076; trace:prototype-dr2-1 p16-077, p16-129; prototype:dr2-1-specs p6-135)",
+        "Saving stores the address in the address book with every ticked use, and a use posted that does not belong to the chosen type is not stored (prototype:dr2-1-source p16-078, p16-079; trace:prototype-dr2-1 p16-056-m1, p16-081)",
+        "After saving an Origin or Consignor address the user lands on the address book at /address-book?category=origin-and-consignor, with the new address listed first and a 'View' link to its own page (prototype:dr2-1-source p16-083, p16-086; trace:prototype-dr2-1 p16-079, p16-081, p16-082; prototype:dr2-1-specs p6-137, p6-139)",
+        "The list then shows a 'Success' banner reading '<name> address added to your address book' (prototype:dr2-1-source p16-085; trace:prototype-dr2-1 p16-080)",
+        "The added address reads as address line 1, address line 2, town or city, county and postcode joined by commas, leaving out blanks, with the country shown separately (prototype:dr2-1-source p16-080, p15-084; trace:ins-fit p1-058)",
+        "The added address is found by the address book search on its name, on a use label such as 'Consignor', on part of its address and on its country (prototype:dr2-1-source p16-082)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-022",
+        "req-address-book-add-and-edit-057",
+        "req-address-book-add-and-edit-059",
+        "req-address-book-add-and-edit-060",
+        "req-address-book-add-and-edit-063",
+        "req-address-book-add-and-edit-064",
+        "req-address-book-add-and-edit-068",
+        "req-address-book-add-and-edit-069",
+        "req-address-book-add-and-edit-070",
+        "req-address-book-add-and-edit-071"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-025, p16-048, p16-052 to p16-055, p16-076, p16-078 to p16-086, p15-084" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-054, p16-056-m1, p16-065, p16-066, p16-077, p16-079 to p16-082, p16-129 (address-book--add-an-address-to-the-address-book-origin-or-consignor-an-address-entered-by-hand-with-its-uses.zip)" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-119, p6-120, p6-135, p6-137, p6-139" },
+        { "source": "repo:insfrontend", "ref": "p3-071, p3-076, p3-077, p3-078, p3-129" },
+        { "source": "trace:ins-fit", "ref": "p1-054 to p1-062" },
+        { "source": "repo:tests", "ref": "p5-093" },
+        { "source": "trace:e2e", "ref": "p15-054" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [
+        "c-address-book-add-and-edit-007 (default followed): in journey mode the add page ticks the section's use and returns the new address id to the journey with no address book banner; that behaviour is req-address-book-add-and-edit-093's, so a journey-mode save without a use must keep working here."
+      ],
+      "notes": "Depends on the rows 'The address book record carries what an address can be used for', 'Adding an address starts by choosing its type' and 'The add-details form for an address entered by hand'. Cross-area: the landing tab needs the address book list's category tabs (req-address-book-list-016 to 019), and the search on a use label needs the list's search over type labels (req-address-book-list-012), so this row depends on the list rows that build them; the combiner sets those ids. The list's Address column may already join every line once the list area lands (its view model is shared); this row's criterion holds either way. The INS frontend's address book client and its stub-mode stub must carry the uses. The banner's no-name fallback ('Address added to your address book') cannot be reached through the form, since a name is required; build it as stated, prove it below the browser. Pass 1 slices combined: the uses question, its validation, the save and the return all exercise one save and one review.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/server/app/services/address-book"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:page-objects/ins/address-book/list-page.ts",
+        "tests:page-objects/ins/address-book/add-page.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Choosing Transporter hands over to adding a transporter",
+      "detail": "The address book record has no transporter category; Design Release 2.1 adds transporters through their own pages. Afterwards choosing 'Transporter' on 'Choose an address type' leaves the address book add for the add-a-transporter pages, whose first page has the Design Release 2.1 copy and a Back link to 'Choose an address type'.",
+      "acceptanceCriteria": [
+        "Choosing 'Transporter' on 'Choose an address type' and continuing leaves the address book add and opens the add-a-transporter page; reached this way, its 'Back' link returns to 'Choose an address type' (prototype:dr2-1-source p16-017; trace:prototype-dr2-1 p16-048, p16-052; prototype:dr2-1-specs p6-148)",
+        "That page shows the caption 'Add a new transporter' and the heading and page title 'Choose a transporter type' (trace:prototype-dr2-1 p16-049; prototype:dr2-1-specs p6-148)",
+        "That page shows the warning 'Check the transporter list before adding new transporters to avoid duplicates.' (trace:prototype-dr2-1 p16-050)",
+        "That page offers the radios 'Private transporter' and 'Commercial', the latter with the hint 'This can only be a commercial transporter from Northern Ireland.', posted as transporterType private or commercial, and a 'Continue' button (trace:prototype-dr2-1 p16-051, p16-051-m1)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-012",
+        "req-address-book-add-and-edit-013",
+        "req-address-book-add-and-edit-014",
+        "req-address-book-add-and-edit-015"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-017" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-048 to p16-052" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-148" },
+        { "source": "repo:addressbook", "ref": "p1-054" }
+      ],
+      "repos": ["frontend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on 'Adding an address starts by choosing its type'. Overlaps the transporters area: its req-transporters-037, 038, 039, 044 (the same page's copy) and 083 to 085 (adding a transporter started from the address book: back link, cancel, save into the address book) build the target. The add-a-transporter pages live today inside a live-animals notification (animals frontend transport/transporter-add), so reaching them from the INS address book with no notification is the transporters area's work; the combiner should merge this row into that transporters row, or make it depend on it. Repos in merge order: the animals frontend provides the target page, the INS frontend links to it.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
+        "tests:tests/ins/e2e/features/address-book",
+        "tests:page-objects/ins/address-book/add-page.ts"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Destination, Consignee or Importer and Branch addresses: search first, manual entry and a fixed UK country",
+      "detail": "Destination, consignee, importer and branch addresses are in the UK and are found by search first. Afterwards, for these two types, the add-details step opens with only the address search; an 'Enter address manually' link reveals the fields; the country is fixed to United Kingdom; the uses question is headed 'Address type' with each type's uses; and a save with nothing entered reveals the fields so every error link reaches its field (c-address-book-add-and-edit-005).",
+      "acceptanceCriteria": [
+        "For 'Destination, Consignee or Importer' and 'Branch' the add-details step opens with only the address search; the address fields, contact fields and uses question stay hidden until an address is picked or manual entry is chosen, and open already revealed when an address or address line 1 is already present (prototype:dr2-1-source p16-025, p16-037; trace:prototype-dr2-1 p16-083, p16-096, p16-098; prototype:dr2-1-specs p6-140, p6-141)",
+        "Below the address search an 'Enter address manually' button styled as a link reveals the address and contact fields and the uses question without picking a result (prototype:dr2-1-source p16-036; trace:prototype-dr2-1 p16-085, p16-130)",
+        "For these two types the Country select holds only 'United Kingdom', pre-selected, and the saved address's country is United Kingdom (GB) whatever country is posted (prototype:dr2-1-source p16-046; trace:prototype-dr2-1 p16-090)",
+        "For these two types the uses question's legend is 'Address type' (prototype:dr2-1-source p16-052; trace:prototype-dr2-1 p16-095, p16-099)",
+        "A 'Destination, Consignee or Importer' address offers the use checkboxes 'Place of destination', 'Consignee' and 'Importer' (prototype:dr2-1-source p16-056; trace:prototype-dr2-1 p16-097; prototype:dr2-1-specs p6-144)",
+        "A 'Branch' address offers exactly one use checkbox, 'Branch address' (prototype:dr2-1-source p16-057; trace:prototype-dr2-1 p16-099; prototype:dr2-1-specs p6-147)",
+        "Saving with nothing picked or typed shows the six field errors with the address and contact fields revealed, so each error summary link moves to a visible field; the errors stay until the next save, and the typed values, ticked uses and search text are kept (prototype:dr2-1-source p16-077; trace:prototype-dr2-1 p16-092, p16-094; prototype:dr2-1-specs p6-142; repo:insfrontend p3-065; c-address-book-add-and-edit-005)",
+        "A saved Destination, Consignee or Importer address lands the user on /address-book?category=destination-consignee-importer, and a Branch address on /address-book?category=branch, listed first (prototype:dr2-1-source p16-083; prototype:dr2-1-specs p6-139)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-023",
+        "req-address-book-add-and-edit-028",
+        "req-address-book-add-and-edit-029",
+        "req-address-book-add-and-edit-058",
+        "req-address-book-add-and-edit-061",
+        "req-address-book-add-and-edit-062",
+        "req-address-book-add-and-edit-094"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-025, p16-036, p16-037, p16-046, p16-052, p16-056, p16-057, p16-077, p16-083 (app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-083 to p16-099, p16-130 (address-book--add-an-address-to-the-address-book-destination-consignee-or-importer-a-uk-address-found-by-search.zip)" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-139 to p6-147" },
+        { "source": "repo:insfrontend", "ref": "p3-065, p5-114" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on 'Saving a new address with its uses' (the uses question, its validation and the save it extends) and on 'The add-details form for an address entered by hand'. The search box itself, its results and the lookup are the next row; here the search is only a field and manual entry is the way through, so this row is observable on every environment with no lookup. The reveal must work without JavaScript as well (for example the manual-entry control posting back to reveal), staying inside GOV.UK Frontend components. The landing-tab criterion restates req-068 (in 'Saving a new address with its uses') for these two types and needs the list area's category tabs.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:page-objects/ins/address-book/add-page.ts",
+        "tests:page-objects/ins/address-book/form-page.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "The address search finds UK addresses as you type",
+      "detail": "Design Release 2.1's search is a free-text type-ahead that fills the address from a picked result. The prototype searches made-up data shipped with the page; c-address-book-add-and-edit-003 rules the real service searches real addresses through the address lookup the INS backend already serves (GET /address-lookup with find=<term>), with the INS frontend's stub in stub mode. Afterwards typing in 'Search for an address' lists matching addresses; picking one fills address line 1, address line 2, town or city and postcode, with United Kingdom; name, email and phone stay for the user; a failed lookup still leaves manual entry.",
+      "acceptanceCriteria": [
+        "The address search is a text field labelled 'Search for an address' with the placeholder 'Start typing...' and an icon button whose accessible name is 'Search' (prototype:dr2-1-source p16-026, p16-027; trace:prototype-dr2-1 p16-084; prototype:dr2-1-specs p6-140)",
+        "Typing in the field lists matching addresses below it in a list labelled 'Address search results', each shown as the lookup's formatted address line with the typed text in bold, and a screen-reader announcement gives the number of results, such as '3 results available' (prototype:dr2-1-source p16-027, p16-029, p16-030; trace:prototype-dr2-1 p16-086, p16-086-m1; prototype:dr2-1-specs p6-143; c-address-book-add-and-edit-003)",
+        "Picking a result hides the search, announces 'Selected <the result's address>' to screen readers and reveals the fields filled from it: premises to address line 1, street and locality to address line 2, town to town or city, the postcode, and country United Kingdom; name, email address and phone number stay blank, and anything the user types over a filled field is what is saved (prototype:dr2-1-source p16-033, p16-034, p16-035; trace:prototype-dr2-1 p16-087, p16-088, p16-089; prototype:dr2-1-specs p6-145; repo:insfrontend p5-052 to p5-059; c-address-book-add-and-edit-003)",
+        "In stub mode and on the local stack, searching any term lists the stub's three London SW1A 1AA addresses, and picking '1 DOWNING STREET, LONDON, SW1A 1AA' fills address line 1 '1 DOWNING STREET', town or city 'LONDON' and postcode 'SW1A 1AA' (repo:insfrontend p5-073 to p5-079; c-address-book-add-and-edit-003)",
+        "In the CDP dev environment, searching a real UK postcode or street lists real addresses from the address lookup (repo:insfrontend p5-067, p5-069; c-address-book-add-and-edit-003)",
+        "When the lookup fails or finds nothing, no results are listed and 'Enter address manually' still reveals the fields, so the address can be entered and saved by hand (prototype:dr2-1-source p16-028; repo:insfrontend p5-070, p5-071)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-024",
+        "req-address-book-add-and-edit-025",
+        "req-address-book-add-and-edit-026",
+        "req-address-book-add-and-edit-027"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p16-026 to p16-035 (app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html; app/routes.js:10435-10451)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-084 to p16-089" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-140, p6-143, p6-145" },
+        { "source": "repo:insfrontend", "ref": "p5-018, p5-020, p5-022, p5-052 to p5-059, p5-065, p5-067, p5-069 to p5-079, p5-114 (src/server/app/services/address-lookup; src/server/app/features/address-lookup-spike/map-to-address-fields.js)" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on 'Destination, Consignee or Importer and Branch addresses: search first, manual entry and a fixed UK country'. The INS backend's /address-lookup is unchanged and already called by the dev-only spike; the spike page itself stays as it is (req-098, out of scope), so share its lookup client and mapping rather than changing the spike. The lookup returns no organisation name, so the screen-reader 'Selected' announcement names the picked address (decision: the prototype announces the name, which a lookup result does not have). The browser needs a session-authenticated INS frontend route to ask for results as the user types; the type-ahead is a progressive enhancement, so without JavaScript the search can post and list results. Real-lookup results are observable only where the INS backend is configured for the lookup: today only local (the stub simulator) and CDP dev have its settings, so this row's real-address criterion names CDP dev alone; see the draft's unobservable list for the other CDP environments. Adding a client-side script needs its build entry, or it 404s silently.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/client/javascripts/address-search.js"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/services/address-lookup",
+        "insfrontend:src/server/app/features/address-lookup-spike/map-to-address-fields.js",
+        "insfrontend:webpack.config.js",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "tests:page-objects/ins/address-book/add-page.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Editing an address matches Design Release 2.1",
+      "detail": "The edit page takes Design Release 2.1's heading, field order, layout and country select, returns the user to where they came from on Back and Cancel, keeps every use the address has, words its success banner as Design Release 2.1 does, and sends the user back rather than to an error page for an address not in their book. Today the heading is 'Edit address details', Phone comes before Email, the fields use other widths, the country select keeps a placeholder, Back and Cancel ignore any return path, and unknown ids show page not found.",
+      "acceptanceCriteria": [
+        "The edit page's heading and page title are 'Edit address and contact details', with no caption (prototype:dr2-1-source p15-057; trace:prototype-dr2-1 p16-107; prototype:dr2-1-specs p6-158, p6-159)",
+        "On the edit page 'Email address' comes before 'Phone number', and the fields use the add form's section headings, order and widths, keeping 'County (optional)' between 'Town or city' and 'Postcode or Zip code' (prototype:dr2-1-source p15-063; trace:prototype-dr2-1 p16-108; trace:ins-fit p3-005-m1, p3-007-m1)",
+        "On the edit page the Country select has no blank placeholder option and shows the stored country selected (prototype:dr2-1-source p15-065; trace:prototype-dr2-1 p16-110; trace:ins-fit p3-013)",
+        "The edit page's 'Back' link goes to the return path the page was opened with, otherwise to the address's view page (prototype:dr2-1-source p15-058; trace:prototype-dr2-1 p16-113)",
+        "'Cancel' on the edit page saves nothing, clears any errors and goes to the return path, by default the address's view page (prototype:dr2-1-source p15-067, p15-068)",
+        "The edit page shows no uses, and an address saved with several uses still has all of them after an edit through the edit page (prototype:dr2-1-source p15-061; trace:prototype-dr2-1 p16-111; c-address-book-add-and-edit-006)",
+        "After a valid edit the list shows a 'Success' banner reading '<Name> address updated', the name with its first letter capitalised and the rest lower case, for example 'Green valley farm address updated' for 'GREEN VALLEY FARM' (prototype:dr2-1-source p15-083; trace:prototype-dr2-1 p16-116; prototype:dr2-1-specs p6-164)",
+        "Opening or saving the edit page for an address that is not in the user's address book (unknown, another organisation's, deleted or a malformed id) goes to the return path or the address book list, saving nothing (prototype:dr2-1-source p15-056, p15-069)"
+      ],
+      "requirements": [
+        "req-address-book-add-and-edit-037",
+        "req-address-book-add-and-edit-039",
+        "req-address-book-add-and-edit-043",
+        "req-address-book-add-and-edit-079",
+        "req-address-book-add-and-edit-081",
+        "req-address-book-add-and-edit-083",
+        "req-address-book-add-and-edit-084",
+        "req-address-book-add-and-edit-086",
+        "req-address-book-add-and-edit-087"
+      ],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p15-056 to p15-069, p15-083 (app/views/address-book-lookup.html)" },
+        { "source": "trace:prototype-dr2-1", "ref": "p16-107 to p16-116" },
+        { "source": "prototype:dr2-1-specs", "ref": "p6-158 to p6-164" },
+        { "source": "repo:insfrontend", "ref": "p3-080 to p3-093, p3-137, p3-140" },
+        { "source": "trace:ins-fit", "ref": "p3-002 to p3-041" },
+        { "source": "repo:tests", "ref": "p5-103 to p5-106" },
+        { "source": "trace:e2e", "ref": "p15-059 to p15-063" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on 'The address book record carries what an address can be used for' (the kept-uses criterion: an update fully replaces the editable fields, so the edit must post the stored uses back) and on 'The add-details form for an address entered by hand' (the section headings and country order it shares). A valid edit still returns to the list's default view (req-085, exists). The banner's no-name fallback ('Address updated') cannot be reached through the form, since a name is required; build it as stated, prove it below the browser. The edit page's Cache-Control is left as it is (req-092, out of scope). Pass 1 slices combined: every criterion is on the one edit page and its save.",
+      "touches": [
+        "insfrontend:src/server/app/features/address-book/edit",
+        "insfrontend:src/server/app/features/address-book/address-id-params.js",
+        "tests:page-objects/ins/address-book/edit-page.ts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit",
+        "insfrontend:src/server/app/services/address-book",
+        "tests:page-objects/ins/address-book/form-page.ts",
+        "tests:tests/ins/e2e/features/address-book"
+      ],
+      "existingRow": null
+    },
+    {
+      "title": "Welsh drafts for the new add and edit copy",
+      "detail": "The address book keeps English and Welsh copy side by side. Changing only the English would leave the Welsh describing the old pages. Afterwards every new or changed English string on the add and edit pages has a Welsh entry, still marked as an unreviewed machine draft.",
+      "acceptanceCriteria": [
+        "The address book's Welsh copy has an entry for every new or changed English string on 'Choose an address type', the add-details step (both layouts, the uses question, the address search and every error message) and the edit page, and no add or edit page shows an English string where the Welsh copy is in use (repo:insfrontend p3-113 to p3-120)",
+        "The Welsh copy stays marked as an unreviewed machine draft that must not ship to users without Welsh Language Standards sign-off (repo:insfrontend p3-113)"
+      ],
+      "requirements": ["req-address-book-add-and-edit-088"],
+      "sources": [
+        { "source": "repo:insfrontend", "ref": "p3-113 to p3-120 (src/server/app/features/address-book/copy/copy.cy.js)" }
+      ],
+      "repos": ["insfrontend"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Depends on every other row in this area that adds or changes English copy: 'Address validation messages match Design Release 2.1, on the form and in the API', 'Adding an address starts by choosing its type', 'The add-details form for an address entered by hand', 'Saving a new address with its uses', 'Destination, Consignee or Importer and Branch addresses: search first, manual entry and a fixed UK country', 'The address search finds UK addresses as you type' and 'Editing an address matches Design Release 2.1'. Kept as one sweep so the Welsh is checked once against the finished English; each earlier row may draft its Welsh as it goes, and this row then confirms nothing is missing. The combiner may fold it into the address book list area's Welsh row (req-address-book-list-079), which edits the same copy file.",
+      "touches": [],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/copy"
+      ],
+      "existingRow": null
+    }
+  ],
+  "unobservable": [
+    {
+      "requirement": "req-address-book-add-and-edit-027",
+      "environments": ["CDP test", "CDP ext-test", "CDP perf-test", "CDP prod"],
+      "why": "The address search's real UK addresses come from the INS backend's GET /address-lookup, but the INS backend has address-lookup settings only for local (the stub simulator) and CDP dev (application-local.yml and application-dev.yml; its profiles are named after CDP environments). In the other CDP environments no lookup is configured, so a search cannot return real addresses there. The row writes the real-address criterion for CDP dev only and the stub criterion for stub mode and the local stack; the reconciler should say what the other CDP environments get (configure the lookup there, or accept manual entry only)."
+    }
+  ]
+}

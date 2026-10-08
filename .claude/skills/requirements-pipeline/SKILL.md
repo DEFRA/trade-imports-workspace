@@ -39,16 +39,19 @@ requirements-pipeline/
     partition.schema.json  one source's partition: its structure and the parts one agent each extracts
     extract.schema.json    one source's extract, and each of its part files: structure and claims
     verify.schema.json     one source's verification: a verdict per claim, and the claims it missed
+    areas.schema.json      the reconcile areas: every source's claims about each area, by extract part or claim range
+    reconcile-part.schema.json  one area's reconciled requirements and conflicts, before tim merges the areas
     requirements.schema.json  the reconciled requirements
     conflicts.schema.json  the reconciled conflicts: precedence or question, with a default
+    challenge.schema.json  one question's challenge verdict: precedence, blocked or question
     DISTIL.md              phase 1: intake → launch distil.js → fold in new sources → save the report
     REPORT.md              the report's structure and writing rules
     TRACE_EXTRACTOR.md     how to extract a Playwright trace source
     BUILD.md               phase 2: build the args → launch the loop → check what landed → handover
   workflow/
     README.md              both workflows' config and stages; the loop's executors and what stops for a human
-    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → reconcile → consolidate → report
-    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, reconcile, consolidate
+    distil.js              the DISTIL workflow: status → characterise → extract parts → verify → area plan → reconcile per area → cross-area → challenge → draft rows per area → combine → report
+    distil/briefs/         the method each DISTIL agent follows: characterise, extract, one extract brief per source kind, verify, area-plan, reconcile, question-challenge, consolidate
     increment-build-loop.js
     codex/                 the implement, review and fix briefs for executor: 'codex'
       schemas/             the output schemas those briefs answer in
@@ -60,6 +63,16 @@ merges the parts. A small source is one part. There is no lighter path and no sw
 extract and verify run on Opus by default (`models: {}`), because a thin extract caps everything downstream: a page,
 field or rule nobody claimed never reaches a requirement. To extract a source again after the method changes, run
 `tim distil reset` before the launch.
+
+**Every later stage is as deep.** Reconcile is cut into areas (a journey page or page group, the dashboard, the
+address book, templates and the rest), one Opus reconciler an area weighing every claim about it, today's sources
+included, then one cross-area pass. Every question is challenged by its own agent against precedence and every
+ruling: **questions are minimal by default**, a blocker outside the programme is never a question, and only the
+questions nothing settles reach the owner. Every area's rows are drafted by their own agent before one combiner
+draws themes at feature-folder granularity. The fan-outs run six at a time, so a deep run stays inside the session
+limit and resumes cleanly. No light agent's relay is trusted blindly: every count the workflow acts on is checked
+against another. To reconcile again from nothing after the reconcile or consolidate method changes, run
+`tim distil reset --stage reconcile` before the launch.
 
 The DISTIL workflow's agents are the default workflow agent. Their guard rails
 tell them not to spawn subagents or forks, and to finish their own task if a
@@ -81,13 +94,17 @@ tim distil status <workarea> --json      # every source's state and next step: t
 tim distil check <workarea> --source <id> --stage partition|extract|verify|all [--part <n>] [--chunk <n>] [--clear-parts] --json   # one source's files against the schemas and each other
 tim distil merge-extract <workarea> --source <id> --json  # join a source's extract parts into its one extract, stamping the scope hash
 tim distil reset <workarea> --source <id> [--source <id>] | --all --json   # move sources' extract and verify files to distil/superseded/<time>/, so the next launch extracts them again
+tim distil reset <workarea> --stage reconcile --json      # keep every verified extract; move requirements, conflicts, areas, challenge verdicts, backlog and report aside, so the next launch reconciles from nothing
 tim distil stamp <workarea> --source <id> --json          # record the source's scope hash in its extract
 tim distil merge-verify <workarea> --source <id> --json   # join a source's verify parts into one file, recording the extract's hash
 tim distil adopt <workarea> --source <id> --json          # take on a source distilled by hand: record both hashes
-tim distil working-set <workarea> [--write] --json        # every claim that held, plus every missed claim: the reconciler's input
-tim distil coverage <workarea> --json    # requirements and conflicts against the working set, and every adopted requirement in one increment; problems scoped reconcile or backlog
+tim distil working-set <workarea> [--write] --json        # every claim that held, plus every missed claim
+tim distil areas <workarea> [--write | --area <id> | --requirements] --json   # check distil/areas.json (no claim in no area); --write each area's working set; --area one area's reconciled and to-build requirements
+tim distil merge-reconcile <workarea> [--area <id>] --json   # join every area's reconciled.json into requirements.json and conflicts.json, numbering new ids; --area checks one area and writes nothing
+tim distil challenge <workarea> [--conflict <id> | --clear] --json   # the question conflicts to challenge; --conflict checks one verdict; --clear removes them
+tim distil coverage <workarea> --json    # requirements and conflicts against the working set, every source backing something, every challenge verdict applied, and every adopted requirement in one increment (a blocked one never in a todo row); problems scoped reconcile or backlog
 tim distil backlog-snapshot <workarea> [--save <tag>] [--compare-to <tag>] --json   # rows removed, and rows built or set aside that changed, since a snapshot
-tim distil trace <workarea> --source <id> [--folder <name>] [--out <file>] --json -- <subcommand>     # the playwright trace CLI, in the source's own folder or a sub-folder of it
+tim distil trace <workarea> --source <id> [--folder <name>] [--out <file>] --json -- <subcommand>     # the playwright trace CLI, in the source's own folder or a sub-folder of it, with a Playwright at least as new as the one that recorded the trace
 tim backlog check <workarea> --json      # the shape, dependencies, cycles, recipe fields, themes and externalDependsOn; exits 1 when out of shape
 tim backlog next <workarea> --json       # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog split <workarea> [--write] [--branch-prefix <prefix>] --json   # a themed backlog into one backlog per theme, plus themes/themes.json with the landing order
@@ -98,8 +115,8 @@ tim backlog standards --files <repoKey>:<path> --json            # the standards
 ## What is coupled to what
 
 The shapes are the joint. [`references/backlog.schema.json`](references/backlog.schema.json)
-is the one definition of the backlog, and the six DISTIL schemas beside it
-(`sources`, `partition`, `extract`, `verify`, `requirements`, `conflicts`) are the one definition of
+is the one definition of the backlog, and the nine DISTIL schemas beside it
+(`sources`, `partition`, `extract`, `verify`, `areas`, `reconcile-part`, `requirements`, `conflicts`, `challenge`) are the one definition of
 each DISTIL file. tim, the distil workflow's agents and the loop all read those files;
 nothing else lists the fields. Change one and check the others in the same change:
 
@@ -107,9 +124,9 @@ nothing else lists the fields. Change one and check the others in the same chang
 |---|---|
 | [`references/backlog.schema.json`](references/backlog.schema.json) | Defines it: every field, required or not, the statuses, the recipe fields refused |
 | [`references/SHAPE.md`](references/SHAPE.md) | The judgement rules a schema cannot check |
-| The six DISTIL schemas (`references/*.schema.json`) | Define `sources.json`, each partition, extract, extract part and verify file, `requirements.json` and `conflicts.json`, every field described |
-| `tim/src/distil/` (`tim distil`) | Validates every DISTIL file against those schemas at runtime, plus what a schema cannot say: unique ids, partitions and their part prefixes, every part present and the extract its parts merged, verdicts matching claims, missed ids, scope hashes, extract hashes, cited claims and conflicts, and every adopted requirement in exactly one increment. Merges extract parts and verify parts, resets sources for a fresh extract, builds the working set, snapshots the backlog's rows and runs the trace CLI |
-| The distil workflow ([`workflow/distil.js`](workflow/distil.js)) and its briefs ([`workflow/distil/briefs/`](workflow/distil/briefs/)) | Runs `tim distil` for its work list and every check, and gives each agent the schema it writes to. Its consolidate step writes the backlog to its schema and runs `tim backlog check` and `tim distil coverage` until both pass |
+| The nine DISTIL schemas (`references/*.schema.json`) | Define `sources.json`, each partition, extract, extract part and verify file, `areas.json`, each area's reconciled file, `requirements.json`, `conflicts.json` and each challenge verdict, every field described |
+| `tim/src/distil/` (`tim distil`) | Validates every DISTIL file against those schemas at runtime, plus what a schema cannot say: unique ids, partitions and their part prefixes, every part present and the extract its parts merged, verdicts matching claims, missed ids, scope hashes, extract hashes, cited claims and conflicts, every claim in an area, every source backing a requirement, every challenge verdict applied, and every adopted requirement in exactly one increment (a blocked one never in a todo row). Merges extract parts, verify parts and the areas' reconciled files, resets sources for a fresh extract or the later stages for a fresh reconcile, builds the working set and each area's, snapshots the backlog's rows and runs the trace CLI with a new enough Playwright |
+| The distil workflow ([`workflow/distil.js`](workflow/distil.js)) and its briefs ([`workflow/distil/briefs/`](workflow/distil/briefs/)) | Runs `tim distil` for its work list and every check, and gives each agent the schema it writes to. Checks every relayed count against another before it acts on it. Its combine step writes the backlog to its schema and runs `tim backlog check` and `tim distil coverage` until both pass |
 | `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`), following `externalDependsOn` into other workareas |
 | `tim/src/backlog/themes.js` and `split.js` (`tim backlog split`) | The theme rules in SHAPE.md: unique ids, no theme cycle, no two themes touching the same code, every todo or blocked row in one theme, cross-theme dependencies matched by theme dependencies, and a split backlog's own envelope. `split.js` writes one backlog per theme, turning a cross-theme `dependsOn` into `externalDependsOn`, and the landing order |
 | The loop's `readIncrement` and plan stage ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row and envelope into every stage's prompt; the planner turns the row into `plans/<id>.md` |

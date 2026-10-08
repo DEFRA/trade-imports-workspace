@@ -1,15 +1,17 @@
 export const meta = {
   name: 'distil',
   description:
-    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → characterise each pending or stale source and cut it into parts → extract every part exhaustively, side by side, and merge them → verify its claims in ranges and merge the parts → reconcile every verified claim into requirements and conflicts → consolidate them into backlog.json → draft the report and return it',
+    'The requirements-pipeline DISTIL phase, whole: read the work list from tim distil status → characterise each pending or stale source and cut it into parts → extract every part exhaustively, side by side, and merge them → verify its claims in ranges and merge the parts → plan reconcile areas from every partition → reconcile each area in full, one agent an area, and merge them → reconcile across areas → challenge every question against precedence and the rulings → draft rows per area and combine them into backlog.json → draft the report and return it',
   whenToUse:
-    'After intake has written <workarea>/sources.json (goal, repos, reposWhy, precedence, sources). Launch by scriptPath with args; every key is required and a missing one stops the run before any agent starts. To fold in a new source or a ruling, edit sources.json and launch again: a source already verified with an unchanged scope is skipped, and reconcile and consolidate keep every existing id. To extract a source again with an unchanged scope, run tim distil reset first. The run returns the report as text for the main session to save.',
+    'After intake has written <workarea>/sources.json (goal, repos, reposWhy, precedence, sources). Launch by scriptPath with args; every key is required and a missing one stops the run before any agent starts. To fold in a new source or a ruling, edit sources.json and launch again: a source already verified with an unchanged scope is skipped, and reconcile and consolidate keep every existing id. To extract a source again with an unchanged scope, run tim distil reset --source first; to reconcile from nothing after a method change, run tim distil reset --stage reconcile. The run returns the report as text for the main session to save.',
   phases: [
     { title: 'Status' },
     { title: 'Characterise' },
     { title: 'Extract' },
     { title: 'Verify' },
+    { title: 'Areas' },
     { title: 'Reconcile' },
+    { title: 'Challenge' },
     { title: 'Consolidate' },
     { title: 'Report' }
   ]
@@ -30,10 +32,12 @@ export const meta = {
 //                passes its own, such as
 //                "npm --prefix ~/<clone>/tim run --silent tim --"
 //   models       {} for the default on every tier, or any of: think (default
-//                opus: characterise, reconcile, consolidate, report), code
-//                (default opus: extract parts, verify), light (default haiku:
-//                status, checks, merges, working set, coverage). A value is
-//                opus, sonnet, haiku, or "inherit" for the session model
+//                opus: characterise, area plan, every area reconciler, the
+//                cross-area pass, every challenger, every row drafter, the
+//                combiner, report), code (default opus: extract parts,
+//                verify), light (default haiku: status, checks, merges,
+//                working sets, coverage). A value is opus, sonnet, haiku, or
+//                "inherit" for the session model
 //   verifyChunk  the most claims one verify agent takes, such as 60: few
 //                enough that it can re-check every one against the source. A
 //                longer extract is verified in ranges, one agent a range
@@ -109,14 +113,20 @@ if (!Number.isInteger(VERIFY_CHUNK) || VERIFY_CHUNK <= 0) {
 
 // ---------------------------------------------------------------------------
 // Models. Three tiers, each with a default matched to the work:
-//   think (opus)   characterise, reconcile, consolidate, report: the calls
-//                  that decide
+//   think (opus)   characterise, the area plan, each area's reconciler, the
+//                  cross-area pass, each challenger and the apply step, each
+//                  area's row drafter, the combiner, report: the calls that
+//                  decide. Every one has a slice small enough to weigh in full
 //   code (opus)    extract parts, verify: reading every word of a slice of a
 //                  source. Opus by default, because a thin extract caps
 //                  everything downstream: a page or field never claimed never
 //                  reaches a requirement
-//   light (haiku)  status, the checks, merges, working set, coverage: run a
-//                  command and report what it printed
+//   light (haiku)  status, the checks, merges, working sets, coverage: run a
+//                  command and report what it printed. The workflow never
+//                  trusts a relay blindly: every count it acts on is checked
+//                  against another (claims against ranges, parts against the
+//                  partition, area ids against the plan), and a relay that
+//                  disagrees is asked again once, then the step fails
 // A tier left out takes its default; "inherit" uses the session model.
 // ---------------------------------------------------------------------------
 const MODEL_DEFAULTS = { think: 'opus', code: 'opus', light: 'haiku' }
@@ -162,8 +172,28 @@ const light = withTier('light')
 const CHARACTERISE_RETRIES = 1
 const EXTRACT_RETRIES = 1
 const VERIFY_RETRIES = 1
+const AREA_PLAN_RETRIES = 1
+const AREA_RETRIES = 1
+const CHALLENGE_RETRIES = 1
 const SEND_BACKS = 2
 const REPORT_RETRIES = 1
+
+// The most think-tier agents one fan-out runs at once: the area reconcilers,
+// the challengers and the row drafters each go in fixed batches of this many,
+// in plan order. Well inside the workflow's own concurrency cap, and narrow
+// enough that a deep run does not hit the account's session limit under a
+// wide Opus fan-out. Fixed batches make the order of agent calls the same on
+// every run, so a resumed run replays every agent that finished.
+const THINK_FAN_OUT = 6
+
+const inBatches = async (items, size, run) => {
+  const results = []
+  for (let start = 0; start < items.length; start += size) {
+    const batch = items.slice(start, start + size)
+    results.push(...(await parallel(batch.map((item, offset) => () => run(item, start + offset)))))
+  }
+  return results
+}
 
 const WORKAREA_TILDE = `${TILDE}/workareas/${WORKAREA}`
 const timCommand = (subcommand, flags) =>
@@ -188,6 +218,19 @@ A failure message's first line says how many problems there are; every line afte
 problem line exactly, never paraphrased.`
 
 const STRINGS = { type: 'array', items: { type: 'string' } }
+
+// A relay asked again because what it copied disagrees with tim's own
+// counts: the workflow never builds on a list a model may have shortened.
+const relayRetryNote = (problems) =>
+  problems && problems.length
+    ? `
+YOUR LAST ANSWER DID NOT MATCH WHAT TIM PRINTED. The workflow checked it against tim's own counts and found:
+${problems.map((problem) => `- ${problem}`).join('\n')}
+Run the commands again and copy every field of their JSON exactly, every entry of every list. Drop nothing, add
+nothing, and never summarise a list.`
+    : ''
+
+const relayLabel = (label, relayAttempt) => (relayAttempt > 0 ? `${label} again` : label)
 
 // ---------------------------------------------------------------------------
 // Status: the work list, and the workspace root in absolute form.
@@ -440,23 +483,42 @@ const PARTITION_CHECK_SCHEMA = {
   additionalProperties: false
 }
 
-const partitionCheckPrompt = (item) => `You are a PARTITION CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
+const partitionCheckPrompt = (item, relayProblems) => `You are a PARTITION CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
 ${RAILS}
 \`${timCommand('distil check', `--source ${item.id} --stage partition --clear-parts`)}\`
 ${ENVELOPE_RULE}
 On success: ok is true. Copy every entry of \`result.sources[0].parts\` exactly (part, title, prefix and path), and
 \`result.removedParts\` into removedParts. The command itself removed those old extract part files, so nothing from an
 earlier run is merged.
-On failure: ok is false, parts and removedParts are [], and problems holds every problem line.
+On failure: ok is false, parts and removedParts are [], and problems holds every problem line.${relayRetryNote(relayProblems)}
 Change nothing yourself. Return the structured output only.`
 
 const nothingBack = (what) => ({ ok: false, problems: [`the ${what} agent returned nothing`], summary: '' })
 
-const runPartitionCheck = async (item, attempt) =>
+const runPartitionCheck = async (item, attempt, relayProblems) =>
   (await agent(
-    partitionCheckPrompt(item),
-    light({ label: `${item.id} check partition${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Characterise', schema: PARTITION_CHECK_SCHEMA })
+    partitionCheckPrompt(item, relayProblems),
+    light({
+      label: relayLabel(`${item.id} check partition${attempt > 0 ? ` ${attempt + 1}` : ''}`, relayProblems ? 1 : 0),
+      phase: 'Characterise',
+      schema: PARTITION_CHECK_SCHEMA
+    })
   )) ?? nothingBack('partition check')
+
+// The characterise agent says how many parts it wrote; a relay that copied
+// fewer would leave a slice of the source unextracted without anyone seeing.
+const partitionRelayProblems = (answer, checked) =>
+  checked.ok && Number.isInteger(answer?.parts) && answer.parts !== (checked.parts ?? []).length
+    ? [`the characterise agent wrote ${answer.parts} parts, but the partition check relayed ${(checked.parts ?? []).length}`]
+    : []
+
+const checkPartition = async (item, attempt, answer) => {
+  const checked = await runPartitionCheck(item, attempt, null)
+  const relayProblems = partitionRelayProblems(answer, checked)
+  if (!relayProblems.length) return checked
+  log(`${item.id}: ${relayProblems.join(' ')}. Asking the check again`)
+  return runPartitionCheck(item, attempt, relayProblems)
+}
 
 // The parts must be 1..n, each with the prefix the workflow gave it and its
 // own part file: anything else is a check agent that copied them wrong, or a
@@ -482,14 +544,14 @@ const characteriseStage = async (item) => {
   const characterised = [
     await agent(characterisePrompt(item, null), think({ label: `${item.id} characterise`, phase: 'Characterise', schema: CHARACTERISE_SCHEMA }))
   ]
-  let checked = await runPartitionCheck(item, 0)
-  let problems = partitionShapeProblems(item, checked)
+  let checked = await checkPartition(item, 0, characterised[0])
+  let problems = [...partitionShapeProblems(item, checked), ...partitionRelayProblems(characterised[0], checked)]
   for (let retry = 1; problems.length && retry <= CHARACTERISE_RETRIES; retry++) {
     characterised.push(
       await agent(characterisePrompt(item, problems), think({ label: `${item.id} characterise retry ${retry}`, phase: 'Characterise', schema: CHARACTERISE_SCHEMA }))
     )
-    checked = await runPartitionCheck(item, retry)
-    problems = partitionShapeProblems(item, checked)
+    checked = await checkPartition(item, retry, characterised.at(-1))
+    problems = [...partitionShapeProblems(item, checked), ...partitionRelayProblems(characterised.at(-1), checked)]
   }
   const decisions = characterised.filter(Boolean).flatMap((answer) => answer.decisions ?? [])
   return problems.length ? { problems, decisions } : { parts: checked.parts, decisions }
@@ -555,57 +617,62 @@ const PART_RANGES = {
   }
 }
 
-const CHUNKS = {
-  type: 'array',
-  description: 'result.sources[0].chunks, exactly',
-  items: {
-    type: 'object',
-    required: ['part', 'count', 'path'],
-    properties: {
-      part: { type: 'integer' },
-      from: { type: ['string', 'null'] },
-      to: { type: ['string', 'null'] },
-      count: { type: 'integer' },
-      path: { type: 'string' }
-    },
-    additionalProperties: false
-  }
+// The verify ranges come from the claim count alone: range N is the claims at
+// indexes (N-1)*verifyChunk on, and writes <slug>.part<N>.json. The workflow
+// works them out itself rather than have a relay retype tim's list, and checks
+// the relay's count of ranges against them.
+const verifyRangesOf = (item, claims) => {
+  const count = claims > 0 ? Math.ceil(claims / VERIFY_CHUNK) : 1
+  return Array.from({ length: count }, (_, index) => ({
+    part: index + 1,
+    start: index * VERIFY_CHUNK,
+    count: Math.max(0, Math.min(VERIFY_CHUNK, claims - index * VERIFY_CHUNK)),
+    path: `${WORKAREA_ABS}/distil/verify/${item.slug}.part${index + 1}.json`
+  }))
+}
+
+const EXTRACT_COUNTS = {
+  claims: { type: 'integer', description: 'result.sources[0].claims, exactly. 0 on failure' },
+  ranges: { type: 'integer', description: 'How many entries result.sources[0].chunks has, counted exactly. 0 on failure' },
+  parts: PART_RANGES
 }
 
 const MERGE_EXTRACT_SCHEMA = {
   type: 'object',
-  required: ['ok', 'stage', 'problems', 'parts', 'chunks', 'removedParts', 'summary'],
+  required: ['ok', 'stage', 'problems', 'claims', 'ranges', 'parts', 'removedParts', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when both commands exited 0' },
     stage: { type: 'string', enum: ['merge', 'check', 'done'], description: 'merge or check: the command that failed. done: both passed' },
     problems: STRINGS,
-    claims: { type: 'integer', description: 'result.sources[0].claims from the check' },
-    parts: PART_RANGES,
-    chunks: CHUNKS,
+    ...EXTRACT_COUNTS,
     removedParts: STRINGS,
     summary: { type: 'string' }
   },
   additionalProperties: false
 }
 
+const COPY_EXTRACT_COUNTS = `Copy \`result.sources[0].claims\` into claims, count the entries of \`result.sources[0].chunks\` into
+   ranges, copy every entry of \`result.sources[0].parts\` exactly (part, title, claims, from and to; [] when it is
+   absent), and \`result.removedParts\` into removedParts`
+
 const mergeExtractPrompt = (item) => `You are a MERGE EXTRACT step of the DISTIL workflow for the source ${item.id}. Run two commands and report what they print.
 ${RAILS}
 1. \`${timCommand('distil merge-extract', `--source ${item.id}`)}\`
 ${ENVELOPE_RULE}
-   On failure: ok is false, stage is "merge", parts, chunks and removedParts are [], problems holds every problem line,
-   and you stop here.
+   On failure: ok is false, stage is "merge", claims and ranges are 0, parts and removedParts are [], problems holds
+   every problem line, and you stop here.
 2. \`${timCommand('distil check', `--source ${item.id} --stage extract --chunk ${VERIFY_CHUNK} --clear-parts`)}\`
-   On success: ok is true, stage is "done". Copy \`result.sources[0].claims\`, every entry of
-   \`result.sources[0].parts\` and of \`result.sources[0].chunks\` exactly, and \`result.removedParts\` into
-   removedParts. The command itself removed those old verify part files, so nothing from an earlier run is merged.
-   On failure: ok is false, stage is "check", parts, chunks and removedParts are [], problems holds every problem line.
+   On success: ok is true, stage is "done". ${COPY_EXTRACT_COUNTS}. The command itself removed those old verify part
+   files, so nothing from an earlier run is merged.
+   On failure: ok is false, stage is "check", claims and ranges are 0, parts and removedParts are [], problems holds
+   every problem line.
 Change nothing yourself. Return the structured output only.`
 
 const runMergeExtract = async (item, attempt) =>
   (await agent(
     mergeExtractPrompt(item),
     light({ label: `${item.id} merge extract${attempt > 0 ? ` ${attempt + 1}` : ''}`, phase: 'Extract', schema: MERGE_EXTRACT_SCHEMA })
-  )) ?? { ...nothingBack('merge extract'), stage: 'merge', parts: [], chunks: [], removedParts: [] }
+  )) ?? { ...nothingBack('merge extract'), stage: 'merge', claims: 0, ranges: 0, parts: [], removedParts: [] }
 
 // Which parts to run again. After a failed merge the parts are still on disk,
 // so only the ones whose agent failed or that a problem names go again;
@@ -649,53 +716,70 @@ const extractPartsStage = async (item, parts) => {
 }
 
 // ---------------------------------------------------------------------------
-// A source already extracted, whose next step is verify, only has its extract
-// checked: its verify ranges and part ranges come from the same check.
+// The extract check: a source already extracted, whose next step is verify,
+// only has its extract checked. It is also how a merge whose relay disagrees
+// with itself is asked again: the check is safe to run twice, the merge is not
+// needed again.
 // ---------------------------------------------------------------------------
 const EXTRACT_CHECK_SCHEMA = {
   type: 'object',
-  required: ['ok', 'problems', 'parts', 'chunks', 'removedParts', 'summary'],
+  required: ['ok', 'problems', 'claims', 'ranges', 'parts', 'removedParts', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when tim distil check exited 0' },
     problems: STRINGS,
-    claims: { type: 'integer', description: 'result.sources[0].claims' },
-    parts: PART_RANGES,
-    chunks: CHUNKS,
+    ...EXTRACT_COUNTS,
     removedParts: STRINGS,
     summary: { type: 'string' }
   },
   additionalProperties: false
 }
 
-const extractCheckPrompt = (item) => `You are an EXTRACT CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
+const extractCheckPrompt = (item, relayProblems) => `You are an EXTRACT CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
 ${RAILS}
 \`${timCommand('distil check', `--source ${item.id} --stage extract --chunk ${VERIFY_CHUNK} --clear-parts`)}\`
 ${ENVELOPE_RULE}
-On success: ok is true. Copy \`result.sources[0].claims\`, every entry of \`result.sources[0].parts\` (or [] when it is
-absent) and of \`result.sources[0].chunks\` exactly (part, from, to, count and path), and \`result.removedParts\` into
-removedParts. The command itself removed those old verify part files, so nothing from an earlier run is merged.
-On failure: ok is false, parts, chunks and removedParts are [], and problems holds every problem line.
+On success: ok is true. ${COPY_EXTRACT_COUNTS}. The command itself removed those old verify part files, so nothing
+from an earlier run is merged.
+On failure: ok is false, claims and ranges are 0, parts and removedParts are [], and problems holds every problem
+line.${relayRetryNote(relayProblems)}
 Change nothing yourself. Return the structured output only.`
 
-const runExtractCheck = async (item) =>
-  (await agent(extractCheckPrompt(item), light({ label: `${item.id} check extract`, phase: 'Extract', schema: EXTRACT_CHECK_SCHEMA }))) ??
-  { ...nothingBack('extract check'), parts: [], chunks: [], removedParts: [] }
+const runExtractCheck = async (item, relayProblems) =>
+  (await agent(
+    extractCheckPrompt(item, relayProblems),
+    light({ label: relayLabel(`${item.id} check extract`, relayProblems ? 1 : 0), phase: 'Extract', schema: EXTRACT_CHECK_SCHEMA })
+  )) ?? { ...nothingBack('extract check'), claims: 0, ranges: 0, parts: [], removedParts: [] }
 
-// The chunks must be parts 1..n, each writing <slug>.part<n>.json, and add up
-// to the claims: anything else is a check agent that copied them wrong.
-const chunkProblems = (item, checked) => {
-  const chunks = checked.chunks ?? []
-  if (chunks.length === 0) return ['the extract check reported no verify ranges']
-  const misnumbered = chunks.filter((chunk, index) => chunk.part !== index + 1 || !chunk.path.endsWith(`/${item.slug}.part${index + 1}.json`))
-  const counted = chunks.reduce((total, chunk) => total + chunk.count, 0)
-  const inParts = (checked.parts ?? []).reduce((total, part) => total + part.claims, 0)
+// Whether what a relay copied from the extract check holds together: the
+// ranges are the claims cut into verifyChunk, and the parts add up to the
+// claims. A relay that dropped the ranges, the parts or the count fails here,
+// however tidy its answer looks.
+const extractRelayProblems = (checked) => {
+  if (!Number.isInteger(checked.claims) || checked.claims < 0) {
+    return [`the extract check relayed ${JSON.stringify(checked.claims)} as the claim count`]
+  }
+  const expected = verifyRangesOf({ slug: '' }, checked.claims).length
+  const inParts = (checked.parts ?? []).reduce((total, part) => total + (part.claims ?? 0), 0)
   return [
-    ...(misnumbered.length ? [`the extract check reported verify ranges out of order or with the wrong part files: ${JSON.stringify(misnumbered)}`] : []),
-    ...(Number.isInteger(checked.claims) && counted !== checked.claims ? [`the verify ranges cover ${counted} claims, but the extract has ${checked.claims}`] : []),
-    ...((checked.parts ?? []).length && Number.isInteger(checked.claims) && inParts !== checked.claims
-      ? [`the extract parts hold ${inParts} claims, but the extract has ${checked.claims}`]
+    ...(checked.ranges === expected
+      ? []
+      : [`the extract check relayed ${JSON.stringify(checked.ranges)} verify ranges, but ${checked.claims} claims in ranges of ${VERIFY_CHUNK} make ${expected}`]),
+    ...((checked.parts ?? []).length && inParts !== checked.claims
+      ? [`the extract check relayed parts holding ${inParts} claims, but the extract has ${checked.claims}`]
       : [])
   ]
+}
+
+// A passing check whose relay disagrees with itself is asked again once,
+// with what was wrong. Twice wrong and the source fails: nothing is verified
+// from ranges nobody can trust.
+const trustedExtractCheck = async (item, checked) => {
+  const problems = extractRelayProblems(checked)
+  if (!problems.length) return { checked, problems }
+  log(`${item.id}: ${problems.join(' ')}. Asking the extract check again`)
+  const again = await runExtractCheck(item, problems)
+  if (!again.ok) return { checked: again, problems: again.problems }
+  return { checked: again, problems: extractRelayProblems(again) }
 }
 
 const failedSource = (item, failedAt, problems) => ({
@@ -710,9 +794,9 @@ const failedSource = (item, failedAt, problems) => ({
 const extractedSource = (item, checked, decisions) => ({
   id: item.id,
   outcome: 'extracted',
-  claims: checked.claims ?? null,
+  claims: checked.claims,
   parts: checked.parts ?? [],
-  chunks: checked.chunks,
+  chunks: verifyRangesOf(item, checked.claims),
   decisions
 })
 
@@ -721,9 +805,9 @@ const characteriseAndExtract = async (item) => {
   if (partitioned.problems) return failedSource(item, 'characterise', partitioned.problems)
   const { merged, answers } = await extractPartsStage(item, partitioned.parts)
   if (!merged.ok) return failedSource(item, 'extract', merged.problems)
-  const shapeProblems = chunkProblems(item, merged)
-  if (shapeProblems.length) return failedSource(item, 'extract', shapeProblems)
-  return extractedSource(item, merged, [
+  const trusted = await trustedExtractCheck(item, merged)
+  if (trusted.problems.length) return failedSource(item, 'extract', trusted.problems)
+  return extractedSource(item, trusted.checked, [
     ...partitioned.decisions,
     ...answers.filter(Boolean).flatMap((answer) => (answer.decisions ?? []).map((decision) => `part ${answer.part}: ${decision}`))
   ])
@@ -734,14 +818,14 @@ const extractStage = async (item) => {
     return failedSource(item, 'extract', [`kind "${item.kind}" has no extract brief. Kinds: ${EXTRACT_KINDS.join(', ')}`])
   }
   if (item.next === 'extract') return characteriseAndExtract(item)
-  const checked = await runExtractCheck(item)
+  const checked = await runExtractCheck(item, null)
   if (!checked.ok) {
     log(`${item.id}: its extract no longer checks out (${checked.problems.join(' ')}), so it is characterised and extracted again`)
     return characteriseAndExtract(item)
   }
-  const shapeProblems = chunkProblems(item, checked)
-  if (shapeProblems.length) return failedSource(item, 'extract', shapeProblems)
-  return extractedSource(item, checked, [])
+  const trusted = await trustedExtractCheck(item, checked)
+  if (trusted.problems.length) return failedSource(item, 'extract', trusted.problems)
+  return extractedSource(item, trusted.checked, [])
 }
 
 // ---------------------------------------------------------------------------
@@ -784,12 +868,12 @@ the source in full yourself: you check every claim against it, and add every cla
 }
 
 const verifyPrompt = (item, chunk, chunkCount, parts, problems) => {
-  const start = (chunk.part - 1) * VERIFY_CHUNK
+  const start = chunk.start
   const end = start + chunk.count
   const range =
     chunk.count > 0
-      ? `claims ${chunk.from} to ${chunk.to}: ${chunk.count} claims, at indexes ${start} to ${end - 1} of the extract.
-Read them with \`jq '.claims[${start}:${end}]' ${extractTilde(item.slug)}\`.`
+      ? `${chunk.count} claims, at indexes ${start} to ${end - 1} of the extract.
+Read them with \`jq '.claims[${start}:${end}]' ${extractTilde(item.slug)}\`: a verdict on every one of them.`
       : `none: the extract has no claims. Write verdicts [] and missed [], and say in your summary what the source holds
 that the extract should have recorded.`
   const retry = problems
@@ -829,16 +913,47 @@ const MERGE_SCHEMA = {
   additionalProperties: false
 }
 
+const COPY_VERIFY_COUNTS = `copy \`result.sources[0].claims\` into claims and the counts in \`result.sources[0].verify\`:
+   verdicts, held, refuted and missed`
+
 const mergePrompt = (item) => `You are a MERGE step of the DISTIL workflow for the source ${item.id}. Run two commands and report what they print.
 ${RAILS}
 1. \`${timCommand('distil merge-verify', `--source ${item.id}`)}\`
 ${ENVELOPE_RULE}
    On failure: ok is false, stage is "merge", problems holds every problem line, and you stop here.
 2. \`${timCommand('distil check', `--source ${item.id} --stage verify`)}\`
-   On success: ok is true, stage is "done", and copy claims and the counts in \`result.sources[0].verify\`: verdicts,
-   held, refuted and missed.
+   On success: ok is true, stage is "done", and ${COPY_VERIFY_COUNTS}.
    On failure: ok is false, stage is "check", problems holds every problem line.
 Change nothing yourself. Return the structured output only.`
+
+const verifyCheckPrompt = (item, relayProblems) => `You are a VERIFY CHECK step of the DISTIL workflow for the source ${item.id}. Run one command and report what it prints.
+${RAILS}
+\`${timCommand('distil check', `--source ${item.id} --stage verify`)}\`
+${ENVELOPE_RULE}
+On success: ok is true, stage is "done", and ${COPY_VERIFY_COUNTS}.
+On failure: ok is false, stage is "check", problems holds every problem line.${relayRetryNote(relayProblems)}
+Change nothing yourself. Return the structured output only.`
+
+// Every claim has exactly one verdict, so a merge whose relayed counts say
+// otherwise was copied wrong: the check runs again (the merge already removed
+// the parts, so it cannot), and twice wrong fails the source.
+const verifyRelayProblems = (merged, claims) => [
+  ...(merged.verdicts === claims ? [] : [`the verify merge relayed ${JSON.stringify(merged.verdicts)} verdicts, but the extract has ${claims} claims`]),
+  ...(merged.held + merged.refuted === merged.verdicts
+    ? []
+    : [`the verify merge relayed ${JSON.stringify(merged.held)} held and ${JSON.stringify(merged.refuted)} refuted, which do not add up to its ${JSON.stringify(merged.verdicts)} verdicts`])
+]
+
+const trustedVerifyCheck = async (item, merged, claims) => {
+  const problems = verifyRelayProblems(merged, claims)
+  if (!problems.length) return { merged, problems }
+  log(`${item.id}: ${problems.join(' ')}. Asking the verify check again`)
+  const again =
+    (await agent(verifyCheckPrompt(item, problems), light({ label: `${item.id} check verify again`, phase: 'Verify', schema: MERGE_SCHEMA }))) ??
+    { ...nothingBack('verify check'), stage: 'check' }
+  if (!again.ok) return { merged: again, problems: again.problems }
+  return { merged: again, problems: verifyRelayProblems(again, claims) }
+}
 
 const runVerifier = (item, chunk, chunkCount, parts, problems, attempt) =>
   agent(
@@ -866,6 +981,9 @@ const verifyStage = async (extracted, item) => {
     merged = await runMerge(item, retry)
   }
   if (!merged.ok) return failedSource(item, 'verify', merged.problems)
+  const trusted = await trustedVerifyCheck(item, merged, extracted.claims)
+  if (trusted.problems.length) return failedSource(item, 'verify', trusted.problems)
+  merged = trusted.merged
   return {
     id: item.id,
     kind: item.kind,
@@ -917,10 +1035,11 @@ if (FAILED.length || NOT_RUN.length) {
 }
 
 // ---------------------------------------------------------------------------
-// Reconcile: the working set, then requirements and conflicts, checked by
-// tim distil coverage and sent back with its problems.
+// Areas: the whole working set, then the plan that cuts reconcile into areas,
+// then one working set per area. No agent reconciles the whole programme at
+// once: an area is small enough for one reconciler to weigh every claim in it.
 // ---------------------------------------------------------------------------
-phase('Reconcile')
+phase('Areas')
 
 const WORKING_SET_SCHEMA = {
   type: 'object',
@@ -954,24 +1073,46 @@ const WORKING_SET_SCHEMA = {
   additionalProperties: false
 }
 
-const workingSet = await agent(
-  `You are the WORKING SET step of the DISTIL workflow. Run commands and report what they print.
+const workingSetPrompt = (relayProblems) => `You are the WORKING SET step of the DISTIL workflow. Run commands and report what they print.
 ${RAILS}
 1. \`${timCommand('distil working-set', '--write')}\`
 ${ENVELOPE_RULE}
-   On success: ok is true. Copy result.path and result.total, each entry of result.sources (id, rank, held, refuted,
+   On success: ok is true. Copy result.path and result.total, every entry of result.sources (id, rank, held, refuted,
    missed), and the id of each entry of result.unavailable.
    On failure: ok is false, problems holds every problem line.
 2. \`ls ${WORKAREA_TILDE} ${WORKAREA_TILDE}/distil\`. Report whether distil/requirements.json, distil/conflicts.json and
-   backlog.json exist.
-Change nothing yourself. Return the structured output only.`,
-  light({ label: 'working set', phase: 'Reconcile', schema: WORKING_SET_SCHEMA })
-)
+   backlog.json exist.${relayRetryNote(relayProblems)}
+Change nothing yourself. Return the structured output only.`
 
-if (!workingSet || !workingSet.ok) {
-  return stoppedResult('working-set-failed', workingSet ? workingSet.problems.join(' ') || workingSet.summary : 'the working set agent returned nothing', {
-    sources: SOURCES
-  })
+const runWorkingSet = async (relayProblems) =>
+  (await agent(workingSetPrompt(relayProblems), light({ label: relayLabel('working set', relayProblems ? 1 : 0), phase: 'Areas', schema: WORKING_SET_SCHEMA }))) ??
+  { ...nothingBack('working set'), sources: [], unavailable: [] }
+
+// Every verified source is in the working set, and its counts add up to the
+// total: a relay that dropped a source would leave its claims unweighed.
+const workingSetRelayProblems = (set) => {
+  if (!set.ok) return []
+  const listed = new Set([...set.sources.map((source) => source.id), ...set.unavailable])
+  const missing = status.sources.map((source) => source.id).filter((id) => !listed.has(id))
+  const counted = set.sources.reduce((total, source) => total + source.held + source.missed, 0)
+  return [
+    ...(missing.length ? [`the working set relayed no entry for ${missing.join(', ')}`] : []),
+    ...(counted === set.total ? [] : [`the working set relayed sources holding ${counted} claims, but a total of ${set.total}`])
+  ]
+}
+
+let workingSet = await runWorkingSet(null)
+const workingSetProblems = workingSetRelayProblems(workingSet)
+if (workingSetProblems.length) {
+  log(`working set: ${workingSetProblems.join(' ')}. Asking again`)
+  workingSet = await runWorkingSet(workingSetProblems)
+}
+
+if (!workingSet.ok) {
+  return stoppedResult('working-set-failed', workingSet.problems.join(' ') || workingSet.summary, { sources: SOURCES })
+}
+if (workingSetRelayProblems(workingSet).length) {
+  return stoppedResult('working-set-failed', `the working set was relayed wrong twice: ${workingSetRelayProblems(workingSet).join(' ')}`, { sources: SOURCES })
 }
 if (workingSet.unavailable.length) {
   return stoppedResult('sources-unverified', `tim distil working-set left out ${workingSet.unavailable.join(', ')}, which are not verified`, {
@@ -987,14 +1128,303 @@ const SOURCE_COUNTS = SOURCES.map((source) => {
     : source
 })
 const HAD_BACKLOG = workingSet.hasBacklog
+const HAD_REQUIREMENTS = workingSet.hasRequirements
 const BACKLOG_ABS = `${WORKAREA_ABS}/backlog.json`
+const AREAS_ABS = `${WORKAREA_ABS}/distil/areas.json`
+const areaDirAbs = (areaId) => `${WORKAREA_ABS}/distil/areas/${areaId}`
+const areaDirTilde = (areaId) => `${WORKAREA_TILDE}/distil/areas/${areaId}`
+
+const AREA_LIST = {
+  type: 'array',
+  items: {
+    type: 'object',
+    required: ['id', 'title'],
+    properties: { id: { type: 'string' }, title: { type: 'string' } },
+    additionalProperties: false
+  }
+}
+
+const AREA_PLAN_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'areas', 'everyArea', 'decisions', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil areas passed on your file' },
+    areas: { ...AREA_LIST, description: 'Every area you wrote, in the order areas.json has them' },
+    everyArea: { ...STRINGS, description: 'The source ids in everyArea' },
+    decisions: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const areaPlanPrompt = (problems) => `You are the AREA PLAN step of the DISTIL workflow for the workarea ${WORKAREA}.
+You write no requirement. You cut reconcile into areas, so that one reconciler per area weighs every claim about it in
+full, from every source, today's included, rather than one reconciler skimming ${workingSet.total} claims.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/area-plan.md, then ${REFERENCES_ABS}/areas.schema.json.
+READ: ${SOURCES_ABS}; every source's partition, \`${WORKAREA_TILDE}/distil/extract/<slug>.partition.json\` (each part's
+title, scope and covers), listed with \`ls ${WORKAREA_TILDE}/distil/extract\`. The working set is at ${workingSet.path}
+(${workingSet.total} claims), for claim id ranges where a part holds more than one area.
+${HAD_REQUIREMENTS ? `${WORKAREA_ABS}/distil/requirements.json and conflicts.json already exist: this is a re-distil. Give every existing
+requirement and conflict to exactly one area, the one its claims speak to.` : 'No requirements.json exists yet: every area owns no existing id.'}
+THE FILE YOU WRITE: ${AREAS_ABS}. Nothing else.
+CHECK, after every write: \`${timCommand('distil areas')}\`. It exits 1 and names every problem: a claim in no area, a
+slice that names no part, an existing id in no area or in two. Fix each one and check again until it passes.${retryNote(problems, 'Writing the area working sets')}
+Return the structured output only.`
+
+const AREA_SETS_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'problems', 'areas', 'total', 'removed', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil areas --write exited 0' },
+    problems: STRINGS,
+    areas: {
+      type: 'array',
+      description: 'Every entry of result.areas: id and claims',
+      items: {
+        type: 'object',
+        required: ['id', 'claims'],
+        properties: { id: { type: 'string' }, claims: { type: 'integer' } },
+        additionalProperties: false
+      }
+    },
+    total: { type: 'integer', description: 'result.total' },
+    removed: { ...STRINGS, description: 'result.removed, exactly' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const areaSetsPrompt = (relayProblems) => `You are the AREA WORKING SETS step of the DISTIL workflow. Run one command and report what it prints.
+${RAILS}
+\`${timCommand('distil areas', '--write')}\`
+${ENVELOPE_RULE}
+On success: ok is true. Copy the id and claims of every entry of result.areas, result.total, and result.removed. The
+command itself wrote each area's working set and removed what an earlier reconcile left.
+On failure: ok is false, areas and removed are [], total is 0, and problems holds every problem line.${relayRetryNote(relayProblems)}
+Change nothing yourself. Return the structured output only.`
+
+const runAreaSets = async (attempt, relayProblems) =>
+  (await agent(
+    areaSetsPrompt(relayProblems),
+    light({ label: relayLabel(`area working sets${attempt > 0 ? ` ${attempt + 1}` : ''}`, relayProblems ? 1 : 0), phase: 'Areas', schema: AREA_SETS_SCHEMA })
+  )) ?? { ...nothingBack('area working sets'), areas: [], total: 0, removed: [] }
+
+// The relay must name exactly the areas the planner wrote, each with claims,
+// adding up to its total. A dropped area would never be reconciled.
+const areaSetsRelayProblems = (sets, planned) => {
+  if (!sets.ok) return []
+  const relayed = sets.areas.map((area) => area.id)
+  const plannedIds = planned.map((area) => area.id)
+  const counted = sets.areas.reduce((total, area) => total + area.claims, 0)
+  return [
+    ...(relayed.join(',') === plannedIds.join(',')
+      ? []
+      : [`the area working sets relayed the areas ${relayed.join(', ') || 'none'}, but the plan has ${plannedIds.join(', ')}`]),
+    ...sets.areas.filter((area) => !(area.claims > 0)).map((area) => `the area working sets relayed ${area.claims} claims for ${area.id}`),
+    ...(counted === sets.total ? [] : [`the area working sets relayed areas holding ${counted} claims, but a total of ${sets.total}`])
+  ]
+}
+
+const planAreas = async () => {
+  const decisions = []
+  let problems = null
+  for (let attempt = 0; attempt <= AREA_PLAN_RETRIES; attempt++) {
+    const plan = await agent(
+      areaPlanPrompt(problems),
+      think({ label: attempt === 0 ? 'area plan' : `area plan retry ${attempt}`, phase: 'Areas', schema: AREA_PLAN_SCHEMA })
+    )
+    decisions.push(...(plan?.decisions ?? []))
+    const planned = plan?.areas ?? []
+    let sets = await runAreaSets(attempt, null)
+    const relayProblems = areaSetsRelayProblems(sets, planned)
+    if (relayProblems.length) {
+      log(`area working sets: ${relayProblems.join(' ')}. Asking again`)
+      sets = await runAreaSets(attempt, relayProblems)
+    }
+    problems = sets.ok
+      ? areaSetsRelayProblems(sets, planned)
+      : sets.problems.length
+        ? sets.problems
+        : [`tim distil areas --write failed without naming a problem: ${sets.summary}`]
+    if (!problems.length && planned.length) return { areas: planned, sets, decisions }
+    if (!planned.length && !problems.length) problems = ['the area plan agent returned no areas']
+  }
+  return { problems, decisions }
+}
+
+const AREA_PLAN = await planAreas()
+if (AREA_PLAN.problems) {
+  return stoppedResult('areas-failed', `distil/areas.json still has problems after ${AREA_PLAN_RETRIES} retry: ${AREA_PLAN.problems.join(' ')}`, {
+    sources: SOURCE_COUNTS
+  })
+}
+const AREAS = AREA_PLAN.areas
+const claimsInArea = Object.fromEntries(AREA_PLAN.sets.areas.map((area) => [area.id, area.claims]))
+log(`${AREAS.length} areas, reconciled ${THINK_FAN_OUT} at a time: ${AREAS.map((area) => `${area.id} (${claimsInArea[area.id]} claims)`).join(', ')}`)
+
+// ---------------------------------------------------------------------------
+// Reconcile: one think-tier agent per area, then tim merges the areas, then
+// one cross-area pass merges duplicates and settles cross-area conflicts,
+// checked by tim distil coverage and sent back with its problems.
+// ---------------------------------------------------------------------------
+phase('Reconcile')
+
+const AREA_RECONCILE_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'requirements', 'conflicts', 'questions', 'decisions', 'goalConflicts', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil merge-reconcile --area passed on your file' },
+    requirements: { type: 'integer' },
+    conflicts: { type: 'integer' },
+    questions: { type: 'integer' },
+    decisions: STRINGS,
+    goalConflicts: {
+      ...STRINGS,
+      description: "One line per ruling that contradicts sources.json's goal: the ruling, and what the goal should now say. [] when none does"
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+// A plain reading that one environment cannot meet is a question, never an
+// adopted requirement. The same line goes to every reconciler.
+const PLAIN_READING_RULE = `WHERE A SOURCE OR RULING CANNOT BE MET AS WRITTEN in some part of the target (an environment, a repo, a journey or
+a stage), or two readings of it would build different things, make it a question with a default that says what each
+part gets. Never adopt one plain reading for every part.`
+
+// Questions are minimal by default: precedence and the rulings settle every
+// difference they can, and a blocker outside the programme is never a
+// question. The challenge step enforces it; every reconciler is told it.
+const MINIMAL_QUESTIONS_RULE = `QUESTIONS ARE MINIMAL BY DEFAULT. Settle every difference precedence or a ruling settles, as precedence. A difference
+that waits on somebody outside the programme (a platform change, access, a ticket) is never a question: adopt it with
+blockedBy. Raise a question only where neither precedence nor any ruling settles it. A challenge step tries to settle
+every question you raise.`
+
+const WEIGH_TODAY_RULE = `WEIGH EVERY CLAIM FROM A TODAY SOURCE (the target repos, traces of the real services, the tests repo). Each delta
+(new, change or exists) cites the claims that show today's behaviour. Keep copy, option, hint and error differences at
+their real granularity: one requirement per difference a user can see, never a summary of them.`
+
+let GOAL_CONFLICTS = []
+const noteGoalConflicts = (answer) => {
+  GOAL_CONFLICTS = [...new Set([...GOAL_CONFLICTS, ...(answer?.goalConflicts ?? []).filter(isText)])]
+}
+
+const areaReconcilePrompt = (area, problems) => `You are an AREA RECONCILE step of the DISTIL workflow for the workarea ${WORKAREA}: area ${area.id}, ${area.title}.
+You weigh every claim in this area's working set, from every source, and write the area's requirements and conflicts.
+Another reconciler does each other area; a cross-area pass joins them after you.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/reconcile.md, then ${REFERENCES_ABS}/reconcile-part.schema.json,
+${REFERENCES_ABS}/requirements.schema.json and ${REFERENCES_ABS}/conflicts.schema.json.
+READ: ${SOURCES_ABS}; your area in ${AREAS_ABS} (\`jq '.areas[] | select(.id == "${area.id}")' ${WORKAREA_TILDE}/distil/areas.json\`);
+YOUR WORKING SET, every claim of it (${claimsInArea[area.id]} claims, in pages if you need to): ${areaDirAbs(area.id)}/working-set.json.
+${HAD_REQUIREMENTS ? `This is a re-distil: the working set's "owns" lists the existing requirement and conflict ids this area keeps. Read
+each in ${WORKAREA_ABS}/distil/requirements.json and conflicts.json, and keep every one of them, id unchanged.` : 'This is a first reconcile: your area owns no existing id.'}
+NEW IDS: req-${area.id}-001, req-${area.id}-002 and on; c-${area.id}-001 and on. tim numbers them when it merges the areas.
+THE FILE YOU WRITE: ${areaDirAbs(area.id)}/reconciled.json, with "area": "${area.id}". Nothing else.
+${WEIGH_TODAY_RULE}
+${MINIMAL_QUESTIONS_RULE}
+${PLAIN_READING_RULE}
+CHECK, after every write: \`${timCommand('distil merge-reconcile', `--area ${area.id}`)}\`. It exits 1 and names every
+problem. Fix each one and check again until it passes.${retryNote(problems, 'Merging the areas')}
+Return the structured output only.`
+
+const runAreaReconcile = (area, problems, attempt) =>
+  agent(
+    areaReconcilePrompt(area, problems),
+    think({ label: `reconcile ${area.id}${attempt > 0 ? ` retry ${attempt}` : ''}`, phase: 'Reconcile', schema: AREA_RECONCILE_SCHEMA })
+  )
+
+const MERGE_RECONCILE_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'problems', 'areas', 'requirements', 'conflicts', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil merge-reconcile exited 0' },
+    problems: STRINGS,
+    areas: { ...STRINGS, description: 'The id of every entry of result.areas, in order' },
+    requirements: { type: 'integer', description: 'result.requirements. 0 on failure' },
+    conflicts: { type: 'integer', description: 'result.conflicts. 0 on failure' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const mergeReconcilePrompt = (relayProblems) => `You are the MERGE RECONCILE step of the DISTIL workflow. Run one command and report what it prints.
+${RAILS}
+\`${timCommand('distil merge-reconcile')}\`
+${ENVELOPE_RULE}
+On success: ok is true. Copy the id of every entry of result.areas, result.requirements and result.conflicts.
+On failure: ok is false, areas is [], requirements and conflicts are 0, and problems holds every problem line.${relayRetryNote(relayProblems)}
+Change nothing yourself. Return the structured output only.`
+
+const runMergeReconcile = async (attempt, relayProblems) =>
+  (await agent(
+    mergeReconcilePrompt(relayProblems),
+    light({ label: relayLabel(`merge areas${attempt > 0 ? ` ${attempt + 1}` : ''}`, relayProblems ? 1 : 0), phase: 'Reconcile', schema: MERGE_RECONCILE_SCHEMA })
+  )) ?? { ...nothingBack('merge areas'), areas: [], requirements: 0, conflicts: 0 }
+
+const mergeRelayProblems = (merged) =>
+  merged.ok && merged.areas.join(',') !== AREAS.map((area) => area.id).join(',')
+    ? [`the merge relayed the areas ${merged.areas.join(', ') || 'none'}, but the plan has ${AREAS.map((area) => area.id).join(', ')}`]
+    : []
+
+// Which areas to reconcile again: the ones whose agent failed or that a
+// merge problem names; failing that, every one.
+const areasToRedo = (answers, failed) => {
+  const named = AREAS.filter(
+    (area, index) => !answers[index]?.ok || failed.problems.some((problem) => problem.includes(`distil/areas/${area.id}/`))
+  )
+  return named.length ? named : AREAS
+}
+
+const mergeAreas = async (attempt) => {
+  let merged = await runMergeReconcile(attempt, null)
+  const relayProblems = mergeRelayProblems(merged)
+  if (relayProblems.length) {
+    log(`merge areas: ${relayProblems.join(' ')}. Asking again`)
+    merged = await runMergeReconcile(attempt, relayProblems)
+    const still = mergeRelayProblems(merged)
+    if (still.length) return { ...merged, ok: false, problems: still }
+  }
+  return merged
+}
+
+const reconcileAreas = async () => {
+  let answers = await inBatches(AREAS, THINK_FAN_OUT, (area) => runAreaReconcile(area, null, 0))
+  let merged = await mergeAreas(0)
+  for (let retry = 1; !merged.ok && retry <= AREA_RETRIES; retry++) {
+    const redo = areasToRedo(answers, merged)
+    log(`merge areas: ${merged.problems.length} problem(s); reconciling ${redo.map((area) => area.id).join(', ')} again`)
+    const redone = await inBatches(redo, THINK_FAN_OUT, (area) => runAreaReconcile(area, merged.problems, retry))
+    answers = AREAS.map((area, index) => {
+      const at = redo.indexOf(area)
+      return at === -1 ? answers[index] : redone[at]
+    })
+    merged = await mergeAreas(retry)
+  }
+  answers.forEach(noteGoalConflicts)
+  return { merged, answers }
+}
+
+const AREA_RECONCILE = await reconcileAreas()
+if (!AREA_RECONCILE.merged.ok) {
+  return stoppedResult(
+    'reconcile-failed',
+    `tim distil merge-reconcile still names ${AREA_RECONCILE.merged.problems.length} problem(s) after ${AREA_RETRIES} retry: ${AREA_RECONCILE.merged.problems.join(' ')}`,
+    { sources: SOURCE_COUNTS, goalConflicts: GOAL_CONFLICTS }
+  )
+}
+let RECONCILE_DECISIONS = AREA_RECONCILE.answers.flatMap((answer, index) =>
+  (answer?.decisions ?? []).map((decision) => `${AREAS[index].id}: ${decision}`)
+)
 
 // tim distil coverage checks the backlog too, once one exists, and scopes each
 // problem: reconcile or backlog. On a re-distil the reconciler cannot fix a
 // backlog problem, so those go to the consolidator.
 const COVERAGE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'problems', 'backlogProblems', 'summary'],
+  required: ['ok', 'problems', 'backlogProblems', 'questions', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when tim distil coverage exited 0' },
     problems: { ...STRINGS, description: 'The message of every entry of errors[0].problems whose scope is reconcile' },
@@ -1023,6 +1453,7 @@ const COVERAGE_SCHEMA = {
     },
     questions: {
       type: 'array',
+      description: 'Every entry of result.questions. [] on failure',
       items: {
         type: 'object',
         required: ['id', 'question', 'default'],
@@ -1033,6 +1464,26 @@ const COVERAGE_SCHEMA = {
           default: { type: 'string' },
           requirements: STRINGS
         },
+        additionalProperties: false
+      }
+    },
+    blocked: {
+      type: 'array',
+      description: 'Every entry of result.blocked',
+      items: {
+        type: 'object',
+        required: ['id', 'blockedBy'],
+        properties: { id: { type: 'string' }, blockedBy: { type: 'string' } },
+        additionalProperties: false
+      }
+    },
+    sourceUsage: {
+      type: 'array',
+      description: 'Every entry of result.sources: id, claims and cited',
+      items: {
+        type: 'object',
+        required: ['id', 'claims', 'cited'],
+        properties: { id: { type: 'string' }, claims: { type: 'integer' }, cited: { type: 'integer' } },
         additionalProperties: false
       }
     },
@@ -1067,7 +1518,7 @@ const snapshotStep = (step, mode) => {
    On failure: snapshotOk is false, and snapshotProblems holds every problem line.`
 }
 
-const coveragePrompt = ({ backlogCheck, snapshot }) => {
+const coveragePrompt = ({ backlogCheck, snapshot, relayProblems }) => {
   const backlogStep = backlogCheck
     ? `
 2. \`${timCommand('backlog check')}\`
@@ -1082,25 +1533,49 @@ ${RAILS}
 ${ENVELOPE_RULE}
    On success: ok is true, and problems and backlogProblems are []. Copy result.requirements (total; byStatus adopted,
    question and out-of-scope, the last as outOfScope; byDelta new, change and exists), result.conflicts (total,
-   precedence, question), every entry of result.questions (id, about, question, default, requirements), and, when
+   precedence, question), every entry of result.questions (id, about, question, default, requirements), every entry of
+   result.blocked into blocked, every entry of result.sources into sourceUsage (id, claims, cited), and, when
    result.backlog is not null, its increments and covered as backlogIncrements and backlogCovered.
-   On failure: ok is false. errors[0].problems lists every problem with its scope. Copy the message of each one whose
-   scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems, exactly.${backlogStep}${snapshotLine}
+   On failure: ok is false and questions is []. errors[0].problems lists every problem with its scope. Copy the message
+   of each one whose scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems,
+   exactly.${backlogStep}${snapshotLine}${relayRetryNote(relayProblems)}
 Change nothing yourself. Return the structured output only.`
 }
 
-const runCoverage = async ({ label, phaseName, backlogCheck, snapshot }) =>
-  (await agent(coveragePrompt({ backlogCheck, snapshot }), light({ label, phase: phaseName, schema: COVERAGE_SCHEMA }))) ??
-  { ...nothingBack('coverage check'), backlogProblems: [] }
+// On success the questions copied must be as many as coverage counted: the
+// challenge step works through exactly that list.
+const coverageRelayProblems = (checked) => {
+  if (!checked.ok) return []
+  const counted = checked.conflicts?.question
+  return Number.isInteger(counted) && counted === (checked.questions ?? []).length
+    ? []
+    : [`the coverage check relayed ${(checked.questions ?? []).length} questions, but counted ${JSON.stringify(counted)} question conflicts`]
+}
 
-const RECONCILE_SCHEMA = {
+const runCoverage = async ({ label, phaseName, backlogCheck, snapshot }) => {
+  const ask = async (relayProblems) =>
+    (await agent(
+      coveragePrompt({ backlogCheck, snapshot, relayProblems }),
+      light({ label: relayLabel(label, relayProblems ? 1 : 0), phase: phaseName, schema: COVERAGE_SCHEMA })
+    )) ?? { ...nothingBack('coverage check'), backlogProblems: [], questions: [] }
+  const checked = await ask(null)
+  const relayProblems = coverageRelayProblems(checked)
+  if (!relayProblems.length) return checked
+  log(`${label}: ${relayProblems.join(' ')}. Asking again`)
+  const again = await ask(relayProblems)
+  const still = coverageRelayProblems(again)
+  return still.length ? { ...again, ok: false, problems: still, backlogProblems: [] } : again
+}
+
+const CROSS_AREA_SCHEMA = {
   type: 'object',
-  required: ['ok', 'requirements', 'conflicts', 'questions', 'decisions', 'goalConflicts', 'summary'],
+  required: ['ok', 'requirements', 'conflicts', 'questions', 'merged', 'decisions', 'goalConflicts', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when the check names no problem about requirements, conflicts or claims' },
     requirements: { type: 'integer' },
     conflicts: { type: 'integer' },
     questions: { type: 'integer' },
+    merged: { ...STRINGS, description: 'One line per duplicate merged across areas: the id kept and the ids folded into it' },
     decisions: STRINGS,
     goalConflicts: {
       ...STRINGS,
@@ -1111,15 +1586,6 @@ const RECONCILE_SCHEMA = {
   additionalProperties: false
 }
 
-const existingNote = (exists, file) =>
-  exists ? `${file} already exists: this is a re-distil. Keep every existing id.` : `${file} does not exist yet.`
-
-// A plain reading that one environment cannot meet is a question, never an
-// adopted requirement. The same line goes to the reconciler every round.
-const PLAIN_READING_RULE = `WHERE A SOURCE OR RULING CANNOT BE MET AS WRITTEN in some part of the target (an environment, a repo, a journey or
-a stage), or two readings of it would build different things, make it a question with a default that says what each
-part gets. Never adopt one plain reading for every part.`
-
 const consolidatorSentBack = (problems) => `
 THE CONSOLIDATOR SENT THESE BACK: it could not write an acceptance criterion that every environment its row names can
 observe. Settle each one as a question with a default that says what each part gets, or reword the requirement:
@@ -1129,19 +1595,25 @@ const coverageSentBack = (problems) => `
 THIS IS A SEND-BACK. The coverage check found these problems. Fix every one:
 ${problemList(problems)}`
 
-const reconcilePrompt = ({ problems, fromConsolidator }) => {
+const crossAreaPrompt = ({ problems, fromConsolidator }) => {
   const sendBack = problems ? (fromConsolidator ? consolidatorSentBack(problems) : coverageSentBack(problems)) : ''
-  return `You are the RECONCILE step of the DISTIL workflow for the workarea ${WORKAREA}.
+  return `You are the CROSS-AREA RECONCILE step of the DISTIL workflow for the workarea ${WORKAREA}.
+${AREAS.length} area reconcilers each weighed their own area's claims in full, and tim merged their files. You work
+across the areas: the duplicates two areas both wrote, the conflicts that span areas, and what coverage finds.
 ${RAILS}
-READ FIRST, in full: ${BRIEFS_ABS}/reconcile.md, then ${REFERENCES_ABS}/requirements.schema.json and
-${REFERENCES_ABS}/conflicts.schema.json.
-READ: ${SOURCES_ABS}; the working set at ${workingSet.path} (${workingSet.total} claims, in pages if you need to).
-${existingNote(workingSet.hasRequirements, `${WORKAREA_ABS}/distil/requirements.json`)}
-${existingNote(workingSet.hasConflicts, `${WORKAREA_ABS}/distil/conflicts.json`)}
+READ FIRST, in full: ${BRIEFS_ABS}/reconcile.md (its "Across areas" section is your method), then
+${REFERENCES_ABS}/requirements.schema.json and ${REFERENCES_ABS}/conflicts.schema.json.
+READ: ${SOURCES_ABS}; ${AREAS_ABS}; ${WORKAREA_ABS}/distil/requirements.json and conflicts.json, which the merge wrote;
+${WORKAREA_ABS}/distil/areas/id-map.json, which says which area each id came from. The whole working set is at
+${workingSet.path} (${workingSet.total} claims), for any claim a cross-area requirement needs.
+${HAD_REQUIREMENTS ? 'This is a re-distil: requirements and conflicts existed before this run. Keep every existing id.' : 'This is a first reconcile: every id is new this run.'}
 THE FILES YOU WRITE: ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_ABS}/distil/conflicts.json. Nothing else.
+${WEIGH_TODAY_RULE}
+${MINIMAL_QUESTIONS_RULE}
 ${PLAIN_READING_RULE}
-CHECK: \`${timCommand('distil coverage')}\`. Fix every problem it names about requirements, conflicts or claims, and
-check again until it names none. A problem about backlog.json or an increment is the consolidator's: leave it.${sendBack}
+CHECK: \`${timCommand('distil coverage')}\`. Fix every problem it names about requirements, conflicts, claims, sources or
+challenge verdicts, and check again until it names none. A problem about backlog.json or an increment is the
+consolidator's: leave it.${sendBack}
 Return the structured output only.`
 }
 
@@ -1157,65 +1629,248 @@ const reconcileProblemsOf = (checked) => {
 const RECONCILE_ROUNDS = 2
 const roundLabel = (label, round) => (round === 1 ? label : `${label}, round ${round}`)
 
-// Every attempt reads the same rulings and goal, so a contradiction one
-// attempt names still stands after a send-back that does not repeat it.
-let GOAL_CONFLICTS = []
-
-const runReconcile = async ({ round, sentBack }) => {
-  let reconciled = null
+// One think-tier step and its coverage check, sent back with the problems up
+// to SEND_BACKS times. The cross-area pass and the challenge's apply step
+// both run this way.
+const runChecked = async ({ prompt, label, phaseName, schema, round, sentBack, snapshot }) => {
+  let answer = null
   let check = null
   let problems = sentBack
+  const answers = []
   for (let attempt = 0; attempt <= SEND_BACKS; attempt++) {
-    reconciled = await agent(
-      reconcilePrompt({ problems, fromConsolidator: attempt === 0 && round > 1 }),
-      think({
-        label: roundLabel(attempt === 0 ? 'reconcile' : `reconcile send-back ${attempt}`, round),
-        phase: 'Reconcile',
-        schema: RECONCILE_SCHEMA
-      })
+    answer = await agent(
+      prompt({ problems, attempt }),
+      think({ label: roundLabel(attempt === 0 ? label : `${label} send-back ${attempt}`, round), phase: phaseName, schema })
     )
-    GOAL_CONFLICTS = [...new Set([...GOAL_CONFLICTS, ...(reconciled?.goalConflicts ?? []).filter(isText)])]
+    answers.push(answer)
+    noteGoalConflicts(answer)
     check = await runCoverage({
-      label: roundLabel(`coverage after reconcile${attempt === 0 ? '' : ` ${attempt + 1}`}`, round),
-      phaseName: 'Reconcile',
+      label: roundLabel(`coverage after ${label}${attempt === 0 ? '' : ` ${attempt + 1}`}`, round),
+      phaseName,
       backlogCheck: false,
-      snapshot: round === 1 && HAD_BACKLOG ? 'save' : null
+      snapshot
     })
     problems = reconcileProblemsOf(check)
     if (problems.length === 0) break
-    log(`reconcile: ${problems.length} problem(s) after attempt ${attempt + 1}${round === 1 ? '' : `, round ${round}`}`)
+    log(`${label}: ${problems.length} problem(s) after attempt ${attempt + 1}${round === 1 ? '' : `, round ${round}`}`)
   }
-  return { reconciled, check, problems }
+  return { answer, answers, check, problems }
 }
 
-let { reconciled, check: reconcileCheck, problems: reconcileProblems } = await runReconcile({ round: 1, sentBack: null })
-let RECONCILE_DECISIONS = reconciled?.decisions ?? []
-
-if (reconcileProblems.length) {
-  return stoppedResult('reconcile-failed', `tim distil coverage still names ${reconcileProblems.length} problem(s) after ${SEND_BACKS} send-backs: ${reconcileProblems.join(' ')}`, {
-    sources: SOURCE_COUNTS
+const runCrossArea = ({ round, sentBack }) =>
+  runChecked({
+    prompt: ({ problems, attempt }) => crossAreaPrompt({ problems, fromConsolidator: attempt === 0 && round > 1 }),
+    label: 'reconcile across areas',
+    phaseName: 'Reconcile',
+    schema: CROSS_AREA_SCHEMA,
+    round,
+    sentBack,
+    snapshot: round === 1 && HAD_BACKLOG ? 'save' : null
   })
+
+// ---------------------------------------------------------------------------
+// Challenge: one think-tier agent per question conflict tries to settle it
+// from precedence and every ruling, and writes its verdict. One apply step
+// rewrites the settled ones, and tim distil coverage checks each verdict was
+// applied. Only the questions no rule settles survive to the report.
+// ---------------------------------------------------------------------------
+const CHALLENGE_VERDICT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'conflict', 'verdict', 'rule', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil challenge --conflict passed on your file' },
+    conflict: { type: 'string' },
+    verdict: { type: 'string', enum: ['precedence', 'blocked', 'question'] },
+    rule: { type: 'string', description: 'The rule you applied, as your file says it' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
 }
-if (HAD_BACKLOG && reconcileCheck.snapshotOk !== true) {
+
+const challengePrompt = (question, problems) => `You are a CHALLENGE step of the DISTIL workflow for the workarea ${WORKAREA}: conflict ${question.id}.
+The reconcilers raised it as a question for a person. Questions are minimal by default: you try to settle it from
+precedence and every ruling, and it stays a question only when nothing settles it.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/question-challenge.md, then ${REFERENCES_ABS}/challenge.schema.json.
+READ: ${SOURCES_ABS} (its precedence, and every ruling source's role); the conflict and the requirements that cite it
+(\`jq '.conflicts[] | select(.id == "${question.id}")' ${WORKAREA_TILDE}/distil/conflicts.json\`, then each of
+${(question.requirements ?? []).join(', ') || 'the requirements citing it'} in ${WORKAREA_TILDE}/distil/requirements.json); every claim its positions rest on, and
+every ruling source's claims, in the working set at ${workingSet.path}.
+THE QUESTION: ${question.question}
+ITS DEFAULT: ${question.default}
+THE FILE YOU WRITE: ${WORKAREA_ABS}/distil/challenge/${question.id}.json. Nothing else: the apply step rewrites the
+conflict and its requirements from your verdict.
+CHECK, after every write: \`${timCommand('distil challenge', `--conflict ${question.id}`)}\`. It exits 1 and names every
+problem. Fix each one and check again until it passes.${retryNote(problems, 'Checking your verdict')}
+Return the structured output only.`
+
+const runChallenger = async (question) => {
+  let answer = await agent(challengePrompt(question, null), think({ label: `challenge ${question.id}`, phase: 'Challenge', schema: CHALLENGE_VERDICT_SCHEMA }))
+  for (let retry = 1; !answer?.ok && retry <= CHALLENGE_RETRIES; retry++) {
+    answer = await agent(
+      challengePrompt(question, [answer ? `your verdict did not pass its check: ${answer.summary}` : 'the challenger returned nothing']),
+      think({ label: `challenge ${question.id} retry ${retry}`, phase: 'Challenge', schema: CHALLENGE_VERDICT_SCHEMA })
+    )
+  }
+  return answer?.ok ? { ...answer, conflict: question.id } : { conflict: question.id, verdict: 'question', rule: 'the challenge could not be completed', ok: false }
+}
+
+const APPLY_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'applied', 'decisions', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when tim distil coverage names no problem about requirements, conflicts or verdicts' },
+    applied: { ...STRINGS, description: 'One line per verdict applied: the conflict id and what changed' },
+    decisions: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const unfinishedNote = (unfinished) =>
+  unfinished.length
+    ? `
+THESE CHALLENGES DID NOT FINISH: ${unfinished.map((verdict) => verdict.conflict).join(', ')}. Each stays a question. Where its
+verdict file exists but does not pass \`${timCommand('distil challenge', '--conflict <id>')}\`, rewrite it as a "question"
+verdict that passes, with "why" saying the challenge did not finish.`
+    : ''
+
+const applyPrompt = (verdicts, unfinished) => ({ problems }) => `You are the APPLY CHALLENGES step of the DISTIL workflow for the workarea ${WORKAREA}.
+Challengers settled ${verdicts.length} question${verdicts.length === 1 ? '' : 's'} from precedence and the rulings. You
+rewrite each settled conflict and the requirements that cite it to match its verdict.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/question-challenge.md (its "Applying the verdicts" section is your method), then
+${REFERENCES_ABS}/challenge.schema.json, ${REFERENCES_ABS}/requirements.schema.json and ${REFERENCES_ABS}/conflicts.schema.json.
+THE VERDICTS TO APPLY, each in ${WORKAREA_ABS}/distil/challenge/<conflict id>.json:
+${verdicts.map((verdict) => `- ${verdict.conflict}: ${verdict.verdict}. ${verdict.rule}`).join('\n') || '- none'}${unfinishedNote(unfinished)}
+THE FILES YOU WRITE: ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_ABS}/distil/conflicts.json, and only the
+unfinished verdict files named above. Nothing else.
+CHECK: \`${timCommand('distil coverage')}\`. It checks every verdict was applied. Fix every problem it names about
+requirements, conflicts, claims or verdicts, and check again until it names none.${problems ? coverageSentBack(problems) : ''}
+Return the structured output only.`
+
+const challengeQuestions = async ({ round, questions }) => {
+  if (!questions.length) return { verdicts: [], check: null, problems: [], decisions: [] }
+  log(`challenge${round === 1 ? '' : `, round ${round}`}: ${questions.length} question(s), ${THINK_FAN_OUT} at a time`)
+  const verdicts = (await inBatches(questions, THINK_FAN_OUT, (question) => runChallenger(question))).map(
+    (verdict, index) => verdict ?? { conflict: questions[index].id, verdict: 'question', rule: 'the challenger returned nothing', ok: false }
+  )
+  const settling = verdicts.filter((verdict) => verdict.ok && verdict.verdict !== 'question')
+  const unfinished = verdicts.filter((verdict) => !verdict.ok)
+  if (!settling.length && !unfinished.length) return { verdicts, check: null, problems: [], decisions: [] }
+  const applied = await runChecked({
+    prompt: applyPrompt(settling, unfinished),
+    label: 'apply challenges',
+    phaseName: 'Challenge',
+    schema: APPLY_SCHEMA,
+    round,
+    sentBack: null,
+    snapshot: null
+  })
+  return {
+    verdicts,
+    check: applied.check,
+    problems: applied.problems,
+    decisions: applied.answers.filter(Boolean).flatMap((answer) => [...(answer.applied ?? []), ...(answer.decisions ?? [])])
+  }
+}
+
+const CHALLENGE_LOG = []
+
+const reconcileRound = async ({ round, sentBack }) => {
+  phase('Reconcile')
+  const crossed = await runCrossArea({ round, sentBack })
+  RECONCILE_DECISIONS = [
+    ...RECONCILE_DECISIONS,
+    ...crossed.answers.filter(Boolean).flatMap((answer) => [...(answer.merged ?? []).map((line) => `merged: ${line}`), ...(answer.decisions ?? [])])
+  ]
+  if (crossed.problems.length) return { failed: 'reconcile-failed', problems: crossed.problems, check: crossed.check }
+  phase('Challenge')
+  const stillStanding = new Set(CHALLENGE_LOG.filter((verdict) => verdict.verdict === 'question').map((verdict) => verdict.conflict))
+  const challenged = await challengeQuestions({
+    round,
+    questions: (crossed.check.questions ?? []).filter((question) => !stillStanding.has(question.id))
+  })
+  CHALLENGE_LOG.push(...challenged.verdicts)
+  RECONCILE_DECISIONS = [...RECONCILE_DECISIONS, ...challenged.decisions]
+  if (challenged.problems.length) return { failed: 'challenge-failed', problems: challenged.problems, check: challenged.check }
+  return { check: challenged.check ?? crossed.check, snapshotCheck: crossed.check }
+}
+
+const stopAfterRound = (outcome, round) =>
+  stoppedResult(
+    outcome.failed,
+    `tim distil coverage still names ${outcome.problems.length} problem(s) after ${SEND_BACKS} send-backs${round === 1 ? '' : `, round ${round}`}: ${outcome.problems.join(' ')}`,
+    { sources: SOURCE_COUNTS, goalConflicts: GOAL_CONFLICTS }
+  )
+
+let roundOutcome = await reconcileRound({ round: 1, sentBack: null })
+if (roundOutcome.failed) return stopAfterRound(roundOutcome, 1)
+let reconcileCheck = roundOutcome.check
+
+// The cross-area pass's coverage checks save the backlog's rows; the
+// challenge's own checks never touch the snapshot.
+if (HAD_BACKLOG && roundOutcome.snapshotCheck.snapshotOk !== true) {
   return stoppedResult(
     'snapshot-failed',
-    `backlog.json exists, but tim distil backlog-snapshot could not save its rows, so the consolidator could not be held to them: ${(reconcileCheck.snapshotProblems ?? []).join(' ') || reconcileCheck.summary}`,
+    `backlog.json exists, but tim distil backlog-snapshot could not save its rows, so the consolidator could not be held to them: ${(roundOutcome.snapshotCheck.snapshotProblems ?? []).join(' ') || roundOutcome.snapshotCheck.summary}`,
     { sources: SOURCE_COUNTS }
   )
 }
 
 // ---------------------------------------------------------------------------
-// Consolidate: backlog.json, checked by tim backlog check and tim distil
-// coverage, with the rows built or set aside held fixed on a re-distil.
+// Consolidate: one think-tier agent per area drafts that area's rows, then
+// one combiner orders and combines them into backlog.json and assigns themes,
+// checked by tim backlog check and tim distil coverage, with the rows built or
+// set aside held fixed on a re-distil.
 // ---------------------------------------------------------------------------
 phase('Consolidate')
 
+const OBSERVABLE_RULE = `EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot. Put the
+requirement in reconcileProblems instead: the workflow sends it back to the reconciler.`
+
+const DRAFT_OBSERVABLE_RULE = `EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot: put the
+requirement in the draft's "unobservable" list with the environment and why, and the combiner sends it back.`
+
+const DRAFT_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'rows', 'requirements', 'decisions', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'true when your rows file is written and covers every requirement your area has to build' },
+    rows: { type: 'integer', description: 'How many draft rows you wrote' },
+    requirements: { type: 'integer', description: 'How many requirements to build they cover' },
+    decisions: STRINGS,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const draftPrompt = (area) => `You are a ROW DRAFT step of the DISTIL workflow for the workarea ${WORKAREA}: area ${area.id}, ${area.title}.
+You draft the backlog rows for this area's requirements, and the code each one touches. One combiner joins every
+area's drafts into backlog.json after you.
+${RAILS}
+READ FIRST, in full: ${BRIEFS_ABS}/consolidate.md (its "Drafting an area's rows" section is your method),
+${REFERENCES_ABS}/backlog.schema.json and ${REFERENCES_ABS}/SHAPE.md.
+YOUR REQUIREMENTS: \`${timCommand('distil areas', `--area ${area.id}`)}\` gives result.areas[0].toBuild, the requirements
+still to build that came from your area, and result.areas[0].reconciled, all of them. Read each in
+${WORKAREA_ABS}/distil/requirements.json, with its conflicts in conflicts.json.
+READ: ${SOURCES_ABS}; this area's working set at ${areaDirAbs(area.id)}/working-set.json, for the claims that show
+which repo files and feature folders each requirement touches.${HAD_BACKLOG ? `
+${BACKLOG_ABS} already exists: name the existing row each requirement already sits in, as the brief says.` : ''}
+THE FILE YOU WRITE: ${areaDirAbs(area.id)}/rows.json (in Bash: ${areaDirTilde(area.id)}/rows.json). Nothing else.
+${DRAFT_OBSERVABLE_RULE}
+Return the structured output only.`
+
+const runDraft = (area) =>
+  agent(draftPrompt(area), think({ label: `draft rows ${area.id}`, phase: 'Consolidate', schema: DRAFT_SCHEMA }))
+
 const CONSOLIDATE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'increments', 'decisions', 'reconcileProblems', 'summary'],
+  required: ['ok', 'increments', 'themes', 'decisions', 'reconcileProblems', 'summary'],
   properties: {
     ok: { type: 'boolean', description: 'true when tim backlog check and tim distil coverage both pass' },
     increments: { type: 'integer' },
+    themes: { type: 'integer', description: 'How many themes the envelope has. 0 without a themes rule' },
     decisions: STRINGS,
     reconcileProblems: {
       ...STRINGS,
@@ -1228,9 +1883,6 @@ const CONSOLIDATE_SCHEMA = {
 }
 
 const repoKeysNote = `Check each repo's GitHub slug with \`git -C ${TILDE}/<path> remote get-url origin\`, one call per repo in sources.json.`
-
-const OBSERVABLE_RULE = `EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot. Put the
-requirement in reconcileProblems instead: the workflow sends it back to the reconciler.`
 
 const existingBacklogNote = (round) => {
   if (HAD_BACKLOG) {
@@ -1256,16 +1908,24 @@ const consolidatePrompt = ({ problems, round, answered }) => {
 THIS IS A SEND-BACK. The checks found these problems. Fix every one:
 ${problemList(problems)}`
     : ''
-  return `You are the CONSOLIDATE step of the DISTIL workflow for the workarea ${WORKAREA}.
+  return `You are the COMBINE step of the DISTIL workflow for the workarea ${WORKAREA}.
+One drafter per area wrote that area's rows. You combine them into backlog.json: merge rows that repeat the same
+set-up, order them, give every one its id, and draw the themes.
 ${RAILS}
 READ FIRST, in full: ${BRIEFS_ABS}/consolidate.md, ${REFERENCES_ABS}/backlog.schema.json and ${REFERENCES_ABS}/SHAPE.md.
-READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_ABS}/distil/conflicts.json.
+READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_ABS}/distil/conflicts.json; every area's
+draft, ${AREAS.map((area) => `${areaDirAbs(area.id)}/rows.json`).join(', ')}; and
+\`${timCommand('distil areas', '--requirements')}\`, whose result.unassigned lists the requirements no area drafted (the
+cross-area pass wrote them): draft their rows yourself.
 ${existingBacklogNote(round)}
 THE FILE YOU WRITE: ${BACKLOG_ABS}. Nothing else.
 REPOS: ${repoKeysNote}
 THEMES: when ${SOURCES_ABS} has a "themes" rule, give every row a theme and write the envelope's "themes", as the
-brief's "Themes" section says. tim backlog check holds the themes to the rules in SHAPE.md.
-${OBSERVABLE_RULE}
+brief's "Themes" section says: boundaries at feature-folder granularity from what each row touches, shared files in
+a foundation theme in an early wave, and never one theme holding most of the rows. tim backlog check holds the themes
+to the rules in SHAPE.md.
+${OBSERVABLE_RULE} Every requirement a draft lists as "unobservable" goes there too, unless you can
+write a criterion every environment observes.
 CHECKS, both until both pass:
 - \`${timCommand('backlog check')}\`
 - \`${timCommand('distil coverage')}\`${reconcilerAnswered(answered)}${sendBack}
@@ -1309,7 +1969,7 @@ const runConsolidate = async ({ round, answered }) => {
     consolidated = await agent(
       consolidatePrompt({ problems, round, answered: attempt === 0 ? answered : [] }),
       think({
-        label: roundLabel(attempt === 0 ? 'consolidate' : `consolidate send-back ${attempt}`, round),
+        label: roundLabel(attempt === 0 ? 'combine rows' : `combine rows send-back ${attempt}`, round),
         phase: 'Consolidate',
         schema: CONSOLIDATE_SCHEMA
       })
@@ -1342,24 +2002,27 @@ const consolidateFailed = (problems, check) => {
   )
 }
 
+const DRAFTS = await inBatches(AREAS, THINK_FAN_OUT, runDraft)
+const unDrafted = AREAS.filter((area, index) => !DRAFTS[index]?.ok)
+if (unDrafted.length) {
+  log(`draft rows: ${unDrafted.map((area) => area.id).join(', ')} did not finish a draft; the combiner drafts their requirements itself`)
+}
+let CONSOLIDATE_DECISIONS = DRAFTS.flatMap((draft, index) => (draft?.decisions ?? []).map((decision) => `${AREAS[index].id}: ${decision}`))
+
 let { consolidated, check: finalCheck, problems: consolidateProblems, sentBack: SENT_BACK } = await runConsolidate({ round: 1, answered: [] })
 if (consolidateProblems.length) return consolidateFailed(consolidateProblems, finalCheck)
-let CONSOLIDATE_DECISIONS = consolidated?.decisions ?? []
+CONSOLIDATE_DECISIONS = [...CONSOLIDATE_DECISIONS, ...(consolidated?.decisions ?? [])]
 
-// A requirement the consolidator cannot turn into an observable criterion goes
-// back to the reconciler once. What is still open after that goes to the
-// report as a step before building.
+// A requirement the combiner cannot turn into an observable criterion goes
+// back to the cross-area reconciler once, and its questions are challenged
+// again. What is still open after that goes to the report as a step before
+// building.
 for (let round = 2; round <= RECONCILE_ROUNDS && SENT_BACK.length; round++) {
   log(`consolidate: sent ${SENT_BACK.length} requirement(s) back to the reconciler, round ${round}`)
-  ;({ reconciled, check: reconcileCheck, problems: reconcileProblems } = await runReconcile({ round, sentBack: SENT_BACK }))
-  RECONCILE_DECISIONS = [...RECONCILE_DECISIONS, ...(reconciled?.decisions ?? [])]
-  if (reconcileProblems.length) {
-    return stoppedResult(
-      'reconcile-failed',
-      `tim distil coverage still names ${reconcileProblems.length} problem(s) after ${SEND_BACKS} send-backs, round ${round}: ${reconcileProblems.join(' ')}`,
-      { sources: SOURCE_COUNTS }
-    )
-  }
+  roundOutcome = await reconcileRound({ round, sentBack: SENT_BACK })
+  if (roundOutcome.failed) return stopAfterRound(roundOutcome, round)
+  reconcileCheck = roundOutcome.check
+  phase('Consolidate')
   ;({ consolidated, check: finalCheck, problems: consolidateProblems, sentBack: SENT_BACK } = await runConsolidate({ round, answered: SENT_BACK }))
   if (consolidateProblems.length) return consolidateFailed(consolidateProblems, finalCheck)
   CONSOLIDATE_DECISIONS = [...CONSOLIDATE_DECISIONS, ...(consolidated?.decisions ?? [])]
@@ -1367,12 +2030,22 @@ for (let round = 2; round <= RECONCILE_ROUNDS && SENT_BACK.length; round++) {
 const OPEN_RECONCILE_PROBLEMS = SENT_BACK
 
 const { requirements: REQUIREMENTS, conflicts: CONFLICTS, questions: QUESTIONS } = countsFrom(finalCheck)
+const BLOCKED = finalCheck.blocked ?? reconcileCheck.blocked ?? []
+const SOURCE_USAGE = finalCheck.sourceUsage ?? reconcileCheck.sourceUsage ?? []
+
+const CHALLENGE = {
+  challenged: CHALLENGE_LOG.length,
+  settled: CHALLENGE_LOG.filter((verdict) => verdict.ok && verdict.verdict === 'precedence').map((verdict) => verdict.conflict),
+  blocked: CHALLENGE_LOG.filter((verdict) => verdict.ok && verdict.verdict === 'blocked').map((verdict) => verdict.conflict),
+  survived: QUESTIONS.map((question) => question.id)
+}
 
 const BACKLOG = {
   path: BACKLOG_ABS,
   total: finalCheck.backlogTotal ?? finalCheck.backlogIncrements ?? null,
   byStatus: finalCheck.backlogByStatus ?? null,
-  covered: finalCheck.backlogCovered ?? null
+  covered: finalCheck.backlogCovered ?? null,
+  themes: consolidated?.themes ?? null
 }
 
 // ---------------------------------------------------------------------------
@@ -1411,9 +2084,19 @@ ${problemList(OPEN_RECONCILE_PROBLEMS)}
 Each one must be settled before building. Put each in the step-0 section and say so in the summary.`
   : ''
 
-const sourceCountsTable = SOURCE_COUNTS.map(
-  (source) => `- ${source.id}: rank ${source.rank ?? '?'}, ${source.claims ?? '?'} claims, ${source.held ?? '?'} held, ${source.refuted ?? '?'} refuted, ${source.missed ?? '?'} missed`
-).join('\n')
+const usageById = Object.fromEntries(SOURCE_USAGE.map((usage) => [usage.id, usage]))
+const sourceCountsTable = SOURCE_COUNTS.map((source) => {
+  const usage = usageById[source.id]
+  const cited = usage ? `, ${usage.cited} of its ${usage.claims} working-set claims cited` : ''
+  return `- ${source.id}: rank ${source.rank ?? '?'}, ${source.claims ?? '?'} claims, ${source.held ?? '?'} held, ${source.refuted ?? '?'} refuted, ${source.missed ?? '?'} missed${cited}`
+}).join('\n')
+
+const challengeNote = `
+THE CHALLENGE: ${CHALLENGE.challenged} question(s) were challenged against precedence and the rulings. ${CHALLENGE.settled.length} settled by
+precedence (${CHALLENGE.settled.join(', ') || 'none'}), ${CHALLENGE.blocked.length} found to wait on a blocker (${CHALLENGE.blocked.join(', ') || 'none'}),
+${CHALLENGE.survived.length} survive (${CHALLENGE.survived.join(', ') || 'none'}). Only the survivors are questions in the report.
+THE BLOCKED REQUIREMENTS, each to build in a blocked increment once somebody acts:
+${BLOCKED.map((blocked) => `- ${blocked.id}: ${blocked.blockedBy}`).join('\n') || '- none'}`
 
 const reportPrompt = (attempt) => `You are the REPORT step of the DISTIL workflow for the workarea ${WORKAREA}. Draft the report and return it as text.
 ${RAILS}
@@ -1422,9 +2105,11 @@ READ FIRST, in full: ${REFERENCES_ABS}/REPORT.md, which gives the report's struc
 rules. Follow it section by section, then run its checks before you return.
 READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json, ${WORKAREA_ABS}/distil/conflicts.json and ${BACKLOG_ABS}.
 The report is for the programme's readers, never for whoever maintains this pipeline. Anything wrong with a file
-or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}
-THE COUNTS PER SOURCE, from tim distil working-set (claims = held + refuted; missed claims were added):
+or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}
+THE COUNTS PER SOURCE, from tim distil working-set and tim distil coverage (claims = held + refuted; missed claims
+were added; cited = the working-set claims a requirement or conflict cites):
 ${sourceCountsTable}
+THE AREAS reconcile was cut into: ${AREAS.map((area) => `${area.id} (${area.title})`).join(', ')}.
 THE TOTALS, from tim distil coverage and tim backlog check:
 - requirements: ${JSON.stringify(REQUIREMENTS)}
 - conflicts: ${JSON.stringify(CONFLICTS)}
@@ -1457,8 +2142,13 @@ return {
   requirements: REQUIREMENTS,
   conflicts: CONFLICTS,
   questions: QUESTIONS,
+  blocked: BLOCKED,
+  challenge: CHALLENGE,
+  areas: AREAS.map((area) => ({ ...area, claims: claimsInArea[area.id] ?? null })),
+  sourceUsage: SOURCE_USAGE,
   backlog: BACKLOG,
   decisions: {
+    areas: AREA_PLAN.decisions,
     reconcile: RECONCILE_DECISIONS,
     consolidate: CONSOLIDATE_DECISIONS
   },

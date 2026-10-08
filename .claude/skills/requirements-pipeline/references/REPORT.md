@@ -29,7 +29,8 @@ About five bullet lines. Each one is a fact the reader acts on:
 
 - how many increments, and how many are ready, blocked or waiting
 - what the backlog builds, in one line
-- how many questions are open, and that each has a default
+- how many questions are open, and that each has a default. These are only the questions that survived the
+  challenge: say how many were challenged and how many precedence, a ruling or a blocker settled
 - any step that must happen before building
 - anything that waits on someone outside the build loop
 
@@ -44,7 +45,7 @@ Any change that must land before the build loop can run this backlog, such as a 
 
 ### 4. `## Questions for <owner>`
 
-One line first: each question lists the default that is built if nobody answers. Then one heading per `question` conflict, numbered, worded as the question:
+Questions are minimal by default: every question the reconcilers raised was challenged against precedence and every ruling, and only the ones nothing settles are here. One line first: how many were challenged, how many were settled or found to wait on a blocker, and that each question left lists the default built if nobody answers. Then one heading per `question` conflict still in `conflicts.json`, numbered, worded as the question:
 
 ```markdown
 ### 1. <The question, as the owner would ask it>
@@ -56,21 +57,28 @@ One line first: each question lists the default that is built if nobody answers.
 
 Use the same three labels, in the same order, every time. Where a default holds several values, put a table between the heading and the labels.
 
-### 5. `## Settled without a question`
+### 5. `## Waiting on others`
 
-A table of every `precedence` conflict: the decision, the source or rule that settled it, and the conflict id.
+Every adopted requirement with `blockedBy`: what it needs, who must act, and the blocked increment that builds it. A blocker is never a question: the design is settled, and the row builds once somebody outside the programme acts. Leave the section out when there is none.
+
+| Requirement | Waiting for | Increment |
+|---|---|---|
+
+### 6. `## Settled without a question`
+
+A table of every `precedence` conflict: the decision, the source or rule that settled it, and the conflict id. Mark the ones the challenge settled, so the owner sees which questions a ruling answered.
 
 | Decision | Settled by | Conflict |
 |---|---|---|
 
-### 6. `## Already in place`
+### 7. `## Already in place`
 
 A table of every adopted requirement whose delta is `exists`: the requirement and what already meets it. Leave the section out when there is none.
 
 | Requirement | What already exists |
 |---|---|
 
-### 7. `## The increments`
+### 8. `## The increments`
 
 A table of every increment, in build order:
 
@@ -81,7 +89,7 @@ Criteria is the count of acceptance criteria. Status is ready, blocked or waitin
 
 Then **Check these ordering decisions:** a bullet each for every call the consolidator made that the owner might want another way. Examples: an increment ordered before another for a reason, a blocked row and what unblocks it, an increment that may be too big to review and how it would split, a row that is not todo and still covers a requirement now out of scope or already met.
 
-### 8. `## Themes`
+### 9. `## Themes`
 
 Only when the backlog has `themes`. Leave the section out otherwise.
 
@@ -94,22 +102,24 @@ Wave is the theme's place in the landing order: wave 1 lands first, and themes i
 
 Then **Cross-theme dependencies:** a bullet each for every row that depends on a row in another theme, or in no theme: the two ids, the two themes, and why the order is real. Say "None" when there are none.
 
-### 9. `## Where the requirements came from`
+### 10. `## Where the requirements came from`
 
 The coverage proof:
 
 - claims taken, from how many sources; how many held, were dropped and were added as missed
+- the areas reconcile was cut into, in one line, so the reader sees every part of the service was weighed apart
 - requirements made, by status: to build (and how many already in place), questions, out of scope
-- a table per source: claims, held, added, and the requirements it backs (in scope in brackets)
+- a table per source: claims, held, added, cited (the working-set claims a requirement or conflict cites), and the requirements it backs (in scope in brackets)
+- one line on unused sources: `tim distil coverage` refuses a source that backs nothing, so say every source backs at least one requirement, and name any source whose cited share is low, such as under a tenth, with what its uncited claims were about
 - the strongest requirements: those most sources back
 - the weakest: those that rest on one source, and any that rest only on inferred claims
 - anything to confirm before passing the report on
 
-### 10. `## Out of scope`
+### 11. `## Out of scope`
 
 Every `out-of-scope` requirement, grouped under a `###` heading per reason, such as problems for the owning teams, platform work outside the loop, and exclusions a source or ruling made. A table or bullets per group, each with its requirement id.
 
-### 11. `## Terms used`
+### 12. `## Terms used`
 
 A table of every abbreviation and term of art the report uses, alphabetical.
 
@@ -125,7 +135,7 @@ A table of every abbreviation and term of art the report uses, alphabetical.
 
 - The backlog has <N> increments: <n> ready to build, <n> blocked.
 - <What it builds, in one line.>
-- <N> questions are open. Each has a default, so building can start without an answer.
+- <N> questions are open, of <n> challenged. Each has a default, so building can start without an answer.
 - <Any step before building.>
 - <Anything that waits on someone outside the loop.>
 
@@ -144,13 +154,19 @@ A table of every abbreviation and term of art the report uses, alphabetical.
 
 ## Questions for <owner>
 
-Each question lists the default that will be built if nobody answers.
+<n> questions were challenged against precedence and every ruling; <n> were settled and <n> wait on others. Each
+question left lists the default that will be built if nobody answers.
 
 ### 1. <question>
 
 - **Default:**
 - **Affects:**
 - **Why it is open:**
+
+## Waiting on others
+
+| Requirement | Waiting for | Increment |
+|---|---|---|
 
 ## Settled without a question
 
@@ -179,7 +195,9 @@ Each theme builds on its own branch and machine. No two themes touch the same co
 ## Done means
 
 - The summary is about five lines, and every line is a fact the reader acts on.
-- Every `question` conflict has its own heading with Default, Affects and Why it is open.
+- Every `question` conflict left after the challenge has its own heading with Default, Affects and Why it is open, and no settled or blocked one is written as a question.
+- Every requirement with `blockedBy` appears once under Waiting on others.
+- Every source appears in the per-source table with its cited count.
 - Every `precedence` conflict, every `exists` requirement, every increment and every `out-of-scope` requirement appears once.
 - When the backlog has themes, every theme appears once in the Themes table, and every row in exactly one theme or listed as in none.
 - Every figure matches the files.

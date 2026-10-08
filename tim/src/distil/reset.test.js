@@ -1,7 +1,7 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { existsSync, mkdirSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { resetSources, supersededStampOf } from './reset.js'
+import { resetReconcile, resetSources, supersededStampOf } from './reset.js'
 import { distilStatus } from './checks.js'
 import { mergeExtractParts } from './merge-extract.js'
 import {
@@ -180,5 +180,76 @@ describe('resetSources', () => {
     expect(() => reset({ sourceIds: ['repo:tests'] })).toThrow(
       `${supersededDir()} already exists. Run the reset again.`
     )
+  })
+})
+
+describe('resetReconcile', () => {
+  const resetLater = () =>
+    resetReconcile({ layout: workspace.layout, now: NOW })
+
+  /** The demo with every later-stage file a reconcile reset moves. */
+  const reconciledAndReported = () => {
+    workspace = makeDistilWorkspace()
+    workspace.writeJson(workspace.layout.workingSet, {})
+    workspace.writeJson(workspace.layout.areas, {})
+    workspace.writeJson(
+      join(workspace.layout.areasDir, 'suite', 'reconciled.json'),
+      {}
+    )
+    workspace.writeJson(join(workspace.layout.challengeDir, 'c-002.json'), {})
+    workspace.writeJson(
+      join(workspace.layout.dir, 'distil', 'backlog-snapshot.before.json'),
+      {}
+    )
+    writeFileSync(workspace.layout.report, '# report\n')
+  }
+
+  test('moves every later-stage file under superseded/<time>/reconcile', () => {
+    reconciledAndReported()
+
+    resetLater()
+
+    expect(readdirSync(join(supersededDir(), 'reconcile')).sort()).toEqual([
+      'areas',
+      'areas.json',
+      'backlog-snapshot.before.json',
+      'backlog.json',
+      'challenge',
+      'conflicts.json',
+      'report.md',
+      'requirements.json',
+      'working-set.json'
+    ])
+  })
+
+  test('keeps every verified extract, so the next launch goes straight to reconcile', () => {
+    reconciledAndReported()
+
+    resetLater()
+
+    expect(
+      distilStatus({
+        layout: workspace.layout,
+        schemas: workspace.schemas,
+        workarea: DEMO_WORKAREA
+      }).counts
+    ).toMatchObject({ verified: 3, pending: 0 })
+  })
+
+  test('refuses while the backlog has a built row, and moves nothing', () => {
+    workspace = makeDistilWorkspace()
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      increments: backlog.increments.map((row, index) =>
+        index === 0 ? { ...row, status: 'done', commit: 'abc1234' } : row
+      )
+    }))
+    const builtId = workspace.readJson(workspace.layout.backlog).increments[0]
+      .id
+
+    expect(() => resetLater()).toThrow(
+      `backlog.json has rows with build work on them: ${builtId}. A reconcile reset starts the backlog again and would lose their ids. Re-distil without a reset instead: it keeps every id and never changes a built row.`
+    )
+    expect(existsSync(workspace.layout.requirements)).toBe(true)
   })
 })

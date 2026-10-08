@@ -1,7 +1,14 @@
 # Consolidate: requirements into backlog.json
 
-You turn the adopted `new` and `change` requirements into increments, and write `<workarea>/backlog.json` in the one
-backlog shape. Your prompt names the files and the two check commands.
+Consolidate runs in two steps, and this brief is the method for both:
+
+- **A drafter per area** drafts the rows for its area's requirements and records the code each row touches, in
+  `distil/areas/<area id>/rows.json`. See [Drafting an area's rows](#drafting-an-areas-rows).
+- **The combiner**, one agent, joins every area's drafts into `<workarea>/backlog.json` in the one backlog shape:
+  it merges rows that repeat the same set-up, orders them, gives each its id and draws the themes. It drafts rows
+  itself for any requirement no area drafted. Its output is checked by `tim backlog check` and `tim distil coverage`.
+
+Your prompt says which you are, names the files and the check commands.
 
 Read these before you write a row:
 
@@ -9,7 +16,7 @@ Read these before you write a row:
   `tim backlog check` validates against this file.
 - `.claude/skills/requirements-pipeline/references/SHAPE.md`: the rules a schema cannot check. A row is a
   requirement, never a recipe. A row is a full-stack slice, never a layer. What an acceptance criterion may and may
-  not name. Provenance.
+  not name. Provenance. Themes.
 - `sources.json`, `distil/requirements.json` and `distil/conflicts.json`.
 - The existing `backlog.json`, when your prompt says one exists.
 
@@ -24,19 +31,23 @@ Read these before you write a row:
   sitting. Aim for three to ten acceptance criteria an increment. Say in each row's `notes` which slices it
   combines and why.
 
-An `exists` requirement is already met. It goes in the report, never in a `todo` or `blocked` increment. An acceptance criterion
-reads as the change, not a restatement of what is there.
+The drafter does pass 1 and pass 2 within its area. The combiner does pass 2 again across areas, merging rows from
+two areas only where they truly repeat the same set-up.
+
+An `exists` requirement is already met. It goes in the report, never in a `todo` or `blocked` increment. An acceptance
+criterion reads as the change, not a restatement of what is there.
 
 ## Each row
 
 - `id`: `inc-001` onwards, in build order. `title`. `detail`: what and why, in plain English.
 - `acceptanceCriteria`: observable. Each ends with its provenance in brackets, such as
-  `(confluence:6518997274 §Notification data; trace:ched-pp country-of-origin)`.
+  `(confluence:6518997274 §Notification data; trace:ched-pp country-of-origin)`. Keep copy, option, hint and error
+  changes as their own criteria, worded as the new text: the reviewer checks each one.
 - **Every acceptance criterion can be observed in every environment the row names.** Never write one that cannot,
   such as a real cloud service on a local stack that has none. That is a reconcile problem, not yours to settle.
-  Put the requirement in your answer's `reconcileProblems`, with the environment and why, and the workflow sends it
-  back to the reconciler. Where a question's default already says what each environment gets, write the criterion
-  per environment to match it.
+  The drafter lists the requirement in its draft's `unobservable`; the combiner puts it in its answer's
+  `reconcileProblems`, with the environment and why, and the workflow sends it back to the reconciler. Where a
+  question's default already says what each environment gets, write the criterion per environment to match it.
 - `requirements`: the requirement ids it covers. Every adopted `new` or `change` requirement sits in exactly one
   increment whose status is `todo`, `blocked`, `done` or `deferred`.
 - `sources`, `repos`, `kind`, `dependsOn` (a real ordering need only, never a layer order), `status`.
@@ -46,11 +57,50 @@ reads as the change, not a restatement of what is there.
   which always merge backend, then tests, then frontend.
 - `openQuestions` where a question touches it. A row a question touches is `todo` when the question has a default,
   so the builder follows the default and says so. It is `blocked` only when there is no safe default to build.
-- A row that needs somebody to act first, such as a platform change, says so in `notes` and is `blocked` until
-  they have.
+- **A requirement with `blockedBy` sits in a `blocked` row**, never a `todo` one, and the row's `openQuestions` name
+  the blocker: who must do what. Keep such requirements apart from rows that can build now, so the rest is not held
+  up. `tim distil coverage` refuses a todo row that covers one.
+- A row that needs somebody to act first for any other reason, such as a platform change, says so in `notes` and is
+  `blocked` until they have.
 - `gate` is a review point: the build loop lands the row, then stops so somebody can look before anything that
   depends on it is built. Set it, saying what to look at, on a row that sets a pattern the rows after it copy, or
   that builds a question's default many rows rest on. Otherwise `null`.
+
+## Drafting an area's rows
+
+You draft the rows for one area. Your prompt's `tim distil areas --area <id>` lists `toBuild`, the adopted `new` and
+`change` requirements from your area, and `reconciled`, every requirement from it.
+
+1. Read each requirement in `toBuild`, its claims in your area's working set, and its conflicts.
+2. Work out **what code each requirement touches**, from the evidence: the target repos' claims name their files and
+   feature folders, and the traces and specs name the pages. Be precise: the feature folder of the page
+   (`frontend:src/server/app/sets/live-animals/journeys/linear/features/origin`), not the whole app.
+3. Draft rows as the two passes say, within your area.
+4. Write `distil/areas/<area id>/rows.json`:
+
+   ```json
+   {
+     "area": "origin",
+     "rows": [
+       {
+         "title": "…", "detail": "…", "acceptanceCriteria": ["… (prototype:dr2-1-source views/origin.njk)"],
+         "requirements": ["req-014", "req-015"], "sources": [{ "source": "…", "ref": "…" }],
+         "repos": ["backend", "frontend", "tests"], "kind": "…", "status": "todo", "gate": null,
+         "openQuestions": [], "notes": "…",
+         "touches": ["frontend:src/server/app/sets/live-animals/journeys/linear/features/origin"],
+         "shared": ["frontend:src/server/app/sets/live-animals/journeys/linear/flow.js"],
+         "existingRow": null
+       }
+     ],
+     "unobservable": []
+   }
+   ```
+
+   `touches` is the code the row owns; `shared` is code other areas' rows also change (the journey flow, the layout,
+   shared copy, a shared component). `existingRow`, on a re-distil, names the row in `backlog.json` that already
+   covers these requirements, so the combiner keeps its id; otherwise `null`. A draft row has no `id`: the combiner
+   gives ids.
+5. Cover every requirement in `toBuild` once. An area with nothing to build writes `"rows": []`.
 
 ## The envelope
 
@@ -58,16 +108,24 @@ reads as the change, not a restatement of what is there.
 - `repos`: the table the build loop takes, written from `sources.json`'s `repos`. Each key's `path` as it is there,
   and its `github` slug `DEFRA/<folder name>` unless the repo's remote says otherwise. Check each with the
   `git -C <workspace>/<path> remote get-url origin` command your prompt gives.
-- `themes`, only when `sources.json` has a `themes` rule (see "Themes" above).
+- `themes`, only when `sources.json` has a `themes` rule (see "Themes" below).
 
 ## Themes
 
 Only when `sources.json` has a `themes` rule. It says how to draw the boundaries; follow it. The rules a theme keeps
-are in `SHAPE.md`, "Themes".
+are in `SHAPE.md`, "Themes". The aim is **several themes that genuinely build in parallel**.
 
-- **Work out what code each row's requirements touch** from the evidence: the `repo:` sources' extracts, and the
-  pages, records and specs the requirements name. Group rows whose code is the same, so no two themes touch the same
-  path.
+- **Draw boundaries at feature-folder granularity, from what each row touches.** The drafts' `touches` say it. A
+  frontend whose feature folders are independent by design (each page its own folder, such as
+  `src/server/app/sets/live-animals/journeys/linear/features/<feature>`) is several themes, not one: group the rows
+  of a few related feature folders into a theme, and name those folders in `touches`. Never name a whole app or a
+  whole repo another theme also builds in.
+- **Shared files go in a foundation theme in an early wave.** The journey flow, the layout, shared copy and any
+  component several themes change (the drafts' `shared`) are one small foundation theme, whose rows make the shared
+  change once. The feature themes depend on it and land in the next wave, in parallel with each other.
+- **A theme holding most of the rows is a smell.** It means the boundary was drawn by repo, or around a shared file,
+  rather than by the code each row owns. Redraw it: move the shared change to the foundation theme and split the
+  rest by feature folder. Say in the theme's `why` how many rows it holds and why it cannot split further.
 - **Give every row a `theme`.** Every `todo` and `blocked` row needs one. Give one to a row built or set aside only
   when it already has one.
 - **Write the envelope's `themes`.** Each has an `id` in lower-case words joined by hyphens, a `title`, a `why`
@@ -103,7 +161,15 @@ are in `SHAPE.md`, "Themes".
 
 ## Finishing
 
-1. Write `backlog.json` with the Write tool, at the absolute path your prompt gives.
-2. Run both check commands your prompt gives, `tim backlog check` and `tim distil coverage`. Each exits 1 and names
+The drafter:
+
+1. Writes `rows.json` with the Write tool, at the absolute path its prompt gives.
+2. Answers with the structured output its prompt asks for: how many rows, how many requirements they cover, and
+   every decision it made.
+
+The combiner:
+
+1. Writes `backlog.json` with the Write tool, at the absolute path its prompt gives.
+2. Runs both check commands its prompt gives, `tim backlog check` and `tim distil coverage`. Each exits 1 and names
    every problem. Fix every one and run both again, until both pass.
-3. Answer with the structured output your prompt asks for, including every decision you made.
+3. Answers with the structured output its prompt asks for, including how many themes and every decision it made.

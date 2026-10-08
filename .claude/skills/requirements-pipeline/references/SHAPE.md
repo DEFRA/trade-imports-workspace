@@ -19,6 +19,15 @@ backlog per theme.
   `<repoKey>:<path prefix>`. Its `why` gives the evidence: which requirements change that code. Two themes never
   touch the same path, or one inside the other, in the same repo: overlapping code means conflicting pull requests.
   Name the narrowest folder the rows change, never a whole repo another theme also builds in.
+- **Boundaries are drawn at feature-folder granularity.** Where a repo's feature folders are independent by design
+  (each page or feature its own folder), they are separate code areas: several themes can build in one app at once,
+  each owning a few folders. Group rows by the folders they actually change, never by the app they live in.
+- **Shared code goes in a foundation theme in an early wave.** A file several themes would change (a journey's
+  flow, the layout, shared copy, a shared component) belongs to one small foundation theme that makes the shared
+  change once. The feature themes depend on it and land in the next wave, in parallel.
+- **A theme holding most of the rows is a smell.** It means the boundary followed a repo or a shared file rather
+  than the code each row owns. Redraw it, or say in its `why` why it cannot split. The aim is several themes that
+  genuinely build in parallel.
 - **A row belongs to exactly one theme.** Every `todo` or `blocked` row names it in `theme`, and builds only in
   repos its theme touches. A row built or set aside may have no theme.
 - **A cross-theme dependency is a real ordering need.** A row may depend on a row in another theme only when it

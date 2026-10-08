@@ -30,14 +30,17 @@ export const DISTIL_SCHEMA_FILES = {
   extract: 'extract.schema.json',
   verify: 'verify.schema.json',
   requirements: 'requirements.schema.json',
-  conflicts: 'conflicts.schema.json'
+  conflicts: 'conflicts.schema.json',
+  areas: 'areas.schema.json',
+  reconcilePart: 'reconcile-part.schema.json',
+  challenge: 'challenge.schema.json'
 }
 
 /**
  * Read every DISTIL schema from the workspace.
  *
  * @param {string} workspaceRoot
- * @returns {{sources: object, partition: object, extract: object, verify: object, requirements: object, conflicts: object}}
+ * @returns {{sources: object, partition: object, extract: object, verify: object, requirements: object, conflicts: object, areas: object, reconcilePart: object, challenge: object}}
  * @throws {TimError} NOT_FOUND when a schema is missing, PARSE when one is not JSON
  */
 export const loadDistilSchemas = (workspaceRoot) =>
@@ -120,7 +123,7 @@ export const claimsHashOf = (claims) =>
  * Every DISTIL file's path inside one workarea folder.
  *
  * @param {string} workareaDir
- * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, supersededDir: string, requirements: string, conflicts: string, workingSet: string, backlog: string}}
+ * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, supersededDir: string, requirements: string, conflicts: string, workingSet: string, areas: string, areasDir: string, areaIdMap: string, challengeDir: string, backlog: string, report: string}}
  */
 export const distilLayout = (workareaDir) => ({
   dir: workareaDir,
@@ -131,8 +134,41 @@ export const distilLayout = (workareaDir) => ({
   requirements: join(workareaDir, 'distil', 'requirements.json'),
   conflicts: join(workareaDir, 'distil', 'conflicts.json'),
   workingSet: join(workareaDir, 'distil', 'working-set.json'),
-  backlog: join(workareaDir, 'backlog.json')
+  areas: join(workareaDir, 'distil', 'areas.json'),
+  areasDir: join(workareaDir, 'distil', 'areas'),
+  areaIdMap: join(workareaDir, 'distil', 'areas', 'id-map.json'),
+  challengeDir: join(workareaDir, 'distil', 'challenge'),
+  backlog: join(workareaDir, 'backlog.json'),
+  report: join(workareaDir, 'report.md')
 })
+
+/**
+ * One area's folder under distil/areas/, holding its working set, its
+ * reconciled requirements and conflicts, and its draft rows.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} areaId
+ * @returns {{dir: string, workingSet: string, reconciled: string, rows: string}}
+ */
+export const areaFilesOf = (layout, areaId) => {
+  const dir = join(layout.areasDir, areaId)
+  return {
+    dir,
+    workingSet: join(dir, 'working-set.json'),
+    reconciled: join(dir, 'reconciled.json'),
+    rows: join(dir, 'rows.json')
+  }
+}
+
+/**
+ * Where one question conflict's challenge verdict is written.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} conflictId
+ * @returns {string}
+ */
+export const challengePathOf = (layout, conflictId) =>
+  join(layout.challengeDir, `${conflictId}.json`)
 
 export const extractPathOf = (layout, slug) =>
   join(layout.extractDir, `${slug}.json`)

@@ -8,6 +8,10 @@ import {
   makeDistilWorkspace,
   splitExtractIntoParts
 } from '../../test-support/distil-workspace.js'
+import {
+  reconciledFor,
+  writeDemoAreas
+} from '../../test-support/distil-areas.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -295,6 +299,151 @@ describe('tim distil reset', () => {
       'Name the sources to reset with --source, once for each, or reset every source with --all. Not both.'
     )
   })
+
+  test('resets the reconcile stage, keeping every verified extract', async () => {
+    workspace = makeDistilWorkspace()
+    await runTim(['reset', DEMO_WORKAREA, '--stage', 'reconcile'])
+
+    const run = await runTim(['status', DEMO_WORKAREA])
+
+    expect({
+      verified: envelopeOf(run).result.counts.verified,
+      requirements: existsSync(workspace.layout.requirements),
+      backlog: existsSync(workspace.layout.backlog)
+    }).toEqual({ verified: 3, requirements: false, backlog: false })
+  })
+
+  test('refuses a reconcile reset that names sources, with exit 2', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'reset',
+      DEMO_WORKAREA,
+      '--stage',
+      'reconcile',
+      '--all'
+    ])
+
+    expect({
+      exitCode: run.exitCode,
+      message: envelopeOf(run).errors[0].message
+    }).toEqual({
+      exitCode: 2,
+      message:
+        '--stage reconcile resets the later stages for the whole workarea, so it takes no --source and no --all.'
+    })
+  })
+})
+
+describe('tim distil areas', () => {
+  test('writes every area working set with --write and prints the counts', async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+
+    const run = await runTim(['areas', DEMO_WORKAREA, '--write'])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      total: 13,
+      areas: [
+        { id: 'suite', claims: 6 },
+        { id: 'tiers', claims: 7 }
+      ]
+    })
+  })
+
+  test('refuses --write with --area, with exit 2', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'areas',
+      DEMO_WORKAREA,
+      '--write',
+      '--area',
+      'suite'
+    ])
+
+    expect(run.exitCode).toBe(2)
+  })
+})
+
+describe('tim distil merge-reconcile', () => {
+  test("checks one area's file and writes nothing", async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+    await runTim(['areas', DEMO_WORKAREA, '--write'])
+    workspace.writeJson(
+      join(workspace.layout.areasDir, 'suite', 'reconciled.json'),
+      reconciledFor(workspace, 'suite')
+    )
+
+    const run = await runTim([
+      'merge-reconcile',
+      DEMO_WORKAREA,
+      '--area',
+      'suite'
+    ])
+
+    expect(envelopeOf(run).result).toEqual({
+      areas: [
+        {
+          id: 'suite',
+          requirements: 2,
+          newRequirements: 0,
+          conflicts: 1,
+          newConflicts: 0
+        }
+      ]
+    })
+  })
+
+  test('exits 1 with LINT when an area has not been reconciled', async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+    await runTim(['areas', DEMO_WORKAREA, '--write'])
+
+    const run = await runTim(['merge-reconcile', DEMO_WORKAREA])
+
+    expect({
+      exitCode: run.exitCode,
+      code: envelopeOf(run).errors[0].code
+    }).toEqual({ exitCode: 1, code: 'LINT' })
+  })
+})
+
+describe('tim distil challenge', () => {
+  test('lists the question conflicts to challenge', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['challenge', DEMO_WORKAREA])
+
+    expect(
+      envelopeOf(run).result.questions.map((question) => question.id)
+    ).toEqual(['c-002'])
+  })
+
+  test('checks one verdict', async () => {
+    workspace = makeDistilWorkspace()
+    workspace.writeJson(join(workspace.layout.challengeDir, 'c-002.json'), {
+      conflict: 'c-002',
+      verdict: 'question',
+      rule: 'No ruling says how often the tiers run.',
+      claims: ['dr5-060'],
+      outcome: 'Tier 1 on every pull request.',
+      why: 'The schedule is a cost the owner weighs.'
+    })
+
+    const run = await runTim([
+      'challenge',
+      DEMO_WORKAREA,
+      '--conflict',
+      'c-002'
+    ])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      conflict: 'c-002',
+      verdict: 'question'
+    })
+  })
 })
 
 describe('tim distil merge-verify', () => {
@@ -525,7 +674,7 @@ describe('tim distil trace', () => {
     )
 
     expect(envelopeOf(run).errors[0].message).toMatch(
-      /^playwright trace snapshot 1 -- eval document\.title failed with exit 1: /
+      /^playwright trace snapshot 1 -- eval document\.title failed with exit 1, using Playwright [0-9.]+ \(tim\): /
     )
   })
 })

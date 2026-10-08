@@ -4,7 +4,18 @@ import { distilLayout, loadDistilSchemas } from '../../distil/files.js'
 import { checkDistil, distilStatus } from '../../distil/checks.js'
 import { mergeVerifyParts } from '../../distil/merge-verify.js'
 import { mergeExtractParts } from '../../distil/merge-extract.js'
-import { resetSources } from '../../distil/reset.js'
+import { resetReconcile, resetSources } from '../../distil/reset.js'
+import {
+  areaRequirements,
+  checkAreas,
+  writeAreaWorkingSets
+} from '../../distil/areas.js'
+import { mergeReconcile } from '../../distil/merge-reconcile.js'
+import {
+  checkChallenge,
+  clearChallenges,
+  listChallenges
+} from '../../distil/challenge.js'
 import { workingSetOf, writeWorkingSet } from '../../distil/working-set.js'
 import { distilCoverage } from '../../distil/coverage.js'
 import { stampScopeHash } from '../../distil/stamp.js'
@@ -39,13 +50,61 @@ const sourceOptsSchema = z.object({ source: sourceIdSchema })
 const RESET_CHOICE =
   'Name the sources to reset with --source, once for each, or reset every source with --all. Not both.'
 
+const RECONCILE_RESET_ALONE =
+  '--stage reconcile resets the later stages for the whole workarea, so it takes no --source and no --all.'
+
 const resetOptsSchema = z
   .object({
+    stage: z.enum(['extract', 'reconcile'], {
+      message: '--stage must be extract or reconcile.'
+    }),
     source: z.array(sourceIdSchema),
     all: z.boolean()
   })
-  .refine(({ source, all }) => all !== source.length > 0, {
-    message: RESET_CHOICE
+  .refine(
+    ({ stage, source, all }) =>
+      stage === 'extract' || (source.length === 0 && !all),
+    { message: RECONCILE_RESET_ALONE }
+  )
+  .refine(
+    ({ stage, source, all }) =>
+      stage === 'reconcile' || all !== source.length > 0,
+    { message: RESET_CHOICE }
+  )
+
+const areaIdSchema = z
+  .string()
+  .regex(
+    /^[a-z0-9]+(-[a-z0-9]+)*$/,
+    'An area id is lower-case words joined by hyphens, such as origin or address-book.'
+  )
+
+const areasOptsSchema = z
+  .object({
+    area: areaIdSchema.optional(),
+    write: z.boolean(),
+    requirements: z.boolean()
+  })
+  .refine(
+    ({ area, write, requirements }) => !(write && (area || requirements)),
+    {
+      message:
+        '--write writes every area at once, so it takes no --area or --requirements. Use one or the other.'
+    }
+  )
+
+const mergeReconcileOptsSchema = z.object({ area: areaIdSchema.optional() })
+
+const challengeOptsSchema = z
+  .object({
+    conflict: z
+      .string()
+      .regex(/^c-[0-9]{3,}$/, 'A conflict id is c- then digits, such as c-002.')
+      .optional(),
+    clear: z.boolean()
+  })
+  .refine(({ conflict, clear }) => !(conflict && clear), {
+    message: '--clear removes every verdict, so it takes no --conflict.'
   })
 
 const collect = (value, previous) => [...previous, value]
@@ -103,7 +162,8 @@ const renderStatus = (result) =>
       : [])
   ].join('\n')
 
-const countOf = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`
+const countOf = (count, word, plural = `${word}s`) =>
+  `${count} ${count === 1 ? word : plural}`
 
 const renderPartition = (source) =>
   [
@@ -144,7 +204,72 @@ const renderMergeExtract = (result) =>
     'Kept the partition and the part files.'
   ].join('\n')
 
+const renderReconcileReset = (result) =>
+  result.superseded
+    ? [
+        `Moved ${countOf(result.moved.length, 'file or folder', 'files or folders')} to ${result.superseded}/reconcile:`,
+        ...result.moved.map((file) => `  ${file.from}`),
+        'Every verified extract is kept: the next launch reconciles from nothing.'
+      ].join('\n')
+    : 'Nothing to move: the workarea has no requirements, conflicts, areas, backlog or report yet.'
+
 const renderReset = (result) =>
+  result.stage === 'reconcile'
+    ? renderReconcileReset(result)
+    : renderSourceReset(result)
+
+const renderAreaLine = (area) =>
+  `  ${area.id}, ${area.title}: ${countOf(area.claims, 'claim')} from ${area.sources.map((source) => `${source.id} ${source.claims}`).join(', ')}${area.toBuild ? `. ${countOf(area.reconciled.length, 'requirement')}, ${area.toBuild.length} to build` : ''}`
+
+const renderAreas = (result) =>
+  [
+    ...(result.total !== undefined
+      ? [
+          `${countOf(result.areas.length, 'area')}, ${countOf(result.total, 'claim')} between them, all in shape.`
+        ]
+      : []),
+    ...result.areas.map(renderAreaLine),
+    ...(result.unassigned?.length
+      ? [`In no area: ${result.unassigned.join(', ')}`]
+      : []),
+    ...(result.written
+      ? [
+          `Wrote ${countOf(result.written.length, 'working set')}. Removed ${countOf(result.removed.length, 'file or folder', 'files or folders')} an earlier reconcile left.`
+        ]
+      : [])
+  ].join('\n')
+
+const renderMergeReconcile = (result) =>
+  [
+    ...result.areas.map(
+      (area) =>
+        `  ${area.id}: ${countOf(area.requirements, 'requirement')} (${area.newRequirements} new), ${countOf(area.conflicts, 'conflict')} (${area.newConflicts} new)`
+    ),
+    result.requirements === undefined
+      ? 'In shape. Nothing written.'
+      : `Merged into ${countOf(result.requirements, 'requirement')} and ${countOf(result.conflicts, 'conflict')}, ${result.renumbered} new ids numbered. Id map: ${result.idMap}`
+  ].join('\n')
+
+const renderChallenge = (result) => {
+  if (result.removed) {
+    return `Removed ${countOf(result.removed.length, 'verdict')}.`
+  }
+  if (result.verdict) {
+    return `${result.conflict}: ${result.verdict}, in shape.`
+  }
+  return [
+    `${countOf(result.questions.length, 'question')} to challenge:`,
+    ...result.questions.map(
+      (question) =>
+        `  ${question.id}: ${question.question} (${question.requirements.join(', ')})`
+    ),
+    ...result.verdicts.map(
+      (verdict) => `  verdict ${verdict.conflict}: ${verdict.verdict}`
+    )
+  ].join('\n')
+}
+
+const renderSourceReset = (result) =>
   result.superseded
     ? [
         `Moved ${countOf(result.moved, 'file')} to ${result.superseded}:`,
@@ -340,38 +465,156 @@ export const register = (program, { timVersion }) => {
   distil
     .command('reset <workarea>')
     .description(
-      'Set sources back to pending, so the next distil launch extracts and verifies them again even though their scope has not changed. Moves their extract, partition, parts and verify files to distil/superseded/<time>/, so nothing is lost'
+      'Start a stage again, keeping what it replaces under distil/superseded/<time>/. --stage extract (the default) sets sources back to pending, moving their extract, partition, parts and verify files. --stage reconcile keeps every verified extract and moves the requirements, conflicts, areas, challenge verdicts, backlog and report'
     )
     .addHelpText(
       'after',
       '\nExamples:\n' +
         '  tim distil reset shared/my-programme --source repo:frontend --source trace:recorded-run --json\n' +
         '  tim distil reset shared/my-programme --all --json\n' +
-        'Use it when the extract method has changed. Requirements that cite the old claims are rewritten by the next reconcile.'
+        '  tim distil reset shared/my-programme --stage reconcile --json\n' +
+        'Use --stage extract when the extract method has changed: the next reconcile re-cites the new claims. Use --stage reconcile when the reconcile or consolidate method has changed: the next launch reconciles from nothing, and new ids start again. A normal re-distil needs no reset. --stage reconcile refuses while a backlog row has build work on it.'
     )
+    .option('--stage <stage>', 'extract or reconcile', 'extract')
     .option(
       '--source <id>',
-      'A source to reset. Give it once for each source',
+      'With --stage extract: a source to reset. Give it once for each source',
       collect,
       []
     )
-    .option('--all', 'Reset every source in sources.json')
+    .option('--all', 'With --stage extract: reset every source in sources.json')
     .action(
       makeBacklogAction({
         run: ({ workspaceRoot, args }, opts) => {
           const parsed = parseOptions(resetOptsSchema, {
+            stage: opts.stage,
             source: opts.source,
             all: opts.all === true
           })
           const { layout, schemas } = contextFor(workspaceRoot, args[0])
-          return resetSources({
-            layout,
-            schemas,
-            sourceIds: parsed.source,
-            all: parsed.all
-          })
+          if (parsed.stage === 'reconcile') {
+            return { stage: 'reconcile', ...resetReconcile({ layout }) }
+          }
+          return {
+            stage: 'extract',
+            ...resetSources({
+              layout,
+              schemas,
+              sourceIds: parsed.source,
+              all: parsed.all
+            })
+          }
         },
         renderText: renderReset,
+        timVersion
+      })
+    )
+
+  distil
+    .command('areas <workarea>')
+    .description(
+      "Check distil/areas.json, the plan that cuts reconcile into areas, and count each area's claims. --write starts a reconcile: it writes each area's working set and removes what an earlier reconcile left. --area lists one area's reconciled requirements"
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  tim distil areas shared/my-programme --json\n' +
+        '  tim distil areas shared/my-programme --write --json\n' +
+        '  tim distil areas shared/my-programme --area origin --json\n' +
+        '  tim distil areas shared/my-programme --requirements --json\n' +
+        'Exits 1 and names every problem: a claim in no area, a slice that names no part or claim, an existing id in no area or two.'
+    )
+    .option(
+      '--write',
+      "Write each area's working set to distil/areas/<area id>/working-set.json, and remove each area's reconciled and draft-row files, the merge's id map and the challenge verdicts an earlier run left"
+    )
+    .option(
+      '--area <id>',
+      'One area, with the requirements now in requirements.json that it reconciled and those still to build'
+    )
+    .option(
+      '--requirements',
+      "Every area's reconciled requirements and those still to build, and the requirements no area holds"
+    )
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const parsed = parseOptions(areasOptsSchema, {
+            area: opts.area,
+            write: opts.write === true,
+            requirements: opts.requirements === true
+          })
+          const context = contextFor(workspaceRoot, args[0])
+          if (parsed.write) return writeAreaWorkingSets(context)
+          if (parsed.area || parsed.requirements) {
+            return areaRequirements({ ...context, areaId: parsed.area })
+          }
+          return checkAreas(context)
+        },
+        renderText: renderAreas,
+        timVersion
+      })
+    )
+
+  distil
+    .command('merge-reconcile <workarea>')
+    .description(
+      "Join every area's distil/areas/<area id>/reconciled.json into requirements.json and conflicts.json. Existing ids stay; each new id takes the next free number, and the citations follow. Writes nothing unless every area's file is in shape. --area checks one area's file and writes nothing"
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  tim distil merge-reconcile shared/my-programme --area origin --json\n' +
+        '  tim distil merge-reconcile shared/my-programme --json\n' +
+        "Exits 1 and names every problem: a missing area file, an id that is not the area's, an existing id left out, a claim outside the area's working set, a conflict nobody can find."
+    )
+    .option('--area <id>', "Check this area's file only, and write nothing")
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const parsed = parseOptions(mergeReconcileOptsSchema, {
+            area: opts.area
+          })
+          return mergeReconcile({
+            ...contextFor(workspaceRoot, args[0]),
+            areaId: parsed.area
+          })
+        },
+        renderText: renderMergeReconcile,
+        timVersion
+      })
+    )
+
+  distil
+    .command('challenge <workarea>')
+    .description(
+      'The question conflicts a challenge works through, and the verdicts already written to distil/challenge/. --conflict checks one verdict; --clear removes them all'
+    )
+    .addHelpText(
+      'after',
+      '\nExamples:\n' +
+        '  tim distil challenge shared/my-programme --json\n' +
+        '  tim distil challenge shared/my-programme --conflict c-002 --json\n' +
+        '  tim distil challenge shared/my-programme --clear --json\n' +
+        'tim distil coverage then checks every settling verdict was applied to conflicts.json and requirements.json.'
+    )
+    .option('--conflict <id>', 'Check the verdict for this conflict')
+    .option('--clear', 'Remove every verdict')
+    .action(
+      makeBacklogAction({
+        run: ({ workspaceRoot, args }, opts) => {
+          const parsed = parseOptions(challengeOptsSchema, {
+            conflict: opts.conflict,
+            clear: opts.clear === true
+          })
+          const context = contextFor(workspaceRoot, args[0])
+          if (parsed.clear) return clearChallenges(context)
+          if (parsed.conflict) {
+            return checkChallenge({ ...context, conflictId: parsed.conflict })
+          }
+          return listChallenges(context)
+        },
+        renderText: renderChallenge,
         timVersion
       })
     )
@@ -574,7 +817,8 @@ export const register = (program, { timVersion }) => {
             sourceId: parsed.source,
             traceArgs: args[1] ?? [],
             out: parsed.out,
-            folder: parsed.folder
+            folder: parsed.folder,
+            workspaceRoot
           })
         },
         renderText: renderTrace,

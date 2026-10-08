@@ -75,8 +75,153 @@ describe('distilCoverage', () => {
           requirements: ['req-002', 'req-004']
         }
       ],
+      blocked: [],
+      sources: [
+        { id: 'ruling:sam-2026-09-29c', claims: 1, cited: 1 },
+        { id: 'repo:tests', claims: 4, cited: 4 },
+        { id: 'confluence:6608160092', claims: 6, cited: 6 }
+      ],
       unavailable: [],
       backlog: { path: workspace.layout.backlog, increments: 2, covered: 4 }
+    })
+  })
+
+  describe('a source that backs nothing', () => {
+    const dropRulingCitations = () => {
+      editRequirement('req-001', (requirement) => ({
+        ...requirement,
+        claims: requirement.claims.filter((claimId) => claimId !== 'sam3-001')
+      }))
+    }
+
+    test('refuses a verified source none of whose claims is cited', () => {
+      workspace = makeDistilWorkspace()
+      dropRulingCitations()
+
+      expect(problemsOf()).toEqual([
+        'ruling:sam-2026-09-29c backs no requirement or conflict: none of its 1 held or missed claims is cited. Weigh every one: cite each where it shows what the service does today or must do, and record any the goal excludes in an out-of-scope requirement.'
+      ])
+    })
+
+    test('counts a claim cited only by an out-of-scope requirement as used', () => {
+      workspace = makeDistilWorkspace()
+      dropRulingCitations()
+      editRequirement('req-005', (requirement) => ({
+        ...requirement,
+        claims: [...requirement.claims, 'sam3-001']
+      }))
+
+      expect(coverage().sources[0]).toEqual({
+        id: 'ruling:sam-2026-09-29c',
+        claims: 1,
+        cited: 1
+      })
+    })
+  })
+
+  describe('a requirement blocked by somebody outside the programme', () => {
+    const BLOCKER =
+      'CDP raises the ingress request-body cap to at least 50MB (EUDPA-518).'
+
+    test('lists it among the blocked requirements', () => {
+      workspace = makeDistilWorkspace()
+      rmSync(workspace.layout.backlog)
+      editRequirement('req-006', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(coverage().blocked).toEqual([
+        { id: 'req-006', blockedBy: BLOCKER }
+      ])
+    })
+
+    test('refuses a blocker on a requirement that is not adopted', () => {
+      workspace = makeDistilWorkspace()
+      rmSync(workspace.layout.backlog)
+      editRequirement('req-004', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(problemsOf()).toEqual([
+        'req-004 is question but carries blockedBy. Only an adopted requirement waits on a blocker: a design choice is a question.'
+      ])
+    })
+
+    test('refuses a todo row that covers it', () => {
+      workspace = makeDistilWorkspace()
+      const todoRow = workspace
+        .readJson(workspace.layout.backlog)
+        .increments.find(
+          (increment) =>
+            (increment.status ?? 'todo') === 'todo' &&
+            increment.requirements.includes('req-006')
+        )
+      editRequirement('req-006', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(problemsOf()).toEqual([
+        `${todoRow.id} is todo but covers req-006, which is blocked by: ${BLOCKER} Make the row blocked, with the blocker in its openQuestions, or move req-006 to a blocked row.`
+      ])
+    })
+  })
+
+  describe('a challenge verdict', () => {
+    const challengePath = (conflictId) =>
+      join(workspace.layout.challengeDir, `${conflictId}.json`)
+
+    const SETTLED = {
+      conflict: 'c-002',
+      verdict: 'precedence',
+      rule: 'ruling:sam-2026-09-29c claim 3 says which tiers run where.',
+      claims: ['sam3-001'],
+      outcome: 'The tier-1 smoke run locally; tiers 2 to 5 in CDP perf-test.'
+    }
+
+    test('refuses a settling verdict that was not applied', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), SETTLED)
+
+      expect(problemsOf()).toEqual([
+        `distil/challenge/c-002.json settled it by precedence (${SETTLED.rule}), but distil/conflicts.json still has c-002 as a question. Rewrite it as precedence with the verdict's outcome and overruled claims, and adopt the requirements that cite it.`
+      ])
+    })
+
+    test('needs nothing applied when it keeps the question', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), {
+        ...SETTLED,
+        verdict: 'question',
+        why: 'No ruling or source says how often the tiers run.'
+      })
+
+      expect(coverage().questions.map((question) => question.id)).toEqual([
+        'c-002'
+      ])
+    })
+
+    test('refuses a blocked verdict whose requirements are still questions and carry no blocker', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), {
+        ...SETTLED,
+        verdict: 'blocked',
+        blocker: 'CDP provisions the perf-test environment.'
+      })
+      editConflict('c-002', ({ question, default: _default, ...conflict }) => ({
+        ...conflict,
+        resolution: 'precedence',
+        outcome: SETTLED.outcome
+      }))
+
+      expect(problemsOf()).toEqual(
+        expect.arrayContaining([
+          `distil/challenge/c-002.json found it waits on a blocker, not a design choice (${SETTLED.rule}), but req-004 is still a question. Adopt it with blockedBy: "CDP provisions the perf-test environment.".`,
+          `distil/challenge/c-002.json found it waits on a blocker, not a design choice (${SETTLED.rule}), but no requirement citing c-002 carries blockedBy. Give each one it holds back blockedBy: "CDP provisions the perf-test environment.".`
+        ])
+      )
     })
   })
 

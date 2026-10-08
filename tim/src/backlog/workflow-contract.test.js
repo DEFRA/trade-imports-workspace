@@ -4096,23 +4096,8 @@ describe('distil', () => {
     ok: true,
     problems: [],
     claims: 3,
+    ranges: 2,
     parts: PART_RANGES,
-    chunks: [
-      {
-        part: 1,
-        from: 'repo-tests-001',
-        to: 'repo-tests-002',
-        count: 2,
-        path: `${VERIFY_DIR}/repo-tests.part1.json`
-      },
-      {
-        part: 2,
-        from: 'repo-tests-003',
-        to: 'repo-tests-003',
-        count: 1,
-        path: `${VERIFY_DIR}/repo-tests.part2.json`
-      }
-    ],
     removedParts: [],
     summary: 'in shape'
   }
@@ -4189,9 +4174,67 @@ describe('distil', () => {
   const CONSOLIDATED = {
     ok: true,
     increments: 2,
+    themes: 0,
     decisions: [],
     reconcileProblems: [],
     summary: 'two increments'
+  }
+  const AREA_PLANNED = {
+    ok: true,
+    areas: [
+      { id: 'suite', title: 'The test suite' },
+      { id: 'tiers', title: 'Test tiers' }
+    ],
+    everyArea: ['ruling:sam'],
+    decisions: ['Gave the ruling to every area.'],
+    summary: 'two areas'
+  }
+  const AREA_SETS = {
+    ok: true,
+    problems: [],
+    areas: [
+      { id: 'suite', claims: 4 },
+      { id: 'tiers', claims: 3 }
+    ],
+    total: 7,
+    removed: [],
+    summary: 'written'
+  }
+  const AREA_RECONCILED = {
+    ok: true,
+    requirements: 2,
+    conflicts: 1,
+    questions: 1,
+    decisions: ['Kept the smoke test apart from the tiers.'],
+    goalConflicts: [],
+    summary: 'reconciled'
+  }
+  const AREAS_MERGED = {
+    ok: true,
+    problems: [],
+    areas: ['suite', 'tiers'],
+    requirements: 4,
+    conflicts: 1,
+    summary: 'merged'
+  }
+  const CROSS_AREA = {
+    ...RECONCILED,
+    merged: ['req-002 kept; req-005 folded into it'],
+    decisions: ['Merged two claims about the smoke test.']
+  }
+  const STANDS = {
+    ok: true,
+    conflict: 'c-001',
+    verdict: 'question',
+    rule: 'No ruling or precedence says where the suites live.',
+    summary: 'stands'
+  }
+  const DRAFTED = {
+    ok: true,
+    rows: 1,
+    requirements: 2,
+    decisions: [],
+    summary: 'drafted'
   }
   const BACKLOG_OK = {
     ...COVERAGE_OK,
@@ -4216,9 +4259,17 @@ describe('distil', () => {
     'repo:tests verify 2/2': verifiedPart(2),
     'repo:tests merge': MERGED,
     'working set': workingSetWith({}),
-    reconcile: RECONCILED,
-    'coverage after reconcile': COVERAGE_OK,
-    consolidate: CONSOLIDATED,
+    'area plan': AREA_PLANNED,
+    'area working sets': AREA_SETS,
+    'reconcile suite': AREA_RECONCILED,
+    'reconcile tiers': AREA_RECONCILED,
+    'merge areas': AREAS_MERGED,
+    'reconcile across areas': CROSS_AREA,
+    'coverage after reconcile across areas': COVERAGE_OK,
+    'challenge c-001': STANDS,
+    'draft rows suite': DRAFTED,
+    'draft rows tiers': DRAFTED,
+    'combine rows': CONSOLIDATED,
     'check backlog': BACKLOG_OK,
     report: { report: REPORT_TEXT, issues: [] }
   }
@@ -4308,7 +4359,7 @@ describe('distil', () => {
         characterise: optionsOf(run, 'repo:tests characterise').model,
         part: optionsOf(run, 'repo:tests extract part 2/2').model,
         verify: optionsOf(run, 'repo:tests verify 1/2').model,
-        reconcile: optionsOf(run, 'reconcile').model
+        reconcile: optionsOf(run, 'reconcile across areas').model
       }).toEqual({
         characterise: 'opus',
         part: 'opus',
@@ -4377,9 +4428,17 @@ describe('distil', () => {
         'repo:tests verify 2/2',
         'repo:tests merge',
         'working set',
-        'reconcile',
-        'coverage after reconcile',
-        'consolidate',
+        'area plan',
+        'area working sets',
+        'reconcile suite',
+        'reconcile tiers',
+        'merge areas',
+        'reconcile across areas',
+        'coverage after reconcile across areas',
+        'challenge c-001',
+        'draft rows suite',
+        'draft rows tiers',
+        'combine rows',
         'check backlog',
         'report'
       ])
@@ -4698,7 +4757,12 @@ describe('distil', () => {
         'ruling:sam-b withdrew real integrations in perf-test: the goal should say every environment is stubbed.'
       const run = await runDistil(
         {},
-        { reconcile: { ...RECONCILED, goalConflicts: [contradiction] } }
+        {
+          'reconcile tiers': {
+            ...AREA_RECONCILED,
+            goalConflicts: [contradiction]
+          }
+        }
       )
 
       expect(promptOf(run, 'report')).toContain(
@@ -4777,7 +4841,7 @@ describe('distil', () => {
       )
 
       expect(labelsOf(run)).not.toContain('repo:stub extract')
-      expect(labelsOf(run)).not.toContain('reconcile')
+      expect(labelsOf(run)).not.toContain('reconcile across areas')
       expect(run.result.stopped.reason).toBe('sources-unverified')
       expect(run.result.stopped.detail).toContain(
         '1 source(s) left for a later launch: repo:stub'
@@ -4820,7 +4884,8 @@ describe('distil', () => {
         'distil/extract/repo-tests.part2.json does not exist yet: part 2 (Fixtures) has no extract.'
       ],
       parts: [],
-      chunks: [],
+      claims: 0,
+      ranges: 0,
       removedParts: [],
       summary: 'refused'
     }
@@ -4983,7 +5048,7 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ok: false,
             problems: [
               'req-002 cites repo-tests-009, which verification refuted. Cite a claim that held.'
@@ -4993,21 +5058,24 @@ describe('distil', () => {
             ],
             summary: 'two problems'
           },
-          'reconcile send-back 1': RECONCILED,
-          'coverage after reconcile 2': COVERAGE_OK
+          'reconcile across areas send-back 1': RECONCILED,
+          'coverage after reconcile across areas 2': COVERAGE_OK
         }
       )
 
-      const prompt = promptOf(run, 'reconcile send-back 1')
+      const prompt = promptOf(run, 'reconcile across areas send-back 1')
       expect(prompt).toContain('- req-002 cites repo-tests-009')
       expect(prompt).not.toContain('- req-003 is adopted as new')
     })
 
     test('routes problems by the scope tim gives them, not their wording', async () => {
-      const prompt = promptOf(await runDistil(), 'coverage after reconcile')
+      const prompt = promptOf(
+        await runDistil(),
+        'coverage after reconcile across areas'
+      )
 
       expect(prompt).toContain(
-        'Copy the message of each one whose\n   scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems'
+        'Copy the message\n   of each one whose scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems'
       )
     })
 
@@ -5015,7 +5083,7 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ...COVERAGE_OK,
             ok: false,
             backlogProblems: [
@@ -5025,8 +5093,8 @@ describe('distil', () => {
         }
       )
 
-      expect(labelsOf(run)).not.toContain('reconcile send-back 1')
-      expect(labelsOf(run)).toContain('consolidate')
+      expect(labelsOf(run)).not.toContain('reconcile across areas send-back 1')
+      expect(labelsOf(run)).toContain('combine rows')
     })
 
     test('stops with reconcile-failed after two send-backs', async () => {
@@ -5041,20 +5109,20 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': refuted,
-          'reconcile send-back 1': RECONCILED,
-          'coverage after reconcile 2': refuted,
-          'reconcile send-back 2': RECONCILED,
-          'coverage after reconcile 3': refuted
+          'coverage after reconcile across areas': refuted,
+          'reconcile across areas send-back 1': RECONCILED,
+          'coverage after reconcile across areas 2': refuted,
+          'reconcile across areas send-back 2': RECONCILED,
+          'coverage after reconcile across areas 3': refuted
         }
       )
 
       expect(run.result.stopped.reason).toBe('reconcile-failed')
-      expect(labelsOf(run)).not.toContain('consolidate')
+      expect(labelsOf(run)).not.toContain('combine rows')
     })
 
     test('tells the reconciler a doubt about one part of the target is a question, never a plain reading', async () => {
-      const prompt = promptOf(await runDistil(), 'reconcile')
+      const prompt = promptOf(await runDistil(), 'reconcile across areas')
 
       expect(prompt).toContain(
         'WHERE A SOURCE OR RULING CANNOT BE MET AS WRITTEN in some part of the target (an environment, a repo, a journey or\na stage), or two readings of it would build different things, make it a question with a default that says what each\npart gets. Never adopt one plain reading for every part.'
@@ -5062,7 +5130,7 @@ describe('distil', () => {
     })
 
     test('tells the consolidator to send back a criterion one environment cannot observe', async () => {
-      const prompt = promptOf(await runDistil(), 'consolidate')
+      const prompt = promptOf(await runDistil(), 'combine rows')
 
       expect(prompt).toContain(
         'EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot. Put the\nrequirement in reconcileProblems instead: the workflow sends it back to the reconciler.'
@@ -5074,10 +5142,10 @@ describe('distil', () => {
         'req-007: the local stack has no real SQS, so "real, not stubbed" cannot be observed there.'
       const SENDS_BACK = { ...CONSOLIDATED, reconcileProblems: [SENT_BACK] }
       const ROUND_2 = {
-        consolidate: SENDS_BACK,
-        'reconcile, round 2': RECONCILED,
-        'coverage after reconcile, round 2': BACKLOG_OK,
-        'consolidate, round 2': CONSOLIDATED,
+        'combine rows': SENDS_BACK,
+        'reconcile across areas, round 2': RECONCILED,
+        'coverage after reconcile across areas, round 2': BACKLOG_OK,
+        'combine rows, round 2': CONSOLIDATED,
         'check backlog, round 2': BACKLOG_OK
       }
       const runSentBack = (overrides = {}) =>
@@ -5087,11 +5155,11 @@ describe('distil', () => {
         const run = await runSentBack()
 
         expect(labelsOf(run).slice(-7)).toEqual([
-          'consolidate',
+          'combine rows',
           'check backlog',
-          'reconcile, round 2',
-          'coverage after reconcile, round 2',
-          'consolidate, round 2',
+          'reconcile across areas, round 2',
+          'coverage after reconcile across areas, round 2',
+          'combine rows, round 2',
           'check backlog, round 2',
           'report'
         ])
@@ -5100,7 +5168,7 @@ describe('distil', () => {
       test('gives the reconciler the requirement as the consolidator worded it', async () => {
         const run = await runSentBack()
 
-        expect(promptOf(run, 'reconcile, round 2')).toContain(
+        expect(promptOf(run, 'reconcile across areas, round 2')).toContain(
           `THE CONSOLIDATOR SENT THESE BACK: it could not write an acceptance criterion that every environment its row names can\nobserve. Settle each one as a question with a default that says what each part gets, or reword the requirement:\n- ${SENT_BACK}`
         )
       })
@@ -5108,7 +5176,7 @@ describe('distil', () => {
       test('tells the second consolidator its first pass is there to rewrite', async () => {
         const run = await runSentBack()
 
-        const prompt = promptOf(run, 'consolidate, round 2')
+        const prompt = promptOf(run, 'combine rows, round 2')
         expect(prompt).toContain(
           'backlog.json is the first pass from this run. Rewrite any row in it.'
         )
@@ -5124,7 +5192,7 @@ describe('distil', () => {
       })
 
       test('puts a requirement still open after round 2 in the report as a step before building', async () => {
-        const run = await runSentBack({ 'consolidate, round 2': SENDS_BACK })
+        const run = await runSentBack({ 'combine rows, round 2': SENDS_BACK })
 
         expect(run.result.reconcileProblems).toEqual([SENT_BACK])
         expect(promptOf(run, 'report')).toContain(
@@ -5144,9 +5212,17 @@ describe('distil', () => {
         }
       )
 
-      expect(promptOf(run, 'reconcile')).toContain(
-        'requirements.json already exists: this is a re-distil. Keep every existing id.'
-      )
+      expect({
+        plan: promptOf(run, 'area plan').includes(
+          'Give every existing\nrequirement and conflict to exactly one area'
+        ),
+        area: promptOf(run, 'reconcile suite').includes(
+          'keep every one of them, id unchanged.'
+        ),
+        across: promptOf(run, 'reconcile across areas').includes(
+          'This is a re-distil: requirements and conflicts existed before this run. Keep every existing id.'
+        )
+      }).toEqual({ plan: true, area: true, across: true })
     })
 
     describe('over an existing backlog', () => {
@@ -5172,7 +5248,7 @@ describe('distil', () => {
               hasConflicts: true,
               hasBacklog: true
             }),
-            'coverage after reconcile': BEFORE,
+            'coverage after reconcile across areas': BEFORE,
             'check backlog': afterWith({}),
             ...answerOverrides
           }
@@ -5181,7 +5257,9 @@ describe('distil', () => {
       test('has tim save the rows before the consolidator runs, and compare them after', async () => {
         const run = await runRedistil({})
 
-        expect(promptOf(run, 'coverage after reconcile')).toContain(
+        expect(
+          promptOf(run, 'coverage after reconcile across areas')
+        ).toContain(
           '`tim distil backlog-snapshot shared/demo --save before --workspace ~/ws --json`'
         )
         expect(promptOf(run, 'check backlog')).toContain(
@@ -5202,11 +5280,11 @@ describe('distil', () => {
       test('sends the consolidator back when a row built or set aside changed', async () => {
         const run = await runRedistil({
           'check backlog': afterWith({ changed: ['inc-001'] }),
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': afterWith({})
         })
 
-        expect(promptOf(run, 'consolidate send-back 1')).toContain(
+        expect(promptOf(run, 'combine rows send-back 1')).toContain(
           '- inc-001: a row built or set aside (not todo or blocked) changed.'
         )
         expect(run.result.stopped).toBeNull()
@@ -5214,7 +5292,7 @@ describe('distil', () => {
 
       test('stops with snapshot-failed when the rows could not be saved', async () => {
         const run = await runRedistil({
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ...BEFORE,
             snapshotOk: false,
             snapshotProblems: ['backlog.json is not valid JSON.']
@@ -5222,16 +5300,16 @@ describe('distil', () => {
         })
 
         expect(run.result.stopped.reason).toBe('snapshot-failed')
-        expect(labelsOf(run)).not.toContain('consolidate')
+        expect(labelsOf(run)).not.toContain('combine rows')
       })
 
       test('stops with consolidate-failed when a row stays removed after two send-backs', async () => {
         const removed = afterWith({ removed: ['inc-001'] })
         const run = await runRedistil({
           'check backlog': removed,
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': removed,
-          'consolidate send-back 2': CONSOLIDATED,
+          'combine rows send-back 2': CONSOLIDATED,
           'check backlog 3': removed
         })
 
@@ -5254,14 +5332,306 @@ describe('distil', () => {
               'inc-002 depends on inc-009, which is not in the backlog.'
             ]
           },
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': BACKLOG_OK
         }
       )
 
-      expect(promptOf(run, 'consolidate send-back 1')).toContain(
+      expect(promptOf(run, 'combine rows send-back 1')).toContain(
         '- inc-002 depends on inc-009, which is not in the backlog.'
       )
+    })
+  })
+
+  describe('relays the workflow builds on', () => {
+    test('asks the extract check again when the merge relayed no verify ranges, then verifies every range', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': { ...MERGED_EXTRACT, ranges: 0 },
+          'repo:tests check extract again': CHECKED
+        }
+      )
+
+      expect({
+        asked: promptOf(run, 'repo:tests check extract again').includes(
+          'the extract check relayed 0 verify ranges, but 3 claims in ranges of 2 make 2'
+        ),
+        verifiers: labelsOf(run).filter((label) =>
+          label.startsWith('repo:tests verify ')
+        )
+      }).toEqual({
+        asked: true,
+        verifiers: ['repo:tests verify 1/2', 'repo:tests verify 2/2']
+      })
+    })
+
+    test('fails the source at extract when the relay is wrong twice, and verifies nothing', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': { ...MERGED_EXTRACT, ranges: 0 },
+          'repo:tests check extract again': { ...CHECKED, ranges: 0 }
+        }
+      )
+
+      expect({
+        source: run.result.sources[0].failedAt,
+        verified: labelsOf(run).some((label) => label.includes('verify'))
+      }).toEqual({ source: 'extract', verified: false })
+    })
+
+    test('works out each verify range from the claim count, never from a relayed list', async () => {
+      const run = await runDistil()
+
+      expect(promptOf(run, 'repo:tests verify 2/2')).toContain(
+        '1 claims, at indexes 2 to 2 of the extract.'
+      )
+    })
+
+    test('asks the partition check again when it relayed fewer parts than characterise wrote', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check partition': {
+            ...PARTITIONED,
+            parts: PARTITIONED.parts.slice(0, 1)
+          },
+          'repo:tests check partition again': PARTITIONED
+        }
+      )
+
+      expect(labelsOf(run)).toContain('repo:tests extract part 2/2')
+    })
+
+    test('asks the coverage check again when it relayed fewer questions than it counted', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'coverage after reconcile across areas': {
+            ...COVERAGE_OK,
+            questions: []
+          },
+          'coverage after reconcile across areas again': COVERAGE_OK
+        }
+      )
+
+      expect(labelsOf(run)).toContain('challenge c-001')
+    })
+  })
+
+  describe('reconcile by area', () => {
+    test('gives each area reconciler its own working set, file and check', async () => {
+      const prompt = promptOf(await runDistil(), 'reconcile tiers')
+
+      expect({
+        workingSet: prompt.includes(
+          'YOUR WORKING SET, every claim of it (3 claims, in pages if you need to): /ws/workareas/shared/demo/distil/areas/tiers/working-set.json.'
+        ),
+        file: prompt.includes(
+          'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/areas/tiers/reconciled.json'
+        ),
+        check: prompt.includes(
+          '`tim distil merge-reconcile shared/demo --area tiers --workspace ~/ws --json`'
+        )
+      }).toEqual({ workingSet: true, file: true, check: true })
+    })
+
+    test('runs the area plan, every area reconciler, every challenger and every drafter on opus', async () => {
+      const run = await runDistil()
+
+      expect(
+        [
+          'area plan',
+          'reconcile suite',
+          'reconcile across areas',
+          'challenge c-001',
+          'draft rows tiers',
+          'combine rows'
+        ].map((label) => optionsOf(run, label).model)
+      ).toEqual(['opus', 'opus', 'opus', 'opus', 'opus', 'opus'])
+    })
+
+    test('tells every reconciler to weigh today sources and keep questions minimal', async () => {
+      const run = await runDistil()
+
+      const missing = ['reconcile suite', 'reconcile across areas'].filter(
+        (label) =>
+          !promptOf(run, label).includes(
+            'WEIGH EVERY CLAIM FROM A TODAY SOURCE'
+          ) ||
+          !promptOf(run, label).includes('QUESTIONS ARE MINIMAL BY DEFAULT')
+      )
+      expect(missing).toEqual([])
+    })
+
+    test('reconciles at most six areas at once, in plan order', async () => {
+      const areas = Array.from({ length: 8 }, (_, index) => ({
+        id: `area-${index + 1}`,
+        title: `Area ${index + 1}`
+      }))
+      const answers = Object.fromEntries(
+        areas.map((area) => [`reconcile ${area.id}`, AREA_RECONCILED])
+      )
+      const run = await runDistil(
+        {},
+        {
+          'area plan': { ...AREA_PLANNED, areas },
+          'area working sets': {
+            ...AREA_SETS,
+            areas: areas.map((area) => ({ id: area.id, claims: 1 })),
+            total: 8
+          },
+          'merge areas': {
+            ...AREAS_MERGED,
+            areas: areas.map((area) => area.id)
+          },
+          ...answers
+        }
+      )
+
+      expect(
+        labelsOf(run).filter((label) => /^reconcile area-/.test(label))
+      ).toEqual(areas.map((area) => `reconcile ${area.id}`))
+    })
+
+    test('reconciles again only the area a failed merge names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'merge areas': {
+            ok: false,
+            problems: [
+              "distil/areas/tiers/reconciled.json req-tiers-001 cites dr5-404, which is not in this area's working set."
+            ],
+            areas: [],
+            requirements: 0,
+            conflicts: 0,
+            summary: 'refused'
+          },
+          'reconcile tiers retry 1': AREA_RECONCILED,
+          'merge areas 2': AREAS_MERGED
+        }
+      )
+
+      expect(labelsOf(run).filter((label) => label.includes('retry'))).toEqual([
+        'reconcile tiers retry 1'
+      ])
+    })
+
+    test('stops with areas-failed when the area plan will not check out', async () => {
+      const refused = {
+        ok: false,
+        problems: [
+          'repo:tests has 4 claims in no area: tests-001, tests-002, tests-005, tests-001-m1. Give each to the area it speaks to, or name the source in everyArea.'
+        ],
+        areas: [],
+        total: 0,
+        removed: [],
+        summary: 'refused'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'area working sets': refused,
+          'area plan retry 1': AREA_PLANNED,
+          'area working sets 2': refused
+        }
+      )
+
+      expect({
+        reason: run.result.stopped.reason,
+        retried: promptOf(run, 'area plan retry 1').includes(
+          '- repo:tests has 4 claims in no area'
+        )
+      }).toEqual({ reason: 'areas-failed', retried: true })
+    })
+  })
+
+  describe('the question challenge', () => {
+    const SETTLED = {
+      ok: true,
+      conflict: 'c-001',
+      verdict: 'precedence',
+      rule: 'ruling:sam claim 2 puts the suites in the tests repo.',
+      summary: 'settled'
+    }
+    const AFTER_APPLY = {
+      ...COVERAGE_OK,
+      conflicts: { total: 1, precedence: 1, question: 0 },
+      questions: []
+    }
+
+    test('gives each challenger its question, its verdict file and its check', async () => {
+      const prompt = promptOf(await runDistil(), 'challenge c-001')
+
+      expect({
+        file: prompt.includes(
+          'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/challenge/c-001.json'
+        ),
+        check: prompt.includes(
+          '`tim distil challenge shared/demo --conflict c-001 --workspace ~/ws --json`'
+        )
+      }).toEqual({ file: true, check: true })
+    })
+
+    test('applies a settling verdict and reports only the questions that survive', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'challenge c-001': SETTLED,
+          'apply challenges': {
+            ok: true,
+            applied: ['c-001: precedence'],
+            decisions: [],
+            summary: 'applied'
+          },
+          'coverage after apply challenges': AFTER_APPLY,
+          'check backlog': { ...BACKLOG_OK, ...AFTER_APPLY }
+        }
+      )
+
+      expect({
+        challenge: run.result.challenge,
+        questions: run.result.questions
+      }).toEqual({
+        challenge: {
+          challenged: 1,
+          settled: ['c-001'],
+          blocked: [],
+          survived: []
+        },
+        questions: []
+      })
+    })
+
+    test('runs no apply step when every question stands', async () => {
+      const run = await runDistil()
+
+      expect(labelsOf(run)).not.toContain('apply challenges')
+    })
+
+    test('stops with challenge-failed when the verdicts are still not applied after two send-backs', async () => {
+      const unapplied = {
+        ok: false,
+        problems: [
+          'distil/challenge/c-001.json settled it by precedence (rule), but distil/conflicts.json still has c-001 as a question.'
+        ],
+        backlogProblems: [],
+        questions: [],
+        summary: 'one problem'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'challenge c-001': SETTLED,
+          'coverage after apply challenges': unapplied,
+          'coverage after apply challenges 2': unapplied,
+          'coverage after apply challenges 3': unapplied
+        }
+      )
+
+      expect(run.result.stopped.reason).toBe('challenge-failed')
     })
   })
 

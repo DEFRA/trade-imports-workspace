@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "The reconciled requirements",
-  "description": "workareas/<workarea>/distil/requirements.json: what the programme must do, reconciled across every source's working set (held claims plus missed claims), written by the reconcile agent. On a re-distil, every existing id is kept. `tim distil coverage` validates it against this file, and also checks what a schema cannot: ids are unique, every cited claim is in the working set, every cited conflict is in conflicts.json, a question requirement cites a question conflict, an adopted change or exists requirement says how in `deltaNote`, and, once backlog.json exists, every adopted requirement that is not `exists` sits in exactly one increment.",
+  "description": "workareas/<workarea>/distil/requirements.json: what the programme must do, reconciled across every source's working set (held claims plus missed claims), written by the reconcile agent. On a re-distil, every existing id is kept. `tim distil coverage` validates it against this file, and also checks what a schema cannot: ids are unique, every cited claim is in the working set, every cited conflict is in conflicts.json, a question requirement cites a question conflict, an adopted change or exists requirement says how in `deltaNote`, only an adopted requirement carries `blockedBy`, every source with held claims backs at least one requirement or conflict, and, once backlog.json exists, every adopted requirement that is not `exists` sits in exactly one increment, one with `blockedBy` never in a todo one.",
   "type": "object",
   "required": ["requirements"],
   "additionalProperties": false,
@@ -70,6 +70,10 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/text" }
+        },
+        "blockedBy": {
+          "description": "Adopted requirements only: who must do what outside the programme before it can be built, such as a platform change or access (\"CDP raises the ingress request-body cap to at least 50MB (EUDPA-518)\"). Never a design choice: that is a question. It sits in a blocked increment whose open questions name the blocker, never in a todo one.",
+          "$ref": "#/$defs/text"
         }
       },
       "if": {

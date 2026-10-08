@@ -26,8 +26,10 @@ source or a ruling: edit `sources.json` and launch again.
 The method each agent follows lives in brief files beside the script, in
 [`distil/briefs/`](distil/briefs/): `characterise.md` for cutting a source into parts,
 `extract.md` for every part of every source, one `extract-<kind>.md` per source kind (repo,
-confluence, web, document, trace, ruling, image), `verify.md`, `reconcile.md` and
-`consolidate.md`. The report agent follows
+confluence, web, document, trace, ruling, image), `verify.md`, `area-plan.md` for cutting reconcile
+into areas, `reconcile.md` for each area's reconciler and the cross-area pass, `question-challenge.md` for
+challenging and applying the questions, and `consolidate.md` for each area's row drafter and the combiner. The report
+agent follows
 [`../references/REPORT.md`](../references/REPORT.md). Every count, check, merge, file
 clean-up and backlog comparison is a `tim distil` command, so no agent ever writes `jq` to
 check another's file, runs `rm`, or copies a hash. A trace source's agents run the trace CLI
@@ -41,10 +43,19 @@ part then reads its slice word for word and claims everything in it; tim merges 
 small source is one part. There is no lighter path, because a thin extract caps everything
 downstream: a page, field or rule nobody claimed never reaches a requirement.
 
+**Every later stage is as deep as extract.** Reconcile is cut into areas by an area plan, one
+think-tier reconciler an area; every question is challenged by its own agent; every area's rows are
+drafted by their own agent before one combiner joins them. No agent weighs more than it can read in
+full.
+
 **To extract a source again with an unchanged scope**, because the method changed, run
 `tim distil reset <workarea> --source <id>` (or `--all`) before the launch. It moves the
 source's extract, partition, parts and verify files to `distil/superseded/<time>/`, and the
-source reads `pending`.
+source reads `pending`. **To reconcile again from nothing**, because the reconcile or consolidate
+method changed, run `tim distil reset <workarea> --stage reconcile`: it moves every file from the
+working set on (requirements, conflicts, areas, challenge verdicts, backlog, report) to
+`distil/superseded/<time>/reconcile/`, keeps every verified extract, and refuses while a backlog row
+has build work on it. A normal re-distil needs neither: it keeps every id.
 
 **A workarea distilled by hand before this workflow** reads as stale on every source, because
 its files carry no hashes. Adopt the sources that are still good with `tim distil adopt`
@@ -60,7 +71,7 @@ and the first log line is the resolved configuration.
 | `workarea` | The programme's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ins-performance-testing`. Never starts with `workareas/` |
 | `only` | `null` to work every source that needs it. Or a list of source ids: only those are extracted and verified this launch. A listed source already verified is skipped, and the run stops before reconcile while any other source still needs work |
 | `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
-| `models` | `{}` for the default on every tier, which is the deep run. `think` (default opus): characterise, reconcile, consolidate, report. `code` (default opus): every extract part and every verifier. `light` (default haiku): status, the checks, both merges, working set, coverage. `"inherit"` uses the session model |
+| `models` | `{}` for the default on every tier, which is the deep run. `think` (default opus): characterise, the area plan, every area reconciler, the cross-area pass, every challenger and the apply step, every row drafter, the combiner, report. `code` (default opus): every extract part and every verifier. `light` (default haiku): status, the checks, the merges, the working sets, coverage; every count a light agent relays is checked against another, and a relay that disagrees is asked again once. `"inherit"` uses the session model |
 | `verifyChunk` | The most claims one verify agent takes. Use 60: few enough that a verifier can re-check every claim against the source and read the slice for what was missed. A 330-claim extract at 60 is verified by 6 agents in parallel, each writing its own part file |
 
 The worked example for the INS performance testing programme:
@@ -82,11 +93,20 @@ The worked example for the INS performance testing programme:
 |---|---|---|
 | Status | 1 light | Resolves the workspace root's absolute form and runs `tim distil status`: the work list. A source verified with an unchanged scope hash and an unchanged extract is skipped |
 | Characterise | 1 think, then 1 light check, per source | Only for a source whose next step is extract. The characterise agent follows `characterise.md` and its kind's brief, and writes `distil/extract/<slug>.partition.json`: the source's structure and its parts, each with what to read in full, what it must cover and its claim id prefix, `<slug>-p<N>`. On a re-extract it shares the old claim ids out among the parts as `keeps`. The check runs `tim distil check --stage partition --clear-parts`, which removes old extract part files. A failed check, or a part without the prefix the workflow named, sends the agent back once with the problems, then the source fails at `characterise` |
-| Extract | 1 code per part, then 1 light merge, per source | One agent per part, side by side, follows `extract.md` and its kind's brief, reads its slice in full and writes `distil/extract/<slug>.part<N>.json`, checking it with `tim distil check --stage extract --part <N>`. The merge runs `tim distil merge-extract`, which joins the parts in order and stamps the scope hash, then `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and each part's range and removes old verify part files. A failed merge re-runs the parts that failed or that a problem names, once, then the source fails. A source whose next step is verify only has its extract checked; if that check fails it is characterised and extracted again |
-| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts its range came from so it re-reads that slice in full. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
-| Reconcile | 1 light, then 1 think and 1 light, up to 3 times | `tim distil working-set --write`, then the reconciler writes `requirements.json` and `conflicts.json`, and `tim distil coverage` checks them. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the consolidator. Up to 2 send-backs |
-| Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`, with `themes` when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
+| Extract | 1 code per part, then 1 light merge, per source | One agent per part, side by side, follows `extract.md` and its kind's brief, reads its slice in full and writes `distil/extract/<slug>.part<N>.json`, checking it with `tim distil check --stage extract --part <N>`. The merge runs `tim distil merge-extract`, which joins the parts in order and stamps the scope hash, then `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which checks the extract and removes old verify part files. The relay copies the claim count, the count of verify ranges and each part's range; the workflow works out the ranges itself from the claim count, and asks the check again once (`<id> check extract again`) when the relayed counts disagree, then the source fails. A failed merge re-runs the parts that failed or that a problem names, once, then the source fails. A source whose next step is verify only has its extract checked; if that check fails it is characterised and extracted again |
+| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts its range came from so it re-reads that slice in full. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails. A relayed verdict count that is not the claim count asks the check again once |
+| Areas | 1 light, then 1 think and 1 light, up to twice | `tim distil working-set --write` (relayed counts checked against the status). The area-plan agent follows `area-plan.md` and writes `distil/areas.json` from every source's partition, checking it with `tim distil areas`. `tim distil areas --write` writes each area's working set and clears the earlier reconcile's area files, id map and challenge verdicts; the relayed areas must be the plan's. One retry of the plan, then the run stops with `areas-failed` |
+| Reconcile | 1 think per area, six at a time, then 1 light merge; then 1 think and 1 light, up to 3 times | Each area's reconciler weighs every claim in its working set and writes `distil/areas/<id>/reconciled.json`, checking it with `tim distil merge-reconcile --area <id>`. `tim distil merge-reconcile` joins them, numbering new ids and writing `distil/areas/id-map.json`; the areas a failed merge names run again, once. Then the cross-area pass merges duplicates and settles cross-area conflicts, and `tim distil coverage` checks the files, refusing a source that backs nothing. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the combiner. Up to 2 send-backs |
+| Challenge | 1 think per question, six at a time; then 1 think and 1 light, up to 3 times | Each challenger follows `question-challenge.md`, tries to settle its question from precedence and every ruling, and writes `distil/challenge/<conflict id>.json`, checking it with `tim distil challenge --conflict`. A challenger that does not finish runs again once. When any verdict settles its question, or a challenger did not finish, the apply step rewrites the conflicts and requirements, and `tim distil coverage` checks every verdict was applied. Up to 2 send-backs, then `challenge-failed` |
+| Consolidate | 1 think per area, six at a time; then 1 think and 1 light, up to 3 times | Each area's drafter writes `distil/areas/<id>/rows.json`: its rows and the code each touches. The combiner joins them into `backlog.json`, with `themes` drawn at feature-folder granularity when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
 | Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
+
+**The fan-outs stay narrow and resumable.** The area reconcilers, challengers and row drafters each run
+in fixed batches of six (`THINK_FAN_OUT`), in plan order: well inside the workflow's concurrency cap,
+and narrow enough that a deep run does not hit the account's session limit under a wide Opus fan-out.
+Fixed batches and prompts with no time in them make the order of agent calls the same on every run, so a
+run stopped at a session limit resumes with `resumeFromRunId` and the same args, replaying every agent
+that finished.
 
 Characterise, extract and verify run as one `pipeline()` over the work list: a source moves on
 to verify as soon as its own extract checks out, and never waits for the others. Within a
@@ -112,9 +132,13 @@ back to the consolidator as a problem.
   workarea, stopped,     // stopped: null, or { reason, detail }
   sources,               // every source: outcome (verified, unchanged, failed, not-run), its counts, extractParts, and failedAt (characterise, extract or verify) when it failed
   failed,                // the ids of the sources that failed
-  requirements, conflicts, questions,   // from tim distil coverage; each question with its default
-  backlog,               // { path, total, byStatus, covered }
-  decisions,             // the reconciler's and consolidator's
+  requirements, conflicts, questions,   // from tim distil coverage; each question that survived the challenge, with its default
+  blocked,               // every requirement with blockedBy: { id, blockedBy }
+  challenge,             // { challenged, settled, blocked, survived }: conflict ids
+  areas,                 // the area plan: { id, title, claims }
+  sourceUsage,           // per source: { id, claims, cited }
+  backlog,               // { path, total, byStatus, covered, themes }
+  decisions,             // the area plan's, every reconciler's and the challenge's, and every drafter's and the combiner's
   goalConflicts,         // rulings that contradict sources.json's goal: the main session corrects the goal
   report, reportPath,    // the report text, and where the main session saves it
   reportIssues           // what the report step found wrong with its inputs, kept out of the report
@@ -122,8 +146,8 @@ back to the consolidator as a problem.
 ```
 
 `stopped.reason` is one of `status-failed`, `unknown-source`, `sources-unverified`,
-`working-set-failed`, `reconcile-failed`, `snapshot-failed`, `consolidate-failed` or
-`report-failed`. Each carries whatever the run had worked out by then. What the main session
+`working-set-failed`, `areas-failed`, `reconcile-failed`, `challenge-failed`, `snapshot-failed`,
+`consolidate-failed` or `report-failed`. Each carries whatever the run had worked out by then. What the main session
 does for each is in [`../references/DISTIL.md`](../references/DISTIL.md#4-when-the-run-stops-early).
 
 The script keeps the args contract every workflow keeps, and

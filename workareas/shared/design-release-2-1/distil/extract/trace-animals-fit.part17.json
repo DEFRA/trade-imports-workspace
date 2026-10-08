@@ -1,0 +1,512 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 17, Transit countries: 14 traces from arrival-transit.fit.spec.js (8 in 'transit countries rendering and validation', lines 699-827; 5 in 'transit countries list, limits and persistence', lines 850-960; 1 in 'transit countries without JavaScript', line 985), all passing with no recorded errors. The traces were written by a newer Playwright than the trace CLI tim installs (TraceVersionError on open), so each zip's trace.trace and trace.network were read directly with jq (action list, network log) and the server-rendered HTML of every transit-countries GET/POST response was unzipped from the zip's resources/ and read. Every trace walks the same set-up (stub sign-in, start notification, origin France, commodity Felis catus, Arrival details with means of transport ROAD_VEHICLE, Save and continue, which redirects 302 to /transit-countries) and then works one page: /live-animals/notifications/{ref}/transit-countries, heading 'Which countries will the consignment travel through?', caption 'Movement'. The page is one form: an accessible-autocomplete over a native select 'Enter a country' (31 countries), an 'Add country' secondary button (action=add), the added list as hidden inputs plus a govuk-table with per-row Remove link-buttons (action=remove:{code}), an empty-state sentence, a limit paragraph at 12, a visually hidden live status region, and Save and continue / Save and return to overview / Cancel and return to overview. Add and remove round-trip to the server and re-render the page (200); Save and continue redirects 302 to /transporters ('Transporter details'). Validation states seen: empty add (400), duplicate add (400), out-of-list code (400), tampered markup code (400), more than 12 (400). Pages reached: transit countries (always, under the overland condition), transporters (only as the redirect target, its content belongs to another part).",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p17-001",
+      "statement": "Choosing road vehicle as the means of transport on Arrival details and pressing Save and continue sends the user to the transit countries page.",
+      "kind": "rule",
+      "ref": "trace t01 (arrival-transit.fit.spec.js:699) network: POST /port-of-entry 302 Location /transit-countries; action call@4397-4401",
+      "quote": "POST port-of-entry meansOfTransport=ROAD_VEHICLE -> 302 /live-animals/notifications/GBN-AG-26-RKTR07/transit-countries",
+      "confidence": "verbatim",
+      "note": "Only ROAD_VEHICLE is driven in this part; other means of transport are not exercised here."
+    },
+    {
+      "id": "trace-animals-fit-p17-002",
+      "statement": "The transit countries page lives at /live-animals/notifications/{reference}/transit-countries.",
+      "kind": "behaviour",
+      "ref": "trace t01 network GET transit-countries 200",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-RKTR07/transit-countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-003",
+      "statement": "The page heading is the question 'Which countries will the consignment travel through?'.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 main h1; action call@4401",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-004",
+      "statement": "The heading carries the section caption 'Movement'.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 span.govuk-caption-l",
+      "quote": "Movement",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-005",
+      "statement": "The browser page title is the question followed by the service name.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 head title",
+      "quote": "Which countries will the consignment travel through? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-006",
+      "statement": "On a validation error the page title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace t06 resource 1f8c715c head title (also t07, t08, t12)",
+      "quote": "Error: Which countries will the consignment travel through? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-007",
+      "statement": "The page explains what a transit country is in a first body paragraph.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 main p.govuk-body; action call@4403",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-008",
+      "statement": "A second body paragraph says the United Kingdom is not a transit country.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 main p.govuk-body; action call@4405",
+      "quote": "This does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-009",
+      "statement": "Above the heading the page shows a journey strip with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 div.app-journey-strip",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">Draft</strong> <span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-RKTR07</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-010",
+      "statement": "The page has a Back link that goes to the notification overview, not to Arrival details.",
+      "kind": "behaviour",
+      "ref": "trace t01 resource 41f27cf9 a.govuk-back-link",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-RKTR07\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-011",
+      "statement": "The page asks for one country at a time in a single field labelled 'Enter a country' (named transitedCountry).",
+      "kind": "data",
+      "ref": "trace t01 resource 41f27cf9 label[for=transitedCountry]; action call@4407",
+      "quote": "Enter a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-012",
+      "statement": "The country field has the hint 'Enter each country that the consignment will travel through'.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 div#transitedCountry-hint; action call@4409",
+      "quote": "Enter each country that the consignment will travel through",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-013",
+      "statement": "The country field is a native select enhanced into a type-ahead (accessible-autocomplete) that shows all values, needs no minimum characters and does not auto-select.",
+      "kind": "constraint",
+      "ref": "trace t01 resource 41f27cf9 select#transitedCountry attributes",
+      "quote": "data-module=\"app-accessible-autocomplete\" data-min-length=\"0\" data-language=\"en\" data-show-all-values=\"true\" data-auto-select=\"false\"",
+      "confidence": "verbatim",
+      "note": "With JavaScript the visible input keeps id transitedCountry and the native select is renamed transitedCountry-select (t02 call@4008 reads select#transitedCountry-select). accessible-autocomplete sits outside the core govuk-frontend toolbox but is the GOV.UK-endorsed pattern."
+    },
+    {
+      "id": "trace-animals-fit-p17-014",
+      "statement": "The type-ahead's first, empty option reads 'Search for a country' and acts as the placeholder.",
+      "kind": "copy",
+      "ref": "trace t02 action call@4008 (options of select#transitedCountry-select); resource 41f27cf9 option value=\"\"",
+      "quote": "<option value=\"\">Search for a country</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-015",
+      "statement": "The country list offers 31 countries, coded by ISO alpha-2: Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands (the), Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland.",
+      "kind": "data",
+      "ref": "trace t01 resource 41f27cf9 select#transitedCountry options; trace t02 call@4008",
+      "quote": "AT=Austria BE=Belgium BG=Bulgaria HR=Croatia CY=Cyprus CZ=Czechia DK=Denmark EE=Estonia FI=Finland FR=France DE=Germany GR=Greece HU=Hungary IS=Iceland IE=Ireland IT=Italy LV=Latvia LI=Liechtenstein LT=Lithuania LU=Luxembourg MT=Malta NL=Netherlands (the) NO=Norway PL=Poland PT=Portugal RO=Romania SK=Slovakia SI=Slovenia ES=Spain SE=Sweden CH=Switzerland",
+      "confidence": "verbatim",
+      "note": "The test asserts the list equals the captured countries-of-origin fixture, so this is the same reference list as country of origin (spec line 743-745). The United Kingdom is not in it."
+    },
+    {
+      "id": "trace-animals-fit-p17-016",
+      "statement": "The transit country list is the same reference list as the country of origin list.",
+      "kind": "integration",
+      "ref": "arrival-transit.fit.spec.js:743-745; trace t02 call@4008",
+      "quote": "expect(options.slice(1)).toEqual(countriesOrigin.map(({ code, name }) => ({ code, label: name })))",
+      "confidence": "inferred",
+      "note": "Inferred from the passing assertion against the countriesOrigin fixture; the trace shows no separate reference-data network call because the list is rendered server-side."
+    },
+    {
+      "id": "trace-animals-fit-p17-017",
+      "statement": "Typing into the country field filters the list by what was typed: 'fran' offers France.",
+      "kind": "behaviour",
+      "ref": "trace t03 actions call@4285-4287",
+      "quote": "fill Enter a country 'fran' -> option[name=\"France\"] visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-018",
+      "statement": "When nothing matches what was typed the type-ahead says 'No countries found'.",
+      "kind": "copy",
+      "ref": "trace t03 actions call@4289-4291; resource select data-no-results",
+      "quote": "No countries found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-019",
+      "statement": "Under the field there is a secondary 'Add country' button that submits the form with action=add.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 button[name=action][value=add]; action call@4411",
+      "quote": "<button type=\"submit\" value=\"add\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Add country</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-020",
+      "statement": "Before any country is added the page says 'You have not added any countries yet.' and shows no table.",
+      "kind": "copy",
+      "ref": "trace t01 actions call@4413-4415; resource 41f27cf9",
+      "quote": "You have not added any countries yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-021",
+      "statement": "The maximum number of countries is not stated up front: the limit message is absent while under the cap.",
+      "kind": "rule",
+      "ref": "trace t01 action call@4417",
+      "quote": "expect text \"Maximum of 12 countries reached. Remove a country to add another.\" to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-022",
+      "statement": "The page ends with a button group: primary 'Save and continue', secondary 'Save and return to overview' (exit=hub) and a 'Cancel and return to overview' link to the overview.",
+      "kind": "copy",
+      "ref": "trace t01 resource 41f27cf9 div.govuk-button-group",
+      "quote": "Save and continue | <button type=\"submit\" value=\"hub\" name=\"exit\" ...>Save and return to overview</button> | <a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-RKTR07\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-023",
+      "statement": "Transit countries are optional: pressing Save and continue with no country added saves and goes to Transporter details with no error.",
+      "kind": "rule",
+      "ref": "trace t04 actions call@4153-4157; network POST transit-countries 302 -> /transporters",
+      "quote": "POST transit-countries concurrencyToken=0&transitedCountry= -> 302 /live-animals/notifications/GBN-AG-26-PJXX9R/transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-024",
+      "statement": "After saving with no countries, returning to the page shows the empty-state sentence and no added countries.",
+      "kind": "behaviour",
+      "ref": "trace t04 actions call@4159-4163",
+      "quote": "You have not added any countries yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-025",
+      "statement": "Save and continue on the transit countries page goes next to the Transporter details page (caption 'Transport and arrival').",
+      "kind": "behaviour",
+      "ref": "trace t13 network POST 302 -> /transporters; resource 452a6432 h1 and caption; action call@4547",
+      "quote": "Transporter details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-026",
+      "statement": "Pressing Add country with nothing chosen is refused with the error 'Enter a country to add' (HTTP 400, page re-rendered).",
+      "kind": "rule",
+      "ref": "trace t05 network POST transit-countries action=add transitedCountry= -> 400; resource a7b5462a error summary",
+      "quote": "Enter a country to add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-027",
+      "statement": "The error summary is titled 'There is a problem' and each message links to the country field (#transitedCountry).",
+      "kind": "copy",
+      "ref": "trace t05 resource a7b5462a div.govuk-error-summary",
+      "quote": "There is a problem ... <a href=\"#transitedCountry\">Enter a country to add</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-028",
+      "statement": "Following the error summary link puts focus in the country search box.",
+      "kind": "behaviour",
+      "ref": "trace t05 actions call@4417-4419 (also t07 call@4757-4759, t12 call@4267-4269)",
+      "quote": "click error link -> expect input#transitedCountry to.be.focused",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-029",
+      "statement": "The field also shows the error inline, prefixed with a visually hidden 'Error:', with the form group and select in their error styles and the message joined to the field's aria-describedby.",
+      "kind": "copy",
+      "ref": "trace t05 resource a7b5462a p#transitedCountry-error",
+      "quote": "<p id=\"transitedCountry-error\" class=\"govuk-error-message\"><span class=\"govuk-visually-hidden\">Error:</span> Enter a country to add</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-030",
+      "statement": "Adding a country already in the list is refused by name: 'You have already added France' (HTTP 400), and the list still holds it only once.",
+      "kind": "rule",
+      "ref": "trace t06 network second POST action=add transitedCountries=FR&transitedCountry=FR -> 400; resource 1f8c715c; actions call@3763-3765",
+      "quote": "You have already added France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-031",
+      "statement": "After a duplicate-add error the refused country's name is kept in the search box.",
+      "kind": "behaviour",
+      "ref": "trace t06 resource 1f8c715c select#transitedCountry",
+      "quote": "data-default-value=\"France\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-032",
+      "statement": "A country already added is still offered in the type-ahead list, which is what lets a duplicate be chosen.",
+      "kind": "behaviour",
+      "ref": "trace t06 resource e5cc27f9 (France added, option FR still present); actions call@3753-3759",
+      "quote": "<input type=\"hidden\" name=\"transitedCountries\" value=\"FR\" /> ... <option value=\"FR\">France</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-033",
+      "statement": "A submitted country code that is not in the list is refused with 'Select countries from the list' (HTTP 400).",
+      "kind": "rule",
+      "ref": "trace t07 network POST transitedCountries=INVALID -> 400; resource 00d39c45 error summary",
+      "quote": "Select countries from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-034",
+      "statement": "A refused out-of-list code is dropped: the re-rendered page holds no added countries and shows no row for it.",
+      "kind": "behaviour",
+      "ref": "trace t07 actions call@4761-4763; resource 00d39c45 (empty-state sentence, no hidden inputs)",
+      "quote": "You have not added any countries yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-035",
+      "statement": "A tampered country value containing markup is refused with 'Select countries from the list' and is never rendered back as markup or script.",
+      "kind": "non-functional",
+      "ref": "trace t08 network POST transitedCountries=\"><img ...> -> 400; actions call@4519-4525",
+      "quote": "Select countries from the list",
+      "confidence": "verbatim",
+      "note": "Asserted: no img inside the form, window.__xss undefined, no hidden inputs survive."
+    },
+    {
+      "id": "trace-animals-fit-p17-036",
+      "statement": "Adding a country re-renders the page (HTTP 200) with the country in a table whose column header is 'Country'.",
+      "kind": "behaviour",
+      "ref": "trace t09 network POST action=add transitedCountry=FR -> 200; actions call@4118-4122; resource e5cc27f9 table",
+      "quote": "<th scope=\"col\" class=\"govuk-table__header\">Country</th>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-037",
+      "statement": "The added-countries table has a visually hidden caption 'Countries you have added' and a visually hidden 'Actions' column header.",
+      "kind": "copy",
+      "ref": "trace t06 resource e5cc27f9 table caption and thead",
+      "quote": "<caption class=\"govuk-table__caption govuk-visually-hidden\">Countries you have added</caption> ... <span class=\"govuk-visually-hidden\">Actions</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-038",
+      "statement": "Each added country row has its own Remove control, a link-styled submit button named 'Remove {country}' with action remove:{code}.",
+      "kind": "behaviour",
+      "ref": "trace t09 action call@4124; resource e5cc27f9 td button",
+      "quote": "<button type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"remove:FR\">Remove<span class=\"govuk-visually-hidden\"> France</span></button>",
+      "confidence": "verbatim",
+      "note": "app-link-button is a non-govuk class styling a button as a link; govuk-frontend has no link-button component, the standard alternative would be a summary-list/table action link to a separate remove route."
+    },
+    {
+      "id": "trace-animals-fit-p17-039",
+      "statement": "Countries added so far ride with the form as hidden transitedCountries inputs and are only saved when the user presses Save and continue; adding does not change the save token.",
+      "kind": "behaviour",
+      "ref": "trace t13 network: add POSTs return 200 with concurrencyToken=0, save POST transitedCountries=FR&transitedCountries=BE -> 302",
+      "quote": "<input type=\"hidden\" name=\"transitedCountries\" value=\"FR\" />",
+      "confidence": "inferred",
+      "note": "Inferred from the add POSTs re-rendering rather than redirecting, and concurrencyToken staying 0 until the save; the spec comment says the list rides with the page 'until the trader saves'. What happens to unsaved additions on Back or Cancel is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p17-040",
+      "statement": "The table lists countries in the order they were added.",
+      "kind": "behaviour",
+      "ref": "trace t13 resource b8e038ca (France row then Belgium row, added France first)",
+      "quote": "<td class=\"govuk-table__cell\">France</td> ... <td class=\"govuk-table__cell\">Belgium</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-041",
+      "statement": "After a country is added the search box is cleared, ready for the next one.",
+      "kind": "behaviour",
+      "ref": "trace t09 action call@4136",
+      "quote": "expect input#transitedCountry to.have.value \"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-042",
+      "statement": "The page has a visually hidden live status region (role status, aria-live polite, aria-atomic true) that announces changes.",
+      "kind": "non-functional",
+      "ref": "trace t09 actions call@4126-4130; resource div#transit-countries-status",
+      "quote": "<div id=\"transit-countries-status\" class=\"govuk-visually-hidden\" role=\"status\" aria-live=\"polite\" aria-atomic=\"true\" data-module=\"app-status-announcer\" data-message=\"\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-043",
+      "statement": "Adding a country announces '{country} added.' through the status region; the message ships in data-message and script writes it into the region after load.",
+      "kind": "copy",
+      "ref": "trace t09 actions call@4132-4134",
+      "quote": "France added.",
+      "confidence": "verbatim",
+      "note": "app-status-announcer is a custom module outside govuk-frontend."
+    },
+    {
+      "id": "trace-animals-fit-p17-044",
+      "statement": "Removing a country takes its row away, keeps the others, and announces '{country} removed.'.",
+      "kind": "behaviour",
+      "ref": "trace t10 network POST action=remove:FR -> 200; actions call@4891-4899; resource 2c0bb5a6",
+      "quote": "France removed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-045",
+      "statement": "At most 12 transit countries can be added.",
+      "kind": "rule",
+      "ref": "trace t11 actions call@4405; resource 426e2a0e (12 hidden inputs)",
+      "quote": "Maximum of 12 countries reached. Remove a country to add another.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-046",
+      "statement": "When the twelfth country is added the search field and the Add country button are removed from the page.",
+      "kind": "rule",
+      "ref": "trace t11 actions call@4407-4409; resource 426e2a0e (no select, no Add button)",
+      "quote": "expect input#transitedCountry to.have.count 0; expect button[name=\"Add country\"] to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-047",
+      "statement": "At the cap the page shows the paragraph 'Maximum of 12 countries reached. Remove a country to add another.' in place of the search.",
+      "kind": "copy",
+      "ref": "trace t11 action call@4411; resource 426e2a0e p#transit-countries-limit",
+      "quote": "Maximum of 12 countries reached. Remove a country to add another.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-048",
+      "statement": "The country that reaches the cap is announced together with the limit in one status message.",
+      "kind": "copy",
+      "ref": "trace t11 actions call@4413-4415; resource 426e2a0e data-message",
+      "quote": "Greece added. Maximum of 12 countries reached. Remove a country to add another.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-049",
+      "statement": "Removing a country when at the cap brings the search field and Add country button back.",
+      "kind": "behaviour",
+      "ref": "trace t11 actions call@4417-4419; network POST action=remove:GR -> 200; resource 64331ecd",
+      "quote": "Greece removed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-050",
+      "statement": "Submitting more than 12 countries is refused with 'Select up to 12 countries' (HTTP 400), linked to and focusing the search box.",
+      "kind": "rule",
+      "ref": "trace t12 network POST 13 transitedCountries -> 400; resource e6048818; actions call@4265-4269",
+      "quote": "Select up to 12 countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-051",
+      "statement": "In the over-the-limit error state all submitted countries (13) are kept in the list, and the search field and Add country button stay on the page alongside the limit paragraph.",
+      "kind": "behaviour",
+      "ref": "trace t12 resource e6048818 (select, Add country, p#transit-countries-limit, 13 rows); action call@4271",
+      "quote": "<p class=\"govuk-body\" id=\"transit-countries-limit\">Maximum of 12 countries reached. Remove a country to add another.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-052",
+      "statement": "The countries added are saved by Save and continue and read back in the table when the page is revisited.",
+      "kind": "behaviour",
+      "ref": "trace t13 actions call@4545-4553; resource b8e038ca",
+      "quote": "<input type=\"hidden\" name=\"transitedCountries\" value=\"FR\" /> <input type=\"hidden\" name=\"transitedCountries\" value=\"BE\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-053",
+      "statement": "Nothing is announced on a fresh load of the page: the status region only speaks for a change just made.",
+      "kind": "non-functional",
+      "ref": "trace t13 action call@4555; resource b8e038ca data-message=\"\"",
+      "quote": "expect #transit-countries-status to.have.text \"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-054",
+      "statement": "Without JavaScript the field stays a native select; choosing a country and pressing Add country adds it to the table.",
+      "kind": "behaviour",
+      "ref": "trace t14 actions call@4855-4859; network POST action=add transitedCountry=FR -> 200",
+      "quote": "selectOption Enter a country {label: France}; click Add country; cell France visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-055",
+      "statement": "Without JavaScript the added list still saves through Save and continue and moves on to Transporter details.",
+      "kind": "behaviour",
+      "ref": "trace t14 network POST transitedCountries=FR -> 302 /transporters; action call@4863-4865",
+      "quote": "Transporter details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-056",
+      "statement": "Without JavaScript the add confirmation exists only in the status region's data attribute, which the script would write out, so a no-JavaScript user is not shown or told that the country was added beyond the new table row.",
+      "kind": "non-functional",
+      "ref": "trace t14 resource c1d8b8de div#transit-countries-status",
+      "quote": "data-module=\"app-status-announcer\" data-message=\"France added.\"",
+      "confidence": "inferred",
+      "note": "Inferred: the region's text is written by the app-status-announcer module after load; with JavaScript disabled it stays empty."
+    },
+    {
+      "id": "trace-animals-fit-p17-057",
+      "statement": "The page's form posts without a client-side validation (novalidate) and carries a CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "trace t01 resource 41f27cf9 form",
+      "quote": "<form method=\"post\" novalidate> <input type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\" /> <input type=\"hidden\" name=\"concurrencyToken\" value=\"0\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p17-058",
+      "statement": "Apart from the journey strip, the link-button and the status announcer, the page is built from govuk-frontend components: caption, heading, body, label, hint, select, secondary and primary buttons, button group, table, error summary and error message.",
+      "kind": "constraint",
+      "ref": "trace t06 resource e5cc27f9 classes in main",
+      "quote": "app-journey-strip, app-link-button, data-module=\"app-accessible-autocomplete\", data-module=\"app-status-announcer\"",
+      "confidence": "inferred",
+      "note": "Read from the class names in the rendered HTML; the four app-* items are the only non-govuk pieces."
+    },
+    {
+      "id": "trace-animals-fit-p17-059",
+      "statement": "No trace in this part presses 'Save and return to overview' or 'Cancel and return to overview' on this page, so where they go and whether Save and return saves the list is not shown.",
+      "kind": "behaviour",
+      "ref": "part 17 traces t01-t14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p17-060",
+      "statement": "No trace shows whether the transit countries page is skipped for means of transport other than road vehicle (for example air or sea), or how the answer shows on the overview or check answers.",
+      "kind": "rule",
+      "ref": "part 17 traces t01-t14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p17-061",
+      "statement": "No trace shows whether the country of origin may also be chosen as a transit country, or whether any list entry is excluded based on earlier answers.",
+      "kind": "rule",
+      "ref": "part 17 traces t01-t14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p17-062",
+      "statement": "No trace shows what happens to countries added but not yet saved when the user leaves by the Back link or Cancel.",
+      "kind": "behaviour",
+      "ref": "part 17 traces t01-t14",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

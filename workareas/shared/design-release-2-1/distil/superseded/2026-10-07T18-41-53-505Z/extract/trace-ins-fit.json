@@ -1,0 +1,665 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "A corpus of 50 Playwright trace zips (one per test, folder name = test id) from the INS frontend's fit specs at INS frontend 406e300, all passed, with report.json (npm output precedes the JSON; the JSON starts at the first line beginning with '{') mapping each test to its folder. All 50 are in scope (scope is every <test>/trace.zip); I selected by listing every folder that holds a trace.zip, no substring filtering. Split by spec file: smoke.fit.spec.js (1 core journey: sign in, dashboard, add, view, delete an address), features/address-book/fit add (19: render, axe, 7 required-field errors, 8 over-length errors, malformed email, error-state axe, save, cancel), delete (4), edit (7), list (6), view (5), and features/dashboard (6, AC1-AC5 plus axe). Pages found, in journey order: (1) Dashboard at / with search by notification reference, sort select, a table (Reference number, Status, Origin country, Commodity, Arrival date, Action) and a 'No notifications found' empty state; (2) Address book list at /address-book (search, Add a new address, table Name/Address/Country/Action, pagination at 25 per page, empty state 'You have no addresses yet.', success banner after add/edit/delete); (3) Add address details at /address-book/add (form, always reachable from list; error summary state on invalid POST); (4) Address details at /address-book/<id> (summary list, Edit and Delete buttons, Back link); (5) Edit address details at /address-book/<id>/edit; (6) Delete address confirmation at /address-book/<id>/delete. Conditional: success banner (only after a successful add, edit or delete, shown above the H1), pagination (only above 25 addresses), empty state, error summary and per-field errors (only after an invalid submit). Dashboard 'View' links leave the INS frontend for the animals frontend on localhost:3000 (/live-animals/notifications/<ref> or .../notification-view); those pages are out of this source. Tooling decision: `tim distil trace ... -- open` failed with TraceVersionError (the traces were written by a newer Playwright than tim's viewer supports), so no playwright subcommand was usable. I unzipped each trace into the working folder and read the raw trace files directly: the action list from before events in 1-trace.trace, rendered DOM from the frame-snapshot events (full-page snapshots at each navigation, rendered main content with jq), the network log from 1-trace.network, and the spec source embedded in each zip under src/. Refs therefore use the form `<test folder> call@<n>` where n is the Playwright callId of the action whose full-page snapshot was read, or `<test folder> src` for the spec source embedded in the zip. Validation messages for the fields I did not snapshot are taken from the embedded spec source, which asserts the rendered text and passed in every trace, so they are verbatim rendered copy; the empty-name and over-255-name error states were read from the rendered DOM directly. Platform chrome (service header, phase banner, footer) is skipped except where it is the service navigation, which the INS frontend owns. Seed data in the traces is the stub address book (Stub Farm 1..30 in the pagination test), stub org ids and a fixed three-notification dashboard dataset. Credential-shaped values: the CSRF crumb hidden input values are not copied.",
+  "scopeHash": "1c20bda205914b652abac5e642fca5866607ff7564cc7f26d7a330e0a2ba6adb",
+  "claims": [
+    {
+      "id": "trace-ins-fit-001",
+      "statement": "The INS frontend's service navigation shows the service name 'Import notification service' and four items in order: Dashboard, Address book, Manage account and Log out; the current page's item is marked active.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (service navigation)",
+      "quote": "Import notification service / Dashboard / Address book / Manage account / Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-002",
+      "statement": "In the service navigation, Manage account is a link whose href is '#' (it goes nowhere), Log out links to /auth/sign-out, Dashboard links to / and Address book to /address-book.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (service navigation)",
+      "quote": "<A class=govuk-service-navigation__link href=#> Manage account",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-003",
+      "statement": "The service carries a grey Alpha phase banner reading 'This is a new service. Help us improve it and give your feedback by email' where the email link is mailto:APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (phase banner)",
+      "quote": "Alpha / This is a new service. Help us improve it and / give your feedback by email",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-004",
+      "statement": "A trader reaches the INS frontend by signing in through a stub sign-in endpoint that takes an organisation id (/auth/stub-sign-in?organisationId=...), which redirects (302) to the dashboard at /.",
+      "kind": "integration",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke 1-trace.network GET /auth/stub-sign-in",
+      "quote": "GET http://localhost:3002/auth/stub-sign-in?organisationId=stub-org-smoke-0b709305-4e90-49e4-af99-7f3283354e7f 302",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-005",
+      "statement": "The dashboard at / has a level-1 heading 'Dashboard' (govuk-heading-xl, full-width column).",
+      "kind": "copy",
+      "ref": "dashboard-dashboard.fit-da-7e579-No-notifications-found-AC5--features call@257",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-006",
+      "statement": "The dashboard has a GET search form with a search-type text input labelled 'Search by notification reference' (name referenceNumber, two-thirds width) and a 'Search' button; the form carries the current sort as a hidden input.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (first form)",
+      "quote": "Search by notification reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-007",
+      "statement": "The dashboard has a second GET form with a select labelled 'Sort by' (name sort) and a secondary 'Update sort' button; the form carries the current reference search as a hidden input so sort and search combine.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (second form)",
+      "quote": "Sort by / Update sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-008",
+      "statement": "The dashboard sort select offers four options, the first selected by default: 'Arrival date (newest first)' (arrivalDate,desc), 'Arrival date (oldest first)' (arrivalDate,asc), 'Last updated (newest first)' (lastUpdated,desc) and 'Last updated (oldest first)' (lastUpdated,asc).",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (select#sort)",
+      "quote": "Arrival date (newest first) / Arrival date (oldest first) / Last updated (newest first) / Last updated (oldest first)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-009",
+      "statement": "The dashboard shows a result count line in the form 'Showing 1-3 of 3' above the table.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13",
+      "quote": "Showing 1-3 of 3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-010",
+      "statement": "The dashboard lists notifications in a table (visually-hidden caption 'Notifications') with six columns in order: Reference number, Status, Origin country, Commodity, Arrival date, and a visually hidden Action column.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (table head)",
+      "quote": "Reference number / Status / Origin country / Commodity / Arrival date / Action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-011",
+      "statement": "The dashboard lists notifications of every status together in one list: the stub dataset shows SUBMITTED, DRAFT and AMEND rows side by side, with the status shown as upper-case plain text (not a tag).",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit-da-7c8cd-fy-the-consignment-AC1-AC2--features src (AC2 test) and call@13 of the smoke trace",
+      "quote": "Stub dataset spans SUBMITTED, DRAFT and AMEND — all three must appear in the same list (AC2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-012",
+      "statement": "Each dashboard row identifies the consignment with reference number (format GBN-AG-26-000001), status, origin country name (France, Ireland, Germany) and arrival date written like '10 Sep 2026'; the Commodity cell is empty for the DRAFT and AMEND rows and shows 'Cattle' for the SUBMITTED row.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (table body)",
+      "quote": "GBN-AG-26-000001 / SUBMITTED / France / Cattle / 10 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-013",
+      "statement": "The dashboard default order puts the notification with the latest arrival date first (12 Sep 2026, then 10 Sep, then 8 Sep) under the default sort 'Arrival date (newest first)'.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (row order)",
+      "quote": "12 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-014",
+      "statement": "Every dashboard row ends in a 'View' link whose visually hidden suffix is the reference number, so each link's accessible name is 'View <reference>'.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (action cells)",
+      "quote": "View / GBN-AG-26-000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-015",
+      "statement": "Opening a SUBMITTED notification from the dashboard goes to the animals frontend's read-only notification-view page: href http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view.",
+      "kind": "integration",
+      "ref": "dashboard-dashboard.fit-da-44f5e-notification-view-page-AC3--features src (AC3 assertion)",
+      "quote": "'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-016",
+      "statement": "Opening a DRAFT notification from the dashboard goes to the animals frontend's journey hub (href http://localhost:3000/live-animals/notifications/GBN-AG-26-000002), not to notification-view.",
+      "kind": "integration",
+      "ref": "dashboard-dashboard.fit-da-2eeb5--not-notification-view-AC3--features src (AC3 assertion)",
+      "quote": "'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-017",
+      "statement": "An AMEND notification's View link also goes to the journey hub path (href http://localhost:3000/live-animals/notifications/GBN-AG-26-000003), without the /notification-view suffix: only SUBMITTED rows get the read-only view link.",
+      "kind": "rule",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (row GBN-AG-26-000003)",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000003",
+      "confidence": "verbatim",
+      "note": "Read from the rendered href; no test asserts the AMEND link, only SUBMITTED and DRAFT."
+    },
+    {
+      "id": "trace-ins-fit-018",
+      "statement": "Searching the dashboard by a complete reference number (GBN-AG-26-000001) returns only the matching notification; the URL becomes /?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-000001, the box keeps the typed value, the count reads 'Showing 1-1 of 1' and a 'Clear search' link to / appears above the table.",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit-da-21d7c--matching-notification-AC4--features call@295",
+      "quote": "Showing 1-1 of 1 / Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-019",
+      "statement": "A dashboard search that matches nothing hides the sort form and table and shows the text 'No notifications found' followed by a 'Clear search' link to /; the search box keeps the typed reference.",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit-da-7e579-No-notifications-found-AC5--features call@265",
+      "quote": "No notifications found / Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-020",
+      "statement": "The dashboard page passes the axe check with no serious or critical violations.",
+      "kind": "non-functional",
+      "ref": "dashboard-dashboard.fit-da-62c16--or-critical-axe-violations-features src",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim",
+      "note": "Every address-book page and error state has the same axe test; the tag set is wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa."
+    },
+    {
+      "id": "trace-ins-fit-021",
+      "statement": "The address book list at /address-book has an H1 'Address book' and the intro paragraph 'Manage addresses used across import and export services.'.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@17",
+      "quote": "Manage addresses used across import and export services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-022",
+      "statement": "The address book list has a GET search form with a search input labelled 'Search addresses' (name q) and a 'Search' button.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@17",
+      "quote": "Search addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-023",
+      "statement": "The address book list has an 'Add a new address' button (a link styled as a button to /address-book/add) between the search form and the table.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@17",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-024",
+      "statement": "The address book list shows a count line 'Showing 1-1 of 1' and a table with columns Name, Address, Country and a visually hidden Action column; each row shows the name, the address as one comma-joined line (line 1, town, postcode, e.g. '1 Stub Way, Stubton, ST1 1UB') and the country name, then a 'View' link with the name visually hidden.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@17",
+      "quote": "Stub Farm 1 / 1 Stub Way, Stubton, ST1 1UB / United Kingdom / View",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-025",
+      "statement": "The address list paginates at 25 addresses per page: with 30 addresses page 1 reads 'Showing 1-25 of 30' and page 2 (/address-book?page=2) reads 'Showing 26-30 of 30'.",
+      "kind": "rule",
+      "ref": "address-book-fit-list.fit--d7e93--are-more-than-25-addresses-features call@43 and call@47",
+      "quote": "Showing 1-25 of 30 / Showing 26-30 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-026",
+      "statement": "The address list uses the GOV.UK Pagination component (nav 'Pagination') below the table: numbered pages 1 and 2 with the current page marked, a 'Next page' link on page 1 and a 'Previous page' link on page 2.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-list.fit--d7e93--are-more-than-25-addresses-features call@43 and call@47",
+      "quote": "govuk-pagination / Next / Previous",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-027",
+      "statement": "When the organisation has no addresses, the address list shows no table or count and instead the text 'You have no addresses yet.' with the Add a new address button still available.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-list.fit--964e2-ge-and-an-option-to-add-one-features call@211",
+      "quote": "You have no addresses yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-028",
+      "statement": "The address book lists only the signed-in organisation's addresses: each test signs in with its own stub organisation id (e.g. stub-org-smoke-<uuid>) and sees only its own seeded or created addresses.",
+      "kind": "rule",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@11",
+      "quote": "/auth/stub-sign-in?organisationId=stub-org-smoke-0b709305-4e90-49e4-af99-7f3283354e7f",
+      "confidence": "inferred",
+      "note": "Inferred from per-test organisation ids and from the list showing 1 address in a fresh org; no test signs in as a second org to prove isolation."
+    },
+    {
+      "id": "trace-ins-fit-029",
+      "statement": "The Add address page at /address-book/add has H1 'Add address details' in a two-thirds column, with two H2 groups: 'Enter address details' and 'Enter contact details'.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@23",
+      "quote": "Add address details / Enter address details / Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-030",
+      "statement": "The Add form's address group has, in order, text inputs 'Name or organisation name' (full width), 'Address line 1' (full), 'Address line 2 (optional)' (full), 'Town or city' (half width), 'County (optional)' (half width) and 'Postcode or Zip code' (half width), then a half-width select 'Country'.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@23",
+      "quote": "Name or organisation name / Address line 1 / Address line 2 (optional) / Town or city / County (optional) / Postcode or Zip code / Country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-031",
+      "statement": "The Add form's Country select starts on a blank option 'Select a country' (empty value) and offers United Kingdom (GB), France (FR), Germany (DE) and Ireland (IE) in the traced environment.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@23 (select#countryCode)",
+      "quote": "Select a country / United Kingdom / France / Germany / Ireland",
+      "confidence": "verbatim",
+      "note": "Five options total; the list is stub data, so the real list is reference data and its size is not shown here."
+    },
+    {
+      "id": "trace-ins-fit-032",
+      "statement": "The Add form's contact group has 'Email address' (full width, autocomplete email) then 'Phone number' (half width) with the hint 'For international numbers include the country code'; the Email address field has no hint.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@23",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-033",
+      "statement": "Only Address line 2 and County are marked optional on the Add form (their labels end '(optional)'); Name, Address line 1, Town or city, Postcode, Country, Email address and Phone number are required.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-df4d5-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "['name', NAME_LABEL, 'Enter a name'], ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'], ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'], ['postcode', POSTCODE_LABEL, 'Enter a postcode'], ['countryCode', 'Country', 'Enter a country'], ['phone', PHONE_LABEL, 'Enter a telephone number'], ['email', EMAIL_LABEL, 'Enter an email address']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-034",
+      "statement": "The Add form's buttons are the primary 'Save and continue' and a secondary 'Cancel and return to address book' (a submit button with name cancel, value true), in a button group.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@23",
+      "quote": "Save and continue / Cancel and return to address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-035",
+      "statement": "The address forms post with a CSRF crumb hidden input; submitting an empty required field redisplays the form (not a redirect) with a GOV.UK Error summary 'There is a problem' linking to the field, plus a per-field error message prefixed with visually hidden 'Error:'.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-add.fit-a-df4d5-focuses-the-preserved-field-features call@35",
+      "quote": "There is a problem / Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-036",
+      "statement": "When the Add form fails validation, the other fields keep what the user typed, only the failing field shows the error styling, and the error summary link targets the field (href #name).",
+      "kind": "behaviour",
+      "ref": "address-book-fit-add.fit-a-df4d5-focuses-the-preserved-field-features call@35",
+      "quote": "<A href=#name> Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-037",
+      "statement": "Clicking an error summary link focuses the matching field, for every required field and every over-length field (tested once per field).",
+      "kind": "behaviour",
+      "ref": "address-book-fit-add.fit-a-df4d5-focuses-the-preserved-field-features src (test 'links to and focuses the preserved field')",
+      "quote": "empty Name or organisation name links to and focuses the preserved field",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-038",
+      "statement": "An empty Name shows the error 'Enter a name'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-df4d5-focuses-the-preserved-field-features call@35",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-039",
+      "statement": "An empty Address line 1 shows the error 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-e05ed-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-040",
+      "statement": "An empty Town or city shows the error 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-2e436-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-041",
+      "statement": "An empty Postcode or Zip code shows the error 'Enter a postcode'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-af791-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter a postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-042",
+      "statement": "An unselected Country shows the error 'Enter a country'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-3fb1a-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-043",
+      "statement": "An empty Phone number shows the error 'Enter a telephone number' (the error says 'telephone' where the label says 'Phone number').",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-32110-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter a telephone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-044",
+      "statement": "An empty Email address shows the error 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-2f2aa-focuses-the-preserved-field-features src (requiredValidations)",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-045",
+      "statement": "A Name longer than 255 characters shows the error 'Name must be 255 characters or fewer', and the over-long value is preserved in the field.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-8c033-focuses-the-preserved-value-features call@77",
+      "quote": "Name must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-046",
+      "statement": "An Address line 1 longer than 255 characters shows the error 'Address line 1 must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-83fe4-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Address line 1 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-047",
+      "statement": "An Address line 2 longer than 255 characters shows the error 'Address line 2 must be 255 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-138a0-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Address line 2 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-048",
+      "statement": "A Town or city longer than 100 characters shows the error 'Town or city must be 100 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-351ad-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Town or city must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-049",
+      "statement": "A County longer than 100 characters shows the error 'County must be 100 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-6d292-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "County must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-050",
+      "statement": "A Postcode or Zip code longer than 12 characters shows the error 'Postcode must be 12 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-e58a8-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Postcode must be 12 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-051",
+      "statement": "A Phone number longer than 20 characters shows the error 'Telephone number must be 20 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-0a2d0-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Telephone number must be 20 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-052",
+      "statement": "An Email address longer than 254 characters shows the error 'Email address must be 254 characters or fewer'.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-f93b2-focuses-the-preserved-value-features src (maxLengthValidations)",
+      "quote": "Email address must be 254 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-053",
+      "statement": "A malformed email address (the test enters 'not-an-email') shows the error 'Enter an email address in the correct format' and the value is preserved, on both the Add and Edit forms.",
+      "kind": "rule",
+      "ref": "address-book-fit-add.fit-a-29872-s-a-malformed-email-address-features src; address-book-fit-edit.fit--e9676-ted-and-the-value-preserved-features src",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-054",
+      "statement": "Saving a valid address redirects (302) to the address book list and shows a green success notification banner (title 'Success', heading '<name> added to your address book', banner id address-book-success-banner, role alert) above the H1, with the new address in the table.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@47",
+      "quote": "Highland Livestock Ltd added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-055",
+      "statement": "The Add form's 'Cancel and return to address book' returns to the address book without creating an address.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-add.fit-c-03995-without-creating-an-address-features src",
+      "quote": "returns to the address book without creating an address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-056",
+      "statement": "The Address details page at /address-book/<id> has a Back link (href /address-book) and an H1 that is the address's name, in a two-thirds column.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-view.fit--4811a-returns-to-the-address-book-features call@(back link) and smoke trace call@51",
+      "quote": "Back",
+      "confidence": "verbatim",
+      "note": "The Back link sits outside main; its destination is proven by the test 'Back returns to the address book' (URL ends /address-book, H1 'Address book')."
+    },
+    {
+      "id": "trace-ins-fit-057",
+      "statement": "The Address details page is a summary list with nine rows in order: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number'.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@51",
+      "quote": "Name or organisation name / Address line 1 / Address line 2 (optional) / Town or city / County / Postcode or Zip code / Country / Email address / Phone number",
+      "confidence": "verbatim",
+      "note": "The summary key for line 2 keeps '(optional)' but the key for County drops it, while the forms label it 'County (optional)'."
+    },
+    {
+      "id": "trace-ins-fit-058",
+      "statement": "The Address details page shows the country as its name (United Kingdom) not its code (GB), and the phone and email as entered.",
+      "kind": "data",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@51",
+      "quote": "United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-059",
+      "statement": "The Address details page offers two buttons, 'Edit' (a link styled as a primary button to /address-book/<id>/edit) and 'Delete' (a warning-styled button to /address-book/<id>/delete).",
+      "kind": "behaviour",
+      "ref": "address-book-fit-view.fit--2e5d8-or-the-address-being-viewed-features src; smoke trace call@51",
+      "quote": "govukButton with an href renders an anchor with role=\"button\", so these are buttons in the accessibility tree rather than links.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-060",
+      "statement": "The Edit address page at /address-book/<id>/edit has H1 'Edit address details', a Back link to the address's details page, and every field prefilled from the stored address.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-edit.fit--759a1-eld-from-the-stored-address-features call@167 and src",
+      "quote": "Edit address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-061",
+      "statement": "The Edit form has no 'Enter address details' / 'Enter contact details' section headings, puts 'Phone number' (with its hint) before 'Email address', and sets different widths from the Add form (two-thirds width on name, address lines, town, county, phone and email; 10-character width on postcode; full-width-default country select).",
+      "kind": "behaviour",
+      "ref": "address-book-fit-edit.fit--759a1-eld-from-the-stored-address-features call@167",
+      "quote": "Phone number / For international numbers include the country code / Email address",
+      "confidence": "verbatim",
+      "note": "Recorded as a difference between the Add and Edit forms; no judgement of which is intended."
+    },
+    {
+      "id": "trace-ins-fit-062",
+      "statement": "The Edit form's buttons are the primary 'Save changes' and the secondary 'Cancel' (a submit button with name cancel).",
+      "kind": "copy",
+      "ref": "address-book-fit-edit.fit--759a1-eld-from-the-stored-address-features call@167",
+      "quote": "Save changes / Cancel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-063",
+      "statement": "Saving valid changes on the Edit form redirects to the address book list and shows the success banner '<name> updated in your address book'.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-edit.fit--de4e5-ms-them-on-the-address-book-features src",
+      "quote": "Glen Tanar Estate updated in your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-064",
+      "statement": "A rejected Edit save keeps the user's edits in the form rather than reverting to the stored address, and the Edit form's validation shows the same messages as Add (e.g. 'Enter a name').",
+      "kind": "behaviour",
+      "ref": "address-book-fit-edit.fit--af334-her-than-the-stored-address-features src",
+      "quote": "a rejected save keeps the edits rather than the stored address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-065",
+      "statement": "The Edit form's Cancel returns to the address book list without saving (the changed value is not stored).",
+      "kind": "behaviour",
+      "ref": "address-book-fit-edit.fit--36446-address-book-without-saving-features src",
+      "quote": "Cancel returns to the address book without saving",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-066",
+      "statement": "The Delete page at /address-book/<id>/delete has H1 'Delete address' and the confirmation 'Are you sure you want to delete <name> from your address book?' with the name in bold.",
+      "kind": "copy",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@55",
+      "quote": "Are you sure you want to delete Highland Livestock Ltd from your address book?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-067",
+      "statement": "The Delete confirmation has a warning button 'Yes, delete this address' and a secondary 'Cancel'; Cancel returns to that address's details page with nothing deleted.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@55; address-book-fit-delete.fi-d5c0d-etails-with-nothing-deleted-features src",
+      "quote": "Yes, delete this address / Cancel returns to the address details with nothing deleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-068",
+      "statement": "Confirming deletion redirects (302) to the address book list with the success banner '<name> deleted from your address book', and the address no longer appears in the table.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@61",
+      "quote": "Highland Livestock Ltd deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-069",
+      "statement": "The Dashboard and Address book links in the service navigation are visible on the address book and navigate to / and /address-book.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-list.fit--762a7-ible-and-navigate-correctly-features src",
+      "quote": "Dashboard and Address book links are visible and navigate correctly",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-070",
+      "statement": "Every address book page and error state (list, add, add validation error, view, edit, edit validation error, delete) passes the axe check with no serious or critical violations.",
+      "kind": "non-functional",
+      "ref": "address-book-fit-add.fit-a-66af9--or-critical-axe-violations-features src; address-book-fit-edit.fit--dd003--or-critical-axe-violations-features src",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-071",
+      "statement": "All INS frontend pages in the traces are built entirely from GOV.UK Design System components (summary list, table, pagination, notification banner, error summary, buttons, service navigation, phase banner, inputs and select) with no non-govuk component classes other than govuk-!-spacing and width utilities; the only custom class seen is on the header ('app-header').",
+      "kind": "constraint",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 to call@61 (class names)",
+      "quote": "govuk-header app-header",
+      "confidence": "inferred",
+      "note": "Inferred from reading the class names in the rendered snapshots of the pages in the smoke trace, not from a class-set query."
+    },
+    {
+      "id": "trace-ins-fit-072",
+      "statement": "The address book and dashboard are rendered server-side by the INS frontend over plain GET and POST requests: add and delete are POSTs that answer 302 to the list; no client-side data calls (XHR/fetch) appear in the network log.",
+      "kind": "integration",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke 1-trace.network (POST /address-book/add 302, POST .../delete 302)",
+      "quote": "POST http://localhost:3002/address-book/add 302",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-073",
+      "statement": "The traces do not show the calls the INS frontend server makes to its backends (the address book system of record, the ins-backend notification read model) or what they return, so the data source for the dashboard and address list, and the call shapes, are not recorded.",
+      "kind": "integration",
+      "ref": "all traces, 1-trace.network (browser-side requests only)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The fit run uses stubbed data; only the browser's requests are in the network log."
+    },
+    {
+      "id": "trace-ins-fit-074",
+      "statement": "No trace exercises the dashboard sort select, so the order produced by the three non-default sort options (arrival date oldest first, last updated newest or oldest first) is not shown, and which date 'Last updated' sorts on is not shown.",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit spec (no sort test); smoke trace call@13 (select rendered)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-075",
+      "statement": "No trace exercises the dashboard with more than three notifications, so dashboard pagination, a page size and the behaviour for a partial reference search are not shown.",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit spec (dataset is three stub notifications)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "AC4 is tested with a complete reference only ('searching by complete reference')."
+    },
+    {
+      "id": "trace-ins-fit-076",
+      "statement": "No trace shows a dashboard with no notifications at all (only a search with no match), so the copy and layout for a first-time organisation's empty dashboard are not shown.",
+      "kind": "behaviour",
+      "ref": "dashboard-dashboard.fit spec; DASH_NONE call@265 is a no-match search",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-077",
+      "statement": "No trace exercises the address book search box (q), so what the search matches (name, address, country) and how it combines with pagination, and its no-result copy, are not shown.",
+      "kind": "behaviour",
+      "ref": "address-book-fit-list spec (no search test); smoke trace call@17 (search form rendered)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-078",
+      "statement": "No trace follows the Manage account or Log out links, so where Manage account goes (its href is '#') and what Log out does and where it lands are not shown.",
+      "kind": "behaviour",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (service navigation)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-079",
+      "statement": "No trace shows the dashboard or address book on a narrow screen, so the service navigation's collapsed 'Menu' toggle (rendered hidden) and mobile table behaviour are not shown.",
+      "kind": "non-functional",
+      "ref": "smoke.fit-a-trader-signs-i-62e11-iews-and-deletes-an-address-smoke call@13 (button 'Menu', hidden)",
+      "quote": "Menu",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-080",
+      "statement": "No trace shows how an address in the address book is used from the live-animals journey (selecting a saved address in a notification), nor any link from the address book to a notification; the INS address book as traced stands alone.",
+      "kind": "integration",
+      "ref": "all traces (no cross-service step to the animals frontend from the address book)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-081",
+      "statement": "No trace covers a backend failure or a save conflict (an address deleted by someone else, a failed save), so the error page or message for those is not shown.",
+      "kind": "behaviour",
+      "ref": "all traces (all 50 passed on the happy and validation paths only)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -1,0 +1,886 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 18 mined all 22 traces from transporters.fit.spec.js in its four describe blocks: transporter list page (8 tests: 7f054, 66d2b, db5f8, f6794, f11a9, 9c144, 40275, 2c405), searching the transporter list (7 tests: 7d16f, 79835, e01b0, 1f326, bdc6c, 21161, a60a7), commercial transporter page (3 tests: a376d, 7b6fa, 0d4a0) and transporter pages accessibility (4 tests: c9d7e, 72c17, b2cb2, 166b3). The spec file was read in full for test titles and assertions. Each trace was unzipped into the part's work folder (t01 to t22, in read order) and read with jq: the action timeline after the Arrival details task, the rendered main HTML at the key snapshots, page titles, the browser network log and the axe results. Every trace walks the same lead-in: stub sign-in, start a new notification, origin, commodity (Felis catus), consignment details, then Arrival details saved blank, which redirects to the transporter list. Pages in order: (1) Transporter details list at /transporters (always, the transporter task's first page) carrying intro copy, authorisation guidance, a Search field and button above a radio-table of every known transporter (Name, Address, Approval number, Type, Status columns), an Add a transporter button, Save and continue, Save and return to overview and Cancel; search states (filtered rows, no-match message) and an error state. (2) Overview, reached after Save and continue on the list or the register. (3) Choose a transporter type at /transporters/add, reached from Add a transporter (owned by part 20; claimed here only for what these traces show, including its axe run). (4) Add commercial transporter at /transporters/add/commercial and Add private transporter at /transporters/add/private, reached through the type question (owned by parts 19 and 20; claimed here only for prefill and routing these traces assert). (5) Search for an approved commercial transporter at /transporters/select, the commercial register, reached only by direct URL after answering Commercial, with its error state. Conditional: the no-match message replaces the table only when a search matches nothing; the register's commercial answer is only in scope once the type question is answered Commercial. Integrations: only browser-to-frontend form posts are visible; no backend call shows in any trace.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p18-001",
+      "statement": "Saving the Arrival details task with Save and continue takes the trader straight to the transporter list page, which opens the transporter task.",
+      "kind": "behaviour",
+      "ref": "trace 7f054 request POST /port-of-entry -> 302 /transporters; action call@4335 to call@4337",
+      "quote": "POST 302 /live-animals/notifications/GBN-AG-26-5HKRY5/port-of-entry -> /live-animals/notifications/GBN-AG-26-5HKRY5/transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-002",
+      "statement": "The transporter list page lives at /live-animals/notifications/{reference}/transporters.",
+      "kind": "data",
+      "ref": "trace 7f054 snapshot call@4337 after (frameUrl)",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-5HKRY5/transporters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-003",
+      "statement": "The transporter list page is headed Transporter details.",
+      "kind": "copy",
+      "ref": "trace 7f054 snapshot call@4337 after, main h1.govuk-heading-l",
+      "quote": "Transporter details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-004",
+      "statement": "The transporter list page carries the section caption Transport and arrival above its heading.",
+      "kind": "copy",
+      "ref": "trace 7f054 snapshot call@4337 after, span.govuk-caption-l",
+      "quote": "Transport and arrival",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-005",
+      "statement": "The transporter list page's browser title is Transporter details - Import notification service - GOV.UK.",
+      "kind": "copy",
+      "ref": "trace 7f054 snapshot call@4337 after, head title",
+      "quote": "Transporter details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-006",
+      "statement": "The transporter list page has a Back link to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 7f054 snapshot call@4337 after, a.govuk-back-link",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-5HKRY5\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-007",
+      "statement": "The transporter list page shows a journey strip with a blue Draft tag and the notification reference in bold above the caption.",
+      "kind": "copy",
+      "ref": "trace 7f054 snapshot call@4337 after, div.app-journey-strip",
+      "quote": "Draft ... GBN-AG-26-5HKRY5",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a non-govuk class wrapping a govuk-tag--blue and a bold govuk-body span; the strip is likely shared across journey pages."
+    },
+    {
+      "id": "trace-animals-fit-p18-008",
+      "statement": "The transporter list page opens with an introduction saying who the transporter is.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4339; snapshot call@4337 after, first p.govuk-body",
+      "quote": "This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-009",
+      "statement": "The list page's authorisation guidance leads with the rule that the transporter must hold a valid UK transporter authorisation from DAERA or APHA under listed conditions.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4341; snapshot call@4337 after",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-010",
+      "statement": "The first authorisation condition is transporting live vertebrate animals in, to, from or through GB.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4343; snapshot call@4337 after, ul.govuk-list--bullet li 1",
+      "quote": "transporting any live vertebrate animals in, to, from or through Great Britain (GB)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-011",
+      "statement": "The second authorisation condition is journeys of over 65 km.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4345; snapshot call@4337 after, ul.govuk-list--bullet li 2",
+      "quote": "travelling on journeys of over 65 km",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-012",
+      "statement": "The third authorisation condition is transporting as part of an economic (commercial) activity.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4347; snapshot call@4337 after, ul.govuk-list--bullet li 3",
+      "quote": "transporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-013",
+      "statement": "The authorisation conditions render as a spaced bulleted list.",
+      "kind": "constraint",
+      "ref": "trace 7f054 snapshot call@4337 after",
+      "quote": "<ul class=\"govuk-list govuk-list--bullet govuk-list--spaced\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-014",
+      "statement": "The list page links to GOV.UK guidance on transporting animals in connection with an economic activity, with the link text saying it opens in a new tab.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4349; snapshot call@4337 after",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-015",
+      "statement": "The guidance link points at the animal welfare in transport guidance, economic activity section.",
+      "kind": "integration",
+      "ref": "trace 7f054 action call@4349 (to.have.attribute href)",
+      "quote": "https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-016",
+      "statement": "The guidance link opens in a new tab (target _blank).",
+      "kind": "behaviour",
+      "ref": "trace 7f054 action call@4351 (to.have.attribute target)",
+      "quote": "target=\"_blank\"",
+      "confidence": "verbatim",
+      "note": "No rel attribute was captured in the serialised snapshot."
+    },
+    {
+      "id": "trace-animals-fit-p18-017",
+      "statement": "The list page tells the trader that DAERA-issued documents are valid in GB.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4353; snapshot call@4337 after",
+      "quote": "Documents issued by DAERA are valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-018",
+      "statement": "The list page tells the trader that documents issued in any EU member state are not valid in GB.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4355; snapshot call@4337 after",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-019",
+      "statement": "The list of transporters is a fieldset group whose legend is Select a transporter, rendered at medium size.",
+      "kind": "copy",
+      "ref": "trace 7f054 action call@4357 (role=group name); snapshot call@4337 after legend.govuk-fieldset__legend--m",
+      "quote": "Select a transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-020",
+      "statement": "The transporter list page offers a Search text field labelled Search.",
+      "kind": "data",
+      "ref": "trace 7d16f action call@5195; trace 7f054 snapshot call@4337 after input#search",
+      "quote": "<label class=\"govuk-label govuk-label--s\" for=\"search\">Search</label> ... <input class=\"govuk-input govuk-!-width-two-thirds\" id=\"search\" name=\"search\" type=\"text\" value=\"\" aria-describedby=\"search-hint\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-021",
+      "statement": "The search field is hinted with what it matches: name, address or approval number.",
+      "kind": "copy",
+      "ref": "trace 7d16f action call@5197; trace 7f054 snapshot call@4337 after div#search-hint",
+      "quote": "Name, address or approval number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-022",
+      "statement": "A secondary Search button sits beside the search field and submits the page's own form with action=search.",
+      "kind": "behaviour",
+      "ref": "trace 7d16f action call@5199; trace 7f054 snapshot call@4337 after",
+      "quote": "<button type=\"submit\" value=\"search\" name=\"action\" class=\"govuk-button govuk-button--secondary\">Search</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-023",
+      "statement": "The search field and button sit above the transporter table in the page order.",
+      "kind": "rule",
+      "ref": "trace 7d16f action call@5201 (evaluate compareDocumentPosition returned true)",
+      "quote": "{\"value\":{\"b\":true}}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-024",
+      "statement": "Searching posts the term back to the list page's own URL and the server re-renders the list (200, no redirect), so search works without client-side JavaScript.",
+      "kind": "behaviour",
+      "ref": "trace 79835 request POST /transporters",
+      "quote": "POST 200 http://localhost:3000/live-animals/notifications/GBN-AG-26-1AQ27G/transporters :: concurrencyToken=0&search=Aberdeen Livestock Ltd&action=search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-025",
+      "statement": "Searching by name leaves only the matching transporter on the list.",
+      "kind": "behaviour",
+      "ref": "trace 79835 actions call@5197 to call@5203; snapshot call@5201 after",
+      "quote": "fill Search \"Aberdeen Livestock Ltd\" ... row Aberdeen Livestock Ltd count 1; row García Livestock Transport SL count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-026",
+      "statement": "Searching by approval number finds the transporter it belongs to and drops the others.",
+      "kind": "behaviour",
+      "ref": "trace e01b0 actions call@5483 to call@5489; snapshot call@5487 after",
+      "quote": "fill Search \"ES-T2-45001294\" ... row García Livestock Transport SL count 1; row Aberdeen Livestock Ltd count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-027",
+      "statement": "Searching by part of an address (a postcode) finds the transporter at that address and drops the others.",
+      "kind": "behaviour",
+      "ref": "trace 1f326 actions call@5089 to call@5095; snapshot call@5093 after",
+      "quote": "fill Search \"AB11 5DQ\" ... row Aberdeen Livestock Ltd count 1; row García Livestock Transport SL count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-028",
+      "statement": "After a search the term stays in the search box.",
+      "kind": "behaviour",
+      "ref": "trace bdc6c action call@4876; trace 79835 snapshot call@5201 after input#search",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"search\" name=\"search\" type=\"text\" value=\"Aberdeen Livestock Ltd\" aria-describedby=\"search-hint\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-029",
+      "statement": "Searching keeps the trader on the transporter list page and shows no error summary.",
+      "kind": "behaviour",
+      "ref": "trace bdc6c actions call@4878, call@4880",
+      "quote": "heading \"Transporter details\" visible; .govuk-error-summary count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-030",
+      "statement": "Searching saves nothing: the search post carries no transporter selection and the response re-renders the list rather than moving on.",
+      "kind": "rule",
+      "ref": "trace 79835 request POST /transporters (no transporter param, status 200)",
+      "quote": "concurrencyToken=0&search=Aberdeen Livestock Ltd&action=search",
+      "confidence": "inferred",
+      "note": "Inferred from the post body and the 200 re-render; the trace cannot see whether the server persisted anything, and the test title claims 'saving nothing'."
+    },
+    {
+      "id": "trace-animals-fit-p18-031",
+      "statement": "When a search matches nothing, the list shows a message instead of an empty table.",
+      "kind": "copy",
+      "ref": "trace 21161 action call@5595; snapshot call@5595 after",
+      "quote": "No transporters match your search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-032",
+      "statement": "When a search matches nothing, no table is rendered; the no-match message sits inside the Select a transporter fieldset.",
+      "kind": "rule",
+      "ref": "trace 21161 action call@5597; snapshot call@5595 after",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-fieldset__legend--m\">Select a transporter</legend><p class=\"govuk-body\">No transporters match your search.</p></fieldset>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-033",
+      "statement": "With no matches, the Add a transporter button, Save and continue, Save and return to overview and Cancel and return to overview are still offered.",
+      "kind": "behaviour",
+      "ref": "trace 21161 snapshot call@5595 after",
+      "quote": "Add a transporter ... Save and continue ... Save and return to overview ... Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-034",
+      "statement": "No trace shows a way to clear a search (no clear or show-all link) or a count of matching results; the only way back to the full list seen is to search again or reload.",
+      "kind": "behaviour",
+      "ref": "traces 79835, e01b0, 1f326, 21161 search-result snapshots",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-035",
+      "statement": "No trace searches with an empty term, or checks whether search is case-insensitive or matches partial names.",
+      "kind": "rule",
+      "ref": "searching the transporter list traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-036",
+      "statement": "The transporters are shown in a table whose column headers are a visually hidden Select, then Name, Address, Approval number, Type and Status.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5009 to call@5019; snapshot call@5007 after thead",
+      "quote": "<th class=\"govuk-table__header\"><span class=\"govuk-visually-hidden\">Select</span></th><th>Name</th><th>Address</th><th>Approval number</th><th>Type</th><th>Status</th>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-037",
+      "statement": "Each table row starts with a small radio button whose accessible label is visually hidden 'Select <name>'.",
+      "kind": "data",
+      "ref": "trace 7f054 snapshot call@4337 after tbody row 1",
+      "quote": "<div class=\"govuk-radios govuk-radios--small\" data-module=\"govuk-radios\"> ... <span class=\"govuk-visually-hidden\">Select Lough Neagh Livestock Ltd</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-038",
+      "statement": "All row radios share the name transporter, and each value is the transporter's id (a slug for list fixtures, a UUID for transporters added by traders).",
+      "kind": "data",
+      "ref": "trace 7f054 snapshot call@4337 after; trace 40275 snapshot call@4477 after",
+      "quote": "name=\"transporter\" type=\"radio\" value=\"garcia-livestock-transport\" ... value=\"c2e6cca6-2859-4a1c-aad0-dae27287c099\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-039",
+      "statement": "The radio-in-a-table layout puts govuk-radios--small items inside govuk-table cells, each wrapped in its own govuk-form-group, all inside one fieldset; this is a composition the design system does not offer as a standard component.",
+      "kind": "constraint",
+      "ref": "trace 7f054 snapshot call@4337 after",
+      "quote": "<td class=\"govuk-table__cell\"><div class=\"govuk-form-group\"><div class=\"govuk-radios govuk-radios--small\" data-module=\"govuk-radios\">",
+      "confidence": "inferred",
+      "note": "Every class used is govuk-*; the pattern is a combination of Table and Radios rather than a single published component. Each row's radios block is a separate govuk-radios module."
+    },
+    {
+      "id": "trace-animals-fit-p18-040",
+      "statement": "Each row shows the transporter's name, a one-line comma-separated address, approval number, type and status, in that column order.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5021 to call@5033",
+      "quote": "García Livestock Transport SL | 43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland | ES-T2-45001294 | Commercial | Approved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-041",
+      "statement": "A private transporter's Approval number cell is left blank.",
+      "kind": "rule",
+      "ref": "trace 66d2b action call@5057 (Aberdeen Livestock Ltd cell 3 to.have.text '')",
+      "quote": "Aberdeen Livestock Ltd ... nth=3 to.have.text \"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-042",
+      "statement": "The Type column reads Commercial or Private.",
+      "kind": "copy",
+      "ref": "trace 66d2b actions call@5031, call@5059",
+      "quote": "Commercial ... Private",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-043",
+      "statement": "The Status column shows an Approved tag in green for an approved transporter.",
+      "kind": "rule",
+      "ref": "trace db5f8 action call@5099",
+      "quote": "row García Livestock Transport SL >> .govuk-tag--green to.have.text \"Approved\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-044",
+      "statement": "The Status column shows a New tag in pink (govuk-tag--magenta) for a newly added, not yet approved transporter.",
+      "kind": "rule",
+      "ref": "trace db5f8 action call@5101",
+      "quote": "row Romanian Agri Exports SRL >> .govuk-tag--magenta to.have.text \"New\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-045",
+      "statement": "The list shows the commercial transporter García Livestock Transport SL, approval number ES-T2-45001294, in Switzerland, Approved.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5021 to call@5033",
+      "quote": "García Livestock Transport SL ... 43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland ... ES-T2-45001294 ... Commercial ... Approved",
+      "confidence": "verbatim",
+      "note": "Fixture data; the address text is placeholder Latin."
+    },
+    {
+      "id": "trace-animals-fit-p18-046",
+      "statement": "The list shows the commercial transporter J & G Campbell LTD, approval number UK/BURY/T2/00104115, in Brussels, Belgium, Approved.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5035 to call@5047",
+      "quote": "J & G Campbell LTD ... Rue de la Loi 200, 1040 Brussels, Belgium ... UK/BURY/T2/00104115 ... Commercial ... Approved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-047",
+      "statement": "The list shows the private transporter Aberdeen Livestock Ltd in Aberdeen, United Kingdom, Approved, with no approval number.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5049 to call@5061",
+      "quote": "Aberdeen Livestock Ltd ... 12 Harbour Road, Aberdeen, Aberdeenshire, AB11 5DQ, United Kingdom ... Private ... Approved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-048",
+      "statement": "The list shows the private transporter Romanian Agri Exports SRL in Cluj-Napoca, Romania, New, with no approval number.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5063 to call@5075",
+      "quote": "Romanian Agri Exports SRL ... Strada Agricultorilor 8, Cluj-Napoca, 400000, Romania ... Private ... New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-049",
+      "statement": "The list shows the private transporter Slovak Farm Export in Košice, Slovakia, Approved, with no approval number.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5077 to call@5089",
+      "quote": "Slovak Farm Export ... Hlavná 45, Košice, 040 01, Slovakia ... Private ... Approved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-050",
+      "statement": "The list shows the private transporter Finnish Livestock Oy in Turku, Finland, New, with no approval number.",
+      "kind": "data",
+      "ref": "trace 66d2b actions call@5091 to call@5103",
+      "quote": "Finnish Livestock Oy ... Satamakatu 3, Turku, 20100, Finland ... Private ... New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-051",
+      "statement": "The list also shows a seventh row, Lough Neagh Livestock Ltd, a New commercial transporter in Belfast with approval number UK/BELF/T2/00104115 and a UUID id, which the six-record fixture loop does not check.",
+      "kind": "data",
+      "ref": "trace 7f054 snapshot call@4337 after tbody row 1; trace 66d2b snapshot call@5007 after",
+      "quote": "Lough Neagh Livestock Ltd ... 4 Quay Road, Unit 3, Belfast, County Antrim, BT1 3LG, Northern Ireland ... UK/BELF/T2/00104115 ... Commercial ... New",
+      "confidence": "verbatim",
+      "note": "Its UUID value and New status suggest it was added through the add-commercial form by another test against the same stub organisation, so it shows that transporters added by a trader join the organisation's list for every notification. Treat its presence as test-run state, not fixture data."
+    },
+    {
+      "id": "trace-animals-fit-p18-052",
+      "statement": "Transporters are listed with the most recently added (trader-added, New) ones first, ahead of the fixture records.",
+      "kind": "rule",
+      "ref": "trace 40275 snapshot call@4477 after (Jean Dupont, then Lough Neagh Livestock Ltd, then García ...)",
+      "quote": "Select Jean Dupont ... Select Lough Neagh Livestock Ltd ... Select García Livestock Transport SL",
+      "confidence": "inferred",
+      "note": "Inferred from row order in two traces only; no trace asserts an ordering rule."
+    },
+    {
+      "id": "trace-animals-fit-p18-053",
+      "statement": "The list page does not ask for the transporter type before showing the list: there is no Choose a transporter type heading on it.",
+      "kind": "rule",
+      "ref": "trace f6794 action call@4995",
+      "quote": "heading \"Choose a transporter type\" to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-054",
+      "statement": "The list page has an Add a transporter link, styled as a secondary button, that goes to /transporters/add.",
+      "kind": "behaviour",
+      "ref": "trace 7f054 snapshot call@4337 after; trace 72c17 action call@6065",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-5HKRY5/transporters/add\" role=\"button\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Add a transporter</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-055",
+      "statement": "The list page ends with a button group: Save and continue (primary, action=save), Save and return to overview (secondary, exit=hub) and a Cancel and return to overview link to the overview.",
+      "kind": "copy",
+      "ref": "trace 7f054 snapshot call@4337 after div.govuk-button-group",
+      "quote": "<button type=\"submit\" value=\"save\" name=\"action\" class=\"govuk-button\">Save and continue</button><button type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview</button><a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-5HKRY5\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-056",
+      "statement": "No trace presses Save and return to overview or Cancel and return to overview on the list page, so what each does is not shown.",
+      "kind": "behaviour",
+      "ref": "transporter list page traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-057",
+      "statement": "The list form posts a concurrencyToken hidden field alongside the CSRF crumb.",
+      "kind": "data",
+      "ref": "trace f11a9 request POST /transporters; snapshot call@4337 after",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"0\">",
+      "confidence": "verbatim",
+      "note": "The token stayed 0 after a save in the traces seen (revisited list in f11a9 still carries value 0)."
+    },
+    {
+      "id": "trace-animals-fit-p18-058",
+      "statement": "Picking a commercial transporter on the list and pressing Save and continue posts transporter=<id> with action=save and redirects to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace f11a9 actions call@4766 to call@4770; request POST /transporters",
+      "quote": "POST 302 /live-animals/notifications/GBN-AG-26-KYF1XN/transporters :: concurrencyToken=0&search=&transporter=garcia-livestock-transport&action=save -> /live-animals/notifications/GBN-AG-26-KYF1XN",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-059",
+      "statement": "Save and continue on the transporter list lands on the overview, not on another transport page.",
+      "kind": "behaviour",
+      "ref": "trace f11a9 action call@4770; trace 9c144 action call@5487",
+      "quote": "heading \"Overview\" to.be.visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-060",
+      "statement": "After a transporter is picked, the overview's Transport and arrival section shows the Transport details task as Complete, linking to the transporter list.",
+      "kind": "behaviour",
+      "ref": "trace f11a9 snapshot call@4770 after, transport-and-arrival-2",
+      "quote": "<a class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-KYF1XN/transporters\">Transport details</a> ... <strong class=\"govuk-tag govuk-tag--green\">Complete</strong>",
+      "confidence": "verbatim",
+      "note": "The task row reads 'Transport details' while the page it opens is headed 'Transporter details'."
+    },
+    {
+      "id": "trace-animals-fit-p18-061",
+      "statement": "A picked commercial transporter persists: returning to the list shows its radio checked.",
+      "kind": "behaviour",
+      "ref": "trace f11a9 actions call@4772, call@4774; snapshot call@4772 after",
+      "quote": "<input value=\"garcia-livestock-transport\" checked=\"\" ...>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-062",
+      "statement": "Picking a commercial transporter on the list saves it with its type: the commercial register page then shows the same transporter checked.",
+      "kind": "rule",
+      "ref": "trace f11a9 actions call@4776, call@4778; snapshot call@4776 after",
+      "quote": "<input value=\"garcia-livestock-transport\" __playwright_checked_=\"true\" ... name=\"commercialTransporter\" type=\"radio\" checked=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-063",
+      "statement": "When a transporter has already been chosen, the list page carries a hidden field named selected holding its id.",
+      "kind": "data",
+      "ref": "trace 40275 snapshot call@4477 after; trace f11a9 snapshot call@4772 after",
+      "quote": "<input type=\"hidden\" name=\"selected\" value=\"8e5f8e2f-9c89-4af4-a9c5-85bc632b1097\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-064",
+      "statement": "Picking a private transporter on the list saves it and redirects to the overview.",
+      "kind": "behaviour",
+      "ref": "trace 9c144 actions call@5483 to call@5487; request POST /transporters",
+      "quote": "POST 302 /live-animals/notifications/GBN-AG-26-128G8A/transporters :: concurrencyToken=0&search=&transporter=aberdeen-livestock&action=save -> /live-animals/notifications/GBN-AG-26-128G8A",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-065",
+      "statement": "A picked private transporter persists: returning to the list shows its radio checked.",
+      "kind": "behaviour",
+      "ref": "trace 9c144 actions call@5489, call@5491",
+      "quote": "radio \"Aberdeen Livestock Ltd\" to.be.checked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-066",
+      "statement": "Picking a private transporter from the list fills in the private transporter record, so the Add private transporter page shows its name and address without retyping.",
+      "kind": "rule",
+      "ref": "trace 9c144 actions call@5493 to call@5497",
+      "quote": "label \"Name or organisation name\" to.have.value \"Aberdeen Livestock Ltd\"; label \"Town or city\" to.have.value \"Aberdeen\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-067",
+      "statement": "A transporter the trader added through the private form joins the list with type Private and status New, and comes back checked on the list.",
+      "kind": "behaviour",
+      "ref": "trace 40275 actions call@4477, call@4479; snapshot call@4477 after row 1",
+      "quote": "Jean Dupont | 12 Rue des Fermes, Amiens, 80000, France |  | Private | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-068",
+      "statement": "A trader-added transporter's list address shows only the address parts given (line 1, town, postcode, country), skipping blank optional parts.",
+      "kind": "rule",
+      "ref": "trace 40275 snapshot call@4477 after; request POST /transporters/add/private (addressLine2 and county blank)",
+      "quote": "12 Rue des Fermes, Amiens, 80000, France",
+      "confidence": "inferred",
+      "note": "Inferred from one record whose addressLine2 and county were posted empty."
+    },
+    {
+      "id": "trace-animals-fit-p18-069",
+      "statement": "Saving the private transporter form posts the fields and redirects to the overview.",
+      "kind": "behaviour",
+      "ref": "trace 40275 request POST /transporters/add/private",
+      "quote": "POST 302 /live-animals/notifications/GBN-AG-26-NR0C1V/transporters/add/private :: concurrencyToken=0&nameOrOrganisationName=Jean Dupont&addressLine1=12 Rue des Fermes&addressLine2=&townOrCity=Amiens&county=&postalOrZipCode=80000&country=France&emailAddress=jean.dupont@example.fr&telephoneNumber=+33 3 22 55 01 44 -> /live-animals/notifications/GBN-AG-26-NR0C1V",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-070",
+      "statement": "Saving the list again with a trader-added transporter already checked succeeds without errors, lands on the overview and leaves the private record unchanged.",
+      "kind": "behaviour",
+      "ref": "trace 40275 actions call@4481 to call@4489; request POST /transporters",
+      "quote": "POST 302 /transporters :: concurrencyToken=0&selected=8e5f8e2f-9c89-4af4-a9c5-85bc632b1097&search=&transporter=8e5f8e2f-9c89-4af4-a9c5-85bc632b1097&action=save; .govuk-error-summary count 0; \"Name or organisation name\" to.have.value \"Jean Dupont\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-071",
+      "statement": "Submitting the list with a value that is not on the list shows the error Select a transporter from the list.",
+      "kind": "rule",
+      "ref": "trace 2c405 actions call@4861, call@4863; request POST /transporters (200); snapshot call@4863 after",
+      "quote": "Select a transporter from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-072",
+      "statement": "The list's error state shows a There is a problem error summary whose link targets #transporter.",
+      "kind": "copy",
+      "ref": "trace 2c405 snapshot call@4863 after div.govuk-error-summary",
+      "quote": "<h2 class=\"govuk-error-summary__title\">There is a problem</h2> ... <a href=\"#transporter\">Select a transporter from the list</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-073",
+      "statement": "The list's error state marks the transporter form group as errored and shows the inline message, prefixed by a visually hidden Error:, inside the fieldset above the table.",
+      "kind": "copy",
+      "ref": "trace 2c405 snapshot call@4863 after",
+      "quote": "<div class=\"govuk-form-group govuk-form-group--error\"><fieldset class=\"govuk-fieldset\" aria-describedby=\"transporter-error\"> ... <p id=\"transporter-error\" class=\"govuk-error-message\"><span class=\"govuk-visually-hidden\">Error:</span> Select a transporter from the list</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-074",
+      "statement": "In the error state the browser title is prefixed with Error:.",
+      "kind": "copy",
+      "ref": "trace 2c405 snapshot call@4863 after, head title",
+      "quote": "Error: Transporter details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-075",
+      "statement": "Following the error summary link focuses the first transporter radio, and the out-of-list value is cleared so no radio is checked.",
+      "kind": "behaviour",
+      "ref": "trace 2c405 actions call@4865 to call@4869",
+      "quote": "input[name=\"transporter\"] >> nth=0 to.be.focused; input[name=\"transporter\"]:checked to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-076",
+      "statement": "No trace submits the list with nothing chosen, so whether a blank save is allowed or raises an error is not shown.",
+      "kind": "rule",
+      "ref": "transporter list page traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-077",
+      "statement": "A searched list has no serious or critical axe violations against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules.",
+      "kind": "non-functional",
+      "ref": "trace a60a7 action call@5317 (axe finishRun, runOnly tags wcag2a wcag2aa wcag21a wcag21aa wcag22aa)",
+      "quote": "no violations",
+      "confidence": "verbatim",
+      "note": "The axe result returned no violations of any impact, not only none serious or critical."
+    },
+    {
+      "id": "trace-animals-fit-p18-078",
+      "statement": "The commercial register page lives at /transporters/select and is reached in these traces only by typing its URL after answering Commercial on the type question and reaching Add commercial transporter; nothing links to it.",
+      "kind": "behaviour",
+      "ref": "trace a376d actions call@5401 to call@5413",
+      "quote": "Frame.goto /live-animals/notifications/GBN-AG-26-KDGKVB/transporters/select",
+      "confidence": "verbatim",
+      "note": "The spec comment says 'The approved commercial register, which nothing links to now that the add route's commercial arm is the add-commercial form.'"
+    },
+    {
+      "id": "trace-animals-fit-p18-079",
+      "statement": "The type question's Commercial answer routes to the Add commercial transporter form at /transporters/add/commercial.",
+      "kind": "behaviour",
+      "ref": "trace 0d4a0 request POST /transporters/add; trace a376d action call@5409",
+      "quote": "POST 302 /transporters/add :: concurrencyToken=0&transporterType=Commercial -> /live-animals/notifications/GBN-AG-26-4AC3TF/transporters/add/commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-080",
+      "statement": "The commercial register page is headed Search for an approved commercial transporter, as the radio group's legend at large size.",
+      "kind": "copy",
+      "ref": "trace a376d action call@5413; snapshot call@5411 after legend h1.govuk-fieldset__heading",
+      "quote": "Search for an approved commercial transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-081",
+      "statement": "Despite its heading, the commercial register page has no search field: it offers only a list of radios.",
+      "kind": "constraint",
+      "ref": "trace a376d snapshot call@5411 after",
+      "quote": "<h1 class=\"govuk-fieldset__heading\">Search for an approved commercial transporter</h1> ... <div class=\"govuk-radios\" data-module=\"govuk-radios\">",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any input other than the radios, crumb and concurrencyToken in the rendered form."
+    },
+    {
+      "id": "trace-animals-fit-p18-082",
+      "statement": "The commercial register page carries the caption Add a new transporter.",
+      "kind": "copy",
+      "ref": "trace a376d snapshot call@5411 after span.govuk-caption-l",
+      "quote": "Add a new transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-083",
+      "statement": "The commercial register page hints that selecting a transporter copies their name, address and approval number into the notification.",
+      "kind": "copy",
+      "ref": "trace a376d action call@5415; snapshot call@5411 after div#commercialTransporter-hint",
+      "quote": "Selecting a transporter copies their name, address and approval number into this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-084",
+      "statement": "The commercial register lists only approved commercial transporters (García Livestock Transport SL and J & G Campbell LTD); the New commercial transporter on the main list is not offered.",
+      "kind": "rule",
+      "ref": "trace a376d snapshot call@5411 after (two radios); compare trace 7f054 snapshot call@4337 after (Lough Neagh Livestock Ltd, Commercial, New)",
+      "quote": "García Livestock Transport SL ... J & G Campbell LTD",
+      "confidence": "inferred",
+      "note": "Inferred from the two radios shown against the main list's three commercial rows."
+    },
+    {
+      "id": "trace-animals-fit-p18-085",
+      "statement": "Each register option is a radio named commercialTransporter, labelled with the transporter's name, with a hint giving the address and approval number.",
+      "kind": "data",
+      "ref": "trace a376d actions call@5417 to call@5423; snapshot call@5411 after",
+      "quote": "García Livestock Transport SL ... 43 East Hague Extension, Delectus sitodio p. Laborum Odio tempor, Quasoccaecat ut ear, 30055, Switzerland — approval number ES-T2-45001294",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-086",
+      "statement": "The commercial register page ends with a single Save and continue button and no Save and return to overview or Cancel link.",
+      "kind": "copy",
+      "ref": "trace a376d snapshot call@5411 after div.govuk-button-group",
+      "quote": "<div class=\"govuk-button-group\"><button type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\">Save and continue</button></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-087",
+      "statement": "The commercial register page's Back link goes to the type question at /transporters/add.",
+      "kind": "behaviour",
+      "ref": "trace f11a9 snapshot call@4776 after a.govuk-back-link",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-KYF1XN/transporters/add\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-088",
+      "statement": "Submitting the commercial register with a value not on the list shows the error Select a transporter from the list.",
+      "kind": "rule",
+      "ref": "trace 7b6fa actions call@4707, call@4709; request POST /transporters/select (200)",
+      "quote": "POST 200 /transporters/select :: concurrencyToken=0&commercialTransporter=invalid-transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-089",
+      "statement": "The register's error state shows a There is a problem summary linking to #commercialTransporter and an inline error between the hint and the radios, with the fieldset described by both.",
+      "kind": "copy",
+      "ref": "trace 7b6fa snapshot call@4709 after",
+      "quote": "<a href=\"#commercialTransporter\">Select a transporter from the list</a> ... <fieldset class=\"govuk-fieldset\" aria-describedby=\"commercialTransporter-hint commercialTransporter-error\"> ... <p id=\"commercialTransporter-error\" class=\"govuk-error-message\"><span class=\"govuk-visually-hidden\">Error:</span> Select a transporter from the list</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-090",
+      "statement": "Following the register's error link focuses the first commercialTransporter radio, and no radio is left checked.",
+      "kind": "behaviour",
+      "ref": "trace 7b6fa actions call@4711 to call@4715",
+      "quote": "input[name=\"commercialTransporter\"] >> nth=0 to.be.focused; input[name=\"commercialTransporter\"]:checked to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-091",
+      "statement": "Choosing a commercial transporter on the register and pressing Save and continue posts commercialTransporter=<id> and redirects to the overview.",
+      "kind": "behaviour",
+      "ref": "trace 0d4a0 actions call@5697 to call@5701; request POST /transporters/select",
+      "quote": "POST 302 /transporters/select :: concurrencyToken=0&commercialTransporter=garcia-livestock-transport -> /live-animals/notifications/GBN-AG-26-4AC3TF",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-092",
+      "statement": "A register choice persists: returning to the register shows it checked.",
+      "kind": "behaviour",
+      "ref": "trace 0d4a0 actions call@5703, call@5705",
+      "quote": "radio \"García Livestock Transport SL\" to.be.checked",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-093",
+      "statement": "The commercial register has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace b2cb2 action call@5486 (axe finishRun)",
+      "quote": "no violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-094",
+      "statement": "The transporter list page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace c9d7e action call@5093 (axe finishRun)",
+      "quote": "no violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-095",
+      "statement": "The transporter type page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace 72c17 action call@6087 (axe finishRun)",
+      "quote": "no violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-096",
+      "statement": "The Add private transporter page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace 166b3 action call@6199 (axe finishRun)",
+      "quote": "no violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-097",
+      "statement": "The accessibility checks run axe with WCAG 2.0 A and AA, 2.1 A and AA and 2.2 AA rule tags.",
+      "kind": "non-functional",
+      "ref": "trace a60a7 action call@5305 / call@5317 options runOnly",
+      "quote": "\"runOnly\" type \"tag\" values [\"wcag2a\",\"wcag2aa\",\"wcag21a\",\"wcag21aa\",\"wcag22aa\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-098",
+      "statement": "No axe check is run on the list's error state, the no-match search state or the commercial register's error state.",
+      "kind": "non-functional",
+      "ref": "transporter pages accessibility traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-099",
+      "statement": "Pressing Add a transporter opens the type question, headed Choose a transporter type, under the caption Add a new transporter.",
+      "kind": "behaviour",
+      "ref": "trace 72c17 actions call@6065, call@6067; snapshot call@6065 after",
+      "quote": "<span class=\"govuk-caption-l\">Add a new transporter</span><h1 class=\"govuk-heading-l\">Choose a transporter type</h1>",
+      "confidence": "verbatim",
+      "note": "Detail of this page belongs to part 20; claimed here as the list's onward route."
+    },
+    {
+      "id": "trace-animals-fit-p18-100",
+      "statement": "The type question warns the trader to search for the transporter before adding it.",
+      "kind": "copy",
+      "ref": "trace 72c17 snapshot call@6065 after div.govuk-warning-text",
+      "quote": "Before you add this transporter, please ensure you have already searched for it first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-101",
+      "statement": "The type question offers Private transporter (value Private) first and Commercial (value Commercial) second, under a visually hidden legend.",
+      "kind": "data",
+      "ref": "trace 72c17 snapshot call@6065 after",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">What type of transporter will move the animals?</legend> ... Private transporter ... Commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-102",
+      "statement": "The Commercial option on the type question is hinted that it can only be a Northern Ireland commercial transporter.",
+      "kind": "copy",
+      "ref": "trace 72c17 snapshot call@6065 after div#transporterType-2-item-hint",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-103",
+      "statement": "Answering Private on the type question routes to the Add private transporter page at /transporters/add/private.",
+      "kind": "behaviour",
+      "ref": "trace 40275 request POST /transporters/add; action call@4459",
+      "quote": "POST 302 /transporters/add :: concurrencyToken=0&transporterType=Private -> /live-animals/notifications/GBN-AG-26-NR0C1V/transporters/add/private",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p18-104",
+      "statement": "No backend call is visible in any trace: the transporter list, search and register are rendered server-side by the frontend, so where the transporter records come from and where picks are stored is not shown.",
+      "kind": "integration",
+      "ref": "network logs of traces 7f054, f11a9, 9c144, 40275, 2c405, 79835, 0d4a0, 7b6fa",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-105",
+      "statement": "The transporter list appears to be held per organisation and shared across notifications, since trader-added transporters from earlier test runs appear on new notifications' lists.",
+      "kind": "integration",
+      "ref": "trace 7f054 snapshot call@4337 after (Lough Neagh Livestock Ltd on a fresh notification); trace 40275 snapshot call@4477 after",
+      "quote": "Select Lough Neagh Livestock Ltd",
+      "confidence": "inferred",
+      "note": "Inferred from a UUID-identified New record present on a notification started in the same test; every trace signs in as stub-org-1."
+    },
+    {
+      "id": "trace-animals-fit-p18-106",
+      "statement": "No trace shows how a transporter's status changes from New to Approved, or who approves it.",
+      "kind": "rule",
+      "ref": "transporter list page traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-107",
+      "statement": "No trace shows a list long enough to need pagination, or says whether the list is paginated.",
+      "kind": "behaviour",
+      "ref": "transporter list page traces (seven rows at most)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p18-108",
+      "statement": "Apart from the app-journey-strip wrapper, every class in the list page's main content is a govuk-* class: caption, heading, body, bullet list, link, label, hint, input, button, fieldset, table, small radios, tag, error summary and error message.",
+      "kind": "constraint",
+      "ref": "trace 7f054 snapshot call@4337 after; trace 2c405 snapshot call@4863 after",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim"
+    }
+  ]
+}

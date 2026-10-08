@@ -1,0 +1,945 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 13 mined 16 Playwright trace zips (all passed) from five animals E2E specs in trade-imports-ins-tests: hub-groups-and-cya-rows.spec.ts (2), change-from-cya.spec.ts (1), task-page-exits.spec.ts (1), reference-strip.spec.ts (1) and pages/notification-view-states.spec.ts (11: DRAFT x5, DRAFT ready to submit x2, SUBMITTED x4). All five specs were read in full. The tim-wrapped `playwright trace open` refused every zip (TraceVersionError: trace written by a newer Playwright than tim installs), so each zip's extracted contents (already unzipped into this part's work folder, verified against `unzip -l` sizes) were read directly with jq: every action (`before` events) of each trace's 1-trace.trace, every page snapshot rendered from frame-snapshot events, and every browser and API-context network log (1/2/3-trace.network). Refs below name the trace by its zip folder slug prefix and hash plus a Playwright callId. Pages, in journey order: dashboard (/live-animals, only to show no strip and to start a notification) -> origin entry page (/notifications/<ref>/origin, carries the strip from the first request) -> hub 'Overview' (/notifications/<ref>; six numbered task-list groups, commodity totals, Review and submit / Return to dashboard) -> task pages (origin, commodities, additional-details in change context; each with Save and continue / Save and return to overview / Cancel and return to overview) -> 'Review your notification' (/notifications/<ref>/notification-view) in three states: DRAFT unfinished (error summary listing what is left, error-styled cards with Missing rows, Change links, Continue POST returns 400 and stays), DRAFT ready to submit (all rows answered, Change and Edit details links, Continue -> /declaration), SUBMITTED (green Submitted strip, Copy as new and Delete at the top, read-only cards) -> Declaration (reached only, heading and form recorded) -> copy lands on a new draft's hub. Conditional surface seen: hub rows Identification details and Transit countries appear only once owed; the Transit countries summary card appears only when transit countries exist. Seeded traces (change-from-cya and all 11 view-state traces) seed by posting the real journey forms from an API request context, which also reveals each form's redirect target outside change context and the declaration -> confirmation redirect. Not reached in this slice (recorded as gaps): the Delete page, the confirmation page, amendment state (Cancel amendment), Edit details links, Change links other than import details and additional animal details, task-page validation errors, hub statuses other than To do and Complete, the exit-details conditional row, and any backend call (the browser only talks to the frontend).",
+  "claims": [
+    {
+      "id": "trace-e2e-p13-001",
+      "statement": "The dashboard at /live-animals shows no reference strip (no Draft tag or GBN-AG reference) because it precedes any journey.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-refer-1d81b action call@484 (expect .app-journey-strip toHaveCount 0 on /live-animals)",
+      "quote": "Expect \"toHaveCount\" {\"selector\":\".app-journey-strip\",\"expression\":\"to.have.count\",\"expectedNumber\":0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-002",
+      "statement": "The dashboard has the caption 'Dashboard', the heading 'Import notification service' and a start button 'Start a new notification'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-refer-1d81b action call@482 snapshot (main)",
+      "quote": "Dashboard | Import notification service | Start a new notification",
+      "confidence": "verbatim",
+      "note": "Dashboard detail belongs to another part; recorded here only as the entry point this slice drives."
+    },
+    {
+      "id": "trace-e2e-p13-003",
+      "statement": "Pressing 'Start a new notification' POSTs to /live-animals/notifications, which creates the notification, mints its GBN-AG reference and redirects straight to that notification's origin page.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-refer-1d81b network (POST /live-animals/notifications 302)",
+      "quote": "POST | http://localhost:3000/live-animals/notifications | 302 | /live-animals/notifications/GBN-AG-26-K677Q7/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-004",
+      "statement": "The notification reference has the shape GBN-AG-<two-digit year>-<six characters>; every reference observed in this part is GBN-AG-26 followed by six upper-case letters or digits, and the tests pin the six characters to a Crockford-style alphabet that leaves out I, L, O and U.",
+      "kind": "data",
+      "ref": "reference-strip.spec.ts line 3; trace animals-e2e-features-refer-1d81b action call@494",
+      "quote": "const GBN_REFERENCE = /GBN-AG-\\d{2}-[0-9A-HJKMNP-TV-Z]{6}/;",
+      "confidence": "verbatim",
+      "note": "notification-view-states.spec.ts uses a looser pattern /GBN-AG-\\d{2}-[0-9A-Z]{6}/. Observed references: GBN-AG-26-CENMX7, -H3B3YD, -K677Q7, -Q4G1HN, -944DQK, -N31Y08, -1H9M7K, -F9ASG4, -P7M7MP, -WH70BP, -RC1HAY, -HJWS6Y, -DRKSYZ, -50HP39, -KESFE9, -5YMSDA, -FEXYBP."
+    },
+    {
+      "id": "trace-e2e-p13-005",
+      "statement": "The reference is part of every journey URL: /live-animals/notifications/<reference>/<page>, so it is already in the entry page's own URL when the user lands on it.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-refer-1d81b action call@486 (after snapshot URL)",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-K677Q7/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-006",
+      "statement": "The entry page (origin) shows the reference strip from the first request, before anything is saved: a blue 'Draft' tag and the notification's GBN-AG reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-refer-1d81b actions call@490, call@492, call@494, call@496",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-K677Q7</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-007",
+      "statement": "The reference strip is a block at the top of the main column holding a status tag followed by the reference in bold body text.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot (main)",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"><STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG><SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-CENMX7</SPAN></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-008",
+      "statement": "The reference strip stays on the hub after the first save, with the Draft tag and the reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-refer-1d81b actions call@518, call@520, call@522",
+      "quote": "Expect \"toHaveText\" {\"selector\":\".app-journey-strip >> .govuk-tag\",\"expression\":\"to.have.text\",\"expectedText\":[{\"string\":\"Draft\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-009",
+      "statement": "Task pages reached from the hub (the origin page again and 'What are you importing?') carry the same reference strip with the Draft tag and reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-refer-1d81b actions call@526, call@528, call@536, call@538, call@540",
+      "quote": "<SPAN class=\"govuk-caption-l\">About the consignment</SPAN> <H1 class=\"govuk-heading-l\">What are you importing?</H1>",
+      "confidence": "verbatim",
+      "note": "The test comment says every post-origin task page inherits the strip from the shared layout; only origin, commodities, additional details, the review page and the declaration were seen with it in this part."
+    },
+    {
+      "id": "trace-e2e-p13-010",
+      "statement": "The declaration page also carries the Draft reference strip.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-97c65 action call@1055 snapshot (main)",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-P7M7MP</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-011",
+      "statement": "A submitted notification's view shows the strip with a green 'Submitted' tag and the notification reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-0de91 actions call@1110, call@1112",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Submitted</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-WH70BP</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-012",
+      "statement": "The hub page is reached at /live-animals/notifications/<reference> and its heading is 'Overview'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@379",
+      "quote": "<H1 class=\"govuk-heading-xl\">Overview</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-013",
+      "statement": "The hub has no back link; the only way back to the dashboard on the page is the 'Return to dashboard' button (besides the service navigation).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot (no govuk-back-link before main)",
+      "quote": "<A href=\"/live-animals\" role=\"button\" class=\"govuk-button govuk-button--secondary\">Return to dashboard</A>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a govuk-back-link in the rendered hub, whereas task pages and the review page render one."
+    },
+    {
+      "id": "trace-e2e-p13-014",
+      "statement": "The hub opens with a 'Your commodities' section showing two totals: Animals ('Total number of animals in this consignment') and Packages/boxes ('Total number of packages in this consignment').",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot (main)",
+      "quote": "Your commodities | Animals | Total number of animals in this consignment | Packages/boxes | Total number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-015",
+      "statement": "The commodity totals read 0 and 0 on a fresh notification and reflect the entered quantities once commodity details are saved (1 animal, 5 packages on the copied notification).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 call@377 snapshot; trace animals-e2e-pages-notifica-e7c83 action call@1233 snapshot",
+      "quote": "<P class=\"app-commodity-total__value\">1</P> ... <P class=\"app-commodity-total__value\">5</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-016",
+      "statement": "The commodity totals use a custom 'app-commodity-total' block (value, h3 label, caption) rather than a GOV.UK Frontend component.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot",
+      "quote": "<DIV class=\"app-commodity-total\"><P class=\"app-commodity-total__value\">0</P><H3 class=\"app-commodity-total__label\">Animals</H3>",
+      "confidence": "verbatim",
+      "note": "Standard alternative would be a summary list or panel-like styled paragraphs; the test notes these labels are h3s, which is why it reads the section headings off their own class."
+    },
+    {
+      "id": "trace-e2e-p13-017",
+      "statement": "The hub sits the whole task list under its own h2 heading 'Notification tasklist'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@381",
+      "quote": "<H2 class=\"govuk-heading-l\">Notification tasklist</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-018",
+      "statement": "The hub groups its tasks under exactly six numbered h3 group headings, in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@383",
+      "quote": "1. About the consignment | 2. Description of the goods | 3. Transport and arrival | 4. Documents | 5. Consignment parties | 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-019",
+      "statement": "Each group has its own GOV.UK task list (six task lists in total, one per heading, in heading order).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@387",
+      "quote": "Expect \"toHaveCount\" {\"selector\":\"ul.app-task-list\",\"expression\":\"to.have.count\",\"expectedNumber\":6",
+      "confidence": "verbatim",
+      "note": "Lists carry govuk-task-list plus a custom 'app-task-list' hook class."
+    },
+    {
+      "id": "trace-e2e-p13-020",
+      "statement": "Group 1 'About the consignment' lists 'Where is this consignment coming from?' (links to /origin), 'What are you importing?' (/commodities) and 'Main reason for import' (/import-reason).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 actions call@389, call@391, call@393; call@377 snapshot",
+      "quote": "Where is this consignment coming from? | What are you importing? | Main reason for import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-021",
+      "statement": "Group 2 'Description of the goods' lists 'Commodity details' (/consignment-details) and 'Additional details' (/additional-details) on a fresh notification.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@395; call@377 snapshot",
+      "quote": "Commodity details | Additional details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-022",
+      "statement": "The 'Identification details' row is off the hub altogether until a chosen commodity carries identifiers.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@397 (not toContainText 'Identification details')",
+      "quote": "Expect \"not toContainText\" {\"selector\":\"ul.app-task-list >> nth=1\",\"expression\":\"to.have.text\",\"expectedText\":[{\"string\":\"Identification details\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-023",
+      "statement": "Once a commodity that carries identifiers (Bos taurus, ear tag) is chosen, 'Identification details' appears in group 2 between 'Commodity details' and 'Additional details', linking to /commodities/identification.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 action call@416; hub snapshot near call@590",
+      "quote": "<A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN/commodities/identification\" aria-describedby=\"description-of-the-goods-2-status\">Identification details</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-024",
+      "statement": "Group 3 'Transport and arrival' lists 'Arrival details' (/port-of-entry) and 'Transport details' (/transporters) on a fresh notification.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 actions call@399, call@401",
+      "quote": "Arrival details | Transport details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-025",
+      "statement": "A 'Transit countries' row (linking to /transit-countries) appears in group 3 between 'Arrival details' and 'Transport details' only once it is owed; it was absent on a fresh notification and present after arrival details with transit countries were saved.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 hub snapshot near call@590; trace animals-e2e-features-hub-g-5d3a0 call@377",
+      "quote": "<A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN/transit-countries\" aria-describedby=\"transport-and-arrival-2-status\">Transit countries</A>",
+      "confidence": "verbatim",
+      "note": "What makes the row owed is not shown; the spec comment names it as a conditional row."
+    },
+    {
+      "id": "trace-e2e-p13-026",
+      "statement": "An 'exit details' conditional hub row is named by the spec as a row not owed on a fresh notification, but no trace in this part shows it or what makes it appear.",
+      "kind": "rule",
+      "ref": "hub-groups-and-cya-rows.spec.ts line 28 comment",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-027",
+      "statement": "Group 4 'Documents' lists 'Upload documents' (/accompanying-documents).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@403",
+      "quote": "Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-028",
+      "statement": "Group 5 'Consignment parties' lists 'Roles and addresses' (/addresses) with the hint 'Consignor or Exporter, Consignee, Importer and Place of Destination'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@405; call@377 snapshot",
+      "quote": "Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-029",
+      "statement": "Group 6 'Contact address' lists 'Contact address for this consignment' (/consignment/contact/select).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@407",
+      "quote": "Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-030",
+      "statement": "Every hub task row is a link with a status tag: a blue 'To do' before it is answered and a green 'Complete' once it is.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG> ... <STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-031",
+      "statement": "Saving the origin page alone (country plus region-code answer, no internal reference) marks 'Where is this consignment coming from?' Complete.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-task--bea32 hub snapshot near call@473",
+      "quote": "Where is this consignment coming from? ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-032",
+      "statement": "No hub status other than 'To do' and 'Complete' (for example In progress, Cannot start yet, Incomplete) appears in any trace in this part.",
+      "kind": "rule",
+      "ref": "all hub snapshots in this part",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-033",
+      "statement": "'Upload documents' stays 'To do' when no documents are added, yet the rest of the notification can be complete and ready to submit, because documents are optional.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 hub snapshot near call@590; trace animals-e2e-pages-notifica-0f999 action call@1166",
+      "quote": "Upload documents ... <STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim",
+      "note": "Spec comment: 'Documents are optional, so the section stands even with nothing uploaded.'"
+    },
+    {
+      "id": "trace-e2e-p13-034",
+      "statement": "The hub ends with a button group holding a primary 'Review and submit' and a secondary 'Return to dashboard', and nothing after them (no seventh section or locked review row).",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@385",
+      "quote": "Expect \"toHaveText\" {\"selector\":\".govuk-button-group .govuk-button\",\"expression\":\"to.have.text.array\",\"expectedText\":[{\"string\":\"Review and submit\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-035",
+      "statement": "'Review and submit' is a link styled as a button to /notification-view and is available even on a fresh notification with most tasks To do.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-CENMX7/notification-view\" role=\"button\" class=\"govuk-button\">Review and submit</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-036",
+      "statement": "'Return to dashboard' is a secondary link-button to /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-5d3a0 action call@377 snapshot",
+      "quote": "<A href=\"/live-animals\" role=\"button\" class=\"govuk-button govuk-button--secondary\">Return to dashboard</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-037",
+      "statement": "Task pages end with a button group of three exits: primary 'Save and continue', secondary 'Save and return to overview', and a plain link 'Cancel and return to overview'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-task--bea32 action call@469 snapshot (origin page)",
+      "quote": "Save and continue | Save and return to overview | Cancel and return to overview",
+      "confidence": "verbatim",
+      "note": "Seen on origin, What are you importing? and Additional details."
+    },
+    {
+      "id": "trace-e2e-p13-038",
+      "statement": "'Cancel and return to overview' is a GET link to the hub, so typed input is discarded: after typing 'DiscardedRef' into the internal reference and cancelling, the hub shows and the field is empty on re-entry.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-task--bea32 actions call@469, call@471, call@473, call@477",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-H3B3YD\">Cancel and return to overview</A>",
+      "confidence": "verbatim",
+      "note": "Network log shows only GETs between the fill and the re-entry: no POST is made on cancel."
+    },
+    {
+      "id": "trace-e2e-p13-039",
+      "statement": "'Save and return to overview' is a submit button named exit with value hub: it commits the page and redirects to the hub instead of the next page in the flow, and the saved value ('CommittedRef') is there on re-entry.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-task--bea32 actions call@479, call@481, call@483, call@487; network POST origin 302",
+      "quote": "<BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-040",
+      "statement": "'Save and continue' on the origin page, outside change context, saves and goes on to 'What are you importing?' (/commodities).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-task--bea32 network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-H3B3YD/origin | 302 | /live-animals/notifications/GBN-AG-26-H3B3YD/commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-041",
+      "statement": "When the user works through tasks from the hub, Save and continue moves within a task group and then returns to the hub: commodities -> consignment details -> hub; identification -> hub; import reason -> additional details -> hub; addresses -> CPH number -> hub; port of entry -> transit countries -> transporters -> hub; contact select -> hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-20167 network (browser)",
+      "quote": "POST | .../consignment-details | 302 | /live-animals/notifications/GBN-AG-26-Q4G1HN ... POST | .../additional-details | 302 | /live-animals/notifications/GBN-AG-26-Q4G1HN ... POST | .../transporters | 302 | /live-animals/notifications/GBN-AG-26-Q4G1HN",
+      "confidence": "verbatim",
+      "note": "The seeding fixture's direct form posts (claim trace-e2e-p13-042) get different redirect targets for the same pages; the trace does not show what makes the difference. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-e2e-p13-042",
+      "statement": "The same forms, posted straight in sequence by the seeding fixture, redirect along a single linear flow: origin -> commodities -> consignment-details -> import-reason -> commodities/identification -> additional-details -> port-of-entry -> transit-countries -> transporters -> accompanying-documents; addresses -> cph-number -> consignment/contact/select -> notification-view.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 3-trace.network (API request context)",
+      "quote": "POST | .../consignment-details | 302 | /live-animals/notifications/GBN-AG-26-944DQK/import-reason ... POST | .../transporters | 302 | /live-animals/notifications/GBN-AG-26-944DQK/accompanying-documents ... POST | .../consignment/contact/select | 302 | /live-animals/notifications/GBN-AG-26-944DQK/notification-view",
+      "confidence": "verbatim",
+      "note": "Each party select page (consignors, destinations, place-of-origin, consignees, importers) redirects back to /addresses."
+    },
+    {
+      "id": "trace-e2e-p13-043",
+      "statement": "Task pages render a 'Back' link to the hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-task--bea32 action call@469 snapshot (origin page)",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-H3B3YD\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-044",
+      "statement": "Every journey form carries a hidden 'concurrencyToken' whose value rises as the notification is saved (1 on a new notification, 17 on a fully answered one), implying an optimistic-concurrency version check on save.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-task--bea32 origin snapshot; trace animals-e2e-features-hub-g-20167 review snapshot",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"1\"> ... <INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"17\">",
+      "confidence": "inferred",
+      "note": "Inferred from the name and the rising value; no conflict was driven. Forms also carry a hidden 'crumb' CSRF token (value [REDACTED])."
+    },
+    {
+      "id": "trace-e2e-p13-045",
+      "statement": "The origin page has the caption 'About the consignment' and the heading 'Origin of the import'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-task--bea32 action call@469 snapshot",
+      "quote": "<SPAN class=\"govuk-caption-l\">About the consignment</SPAN> <H1 class=\"govuk-heading-l\">Origin of the import</H1>",
+      "confidence": "verbatim",
+      "note": "Origin page fields belong to another part; recorded here only as the page the exits and change tests drive."
+    },
+    {
+      "id": "trace-e2e-p13-046",
+      "statement": "The origin page has an optional text field 'Your internal reference for this consignment (optional)' with the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-task--bea32 action call@469 snapshot",
+      "quote": "Your internal reference for this consignment (optional) | Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-047",
+      "statement": "The check-your-answers page is the notification view at /notification-view, headed 'Review your notification', reached from the hub's 'Review and submit'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@592, call@594, call@596",
+      "quote": "<H1 class=\"govuk-heading-l\">Review your notification</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-048",
+      "statement": "The review page has a 'Back' link to the hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot near call@596",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-049",
+      "statement": "The review page groups answers under the same six numbered h2 section headings as the hub (1. About the consignment ... 6. Contact address), separated by visible section breaks.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@598 to call@608",
+      "quote": "<H2 class=\"govuk-heading-m\" id=\"about-the-consignment\">1. About the consignment</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-050",
+      "statement": "Inside each section, each hub task appears as an h3 (for example 'Where is this consignment coming from?', 'Main reason for import', 'Commodity details', 'Additional details', 'Arrival details', 'Transit countries', 'Transport details', 'Upload documents', 'Roles and addresses', 'Contact address for this consignment'), followed by a summary card with its own h4 title.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@614, call@616, call@618; review snapshot",
+      "quote": "<H3 class=\"govuk-heading-s\">Where is this consignment coming from?</H3> ... <H4 class=\"govuk-summary-card__title\">Import details</H4>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-051",
+      "statement": "Each summary card has one 'Change' link in its title bar and none on its rows; the link's hidden text names the card (for example 'Change import details (Import details)', 'Change commodity 1', 'Change uploaded documents').",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot; trace animals-e2e-pages-notifica-bee7d actions call@1133, call@1135",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN/origin?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> import details (Import details)</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-052",
+      "statement": "Every Change link points to its answering page with ?change=1: origin, import-reason, consignment-details, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents, addresses and consignment/contact/select.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot",
+      "quote": "origin?change=1 | import-reason?change=1 | consignment-details?change=1 | additional-details?change=1 | port-of-entry?change=1 | transit-countries?change=1 | transporters?change=1 | accompanying-documents?change=1 | addresses?change=1 | consignment/contact/select?change=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-053",
+      "statement": "The 'Import details' card (under 'Where is this consignment coming from?') shows rows Country of origin, Region of origin code required, Region of origin code and Internal reference number (France, Yes, FR-75, Imports456GB in the trace).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@620 to call@626",
+      "quote": "Country of origin France | Region of origin code required Yes | Region of origin code FR-75 | Internal reference number Imports456GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-054",
+      "statement": "The region of origin code is shown with the country prefix joined to the typed suffix (suffix '75' for France shows as 'FR-75').",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@388, call@624",
+      "quote": "Frame.fill {\"selector\":\"internal:label=\\\"Enter the region of origin code\\\"s\",\"strict\":true,\"value\":\"75\"} ... FR-75",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-055",
+      "statement": "The 'Reason for import' card (under 'Main reason for import') shows rows Reason for import and Purpose in the market (Internal market, Breeding).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@632, call@634",
+      "quote": "Reason for import Internal market | Purpose in the market Breeding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-056",
+      "statement": "Each commodity gets its own card under 'Commodity details', titled '<common name> (<commodity code>) — <species>', for example 'Cow (0102) — Bos taurus'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot",
+      "quote": "<H4 class=\"govuk-summary-card__title\">Cow (0102) — Bos taurus</H4>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-057",
+      "statement": "A commodity card shows rows Commodity code, Common name, Species, Number of animals and Number of packages (0102, Cow, Bos taurus, 1, 5).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@636 to call@644",
+      "quote": "Commodity code 0102 | Common name Cow | Species Bos taurus | Number of animals 1 | Number of packages 5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-058",
+      "statement": "Inside the commodity card, an 'Animal details' h5 heads a table with columns 'Animal' and 'Ear tag', one row per animal ('Animal 1', 'UK123456789012').",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@646 to call@652",
+      "quote": "<H5 class=\"govuk-heading-s\">Animal details</H5> ... <TH class=\"govuk-table__header\">Animal</TH><TH class=\"govuk-table__header\">Ear tag</TH> ... Animal 1 | UK123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-059",
+      "statement": "There is no separate identification card on the review page: identification answers sit inside the commodity card, and the commodity card's single Change link goes to consignment details.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN/consignment-details?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> commodity 1</SPAN></A>",
+      "confidence": "inferred",
+      "note": "Inferred from the card layout; no Change link to /commodities/identification exists on the page."
+    },
+    {
+      "id": "trace-e2e-p13-060",
+      "statement": "The 'Additional animal details' card (under 'Additional details') shows rows Certified for and Includes unweaned animals (Slaughter, No).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@628, call@630",
+      "quote": "Certified for Slaughter | Includes unweaned animals No",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-061",
+      "statement": "The 'Arrival details' card shows rows Port of entry, Arrival date at port of entry, Means of transport to the port of entry, Transport identification and Transport document reference (Aberdeen Harbour (GB ABD), 7/11/2026, Road Vehicle, FR-892-LK, CMR-2026-884721).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@654 to call@662",
+      "quote": "Port of entry Aberdeen Harbour (GB ABD) | Arrival date at port of entry 7/11/2026 | Means of transport to the port of entry Road Vehicle | Transport identification FR-892-LK | Transport document reference CMR-2026-884721",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-062",
+      "statement": "The arrival date is shown as entered, in d/m/yyyy numeric form ('7/11/2026'), not in the GOV.UK long date style.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@520, call@656",
+      "quote": "Frame.fill {\"selector\":\"input[name=\\\"arrivalDateAtPort\\\"]\",\"strict\":true,\"value\":\"7/11/2026\"} ... Arrival date at port of entry 7/11/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-063",
+      "statement": "The 'Transit countries' card has one row 'Countries that the consignment will travel through' listing the countries comma-separated in the order they were added (France, Belgium), not alphabetically.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@552, call@570, call@664",
+      "quote": "Countries that the consignment will travel through France, Belgium",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-064",
+      "statement": "The 'Transit countries' card appears only when transit countries were recorded; on the unfinished draft with no transit countries it is absent from section 3.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot",
+      "quote": "<H3 class=\"govuk-heading-s\">Arrival details</H3> ... <H3 class=\"govuk-heading-s\">Transport details</H3>",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the unfinished-draft and complete review pages."
+    },
+    {
+      "id": "trace-e2e-p13-065",
+      "statement": "The 'Transport details' card shows rows Name, Address, Country, Approval number and Type for the chosen transporter (García Livestock Transport SL, a three-line address, Switzerland, ES-T2-45001294, Commercial).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@666, call@668; review snapshot",
+      "quote": "Name García Livestock Transport SL | Address 43 East Hague Extension Delectus sitodio p. Laborum Odio tempor Quasoccaecat ut ear, 30055 | Country Switzerland | Approval number ES-T2-45001294 | Type Commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-066",
+      "statement": "Section 4 shows an 'Uploaded documents' card that reads 'You have not added any documents yet.' when nothing is uploaded, and still offers 'Change uploaded documents'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@610, call@612",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-067",
+      "statement": "The review page with uploaded documents is never shown in this part; how uploaded documents are listed on it is not evidenced.",
+      "kind": "data",
+      "ref": "all review snapshots in this part",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-068",
+      "statement": "The 'Roles and addresses' card shows rows Place of origin, Consignor, Consignee, Importer, Place of destination and County parish holding (CPH) number, in that order.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@670 to call@680",
+      "quote": "Place of origin | Consignor | Consignee | Importer | Place of destination | County parish holding (CPH) number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-069",
+      "statement": "Each party row shows the address block: name in bold, then address lines, town, postcode, country, telephone and email, one per line.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot (Place of origin row)",
+      "quote": "<STRONG>Origin Farm</STRONG> 1 Farm Lane Ennis V95 X7P2 Ireland +44 1234 567890 contact@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-070",
+      "statement": "Each party row on a draft review page has its own 'Edit details' row action that opens that party's edit page with return=notification-view (place-of-origin, consignors, consignees, importers, destinations).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-hub-g-20167 review snapshot",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-Q4G1HN/place-of-origin/edit?return=notification-view\">Edit details<SPAN class=\"govuk-visually-hidden\"> place of origin (Roles and addresses)</SPAN></A>",
+      "confidence": "verbatim",
+      "note": "This is the one place rows carry an action besides the card's Change link."
+    },
+    {
+      "id": "trace-e2e-p13-071",
+      "statement": "No trace follows an 'Edit details' link, so the party edit pages and their return to the review page are not evidenced.",
+      "kind": "behaviour",
+      "ref": "all traces in this part",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-072",
+      "statement": "The CPH number row has no action and shows the number normalised with separators stripped: county 12, parish 345, holding 6789 is shown as '123456789'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-hub-g-20167 actions call@508 to call@512, call@680",
+      "quote": "<DIV class=\"govuk-summary-list__row govuk-summary-list__row--no-actions\"><DT class=\"govuk-summary-list__key\">County parish holding (CPH) number</DT><DD class=\"govuk-summary-list__value\">123456789</DD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-073",
+      "statement": "The 'Contact address for this consignment' card has one row 'Contact address' showing the chosen address block (Animal and Plant Health Agency, Woodham Lane, Addlestone, KT15 3NB, United Kingdom ...) with its own 'Edit details' action to consignment/contact/edit?return=notification-view.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-hub-g-20167 action call@682; review snapshot",
+      "quote": "<STRONG>Animal and Plant Health Agency</STRONG> Woodham Lane Addlestone KT15 3NB United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-074",
+      "statement": "A draft review page ends with a single 'Continue' submit button in a POST form.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-notifica-b56ec action call@1210",
+      "quote": "<FORM method=\"post\"> ... <BUTTON type=\"submit\" class=\"govuk-button\">Continue</BUTTON></FORM>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-075",
+      "statement": "A Change link opens the answering page with change context (?change=1 in the URL): 'Change import details' opens 'Origin of the import' at /origin?change=1.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 actions call@337, call@339, call@341",
+      "quote": "Expect \"toHaveURL\" {\"expression\":\"to.have.url\",\"expectedText\":[{\"regexSource\":\"\\\\/origin\\\\?change=1$\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-076",
+      "statement": "Under change context, Save and continue saves and returns to the review page instead of the next page in the flow, and the card shows the new value (Country of origin France -> Belgium).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 actions call@357, call@359, call@361, call@363; network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-944DQK/origin?change=1 | 302 | /live-animals/notifications/GBN-AG-26-944DQK/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-077",
+      "statement": "'Change additional animal details' opens 'Additional details' at /additional-details?change=1; saving there returns to the review page (instead of continuing into the consignment flow) with Certified for changed from Slaughter to Exhibition.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 actions call@367 to call@381; network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-944DQK/additional-details?change=1 | 302 | /live-animals/notifications/GBN-AG-26-944DQK/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-078",
+      "statement": "Change context leaves the answering page's other exits unchanged: its Back link and 'Cancel and return to overview' still go to the hub, not back to the review page, and 'Save and return to overview' is still offered.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 action call@339 snapshot (origin?change=1) and call@369 snapshot (additional-details?change=1)",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-944DQK\" class=\"govuk-back-link\">Back</A> ... <A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-944DQK\">Cancel and return to overview</A>",
+      "confidence": "verbatim",
+      "note": "Neither exit was clicked under change context; where they lead is read from their hrefs."
+    },
+    {
+      "id": "trace-e2e-p13-079",
+      "statement": "The answering page under change context shows the saved answers pre-filled (Additional details shows Slaughter and No already checked).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 action call@369 snapshot",
+      "quote": "<INPUT __playwright_value_=\"slaughter\" __playwright_checked_=\"true\" class=\"govuk-radios__input\" id=\"animalsCertifiedFor-2\" name=\"animalsCertifiedFor\" type=\"radio\" value=\"slaughter\" checked=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-080",
+      "statement": "The Additional details page has the caption 'Commodity details', the heading 'Additional details', a radio question 'What are the animals certified for?' with the hint 'This information can be found on the ITAHC.' and a radio question 'Does the consignment contain any unweaned animals?' with the hint 'These are animals that are still feeding from their mother.'",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-chang-7ee54 action call@369 snapshot",
+      "quote": "What are the animals certified for? | This information can be found on the ITAHC. | Does the consignment contain any unweaned animals? | These are animals that are still feeding from their mother.",
+      "confidence": "verbatim",
+      "note": "Page belongs to another part; recorded here as the change-context target."
+    },
+    {
+      "id": "trace-e2e-p13-081",
+      "statement": "'What are the animals certified for?' offers 16 options: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-chang-7ee54 action call@369 snapshot",
+      "quote": "Further keeping | Slaughter | Confined establishment | Germinal products | Registered equine animal | Travelling circus/animal act | Exhibition | Event or activity near borders | Release into the wild | Dispatch centre | Relaying area / purification centre | Ornamental aquaculture establishment | Technical use | Quarantine or similar establishment | Live aquatic animals for human consumption | Other",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-082",
+      "statement": "Only the import details and additional animal details Change links were followed; the change-context round trip for the other cards (reason for import, commodity, arrival, transit countries, transport, documents, roles and addresses, contact address) is not evidenced.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-chang-7ee54 (all actions)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-083",
+      "statement": "An unfinished draft's review page shows, on arrival and before Continue is pressed, a GOV.UK error summary titled 'There is a problem' listing each unfinished card as a 'Complete <card>' link to that card's anchor.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-db6af action call@988 snapshot; trace animals-e2e-pages-notifica-f33cc action call@1018 snapshot",
+      "quote": "<H2 class=\"govuk-error-summary__title\">There is a problem</H2>",
+      "confidence": "verbatim",
+      "note": "The spec's DRAFT test only asserts the summary after Continue; the snapshots show it already on the initial GET."
+    },
+    {
+      "id": "trace-e2e-p13-084",
+      "statement": "For a draft with only origin, commodity, consignment details and identification answered, the error summary lists, in page order: 'Complete reason for import', 'Complete additional animal details', 'Complete arrival details', 'Complete transport details', 'Complete roles and addresses', 'Complete contact address for this consignment'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot; seed 2/3-trace.network",
+      "quote": "<A href=\"#reason-for-import\">Complete reason for import</A> <A href=\"#additional-animal-details\">Complete additional animal details</A> <A href=\"#arrival-details\">Complete arrival details</A> <A href=\"#transport-details\">Complete transport details</A> <A href=\"#roles-and-addresses\">Complete roles and addresses</A> <A href=\"#contact-address\">Complete contact address for this consignment</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-085",
+      "statement": "Documents are never listed in the error summary when none are uploaded, because the documents section is optional.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot",
+      "quote": "<P class=\"govuk-body\">You have not added any documents yet.</P>",
+      "confidence": "inferred",
+      "note": "Inferred: the Uploaded documents card is not error-styled and has no summary entry on an unfinished draft."
+    },
+    {
+      "id": "trace-e2e-p13-086",
+      "statement": "Each unfinished card is error-styled, repeats its message under the title as a GOV.UK error message ('Error: Complete arrival details'), and shows every unanswered row's value as a 'Missing' marker that is visually hidden text.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot (arrival-details card)",
+      "quote": "<DIV class=\"govuk-summary-card app-summary-card--error\" id=\"arrival-details\"> ... <P class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Complete arrival details</P> ... <SPAN class=\"app-summary-list__value--missing\"><SPAN class=\"govuk-visually-hidden\">Missing</SPAN></SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-087",
+      "statement": "The error card and missing-value styling use custom classes ('app-summary-card--error', 'app-summary-list__value--missing') outside GOV.UK Frontend, which has no error variant of the summary card.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot",
+      "quote": "app-summary-card--error | app-summary-list__value--missing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-088",
+      "statement": "On an unfinished draft the unanswered cards still list their row keys with Missing values: Reason for import; Certified for and Includes unweaned animals; the five arrival rows; Type for transport details; all six roles and addresses rows; Contact address.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot",
+      "quote": "Reason for import | Certified for | Includes unweaned animals | Port of entry | Arrival date at port of entry | Means of transport to the port of entry | Transport identification | Transport document reference | Type | Place of origin | Consignor | Consignee | Importer | Place of destination | County parish holding (CPH) number | Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-089",
+      "statement": "Unfinished cards still carry their Change link (hidden text without the card-name suffix, for example 'Change arrival details'), and unanswered party rows carry no 'Edit details' action.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-f33cc action call@1024 snapshot",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-1H9M7K/port-of-entry?change=1\">Change<SPAN class=\"govuk-visually-hidden\"> arrival details</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-090",
+      "statement": "An unfinished draft's review page shows the recorded answers in the numbered sections (Import details with France; the Cow (0102) — Bos taurus card with Number of animals) and the Uploaded documents card.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-db6af actions call@992 to call@1012",
+      "quote": "Expect \"toContainText\" {\"selector\":\".govuk-summary-card >> internal:has-text=\\\"Import details\\\"i\",\"expression\":\"to.have.text\",\"expectedText\":[{\"string\":\"France\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-091",
+      "statement": "An unfinished draft's review page shows the Draft strip with the notification reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-2df45 actions call@856, call@858",
+      "quote": "Expect \"toContainText\" {\"selector\":\".app-journey-strip\",\"expression\":\"to.have.text\",\"expectedText\":[{\"string\":\"GBN-AG-26-KESFE9\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-092",
+      "statement": "A draft review page offers submission (Continue) and none of the post-submit actions: no 'Copy as new', no 'Delete' and no 'Cancel amendment'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-b56ec actions call@1210 to call@1216",
+      "quote": "Expect \"toHaveCount\" {\"selector\":\"internal:role=button[name=\\\"Copy as new\\\"i]\",\"expression\":\"to.have.count\",\"expectedNumber\":0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-093",
+      "statement": "Pressing Continue on an unfinished draft POSTs to /notification-view, which answers 400 and re-renders the same page with the error summary naming what is left; the user stays on /notification-view.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-f33cc actions call@1022 to call@1030; network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-1H9M7K/notification-view | 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-094",
+      "statement": "Once every section is answered, the review page shows no error summary.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-0f999 action call@1166",
+      "quote": "Expect \"toHaveCount\" {\"selector\":\".govuk-error-summary\",\"expression\":\"to.have.count\",\"expectedNumber\":0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-095",
+      "statement": "Pressing Continue on a draft that is ready to submit POSTs to /notification-view and redirects to the declaration page (/declaration).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-97c65 actions call@1051, call@1053; network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-P7M7MP/notification-view | 302 | /live-animals/notifications/GBN-AG-26-P7M7MP/declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-096",
+      "statement": "The declaration page is headed 'Declaration', has a Back link to the review page, a confirmation checkbox 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', a 'Date of declaration' line and a Continue button.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-notifica-97c65 action call@1055 snapshot",
+      "quote": "<H1 class=\"govuk-heading-l\">Declaration</H1> ... I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct. ... Date of declaration: 7 October 2026",
+      "confidence": "verbatim",
+      "note": "Declaration content belongs to another part; recorded here as the Continue target."
+    },
+    {
+      "id": "trace-e2e-p13-097",
+      "statement": "Submitting the declaration redirects to a confirmation page (/confirmation).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-e7c83 3-trace.network (seed)",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-HJWS6Y/declaration | 302 | /live-animals/notifications/GBN-AG-26-HJWS6Y/confirmation",
+      "confidence": "verbatim",
+      "note": "Seen only in the seeding fixture's traffic; the confirmation page itself is not rendered in this part."
+    },
+    {
+      "id": "trace-e2e-p13-098",
+      "statement": "Opening a submitted notification's view lands on /live-animals/notifications/<reference>/notification-view under the same heading 'Review your notification'.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-0de91 actions call@1104, call@1106, call@1108",
+      "quote": "Expect \"toHaveURL\" {\"expression\":\"to.have.url\",\"expectedText\":[{\"regexSource\":\"\\\\/live-animals\\\\/notifications\\\\/GBN-AG-26-WH70BP\\\\/notification-view$\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-099",
+      "statement": "A submitted notification's view puts a button group directly under the heading with a secondary 'Copy as new' button and a red warning 'Delete' button.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-notifica-b04ab actions call@954, call@956; trace animals-e2e-pages-notifica-0de91 snapshot",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button govuk-button--secondary\">Copy as new</BUTTON> ... <A href=\"/live-animals/notifications/GBN-AG-26-WH70BP/delete\" role=\"button\" class=\"govuk-button govuk-button--warning\">Delete</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-100",
+      "statement": "A submitted notification's view offers no 'Cancel amendment' link.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-b04ab action call@958",
+      "quote": "Expect \"toHaveCount\" {\"selector\":\"internal:role=link[name=\\\"Cancel amendment\\\"i]\",\"expression\":\"to.have.count\",\"expectedNumber\":0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-101",
+      "statement": "The tests name a 'Cancel amendment' action and assert its absence for draft and submitted notifications, implying an amendment state where it appears; no trace in this part shows that state or the action.",
+      "kind": "behaviour",
+      "ref": "notification-view-states.spec.ts lines 41, 87",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-102",
+      "statement": "A submitted notification's view is read-only: its cards have no Change links, its party rows have no Edit details actions, and there is no Continue button.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-0de91 action call@1104 snapshot",
+      "quote": "<DIV class=\"govuk-summary-card__title-wrapper\"><H4 class=\"govuk-summary-card__title\">Import details</H4></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-103",
+      "statement": "A submitted notification's view still renders every recorded answer in the same numbered sections and cards (Import details with France, the Cow (0102) — Bos taurus card, transit countries, transport, documents, roles and addresses, contact address).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-877e8 actions call@1095, call@1097; trace animals-e2e-pages-notifica-0de91 snapshot",
+      "quote": "Expect \"toContainText\" {\"selector\":\".govuk-summary-card >> internal:has-text=\\\"Import details\\\"i\",\"expression\":\"to.have.text\",\"expectedText\":[{\"string\":\"France\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-104",
+      "statement": "A submitted notification's view still has a 'Back' link to that notification's hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-0de91 action call@1104 snapshot",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-WH70BP\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim",
+      "note": "What the hub of a submitted notification shows is not evidenced in this part."
+    },
+    {
+      "id": "trace-e2e-p13-105",
+      "statement": "What the hub and task pages show for a submitted notification (whether they are reachable, read-only or carry the Submitted strip) is not shown by any trace in this part.",
+      "kind": "behaviour",
+      "ref": "all SUBMITTED traces in this part",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-106",
+      "statement": "'Copy as new' is an inline POST form to /notifications/<reference>/copy that sends copyOrigin=notification-view.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-pages-notifica-0de91 action call@1104 snapshot",
+      "quote": "<FORM method=\"post\" action=\"/live-animals/notifications/GBN-AG-26-WH70BP/copy\" class=\"app-form-inline\"> ... <INPUT type=\"hidden\" name=\"copyOrigin\" value=\"notification-view\">",
+      "confidence": "verbatim",
+      "note": "'app-form-inline' is a custom class used to sit a form button inline in a govuk-button-group."
+    },
+    {
+      "id": "trace-e2e-p13-107",
+      "statement": "Copying a submitted notification creates a new draft with a new GBN-AG reference and redirects to the new draft's hub ('Overview').",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-e7c83 actions call@1231, call@1233, call@1235; network",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-HJWS6Y/copy | 302 | /live-animals/notifications/GBN-AG-26-DRKSYZ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-108",
+      "statement": "The copied notification's hub shows the Draft strip with the new reference, not the original's.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-notifica-e7c83 action call@1235; call@1233 snapshot",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> ... GBN-AG-26-DRKSYZ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p13-109",
+      "statement": "The copy carries over every answer: on the new draft's hub every task is Complete (including Identification details and Transit countries) except Upload documents (To do), and the totals read 1 animal and 5 packages.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-e7c83 action call@1233 snapshot",
+      "quote": "Where is this consignment coming from? Complete | What are you importing? Complete | Main reason for import Complete | Commodity details Complete | Identification details Complete | Additional details Complete | Arrival details Complete | Transit countries Complete | Transport details Complete | Upload documents To do | Roles and addresses Complete | Contact address for this consignment Complete",
+      "confidence": "verbatim",
+      "note": "Whether uploaded documents would be copied is not shown, since the source notification had none."
+    },
+    {
+      "id": "trace-e2e-p13-110",
+      "statement": "The Delete button links to /notifications/<reference>/delete, but no trace follows it; the delete page, its confirmation and its outcome are not evidenced.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-notifica-b04ab action call@956",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-111",
+      "statement": "The browser only talks to the frontend (localhost:3000); no backend or reference-data call is visible in any browser network log in this part, so which backend calls the hub, review, copy and Continue actions make is not evidenced.",
+      "kind": "integration",
+      "ref": "1-trace.network of all 16 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-112",
+      "statement": "The test fixture resolves seeded party addresses through the address book API by organisation and name query before posting the select forms.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-chang-7ee54 2-trace.network (API request context)",
+      "quote": "GET | http://localhost:8089/organisation/5900001/addresses?q=Tech%20Imports%20Ltd | 200",
+      "confidence": "verbatim",
+      "note": "This is test-harness traffic, not something the browser journey does; it shows the address book API's search shape."
+    },
+    {
+      "id": "trace-e2e-p13-113",
+      "statement": "No trace in this part drives a validation error on a task page via Save and continue or Save and return to overview, so how 'Save and return to overview' behaves with invalid or incomplete input is not evidenced.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-task--bea32 (all actions)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p13-114",
+      "statement": "Pages in this slice are built from GOV.UK Frontend components (task list, tags, summary cards, summary list, table, error summary, error message, button group, buttons, back link, radios, checkboxes, caption) apart from the custom app-* hooks for the journey strip, task list, commodity totals, error card, missing value and inline form.",
+      "kind": "constraint",
+      "ref": "snapshots: hub call@377 (5d3a0), review call@1024 (f33cc), submitted call@1104 (0de91)",
+      "quote": "app-journey-strip | app-task-list | app-commodity-total | app-summary-card--error | app-summary-list__value--missing | app-form-inline",
+      "confidence": "verbatim"
+    }
+  ]
+}

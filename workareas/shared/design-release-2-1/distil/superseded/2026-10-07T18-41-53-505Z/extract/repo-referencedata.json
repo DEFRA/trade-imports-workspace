@@ -1,0 +1,152 @@
+{
+  "source": "repo:referencedata",
+  "structure": "repos/trade-imports-reference-data at 9f3aa3e: a small Spring Boot (Java) REST service with no database repository. Read: docs/repos/trade-imports-reference-data.md, doc/adr/0002 (the only ruling; there is no decisions ledger), src/main/java/.../countries (CountriesController, Country, SubDivision), .../portsofentry (PortsOfEntryController, PortOfEntry), .../client (MdmClient Feign client, MdmService with caching and filtering, Mdm* payload classes), .../configuration/CacheConfig.java, src/main/resources/application.yml and the CountriesControllerIT integration test. The service exposes exactly two lists today: countries (with subdivisions) and ports of entry. Searching src/main for commodity, species, transporter, certification and document-type code found nothing, so every other list the scope names is recorded as a gap. Left out: metrics, logging, TLS, proxy and Mongo configuration, which are operational plumbing a journey page cannot observe.",
+  "scopeHash": "2b1e56d140aaf3477a54736f9b08054f236c5771bf6fc8b3d02cdcfeae7bebd7",
+  "claims": [
+    {
+      "id": "repo-referencedata-001",
+      "statement": "The service serves a list of countries at GET /countries, each with a code, a name and a list of subdivisions.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:18-34; Country.java:15-19",
+      "quote": "@RequestMapping(\"/countries\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-002",
+      "statement": "Countries are returned sorted by name, ascending.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/CountriesController.java:30",
+      "quote": ".sorted(Comparator.comparing(Country::getName))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-003",
+      "statement": "A country's code is the MDM effective alpha-2 code and its name is the MDM effective alias, not the long name.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:22-23",
+      "quote": "this.code = mdmCountry.getEffectiveAlpha2();\n    this.name = mdmCountry.getEffectiveAlias();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-004",
+      "statement": "Great Britain (code GB) is never returned in the countries list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:49",
+      "quote": ".filter(c -> !\"GB\".equals(c.getEffectiveAlpha2()))",
+      "confidence": "verbatim",
+      "note": "The integration test also asserts that GB-NIR is absent from the response (CountriesControllerIT.java:45-46)."
+    },
+    {
+      "id": "repo-referencedata-005",
+      "statement": "GET /countries takes an optional blocks query parameter. When given, only countries that belong to a block of that name with includeCountry true are returned; when absent, all countries (bar GB) are returned.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:54-59",
+      "quote": "if (requestedBlock == null || country.getBlocks() == null) return true;\n    return country.getBlocks().stream()\n        .anyMatch(b -> requestedBlock.equals(b.getName())\n                 && Boolean.TRUE.equals(b.getIncludeCountry()));",
+      "confidence": "verbatim",
+      "note": "A country whose MDM record has no blocks at all passes the filter even when a block is requested."
+    },
+    {
+      "id": "repo-referencedata-006",
+      "statement": "Each country carries its subdivisions as code and name pairs (for example Canary Islands, ES-CN). A subdivision with no code value is dropped, and a country with no subdivisions has an empty list.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/countries/Country.java:27-39; src/test/java/.../integration/CountriesControllerIT.java:48-50",
+      "quote": ".filter(subDivision -> subDivision.getCode() != null\n            && subDivision.getCode().getValue() != null)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-007",
+      "statement": "The service serves a list of ports of entry at GET /ports-of-entry, each with a code and a name, sorted by name ascending.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/portsofentry/PortsOfEntryController.java:17-31; PortOfEntry.java:15-16",
+      "quote": ".map(PortOfEntry::new)\n        .sorted(Comparator.comparing(PortOfEntry::getName))",
+      "confidence": "verbatim",
+      "note": "Only code and name are exposed; the MDM id is dropped."
+    },
+    {
+      "id": "repo-referencedata-008",
+      "statement": "Ports of entry come from MDM's border control post endpoint, and countries from MDM's geo countries endpoint, both called with the subscription key header and system=GBNAG. This service holds no reference data of its own.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:20-31; MdmService.java:17",
+      "quote": "@GetMapping(value = \"/mdm/geo/countries\")",
+      "confidence": "verbatim",
+      "note": "The ports endpoint is /mdm/trade/bcp/poes."
+    },
+    {
+      "id": "repo-referencedata-009",
+      "statement": "MDM responses are cached in memory for CACHE_MDM_TTL_MINUTES (default 60). Empty results are never cached, and countries are cached separately for each distinct blocks value.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:22,35; configuration/CacheConfig.java:32-44; src/main/resources/application.yml:5-7",
+      "quote": "@Cacheable(value = \"MDM_COUNTRIES_CACHE\", unless = \"#result == null || #result.isEmpty()\")",
+      "confidence": "verbatim",
+      "note": "CacheConfig.java:30-31 comments that the purpose is to rate-limit calls to MDM, not to defend against MDM unavailability."
+    },
+    {
+      "id": "repo-referencedata-010",
+      "statement": "If MDM returns no body for a countries or ports request, the service returns an empty list rather than an error.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmService.java:28-31,44-47",
+      "quote": "log.warn(\"MDM returned a null body for ports-of-entry request\");\n      return List.of();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-011",
+      "statement": "The service has no inbound authentication of its own callers, and no notification, address or user data.",
+      "kind": "constraint",
+      "ref": "docs/repos/trade-imports-reference-data.md, Responsibilities, Does not own",
+      "quote": "Authentication of its own callers: no inbound auth was found in the controllers.",
+      "confidence": "inferred",
+      "note": "Inferred from the controllers carrying no security annotations; absence of auth was not proven by a test."
+    },
+    {
+      "id": "repo-referencedata-012",
+      "statement": "Ruling ADR 0002 (accepted 2026-05-07): trade-imports-reference-data is the shared home for several reference-data domains until one grows large enough to extract. Countries is the only domain it lists as currently managed; commodity codes and BCPs/POEs are listed as planned future domains to be added to this service first.",
+      "kind": "constraint",
+      "ref": "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md:15-24",
+      "quote": "We will use `trade-imports-reference-data` as a shared service to manage multiple reference data domains until any individual domain grows large enough to justify extraction into its own dedicated service.",
+      "confidence": "verbatim",
+      "note": "The ADR is out of date against the code: it lists BCPs/POEs as planned, but GET /ports-of-entry is already implemented."
+    },
+    {
+      "id": "repo-referencedata-013",
+      "statement": "No commodity or species list exists in this service: no endpoint, model or MDM call for commodity codes, commodity categories or species.",
+      "kind": "data",
+      "ref": "src/main (searched with grep for commodit and species)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "ADR 0002 names commodity codes as a planned domain. Searched all of src/main with grep -rli for commodit, species, transporter, certification, document-type and documentType: no matches."
+    },
+    {
+      "id": "repo-referencedata-014",
+      "statement": "No commodity identifier list exists in this service.",
+      "kind": "data",
+      "ref": "src/main (searched with grep)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in controllers, client and model packages; the only controllers are CountriesController and PortsOfEntryController."
+    },
+    {
+      "id": "repo-referencedata-015",
+      "statement": "No transporter list exists in this service.",
+      "kind": "data",
+      "ref": "src/main (searched with grep for transporter)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-referencedata-016",
+      "statement": "No document type list exists in this service.",
+      "kind": "data",
+      "ref": "src/main (searched with grep for document-type and documentType)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-referencedata-017",
+      "statement": "No certification purpose list exists in this service.",
+      "kind": "data",
+      "ref": "src/main (searched with grep for certification)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

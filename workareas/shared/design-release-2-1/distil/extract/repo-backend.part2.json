@@ -1,0 +1,972 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 2, Notification write lifecycle, of repos/trade-imports-animals-backend at main 15ae53f. Read in full: notification/NotificationController.java (266 lines, 14 endpoints; only POST /notifications, PUT /notifications/{referenceNumber}, POST .../copy, .../submit, .../amend and .../cancel-amend claimed here), NotificationService.java (548 lines; claimed: saveNotification, createNotification, updateNotification, replace, copyNotification, submitNotification, amendNotification, cancelAmendNotification, writeWithOutbox, executeWithOutboxLock, setNotificationDetails, deepCopyFulfilments; list, soft-delete, hard delete and expiry are parts 3 and 5), NotificationRepository.java (40), NotificationCopyMapper.java (102), NotificationContentMapper.java (36), ActorRequest.java (30), AuditContext.java (18), audit/Action.java, Result.java, Audit.java, AuditRepository.java, the notification.submit block of application.yml, integration/NotificationIT.java (2,500 lines, every test read; the post_, put_, copy_, submit_, submitFromAmend_, submitThenAmend_, amend_ and cancelAmend_ tests claimed as proof; findAll_, delete_, softDelete_, findAllReferenceNumbers_, getOutboxEvents_ and findFulfilments_ tests belong to parts 3 and 5), integration/OptimisticLockingIT.java (54), notification/NotificationCopyMapperTest.java (432) and NotificationContentMapperTest.java (81). To state the HTTP status each refusal reaches, exceptions/GlobalExceptionHandler.java was grepped for its handler-to-status mapping, OutboxEventType.SUBMISSION_EVENTS, SaveNotificationDto and the @Version field on NotificationAggregate were grepped, and ReferenceNumberGenerator's pattern was read; those files are other parts' and are cited only as provenance. Claims run: the six endpoints (body, response, status codes, refusal messages), the status transitions each allows and leaves, submit and its settings, amend and cancel-amend snapshots, the copy rules field by field, optimistic locking, the outbox write lock, actor and trace headers, audit (none for these six), and security observations in general terms.",
+  "claims": [
+    {
+      "id": "repo-backend-p2-001",
+      "statement": "POST /notifications both creates and updates a notification: a request whose notification has a blank reference number creates a new one, and one with a reference number updates that notification.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:86-92; NotificationController.java:48-59",
+      "quote": "if (StringUtils.isBlank(notificationDto.getReferenceNumber())) {\n            return createNotification(notificationDto, correlationId, actor);\n        } else {\n            return updateNotification(notificationDto, correlationId, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-002",
+      "statement": "The body of POST /notifications and PUT /notifications/{referenceNumber} is a wrapper with a required, validated notification object and an optional actor object.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java:14-18; NotificationController.java:52,71",
+      "quote": "@Valid\n    @NotNull\n    NotificationDto notification;\n ... ActorRequest actor;",
+      "confidence": "verbatim",
+      "note": "SaveNotificationDto is part 1's file; the fields it validates are claimed there."
+    },
+    {
+      "id": "repo-backend-p2-003",
+      "statement": "Every one of the six write endpoints answers 200 with the whole stored notification aggregate as the body.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:58,76,95,118,137,155",
+      "quote": "return ResponseEntity.ok(notificationService.saveNotification(notificationDto, traceId, actor));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-004",
+      "statement": "Each write endpoint takes an optional x-cdp-request-id header, defaulting to an empty string, and passes it on as the correlation id stamped on the outbox event it writes.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:41,53; NotificationIT.java submit_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "@RequestHeader(value = HEADER_TRACE_ID, required = false, defaultValue = \"\") String traceId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-005",
+      "statement": "A new notification is created with status DRAFT, a created timestamp of now and an updated timestamp of now.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:450-455,518",
+      "quote": "notificationAggregate.setCreated(Instant.now());\n        notificationAggregate.setStatus(NotificationStatus.DRAFT);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-006",
+      "statement": "The service, not the caller, gives a new notification its reference number, in the form GBN-AG-, two digits, a hyphen and six characters from a set that leaves out I, L, O and U.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:457; ReferenceNumberGenerator.java:20; NotificationIT.java post_shouldMapAllFieldsToNotificationAndSave",
+      "quote": "REFERENCE_NUMBER_PATTERN = \"^GBN-AG-\\\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$\"",
+      "confidence": "verbatim",
+      "note": "How the generator builds the number (year digits, alphabet) is part 1's or part 3's claim; here only that create assigns it."
+    },
+    {
+      "id": "repo-backend-p2-007",
+      "statement": "If a generated reference number collides with an existing one, create tries again with a new number, up to 3 attempts, and then fails with a server error.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:43,456-473",
+      "quote": "throw new IllegalStateException(\n            \"Failed to generate a unique reference number after \" + MAX_REF_RETRIES + \" attempts\");",
+      "confidence": "verbatim",
+      "note": "IllegalStateException reaches the RuntimeException catch-all in GlobalExceptionHandler, which answers 500."
+    },
+    {
+      "id": "repo-backend-p2-008",
+      "statement": "Creating a notification writes a NotificationCreated outbox event at aggregate version 1.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:459-465; NotificationIT.java post_shouldWriteNotificationCreatedEvent_whenCreatingDraftNotification",
+      "quote": "assertThat(events.getFirst().getEventType())\n            .isEqualTo(\"uk.gov.defra.imports.notification.NotificationCreated\");\n        assertThat(events.getFirst().getAggregateVersion()).isEqualTo(1L);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-009",
+      "statement": "When a notification time-to-live in days is configured and the environment is not production, create stamps an expiry date that number of days after the created time; otherwise no expiry is set.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:442-448,454",
+      "quote": "if (days == null || ttlConfig.isProd()) {\n            return;\n        }\n        notificationAggregate.setExpireAt(notificationAggregate.getCreated().plus(days, ChronoUnit.DAYS));",
+      "confidence": "verbatim",
+      "note": "The TTL settings and the sweep that deletes expired notifications are part 3's. A copy is created through the same path, so a copy gets a fresh expiry too."
+    },
+    {
+      "id": "repo-backend-p2-010",
+      "statement": "Create stores every notification field it is sent and returns them: origin with region of origin, commodity with its complements and species, reason for import, additional details, CPH number and transport.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java post_shouldMapAllFieldsToNotificationAndSave",
+      "quote": "assertThat(created.getReferenceNumber()).matches(REF_FORMAT_REGEX);\n        assertNotificationMappedFields(created);\n        assertThat(created.getNotification().getOrigin().getRegionOfOriginCode()).isEqualTo(\"GB-ENG\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-011",
+      "statement": "Create stores the origin's country subdivision code.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java post_shouldPersistCountrySubdivisionCode",
+      "quote": "assertThat(persisted.getNotification().getOrigin().getCountrySubdivisionCode()).isEqualTo(\"ES-CN\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-012",
+      "statement": "Several notifications can be created without a reference number in the request, and each gets its own generated GBN-AG- reference.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java post_shouldAllowMultipleNotificationsWithNullReferenceNumber",
+      "quote": ".allMatch(ref -> ref != null && ref.startsWith(\"GBN-AG-\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-013",
+      "statement": "A save writes these notification fields from the request: origin, commodity, reason for import, additional details, place of origin, consignor, consignee, importer, destination, CPH number, transport, consignment, purpose in internal market, destination country, port of exit and exit date, plus the fulfilments payload.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:496-519",
+      "quote": "notification.setOrigin(dto.getOrigin());\n        notification.setCommodity(dto.getCommodity());\n ... notification.setExitDate(dto.getExitDate());\n        notificationAggregate.setFulfilments(dto.getFulfilments());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-014",
+      "statement": "A save replaces the whole notification content rather than merging it: every field is set from the request, so a field the request leaves out is cleared on the stored notification.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:496-519",
+      "quote": "notification.setTransport(dto.getTransport());\n        notification.setConsignment(dto.getConsignment());",
+      "confidence": "inferred",
+      "note": "Inferred because each setter copies the request value unconditionally, null included; the PUT endpoint's own description calls it 'Replaces the notification content'."
+    },
+    {
+      "id": "repo-backend-p2-015",
+      "statement": "Updating a notification through POST /notifications with every field changed stores the new values and does not create a second notification.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java post_shouldUpdateAllFieldsOnExistingNotification",
+      "quote": "assertThat(updated.getReferenceNumber()).isEqualTo(referenceNumber);\n        assertNotificationMappedFields(updated, \"REF-updated\");\n\n        // Verify only one notification exists and reload via API\n        List<NotificationView> all = findAllNotifications();\n        assertThat(all).hasSize(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-016",
+      "statement": "When a save changes the means of transport to one that needs no transit and sends no transited countries, the stored transited countries are cleared.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java post_shouldClearTransitedCountries_whenUpdatedToMeansThatDoesNotRequireTransit",
+      "quote": "assertThat(updated.getNotification().getTransport().getMeansOfTransport()).isEqualTo(MeansOfTransport.VESSEL);\n        assertThat(updated.getNotification().getTransport().getTransitedCountries()).isNullOrEmpty();",
+      "confidence": "verbatim",
+      "note": "The clearing follows from the whole-content replace, with the request sending transitedCountries null; the backend does not itself derive it from the means of transport."
+    },
+    {
+      "id": "repo-backend-p2-017",
+      "statement": "Updating through POST /notifications with a reference number that does not exist answers 404 with the detail 'Cannot find notification with reference number: <ref>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:41,478-480",
+      "quote": "private static final String CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER = \"Cannot find notification with reference number: \";",
+      "confidence": "verbatim",
+      "note": "NotFoundException maps to 404 'Resource Not Found' in GlobalExceptionHandler. The same message and status are used by PUT, copy, submit, amend and cancel-amend."
+    },
+    {
+      "id": "repo-backend-p2-018",
+      "statement": "Updating through POST /notifications is refused with 400 unless the notification is DRAFT or AMEND, with the detail 'Cannot save notification with status: <status>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:481-485",
+      "quote": "throw new BadRequestException(\n                \"Cannot save notification with status: \" + existing.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-019",
+      "statement": "Updating through POST /notifications without a concurrency token is refused with 400 and the detail 'concurrencyToken is required to update a notification'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:486-488",
+      "quote": "throw new BadRequestException(\"concurrencyToken is required to update a notification\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-020",
+      "statement": "An update through POST /notifications keeps the notification's current status and writes a NotificationEdited outbox event.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:492-493",
+      "quote": "return writeWithOutbox(existing, referenceNumber, correlationId, existing.getStatus(),\n            OutboxEventType.NOTIFICATION_EDITED, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-021",
+      "statement": "PUT /notifications/{referenceNumber} replaces the content of the notification at that reference: the notification fields and the opaque fulfilments payload.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:61-78",
+      "quote": "Replaces the notification content (notification-shape fields + opaque fulfilments payload) at the given reference. Requires DRAFT or AMEND status. Emits a NotificationEdited outbox event on every save.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-022",
+      "statement": "PUT takes the notification to change from the path; any reference number in the body is not checked against it.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:101-117",
+      "quote": "NotificationAggregate notificationAggregate = notificationRepository.findByReferenceNumber(referenceNumber)",
+      "confidence": "inferred",
+      "note": "Inferred because replace() looks up by the path reference and never reads dto.getReferenceNumber()."
+    },
+    {
+      "id": "repo-backend-p2-023",
+      "statement": "The six write endpoints that take a reference in the path refuse one that does not match the GBN-AG reference pattern, as a validation error.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:70,89,113,132,150",
+      "quote": "@Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber",
+      "confidence": "verbatim",
+      "note": "The controller is @Validated, so the ConstraintViolationException handler answers 400 'Validation Error'. POST /notifications has no path reference and does not check the body's reference format here."
+    },
+    {
+      "id": "repo-backend-p2-024",
+      "statement": "PUT answers 404 when no notification has the path reference.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:103-105; NotificationController.java:67",
+      "quote": "@ApiResponse(responseCode = \"404\", description = \"Notification not found\", content = @Content)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-025",
+      "statement": "PUT is refused with 400 unless the notification is DRAFT or AMEND, with the detail 'Cannot replace notification content with status: <status>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:106-110",
+      "quote": "throw new BadRequestException(\n                \"Cannot replace notification content with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-026",
+      "statement": "PUT without a concurrency token is refused with 400 and the detail 'concurrencyToken is required to replace a notification'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:111-113",
+      "quote": "throw new BadRequestException(\"concurrencyToken is required to replace a notification\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-027",
+      "statement": "PUT keeps the notification's current status, DRAFT or AMEND, and writes a NotificationEdited outbox event on every save.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:116-117",
+      "quote": "return writeWithOutbox(notificationAggregate, referenceNumber, correlationId,\n            notificationAggregate.getStatus(), OutboxEventType.NOTIFICATION_EDITED, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-028",
+      "statement": "Every notification carries a concurrency token, returned in each response, that the store uses as an optimistic-lock version: it advances on each write.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java:35-36; NotificationIT.java copy_shouldReturn409StaleConcurrencyToken_whenExpectedTokenDoesNotMatchSource",
+      "quote": "@Version\n    private Long concurrencyToken;",
+      "confidence": "verbatim",
+      "note": "The IT comments say a notification starts at version 0 after POST and a PUT advances it to 1."
+    },
+    {
+      "id": "repo-backend-p2-029",
+      "statement": "A save (POST update or PUT) is checked against the concurrency token the caller sends, not the stored one: the caller's token is set on the notification before it is written, so a token older than the stored one fails the write.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:114,489",
+      "quote": "notificationAggregate.setConcurrencyToken(dto.getConcurrencyToken());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-030",
+      "statement": "A save sent with a stale concurrency token answers 409 with the code STALE_CONCURRENCY_TOKEN and the title 'Stale Concurrency Token'.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java put_shouldReturn409StaleConcurrencyToken_whenTokenIsStale; GlobalExceptionHandler.java:258-276",
+      "quote": ".jsonPath(\"$.status\").isEqualTo(409)\n            .jsonPath(\"$.code\").isEqualTo(\"STALE_CONCURRENCY_TOKEN\")\n            .jsonPath(\"$.title\").isEqualTo(\"Stale Concurrency Token\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-031",
+      "statement": "A save refused for a stale concurrency token changes nothing: the stored notification keeps the earlier write.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java put_shouldReturn409StaleConcurrencyToken_whenTokenIsStale",
+      "quote": "// And the stored notification reflects the first PUT's write, not the stale one.\n        NotificationAggregate stored = notificationRepository.findByReferenceNumber(ref).orElseThrow();\n        assertThat(stored.getNotification().getOrigin().getInternalReference()).isEqualTo(\"FIRST\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-032",
+      "statement": "When two writers load the same notification and both save, the second save with the older version is rejected and the stored notification keeps the first writer's change.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/OptimisticLockingIT.java save_shouldThrowOptimisticLockingFailure_whenSavingWithStaleConcurrencyToken",
+      "quote": "// Assert — tab B still holds the pre-write concurrencyToken; its save must be rejected.\n        staleNotification.setStatus(NotificationStatus.AMEND);\n        assertThatThrownBy(() -> notificationRepository.save(staleNotification))\n            .isInstanceOf(OptimisticLockingFailureException.class);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-033",
+      "statement": "Submit, amend and cancel-amend take no concurrency token from the caller, so they act on whatever version is stored when the call arrives, not the version the user last saw.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:112-155; NotificationService.java:185-273",
+      "quote": "public ResponseEntity<NotificationAggregate> submit(\n        @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber,\n        @RequestHeader(value = HEADER_TRACE_ID, required = false, defaultValue = \"\") String traceId,\n        @RequestBody(required = false) ActorRequest actorRequest)",
+      "confidence": "inferred",
+      "note": "Inferred from the signatures: only save and copy carry a token. A concurrent write between load and save would still fail the optimistic lock."
+    },
+    {
+      "id": "repo-backend-p2-034",
+      "statement": "POST /notifications/{referenceNumber}/copy creates a new DRAFT notification from an existing one.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:80-96",
+      "quote": "@Operation(summary = \"Copy notification\", description = \"Creates a new DRAFT notification copied from an existing one\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-035",
+      "statement": "Copy requires a concurrencyToken query parameter: the version of the source the user is copying from.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:90",
+      "quote": "@RequestParam Long concurrencyToken,",
+      "confidence": "verbatim",
+      "note": "A missing parameter is refused by Spring as a bad request before the service runs; no message of the service's own."
+    },
+    {
+      "id": "repo-backend-p2-036",
+      "statement": "Copy takes an optional actor as its whole request body.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:92",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-037",
+      "statement": "Copy answers 404 with the source's reference in the detail when the source notification does not exist.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldReturn404_whenSourceNotificationDoesNotExist",
+      "quote": ".jsonPath(\"$.status\").isEqualTo(404)\n            .jsonPath(\"$.detail\").value(Matchers.containsString(NONEXISTENT_REF));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-038",
+      "statement": "Copy accepts a source in DRAFT, SUBMITTED or AMEND, and refuses any other status, such as DELETED, with 400 and the detail 'Cannot copy notification with status: <status>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:126-130",
+      "quote": "throw new BadRequestException(\"Cannot copy notification with status: \" + source.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-039",
+      "statement": "Copying a notification that someone else has deleted since the user saw it answers 400, because the status check runs before the version check.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldReturn400_whenSourceNotificationIsDeleted",
+      "quote": "// When — the user with the stale copy clicks copy. \n        // Then — the status guard fires with 400.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-040",
+      "statement": "Copy answers 409 STALE_CONCURRENCY_TOKEN when the source has changed since the version the user sent, so a user never copies content different from what they were looking at.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:137-141; NotificationIT.java copy_shouldReturn409StaleConcurrencyToken_whenExpectedTokenDoesNotMatchSource",
+      "quote": "// When — copy with the stake version 0 (eg in another browser)\n        // Then return CONFLICT to prevent non-WYSIWYG copies.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-041",
+      "statement": "Copy fails with a server error when the expected token or the source's own token is missing.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:131-136",
+      "quote": "throw new IllegalStateException(\n                \"Cannot check copy source concurrencyToken for \" + referenceNumber",
+      "confidence": "verbatim",
+      "note": "IllegalStateException reaches the RuntimeException catch-all, which answers 500."
+    },
+    {
+      "id": "repo-backend-p2-042",
+      "statement": "A copy gets a new reference number different from its source, in the GBN-AG format, and status DRAFT.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldCreateNewDraftFromSourceNotification",
+      "quote": "assertThat(copy.getReferenceNumber()).isNotEqualTo(sourceRef);\n        assertThat(copy.getReferenceNumber()).matches(REF_FORMAT_REGEX);\n        assertThat(copy.getStatus()).isEqualTo(NotificationStatus.DRAFT);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-043",
+      "statement": "A submitted notification can be copied into a new DRAFT.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldCreateNewDraftFromSubmittedNotification",
+      "quote": "// Then — copy is a new DRAFT with a different reference number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-044",
+      "statement": "Copying leaves the source notification unchanged.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldCreateNewDraftFromSourceNotification",
+      "quote": "// Original unchanged\n        NotificationAggregate original = notificationRepository.findByReferenceNumber(sourceRef).orElseThrow();\n        assertThat(original.getNotification().getOrigin().getInternalReference()).isEqualTo(\"INTERNAL-DO-NOT-COPY\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-045",
+      "statement": "Copy writes a NotificationCreated outbox event for the new notification and writes no event against the source.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldWriteNotificationCreatedEvent_forNewNotification",
+      "quote": "// Source aggregate has exactly one event (its own NOTIFICATION_CREATED, not a second one from the copy)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-046",
+      "statement": "The purpose of copy is a fresh incomplete draft: identification, commodity type and address details are kept, while logistics and per-animal counts are reset.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:7-12",
+      "quote": "Maps a source {@link NotificationAggregate} to a {@link NotificationDto} for the copy-as-new\n * feature: identification, commodity type, and address details are retained, while\n * logistical fields (transport, consignment contact) and per-animal counts are reset\n * so the copy starts as a fresh incomplete draft.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-047",
+      "statement": "Copy keeps the origin's country code, country subdivision code, whether a region code is required, and the region of origin code.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:60-71; NotificationCopyMapperTest.java toCopyDto_shouldRetainCountryOfOriginAndRequiresRegionCode, toCopyDto_shouldRetainRegionOfOriginCode, toCopyDto_shouldRetainCountrySubdivisionCode",
+      "quote": ".countryCode(source.getCountryCode())\n            .countrySubdivisionCode(source.getCountrySubdivisionCode())\n            .requiresRegionCode(source.getRequiresRegionCode())\n            .regionOfOriginCode(source.getRegionOfOriginCode())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-048",
+      "statement": "Copy clears the origin's internal reference, the per-consignment reference.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:69; NotificationCopyMapperTest.java toCopyDto_shouldOmitInternalReference; NotificationIT.java copy_shouldCreateNewDraftFromSourceNotification",
+      "quote": "// internalReference intentionally omitted — per-consignment reference is reset on copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-049",
+      "statement": "Copy keeps the commodity name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:77-80; NotificationCopyMapperTest.java toCopyDto_shouldRetainCommodityNameAndTypeOfCommodity",
+      "quote": "assertThat(result.getCommodity().getName()).isEqualTo(\"Live bovine animals\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-050",
+      "statement": "Copy keeps each commodity complement's type of commodity, one complement for each in the source.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:83-91",
+      "quote": ".map(cc -> CommodityComplement.builder().typeOfCommodity(cc.getTypeOfCommodity()).build())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-051",
+      "statement": "Copy clears every complement's total number of animals, total number of packages and species list.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:87; NotificationCopyMapperTest.java toCopyDto_shouldOmitPerAnimalDataFromAllComplements",
+      "quote": "// totalNoOfAnimals, totalNoOfPackages, species intentionally omitted — per-animal counts are reset on copy; only typeOfCommodity is retained",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-052",
+      "statement": "Because the species list is cleared, copy also drops every animal identifier (such as ear tags) the source recorded.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapperTest.java toCopyDto_shouldOmitAnimalIdentifiers_becauseSpeciesIsResetOnCopy",
+      "quote": "assertThat(result.getCommodity().getCommodityComplement().getFirst().getSpecies()).isNull();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-053",
+      "statement": "Copy keeps the reason for import.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:27; NotificationCopyMapperTest.java toCopyDto_shouldRetainReasonForImport",
+      "quote": ".reasonForImport(source.getReasonForImport())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-054",
+      "statement": "Copy keeps what the animals are certified for, and clears the unweaned animals answer.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:93-101; NotificationCopyMapperTest.java toCopyDto_shouldRetainCertifiedFor, toCopyDto_shouldOmitUnweanedAnimals",
+      "quote": ".certifiedFor(source.getCertifiedFor())\n            // unweanedAnimals intentionally omitted — animal-specific detail is reset on copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-055",
+      "statement": "Copy keeps the place of origin, consignor, consignee, importer and destination parties, each with its name, email, phone and address in full.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:29-33,48-58; NotificationIT.java copy_shouldRetainAllOperatorAddresses; NotificationCopyMapperTest.java toCopyDto_shouldCopyEveryFieldOfTheStoredPartyLiteral",
+      "quote": ".name(source.getName())\n            .email(source.getEmail())\n            .phone(source.getPhone())\n            .address(source.getAddress())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-056",
+      "statement": "A copied party is the stored address literal itself, not a lookup: the copy carries exactly the consignor details stored on the source.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldRetainTheConsignorLiteral",
+      "quote": "assertThat(copy.getNotification().getConsignor()).isEqualTo(literalConsignor());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-057",
+      "statement": "When a submitted notification is copied, the new draft and its NotificationCreated outbox event both carry the source's consignor details.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java copy_shouldCarryTheSourceConsignorLiteral_onCreatedOutbox_whenSourceIsSubmitted",
+      "quote": "// Then — stored draft and Created outbox both carry the source's literal party",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-058",
+      "statement": "Copy keeps the CPH number.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:34; NotificationCopyMapperTest.java toCopyDto_shouldRetainCphNumber",
+      "quote": ".cphNumber(source.getCphNumber())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-059",
+      "statement": "Copy keeps the purpose in the internal market, the destination country and the port of exit.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:35-40; NotificationCopyMapperTest.java toCopyDto_shouldRetainPurposeInInternalMarket, toCopyDto_shouldRetainDestinationCountry, toCopyDto_shouldRetainPortOfExit",
+      "quote": ".purposeInInternalMarket(source.getPurposeInInternalMarket())\n            .destinationCountry(source.getDestinationCountry())\n            // portOfExit retained — pairs with portOfEntry, which is a logistical field reset",
+      "confidence": "verbatim",
+      "note": "The code comment records that keeping port of exit while resetting port of entry was a deliberate choice, for consistency with the other reason-for-import-dependent fields."
+    },
+    {
+      "id": "repo-backend-p2-060",
+      "statement": "Copy clears the whole transport block: port of entry, arrival date, means of transport and transporter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:42; NotificationCopyMapperTest.java toCopyDto_shouldOmitTransport",
+      "quote": "// transport intentionally omitted — logistical fields (portOfEntry, arrivalDate, transporter) are reset on copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-061",
+      "statement": "Copy clears the consignment block, which holds the contact address.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:43; NotificationCopyMapperTest.java toCopyDto_shouldOmitConsignment",
+      "quote": "// consignment intentionally omitted — contact address is reset on copy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-062",
+      "statement": "Copy clears the exit date, like the arrival date, as a time-bound logistical value.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:44; NotificationCopyMapperTest.java toCopyDto_shouldOmitExitDate",
+      "quote": "// exitDate intentionally omitted — time-bound logistical value is reset on copy, like arrivalDate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-063",
+      "statement": "Copy keeps the source's whole fulfilments payload, unfiltered.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:41; NotificationCopyMapperTest.java toCopyDto_shouldRetainFulfilments",
+      "quote": ".fulfilments(notificationAggregate.getFulfilments() == null ? null : new ArrayList<>(notificationAggregate.getFulfilments()))",
+      "confidence": "verbatim",
+      "note": "For the reconciler: the notification fields are reset field by field, but the opaque fulfilments payload the frontend rehydrates from is copied whole, so any answers it holds for reset fields (transport, per-animal counts) are not reset by the backend. Whether the frontend resets them is outside this part."
+    },
+    {
+      "id": "repo-backend-p2-064",
+      "statement": "Copy handles a source with no origin, commodity, additional details or parties by leaving those empty on the copy, and a commodity with no complements becomes one with an empty complement list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapperTest.java NullSafety",
+      "quote": "assertThat(result.getCommodity().getCommodityComplement()).isNullOrEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-065",
+      "statement": "Copy fails when the source notification has no notification content at all.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java:23; NotificationCopyMapperTest.java toCopyDto_shouldThrow_whenAggregateHasNoNotification",
+      "quote": ".withMessageContaining(\"requires a notification sub-object\");",
+      "confidence": "verbatim",
+      "note": "A NullPointerException reaches the catch-all and answers 500."
+    },
+    {
+      "id": "repo-backend-p2-066",
+      "statement": "Copying a notification that is mid-amendment copies its current, edited content, not the content that was submitted.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:143; NotificationCopyMapper.java:23",
+      "quote": "Notification source = notificationAggregate.requireNotification();",
+      "confidence": "inferred",
+      "note": "Inferred because the mapper reads the live notification, never preAmendNotification, and AMEND is an accepted copy source."
+    },
+    {
+      "id": "repo-backend-p2-067",
+      "statement": "POST /notifications/{referenceNumber}/submit moves a notification to SUBMITTED, from DRAFT or from AMEND.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:98-100; NotificationIT.java submit_shouldTransitionStatusFromDraftToSubmitted",
+      "quote": "description = \"Transitions notification status to SUBMITTED. Accepts DRAFT or AMEND as the source state.\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-068",
+      "statement": "Submit takes an optional actor as its whole request body and nothing else.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:112-118",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-069",
+      "statement": "Submit answers 404 with the reference in the detail when the notification does not exist, and writes no outbox event.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldReturn404_whenReferenceNumberDoesNotExist, submit_shouldNotWriteOutboxEvent_whenNotificationDoesNotExist",
+      "quote": "// Then — no outbox events written\n        assertThat(outboxEventRepository.findAll()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-070",
+      "statement": "Submit is refused with 400 unless the notification is DRAFT or AMEND, with the detail 'Cannot submit notification with status: <status>', so a SUBMITTED or DELETED notification cannot be submitted again.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:190-194",
+      "quote": "throw new BadRequestException(\n                \"Cannot submit notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-071",
+      "statement": "Submit checks only the notification's status; it does not check the notification is complete or valid before accepting it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:184-208",
+      "quote": "if (notificationAggregate.getStatus() != NotificationStatus.DRAFT\n            && notificationAggregate.getStatus() != NotificationStatus.AMEND) {",
+      "confidence": "gap",
+      "note": "Looked in submitNotification and writeWithOutbox: no completeness or field validation runs on submit. The ITs submit notifications holding only a country and commodity name and get 200. Whether completeness is enforced only by the frontend is for the reconciler."
+    },
+    {
+      "id": "repo-backend-p2-072",
+      "statement": "A first submission, from DRAFT, writes a NotificationSubmitted outbox event; a re-submission, from AMEND, writes a NotificationSubmissionAmended event instead.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:196-199; NotificationIT.java submitFromAmend_shouldClearPreAmendSnapshot_andKeepEditedContent",
+      "quote": "// AMEND -> SUBMITTED is a re-submission; DRAFT -> SUBMITTED is the first submission.\n        OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.AMEND\n            ? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED\n            : OutboxEventType.NOTIFICATION_SUBMITTED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-073",
+      "statement": "Every submission, first or re-submission, records a new submitted-at time of now; no other action sets it.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:291-295; OutboxEventType.java:43-45",
+      "quote": "// Only actual submissions mint a new submittedAt; cancel-amend restores to SUBMITTED\n                // but must preserve the timestamp from the original submission.\n                if (OutboxEventType.SUBMISSION_EVENTS.contains(eventType)) {\n                    notification.setSubmittedAt(Instant.now());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-074",
+      "statement": "Every write through these endpoints sets the notification's updated time to now.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:290; NotificationIT.java submit_shouldTransitionStatusFromDraftToSubmitted, amend_shouldTransitionStatusFromSubmittedToAmend",
+      "quote": "notification.setUpdated(Instant.now());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-075",
+      "statement": "Submit stores the notification as it stands and its outbox event carries the GBN-AG payload with the notification's reference as its identifier and correlation id from the trace header.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "assertThat(event.getMetadata().getCorrelationId()).isEqualTo(\"trace-outbox-001\");\n        assertThat(event.getMetadata().getSchemaVersion()).isEqualTo(\"1\");\n        assertThat(event.getMetadata().getSchemaUrl()).isEqualTo(OutboxEventType.NOTIFICATION_SUBMITTED.schemaUrl());\n        assertThat(gbnAgIdentifier(event)).isEqualTo(referenceNumber);",
+      "confidence": "verbatim",
+      "note": "The envelope's other fields (aggregate type Notification, subtype GBN-AG, statusChanges) and the payload mapping are parts 5 and 6."
+    },
+    {
+      "id": "repo-backend-p2-076",
+      "statement": "On submit, the published payload references only the accompanying documents whose virus scan completed; pending and rejected documents are left out.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldReferenceOnlyTheDocumentsThatPassedTheVirusScan",
+      "quote": "assertThat(gbnAgReferenceDocuments(event)).containsExactly(Map.of(\n            \"typeCode\", \"GBN1\",",
+      "confidence": "verbatim",
+      "note": "Submit does not refuse a notification with documents still being scanned or rejected; it just leaves them out. Document mapping detail is part 6's."
+    },
+    {
+      "id": "repo-backend-p2-077",
+      "statement": "When a notification has no accompanying documents, its submit payload omits the reference-document key rather than sending an empty list.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "// No accompanying documents: the key is omitted rather than sent as an empty array\n        assertThat(gbnAgReferenceDocuments(event)).isNull();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-078",
+      "statement": "Submit publishes the consignor exactly as stored on the notification, with its name, address, email and phone, and leaves the stored consignor unchanged.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldCarryTheStoredPartyLiteral_onTheOutboxEvent",
+      "quote": "// Then — GBNAG carries exactly the stored details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-079",
+      "statement": "A draft saved before parties became address literals, still holding an address-book id on a party, submits successfully: the id is ignored, and the submit's re-save drops it from the stored record.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldIgnoreALegacyAddressIdOnAStoredParty",
+      "quote": "// And — the submit re-save sheds the legacy field from the stored document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-080",
+      "statement": "When submit is sent an actor, the actor (id, source, user type, display name, organisation id) is stamped on the submitted outbox event and on its SUBMITTED status change; without one the actor is empty.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldWriteActorAndStatusChanges_whenActorBodyProvided, submit_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "// Then — actor is stamped on the SUBMITTED event and statusChanges carries it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-081",
+      "statement": "Each submission of the same notification carries a version id one higher than the last: 1 on the first submission, 2 on the next.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldSetVersionIdToOne_onFirstSubmission, submit_shouldIncrementVersionId_onResubmission",
+      "quote": "assertThat(gbnAgVersionId(submitEvents.get(0))).isEqualTo(1);\n        assertThat(gbnAgVersionId(submitEvents.get(1))).isEqualTo(2);",
+      "confidence": "verbatim",
+      "note": "The re-submission test forces the stored status back to DRAFT rather than going through amend."
+    },
+    {
+      "id": "repo-backend-p2-082",
+      "statement": "Each event written for a notification takes the next aggregate version, starting at 1 for its creation.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submit_shouldIncrementAggregateVersion_onSubsequentSubmissions",
+      "quote": "// Then — CREATED(v1) + SUBMITTED(v2) + SUBMITTED(v3) with incrementing versions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-083",
+      "statement": "Re-submitting from AMEND keeps the content edited during the amendment and clears the stored pre-amend snapshot.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:284-288; NotificationIT.java submitFromAmend_shouldClearPreAmendSnapshot_andKeepEditedContent",
+      "quote": "// Then — edited content kept, pre-amend snapshot cleared",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-084",
+      "statement": "Submit, amend and cancel-amend list a 401 response in the API description, but nothing in these endpoints checks who is calling: the integration tests call them without credentials and get 200.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:108,127,146; NotificationIT.java (webClient(\"NoAuth\") throughout)",
+      "quote": "@ApiResponse(responseCode = \"401\", description = \"Unauthorised\", content = @Content)",
+      "confidence": "inferred",
+      "note": "Inferred from the controller (no auth parameter) and the ITs. Whether a filter guards these paths is AdminSecretFilter's, which part 3 reads."
+    },
+    {
+      "id": "repo-backend-p2-085",
+      "statement": "The write endpoints do not tie a notification to the calling user or organisation: any caller holding a reference number can change that notification.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:103,123,186,212,244,478",
+      "quote": "notificationRepository.findByReferenceNumber(referenceNumber)",
+      "confidence": "inferred",
+      "note": "Security observation, stated in general terms only. Each write loads by reference alone; the actor is caller-supplied and used only for the event record."
+    },
+    {
+      "id": "repo-backend-p2-086",
+      "statement": "The submit settings in application.yml hold one value, lock-at-least-for of 50ms: how long a notification's write lock is held at minimum, and how long a write waits before trying for the lock again.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:143-144; NotificationService.java:69,311,320",
+      "quote": "submit:\n    lock-at-least-for: 50ms",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-087",
+      "statement": "Every write on a notification (create, save, copy's new draft, submit, amend, cancel-amend) runs under a lock for that notification, held for at most 10 seconds, so writes to one notification happen one at a time.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:42,282-283,302-307",
+      "quote": "String lockName = \"outbox-write:\" + aggregateId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-088",
+      "statement": "A write that cannot get the notification's lock tries again twice, waiting between tries, and then fails with a 500 'Could not acquire outbox lock for <operation>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:44,308-337; GlobalExceptionHandler.java:312-330",
+      "quote": "throw new OutboxWriteException(\n            \"Could not acquire outbox lock for \" + operationLabel,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-089",
+      "statement": "For PUT, copy, submit, amend and cancel-amend, saving the notification and writing its outbox event happen in one transaction: both land or neither does.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:100,120,184,210,242,296-297",
+      "quote": "NotificationAggregate saved = notificationRepository.save(notification);\n                outboxService.appendEvent(saved, eventType, correlationId, actor);",
+      "confidence": "inferred",
+      "note": "Inferred from @Transactional on replace, copy, submit, amend and cancel-amend. saveNotification itself (POST create and update) carries no @Transactional annotation in this file, so whether POST runs in a transaction depends on configuration outside this part."
+    },
+    {
+      "id": "repo-backend-p2-090",
+      "statement": "POST /notifications/{referenceNumber}/amend moves a SUBMITTED notification to AMEND.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:121-123; NotificationIT.java amend_shouldTransitionStatusFromSubmittedToAmend",
+      "quote": "description = \"Transitions notification status from SUBMITTED to AMEND. Emits an outbox event.\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-091",
+      "statement": "Amend takes an optional actor as its whole request body.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:134",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-092",
+      "statement": "Amend answers 404 with the reference in the detail when the notification does not exist.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java amend_shouldReturn404_whenReferenceNumberDoesNotExist",
+      "quote": ".jsonPath(\"$.status\").isEqualTo(404)\n            .jsonPath(\"$.detail\").value(Matchers.containsString(NONEXISTENT_REF));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-093",
+      "statement": "Amend is refused with 400 unless the notification is SUBMITTED, with the detail 'Cannot amend notification with status: <status>'; a draft cannot be amended.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:216-219; NotificationIT.java amend_shouldReturn400_whenNotificationNotSubmitted",
+      "quote": "throw new BadRequestException(\n                \"Cannot amend notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-094",
+      "statement": "Amend stores a snapshot of the notification content as it was submitted, kept separate from the content the user goes on to edit.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:221-225; NotificationIT.java amend_shouldPersistPreAmendSnapshotInMongo",
+      "quote": "// The content baseline is captured here alongside fulfilments: a deep-clone of the\n        // notification as it stood when the trader opened the amendment, so cancel-amend can\n        // restore what was really submitted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-095",
+      "statement": "Amend also stores a snapshot of the fulfilments payload as it was submitted.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:226-231",
+      "quote": "notificationAggregate.setPreAmendFulfilments(deepCopyFulfilments(currentFulfilments));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-096",
+      "statement": "Amend fails with a server error when the submitted notification has no fulfilments payload.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:227-230; NotificationIT.java submitThenAmend_shouldAccumulateStatusChanges",
+      "quote": "throw new IllegalStateException(\n                \"Cannot amend notification: fulfilments payload is missing\");",
+      "confidence": "verbatim",
+      "note": "IllegalStateException answers 500. The IT notes 'amend requires fulfilments on the stored notification'."
+    },
+    {
+      "id": "repo-backend-p2-097",
+      "statement": "Amend writes a NotificationAmendmentRequested outbox event, with the trace header as its correlation id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:233-239; NotificationIT.java amend_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "assertThat(amendEvent.getEventType())\n            .isEqualTo(\"uk.gov.defra.imports.notification.NotificationAmendmentRequested\");\n        assertThat(amendEvent.getAggregateVersion()).isEqualTo(3L);\n        assertThat(amendEvent.getMetadata().getCorrelationId()).isEqualTo(\"trace-amend-001\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-098",
+      "statement": "Amend keeps the original submitted-at time.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:293-295",
+      "quote": "if (OutboxEventType.SUBMISSION_EVENTS.contains(eventType)) {\n                    notification.setSubmittedAt(Instant.now());",
+      "confidence": "inferred",
+      "note": "Inferred because NOTIFICATION_AMENDMENT_REQUESTED is not in SUBMISSION_EVENTS."
+    },
+    {
+      "id": "repo-backend-p2-099",
+      "statement": "Each status change event carries the history of status changes so far, each with who made it: after create, submit by one user and amend by another, the amend event lists DRAFT, SUBMITTED by the first user and AMEND by the second.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java submitThenAmend_shouldAccumulateStatusChanges",
+      "quote": "// statusChanges: DRAFT (NOTIFICATION_CREATED) + SUBMITTED (Alice) + AMEND (Bob)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-100",
+      "statement": "POST /notifications/{referenceNumber}/cancel-amend puts back the submitted notification content and moves the notification from AMEND to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:140-142",
+      "quote": "description = \"Restores the submitted notification content and transitions status from AMEND to SUBMITTED.\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-101",
+      "statement": "Cancel-amend takes an optional actor as its whole request body.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:152",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-102",
+      "statement": "Cancel-amend answers 404 with the reference in the detail when the notification does not exist.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java cancelAmend_shouldReturn404_whenReferenceNumberDoesNotExist",
+      "quote": ".jsonPath(\"$.status\").isEqualTo(404)\n            .jsonPath(\"$.detail\").value(Matchers.containsString(NONEXISTENT_REF));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-103",
+      "statement": "Cancel-amend is refused with 400 unless the notification is AMEND, with the detail 'Cannot cancel amendment for notification with status: <status>'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:248-251; NotificationIT.java cancelAmend_shouldReturn400_whenNotificationNotInAmendStatus",
+      "quote": "throw new BadRequestException(\n                \"Cannot cancel amendment for notification with status: \" + notificationAggregate.getStatus());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-104",
+      "statement": "Cancel-amend is refused with 400 when no pre-amend snapshot is stored, with the detail 'Cannot cancel amendment: no pre-amend snapshot stored for notification'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:252-255",
+      "quote": "throw new BadRequestException(\n                \"Cannot cancel amendment: no pre-amend snapshot stored for notification\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-105",
+      "statement": "Cancel-amend discards every edit made during the amendment: the content and fulfilments go back to the snapshot taken when the amendment started.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:257-261; NotificationIT.java cancelAmend_shouldRestoreBaselineAndRevertStatusInMongo",
+      "quote": "// Then — status reverted, pre-amend snapshot cleared, amendable fields restored",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-106",
+      "statement": "After cancel-amend the stored snapshots are cleared.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:262-263",
+      "quote": "notificationAggregate.setPreAmendFulfilments(null);\n        notificationAggregate.setPreAmendNotification(null);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-107",
+      "statement": "Cancel-amend keeps the original submitted-at time rather than recording a new one.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:264-265",
+      "quote": "// submittedAt is deliberately NOT reset — reverting to the previously-submitted state\n        // preserves the original submission timestamp.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-108",
+      "statement": "Cancel-amend writes one NotificationAmendmentCancelled outbox event.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:266-272; NotificationIT.java cancelAmend_shouldWriteAmendmentCancelledOutboxEvent",
+      "quote": "assertThat(cancelEvent.getEventType())\n            .isEqualTo(\"uk.gov.defra.imports.notification.NotificationAmendmentCancelled\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-109",
+      "statement": "The snapshot amend takes is a full independent copy: a commodity with no complements is stored with an empty list, and later edits to the live content do not change the snapshot.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapper.java:10-35; NotificationContentMapperTest.java deepClone_shouldNormaliseNullCommodityComplementToEmptyList, deepClone_shouldProduceIndependentObjectGraph_soMutatingCloneDoesNotAffectSource",
+      "quote": "// Normalise commodityComplement null to empty list so snapshots never hold null collections.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-110",
+      "statement": "The amend snapshot keeps every content field, including the origin's internal reference, region of origin, additional details and CPH number.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapperTest.java deepClone_shouldRoundTripContentFields; NotificationIT.java amend_shouldPersistPreAmendSnapshotInMongo",
+      "quote": "assertThat(reloaded.getPreAmendNotification().getOrigin().getInternalReference())\n            .isEqualTo(\"INTERNAL-DO-NOT-COPY\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-111",
+      "statement": "The lifecycle these endpoints allow: create gives DRAFT; save keeps DRAFT or AMEND; submit takes DRAFT or AMEND to SUBMITTED; amend takes SUBMITTED to AMEND; cancel-amend takes AMEND back to SUBMITTED; copy reads DRAFT, SUBMITTED or AMEND and makes a new DRAFT. Nothing moves a SUBMITTED notification back to DRAFT.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:106,126,190,216,248,481",
+      "quote": "if (notificationAggregate.getStatus() != NotificationStatus.SUBMITTED) {",
+      "confidence": "inferred",
+      "note": "Inferred by putting the six status guards together. Soft-delete to DELETED is part 3's."
+    },
+    {
+      "id": "repo-backend-p2-112",
+      "statement": "An actor sent to a write endpoint has six optional fields: id, source, user type, display name, organisation id and on-behalf-of organisation id.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ActorRequest.java:13-18",
+      "quote": "String id;\n    String source;\n    String userType;\n    String displayName;\n    String organisationId;\n    String onBehalfOfOrganisationId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-113",
+      "statement": "When no actor is sent, the write goes ahead and its outbox event records no actor.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:249-251; NotificationIT.java submit_shouldWriteOutboxEventWithCorrectEnvelope",
+      "quote": "return actorRequest != null ? actorRequest.toActor() : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-114",
+      "statement": "None of the six write endpoints writes an audit record: the audit log records only two actions, deleting notifications and replaying events.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/audit/Action.java:3-7; NotificationService.java:521-534",
+      "quote": "DELETE_NOTIFICATIONS,\n    REPLAY_EVENTS",
+      "confidence": "gap",
+      "note": "Looked in NotificationService and the audit package: createNotificationAuditRecord is called only from the hard delete. The six writes leave a trail only through outbox events. The scope asked for audit records per action; there are none for these."
+    },
+    {
+      "id": "repo-backend-p2-115",
+      "statement": "An audit record, where one is written, holds the action, a SUCCESS or FAILURE result, a timestamp, the number of notifications or events, the reference numbers, the trace id and the user id, in an audit collection.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/audit/Audit.java:12-36; Result.java:3-6",
+      "quote": "private Action action;\n    \n    private Result result;\n    \n    private Instant timestamp;",
+      "confidence": "verbatim",
+      "note": "Who writes these (hard delete, replay) is part 3's and part 5's."
+    },
+    {
+      "id": "repo-backend-p2-116",
+      "statement": "Where an audit record is written, the request must carry both a trace id and a user id.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/AuditContext.java:13-17",
+      "quote": "Objects.requireNonNull(traceId, \"traceId\");\n    Objects.requireNonNull(userId, \"userId\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p2-117",
+      "statement": "The six write endpoints take no User-Id header, so the backend cannot attribute a create, save, copy, submit, amend or cancel-amend to a user except through the caller-supplied actor.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:48-156",
+      "quote": "public static final String HEADER_USER_ID = \"User-Id\";",
+      "confidence": "inferred",
+      "note": "Inferred because HEADER_USER_ID is read only by replay and hard delete."
+    }
+  ]
+}

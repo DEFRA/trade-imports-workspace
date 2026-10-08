@@ -1,0 +1,147 @@
+{
+  "programme": "design-release-2-1",
+  "goal": "Bring the real GB notification services (the live-animals journey, its dashboard, templates and address book) up to Design Release 2.1 of the GB notification service prototype, so that wherever a real service differs from Design Release 2.1 it changes to match it, except where a DR1 judgement on that same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it.",
+  "repos": {
+    "frontend": "repos/trade-imports-animals-frontend",
+    "backend": "repos/trade-imports-animals-backend",
+    "insfrontend": "repos/trade-imports-ins-frontend",
+    "insbackend": "repos/trade-imports-ins-backend",
+    "addressbook": "repos/trade-imports-address-book",
+    "referencedata": "repos/trade-imports-reference-data",
+    "tests": "repos/trade-imports-ins-tests"
+  },
+  "reposWhy": "Design Release 2.1 covers the live-animals notification journey (animals frontend and backend), the notifications dashboard and address book (owned by the INS front door, its read model in ins-backend, and the address-book system of record), and the reference lists the journey reads (reference-data); the tests repo holds every service's end-to-end suite.",
+  "themes": "Group increments into themes drawn from the evidence, with boundaries set by the code each theme touches (repo and folder), so each theme can be built in parallel on a separate machine without pull requests that conflict with another theme's.",
+  "precedence": [
+    "ruling:sam-2026-10-07",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:tests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "sources": [
+    {
+      "id": "ruling:sam-2026-10-07",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-07.md",
+      "scope": "whole file",
+      "role": "the owner's decisions: outranks every other source. It sets how the rest are weighed: the prototype wins by default over what the real services do today; only a DR1 judgement on the same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it."
+    },
+    {
+      "id": "document:dr1-parity-notes",
+      "kind": "document",
+      "locator": "workareas/shared/design-release-2-1/sources/dr1-parity-union/PROGRAMME-NOTES.md",
+      "scope": "whole file: the standing rulings, the groups blocked by ruling and why, and any other judgement it records (copied from commit 6688fd8e on origin/feat/parity-report-triage-view)",
+      "role": "DR1 judgements only. Never a source of requirements on its own. Used only where the real frontend and the prototype clash: where DR1 already judged that same difference, the judgement wins and its row is cited."
+    },
+    {
+      "id": "document:dr1-parity-backlog",
+      "kind": "document",
+      "locator": "workareas/shared/design-release-2-1/sources/dr1-parity-union/backlog.json",
+      "scope": "every row's judgement on a difference between the real frontend and the prototype: rows whose status is rejected, dropped, blocked or deferred, with the reason; and every RULING or decision recorded in any row's notes, openQuestions or decision field, whatever its status. A done row is a judgement only where its notes record a choice that departs from the prototype. Cite each by row id (inc-NNN). Copied from commit 6688fd8e on origin/feat/parity-report-triage-view.",
+      "role": "DR1 judgements only. Never a source of requirements on its own. Used only where the real frontend and the prototype clash: where DR1 already judged that same difference, the judgement wins and its row is cited."
+    },
+    {
+      "id": "prototype:dr2-1-source",
+      "kind": "repo",
+      "locator": "~/git/defra/defra-design/GB-notification-service",
+      "scope": "Design Release 2.1 only, at commit 04a073b (read with git show 04a073b:<path> if the checkout has moved): app/lib/version-mount.js and app/lib/design-release-2.1-version.js (how /design-release-2.1 mirrors the root routes and overrides views), every view in app/views/design-release-2.1/, the root views and partials those pages fall back to where DR2.1 has no override, the handlers and validation in app/routes.js reached under /design-release-2.1, and app/data/ lists those pages read. Leave out app/views/intro/, /design-release-2/ and /testing/.",
+      "role": "the target design: what every page, field, option, hint, error message, branch and journey step should be. Wins by default."
+    },
+    {
+      "id": "trace:prototype-dr2-1",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-prototype",
+      "scope": "every trace in the folder (index.json lists them): the Design Release 2.1 journeys as rendered",
+      "role": "the target design as rendered: verbatim copy, components, conditional reveals and error states."
+    },
+    {
+      "id": "prototype:dr2-1-specs",
+      "kind": "repo",
+      "locator": "workareas/shared/design-release-2-1/prototype-specs",
+      "scope": "the fit-style Playwright specs that drove the Design Release 2.1 traces, and COVERAGE.md: the routes, branches and error states they assert, including any the traces did not reach",
+      "role": "what the Design Release 2.1 journeys are proven to do: the driving suite of trace:prototype-dr2-1."
+    },
+    {
+      "id": "repo:backend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-animals-backend",
+      "scope": "the notification record: fields stored and their validation, lifecycle (draft, submit, amend, copy, delete, templates if any), the API the animals frontend calls, and what it publishes to other services",
+      "role": "what exists today and what has already been ruled; the real persistence, validation and cross-service constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:insbackend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-backend",
+      "scope": "the notification read model behind the dashboard: fields, statuses, filters, sort and search it serves",
+      "role": "what exists today and what has already been ruled; the real persistence and cross-service constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:addressbook",
+      "kind": "repo",
+      "locator": "repos/trade-imports-address-book",
+      "scope": "the address record: fields, types or usages, validation, organisation scoping and the API",
+      "role": "what exists today and what has already been ruled; the real persistence, validation and authorisation constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:referencedata",
+      "kind": "repo",
+      "locator": "repos/trade-imports-reference-data",
+      "scope": "the reference lists the live-animals journey reads: countries, ports, commodities and species, commodity identifiers, transporters, document types, certification purposes",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:frontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-animals-frontend",
+      "scope": "src/server/app/sets/live-animals (journey pages, flow, obligations, copy), src/server/app/shared (layout and shared copy), the dashboard, notification actions, delete, cancel-amend and address features, and the fit specs (*.fit.spec.js); any decisions or rulings ledger it keeps",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:insfrontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-frontend",
+      "scope": "src/server/app/features (dashboard and address book), shared layout and copy, the journey handshake to the animals frontend, and its fit specs",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:tests",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-tests",
+      "scope": "tests/animals and tests/ins: the specs, page objects and test data for the live-animals journey, the dashboard and the address book",
+      "role": "what is already proven end to end"
+    },
+    {
+      "id": "trace:animals-fit",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-animals-fit",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder; 455 tests, all passed at animals frontend 4c2119da): the animals frontend's fit journeys and features",
+      "role": "how the real animals frontend renders today"
+    },
+    {
+      "id": "trace:ins-fit",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-ins-fit",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder; 50 tests, all passed at INS frontend 406e300): the INS frontend's fit specs",
+      "role": "how the real INS frontend renders today"
+    },
+    {
+      "id": "trace:e2e",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-e2e",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder and project): the tests repo's animals and ins projects against the workspace stack built from latest main",
+      "role": "how the real services behave end to end today"
+    }
+  ]
+}

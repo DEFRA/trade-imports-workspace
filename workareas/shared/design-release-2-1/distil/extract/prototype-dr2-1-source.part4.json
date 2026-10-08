@@ -1,0 +1,736 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 4, Reason for import, read at commit 04a073b in full: the DR2.1 override view app/views/design-release-2.1/reason-for-import.html (78 lines); the four root partials routes.js renders into the radio conditionals (partials/internal-market-purpose-select.html, transhipment-destination-country-select.html, transit-options-select.html, temporary-admission-horses-select.html); the data lists app/data/import-reasons.js (5 reasons), internal-market-purposes.js (11 purposes), exit-border-control-posts.js (10 posts) and certification-purposes.js (16 options); and app/routes.js lines 1616-1756 (germinal filtering of reasons and purposes, completeness rule hasImportReasonComplete, validateImportReasonProceed, a no-op redirectIfNoImportReason), 10371-10411 (purpose radio items, destination country select items), 10525-10585 (exit border control post select items, buildImportReasonItems wiring each conditional), 10757-10870 (renderReasonForImportPage, which renders the four partials then the page; the rest of the range is document type constants for the documents part, not claimed here), 11523-11538 (GET /prototype/reason-for-import seeding and GET /reason-for-import) and 12286-12389 (POST /reason-for-import). To read the handlers correctly it also read, without claiming their own pages, the helpers they call: seedPrototypeSessionForReasonForImport, redirectIfNoOrigin, isFromHub/isFromReview/isFromTemplateReview, getJourneyBackLink, getJourneyFormAction, isJourneySoftSaveAction, getJourneySaveRedirect, getSectionContinueRedirect, isValidExitBorderControlPost, parseArrivalDisplayDate, hasGerminalProductsOnly, app/data/countries.js and the DR2.1 journey-form-actions partial, plus version-mount.js's JOURNEY_PATH_PREFIXES (which lists /reason-for-import and /prototype/reason-for-import). One page is covered: Main import reason, with its five reasons, the four conditional reveals (internal market purpose radios; transhipment destination country select; transit port of exit and destination country selects; temporary admission horses exit date picker and port of exit select), the germinal-products filtering, soft validation and its six error messages, the save, hub and review actions, where the page leads, and the completeness rule the hub uses. The certification-purposes list is not used by this page (it feeds the additional animal details page); it is claimed as data with that note.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p4-001",
+      "statement": "The reason for import page is served at /reason-for-import, which under Design Release 2.1 is mounted as /design-release-2.1/reason-for-import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11529; app/lib/version-mount.js:16",
+      "quote": "router.get('/reason-for-import', (req, res) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-002",
+      "statement": "The page's title (pageName) is \"Main import reason\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:3",
+      "quote": "{% set pageName = \"Main import reason\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-003",
+      "statement": "The page heading is \"Main import reason\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:42",
+      "quote": "<h1 class=\"app-reason-for-import-page__heading\">Main import reason</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-004",
+      "statement": "The page caption above the heading is \"About the consignment\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:41",
+      "quote": "<p class=\"app-reason-for-import-page__caption\">About the consignment</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-005",
+      "statement": "The page shows an Alpha phase banner reading \"This is a new service. Help us improve it and give your feedback by email.\", whose feedback link goes nowhere (href \"#\").",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:11-16",
+      "quote": "text: \"Alpha\"\n    },\n    html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-006",
+      "statement": "The page shows a Back link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:18-21",
+      "quote": "text: \"Back\",\n    href: backLink",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-007",
+      "statement": "In the linear journey the Back link goes to the What are you importing page (/what-are-you-importing, prefixed under /design-release-2.1).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10822; app/routes.js:488-498",
+      "quote": "backLink: getJourneyBackLink(req, '/what-are-you-importing'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-008",
+      "statement": "When the page is opened from the notification hub (from=hub), the Back link goes to the notification hub instead.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:493-495",
+      "quote": "if (isFromHub(req)) {\n    return '/notification-hub'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-009",
+      "statement": "When the page is opened from a template review, or the user is editing a template from its review, the Back link goes back to that template's review page (/templates/<template id>, or /templates if there is no id).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:457-461; app/routes.js:489-491",
+      "quote": "if (isFromTemplateReview(req) || isEditingTemplateFromReview(req.session.data)) {\n    return getTemplateReviewReturnPath(req.session.data)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-010",
+      "statement": "The page shows the notification status block (the shared notification-status partial) above the form.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:30",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "verbatim",
+      "note": "The partial's content is claimed by the shell part. The page passes notificationReference, falling back to a prototype reference."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-011",
+      "statement": "The page always has a notification reference: GET and POST make sure one exists, and the page falls back to the prototype's fixed reference if the session has none.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11530; app/routes.js:12287; app/routes.js:10825",
+      "quote": "notificationReference: sessionData.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-012",
+      "statement": "The page can be reached without completing earlier pages: the origin guard on GET and POST never redirects.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:436-438; app/routes.js:11532-11534",
+      "quote": "function redirectIfNoOrigin (req, res) {\n  return false\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-013",
+      "statement": "There is no guard that sends a user back to this page when no import reason has been given: the import-reason guard never redirects.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1753-1755",
+      "quote": "function redirectIfNoImportReason (req, res) {\n  return false\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-014",
+      "statement": "The page asks one question as radios, named importReason, whose legend \"What is the main reason for importing the animals?\" is visually hidden, so the page heading stands as the question.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:51-59",
+      "quote": "name: \"importReason\",\n            fieldset: {\n              legend: {\n                text: \"What is the main reason for importing the animals?\",\n                classes: \"govuk-visually-hidden\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-015",
+      "statement": "Each import reason radio shows its hint text beneath its label, and the reason already saved (or just submitted) is pre-selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10548-10556",
+      "quote": "hint: {\n        text: reason.hint\n      },\n      checked: selectedValue === reason.value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-016",
+      "statement": "For live animals the page offers five import reasons, in this order: Internal market; Transhipment or onward travel; Transit; Re-entry; Temporary admission horses.",
+      "kind": "data",
+      "ref": "app/data/import-reasons.js:3-33",
+      "quote": "value: 'Internal market' ... value: 'Transhipment or onward travel' ... value: 'Transit' ... value: 'Re-entry' ... value: 'Temporary admission horses'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-017",
+      "statement": "The Internal market reason's hint is \"For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).\"",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:7",
+      "quote": "hint: 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-018",
+      "statement": "The Transhipment or onward travel reason's hint is \"For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.\"",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:13",
+      "quote": "hint: 'For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-019",
+      "statement": "The Transit reason's hint is \"For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.\"",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:18",
+      "quote": "hint: 'For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-020",
+      "statement": "The Re-entry reason's hint is \"For animals authorised for re-entry, or rejected exports re-entering Great Britain.\"",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:24",
+      "quote": "hint: 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-021",
+      "statement": "The Temporary admission horses reason's hint is \"For horses authorised for temporary entry.\"",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:29",
+      "quote": "hint: 'For horses authorised for temporary entry.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-022",
+      "statement": "Each import reason's stored value is the same as its displayed label.",
+      "kind": "data",
+      "ref": "app/data/import-reasons.js:4-5",
+      "quote": "value: 'Internal market',\n    text: 'Internal market',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-023",
+      "statement": "Under Design Release 2.1, when every selected species is a germinal product, the page offers only the reasons marked for germinal products: Internal market and Transit.",
+      "kind": "rule",
+      "ref": "app/routes.js:1616-1626; app/data/import-reasons.js:8,19",
+      "quote": "return isDesignRelease21SessionData(sessionData) && hasGerminalProductsOnly(sessionData)\n...\n  return importReasons.filter((reason) => reason.forGerminalProducts)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-024",
+      "statement": "A notification counts as germinal products only when at least one species is selected and every selected species belongs to a germinal-product commodity; a mix of live animals and germinal products gets the full live-animal lists.",
+      "kind": "rule",
+      "ref": "app/routes.js:4448-4460",
+      "quote": "if (!speciesIds.length) {\n    return false\n  }\n\n  return speciesIds.every((speciesId) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-025",
+      "statement": "The question's legend and the reason hints still speak of animals when the notification is germinal products only; the page has no germinal-specific wording.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:56; app/data/import-reasons.js:7,18",
+      "quote": "text: \"What is the main reason for importing the animals?\",",
+      "confidence": "inferred",
+      "note": "Inferred because the view and data lists carry one set of copy and only the option list is filtered for germinal products."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-026",
+      "statement": "Choosing Internal market reveals a follow-up radio question, \"Purpose in the internal market\", named internalMarketPurpose, shown as a medium legend.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/internal-market-purpose-select.html:4-11; app/routes.js:10558-10562",
+      "quote": "name: \"internalMarketPurpose\",\n    fieldset: {\n      legend: {\n        text: \"Purpose in the internal market\",\n        classes: \"govuk-fieldset__legend--m\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-027",
+      "statement": "For live animals the internal market purpose offers eleven options, in this order: Transfer of ownership - Sale/gift; Transfer of ownership - Rescue; Breeding; Research; Racing, competition, show or training; Approved premises or body; Companion animal not for resale or rehoming; Production; Slaughter; Fattening; Restocking.",
+      "kind": "data",
+      "ref": "app/data/internal-market-purposes.js:3-61",
+      "quote": "value: 'Transfer of ownership - Sale/gift' ... value: 'Transfer of ownership - Rescue' ... value: 'Breeding' ... value: 'Research' ... value: 'Racing, competition, show or training' ... value: 'Approved premises or body' ... value: 'Companion animal not for resale or rehoming' ... value: 'Production' ... value: 'Slaughter' ... value: 'Fattening' ... value: 'Restocking'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-028",
+      "statement": "Each internal market purpose shows its hint beneath its label, its stored value is the same as its label, and the saved purpose is pre-selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10384-10395",
+      "quote": "value: purpose.value,\n      text: purpose.text,\n      hint: purpose.hint\n        ? {\n            text: purpose.hint\n          }\n        : null,\n      checked: selectedValue === purpose.value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-029",
+      "statement": "The hint for \"Transfer of ownership - Sale/gift\" is \"Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:7",
+      "quote": "hint: 'Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-030",
+      "statement": "The hint for \"Transfer of ownership - Rescue\" is \"Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:13",
+      "quote": "hint: 'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-031",
+      "statement": "The hint for Breeding is \"Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:18",
+      "quote": "hint: 'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-032",
+      "statement": "The hint for Research is \"Animals for use in scientific or medical research.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:24",
+      "quote": "hint: 'Animals for use in scientific or medical research.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-033",
+      "statement": "The hint for \"Racing, competition, show or training\" is \"Animals to participate in competitive or training events.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:30",
+      "quote": "hint: 'Animals to participate in competitive or training events.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-034",
+      "statement": "The hint for \"Approved premises or body\" is \"Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:35",
+      "quote": "hint: 'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-035",
+      "statement": "The hint for \"Companion animal not for resale or rehoming\" is \"Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:40",
+      "quote": "hint: 'Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals\\' movement or a group of five or more animals being accompanied by their owner.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-036",
+      "statement": "The hint for Production is \"Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:45",
+      "quote": "hint: 'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-037",
+      "statement": "The hint for Slaughter is \"Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:51",
+      "quote": "hint: 'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-038",
+      "statement": "The hint for Fattening is \"Animals to be fattened for meat production.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:56",
+      "quote": "hint: 'Animals to be fattened for meat production.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-039",
+      "statement": "The hint for Restocking is \"To replenish or enhance populations of species, for example, restocking of game or fish.\"",
+      "kind": "copy",
+      "ref": "app/data/internal-market-purposes.js:61",
+      "quote": "hint: 'To replenish or enhance populations of species, for example, restocking of game or fish.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-040",
+      "statement": "Under Design Release 2.1, when every selected species is a germinal product, the internal market purpose offers only four options: Transfer of ownership - Sale/gift; Breeding; Research; Production.",
+      "kind": "rule",
+      "ref": "app/routes.js:1628-1634; app/data/internal-market-purposes.js:8,19,25,46",
+      "quote": "return internalMarketPurposes.filter((purpose) => purpose.forGerminalProducts)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-041",
+      "statement": "Choosing Transhipment or onward travel reveals one follow-up select, \"Destination country\", named transhipmentDestinationCountry; it does not ask for a port of exit.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/transhipment-destination-country-select.html:4-12; app/routes.js:10564-10568",
+      "quote": "id: \"transhipment-destination-country\",\n    name: \"transhipmentDestinationCountry\",\n    label: {\n      text: \"Destination country\"\n    },",
+      "confidence": "verbatim",
+      "note": "The partition's scope line mentions an exit border control post next to transhipment; the code has none for transhipment, only for transit and temporary admission horses."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-042",
+      "statement": "Every destination country select starts with an empty \"Select one\" option, selected when nothing has been chosen, followed by the country list, with the saved country pre-selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10397-10410",
+      "quote": "value: '',\n      text: 'Select one',\n      selected: !selectedValue\n    },\n    ...countryOptions.map((country) => ({\n      value: country.value,\n      text: country.label,\n      selected: selectedValue === country.value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-043",
+      "statement": "The destination country list (for transhipment and transit) is the shared country-of-origin list: the 27 EU member states, EU outermost territories shown as \"<territory> (<parent country>)\" and the Crown Dependencies Guernsey, Jersey and Isle of Man shown with \"(United Kingdom)\", sorted alphabetically.",
+      "kind": "data",
+      "ref": "app/routes.js:8; app/data/countries.js",
+      "quote": "const countryOptions = require('./data/countries')",
+      "confidence": "verbatim",
+      "note": "The reason hints describe transhipment and transit as travel to a third country, but the destination list holds only EU states, EU territories and Crown Dependencies. Recorded, not reconciled."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-044",
+      "statement": "Choosing Transit reveals two follow-up selects in this order: \"Port of exit\" (transitExitBorderControlPost) and \"Destination country\" (transitDestinationCountry).",
+      "kind": "behaviour",
+      "ref": "app/views/partials/transit-options-select.html:4-22; app/routes.js:10570-10574",
+      "quote": "id: \"transit-exit-border-control-post\",\n    name: \"transitExitBorderControlPost\",\n    label: {\n      text: \"Port of exit\"\n    },\n...\n    id: \"transit-destination-country\",\n    name: \"transitDestinationCountry\",\n    label: {\n      text: \"Destination country\"\n    },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-045",
+      "statement": "Every port of exit select starts with an empty \"Select one\" option, selected when nothing has been chosen, followed by the exit border control posts, each stored and shown as the same text, with the saved post pre-selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10525-10538",
+      "quote": "value: '',\n      text: 'Select one',\n      selected: !selectedValue\n    },\n    ...exitBorderControlPosts.map((post) => ({\n      value: post,\n      text: post,\n      selected: selectedValue === post",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-046",
+      "statement": "The port of exit list holds ten exit border control posts, in this order: Edinburgh Airport (animals) - GBEDI4; Gatwick Airport (animals) - GBLGW4; Glasgow Airport (animals) - GBGLA002; Heathrow Airport - HARC (animals) - GBLHR4A; Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022; Heathrow Airport – Animal Aircare Ltd (animals) - GBLHR067; Holyhead POE - GBHLY; Manchester Airport (animals) - GBMNC4; Prestwick Airport (animals) - GBPIK4; Stansted Airport (animals) - GBSTN4A.",
+      "kind": "data",
+      "ref": "app/data/exit-border-control-posts.js:3-14",
+      "quote": "'Edinburgh Airport (animals) - GBEDI4',\n  'Gatwick Airport (animals) - GBLGW4',\n  'Glasgow Airport (animals) - GBGLA002',\n  'Heathrow Airport - HARC (animals) - GBLHR4A',\n  'Heathrow Airport – Airpets Limited (animals) – GBLHR022 - GBLHR022',\n  'Heathrow Airport – Animal Aircare Ltd (animals) - GBLHR067',\n  'Holyhead POE - GBHLY',\n  'Manchester Airport (animals) - GBMNC4',\n  'Prestwick Airport (animals) - GBPIK4',\n  'Stansted Airport (animals) - GBSTN4A'",
+      "confidence": "verbatim",
+      "note": "One entry repeats its code (GBLHR022 - GBLHR022) and mixes en dashes with hyphens; recorded as the source has it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-047",
+      "statement": "The same exit border control post list serves both the transit port of exit and the temporary admission horses port of exit.",
+      "kind": "data",
+      "ref": "app/routes.js:10802; app/routes.js:10815",
+      "quote": "exitBorderControlPostItems: buildExitBorderControlPostItems(selectedTransitExitBorderControlPost),\n...\n          exitBorderControlPostItems: buildExitBorderControlPostItems(selectedTemporaryAdmissionPortOfExit)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-048",
+      "statement": "A port of exit is accepted when it matches one of the listed exit border control posts, ignoring case and surrounding spaces.",
+      "kind": "rule",
+      "ref": "app/routes.js:2235-2239",
+      "quote": "const normalised = (exitBorderControlPost || '').trim().toLowerCase()\n\n  return exitBorderControlPosts.some((option) => option.toLowerCase() === normalised)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-049",
+      "statement": "Choosing Temporary admission horses reveals two follow-up fields in this order: an \"Exit date\" date picker (temporaryAdmissionExitDate) and a \"Port of exit\" select (temporaryAdmissionPortOfExit).",
+      "kind": "behaviour",
+      "ref": "app/views/partials/temporary-admission-horses-select.html:6-33; app/routes.js:10576-10580",
+      "quote": "id: \"temporary-admission-exit-date\",\n      name: \"temporaryAdmissionExitDate\",\n...\n      label: {\n        text: \"Exit date\",\n...\n    id: \"temporary-admission-port-of-exit\",\n    name: \"temporaryAdmissionPortOfExit\",\n    label: {\n      text: \"Port of exit\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-050",
+      "statement": "The exit date is a single date-picker text field (the MOJ date picker), not separate day, month and year inputs.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/temporary-admission-horses-select.html:1,6",
+      "quote": "{% from \"moj/components/date-picker/macro.njk\" import mojDatePicker %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-051",
+      "statement": "The exit date hint is \"For example, 27/3/2026\".",
+      "kind": "copy",
+      "ref": "app/views/partials/temporary-admission-horses-select.html:14-17",
+      "quote": "text: \"For example, 27/3/2026\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-052",
+      "statement": "The exit date picker sets no earliest or latest date, unlike the arrival date picker, which is bounded to 7 days back and 6 months ahead.",
+      "kind": "rule",
+      "ref": "app/views/partials/temporary-admission-horses-select.html:6-22; app/routes.js:4333-4344",
+      "quote": "{{ mojDatePicker({\n      id: \"temporary-admission-exit-date\",\n      name: \"temporaryAdmissionExitDate\",\n      value: data.temporaryAdmissionExitDate or \"\",",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of minDate/maxDate in the partial; the arrival bounds are quoted only for contrast."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-053",
+      "statement": "An exit date is accepted only in the form day/month/year with a four-digit year (one or two digits for day and month) and only when it is a real calendar date; any past or future date is accepted.",
+      "kind": "rule",
+      "ref": "app/routes.js:4301-4323; app/routes.js:1731",
+      "quote": "const match = trimmed.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/)\n...\n  if (\n    date.getFullYear() !== year ||\n    date.getMonth() !== month - 1 ||\n    date.getDate() !== day\n  ) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-054",
+      "statement": "Only one conditional reveal belongs to each reason; Re-entry has no follow-up question.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10540-10584",
+      "quote": "if (reason.value === 'Internal market' && internalMarketConditionalHtml) {\n...\n    if (reason.value === 'Transhipment or onward travel' && transhipmentConditionalHtml) {\n...\n    if (reason.value === 'Transit' && transitConditionalHtml) {\n...\n    if (reason.value === 'Temporary admission horses' && temporaryAdmissionHorsesConditionalHtml) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-055",
+      "statement": "When the page is shown again after a failed submit, every reason and follow-up field shows the value the user just entered.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10758-10779; app/routes.js:12342-12358; app/routes.js:12381",
+      "quote": "const selectedImportReason = Object.prototype.hasOwnProperty.call(locals, 'selectedImportReason')\n    ? locals.selectedImportReason\n    : sessionData.importReason",
+      "confidence": "inferred",
+      "note": "Inferred: POST writes the submitted values to the session before validating, and the render reads them back from the session."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-056",
+      "statement": "The form posts to /design-release-2.1/reason-for-import without browser validation (novalidate).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:45",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/reason-for-import\" novalidate class=\"app-reason-for-import-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-057",
+      "statement": "When the page was opened from the hub, the form carries a hidden from=hub field so the submit returns to the hub.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:47-49",
+      "quote": "{% if fromHub %}\n            <input type=\"hidden\" name=\"from\" value=\"hub\">\n          {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-058",
+      "statement": "The form does not carry from=review or from=template-review, so a page opened from the review page with from=review continues to Consignment details on Save and continue rather than returning to the review.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:45-49; app/routes.js:1597-1599",
+      "quote": "if (isFromReview(req)) {\n    return '/review-notification'\n  }",
+      "confidence": "inferred",
+      "note": "Inferred: isFromReview reads req.query or req.body, the form action has no query string and only a from=hub hidden field exists. A template edit still returns to the template through the session flag isEditingTemplateFromReview."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-059",
+      "statement": "In the default state the page's buttons are \"Save and continue\", \"Save and return to overview\" (secondary) and a \"Cancel and return to overview\" link to the notification hub.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/reason-for-import.html:68-69; app/views/partials/design-release-2.1/journey-form-actions.html",
+      "quote": "{% set journeyFormActionOptions = {} %}\n          {% include \"partials/design-release-2.1/journey-form-actions.html\" %}",
+      "confidence": "verbatim",
+      "note": "The page passes no options, so the shared journey-form-actions defaults apply; that partial's amend and template-review variants are claimed by the shell part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-060",
+      "statement": "When the user saves with a valid reason (Save and continue) the page goes to Consignment details (/consignment-details).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12387",
+      "quote": "return res.redirect(getSectionContinueRedirect(req, '/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-061",
+      "statement": "Save and continue returns to the notification hub instead when the page was opened from the hub, to the review page when from=review reaches the handler, and to the template review (saving the template with a \"<title> has been updated\" message) when a template is being edited from its review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1588-1602; app/routes.js:468-486",
+      "quote": "if (isFromTemplateReview(req) || isEditingTemplateFromReview(req.session.data)) {\n    return saveAndReturnToTemplateReview(req.session.data)\n  }\n\n  if (isFromHub(req)) {\n    return '/notification-hub'\n  }\n\n  if (isFromReview(req)) {\n    return '/review-notification'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-062",
+      "statement": "The main import reason is optional: Save and continue with no reason selected moves on to Consignment details without an error, and clears any previously saved reason.",
+      "kind": "rule",
+      "ref": "app/routes.js:1688-1692; app/routes.js:12335-12342",
+      "quote": "// Soft validation: a main reason is optional to proceed, but once selected\n  // any further information required for that reason must be completed.\n  if (!allowedImportReasonValues.includes(importReason)) {\n    return { errors, errorList }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-063",
+      "statement": "Once a reason is selected, its follow-up questions must be answered before Save and continue can proceed; otherwise the page is shown again with an error summary titled \"There is a problem\" and an error on each field.",
+      "kind": "rule",
+      "ref": "app/routes.js:12366-12382; app/views/design-release-2.1/reason-for-import.html:32-37",
+      "quote": "if (validation.errorList.length) {\n    req.session.data.errorList = validation.errorList\n    req.session.data.errors = validation.errors\n\n    return renderReasonForImportPage(req, res)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-064",
+      "statement": "With Internal market selected and no valid purpose chosen, the error is \"Select a purpose in the internal market\", linked to the purpose radios.",
+      "kind": "rule",
+      "ref": "app/routes.js:1694-1701",
+      "quote": "errors.internalMarketPurpose = { text: 'Select a purpose in the internal market' }\n    errorList.push({\n      text: 'Select a purpose in the internal market',\n      href: '#internal-market-purpose'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-065",
+      "statement": "For a germinal-products-only notification, a purpose outside the four germinal purposes counts as not chosen and raises \"Select a purpose in the internal market\".",
+      "kind": "rule",
+      "ref": "app/routes.js:1686; app/routes.js:1694-1696",
+      "quote": "const allowedInternalMarketPurposeValues = getInternalMarketPurposeValuesForSession(sessionData)",
+      "confidence": "inferred",
+      "note": "Inferred: validation checks the purpose against the session-filtered list."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-066",
+      "statement": "With Transhipment or onward travel selected and no listed destination country chosen, the error is \"Select a destination country\", linked to the transhipment destination country select.",
+      "kind": "rule",
+      "ref": "app/routes.js:1703-1710",
+      "quote": "errors.transhipmentDestinationCountry = { text: 'Select a destination country' }\n    errorList.push({\n      text: 'Select a destination country',\n      href: '#transhipment-destination-country'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-067",
+      "statement": "With Transit selected and no listed port of exit chosen, the error is \"Select a port of exit\", linked to the transit port of exit select.",
+      "kind": "rule",
+      "ref": "app/routes.js:1713-1719",
+      "quote": "errors.transitExitBorderControlPost = { text: 'Select a port of exit' }\n      errorList.push({\n        text: 'Select a port of exit',\n        href: '#transit-exit-border-control-post'\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-068",
+      "statement": "With Transit selected and no listed destination country chosen, the error is \"Select a destination country\", linked to the transit destination country select; both transit errors can show together, port of exit first.",
+      "kind": "rule",
+      "ref": "app/routes.js:1721-1727",
+      "quote": "errors.transitDestinationCountry = { text: 'Select a destination country' }\n      errorList.push({\n        text: 'Select a destination country',\n        href: '#transit-destination-country'\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-069",
+      "statement": "With Temporary admission horses selected and the exit date left empty, the error is \"Enter an exit date\", linked to the exit date field.",
+      "kind": "rule",
+      "ref": "app/routes.js:1731-1738",
+      "quote": "text: temporaryAdmissionExitDate ? 'Enter a real date' : 'Enter an exit date'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-070",
+      "statement": "With Temporary admission horses selected and an exit date that is not a real day/month/year date, the error is \"Enter a real date\".",
+      "kind": "rule",
+      "ref": "app/routes.js:1731-1738",
+      "quote": "text: temporaryAdmissionExitDate ? 'Enter a real date' : 'Enter an exit date'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-071",
+      "statement": "With Temporary admission horses selected and no listed port of exit chosen, the error is \"Select a port of exit\", linked to the temporary admission port of exit select; it can show alongside the exit date error, date first.",
+      "kind": "rule",
+      "ref": "app/routes.js:1741-1747",
+      "quote": "errors.temporaryAdmissionPortOfExit = { text: 'Select a port of exit' }\n      errorList.push({\n        text: 'Select a port of exit',\n        href: '#temporary-admission-port-of-exit'\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-072",
+      "statement": "The page sets no error for choosing an exit date in the past or before the arrival date; the only exit date checks are presence and being a real date.",
+      "kind": "rule",
+      "ref": "app/routes.js:1730-1748",
+      "quote": "if (!parseArrivalDisplayDate(temporaryAdmissionExitDate)) {",
+      "confidence": "gap",
+      "note": "Gap: the source says nothing about how the exit date relates to today or to the arrival date."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-073",
+      "statement": "On Save and continue the submitted reason and its own follow-up answers are saved to the notification even when the follow-ups fail validation; follow-up answers belonging to other reasons are cleared.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12335-12358",
+      "quote": "req.session.data.importReason = selectedImportReason\n  req.session.data.internalMarketPurpose = selectedInternalMarketPurpose\n  req.session.data.transhipmentDestinationCountry = selectedImportReason === 'Transhipment or onward travel'\n    ? (transhipmentDestinationCountry || null)\n    : null",
+      "confidence": "verbatim",
+      "note": "The values are written before validateImportReasonProceed runs, so an unlisted or badly formed follow-up value is held in the session until corrected."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-074",
+      "statement": "A submitted reason that is not in the list allowed for the notification (for example Re-entry on a germinal-products-only notification) is saved as no reason.",
+      "kind": "rule",
+      "ref": "app/routes.js:12335-12337",
+      "quote": "const selectedImportReason = allowedImportReasonValues.includes(importReason)\n    ? importReason\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-075",
+      "statement": "Save and return to overview (action hub) saves without any validation and goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12303; app/routes.js:12332; app/routes.js:1564-1586",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n...\n    return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-076",
+      "statement": "When amending a notification, Save and return (action review) saves without validation and goes to the review page (/review-notification).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1564-1579",
+      "quote": "return action === 'hub' || action === 'review'\n...\n  if (action === 'review') {\n    return '/review-notification'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-077",
+      "statement": "Saving by hub or review stores the draft notification; while a template is being edited from its review it saves the template and returns to its review page instead.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1568-1575",
+      "quote": "if (sessionData && isEditingTemplateFromReview(sessionData)) {\n    return saveAndReturnToTemplateReview(sessionData)\n  }\n\n  if (sessionData) {\n    persistDraftNotification(sessionData)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-078",
+      "statement": "On a hub or review save, only follow-up answers that are valid for the chosen reason are kept; an invalid or missing follow-up is saved as empty, and answers for other reasons are cleared.",
+      "kind": "rule",
+      "ref": "app/routes.js:12304-12330",
+      "quote": "req.session.data.internalMarketPurpose = importReason === 'Internal market' &&\n        allowedInternalMarketPurposeValues.includes(internalMarketPurpose)\n        ? internalMarketPurpose\n        : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-079",
+      "statement": "On a hub or review save with no reason (or a reason not allowed for the notification) selected, nothing on the page is changed: the previously saved reason and follow-ups are kept.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12304-12332",
+      "quote": "if (allowedImportReasonValues.includes(importReason)) {\n      req.session.data.importReason = importReason",
+      "confidence": "inferred",
+      "note": "Inferred: the saves sit inside the allowed-reason check and the handler redirects either way. This differs from Save and continue, which clears the reason. A second soft-save branch after the full save (lines 12360-12364) can never be reached, because the first branch already returned."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-080",
+      "statement": "The reason section counts as complete when a reason allowed for the notification is saved and its follow-ups are valid: Internal market needs an allowed purpose; Transhipment or onward travel needs a listed destination country; Transit needs a listed port of exit and a listed destination country; Temporary admission horses needs a real exit date and a listed port of exit; Re-entry needs nothing more.",
+      "kind": "rule",
+      "ref": "app/routes.js:1644-1671",
+      "quote": "if (sessionData.importReason === 'Internal market') {\n    return allowedInternalMarketPurposeValues.includes(sessionData.internalMarketPurpose)\n  }\n...\n  return true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-081",
+      "statement": "The reason section is not complete when no reason is saved, even though the page lets the user continue without one.",
+      "kind": "rule",
+      "ref": "app/routes.js:1648-1650",
+      "quote": "if (!allowedImportReasonValues.includes(sessionData.importReason)) {\n    return false\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-082",
+      "statement": "A saved reason becomes incomplete if the notification later turns germinal-products-only and the reason or purpose is not in the germinal list.",
+      "kind": "rule",
+      "ref": "app/routes.js:1644-1654",
+      "quote": "const allowedImportReasonValues = getImportReasonValuesForSession(sessionData)\n  const allowedInternalMarketPurposeValues = getInternalMarketPurposeValuesForSession(sessionData)",
+      "confidence": "inferred",
+      "note": "Inferred: completeness is checked against the lists filtered for the current species."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-083",
+      "statement": "A prototype shortcut, /prototype/reason-for-import (mounted under /design-release-2.1), fills the earlier answers and redirects to the reason for import page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11523-11527; app/lib/version-mount.js:45",
+      "quote": "router.get('/prototype/reason-for-import', (req, res) => {\n  seedPrototypeSessionForReasonForImport(req.session.data)\n\n  return res.redirect('/reason-for-import')\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-084",
+      "statement": "The shortcut's seeded answers are: country of origin France, region of origin not required, commodity Cattle (0102) with species cattle-bison-bison, 5 animals, certification purpose Slaughter, unweaned animals No, and a notification reference.",
+      "kind": "data",
+      "ref": "app/routes.js:381-400",
+      "quote": "sessionData.countryOfOrigin = 'France'\n  sessionData.regionOfOriginRequired = 'No'\n  sessionData.commodityId = 'cattle'\n  sessionData.commodityCode = '0102'\n  sessionData.commodityName = 'Cattle'\n  sessionData.selectedSpecies = ['cattle-bison-bison']\n...\n    'cattle-bison-bison': '5'\n  }\n  sessionData.certificationPurpose = 'Slaughter'\n  sessionData.unweanedAnimals = 'No'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-085",
+      "statement": "The certification purpose list holds sixteen options, in this order: Further keeping; Slaughter; Confined establishment; Germinal products; Registered equine animal; Travelling circus/animal act; Exhibition; Event or activity near borders; Release into the wild; Dispatch centre; Relaying area / purification centre; Ornamental aquaculture establishment; Technical use; Quarantine or similar establishment; Live aquatic animals for human consumption; Other.",
+      "kind": "data",
+      "ref": "app/data/certification-purposes.js:3-20",
+      "quote": "'Further keeping',\n  'Slaughter',\n  'Confined establishment',\n  'Germinal products',\n  'Registered equine animal',\n  'Travelling circus/animal act',\n  'Exhibition',\n  'Event or activity near borders',\n  'Release into the wild',\n  'Dispatch centre',\n  'Relaying area / purification centre',\n  'Ornamental aquaculture establishment',\n  'Technical use',\n  'Quarantine or similar establishment',\n  'Live aquatic animals for human consumption',\n  'Other'",
+      "confidence": "verbatim",
+      "note": "This list is not shown on the reason for import page. Under DR2.1 it feeds the certification purpose radios on the additional animal details page (another part); the reason shortcut seeds Slaughter from it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-086",
+      "statement": "The certification purpose options have no hints and are stored as their labels.",
+      "kind": "data",
+      "ref": "app/data/certification-purposes.js:3",
+      "quote": "module.exports = [\n  'Further keeping',",
+      "confidence": "inferred",
+      "note": "Inferred: the list is plain strings, with no hint field."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-087",
+      "statement": "The page gives no guidance on how the main import reason relates to the certification purpose answered elsewhere; nothing on the page checks one against the other.",
+      "kind": "rule",
+      "ref": "app/routes.js:1673-1751; app/routes.js:12286-12388",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Gap: the validation and handler only check the reason and its own follow-ups."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-088",
+      "statement": "An unused helper builds the internal market purpose radios from the full, unfiltered purpose list; the page itself uses the session-filtered list.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10371-10382; app/routes.js:10783-10786",
+      "quote": "function buildInternalMarketPurposeSelectItems (selectedValue) {\n  return internalMarketPurposes.map((purpose) => ({",
+      "confidence": "inferred",
+      "note": "Inferred unused within this slice: renderReasonForImportPage calls buildInternalMarketPurposeItems with getInternalMarketPurposesForSession. Recorded so the reconciler does not treat the full list as the germinal behaviour."
+    },
+    {
+      "id": "prototype-dr2-1-source-p4-089",
+      "statement": "The follow-up questions are only revealed for the selected radio; the radio reveal behaviour is the standard GOV.UK conditional reveal.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10558-10562",
+      "quote": "item.conditional = {\n        html: internalMarketConditionalHtml\n      }",
+      "confidence": "verbatim"
+    }
+  ]
+}

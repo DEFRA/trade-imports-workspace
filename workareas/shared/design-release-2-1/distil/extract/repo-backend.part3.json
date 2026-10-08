@@ -1,0 +1,787 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 3, Reading, listing, deleting and expiry. Read in full: NotificationController (266 lines) and NotificationService (548 lines), claiming only GET /notifications, GET /notifications/{ref}/fulfilments, GET /notifications/reference-numbers, POST /notifications/{ref}/soft-delete, DELETE /notifications and deleteExpired; NotificationRepository, NotificationSort, NotificationView and NotificationViewData (list item shape), NotificationFulfilmentsView, NotificationReferenceOnly, NotificationPageResponse (1-based paging), ReferenceNumberPageResponse (0-based paging), NotificationExpirySweeper, NotificationTtlConfig, AdminSecretFilter, and the admin.secret and notification.admin, notification.list and notification.ttl sections of application.yml. Tests read in full: NotificationControllerTest (1395 lines; the FindAll, FindFulfilments, FindAllReferenceNumbers, SoftDelete, Delete and replay-401 tests are claimed as proof, the create/replace/copy/submit/amend/cancel-amend/outbox-events tests belong to other parts), NotificationSortTest, NotificationExpirySweeperTest, NotificationExpirySweeperConditionTest, NotificationTtlConfigTest and NotificationExpiryIT. Covered: dashboard list scoping (none: status-filtered only), paging and fixed page size 25, the four sort options and fallback, the exact referenceNumber filter, list item fields; the fulfilment read; the reference-number list (admin page size 50, newest first); soft delete statuses, idempotency, refusals and events; hard DELETE all-or-nothing with audit; the admin-secret guard; draft expiry stamping, prod safeguards, sweep cadence, batch, lock and cascade. Claims 001-076 restate the earlier run of this part, re-verified against the source; 077-093 add test proofs and details that run missed.",
+  "claims": [
+    {
+      "id": "repo-backend-p3-001",
+      "statement": "GET /notifications returns a paginated list of import notifications for the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:158-172",
+      "quote": "@Operation(summary = \"List notifications\",\n        description = \"Returns a paginated list of import notifications. \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-002",
+      "statement": "The dashboard list only ever includes notifications in DRAFT, SUBMITTED or AMEND status; soft-deleted (DELETED) notifications never appear in it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:157-160",
+      "quote": "List<NotificationStatus> dashboardStatuses = List.of(\n            NotificationStatus.DRAFT, NotificationStatus.SUBMITTED, NotificationStatus.AMEND);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-003",
+      "statement": "The dashboard list is not scoped to the calling user or organisation: the endpoint takes no user or organisation input, so every caller is served notifications from every trader. This is a weakness in access control on the list read.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:166-171; NotificationService.java:177-178",
+      "quote": "public NotificationPageResponse findAll(\n        @RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber)",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any user, organisation or actor parameter on the list endpoint and its repository query (findAllViewByStatusIn filters on status only). Stated in general terms on purpose."
+    },
+    {
+      "id": "repo-backend-p3-004",
+      "statement": "The dashboard list's page parameter is 1-based, defaults to 1 and must be at least 1.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:167",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page",
+      "confidence": "verbatim",
+      "note": "The response status for page=0 is set by GlobalExceptionHandler, which another part reads."
+    },
+    {
+      "id": "repo-backend-p3-005",
+      "statement": "The dashboard list returns 25 notifications per page, set by configuration; the caller cannot choose the page size.",
+      "kind": "rule",
+      "ref": "src/main/resources/application.yml:141-142; NotificationService.java:161",
+      "quote": "list:\n    page-size: 25",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-006",
+      "statement": "The dashboard list supports four sort options: arrivalDate,desc (the default), arrivalDate,asc, createdAt,desc and createdAt,asc.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:161",
+      "quote": "Optional sort: arrivalDate,desc (default), arrivalDate,asc, createdAt,desc, createdAt,asc.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-007",
+      "statement": "Sorting by arrivalDate orders on the transport arrival date of the notification, and sorting by createdAt orders on when the notification was created.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:10-11,33-34",
+      "quote": "private static final String ARRIVAL_DATE_FIELD = \"notification.transport.arrivalDate\";\n    private static final String CREATED_AT_FIELD = \"created\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-008",
+      "statement": "A missing, blank, malformed (not exactly field,direction) or unknown sort value falls back to arrival date, newest first, rather than being rejected.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:18-24,35-40",
+      "quote": "if (sortParam == null || sortParam.isBlank()) {\n            return defaultSort();\n        }",
+      "confidence": "verbatim",
+      "note": "NotificationSortTest.toSort_shouldDefaultToArrivalDateDescending_whenMissingOrInvalid proves null, empty and \"invalid\" all give arrival date descending."
+    },
+    {
+      "id": "repo-backend-p3-009",
+      "statement": "The sort direction is ascending only when the direction part is \"asc\" (any case); any other direction value sorts descending.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java:28-30",
+      "quote": "Sort.Direction sortDirection = \"asc\".equalsIgnoreCase(parts[1].trim())\n            ? Sort.Direction.ASC\n            : Sort.Direction.DESC;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-010",
+      "statement": "The dashboard list can be filtered by an optional referenceNumber, which is an exact match against a complete notification reference, not a partial search.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:162",
+      "quote": "Optional referenceNumber: exact match against a complete notification reference.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-011",
+      "statement": "The referenceNumber filter is trimmed of surrounding whitespace, and a blank value is treated as no filter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:163-164",
+      "quote": "String trimmedReference = StringUtils.trimToNull(referenceNumber);\n        if (trimmedReference != null) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-012",
+      "statement": "A reference filter that matches nothing (including a reference that does not exist, is soft-deleted, or is not in a valid reference format) returns 200 with an empty page, not an error.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:166-170; NotificationControllerTest.java:998-1009",
+      "quote": ".orElseGet(() -> Page.empty(pageable));",
+      "confidence": "verbatim",
+      "note": "findAll_shouldPassInvalidReferenceNumberToService proves the controller passes \"invalid-ref\" through and answers 200; the reference filter is not pattern-validated."
+    },
+    {
+      "id": "repo-backend-p3-013",
+      "statement": "The dashboard list offers no other filter or search: only page, sort and an exact referenceNumber are accepted, so there is no filter by status, date, commodity, country or free text.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:166-169",
+      "quote": "@RequestParam(defaultValue = \"1\") @Min(1) int page,\n        @RequestParam(required = false) String sort,\n        @RequestParam(required = false) String referenceNumber",
+      "confidence": "inferred",
+      "note": "Inferred from the three request parameters being the endpoint's entire input."
+    },
+    {
+      "id": "repo-backend-p3-014",
+      "statement": "The dashboard list response carries content, page (1-based, echoing the request), size, numberOfElements, totalElements and totalPages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java:14-29",
+      "quote": "public record NotificationPageResponse(\n    List<NotificationView> content,\n    int page,\n    int size,\n    int numberOfElements,\n    long totalElements,\n    int totalPages)",
+      "confidence": "verbatim",
+      "note": "page is the zero-based page number plus 1 (pageResult.getNumber() + 1). NotificationControllerTest.findAll_shouldReturnEmptyPage pins an empty page as page 1, size 25 and zero totals."
+    },
+    {
+      "id": "repo-backend-p3-015",
+      "statement": "Each dashboard list item carries the notification's referenceNumber, concurrencyToken, status, created timestamp, origin, commodity, consignor, consignee and transport, as a flat object.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:22-43; NotificationViewData.java",
+      "quote": "String getReferenceNumber();\n\n    Long getConcurrencyToken();\n\n    NotificationStatus getStatus();\n\n    Instant getCreated();\n\n    @Value(\"#{target.notification?.origin}\")\n    Origin getOrigin();",
+      "confidence": "verbatim",
+      "note": "The other accessors are getCommodity, getConsignor, getConsignee and getTransport, each unwrapped from notification.*."
+    },
+    {
+      "id": "repo-backend-p3-016",
+      "statement": "List items do not carry submittedAt, the updated timestamp, importer, destination, reason for import or the fulfilments payload, so a dashboard built on this endpoint cannot show those.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:20-44",
+      "quote": "public interface NotificationView {",
+      "confidence": "inferred",
+      "note": "Inferred from the projection's accessor list, which the response serialises directly (NotificationPageResponse javadoc: the wire response carries exactly the fields the projection exposes)."
+    },
+    {
+      "id": "repo-backend-p3-017",
+      "statement": "The created timestamp on list items is an ISO-8601 instant in UTC with a Z suffix and sub-second precision, not a date or a numeric epoch.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:937-938",
+      "quote": ".andExpect(jsonPath(\"$.content[0].created\").value(\"2026-07-21T00:30:00.456Z\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-018",
+      "statement": "The dashboard list endpoint loads the whole stored notification for every row, a cost accepted because the endpoint is due to be replaced by an event-populated dashboard service.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java:10-14",
+      "quote": "Accepted trade-off: this endpoint is being replaced by an event-populated dashboard service\n * and there are no live users to notice the cost.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-019",
+      "statement": "GET /notifications/{referenceNumber}/fulfilments returns the notification's referenceNumber, concurrencyToken, status, created, submittedAt and its opaque fulfilments payload; it backs the frontend engine's rehydrate of a journey.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:174-185; NotificationFulfilmentsView.java:15-25",
+      "quote": "Returns the fulfilment-view projection (referenceNumber, status, dates, opaque fulfilments payload) of the notification at the given reference. Backs the frontend engine's rehydrate path.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-020",
+      "statement": "The fulfilment read leaves out the server-only fields: the pre-amend notification and fulfilment snapshots and the expiry time.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationFulfilmentsView.java:7-11",
+      "quote": "Server-only fields\n * ({@code preAmendNotification}, {@code preAmendFulfilments}, {@code expireAt}) are\n * intentionally omitted so they aren't loaded on read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-021",
+      "statement": "The fulfilment read returns created and submittedAt as exact ISO-8601 UTC instants with a Z suffix.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1129-1133",
+      "quote": ".andExpect(jsonPath(\"$.created\").value(\"2026-07-21T06:42:17.123Z\"))\n                .andExpect(jsonPath(\"$.submittedAt\").value(\"2026-07-21T14:09:05Z\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-022",
+      "statement": "Reading the fulfilments of a reference that does not exist returns 404 with the detail \"Cannot find notification with reference number: <reference>\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:41,151-155; NotificationControllerTest.java:1136-1149",
+      "quote": "\"Cannot find notification with reference number: \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-023",
+      "statement": "The fulfilment read returns a notification in any status, including a soft-deleted one.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:19",
+      "quote": "Optional<NotificationFulfilmentsView> findFulfilmentsViewByReferenceNumber(String referenceNumber);",
+      "confidence": "inferred",
+      "note": "Inferred: the lookup is by reference alone, with no status condition, unlike the dashboard list."
+    },
+    {
+      "id": "repo-backend-p3-024",
+      "statement": "The fulfilment read is not scoped to the caller: any caller who knows a reference number is served that notification's content. This is a weakness in access control on the read.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:181-185",
+      "quote": "public ResponseEntity<NotificationFulfilmentsView> findFulfilments(\n        @Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber) {",
+      "confidence": "inferred",
+      "note": "Inferred from the endpoint taking only the reference and the admin-secret filter not covering it. Stated in general terms on purpose."
+    },
+    {
+      "id": "repo-backend-p3-025",
+      "statement": "The fulfilment read and soft delete only accept a path reference in the GBN-AG format: GBN-AG-, a two-digit year, a hyphen and six characters from digits and capital letters excluding I, L, O and U.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:182,241; ReferenceNumberGenerator.java:20",
+      "quote": "public static final String REFERENCE_NUMBER_PATTERN = \"^GBN-AG-\\\\d{2}-[0-9A-HJ-KM-NP-TV-Z]{6}$\";",
+      "confidence": "verbatim",
+      "note": "The response a malformed reference gets comes from GlobalExceptionHandler, read by another part."
+    },
+    {
+      "id": "repo-backend-p3-026",
+      "statement": "GET /notifications/reference-numbers returns a paginated list of notification reference numbers only, without the notifications' content.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:187-198",
+      "quote": "Returns a paginated list of notification reference numbers without loading full documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-027",
+      "statement": "The reference-number list's page parameter is 0-based, defaults to 0 and must be at least 0, and the page it reports is 0-based too, unlike the dashboard list, which is 1-based.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:195; ReferenceNumberPageResponse.java:19",
+      "quote": "@RequestParam(defaultValue = \"0\") @Min(0) int page",
+      "confidence": "verbatim",
+      "note": "NotificationControllerTest.findAllReferenceNumbers_shouldReturnEmptyPage pins page 0 for the default request."
+    },
+    {
+      "id": "repo-backend-p3-028",
+      "statement": "The reference-number list returns 50 references per page, set by the admin page-size configuration.",
+      "kind": "rule",
+      "ref": "src/main/resources/application.yml:139-140; NotificationService.java:371",
+      "quote": "admin:\n    page-size: 50",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-029",
+      "statement": "The reference-number list is ordered by creation time, newest first.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:370-371",
+      "quote": "PageRequest.of(page, adminPageSize, Sort.by(Direction.DESC, \"created\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-030",
+      "statement": "The reference-number list includes every stored notification in any status, soft-deleted ones included.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:36",
+      "quote": "Page<NotificationReferenceOnly> findAllProjectedBy(Pageable pageable);",
+      "confidence": "inferred",
+      "note": "Inferred: the query has no status condition."
+    },
+    {
+      "id": "repo-backend-p3-031",
+      "statement": "The reference-number list response carries content (a list of reference strings), page, size, numberOfElements, totalElements and totalPages.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberPageResponse.java:6-12",
+      "quote": "public record ReferenceNumberPageResponse(\n    List<String> content,\n    int page,\n    int size,\n    int numberOfElements,\n    long totalElements,\n    int totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-032",
+      "statement": "The reference-number list documents a 401 Unauthorised response but is not behind the admin secret or any other check, so any caller can list every reference. This is a weakness in access control.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:192; filter/AdminSecretFilter.java:48-58",
+      "quote": "@ApiResponse(responseCode = \"401\", description = \"Unauthorised\", content = @Content)",
+      "confidence": "inferred",
+      "note": "Inferred: the admin-secret filter skips every GET request. Stated in general terms on purpose."
+    },
+    {
+      "id": "repo-backend-p3-033",
+      "statement": "POST /notifications/{referenceNumber}/soft-delete moves the notification to DELETED status and returns the updated notification with 200.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:231-247; NotificationControllerTest.java:1254-1270",
+      "quote": "Transitions notification status to DELETED (soft delete).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-034",
+      "statement": "Soft delete accepts a notification in DRAFT, SUBMITTED or AMEND status.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:349-354",
+      "quote": "if (notificationAggregate.getStatus() != NotificationStatus.DRAFT\n            && notificationAggregate.getStatus() != NotificationStatus.SUBMITTED\n            && notificationAggregate.getStatus() != NotificationStatus.AMEND) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-035",
+      "statement": "The soft-delete API description says only DRAFT and SUBMITTED notifications can be deleted, which disagrees with the code, which also deletes AMEND notifications.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:233",
+      "quote": "Only DRAFT and SUBMITTED notifications can be deleted.",
+      "confidence": "verbatim",
+      "note": "Recorded as a discrepancy inside this source: the published OpenAPI text lags NotificationService.softDeleteNotification."
+    },
+    {
+      "id": "repo-backend-p3-036",
+      "statement": "Soft-deleting a notification that is already DELETED is a no-op that returns the notification unchanged with 200, so a repeated request after a lost response is safe.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:345-348",
+      "quote": "// Idempotent per REST DELETE convention — a repeat call after a lost response is a no-op.\n        if (notificationAggregate.getStatus() == NotificationStatus.DELETED) {\n            return notificationAggregate;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-037",
+      "statement": "Soft delete refuses any other status with 400 and the detail \"Cannot delete notification with status: <status>\"; with today's four statuses this refusal cannot be reached.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:352-353; NotificationStatus.java:4",
+      "quote": "\"Cannot delete notification with status: \" + notificationAggregate.getStatus()",
+      "confidence": "verbatim",
+      "note": "Unreachable is inferred: NotificationStatus is DRAFT, SUBMITTED, AMEND, DELETED, and DELETED returns early. NotificationControllerTest.softDelete_shouldReturn400_whenNotificationNotInDeletableState mocks the service to throw this message for DELETED, which the real service no longer does."
+    },
+    {
+      "id": "repo-backend-p3-038",
+      "statement": "Soft-deleting a reference that does not exist returns 404 with the detail \"Cannot find notification with reference number: <reference>\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:342-344; NotificationControllerTest.java:1272-1285",
+      "quote": "new NotFoundException(\n                CANNOT_FIND_NOTIFICATION_WITH_REFERENCE_NUMBER + referenceNumber)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-039",
+      "statement": "Soft delete keeps the notification record and its content; only its status changes to DELETED and its updated time is refreshed.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:289-290,359-365",
+      "quote": "notification.setStatus(targetStatus);\n                notification.setUpdated(Instant.now());",
+      "confidence": "inferred",
+      "note": "Inferred from writeWithOutbox saving the same aggregate with only status and updated changed. A soft delete from AMEND keeps the pre-amend snapshots and submittedAt, because NOTIFICATION_SUBMISSION_DELETED is not one of the SUBMISSION_EVENTS that clear them."
+    },
+    {
+      "id": "repo-backend-p3-040",
+      "statement": "Soft-deleting a DRAFT records a NotificationDeleted event; soft-deleting a SUBMITTED or AMEND notification records a NotificationSubmissionDeleted event, for publishing to other services.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:355-358; outbox/OutboxEventType.java:35-40",
+      "quote": "// DRAFT -> DELETED has no submission history; SUBMITTED/AMEND -> DELETED does.\n        OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.DRAFT\n            ? OutboxEventType.NOTIFICATION_DELETED\n            : OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-041",
+      "statement": "Soft delete takes an optional actor body (id, source, userType, displayName, organisationId) and an optional x-cdp-request-id header, which it passes on as the event's actor and correlation id.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:240-246; NotificationControllerTest.java:1301-1343",
+      "quote": "@RequestHeader(value = HEADER_TRACE_ID, required = false, defaultValue = \"\") String traceId,\n        @RequestBody(required = false) ActorRequest actorRequest)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-042",
+      "statement": "Soft delete has no ownership or admin check: the endpoint is not behind the admin secret and does not compare the caller with the notification's owner. This is a weakness in access control.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:237; filter/AdminSecretFilter.java:48-58",
+      "quote": "@ApiResponse(responseCode = \"401\", description = \"Unauthorised\", content = @Content)",
+      "confidence": "inferred",
+      "note": "Inferred: the admin filter covers only DELETE requests and the replay POST, and the service makes no caller check. The documented 401 is never produced. Stated in general terms on purpose."
+    },
+    {
+      "id": "repo-backend-p3-043",
+      "statement": "DELETE /notifications permanently removes the notifications named in a JSON array of reference numbers, together with their accompanying documents, and answers 204 No Content.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:253-265; NotificationService.java:431-434",
+      "quote": "notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers);\n        documentService.deleteForNotificationRefs(referenceNumbers);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-044",
+      "statement": "DELETE /notifications with an empty list is refused with 400 and nothing is deleted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:259-261; NotificationControllerTest.java:1054-1066",
+      "quote": "if (referenceNumbers == null || referenceNumbers.isEmpty()) {\n            return ResponseEntity.badRequest().build();\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-045",
+      "statement": "DELETE /notifications requires both an x-cdp-request-id header and a User-Id header; a request missing either is refused with 400 before anything is deleted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:257-258; NotificationControllerTest.java:1068-1098",
+      "quote": "@RequestHeader(value = NotificationController.HEADER_TRACE_ID, required = true) String traceId,\n        @RequestHeader(value = NotificationController.HEADER_USER_ID, required = true) String userId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-046",
+      "statement": "DELETE /notifications is all or nothing: if any listed reference does not exist, nothing is deleted and the caller gets 404 with the detail \"Cannot find notifications with reference numbers: <missing references, comma-separated>\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:382-394; NotificationControllerTest.java:1033-1052",
+      "quote": "throw new NotFoundException(\n                \"Cannot find notifications with reference numbers: \" + String.join(\", \", missing));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-047",
+      "statement": "DELETE /notifications deletes notifications in any status: it has no status check.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377-398",
+      "quote": "public void deleteByReferenceNumbers(List<String> referenceNumbers, AuditContext auditContext) {",
+      "confidence": "inferred",
+      "note": "Inferred from the method checking existence only."
+    },
+    {
+      "id": "repo-backend-p3-048",
+      "statement": "Every DELETE /notifications request writes an audit record of action DELETE_NOTIFICATIONS with the result (SUCCESS, or FAILURE when a reference is missing), the references, their count, the trace id, the user id and a timestamp; the FAILURE record is kept even though the request fails.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377,390-397,521-534",
+      "quote": "Audit auditRecord = Audit.builder()\n            .action(Action.DELETE_NOTIFICATIONS)\n            .result(result)\n            .notificationReferenceNumbers(referenceNumbers)\n            .numberOfNotifications(referenceNumbers.size())\n            .traceId(auditContext.traceId())\n            .userId(auditContext.userId())\n            .timestamp(Instant.now())\n            .build();",
+      "confidence": "verbatim",
+      "note": "The FAILURE record survives because the method is @Transactional(noRollbackFor = NotFoundException.class)."
+    },
+    {
+      "id": "repo-backend-p3-049",
+      "statement": "DELETE /notifications records no lifecycle event, so other services are not told that the notifications were removed.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377-398,431-434",
+      "quote": "private void deleteNotificationsAndDocuments(List<String> referenceNumbers) {",
+      "confidence": "inferred",
+      "note": "Inferred: neither deleteByReferenceNumbers nor deleteNotificationsAndDocuments calls the outbox service, unlike soft delete."
+    },
+    {
+      "id": "repo-backend-p3-050",
+      "statement": "DELETE requests to /notifications and POST requests to /notifications/{reference}/replay require the Trade-Imports-Animals-Admin-Secret header to match the configured admin secret.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:24,48-58",
+      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method)\n            && uri.startsWith(\"/notifications\");\n        boolean isReplayEndpoint = \"POST\".equalsIgnoreCase(method)\n            && uri.matches(\"/notifications/[^/]+/replay\");",
+      "confidence": "verbatim",
+      "note": "The class javadoc says \"Applied to DELETE /notifications requests only.\", which predates the replay guard. The DELETE match is a prefix match, so any DELETE under /notifications is guarded too."
+    },
+    {
+      "id": "repo-backend-p3-051",
+      "statement": "A guarded request with no admin secret header, or the wrong one, gets 401 with an empty body and never reaches the endpoint.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:35-42; NotificationControllerTest.java:1375-1383",
+      "quote": "response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);\n            return;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-052",
+      "statement": "When the configured admin secret is blank, every guarded request is refused with 401.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:35",
+      "quote": "if (tradeImportsAnimalsAdminSecret.isBlank()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-053",
+      "statement": "The admin secret is compared in constant time.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:37-39",
+      "quote": "!MessageDigest.isEqual(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-054",
+      "statement": "The admin secret is set from the TRADE_IMPORTS_ANIMALS_ADMIN_SECRET environment variable, with a local default when it is not set.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:128-130",
+      "quote": "secret: ${TRADE_IMPORTS_ANIMALS_ADMIN_SECRET:[REDACTED]}",
+      "confidence": "verbatim",
+      "note": "Default value redacted. A deployed environment that does not set the variable would fall back to that default."
+    },
+    {
+      "id": "repo-backend-p3-055",
+      "statement": "Every GET endpoint and every POST other than replay, including soft delete and the reference-number list, is outside the admin-secret guard.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:57",
+      "quote": "return !isDeleteNotifications && !isReplayEndpoint;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-056",
+      "statement": "In non-prod environments, each newly created notification is stamped to expire a configured number of days after its creation time.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:436-448,454",
+      "quote": "notificationAggregate.setExpireAt(notificationAggregate.getCreated().plus(days, ChronoUnit.DAYS));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-057",
+      "statement": "The expiry window is set by the NOTIFICATION_TTL_DAYS environment variable and is unset by default, so by default no notification expires.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:145-149",
+      "quote": "# Defaults here are the prod-safe values: days unset (no stamping) and sweep disabled.\n  # Non-prod environments opt in via NOTIFICATION_TTL_DAYS and NOTIFICATION_TTL_SWEEP_ENABLED.\n  ttl:\n    days: ${NOTIFICATION_TTL_DAYS:}",
+      "confidence": "verbatim",
+      "note": "The code comments describe the window as 7 days (\"suit 7-day granularity\"), but 7 is not configured in this repo; the value comes from each environment's config."
+    },
+    {
+      "id": "repo-backend-p3-058",
+      "statement": "No expiry is stamped when the running environment is prod (the ENVIRONMENT value \"prod\" in any case), even if a number of days is configured; any other name, including \"production\", counts as non-prod.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:77-80; NotificationService.java:443-446; NotificationTtlConfigTest.java:27-38",
+      "quote": "return \"prod\".equalsIgnoreCase(environment);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-059",
+      "statement": "Expiry is anchored to creation: saving, submitting or amending a notification does not extend its expiry.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:439-441",
+      "quote": "Anchored to {@code created}, so a notification expires a fixed window after creation\n     * regardless of later activity.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-060",
+      "statement": "Expiry is not limited to drafts: a notification of any status, submitted ones included, is deleted once its expiry time passes.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:33-34",
+      "quote": "@Query(\"{ 'expireAt': { $ne: null, $lte: ?0 } }\")",
+      "confidence": "inferred",
+      "note": "Inferred: the expiry query has no status condition, and stamping happens for every created notification. The partition scope calls it \"draft expiry\"; the code does not restrict it to drafts."
+    },
+    {
+      "id": "repo-backend-p3-061",
+      "statement": "A copied notification gets its own expiry window counted from the copy's creation time.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:143,450-454",
+      "quote": "return createNotification(notificationCopyMapper.toCopyDto(source), correlationId, actor);",
+      "confidence": "inferred",
+      "note": "Inferred: copy goes through createNotification, which calls stampExpiry."
+    },
+    {
+      "id": "repo-backend-p3-062",
+      "statement": "A notification with no expiry time, such as one created before expiry shipped or in prod, is never deleted by the sweep.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:404-406; NotificationExpiryIT.java:104-115",
+      "quote": "Notifications with a {@code null} {@code expireAt}\n     * — including everything created before this feature shipped — are never selected.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-063",
+      "statement": "A notification is due for deletion once its expiry time is at or before the time of the sweep.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java:26-34",
+      "quote": "Notifications due for automatic expiry: a non-null {@code expireAt} at or before {@code now}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-064",
+      "statement": "The expiry sweep runs only where notification.ttl.sweep.enabled is explicitly true (NOTIFICATION_TTL_SWEEP_ENABLED); it is off by default and absent when the setting is false or missing.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:27; application.yml:151-152; NotificationExpirySweeperConditionTest.java:32-46",
+      "quote": "@ConditionalOnProperty(prefix = \"notification.ttl.sweep\", name = \"enabled\", havingValue = \"true\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-065",
+      "statement": "Prod is protected from expiry by two independent safeguards: no expiry is stamped there, and the sweep does not run there.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:14-23",
+      "quote": "Prod is protected by two independent safeguards. Deleting a notification in prod would require\n * both to fail together:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-066",
+      "statement": "The expiry sweep runs once an hour by default, measured from the end of the previous run.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:36; application.yml:153",
+      "quote": "@Scheduled(fixedDelayString = \"${notification.ttl.sweep.interval-ms:3600000}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-067",
+      "statement": "Each sweep deletes at most 10 expired notifications by default; any more wait for the next run.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:154; NotificationService.java:411-424; NotificationExpiryIT.java:117-128",
+      "quote": "batch-size: 10",
+      "confidence": "verbatim",
+      "note": "NotificationExpiryIT.deleteExpired_removesAtMostBatchSizePerRun proves three due notifications with batch 2 are removed as 2 then 1."
+    },
+    {
+      "id": "repo-backend-p3-068",
+      "statement": "The expiry sweep permanently deletes each due notification together with its accompanying documents.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:400-424; NotificationExpiryIT.java:69-96",
+      "quote": "Deletes notifications whose {@code expireAt} has passed, cascading to their accompanying\n     * documents, up to {@code batchSize} per call.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-069",
+      "statement": "The expiry sweep writes no audit record, and leaves existing audit records that name the expired notification untouched.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:403-404; NotificationExpiryIT.java:97-101",
+      "quote": "unlike {@link #deleteByReferenceNumbers} it writes no audit\n     * record",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-070",
+      "statement": "The expiry sweep records no lifecycle event, so other services are not told that an expired notification was removed.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:411-424",
+      "quote": "deleteNotificationsAndDocuments(referenceNumbers);\n        return referenceNumbers.size();",
+      "confidence": "inferred",
+      "note": "Inferred: deleteExpired never calls the outbox service."
+    },
+    {
+      "id": "repo-backend-p3-071",
+      "statement": "The expiry sweep tolerates documents disappearing mid-batch rather than failing, because another actor may remove them at the same time.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:404-405",
+      "quote": "tolerates documents vanishing mid-batch (a background sweep should not fail because\n     * another actor removed a row concurrently)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-072",
+      "statement": "Only one service instance sweeps at a time: each run takes a shared lock named notification-expiry-sweeper, held at least 1 second and at most 30 seconds, and skips the run if the lock is held elsewhere.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:31,38-52; application.yml:155-156; NotificationExpirySweeperTest.java:90-110",
+      "quote": "static final String LOCK_NAME = \"notification-expiry-sweeper\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-073",
+      "statement": "When a sweep deletes notifications it logs \"Expiry sweeper deleted <n> notification(s)\"; a sweep that deletes nothing logs nothing.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:47-50; NotificationExpirySweeperTest.java:78-121",
+      "quote": "log.info(\"Expiry sweeper deleted {} notification(s)\", deleted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-074",
+      "statement": "A configured expiry window of zero or a negative number of days fails validation when the service starts, rather than stamping an expiry that has already passed.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:31-33,40; NotificationTtlConfigTest.java:61-83",
+      "quote": "Must be positive\n *                    when set — a non-positive value fails validation at startup rather than\n *                    stamping an already-elapsed {@code expireAt}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-075",
+      "statement": "Sweep settings that are zero, negative or missing fall back to safe defaults: batch size 10, interval 1 hour, lock held at least 1 second and at most 30 seconds.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java:61-74; NotificationTtlConfigTest.java:40-48",
+      "quote": "if (batchSize <= 0) {\n        batchSize = 10;\n      }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-076",
+      "statement": "The backend offers no read of a single notification's full content by reference other than the fulfilment view; a dashboard or check-answers page reading the stored notification fields has only the list item fields or the opaque fulfilments payload to use.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:158-210",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every GET mapping in NotificationController: /notifications, /{referenceNumber}/fulfilments, /reference-numbers and /{referenceNumber}/outbox-events. None returns the full notification aggregate by reference."
+    },
+    {
+      "id": "repo-backend-p3-077",
+      "statement": "A test proves that GET /notifications with nothing stored answers 200 with an empty content array, page 1, size 25 and zero numberOfElements, totalElements and totalPages.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:890-907 (FindAll.findAll_shouldReturnEmptyPage)",
+      "quote": ".andExpect(jsonPath(\"$.content\").isEmpty())\n                .andExpect(jsonPath(\"$.page\").value(1))\n                .andExpect(jsonPath(\"$.size\").value(25))",
+      "confidence": "verbatim",
+      "note": "WebMvc slice test with the service mocked: it proves the wire shape and status, not the query."
+    },
+    {
+      "id": "repo-backend-p3-078",
+      "statement": "A test proves that each GET /notifications list item is serialised with its referenceNumber, status, origin country code and commodity name, and that the page, size, totalElements and totalPages are returned alongside.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:909-947 (FindAll.findAll_shouldReturnPageOfNotifications)",
+      "quote": ".andExpect(jsonPath(\"$.content[0].referenceNumber\").value(REF_1))\n                .andExpect(jsonPath(\"$.content[0].status\").value(\"DRAFT\"))\n                .andExpect(jsonPath(\"$.content[0].origin.countryCode\").value(\"GB\"))\n                .andExpect(jsonPath(\"$.content[0].commodity.name\").value(\"Live cattle\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-079",
+      "statement": "Tests prove that the page, sort and referenceNumber query parameters of GET /notifications reach the list unchanged, including a referenceNumber that is not in a valid reference format.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:955-1009 (findAll_shouldPassPageParam, findAll_shouldPassSortParam, findAll_shouldPassReferenceNumberParam, findAll_shouldPassInvalidReferenceNumberToService)",
+      "quote": "verify(notificationService).findAll(1, \"createdAt,desc\", null);\n...\nverify(notificationService).findAll(1, null, \"invalid-ref\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-080",
+      "statement": "When the dashboard list is filtered by a reference that matches, the response holds exactly that one notification and reports a total of one.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:166-170",
+      "quote": ".<Page<NotificationView>>map(notification ->\n                    new PageImpl<>(List.of(notification), pageable, 1))\n                .orElseGet(() -> Page.empty(pageable));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-081",
+      "statement": "Tests prove that GET /notifications/reference-numbers answers 200 with a list of reference strings and a 0-based page, and that a requested page number is passed through.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1152-1209 (FindAllReferenceNumbers)",
+      "quote": ".andExpect(jsonPath(\"$.content[0]\").value(REF_1))\n                .andExpect(jsonPath(\"$.content[1]\").value(REF_2))\n                .andExpect(jsonPath(\"$.page\").value(0))",
+      "confidence": "verbatim",
+      "note": "The tests' mocked size of 25 is fixture data; the configured admin page size is 50 (repo-backend-p3-028)."
+    },
+    {
+      "id": "repo-backend-p3-082",
+      "statement": "A test proves that DELETE /notifications with the admin secret, a trace id and a user id answers 204 and passes the trace id and user id on for the audit record.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1015-1031 (Delete.delete_shouldReturn204_whenAllReferenceNumbersExist)",
+      "quote": ".andExpect(status().isNoContent());\n\n            verify(notificationService).deleteByReferenceNumbers(referenceNumbers, new AuditContext(\"trace-abc\", \"user-123\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-083",
+      "statement": "The soft-delete controller test pins a 400 refusal with the detail \"Cannot delete notification with status: DELETED\", but the service treats a repeat soft delete of a DELETED notification as a successful no-op, so that refusal is never produced for DELETED in practice.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:1287-1299; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:345-348",
+      "quote": ".thenThrow(new BadRequestException(\"Cannot delete notification with status: DELETED\"));",
+      "confidence": "inferred",
+      "note": "The test mocks the service, so it proves only that a BadRequestException maps to 400 with its message as detail. The real service returns early for DELETED (repo-backend-p3-036)."
+    },
+    {
+      "id": "repo-backend-p3-084",
+      "statement": "The admin-secret guard applies to any DELETE request whose path begins with /notifications, not only to DELETE /notifications itself.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:52-53",
+      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method)\n            && uri.startsWith(\"/notifications\");",
+      "confidence": "verbatim",
+      "note": "The class comment says 'Applied to DELETE /notifications requests only.', which is narrower than the code and omits the replay endpoint the code also guards."
+    },
+    {
+      "id": "repo-backend-p3-085",
+      "statement": "The admin-secret check runs before almost every other request filter, so a refused request is turned away before any other request handling.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:21",
+      "quote": "@Order(Ordered.HIGHEST_PRECEDENCE + 1)",
+      "confidence": "inferred",
+      "note": "Inferred from the filter's order, one step after the highest precedence."
+    },
+    {
+      "id": "repo-backend-p3-086",
+      "statement": "Tests prove the admin-secret guard and the DELETE /notifications headers are checked with the secret supplied as the Trade-Imports-Animals-Admin-Secret header; every DELETE test sends it.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:50-54,1024,1045,1059,1076,1092",
+      "quote": ".header(\"Trade-Imports-Animals-Admin-Secret\", \"test-secret\")",
+      "confidence": "verbatim",
+      "note": "The test value is a test fixture, not a real secret. No test in this file sends DELETE /notifications without the secret; the 401 path is proven only for replay (repo-backend-p3-051)."
+    },
+    {
+      "id": "repo-backend-p3-087",
+      "statement": "A test proves that the expiry sweep leaves a notification that is not yet due, and its accompanying document, in place.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationExpiryIT.java:69-96 (deleteExpired_removesDueNotificationAndDocuments_leavingAuditAndNonDueUntouched)",
+      "quote": "// Non-due notification and its document survive.\n        assertThat(notificationRepository.findByReferenceNumber(activeRef)).isPresent();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-088",
+      "statement": "When the expiry sweep finds notifications due, it logs \"Expiring <n> notification(s)\" before deleting them.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:421",
+      "quote": "log.info(\"Expiring {} notification(s)\", referenceNumbers.size());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-089",
+      "statement": "Each expiry sweep batch deletes its notifications and their documents in one transaction.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:411-412",
+      "quote": "@Transactional\n    public int deleteExpired(int batchSize) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-090",
+      "statement": "The environment name used to decide whether expiry is stamped comes from the ENVIRONMENT variable and is \"local\" when that is not set.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:150",
+      "quote": "environment: ${ENVIRONMENT:local}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-091",
+      "statement": "The interval between expiry sweeps can be set by notification.ttl.sweep.interval-ms, and falls back to one hour (3600000 ms) when it is not set.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java:36",
+      "quote": "@Scheduled(fixedDelayString = \"${notification.ttl.sweep.interval-ms:3600000}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p3-092",
+      "statement": "No test in this slice proves the status filter or the sort order of GET /notifications against a real store: the list tests mock the service, and only the sort parsing is unit-tested.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java:880-1010; NotificationSortTest.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in NotificationControllerTest, NotificationSortTest and NotificationExpiryIT, the tests this part reads. Other integration tests outside this part may cover it."
+    },
+    {
+      "id": "repo-backend-p3-093",
+      "statement": "A path reference on the fulfilment read or soft delete that is not in the GBN-AG format is refused by request validation before any lookup; the status and message of that refusal are set by the shared error handler, not in this slice.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:38,182,241",
+      "quote": "@Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber",
+      "confidence": "inferred",
+      "note": "Inferred from @Validated on the controller and @Pattern on the path variable. GlobalExceptionHandler handles ConstraintViolationException; it is read by another part."
+    }
+  ]
+}

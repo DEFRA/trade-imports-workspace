@@ -1,0 +1,562 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 4, Notification hub (task list). Read hub.fit.spec.js in full (22 tests: hub feature 10, commodity totals 5, the Commodity details row 2, the Review and submit button 5) and mined all 22 trace zips its read names. The trace CLI could not open them (TraceVersionError: traces were written by Playwright 1.63.0, newer than tim's viewer), so each zip was read from its unzipped copy in this part's working folder (h01..h22, verified against the zips' file listings and mapped to spec lines through test.trace stacks): the browser actions and selectors from 1-trace.trace, the network log from 1-trace.network, and the server-rendered HTML of every page from resources/*.html. Trace short names used in refs: h01=34521 (newly entered statuses), h02=86460 (Notification tasklist heading), h03=66a0b (every task opens), h04=9fabe (arrival details before a commodity), h05=14eb3 (commodity details while nothing chosen), h06=9ae69 (identification row absent), h07=9c588 (identification row appears), h08=9340d (section 2 order), h09=f896d (only one hint), h10=6b3c3 (no back link, return to dashboard), h11=e7523 (Commodity details row own task), h12=94963 (Commodity details Complete), h13=192df (review with only origin), h14=9699e (button group), h15=8fdf3 (review once all sections complete), h16=fed70 (single species, no identifier), h17=7b55a (axe, origin only), h18=1daf7 (totals read 0), h19=b80df (number, label, caption), h20=5829f (govuk design tokens), h21=5585e (small screen), h22=d269d (axe with totals). One page is in scope: the hub, GET /live-animals/notifications/{reference}, h1 'Overview'. Top to bottom it holds a journey strip (Draft tag and reference), the 'Your commodities' totals (two app-commodity-total boxes), the 'Notification tasklist' h2 over six numbered h3 sections each with its own govuk-task-list, and a button group (Review and submit, Return to dashboard). States seen: newly entered (origin only; 10 rows, no Identification details, no Transit countries), commodity chosen without numbers, commodity numbers saved, arrival details saved with no commodity (Transit countries appears), every section but documents complete (12 rows). Conditional rows: Identification details (once a commodity carrying identifiers is chosen) and Transit countries (once arrival details are saved). The pages the rows open were followed only as far as their heading and where saving them leads back; their contents belong to other parts.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p4-001",
+      "statement": "The notification hub is served at /live-animals/notifications/{reference} and its page heading is 'Overview'.",
+      "kind": "behaviour",
+      "ref": "trace 34521 (h01) call@3461 goto /live-animals/notifications/GBN-AG-26-DGWJ47, call@3463 expect heading; resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html main h1",
+      "quote": "<h1 class=\"govuk-heading-xl\">Overview</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-002",
+      "statement": "The hub's browser page title is 'Overview - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html head title",
+      "quote": "Overview - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-003",
+      "statement": "Above the heading, the hub shows a journey strip: a blue 'Draft' tag followed by the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html main div.app-journey-strip",
+      "quote": "Draft ... GBN-AG-26-DGWJ47",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a non-govuk wrapper class around a govuk-tag--blue and a govuk-body bold span."
+    },
+    {
+      "id": "trace-animals-fit-p4-004",
+      "statement": "Notification references take the form GBN-AG-26- followed by six upper-case letters and digits, inferred from every reference the 22 traces created (for example GBN-AG-26-DGWJ47, GBN-AG-26-7QGNWW, GBN-AG-26-8KZWKF).",
+      "kind": "data",
+      "ref": "traces 34521 (h01), e7523 (h11), fed70 (h16) network POST /live-animals/notifications 302 Location",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-DGWJ47/origin",
+      "confidence": "inferred",
+      "note": "'26' may be the year; the traces do not show how the suffix is generated."
+    },
+    {
+      "id": "trace-animals-fit-p4-005",
+      "statement": "The hub has no back link.",
+      "kind": "behaviour",
+      "ref": "trace 6b3c3 (h10) assertion hub.fit.spec.js:326; resources hub HTML has no govuk-back-link",
+      "quote": "await expect(page.locator('.govuk-back-link')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-006",
+      "statement": "The hub shows the service navigation with Dashboard marked active (linking to /live-animals), then Address book, Manage account and Log out.",
+      "kind": "behaviour",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html header govuk-service-navigation",
+      "quote": "Dashboard ... Address book ... Manage account ... Log out",
+      "confidence": "verbatim",
+      "note": "Address book links to http://localhost:3002/address-book (the INS frontend), Manage account to '#', Log out to /auth/sign-out. The spec comment names the Dashboard item as one of the routes out of the hub."
+    },
+    {
+      "id": "trace-animals-fit-p4-007",
+      "statement": "The hub shows a 'Your commodities' summary as an h2 under the page heading, from the first visit, before any commodity has been chosen.",
+      "kind": "copy",
+      "ref": "trace 1daf7 (h18) assertion hub.fit.spec.js:481; trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html",
+      "quote": "<h2 class=\"govuk-heading-l\">Your commodities</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-008",
+      "statement": "The first commodity total box shows the number of animals, an h3 label 'Animals' and the caption 'Total number of animals in this consignment'.",
+      "kind": "copy",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html .app-commodity-total (first)",
+      "quote": "<h3 class=\"app-commodity-total__label\">Animals</h3> <p class=\"app-commodity-total__caption\">Total number of animals in this consignment</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-009",
+      "statement": "The second commodity total box shows the number of packages, an h3 label 'Packages/boxes' and the caption 'Total number of packages in this consignment'.",
+      "kind": "copy",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html .app-commodity-total (second)",
+      "quote": "<h3 class=\"app-commodity-total__label\">Packages/boxes</h3> <p class=\"app-commodity-total__caption\">Total number of packages in this consignment</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-010",
+      "statement": "Each total box reads, in order, the number, then the label, then the caption.",
+      "kind": "behaviour",
+      "ref": "trace b80df (h19) assertion hub.fit.spec.js:95-104 (expectTotalBoxes); resources/520d0bcbdcf9d36e34f881f6d79761563c9794c7.html",
+      "quote": "<p class=\"app-commodity-total__value\">25</p> <h3 class=\"app-commodity-total__label\">Animals</h3> <p class=\"app-commodity-total__caption\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-011",
+      "statement": "Both total boxes read 0 before a commodity has been added.",
+      "kind": "rule",
+      "ref": "trace 1daf7 (h18) assertion hub.fit.spec.js:488; resources/9a645ed5abd3b67684ecaf6129071ac17c957f12.html",
+      "quote": "<p class=\"app-commodity-total__value\">0</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-012",
+      "statement": "Both total boxes still read 0 when a commodity has been chosen but its numbers have not been entered.",
+      "kind": "rule",
+      "ref": "trace e7523 (h11) resources/c7d2ee1373436c9c26c9114f12368f35b7f6f9a2.html (Bos taurus chosen, Commodity details To do)",
+      "quote": "<p class=\"app-commodity-total__value\">0</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-013",
+      "statement": "Once the commodity details are saved, the Animals box shows the number of animals entered and the Packages/boxes box the number of packages entered (25 and 5 in one trace, 1 and 5 in another).",
+      "kind": "rule",
+      "ref": "trace 94963 (h12) resources/828c3f756c7d981e634f0af16fe559adc8d34756.html; trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html; fills 'Number of animals' and 'Number of packages (when required)'",
+      "quote": "<p class=\"app-commodity-total__value\">25</p> ... <p class=\"app-commodity-total__value\">5</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-014",
+      "statement": "The total boxes are static panels: neither contains a link or a button.",
+      "kind": "behaviour",
+      "ref": "trace 5829f (h20) assertions hub.fit.spec.js:543-544",
+      "quote": "await expect(boxes.getByRole('link')).toHaveCount(0)\n    await expect(boxes.getByRole('button')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-015",
+      "statement": "The total boxes are a custom component outside the govuk-frontend set (app-commodity-total with __value, __label and __caption), placed in two govuk-grid-column-one-half columns; no standard GOV.UK component renders a figure-label-caption panel, so it is built from GOV.UK design tokens.",
+      "kind": "constraint",
+      "ref": "trace 5829f (h20) resources stylesheet rules .app-commodity-total*; hub HTML div.govuk-grid-column-one-half > div.app-commodity-total",
+      "quote": ".app-commodity-total{box-sizing:border-box;padding:20px;background-color:#f3f3f3}",
+      "confidence": "verbatim",
+      "note": "The test is titled 'the boxes are static panels styled from govuk design tokens'."
+    },
+    {
+      "id": "trace-animals-fit-p4-016",
+      "statement": "Each total box has a light grey background (rgb(243, 243, 243)); its number is blue (rgb(29, 112, 184)), 48px and bold; its label is blue, 24px, bold with no top margin; its caption is 19px in the text colour (rgb(11, 12, 12)).",
+      "kind": "non-functional",
+      "ref": "trace 5829f (h20) assertion hub.fit.spec.js:566-577 (computed styles at desktop width)",
+      "quote": "background: 'rgb(243, 243, 243)',\n      valueColour: 'rgb(29, 112, 184)',\n      valueFontSize: '48px',\n      valueFontWeight: '700',\n      labelColour: 'rgb(29, 112, 184)',\n      labelFontSize: '24px',\n      labelFontWeight: '700',\n      labelMarginTop: '0px',\n      captionFontSize: '19px',\n      captionColour: 'rgb(11, 12, 12)'",
+      "confidence": "verbatim",
+      "note": "The trace does not record the evaluate result; the values are the passing test's expected values, and the stylesheet in the trace agrees (font-size 3rem / 1.5rem / 1.1875rem, colour #1d70b8)."
+    },
+    {
+      "id": "trace-animals-fit-p4-017",
+      "statement": "Each total box's caption wraps to no more than two lines.",
+      "kind": "non-functional",
+      "ref": "trace b80df (h19) assertion hub.fit.spec.js:527-533",
+      "quote": "`\"${text}\" wraps to more than two lines`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-018",
+      "statement": "On a 360px-wide screen the two total boxes stack one above the other and the page does not scroll horizontally.",
+      "kind": "non-functional",
+      "ref": "trace 5585e (h21) viewport 360x740, assertions hub.fit.spec.js:591, 599",
+      "quote": "the boxes stack with no horizontal overflow on a small screen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-019",
+      "statement": "The hub has no serious or critical WCAG 2 A/AA axe violations with only the origin answered (zero-total panels and both buttons), with a commodity chosen but its numbers owed, and with commodity totals showing.",
+      "kind": "non-functional",
+      "ref": "traces 7b55a (h17) hub.fit.spec.js:467, e7523 (h11) hub.fit.spec.js:361, d269d (h22) hub.fit.spec.js:611",
+      "quote": "hub with nothing but the origin answered has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-020",
+      "statement": "The task list is headed 'Notification tasklist' as an h2 below the commodity totals.",
+      "kind": "copy",
+      "ref": "trace 86460 (h02) assertion hub.fit.spec.js:157-159; resources/695ac16a72576c3fa2bf89bcafb7edd1fde1802d.html",
+      "quote": "<h2 class=\"govuk-heading-l\">Notification tasklist</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-021",
+      "statement": "The task list is divided into exactly six numbered h3 sections, in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address'.",
+      "kind": "copy",
+      "ref": "trace 86460 (h02) assertion hub.fit.spec.js:163 (h3.govuk-heading-m toHaveText all six); trace 34521 (h01) call@3467-3477",
+      "quote": "1. About the consignment / 2. Description of the goods / 3. Transport and arrival / 4. Documents / 5. Consignment parties / 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-022",
+      "statement": "Nothing follows the six sections in the task list: there is no review task row, and the text 'Check and submit' appears nowhere on the hub.",
+      "kind": "behaviour",
+      "ref": "trace 34521 (h01) call@3491; trace 9699e (h14) hub.fit.spec.js:418",
+      "quote": "await expect(page.getByText(RETIRED_REVIEW_ROW_TITLE)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-023",
+      "statement": "Each section renders its own GOV.UK Task list (govuk-task-list) with an app-task-list modifier that stops status tags wrapping; every row is a link (govuk-task-list__item--with-link) whose status tag is tied to it with aria-describedby, the status id carrying the section id (for example 'about-the-consignment-1-status').",
+      "kind": "constraint",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html ul.govuk-task-list.app-task-list; stylesheet rule .app-task-list .govuk-task-list__status",
+      "quote": ".app-task-list .govuk-task-list__status{white-space:nowrap}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-024",
+      "statement": "A task row's status is one of two tags only: a green 'Complete' or a blue 'To do'.",
+      "kind": "rule",
+      "ref": "every hub HTML across the 22 traces (e.g. trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html); hub copy statuses",
+      "quote": "<strong class=\"govuk-tag govuk-tag--green\">\n        Complete ... <strong class=\"govuk-tag govuk-tag--blue\">\n        To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-025",
+      "statement": "No task row ever shows a 'Cannot start yet' status: no task waits on another.",
+      "kind": "rule",
+      "ref": "trace 66a0b (h03) hub.fit.spec.js:202; trace 9699e (h14) hub.fit.spec.js:419",
+      "quote": "await expect(page.locator(CANNOT_START_STATUS)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-026",
+      "statement": "Before a commodity is chosen the hub lists ten tasks, and every one is a link that opens: Where is this consignment coming from?, What are you importing?, Main reason for import, Commodity details, Additional details, Arrival details, Transport details, Roles and addresses, Contact address for this consignment, Upload documents.",
+      "kind": "behaviour",
+      "ref": "trace 66a0b (h03) assertions hub.fit.spec.js:195-200; resources/80941d6ff05bca45b6c3bacd2e29bb063cd1a41a.html",
+      "quote": "every task the hub shows opens before a commodity is chosen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-027",
+      "statement": "The earliest hub a trader reaches already shows 'Where is this consignment coming from?' as Complete, because a new notification starts on the origin page and the trader answers it first.",
+      "kind": "rule",
+      "ref": "trace 34521 (h01) network POST /live-animals/notifications 302 to /origin, then hub; call@3481",
+      "quote": "Where is this consignment coming from?\n      </a> ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-028",
+      "statement": "Section 1 'About the consignment' lists, in order: 'Where is this consignment coming from?' (links to /origin), 'What are you importing?' (links to /commodities) and 'Main reason for import' (links to /import-reason).",
+      "kind": "data",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html section 1 task list",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/origin\" ... Where is this consignment coming from? ... href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/commodities\" ... What are you importing? ... href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/import-reason\" ... Main reason for import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-029",
+      "statement": "'What are you importing?' reads To do until a commodity is chosen, and Complete once one is chosen, even while its numbers are still owed.",
+      "kind": "rule",
+      "ref": "trace 34521 (h01) call@3483 (To do); trace e7523 (h11) hub.fit.spec.js:357 and resources/c7d2ee1373436c9c26c9114f12368f35b7f6f9a2.html (Complete)",
+      "quote": "What are you importing?\n      </a> ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-030",
+      "statement": "'Main reason for import' reads To do until the import reason is saved and Complete afterwards; saving the reason carries the trader on to Additional details rather than back to the hub.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) network POST /import-reason 302 to /additional-details; resources/7aa6ff833a3f01a4473e8404356ff43644841909.html",
+      "quote": "[\"POST\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF/import-reason\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF/additional-details\"]",
+      "confidence": "verbatim",
+      "note": "The trace answered 'Internal market' then 'Breeding' on the import-reason page."
+    },
+    {
+      "id": "trace-animals-fit-p4-031",
+      "statement": "Section 2 'Description of the goods' lists 'Commodity details' first, then 'Identification details' when it applies, then 'Additional details'.",
+      "kind": "rule",
+      "ref": "trace 9340d (h08) assertion hub.fit.spec.js:291-297; resources/4a68f2d75e0ef394a348a724e1d2ef28e653705f.html",
+      "quote": "Commodity details ... Identification details ... Additional details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-032",
+      "statement": "'Commodity details' is a task of its own, separate from 'What are you importing?', and links to the consignment-details page (/consignment-details).",
+      "kind": "data",
+      "ref": "trace e7523 (h11) assertion hub.fit.spec.js:353-355",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-7QGNWW/consignment-details\" ... Commodity details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-033",
+      "statement": "'Commodity details' reads To do while the commodity's numbers have not been entered, including after a commodity has been chosen.",
+      "kind": "rule",
+      "ref": "trace 34521 (h01) call@3487; trace e7523 (h11) hub.fit.spec.js:356",
+      "quote": "Commodity details\n      </a> ... To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-034",
+      "statement": "'Commodity details' reads Complete once the number of animals and number of packages are saved, while 'What are you importing?' stays Complete and 'Additional details' stays To do.",
+      "kind": "rule",
+      "ref": "trace 94963 (h12) assertions hub.fit.spec.js:369-377; resources/828c3f756c7d981e634f0af16fe559adc8d34756.html",
+      "quote": "reads Complete once the numbers are saved, leaving the other rows alone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-035",
+      "statement": "With nothing chosen, the 'Commodity details' link opens the commodity question instead: /consignment-details redirects to /commodities, headed 'What are you importing?'.",
+      "kind": "rule",
+      "ref": "trace 14eb3 (h05) network GET /consignment-details 302 to /commodities; assertion hub.fit.spec.js:244",
+      "quote": "[\"GET\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-3X9Q9S/consignment-details\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-3X9Q9S/commodities\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-036",
+      "statement": "Saving the commodity details page returns the trader to the hub.",
+      "kind": "behaviour",
+      "ref": "trace fed70 (h16) network POST /consignment-details 302 to the hub; trace 94963 (h12) call 'Save and continue' then expect heading Overview",
+      "quote": "[\"POST\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF/consignment-details\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-037",
+      "statement": "The commodity details page offers a 'Cancel and return to overview' link that takes the trader back to the hub without saving the numbers.",
+      "kind": "behaviour",
+      "ref": "trace e7523 (h11) call@3405 click, call@3407 expect heading Overview",
+      "quote": "internal:role=link[name=\"Cancel and return to overview\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-038",
+      "statement": "The 'Identification details' row is absent while no commodity is chosen.",
+      "kind": "rule",
+      "ref": "trace 9ae69 (h06) assertion hub.fit.spec.js:257-259; trace 34521 (h01) hub HTML section 2 has two rows",
+      "quote": "overview: when no commodity is chosen, the animal identification row is absent",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-039",
+      "statement": "Once a commodity carrying identifiers is chosen (Bos taurus in the trace), the 'Identification details' row appears, linking to /commodities/identification.",
+      "kind": "rule",
+      "ref": "trace 9c588 (h07) assertions hub.fit.spec.js:273-278; resources/0fd99d1e4313664166ec68b928ef79b5e9437c05.html",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-8SBJKS/commodities/identification\" aria-describedby=\"description-of-the-goods-2-status\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-040",
+      "statement": "For a single-species consignment, 'Identification details' reads Complete as soon as the commodity is chosen, with no identifier saved, and the review still opens.",
+      "kind": "rule",
+      "ref": "trace e7523 (h11) resources/c7d2ee1373436c9c26c9114f12368f35b7f6f9a2.html; trace fed70 (h16) assertion hub.fit.spec.js:447 and call@3569-3573",
+      "quote": "a single-species notification reaches the review with no identifier saved",
+      "confidence": "verbatim",
+      "note": "The spec comment cites Design release 1: 'Animal identifiers are optional unless multiple species are selected.'"
+    },
+    {
+      "id": "trace-animals-fit-p4-041",
+      "statement": "The 'Identification details' row opens a page headed 'Identification details', and saving an identifier there (an ear tag) returns the trader to the hub.",
+      "kind": "behaviour",
+      "ref": "trace 8fdf3 (h15) call@3469 click, call@3471 expect heading, call@3473 fill 'Ear tag', call@3477 expect heading Overview",
+      "quote": "internal:role=heading[name=\"Identification details\"s]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-042",
+      "statement": "'Additional details' links to /additional-details, reads To do until answered, and Complete afterwards; saving it returns the trader to the hub.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) network POST /additional-details 302 to the hub; resources/7aa6ff833a3f01a4473e8404356ff43644841909.html",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-8KZWKF/additional-details\" ... Additional details ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-043",
+      "statement": "Section 3 'Transport and arrival' lists 'Arrival details' (links to /port-of-entry), then 'Transit countries' (links to /transit-countries) when it applies, then 'Transport details' (links to /transporters).",
+      "kind": "data",
+      "ref": "trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html section 3",
+      "quote": "Arrival details ... href=\"/live-animals/notifications/GBN-AG-26-8KZWKF/transit-countries\" ... Transit countries ... Transport details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-044",
+      "statement": "'Arrival details' opens before a commodity is chosen, on a page headed 'Arrival details'.",
+      "kind": "behaviour",
+      "ref": "trace 9fabe (h04) call@2987 click, call@2989 expect heading",
+      "quote": "<h1 class=\"govuk-heading-l\">Arrival details</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-045",
+      "statement": "With no commodity chosen, saving 'Arrival details' returns the trader straight to the hub, and 'Arrival details' then reads Complete.",
+      "kind": "rule",
+      "ref": "trace 9fabe (h04) network POST /port-of-entry 302 to the hub; resources/864b6f3f6d8b5aed69ccb5151ce040e24e6d1206.html",
+      "quote": "[\"POST\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8YMV8W/port-of-entry\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8YMV8W\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-046",
+      "statement": "With a commodity chosen, saving 'Arrival details' carries the trader on to Transit countries, then Transport details, and only then back to the hub.",
+      "kind": "behaviour",
+      "ref": "trace fed70 (h16) network POST /port-of-entry 302 to /transit-countries, POST /transit-countries 302 to /transporters, POST /transporters 302 to the hub",
+      "quote": "[\"POST\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF/port-of-entry\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-8KZWKF/transit-countries\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-047",
+      "statement": "The 'Transit countries' row is absent until arrival details have been saved, and appears (To do) between Arrival details and Transport details once they are.",
+      "kind": "rule",
+      "ref": "trace 9fabe (h04) resources/84501351e6e52d8903866a091ac2dc5ed953c647.html (absent) and 864b6f3f6d8b5aed69ccb5151ce040e24e6d1206.html (present); trace fed70 (h16) resources/7aa6ff833a3f01a4473e8404356ff43644841909.html (absent before arrival)",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-8YMV8W/transit-countries\" aria-describedby=\"transport-and-arrival-2-status\">\n        Transit countries",
+      "confidence": "verbatim",
+      "note": "Which arrival answer brings the row in (the means of transport, the port, or arrival details being present at all) is not shown; both traces filled every arrival field. The spec comment says identification and transit countries 'do not apply to a notification with nothing chosen', yet after arrival details are saved with no commodity the row shows."
+    },
+    {
+      "id": "trace-animals-fit-p4-048",
+      "statement": "With no commodity chosen, the hub lists 'Transit countries' as To do after arrival details are saved, even though saving arrival details skipped the transit countries page.",
+      "kind": "behaviour",
+      "ref": "trace 9fabe (h04) network POST /port-of-entry 302 to the hub; resources/864b6f3f6d8b5aed69ccb5151ce040e24e6d1206.html",
+      "quote": "Transit countries\n      </a> ... To do",
+      "confidence": "verbatim",
+      "note": "Recorded, not reconciled: the hub and the save routing disagree about whether transit countries apply."
+    },
+    {
+      "id": "trace-animals-fit-p4-049",
+      "statement": "'Transit countries' and 'Transport details' read Complete once the transit countries (France and Belgium in the trace) and a transporter are saved.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html",
+      "quote": "Transit countries\n      </a> ... Complete ... Transport details\n      </a> ... Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-050",
+      "statement": "Section 4 'Documents' has one row, 'Upload documents', linking to /accompanying-documents.",
+      "kind": "data",
+      "ref": "trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html section 4",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/accompanying-documents\" aria-describedby=\"documents-1-status\">\n        Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-051",
+      "statement": "'Upload documents' still reads To do when every other task is Complete, and the review opens regardless.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html, call@3571-3573; trace 8fdf3 (h15) call@3605-3607",
+      "quote": "Upload documents\n      </a> ... To do",
+      "confidence": "verbatim",
+      "note": "completeAnswerSections never opens the documents task, so the hub's 'every answer section is complete' excludes documents."
+    },
+    {
+      "id": "trace-animals-fit-p4-052",
+      "statement": "Section 5 'Consignment parties' has one row, 'Roles and addresses', linking to /addresses, with the hint 'Consignor or Exporter, Consignee, Importer and Place of Destination' beneath it.",
+      "kind": "copy",
+      "ref": "trace f896d (h09) assertion hub.fit.spec.js:312-315; trace 34521 (h01) resources/1bfed2d7345054b7730db2d3ea4d215b98445177.html",
+      "quote": "Roles and addresses\n      </a>\n      <div id=\"consignment-parties-1-hint\" class=\"govuk-task-list__hint\">\n        Consignor or Exporter, Consignee, Importer and Place of Destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-053",
+      "statement": "'Roles and addresses' is the only task row with a hint; every other row is a bare link with a status tag.",
+      "kind": "rule",
+      "ref": "trace f896d (h09) assertion hub.fit.spec.js:308-310",
+      "quote": "await expect(hints).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-054",
+      "statement": "'Roles and addresses' read Complete after the trader had added a consignor or exporter, place of destination, place of origin, consignee and importer, and then saved a county parish holding (CPH) number; it was To do before.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) network /consignors/select, /destinations/select, /place-of-origin/select, /consignees/select, /importers/select, POST /addresses 302 to /cph-number, POST /cph-number 302 to the hub; resources/7aa6ff833a3f01a4473e8404356ff43644841909.html",
+      "quote": "Roles and addresses\n      </a> ... Complete",
+      "confidence": "inferred",
+      "note": "Inferred: the traces only show the row Complete after all five parties and the CPH number; which of them the status depends on is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p4-055",
+      "statement": "Section 6 'Contact address' has one row, 'Contact address for this consignment', linking to /consignment/contact/select; it reads Complete once a contact (Animal and Plant Health Agency in the trace) is chosen, and saving it returns to the hub.",
+      "kind": "rule",
+      "ref": "trace fed70 (h16) resources/b20faa1c6b36944ab0d936eca587a8ea80919f1e.html; network POST /consignment/contact/select 302 to the hub",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-8KZWKF/consignment/contact/select\" aria-describedby=\"contact-address-1-status\">\n        Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-056",
+      "statement": "Opening 'Where is this consignment coming from?' from the hub and saving it returns the trader to the hub.",
+      "kind": "behaviour",
+      "ref": "trace e7523 (h11) network POST /origin 302 to the hub (second origin save)",
+      "quote": "[\"POST\",\"http://localhost:3000/live-animals/notifications/GBN-AG-26-7QGNWW/origin\",302,\"http://localhost:3000/live-animals/notifications/GBN-AG-26-7QGNWW\"]",
+      "confidence": "verbatim",
+      "note": "The first origin save of a new notification goes on to /commodities instead; that page is another part's."
+    },
+    {
+      "id": "trace-animals-fit-p4-057",
+      "statement": "Below the task list the hub ends with a button group: a primary 'Review and submit' button followed by a secondary 'Return to dashboard' button.",
+      "kind": "copy",
+      "ref": "trace 9699e (h14) assertions hub.fit.spec.js:411-417; trace 34521 (h01) resources div.govuk-button-group",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/notification-view\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">\n  Review and submit\n</a> ... class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">\n  Return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-058",
+      "statement": "'Review and submit' is a link styled as a button, to /live-animals/notifications/{reference}/notification-view.",
+      "kind": "data",
+      "ref": "trace 192df (h13) assertion hub.fit.spec.js:395-397",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-DGWJ47/notification-view\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-059",
+      "statement": "'Review and submit' is always offered and opens the review page, headed 'Review your notification', whatever the notification still owes, including when only the origin is answered.",
+      "kind": "rule",
+      "ref": "trace 192df (h13) network GET /notification-view 200; resources h1",
+      "quote": "<h1 class=\"govuk-heading-l\">Review your notification</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-060",
+      "statement": "'Review and submit' opens the review page once every answer section is complete.",
+      "kind": "behaviour",
+      "ref": "trace 8fdf3 (h15) call@3605 click 'Review and submit', call@3607 expect heading 'Review your notification'",
+      "quote": "opens the review once every answer section is complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-061",
+      "statement": "'Return to dashboard' links to /live-animals and takes the trader to the dashboard, headed 'Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace 6b3c3 (h10) assertions hub.fit.spec.js:327-333; network GET /live-animals 200",
+      "quote": "<a href=\"/live-animals\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">\n  Return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p4-062",
+      "statement": "The traces show no call from the browser to any backend: the hub's task statuses, conditional rows and commodity totals are rendered server-side, and where the frontend reads them from is not visible.",
+      "kind": "integration",
+      "ref": "all 22 traces, 1-trace.network: only same-origin requests to localhost:3000",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-063",
+      "statement": "No trace chose more than one species, so the 'Identification details' status when identifiers are mandatory (multiple species) and not yet entered is not shown.",
+      "kind": "rule",
+      "ref": "all 22 traces: only Bos taurus is ever chosen",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-064",
+      "statement": "No trace chose a commodity that carries no identifiers, so whether the 'Identification details' row stays absent for such a commodity is not shown.",
+      "kind": "rule",
+      "ref": "trace 9c588 (h07) and all others: only Bos taurus is chosen",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-065",
+      "statement": "No trace opens 'Upload documents' or adds a document, so what makes it read Complete is not shown.",
+      "kind": "rule",
+      "ref": "all 22 traces: /accompanying-documents is never requested",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-066",
+      "statement": "No trace shows the hub for a notification that is not a draft (for example after submission), so the journey strip's other tags and whether the hub is still reachable or editable are not shown.",
+      "kind": "behaviour",
+      "ref": "all 22 traces: the journey strip always reads 'Draft'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-067",
+      "statement": "No trace adds more than one commodity line, so whether the totals add up the animals and packages across lines is not shown.",
+      "kind": "rule",
+      "ref": "all 22 traces: one commodity line at most",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p4-068",
+      "statement": "No trace shows a 'Transport details' or 'Contact address' row reading Complete through any route other than the full run, and no trace changes an answer back to empty, so whether a status can return from Complete to To do is not shown.",
+      "kind": "rule",
+      "ref": "all 22 traces",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

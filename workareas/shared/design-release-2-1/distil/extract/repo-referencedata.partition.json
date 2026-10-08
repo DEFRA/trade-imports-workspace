@@ -1,0 +1,45 @@
+{
+  "source": "repo:referencedata",
+  "structure": "repos/trade-imports-reference-data at 9f3aa3e (main, tag 0.20.0): a small Java 25 / Spring Boot REST service (about 100 files, about 1,500 lines in scope) that serves two reference lists, read from MDM and cached in memory: GET /countries (optional blocks query parameter; GB removed; sorted by name; subdivisions) in src/main/java/.../countries/, and GET /ports-of-entry (sorted by name) in src/main/java/.../portsofentry/. The MDM adaptation (Feign client, service, Mdm* records), the Caffeine cache config and the global exception handler carry the rules those endpoints apply; their unit and integration tests, the MDM fixtures, README, application.yml and ADR 0002 (shared service for several reference-data domains; commodity codes planned, not built) record what is proven and ruled. There is no rulings ledger. Of the lists the scope names, only countries and ports exist here: commodities and species, commodity identifiers, transporters, document types and certification purposes have no endpoint, model or data in this repo, and are gaps for the extract to record. Left out as outside scope: platform plumbing with no bearing on the lists (metrics, tracing and logging filters and interceptors, TLS, proxy, AWS, Mongo config and their tests, CI workflows, Dockerfile, .claude hooks), except where a part file is read for an auth or caching rule the endpoints depend on. One part covers the whole scoped source.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Countries and ports of entry",
+      "scope": "The whole scoped repo: the two reference-list endpoints, the MDM fetch, adaptation, filtering, sorting and caching behind them, their error responses, the tests that prove them, the README and ADR 0002, and the gaps for every other list the scope names.",
+      "read": [
+        "README.md",
+        "doc/adr/0002-use-reference-data-for-multiple-domains-until-they-get-too-large.md",
+        "src/main/resources/application.yml",
+        "src/main/resources/application-local.yml",
+        "src/main/java/uk/gov/defra/trade/imports/countries/",
+        "src/main/java/uk/gov/defra/trade/imports/portsofentry/",
+        "src/main/java/uk/gov/defra/trade/imports/client/",
+        "src/main/java/uk/gov/defra/trade/imports/configuration/CacheConfig.java",
+        "src/main/java/uk/gov/defra/trade/imports/configuration/MdmConfiguration.java",
+        "src/main/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptor.java",
+        "src/main/java/uk/gov/defra/trade/imports/exceptions/",
+        "src/test/java/uk/gov/defra/trade/imports/countries/",
+        "src/test/java/uk/gov/defra/trade/imports/client/MdmServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/integration/CountriesControllerCacheExpiryIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/configuration/CacheConfigTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/exceptions/GlobalExceptionHandlerTest.java",
+        "src/test/resources/integration/mdm-countries-response.json",
+        "src/test/resources/integration/mdm-poe-response.json"
+      ],
+      "covers": [
+        "GET /countries: its route, the blocks query parameter and how it filters (block name, includeCountry), the removal of GB, the sort order, and every field of Country and SubDivision as returned",
+        "GET /ports-of-entry: its route, the sort order and every field of PortOfEntry as returned",
+        "How each MDM payload (MdmCountry, MdmSubDivision, MdmBlock, MdmCodedValue, MdmPortOfEntry, MdmPortsResponse) maps to the returned shapes, including any field dropped or defaulted",
+        "Caching: the two caches, their TTL and its default, and the rule that empty results are not cached",
+        "Error behaviour: every exception the handler maps, its status code and response body",
+        "What the MDM calls send (system code, subscription key, bearer token) only as far as it shapes what the lists return",
+        "Every test in the countries, client, cache and exception tests and the three countries/ports integration tests that proves a list behaviour",
+        "ADR 0002 and the README: every decision or ruling on which domains the service serves, including commodity codes as planned",
+        "A gap claim for each list the scope names that the repo does not serve: commodities and species, commodity identifiers, transporters, document types, certification purposes, saying where it was looked for"
+      ],
+      "prefix": "repo-referencedata-p1"
+    }
+  ]
+}

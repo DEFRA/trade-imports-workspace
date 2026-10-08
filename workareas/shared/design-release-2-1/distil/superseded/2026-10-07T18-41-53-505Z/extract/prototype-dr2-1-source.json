@@ -1,0 +1,1083 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "The GOV.UK Prototype Kit app GB-notification-service at commit 04a073b, read in place with git show/archive (not the checkout). Scope is Design Release 2.1 only. Layout: (1) app/lib/version-mount.js and app/lib/design-release-2.1-version.js mount /design-release-2.1 by copying every root route from app/routes.js into a versioned router, prefixing redirects and rendered paths with /design-release-2.1, and rendering app/views/design-release-2.1/<view> when an override exists, else the root view in app/views/. (2) 36 DR2.1 view overrides (journey pages, hub, review, declaration, submitted, dashboards, templates, deletes) plus 17 partials under app/views/partials/design-release-2.1/. (3) Root views and partials DR2.1 falls back to: the address book views (address-book*.html), notification-status, region-of-origin, cph-number-input, arrival-date-picker, transporter fields, import-reason conditionals. (4) app/routes.js (about 13,100 lines): journey handlers around lines 11105-13100, validation and completeness helpers around lines 1-6500, dashboard/template/address-book helpers around lines 6600-10500; DR2.1 behaviour is switched by isDesignRelease21SessionData. (5) app/data lists read by those pages: commodities, germinal commodities, commodity-identifiers, certification-purposes, import-reasons, internal-market-purposes, exit-border-control-posts, means-of-transport, countries and region prefixes, uk-airports, transporters and transporter-types, contact-addresses, consignment-address-sections and use-groups, address-book data and category/use lists, dashboard-notifications (sort items, page size), dashboard-templates. The journey: notification type, origin, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries, transporter, documents, consignment addresses (plus CPH or permanent address), contact address, review, declaration, submitted; around it sit the hub, dashboards, templates, copy/amend/delete and the address book. All state is held in the session (no persistence). Left out as the scope says: app/views/intro, /design-release-2 and /testing, the other 'dashboard-*' fixture rows in app/data beyond sort and page size, the JS/CSS assets, and each address, airport and species list item-by-item (counted or sampled, not transcribed).",
+  "scopeHash": "6daf1cd5319577a9a28c717640f3aa8b5538de6e7ed109099ab23e367bc7e82b",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-001",
+      "statement": "Design Release 2.1 is served under the /design-release-2.1 base path. It reuses every root route handler, and redirects and rendered links are prefixed with that base path.",
+      "kind": "behaviour",
+      "ref": "app/lib/version-mount.js (createVersionMount, mountVersion, copyRouterStack); app/lib/design-release-2.1-version.js:5",
+      "quote": "const DESIGN_RELEASE_21_BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-002",
+      "statement": "Where DR2.1 has no view of its own, the page renders the root view instead; DR2.1 pages therefore inherit the root address book views and several root partials.",
+      "kind": "behaviour",
+      "ref": "app/lib/version-mount.js (renderVersionView)",
+      "quote": "if (versionViewExists(viewName)) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-003",
+      "statement": "Submitted notifications and address-book additions are shared between design release versions; every other session key is scoped to the DR2.1 version.",
+      "kind": "constraint",
+      "ref": "app/lib/version-mount.js:6-9",
+      "quote": "const SHARED_SESSION_KEYS = [\n  'addressBookAddedAddresses',\n  'submittedNotifications'\n]",
+      "confidence": "verbatim",
+      "note": "A prototype session mechanism. The real services persist per organisation."
+    },
+    {
+      "id": "prototype-dr2-1-source-004",
+      "statement": "The DR2.1 service navigation shows Dashboard, Templates, Address book and Manage account. There is no Log out item in DR2.1 (DR2 shows one).",
+      "kind": "copy",
+      "ref": "app/views/layouts/main.html:70-98",
+      "quote": "text: \"Templates\",",
+      "confidence": "verbatim",
+      "note": "Four items listed in the isDesignRelease21Version branch; the DR2 branch adds a Log out item after Manage account."
+    },
+    {
+      "id": "prototype-dr2-1-source-005",
+      "statement": "In DR2.1 the service navigation links go to the version's dashboard, templates list and address book, and the GOV.UK header service link goes to the DR2.1 /index page.",
+      "kind": "behaviour",
+      "ref": "app/lib/design-release-2.1-version.js:20-27",
+      "quote": "serviceNavTemplatesHref: `${DESIGN_RELEASE_21_BASE}/templates`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-006",
+      "statement": "Every DR2.1 page shows an Alpha phase banner reading 'This is a new service. Help us improve it and give your feedback by email.' The feedback link target is a placeholder (#).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:10-15",
+      "quote": "This is a new service. Help us improve it and",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-007",
+      "statement": "The DR2.1 home page (the version root) is an overall dashboard titled 'Import notification service' with the caption 'Dashboard'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11539-11545; app/views/design-release-2.1/dashboard-home.html:23-24",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-008",
+      "statement": "The overall dashboard shows a Messages link with an unread message count, and the count is a fixed value of 12 in the prototype.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:27-31; app/routes.js:8878",
+      "quote": "messageCount: 12,",
+      "confidence": "inferred",
+      "note": "The Messages link target is '#', so there is no messages page in DR2.1; the count is hard-coded."
+    },
+    {
+      "id": "prototype-dr2-1-source-009",
+      "statement": "The overall dashboard has two header actions: a primary 'Create new' button and a secondary 'Use template' button leading to the templates list.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:34-42",
+      "quote": "text: \"Use template\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-010",
+      "statement": "The overall dashboard has one section per notification category (Live animals, Germinal products, Plants, plant products or other objects). Each has a 'View dashboard' link and glance cards: 'Action needed' (Tasks requiring your attention, with a View tasks link) and 'Status updates' (Changes in the past 24 hours, with a View updates link).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:46-98",
+      "quote": "Tasks requiring your attention",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-011",
+      "statement": "The Plants section of the overall dashboard has a third card 'Inspection required' (Consignments due at the BCP, link 'View requirements'); the plants links and counts are static placeholders with '#' targets.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:100-132; app/routes.js:8895-8903",
+      "quote": "Consignments due at the BCP",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-012",
+      "statement": "The glance counts on the overall dashboard are fixed demo values (live animals 4 actions and 8 updates, germinal 2 and 1, plants 4, 4 and 6 inspections), not computed from notifications.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8881-8903",
+      "quote": "actionNeeded: 4,\n      statusChange: 8",
+      "confidence": "inferred",
+      "note": "Count values are literals in renderOverallDashboardPage."
+    },
+    {
+      "id": "prototype-dr2-1-source-013",
+      "statement": "The category dashboards are /live-animals and /germinal-products; /dashboard redirects to the version root, or to /live-animals when a query string is present. The default list heading is 'Live animals and germinal products' and the category headings are 'Live animals' and 'Germinal products'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11547-11553, 11724-11736, 8771-8772, 6690-6699",
+      "quote": "'Live animals and germinal products'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-014",
+      "statement": "A category dashboard shows a caption 'Dashboard', the category heading, 'Create new' (which starts the journey for that category) and 'Use template' buttons, and a Summary section with glance cards 'Action needed' (Tasks requiring your attention) and 'Status updated' (Changes in the past 24 hours).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:46-83",
+      "quote": "Status updated",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-015",
+      "statement": "The dashboard Notifications section has a 'Search by' text input with the hint 'Keyword, notification number, commodity, consignee or consignor'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:96-116",
+      "quote": "Keyword, notification number, commodity, consignee or consignor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-016",
+      "statement": "The dashboard 'Sort by:' select offers Select one, Newest first, Oldest first and Arrival date.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:288-292",
+      "quote": "{ value: 'arrival-date', text: 'Arrival date' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-017",
+      "statement": "The dashboard has a collapsible 'Additional filters' panel: 'By arrival date' radios (Today, Tomorrow, Next 7 days in DR2.1), a 'By date range' with Start date and End date pickers (hint 'For example, 27/3/2026'), a 'By type' select (Live animals, Products of animal origin; Plants is hidden in DR2.1, and the select is hidden on a category dashboard) and a 'Status' select (Action required, Submitted, Completed; Draft is hidden in DR2.1). The panel opens when any filter is set.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:132-213; app/routes.js:8667-8714, 8728-8733, 8846-8851",
+      "quote": "text: options.numericSeven ? 'Next 7 days' : 'Next seven days',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-018",
+      "statement": "In the prototype the dashboard search text, sort, date range, type and status filters are rendered and kept in the page but the view model does not apply them to the notification list; only the tab, category and page change which notifications are shown.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8716-8868",
+      "quote": "search: (query.search || '').trim(),",
+      "confidence": "inferred",
+      "note": "getDashboardViewModel filters by category and tab only; search, sort, dateRange, startDate, endDate, typeFilter and statusFilter are echoed back and not used to filter visibleNotifications. The reconciler should treat the intended behaviour as the visible controls, not as a rule about results."
+    },
+    {
+      "id": "prototype-dr2-1-source-019",
+      "statement": "The notification list has three tabs: 'In progress (N)', 'Draft' and 'Completed'. In progress holds notifications with status Submitted or Action required, Draft holds drafts, Completed holds notifications whose submission is complete. The list heading changes to 'Notifications in progress', 'Draft notifications' or 'Completed notifications'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8752-8802; app/views/design-release-2.1/dashboard.html:217-229",
+      "quote": "notificationSectionHeading: activeTab === 'drafts'\n      ? 'Draft notifications'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-020",
+      "statement": "The dashboard list shows 8 notifications per page with GOV.UK pagination and a results line 'Show 1-8 of N results' (or 'Show 0 of 0 results').",
+      "kind": "behaviour",
+      "ref": "app/data/dashboard-notifications.js:286; app/routes.js:7653-7657",
+      "quote": "return `Show ${start}-${end} of ${total} results`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-021",
+      "statement": "Each notification card on a dashboard shows its reference with 'Copy as new' and 'View' links, then Commodity, Arrival date, Consignee, Notification status, a quantity (Number of animals or packages), Origin and Consignor, plus an 'Inspection' field tagged 'Required' when inspection is required.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:11-71",
+      "quote": "Notification status",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-022",
+      "statement": "A notification's status shows as plain text 'Submitted' or 'Completed', or as a tag 'Draft' or 'Action required'. An 'Action required' card is marked as an error card and shows an error message, which is 'ITAHC is missing' when no ITAHC or health certificate is attached and 'Information is missing' when required animal identifiers are incomplete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7329-7355, 6371-6388",
+      "quote": "return 'ITAHC is missing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-023",
+      "statement": "A success banner on the dashboard auto-dismisses after 5000 ms, and after a notification is deleted it reads '<reference> has been deleted' (or 'Notification has been deleted').",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:34-44; app/routes.js:12110-12112",
+      "quote": "`${notificationReference} has been deleted`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-024",
+      "statement": "The 'Action needed' page is titled 'Tasks requiring your attention' (caption 'Action needed', description 'Add missing information or upload documents to prevent your consignment from being delayed.'), with search, sort, a result count, notification cards and pagination; DR2.1 does not show the delay filter.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-actions.html:30-40; app/routes.js:9020-9023",
+      "quote": "Add missing information or upload documents to prevent your consignment from being delayed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-025",
+      "statement": "The status updates page is titled 'Changes in past 24 hours' (caption 'Status updated') with the description 'Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.' and lists notifications in sections.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-changes.html:27-49",
+      "quote": "Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-026",
+      "statement": "The inspection page is titled 'Consignments due at the border control post (BCP)' (description 'Consignments that must go to your chosen BCP for inspection.') with a details section 'What to do at a border inspection', search, sort, result count, cards and pagination.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-inspection.html:31-46",
+      "quote": "What to do at a border inspection",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-027",
+      "statement": "The templates page is titled 'Manage templates' with the text 'Select, manage or create new notification templates', a 'Create new template' button, a 'My templates' list with a result count and 'Sort by:' select. Each template card shows a category label, title, 'View template' and 'Use template' links, and Commodity, Origin, Consignee and Consignor.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:39-82; app/views/partials/design-release-2.1/dashboard-template-card.html:1-35",
+      "quote": "Select, manage or create new notification templates",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-028",
+      "statement": "Creating a template starts with the notification type page, then a name page (caption 'Create a new template', heading 'Enter template name', button 'Save and continue', link 'Cancel and return to manage templates'), then the normal origin page. The name is not validated: an empty name is saved as 'Untitled template'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8953-9002, 7729; app/views/design-release-2.1/create-template.html:28-57",
+      "quote": "const title = String(sessionData.templateName || '').trim() || 'Untitled template'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-029",
+      "statement": "A template journey uses the same pages but the hub tasklist is headed 'Template tasklist', there is no arrival date question, no Upload documents section and no declaration; the primary hub action is 'Review template' and the secondary is 'Return to manage templates'. The review page's primary button is 'Save template'.",
+      "kind": "rule",
+      "ref": "app/routes.js:6461-6502, 1519-1531, 5100-5105; app/views/design-release-2.1/review-notification.html:75-77",
+      "quote": "text: 'Review template',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-030",
+      "statement": "Saving a template adds it to the top of the templates list, returns to the templates page and shows the success message '<template title> saved to templates'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9004-9018",
+      "quote": "`${savedTemplate.title} saved to templates`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-031",
+      "statement": "A template stores the origin country and region code, internal reference, commodity and species selection, import reason and purpose, certification purpose, unweaned answer, storage temperature, animal counts, packages, weights, animal identifiers, port of entry, means of transport, transport identification and document reference, transporter, place of origin, contact address and CPH number; it does not store the arrival date in DR2.1.",
+      "kind": "data",
+      "ref": "app/routes.js:7728-7805",
+      "quote": "arrivalDateAtPort: isDesignRelease21TemplateCreate(sessionData)\n        ? null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-032",
+      "statement": "The view template page shows the caption 'Templates', the template title, 'Date created', 'Use template' and warning-style 'Delete' buttons and the review summary sections with change links; changing a section opens that journey page in template-review mode, where the primary button is 'Save and return' and a 'Cancel' link, and the saved result shows '<title> has been updated'.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/view-template.html:43-69; app/routes.js:8509-8549, 468-486; app/views/partials/design-release-2.1/journey-form-actions.html:50-56",
+      "quote": "`${templateTitle} has been updated`",
+      "confidence": "inferred",
+      "note": "The success text is built as sessionData.templateReviewSuccessMessage; the view template banner renders it."
+    },
+    {
+      "id": "prototype-dr2-1-source-033",
+      "statement": "Using a template starts a new Draft notification pre-filled from the template and opens the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11591-11607",
+      "quote": "seedNotificationSessionFromTemplate(req.session.data, template)\n  persistDraftNotification(req.session.data)\n\n  return res.redirect('/notification-hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-034",
+      "statement": "Deleting a template asks 'Delete this template?' with 'Confirm that you want to delete this template.', shows the template name, 'This action cannot be undone.', a warning 'Yes, delete' button and a 'No, cancel' link; confirming returns to the templates list with '<title> has been deleted'. Discarding a template that is being created uses the same confirmation.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/delete-template.html:6-7; app/views/partials/design-release-2.1/delete-confirmation.html:10-22; app/routes.js:8654, 8597",
+      "quote": "This action cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-035",
+      "statement": "Starting a notification from the generic create route with no category goes to the 'What are you importing?' notification type page; starting from a category dashboard skips it and goes straight to Origin of the import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11105-11120",
+      "quote": "if (isDr21 && !category) {\n    return res.redirect('/notification-type')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-036",
+      "statement": "The notification type page has the caption 'About the consignment', the heading 'What are you importing?' and a single radio group with five options: Live animals, Germinal products (semen, ova, embryos), Plants for planting, Potatoes (seed and ware), Wood products. The only action is a 'Continue' button; there is no save-to-hub or cancel action.",
+      "kind": "copy",
+      "ref": "app/routes.js:125-131; app/views/design-release-2.1/notification-type.html:36-53",
+      "quote": "{ value: 'germinal-products', text: 'Germinal products (semen, ova, embryos)' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-037",
+      "statement": "Continuing without choosing a type shows the error 'Select what you are importing'.",
+      "kind": "rule",
+      "ref": "app/routes.js:151-159",
+      "quote": "notificationType: { text: 'Select what you are importing' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-038",
+      "statement": "Changing the notification type of an existing notification clears its commodity selection. Choosing a type starts a Draft notification and the next page is Origin of the import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11147-11170",
+      "quote": "applySpeciesSelectionToSession(req.session.data, [])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-039",
+      "statement": "A new notification gets a generated reference of the form GBN-AG-26 followed by six random upper-case letters or digits, and starts with the status Draft.",
+      "kind": "data",
+      "ref": "app/routes.js:7835-7849, 10615-10625",
+      "quote": "const reference = `GBN-AG-26-${code}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-040",
+      "statement": "Only the plants-for-planting, potatoes and wood-products types have no commodity list: the commodity search returns no commodities for any type other than live animals and germinal products, so those three types cannot proceed to a selectable commodity.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:219-235",
+      "quote": "    return sortCommoditiesByName(commodities)\n  }\n\n  return []",
+      "confidence": "inferred",
+      "note": "The type options exist on the page; getSearchCommodities returns [] for them."
+    },
+    {
+      "id": "prototype-dr2-1-source-041",
+      "statement": "Every status area on journey pages shows a coloured status tag (Draft, Amend or Template) beside the notification reference, or the template name when creating a template; in Amend status a 'Cancel amend' control is shown.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:1-15",
+      "quote": "Cancel amend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-042",
+      "statement": "The Origin of the import page has the caption 'About the consignment', the heading 'Origin of the import', a searchable 'Country of origin' picker (placeholder 'Search for a country'), the question 'Does the consignment have a region of origin code?' with the hint 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' and Yes/No radios, and an optional field 'Your internal reference for this consignment (optional)' with the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:39-169",
+      "quote": "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-043",
+      "statement": "Choosing Yes reveals 'Enter the region of origin code' with the hint 'Enter up to 5 characters.', a fixed read-only prefix taken from the chosen country and a text input limited to 5 characters; the code is stored upper-case as '<prefix>-<suffix>'.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/region-of-origin-code-input.html:1-35; app/routes.js:11183-11201",
+      "quote": "Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-044",
+      "statement": "The region of origin code prefix comes from a country-to-ISO-prefix table covering EU member states and territories, for example France FR, Republic of Ireland IE, Canary Islands (Spain) ES, Ceuta (Spain) XC and Melilla (Spain) XL.",
+      "kind": "data",
+      "ref": "app/data/country-region-prefixes.js:3-45",
+      "quote": "'Ceuta (Spain)': 'XC',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-045",
+      "statement": "The only validation on Origin of the import is that a region of origin code is entered when Yes is chosen, with the error 'Enter the region of origin code'. Country of origin and the Yes/No answer are not required to continue.",
+      "kind": "rule",
+      "ref": "app/routes.js:417-434",
+      "quote": "errors.regionOfOriginCodeSuffix = { text: 'Enter the region of origin code' }",
+      "confidence": "inferred",
+      "note": "validateOriginOfImport has no country or region-question check. The hub marks the task complete only when country, answer and (if Yes) code are present."
+    },
+    {
+      "id": "prototype-dr2-1-source-046",
+      "statement": "On the Origin page DR2.1 shows only a 'Save and continue' button, with no 'Save and return to overview' button and no cancel link.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:171-175",
+      "quote": "showHub: false,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-047",
+      "statement": "The 'What are you importing?' page (caption 'About the consignment') has the inset text 'You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.', a 'Search for a commodity' picker, a details panel 'Help with commodity codes' (with a link to the Trade Tariff tool) and a list of selected commodities with 'Clear all'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:42-136",
+      "quote": "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-048",
+      "statement": "The commodity search hint is 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' for live animals and 'You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).' for germinal products.",
+      "kind": "copy",
+      "ref": "app/routes.js:10650-10656",
+      "quote": "You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-049",
+      "statement": "Continuing without a commodity shows the error 'Select a commodity'. A commodity is optional when saving to the hub.",
+      "kind": "rule",
+      "ref": "app/routes.js:1015-1032, 11269-11282",
+      "quote": "commoditySearch: { text: 'Select a commodity' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-050",
+      "statement": "The live animal commodities, with their commodity codes, are: Cattle 0102, Horse 0101, Pig 0103, Sheep 010410, Goat 010420, Chicken 010511, Turkey 010512, Duck 010513, Goose 010514, Guinea fowl 010515, Cat, Dog, Ferret and Other live mammals (all 01061900), Rabbit 010614, Camel 010613, Ostrich 010633, Parrot 010632, Reptile 010620, Bees 01064100 and Ornamental fish 030111, each with a list of species.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:11-288",
+      "quote": "id: 'other-live-mammals',\n    name: 'Other live mammals',\n    code: '01061900',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-051",
+      "statement": "The germinal product commodities are 15 embryo/ova and semen items (cat, cattle, dog, goat, horse, pig, rabbit/rodent semen, sheep), all with commodity code 05119985 except Cattle, Semen which is 05111000, each with one or more species.",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:16-124",
+      "quote": "name: 'Cattle, Semen',\n    code: '05111000',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-052",
+      "statement": "A notification is for live animals only or for germinal products only: species from the other group are dropped from the selection, and a germinal-only selection switches the notification to its germinal variants of later pages (commodity details, identification, additional details, import reasons, review and hub).",
+      "kind": "rule",
+      "ref": "app/routes.js:163-179, 11247-11267, 1616-1626",
+      "quote": "if (type === 'germinal-products') {\n    return isGerminal\n  }",
+      "confidence": "inferred",
+      "note": "Mixed live and germinal selection is prevented by filtering on notification type; the selection UI itself is client-side JavaScript not in scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-053",
+      "statement": "The 'Main import reason' page (caption 'About the consignment', question 'What is the main reason for importing the animals?') offers five radios with hints: Internal market, Transhipment or onward travel, Transit, Re-entry and Temporary admission horses. For germinal products only Internal market and Transit are offered.",
+      "kind": "copy",
+      "ref": "app/data/import-reasons.js:3-33; app/routes.js:1616-1626",
+      "quote": "hint: 'For horses authorised for temporary entry.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-054",
+      "statement": "Choosing Internal market reveals 'Purpose in the internal market' with 11 options (Transfer of ownership - Sale/gift, Transfer of ownership - Rescue, Breeding, Research, Racing, competition, show or training, Approved premises or body, Companion animal not for resale or rehoming, Production, Slaughter, Fattening, Restocking), each with a hint; germinal products offer only Transfer of ownership - Sale/gift, Breeding, Research and Production.",
+      "kind": "data",
+      "ref": "app/data/internal-market-purposes.js:3-71",
+      "quote": "value: 'Restocking',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-055",
+      "statement": "Choosing Transhipment or onward travel reveals a 'Destination country' select. Choosing Transit reveals a 'Port of exit' select and a 'Destination country' select. Choosing Temporary admission horses reveals an 'Exit date' date picker (hint 'For example, 27/3/2026') and a 'Port of exit' select.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/transit-options-select.html; app/views/partials/transhipment-destination-country-select.html; app/views/partials/temporary-admission-horses-select.html",
+      "quote": "text: \"Port of exit\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-056",
+      "statement": "The ports of exit offered for Transit and Temporary admission horses are ten border control posts, such as 'Edinburgh Airport (animals) - GBEDI4', 'Holyhead POE - GBHLY' and 'Stansted Airport (animals) - GBSTN4A'.",
+      "kind": "data",
+      "ref": "app/data/exit-border-control-posts.js:3-12",
+      "quote": "'Holyhead POE - GBHLY',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-057",
+      "statement": "Main import reason is soft-validated: no reason is needed to continue, but once a reason is chosen its extra details are required, with the errors 'Select a purpose in the internal market', 'Select a destination country', 'Select a port of exit', 'Enter an exit date' (or 'Enter a real date').",
+      "kind": "rule",
+      "ref": "app/routes.js:1688-1750",
+      "quote": "// Soft validation: a main reason is optional to proceed, but once selected\n  // any further information required for that reason must be completed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-058",
+      "statement": "The Commodity details page (caption 'Description of the goods') lists the 'Selected commodities' in a table (Commodity code, Common name, Species, with a Remove button per row) and an 'Add another commodity' link. Removing the last commodity returns to 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-details.html:47-97; app/routes.js:11342-11367",
+      "quote": "Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-059",
+      "statement": "For each species the Commodity details page asks 'Number of animals'. Species whose commodity has a packaging field also show 'Number of packages (when required)' with the hint 'Such as crates, bags or boxes'. Germinal species instead ask 'Total gross weight' (suffix kg) and 'Number of packages'; a germinal-only notification also asks the radio question 'Temperature' (hint 'How will the products be stored') with Ambient, Chilled and Frozen.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-details.html:119-210; app/data/commodities.js:21-23",
+      "quote": "Number of packages (when required)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-060",
+      "statement": "Commodity details errors: 'Enter the number of animals', 'Enter a whole number greater than 0' (animals and packages), 'Enter the number of packages', 'Enter the total gross weight', 'Enter a number greater than 0' (weight, decimals allowed) and 'Select a temperature'. Packages for live animals are not validated.",
+      "kind": "rule",
+      "ref": "app/routes.js:1054-1208",
+      "quote": "errors[`netWeight-${speciesId}`] = { text: 'Enter the total gross weight' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-061",
+      "statement": "For 'Other live mammals' (01061900) the Commodity details and identification tables list each chosen species by its common name on its own row, and a row is removed by species rather than by commodity.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:864-886",
+      "quote": "removeBy: 'species'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-062",
+      "statement": "Animal identifier fields depend on the commodity code: 01061900 Microchip, Passport, Tattoo; 0102 Ear tag, Passport; 0101 Microchip, Passport, Horse name; 0103 Ear tag; sheep and goat Ear tag; chickens, turkeys, ducks, geese, guinea fowl, rabbits, camels, ostriches, parrots, reptiles, bees and fish have none. The Identification details page appears only if some selected species has identifier fields.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers.js:3-33; app/routes.js:1796-1800",
+      "quote": "'0101': [\n    { id: 'microchip', label: 'Microchip' },\n    { id: 'passport', label: 'Passport' },\n    { id: 'horse-name', label: 'Horse name' }\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-063",
+      "statement": "Germinal product identifier fields are 'Donor name/ID' (text, 58 characters maximum), 'Collection date', 'Production date' (dates, hint 'For example, 27/03/2026') and 'Identification number/mark' (text, 58 characters maximum); one set per germinal species rather than one per animal.",
+      "kind": "data",
+      "ref": "app/data/commodity-identifiers.js:17-23; app/routes.js:1788-1790",
+      "quote": "{ id: 'donor-id', label: 'Donor name/ID', type: 'text', maxLength: 58 },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-064",
+      "statement": "The Identification details page (caption 'About the consignment') carries the inset text 'You must add all animal identification details before the consignment arrives at the port of entry.', a Selected commodities table with a Change link, a panel per species headed by the species name with a 'Change number of animals' link, an 'Enter details for <species> n of N' form, a saved-animals table with Remove, and a 'Save and add another' button that becomes 'Save and finish' for the last animal (no button when only one animal).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/animal-identification-details.html:51-166; app/routes.js:2033-2045, 1920-1922",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-065",
+      "statement": "Identification fields are individually optional; entered values are checked for length ('<label> must be <n> characters or less') and dates for format ('Enter a <label> in the format DD/MM/YYYY') and reality ('<label> must be a real date').",
+      "kind": "rule",
+      "ref": "app/routes.js:2117-2135",
+      "quote": "return `Enter a ${field.label.toLowerCase()} in the format DD/MM/YYYY`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-066",
+      "statement": "Animal identifiers are optional for submission when one species is selected. With more than one species selected, at least one complete identifier set is required for every species, otherwise review reports 'Enter at least 1 animal identifier for <species>' (or the number-of-animals or packages prompt).",
+      "kind": "rule",
+      "ref": "app/routes.js:1835-1848, 4861-4877",
+      "quote": "// Multiple species: at least one complete identifier entry per species.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-067",
+      "statement": "The Additional details page (caption 'Commodity details') asks 'What are the animals certified for?' (hint 'You can find this information on the ITAHC.') with sixteen options from 'Further keeping' to 'Other', unless the notification is germinal only (then it is shown as 'Germinal products' on review). It also asks 'Does the consignment contain any unweaned animals?' (hint 'These are animals that are still feeding from their mother.') with Yes and No, but only for cattle and pig commodities, and not when every code is 01061900.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/additional-animal-details.html:47-89; app/data/certification-purposes.js:3-19; app/routes.js:1372-1417",
+      "quote": "These are animals that are still feeding from their mother.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-068",
+      "statement": "The Additional details page is skipped when neither question applies. The journey order is: Origin, What are you importing, Main import reason, Commodity details, Identification details (if identifier fields), Additional details (if a question applies), Arrival details, Transit countries (if required), Transporter, Upload documents (not for templates), Roles and addresses, Contact address, Review, Declaration (not for templates).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1495-1534",
+      "quote": "'/roles-and-addresses',\n    '/contact-address-for-consignment',\n    '/review-notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-069",
+      "statement": "The Arrival details page (caption 'Transport and arrival') has: an arrival date picker (not on templates) labelled 'Arrival date at port of entry' with the hint 'The expected date of arrival at the port of entry. For example, 27/3/2026'; 'Port of entry' as a searchable select (hint 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.', placeholder 'Select a port'); 'Means of transport to the port of entry' select; 'Transport identification'; and 'Transport document reference'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:37-153; app/views/partials/arrival-date-picker.html",
+      "quote": "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-070",
+      "statement": "The 'Transport identification' hint says 'Enter one of the following:' followed by flight number, train number, road vehicle registration number, vessel name (for ferries, also the road vehicle registration number). The 'Transport document reference' hint says 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:129-146",
+      "quote": "Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-071",
+      "statement": "The means of transport options are Air, Rail, Road and Sea (first option 'Select one'). The port of entry options are UK airports and ports listed as '<name> - <code>'.",
+      "kind": "data",
+      "ref": "app/data/means-of-transport.js; app/routes.js:2225-2227, 2255-2270",
+      "quote": "text: 'Select one',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-072",
+      "statement": "The arrival date picker allows dates from 7 days before today to 6 months after today.",
+      "kind": "rule",
+      "ref": "app/routes.js:4333-4344",
+      "quote": "minDate.setDate(minDate.getDate() - 7)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-073",
+      "statement": "Arrival details is soft-validated: only 'Select a means of transport to the port of entry' is required to continue; arrival date, port, identification and document reference may be blank. The hub marks the task complete only when all of them are valid and the date is inside the allowed range.",
+      "kind": "rule",
+      "ref": "app/routes.js:4372-4387, 2272-2291",
+      "quote": "// Soft validation: other arrival fields are optional to proceed, but means of\n  // transport is required (it also drives whether transit countries are shown).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-074",
+      "statement": "The Transit countries page (caption 'Movement') is only part of the journey when the means of transport is Rail or Road; it asks 'Which countries will the consignment travel through?' with the text 'Countries the consignment will travel through are countries between the country of origin and the destination country.' and 'This does not include the United Kingdom.', an 'Enter a country' picker (hint 'Enter each country that the consignment will travel through') and a Country table with a Remove link. Countries are optional, and changing to another means of transport clears them.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:40-139; app/routes.js:48, 2293-2313, 2337-2340",
+      "quote": "const TRANSIT_MEANS_OF_TRANSPORT = ['Rail', 'Road']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-075",
+      "statement": "The Transporter details page (caption 'Transport and arrival') explains 'This is the person or company responsible for transporting the consignment.' and the authorisation rules: a transporter must hold a valid authorisation issued by DAERA or APHA in the UK if transporting live vertebrate animals in, to, from or through Great Britain, travelling over 65 km, or transporting as part of an economic activity, and 'Documents issued by DAERA are valid for use in GB.' and 'Documents issued in any EU member state are not valid for use in GB.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter.html:40-62",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-076",
+      "statement": "Under 'Select a transporter' there is a search ('Name, address or approval number'), an 'Add a transporter' button and a table with radio select, Name, Address, Approval number, Type, Status tag and a 'View details' link. A transporter is optional to continue.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transporter.html:73-165; app/routes.js:12839-12847",
+      "quote": "Name, address or approval number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-077",
+      "statement": "The transporter list is seeded with eight transporters (for example Yusen Logistics (Romania) SRL, Roadtrain Ltd, Aberdeen Livestock Ltd) of type Commercial or Private with status Approved or New; transporters added in the session appear first.",
+      "kind": "data",
+      "ref": "app/data/transporters.js:1-85; app/routes.js:3311-3313",
+      "quote": "approvalNumber: 'UK/ABERDEEN/T1/00092001',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-078",
+      "statement": "'Add a transporter' opens 'Choose a transporter type' (caption 'Add a new transporter') with a warning 'Check the transporter list before adding new transporters to avoid duplicates.' and radios 'Private transporter' and 'Commercial' (hint 'This can only be a commercial transporter from Northern Ireland.'); the error is 'Select a transporter type'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transporter-add.html:31-38; app/data/transporter-types.js:2-11; app/routes.js:3398-3414",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-079",
+      "statement": "The private transporter form collects name or organisation name, address line 1, address line 2 (optional), town or city, county (optional), postcode or Zip code, country, email address and phone number (hint 'For international numbers include the country code'); all except the optional lines are required, with messages such as 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Select a country', 'Enter an email address', 'Enter a phone number'. A saved private transporter has the approval number 'Not applicable' and status New.",
+      "kind": "rule",
+      "ref": "app/routes.js:3462-3500, 3527-3538; app/views/partials/transporter-add-private-fields.html",
+      "quote": "approvalNumber: 'Not applicable',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-080",
+      "statement": "The commercial transporter form adds a required 'Transporter authorisation number' (error 'Enter a transporter authorisation number'), has an optional address lookup, fixes the country to Northern Ireland, and shows an 'Important' banner 'Help with transporter authorisation' repeating the DAERA/APHA authorisation guidance. Both add forms have 'Save and continue' and 'Cancel and return to dashboard' buttons.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:3592-3650, 3368; app/views/partials/transporter-authorisation-banner.html:4-9; app/views/design-release-2.1/transporter-add-commercial.html:49-58",
+      "quote": "const COMMERCIAL_TRANSPORTER_COUNTRY = 'Northern Ireland'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-081",
+      "statement": "The Upload documents page (caption 'Documents') says 'You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.' and lists other documents (import licences or authorisations, commercial documents or invoices) plus a details table 'Check which additional documents you must upload'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/upload-documents.html:38-82",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-082",
+      "statement": "The upload card asks for 'Document reference', 'Document type' (select), 'Date of issue' (date picker, hint 'For example, 27/3/2026') and an 'Attachment' with the rules 'files that are smaller than 50MB', 'PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', 'up to a maximum of 15 files' and 'ZIP files are not allowed for security reasons'; the buttons are 'Save and add another' and the standard journey buttons.",
+      "kind": "constraint",
+      "ref": "app/views/design-release-2.1/upload-documents.html:168-193",
+      "quote": "ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-083",
+      "statement": "The document types are Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log and Other.",
+      "kind": "data",
+      "ref": "app/routes.js:10843-10861",
+      "quote": "{ value: 'itahc', text: 'Intra Trade Animal Health Certificate (ITAHC)' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-084",
+      "statement": "Adding a document is validated with 'Enter a document reference', 'Select a document type', 'Enter a date of issue' (or 'Enter a real date'), 'Upload a document' and 'You can upload a maximum of 15 files'. Uploads are optional: continuing with nothing chosen is allowed, but once a document type is chosen every document field is required.",
+      "kind": "rule",
+      "ref": "app/routes.js:10944-10998, 12259-12271",
+      "quote": "// Soft validation: uploads are optional, but once a document type is chosen\n    // all document fields must be completed before continuing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-085",
+      "statement": "A saved document is listed (Document reference, Document type, Date of issue, Status, Remove) with a status tag 'Scanning for virus' that changes to 'Check completed' after a simulated virus check of about 2.5 seconds.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10925-10926, 10869; app/views/design-release-2.1/upload-documents.html:205-238",
+      "quote": "const VIRUS_CHECK_DELAY_MS = 2500",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-086",
+      "statement": "The Consignment addresses page (caption 'Consignment parties') says 'Add all the addresses that are involved in the consignment.' with the warning 'Providing a false address is an act of fraud', and one section per role, each with its heading, hint and an 'Add a ...' link, or the chosen address with a Change link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/roles-and-addresses.html:39-120",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-087",
+      "statement": "The address roles are: Place of origin ('The address where the animals begin their journey to Great Britain'), Consignor ('This is the sender of the consignment.'), Consignee ('This is the receiver or buyer of the consignment being shipped or transported.'), Importer ('This is usually the same as the consignee. You can select a different person if needed.'), Place of destination ('This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'), County parish holding (CPH) number and Permanent address.",
+      "kind": "copy",
+      "ref": "app/data/consignment-address-sections.js:2-91",
+      "quote": "This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-088",
+      "statement": "Which role sections appear depends on the commodity code: horses (0101) and germinal products (05111000, 05119985) show origin, consignor, consignee, importer and destination only; cattle (0102), pigs (0103) and the default add a CPH number; 01061900 animals (cats, dogs, ferrets, other mammals) show origin, consignor, consignee, importer, destination and a permanent address. Several selected commodities show the union of their sections.",
+      "kind": "rule",
+      "ref": "app/data/consignment-address-sections.js:93-143",
+      "quote": "'01061900': [\n    'place-of-origin',\n    'consignor-or-exporter',\n    'consignee',\n    'importer',\n    'place-of-destination',\n    'permanent-address'\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-089",
+      "statement": "Consignor can be set 'Same as place of origin' and Importer and Place of destination can be set 'Same as consignee', as one-click links shown once the source address has been chosen.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/roles-and-addresses.html:94-113; app/routes.js:2525-2541",
+      "quote": ">Same as consignee</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-090",
+      "statement": "Continuing from Consignment addresses is always allowed; the review page and hub only mark the section complete when every active section has an address (or CPH number or permanent address), and the review error names each incomplete section as 'Complete <section heading>'.",
+      "kind": "rule",
+      "ref": "app/routes.js:12031-12061, 2615-2630",
+      "quote": "text: `Complete ${section.heading.toLowerCase()}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-091",
+      "statement": "An address role page (place of origin, consignor, consignee, importer, place of destination) shows its caption 'Consignment parties' and role heading, an 'Add a new address' button, search ('Name, address or country' hint), the 'Select an address' list with 'Showing X out of Y results', a table of Name, Address and Country with a 'View' link, and buttons 'Save and continue' and 'Save and return to hub' with 'Cancel and return to hub'. The place of origin page filters by a country picker labelled 'Enter a country' with the hint 'Enter each country that the consignment will travel through'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-address-select.html:41-259",
+      "quote": "Showing <span data-results-visible>{{ addressResults.visibleCount }}</span> out of <span data-results-total>{{ addressResults.totalCount }}</span> results",
+      "confidence": "verbatim",
+      "note": "The country picker hint on the place of origin page repeats the transit-countries wording; likely copied. Recorded as found."
+    },
+    {
+      "id": "prototype-dr2-1-source-092",
+      "statement": "The 'Add address and contact details' page (caption 'Add new address') for a consignment role collects name or organisation, address lines, town or city, postcode or Zip code, country, email address and phone number, and asks 'What else should this address be used for?' with the hint 'This address is being added as a <role> address. Select any other roles or addresses this address should be used for.' Destination, consignee and importer roles use a UK address lookup with 'Enter address manually' and fix the country to United Kingdom. Buttons are 'Save and select' and 'Save and return to address page', and the link is 'Cancel and return to hub'.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:39-143; app/routes.js:4156-4224",
+      "quote": "What else should this address be used for?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-093",
+      "statement": "A new address requires name or organisation, address line 1, town or city, postcode or Zip code, country, email address and phone number, with the errors 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Select a country', 'Enter an email address' and 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10485-10523",
+      "quote": "addError('addressBookManualPostcode', 'Enter a postcode or Zip code', '#address-book-manual-postcode')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-094",
+      "statement": "For the origin group (place of origin and consignor) the extra address uses offered are Place of origin and Consignor, and for the destination group Place of destination, Consignee and Importer; the role the address is being added for is implied and not offered again.",
+      "kind": "rule",
+      "ref": "app/data/consignment-address-use-groups.js:3-85",
+      "quote": "// Current role is implied by the journey — only offer other uses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-095",
+      "statement": "The CPH number page (caption 'Consignment parties', heading 'Add the county parish holding number (CPH)') has a details panel 'What is a CPH number?' ('A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.') and a three-part input County (2 digits), Parish (3 digits), Holding number (4 digits) with the hint 'For example 12/345/6789'. It is saved as 'county/parish/holding' only when all three parts are present, and entering nothing raises no error.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/cph-number.html:31-51; app/views/partials/cph-number-input.html; app/routes.js:3248-3272",
+      "quote": "A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-096",
+      "statement": "The permanent address step (for 01061900 animals) goes straight to a per-animal page headed 'Permanent address' with the warning 'Providing a false address is an act of fraud' and the guidance 'A permanent address is where an animal: will permanently reside, can be checked by the Animal and Plant Health Agency (APHA)'. It asks 'Where will their permanent address be?' per animal, with a card per animal showing its identifiers and radios 'Same as the place of destination (POD)' or 'Enter a new address' (hint 'This is where they will stay after spending 48 hours at the place of destination.').",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12899-12929, 2885-2907; app/views/design-release-2.1/permanent-address-animals.html:33-98",
+      "quote": "This is where they will stay after spending 48 hours at the place of destination.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-097",
+      "statement": "A new permanent address per animal needs name or organisation, address line 1, town or city, postcode or Zip code, email and phone, each error naming the animal ('Enter address line 1 for <animal>'); choosing the place of destination before one is set gives 'Add a place of destination before you can continue'. Without an animal count the page says 'Add the number of animals on consignment details before you can continue.'",
+      "kind": "rule",
+      "ref": "app/routes.js:3071-3157; app/views/design-release-2.1/permanent-address-animals.html:98-101",
+      "quote": "Add a place of destination before you can continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-098",
+      "statement": "The yes/no 'Are all the animals going to the place of destination?' permanent address page exists as a DR2.1 view, but its route always sets the answer to 'no' and redirects to the per-animal page, so it is not reachable in the journey.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12899-12929; app/views/design-release-2.1/permanent-address.html:57-74",
+      "quote": "req.session.data.permanentAddressSameAsDestination = 'no'",
+      "confidence": "inferred",
+      "note": "Both GET and POST /permanent-address redirect to /permanent-address/select."
+    },
+    {
+      "id": "prototype-dr2-1-source-099",
+      "statement": "The Contact address for consignment page says 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.' and asks to 'Select an address' from branch addresses with a link 'add a new branch address'; the error is 'Select a contact address'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/contact-address-for-consignment.html:46-85; app/routes.js:1353-1370",
+      "quote": "This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-100",
+      "statement": "The contact addresses offered are the branch addresses and contact-type addresses from the address book plus three seeded branch addresses (Aberdeen Livestock Ltd, West Country Livestock Ltd, Cymru Animal Imports Ltd), listed with the address as a hint.",
+      "kind": "data",
+      "ref": "app/routes.js:1233-1251; app/data/contact-addresses.js:2-22",
+      "quote": "type === 'branch-address' || type === 'contact'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-101",
+      "statement": "Standard journey buttons in DR2.1 are 'Save and continue' (primary), 'Save and return to overview' (secondary, saves a draft and goes to the hub) and a link 'Cancel and return to overview'. Pages in the consignment parties group instead say 'Save and return to hub' and 'Cancel and return to hub'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:14-35, 71-96",
+      "quote": "{% set hubText = options.hubText if options.hubText else 'Save and return to overview' %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-102",
+      "statement": "While amending a submitted notification the journey buttons change to a primary 'Save and return' (to the review page), a secondary 'Save and continue' and a link-style 'Save and return to overview'.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:3-12, 72-88",
+      "quote": "Amend state (notificationStatus == 'Amend'):\n    Save and return (primary) → review",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-103",
+      "statement": "The notification hub is titled 'Overview' and shows a 'Your commodities' summary of cards (Animals - 'Total number of animals in this consignment', Packages/boxes - 'Total number of packages in this consignment'; germinal-only shows Packages/boxes and Kilograms - 'Total weight of packages in this consignment'), a 'Notification tasklist' and the actions 'Review and submit' (primary) and 'Return to dashboard' (secondary).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-hub.html:24-114; app/routes.js:6461-6502",
+      "quote": "Total number of animals in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-104",
+      "statement": "The hub task list has sections '1. About the consignment' (Where is this consignment coming from?, What are you importing?, Main import reason), '2. Description of the goods' (Commodity details, Identification details if needed, Additional details if needed), '3. Transport and arrival' (Arrival details, Transit countries if needed, Transport details), '4. Documents' (Upload documents), '5. Consignment parties' (Roles and addresses, hint 'Consignor or Exporter, Consignee, Importer and Place of Destination') and '6. Contact address' (Contact address for this consignment), each task tagged 'Complete' or 'To do'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6503-6597",
+      "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-105",
+      "statement": "A hub task shows Complete when its data is present and valid: origin needs country and region answer (and code if Yes); import reason needs its extra details; commodity details need positive counts (and weight, packages and temperature for germinal); transit countries are Complete once any are selected; transport details need a chosen transporter; documents need at least one; contact address needs a valid contact address.",
+      "kind": "rule",
+      "ref": "app/routes.js:402-415, 1423-1459, 1644-1671, 3289-3291, 6557-6595",
+      "quote": "return Boolean(sessionData.transporter && sessionData.transporter.name)",
+      "confidence": "inferred",
+      "note": "Derived by reading the has...Complete helpers feeding the tasklist statuses."
+    },
+    {
+      "id": "prototype-dr2-1-source-106",
+      "statement": "The review page shows its content in six numbered sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Uploaded documents' (omitted for templates, so the next sections renumber), '5. Consignment addresses' and '6. Contact address', each with summary cards and Change links.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-sections.html:3-61",
+      "quote": "{{ partiesSectionNumber }}. Consignment addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-107",
+      "statement": "Review summary rows include Country of origin, Region of origin code, Internal reference number, Commodity code, Common name, Species, Main import reason (plus Purpose in the market, Destination country, Exit border control post, Exit date, Port of exit as relevant), Certified for, Includes unweaned animals, Port of entry, Arrival date at destination, Means of transport to the port of entry, Transport identification, Transport document reference, transporter Name, Address, Country, Approval number and Type, and a Contact address; blank values show as not applicable.",
+      "kind": "data",
+      "ref": "app/routes.js:5002-5121, 5236-5263",
+      "quote": "key: 'Arrival date at destination',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-108",
+      "statement": "Pressing Continue on the review page goes to the declaration only when the notification is complete; otherwise it redisplays the review page with an error summary listing 'Complete <card title>' for each incomplete card. Documents and transit countries are optional for submission.",
+      "kind": "rule",
+      "ref": "app/routes.js:12117-12129, 4896-4905, 4956-5000",
+      "quote": "// Documents remain optional. Animal identifiers are optional unless multiple\n  // species are selected, in which case at least one identifier is required per species.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-109",
+      "statement": "A submitted, action-required or draft review page begins with an 'Import reference numbers' section with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.', the notification reference and the customs document code C640, each with a Copy button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:44-67",
+      "quote": "You must use the correct reference and code on the customs declaration or your consignment will be delayed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-110",
+      "statement": "The review page header shows the reference, a status tag (Draft, Submitted, Submission complete or Submitted action required), a date line ('Date created' for drafts, 'Date submitted' otherwise) and the actions 'Amend this notification' (only for Submitted and action-required), 'Copy as new' and 'Delete'. An action-required notification also shows a warning such as 'You need to complete animal identifiers and upload a health certificate'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/review-page-header.html:1-39; app/routes.js:5713-5775",
+      "quote": "return 'You need to complete animal identifiers and upload a health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-111",
+      "statement": "For an action-required notification with no uploaded document, the Uploaded documents section shows the section error 'Upload a valid health certificate' in place of document cards.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5622-5628",
+      "quote": "'Upload a valid health certificate'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-112",
+      "statement": "The journey review page buttons are 'Continue' (or 'Save template'), 'Cancel amend' while amending, and a warning 'Delete' button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/review-notification.html:72-91",
+      "quote": "text: \"Save template\" if data.isCreatingTemplate else \"Continue\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-113",
+      "statement": "The Declaration page has three statements ('I am the contact for the authorities and located in the UK.' with 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'; 'I confirm I am responsible for this consignment.' until it clears official checks at the border or reaches the place of destination; 'I confirm that I am accountable for:' payment for official controls, re-dispatch arrangements, quarantine or isolation costs, destruction and disposal costs, and authorisation to act for a third party), a confirmation checkbox 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', 'Date of declaration' and a Continue button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/declaration.html:36-92",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-114",
+      "statement": "Continuing the declaration without ticking the box shows 'Confirm that you have reviewed and comply with this declaration'; ticking it submits the notification and opens the submitted page. Templates skip the declaration.",
+      "kind": "rule",
+      "ref": "app/routes.js:6339-6357, 12141-12166",
+      "quote": "text: 'Confirm that you have reviewed and comply with this declaration'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-115",
+      "statement": "The submission confirmation page shows a green panel 'Import notification submitted' with 'Your reference number' and the reference, and sections 'Transporting the consignment', 'How to view or amend this notification' (links 'Return to your dashboard' and 'Create a new notification') and 'Getting help' (APHA email, telephone 0330 041 6999, Monday to Friday 8:30am to 5pm, HMRC contact and call charges links).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-submitted.html:22-82",
+      "quote": "Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-116",
+      "statement": "A section 'Before the consignment is imported' ('You still need to:') is shown on the confirmation page when the submission is incomplete, listing 'upload the ITAHC and any other required documents' when no ITAHC is attached and 'complete the animal identifier information in the notification' when identifiers are incomplete.",
+      "kind": "rule",
+      "ref": "app/routes.js:6400-6418; app/views/design-release-2.1/notification-submitted.html:29-39",
+      "quote": "items.push('upload the ITAHC and any other required documents')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-117",
+      "statement": "A submitted notification with a missing ITAHC or incomplete identifiers has the status 'Submitted action required' and appears as Action required on the dashboard; otherwise it is 'Submitted'.",
+      "kind": "rule",
+      "ref": "app/routes.js:5668-5672",
+      "quote": "statusText: conditionalItems.length ? 'Submitted action required' : 'Submitted',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-118",
+      "statement": "'Amend this notification' opens a dialog 'Amend notification' asking 'Are you sure you want to change this notification?' with 'Yes, continue' and 'No, go back'; continuing loads the submitted notification as an editable copy with the status 'Amend' and opens the review page.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:20-28; app/routes.js:11646-11677",
+      "quote": "Are you sure you want to change this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-119",
+      "statement": "'Cancel amend' opens a dialog 'Are you sure you want to cancel this amendment?' with 'Yes, cancel amendment' and 'Go back'; confirming discards the edits and returns to the original submitted notification's review page.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/cancel-amend-modal.html:17-23; app/routes.js:11680-11706",
+      "quote": "Are you sure you want to cancel this amendment?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-120",
+      "statement": "'Copy as new' creates a new Draft notification with a new reference and opens the hub. It carries over the origin, region code and internal reference, commodity and species selection, notification type, import reason and its details, certification purpose, unweaned answer, storage temperature, all consignment role addresses, CPH number and permanent address, and does not carry over animal counts, identifiers, arrival and transport details, transporter, documents or the contact address.",
+      "kind": "rule",
+      "ref": "app/routes.js:5812-5862, 5869-5888",
+      "quote": "const carriedOverKeys = [",
+      "confidence": "inferred",
+      "note": "The carried-over key list names what is kept; absence of counts, identifiers, arrival, transport, documents and contact address from the list is the basis of the second half of the statement."
+    },
+    {
+      "id": "prototype-dr2-1-source-121",
+      "statement": "Deleting a notification asks 'Delete this notification?' with 'Confirm that you want to delete this notification.', a summary of Reference number, Commodity, Number and Origin, 'This action cannot be undone.', a warning 'Yes, delete' button and a 'No, cancel' link; confirming returns to the dashboard with '<reference> has been deleted'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/delete-notification.html:6-7; app/routes.js:6175-6193, 12089-12115",
+      "quote": "Confirm that you want to delete this notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-122",
+      "statement": "The address book page is titled 'Address book' with 'Manage your addresses for use across all your import notifications', an 'Add a new address' button, a collapsible 'Filter addresses' panel (Search with the placeholder 'Search by name, address or country' and a Type select), and four category tabs: Origin and Consignor, Destination, Consignee and Importer, Transporter, Branch. Each tab has a heading such as 'Origin and Consignor addresses' and a results line.",
+      "kind": "copy",
+      "ref": "app/views/address-book.html:33-100, 147-165; app/data/address-book.js:23-55",
+      "quote": "Manage your addresses for use across all your import notifications",
+      "confidence": "verbatim",
+      "note": "The tab label strings in app/data/address-book.js use 'Destination, Consignee and Importer' (and 'Origin and Consignor'); the add-an-address page in DR2.1 says 'Or' instead of 'and' (see the address type claim). Both are recorded."
+    },
+    {
+      "id": "prototype-dr2-1-source-123",
+      "statement": "The address book table shows Name, Type, Address, Country and a 'View' link per row; the Transporter tab shows Name, Address, Approval number and Type. It shows 8 addresses per page with pagination.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book.html:168-241; app/data/address-book.js:412",
+      "quote": "pageSize: 8,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-124",
+      "statement": "Adding an address starts at 'Choose an address type' (caption 'Add a new address') with radios, in DR2.1: 'Origin or Consignor' (hint 'Place of origin, Consignor'), 'Destination, Consignee or Importer' (hint 'Place of destination, Consignee, Importer'), 'Transporter' (hint 'Private, Commercial') and 'Branch' (hint 'Branch address'); the error is 'Select an address type'.",
+      "kind": "copy",
+      "ref": "app/data/address-book-add-categories.js:2-27; app/routes.js:10265, 11791-11799",
+      "quote": "textDesignRelease21: 'Destination, Consignee or Importer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-125",
+      "statement": "Choosing Transporter in the address book sends the user to the transporter type flow; the other categories go to an address details page with a UK address lookup (destination and branch categories) or manual entry, and the question 'What can this address be used for?' (checkboxes). Origin uses are Place of origin and Consignor; destination uses are Place of destination, Consignee and Importer; branch uses are Branch address. The error is 'Select what this address can be used for'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11813-11817, 10089-10091, 10212-10224; app/data/address-book-origin-uses.js; app/data/address-book-destination-uses.js; app/data/address-book-branch-uses.js",
+      "quote": "text: 'Select what this address can be used for'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-126",
+      "statement": "An address book entry has a view page (summary of its details, with Edit and Delete buttons for addresses the user can manage), an edit page with the same validation as adding, and a delete confirmation 'Delete this address?' ('Confirm that you want to delete this address.'). Success messages read '<name> address added to your address book', '<Name> address updated' and '<Name> address deleted'.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book-view.html:28-49; app/views/design-release-2.1/delete-address.html:6-7; app/routes.js:9651-9679, 11978-12040",
+      "quote": "return `${trimmed} address added to your address book`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-127",
+      "statement": "The country lists used by the journey are European Union member states (27 listed) with their territories such as Azores, Canary Islands, Ceuta, French Guiana, Guadeloupe and Madeira, plus other countries; the same list feeds Country of origin, transit countries, destination countries and address countries.",
+      "kind": "data",
+      "ref": "app/data/countries.js:1-60",
+      "quote": "const memberStates = [",
+      "confidence": "verbatim",
+      "note": "The rest of the file (other countries beyond the first 60 lines) was not transcribed; the list is counted by structure only."
+    },
+    {
+      "id": "prototype-dr2-1-source-128",
+      "statement": "All DR2.1 data (drafts, submitted notifications, templates, address book additions, uploaded documents) is held in the user's session; nothing is persisted, authenticated or scoped to an organisation, and the prototype performs no real file upload or virus scan.",
+      "kind": "non-functional",
+      "ref": "app/lib/version-mount.js (middleware: req.session.data); app/routes.js:10872-11013",
+      "quote": "virusStatus: 'uploading',",
+      "confidence": "inferred",
+      "note": "Inferred from session-only storage and the simulated virus check. The real services must supply persistence, validation and authorisation the prototype cannot express."
+    },
+    {
+      "id": "prototype-dr2-1-source-129",
+      "statement": "The prototype's address book has no search or filter on the Add-address lookup beyond the client-side picker; the Messages, Manage account and Plants dashboard links are placeholders with '#' targets and have no DR2.1 page.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:28; app/views/layouts/main.html:92-96",
+      "quote": "href: navManageAccountHref,",
+      "confidence": "inferred",
+      "note": "navManageAccountHref defaults to '#' and is not overridden in design-release-2.1-version.js."
+    },
+    {
+      "id": "prototype-dr2-1-source-130",
+      "statement": "The source does not state field length limits, address formats or email/phone format checks for addresses and transporter contact details: required fields are only checked for presence.",
+      "kind": "constraint",
+      "ref": "app/routes.js:10485-10523, 3462-3500",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in validateAddressBookManualAddress, validateTransporterPrivateForm and validateTransporterCommercialForm: only presence checks."
+    },
+    {
+      "id": "prototype-dr2-1-source-131",
+      "statement": "The source does not define behaviour for the plants-for-planting, potatoes and wood-products notification types beyond offering them as radios; there is no commodity list, journey or dashboard for them.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:125-131, 219-235",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in routes.js and app/data for commodities for these types; none found."
+    },
+    {
+      "id": "prototype-dr2-1-source-132",
+      "statement": "The source does not define a validation message or rule for an empty or duplicate template name when creating a template, nor for an empty country of origin.",
+      "kind": "rule",
+      "ref": "app/routes.js:8984-9002, 417-434",
+      "quote": "",
+      "confidence": "gap",
+      "note": "handleCreateTemplatePage and validateOriginOfImport contain no such validation."
+    }
+  ]
+}

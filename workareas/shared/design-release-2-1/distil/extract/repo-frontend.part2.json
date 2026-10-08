@@ -1,0 +1,1475 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 2 read, in full: the live-animals obligation manifest (src/server/app/sets/live-animals/obligations/index.js, 49 obligations) and its 11 section files (arrival, documents, import-reason, misc, origin, parties, system, transport, commodities/aggregates, commodities/identifiers, commodities/lines); the set-owned commodities reference service (services/commodities/index.js and stub.js); the set's 12 docs (README, features, obligation-model, journey-flow-and-gates, limits, services, testing, lighthouse and the four add-a-* recipes); the platform decisions ledger (src/server/app/docs/decisions.md, 8 rulings) and platform limits (src/server/app/docs/limits.md, 5 limits); and the boot-time model purity gate (src/server/app/obligation-purity.js). Claims run in that order: manifest-wide facts, then each obligation by section with its scope gate, mandate, cardinality and invariant, then the commodity catalogue (5 picker commodities, codes, species, types, identifier order, package-count, permanent-address, unweaned and CPH lists), then rules the set docs state about the live journey (flow sections, 12 task rows, hub, opening run, entry guard, captions, collections loops, check-answers, testing and Lighthouse floors), then every decision and limit as an existing ruling. The add-a-* recipes were claimed only where they state a rule of the live journey (run membership, hub hints, check-answers Change links, collection add/remove/cap behaviour). Page copy and controllers sit in other parts.",
+  "claims": [
+    {
+      "id": "repo-frontend-p2-001",
+      "statement": "The live-animals notification model is the Live Animals V4 data-field model, taken from the Confluence page \"Live Animals Data Fields - V4\" (page 6497338582).",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:2",
+      "quote": " * Obligations — Live Animals V4 data-field model.\n *\n * Source: Confluence \"Live Animals Data Fields - V4\" (page 6497338582).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-002",
+      "statement": "The notification manifest declares 49 obligations, and the order they are listed in does not affect evaluation.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:178-232",
+      "quote": "// Manifest — order does not affect evaluation (evaluator builds group\n// hierarchy via `within` back-references).",
+      "confidence": "verbatim",
+      "note": "49 is counted from the obligations array, lines 183-231."
+    },
+    {
+      "id": "repo-frontend-p2-003",
+      "statement": "A notification holds three repeatable groups: commodity lines, animal-identifier records within each line, and accompanying documents. Groups are derived from the obligations that point at them with `within`.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:234-237",
+      "quote": "export const groups = obligations.filter((obligation) =>\n  obligations.some((other) => other.within === obligation)\n)",
+      "confidence": "inferred",
+      "note": "The three groups follow from the within references in lines.js (commodityLine), identifiers.js (unitRecord) and documents.js (documents)."
+    },
+    {
+      "id": "repo-frontend-p2-004",
+      "statement": "No notification-level all-or-nothing invariant across scalar fields exists today.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:241-245",
+      "quote": "The current manifest has zero `allOrNothingOfIds`\n// carriers; the loop is retained as a general primitive for any future\n// notification-level scalar invariant block.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-005",
+      "statement": "Option lists for commodities, species, ports of entry, country of origin and animals-certified-for come from MDM in production and are stubbed in test fixtures; they are not modelled as obligations.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:46-49",
+      "quote": " * MDM-sourced enum values (commodities / species / ports of\n * entry / country of origin / animals-certified-for options) are\n * stubbed in test fixtures rather than modelled as obligations —\n * their real option lists come from MDM in production.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-006",
+      "statement": "A standard address block is a single answer whose stored value is a composite of name, address line 1, optional address line 2, town, optional county, postcode, country, telephone and email.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:51-53",
+      "quote": " * Standard address block: modelled as a single-cardinality obligation\n * whose stored value is a composite `{ name, addressLine1,\n * addressLine2?, town, county?, postCode, country, telephone, email }`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-007",
+      "statement": "Validation of an address block's subfields (maximum lengths, formats, which subfields are mandatory) is outside the obligation model.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:54-55",
+      "quote": " * Field-level validation of the composite (max-length, formats,\n * mandatory subfields) is out of scope of the obligation model.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-008",
+      "statement": "The model does not say anywhere which address subfields are mandatory or what limits they carry; that rule must live in the address pages or the address book, outside this slice.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/index.js:51-55; obligations/sections/parties.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in parties.js, misc.js, transport.js and the manifest header. Only the composite shape is stated."
+    },
+    {
+      "id": "repo-frontend-p2-009",
+      "statement": "Every notification carries a system-assigned reference number (poApprovedReferenceNumber) in the format GBN-AG-YY-XXXXXX, minted when the notification is created.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/system.js:7-9",
+      "quote": "// V4: `GBN-AG-YY-XXXXXX` where XXXXXX is a 6-char Crockford base32\n// body (`0-9A-HJKMNP-TV-Z`, no I/L/O/U). System-assigned at\n// notification-creation time; never user-entered.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-010",
+      "statement": "The six-character body of the reference number uses Crockford base32 and never contains the letters I, L, O or U.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/system.js:7-8",
+      "quote": "XXXXXX is a 6-char Crockford base32\n// body (`0-9A-HJKMNP-TV-Z`, no I/L/O/U)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-011",
+      "statement": "The reference number is mandatory, system-populated and never shown to the user as a question in the journey; its legality is enforced by the system that mints it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/system.js:1-15",
+      "quote": "// System-populated fields — declared for V4 completeness but NOT\n// presented in the flow layer. Value legality is enforced upstream,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-012",
+      "statement": "The arrival date at the port is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/arrival.js:5-9",
+      "quote": "export const arrivalDateAtPort = {\n  id: '12b3c4d5-e6f7-4a08-8b9a-1c2d3e4f5a6b',\n  name: 'arrivalDateAtPort',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-013",
+      "statement": "The port of entry is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/arrival.js:11-15",
+      "quote": "export const portOfEntry = {\n  id: '23c4d5e6-f7a8-4b09-8cab-2d3e4f5a6b7c',\n  name: 'portOfEntry',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-014",
+      "statement": "A trader can attach between 0 and 15 accompanying documents to a notification, and the documents collection is always in scope.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:5-6,22",
+      "quote": "// Spec source: traders can attach between 0 and 15 accompanying\n// documents to a notification;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-015",
+      "statement": "More than 15 documents breaks an invariant with the error code obligation.accompanyingDocument.tooMany, which also catches documents saved before a lower cap was deployed.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:13-16,24-27",
+      "quote": "  requires: {\n    maxEntries: 15,\n    maxEntriesErrorCode: 'obligation.accompanyingDocument.tooMany'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-016",
+      "statement": "The documents feature also caps the Add affordance at 15 and enforces the cap on its write path.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/limits.md:3-6; obligations/sections/documents.js:13-14",
+      "quote": "The document collection has a maximum of fifteen entries. The set manifest declares\nthe cardinality and the documents feature enforces it on its write path.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-017",
+      "statement": "Existing ruling: the model, which allows many documents, is the source of truth over the V4 Confluence page, which still reads as if a notification has at most one document.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:7-9",
+      "quote": "Confluence page 6497338582\n// still reads as if there is at most one document — the model is the\n// source of truth until the page is amended.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-018",
+      "statement": "Each accompanying document must have a document type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:30-35",
+      "quote": "  name: 'accompanyingDocumentType',\n  within: documents,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-019",
+      "statement": "Each accompanying document must have an attachment type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:37-42",
+      "quote": "  name: 'accompanyingDocumentAttachmentType',\n  within: documents,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-020",
+      "statement": "Each accompanying document must have a document reference.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:44-49",
+      "quote": "  name: 'accompanyingDocumentReference',\n  within: documents,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-021",
+      "statement": "Each accompanying document must have a date of issue.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:51-56",
+      "quote": "  name: 'accompanyingDocumentDateOfIssue',\n  within: documents,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-022",
+      "statement": "A document's upload id is optional.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:58-63",
+      "quote": "  name: 'uploadId',\n  within: documents,\n  status: 'optional'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-023",
+      "statement": "A document's file name is optional, so a document can be recorded without an uploaded file.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:65-70",
+      "quote": "  name: 'filename',\n  within: documents,\n  status: 'optional'",
+      "confidence": "inferred",
+      "note": "The second half follows because both uploadId and filename are optional while type, attachment type, reference and date of issue are mandatory."
+    },
+    {
+      "id": "repo-frontend-p2-024",
+      "statement": "Document instance ids are session-scoped counter values such as doc1 and doc2.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:23",
+      "quote": "  // Instance ids are session-scoped counter values (`doc1`, `doc2`, …).",
+      "confidence": "verbatim",
+      "note": "The set limits doc (repo-frontend-p2-148) says grouped positions are snapshot-local and renumber on removal; recorded as the source says, not reconciled."
+    },
+    {
+      "id": "repo-frontend-p2-025",
+      "statement": "The reason for import is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:34-38",
+      "quote": "export const reasonForImport = {\n  id: 'd34e5f6a-7b8c-4d9e-8f01-2a3b4c5d6e7f',\n  name: 'reasonForImport',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-026",
+      "statement": "The stored reason-for-import values the model gates on are internalMarket, transit, transhipmentOrOnwardTravel and temporaryAdmissionHorses.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:48,61-64,84,108",
+      "quote": "const PORT_OF_EXIT_APPLICABLE_REASONS = ['transit', 'temporaryAdmissionHorses']",
+      "confidence": "inferred",
+      "note": "Read from the gate values; the model does not hold the full option list, which belongs to the page copy (another part)."
+    },
+    {
+      "id": "repo-frontend-p2-027",
+      "statement": "The purpose in the internal market is asked, and mandatory, only when the reason for import is internal market.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:6-9,43-56",
+      "quote": "'purposeInInternalMarket applies when reasonForImport is internalMarket'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-028",
+      "statement": "When the reason for import changes away from internal market, any saved purpose in the internal market is deleted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:40-42",
+      "quote": "// Purge-on-flip: when reasonForImport is not 'internalMarket',\n// purposeInInternalMarket goes out of scope and any stored value is\n// dropped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-029",
+      "statement": "The destination country is asked, and mandatory, only when the reason for import is transit or transhipment or onward travel; otherwise any saved value is deleted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:58-79",
+      "quote": "// V4 (Confluence page 6497338582, \"Reason of Import\" section):\n// destinationCountry applies when reasonForImport ∈ { transit,\n// transhipmentOrOnwardTravel }. Purge-on-flip.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-030",
+      "statement": "The port of exit is asked, and mandatory, only when the reason for import is transit or temporary admission of horses; otherwise any saved value is deleted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:81-99",
+      "quote": "// V4: portOfExit applies when reasonForImport ∈ { transit,\n// temporaryAdmissionHorses }.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-031",
+      "statement": "The port of exit is chosen from the same list as the port of entry.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:82-83",
+      "quote": "Spec: \"Port selected from the port of\n// entry list (Exit and Entry share the same list).\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-032",
+      "statement": "The exit date is asked, and mandatory, only when the reason for import is temporary admission of horses; otherwise any saved value is deleted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:101-116",
+      "quote": "// V4: exitDate applies only when reasonForImport is\n// temporaryAdmissionHorses. Purge-on-flip.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-033",
+      "statement": "The model states no rule relating the exit date to the arrival date (for example that exit must follow arrival).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:101-116; obligations/sections/arrival.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Any such check would be page validation, in another part."
+    },
+    {
+      "id": "repo-frontend-p2-034",
+      "statement": "The contact address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:5-9",
+      "quote": "export const contactAddress = {\n  id: 'f037e8f9-a0b1-4c26-8d72-fe5f60718293',\n  name: 'contactAddress',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-035",
+      "statement": "The trader's own internal reference number is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:11-19",
+      "quote": "// Internal reference (trader-entered)\n// -----------------------------------------------------------------------------\n\nexport const internalReferenceNumber = {\n  id: '10e5f607-1829-4a3b-84c5-06d7e8f9a0b1',\n  name: 'internalReferenceNumber',\n  status: 'optional'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-036",
+      "statement": "What the animals are certified for is asked once per notification and is always mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:21-30",
+      "quote": "// Animals certified for (notification-level; spec notes APHA may make\n// this commodity-gated later — modelled as always-mandatory for now)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-037",
+      "statement": "APHA may later make the animals-certified-for question depend on the commodity.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/misc.js:22-23",
+      "quote": "spec notes APHA may make\n// this commodity-gated later",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-038",
+      "statement": "The country of origin is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:12-16",
+      "quote": "export const countryOfOrigin = {\n  id: 'a01b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',\n  name: 'countryOfOrigin',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-039",
+      "statement": "A country-of-origin subdivision code is held and is optional.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:18-22",
+      "quote": "export const countryOfOriginSubdivisionCode = {\n  id: 'd34e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a',\n  name: 'countryOfOriginSubdivisionCode',\n  status: 'optional'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-040",
+      "statement": "Whether a region of origin code is required is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:24-28",
+      "quote": "export const regionCodeRequirement = {\n  id: 'b12c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e',\n  name: 'regionOfOriginCodeRequirement',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-041",
+      "statement": "The region of origin code is always in scope: mandatory when the trader says a region code is required (yes), optional otherwise.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:3-6,30-42",
+      "quote": "// Retain-value pattern: always in scope; mandatory when the\n// requirement is 'yes', optional otherwise.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-042",
+      "statement": "A saved region of origin code is kept when the trader changes the requirement answer to no; it is not deleted.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:31-32",
+      "quote": "Stored values are kept\n// across gate flips (V4 spec: the field itself is not purged on 'no').",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-043",
+      "statement": "The place of origin address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:6-10",
+      "quote": "export const placeOfOrigin = {\n  id: '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c',\n  name: 'placeOfOrigin',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-044",
+      "statement": "The consignor address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:12-16",
+      "quote": "export const consignor = {\n  id: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',\n  name: 'consignor',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-045",
+      "statement": "The consignee address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:18-22",
+      "quote": "export const consignee = {\n  id: 'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e',\n  name: 'consignee',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-046",
+      "statement": "The importer address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:24-28",
+      "quote": "export const importer = {\n  id: 'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f',\n  name: 'importer',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-047",
+      "statement": "The place of destination address is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:30-34",
+      "quote": "export const placeOfDestination = {\n  id: 'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60',\n  name: 'placeOfDestination',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-048",
+      "statement": "The transporter type is always asked and is mandatory, with the stored values Commercial and Private.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:27-31,38-41,53-56",
+      "quote": "export const transporterType = {\n  id: '34d5e6f7-a8b9-4c0a-8dbc-3e4f5a6b7c8d',\n  name: 'transporterType',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-049",
+      "statement": "A commercial transporter address is asked, and mandatory, only when the transporter type is Commercial; switching to Private deletes it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:33-48",
+      "quote": "// Purge-on-flip: switching transporterType from 'Commercial' to\n// 'Private' drops any stored commercialTransporter address.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-050",
+      "statement": "A private transporter address is asked, and mandatory, only when the transporter type is Private; it is out of scope otherwise.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:12-15,50-63",
+      "quote": "explanation: 'privateTransporter applies when transporterType is Private'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-051",
+      "statement": "The means of transport is always asked and is mandatory; the land modes it gates on are RAILWAY and ROAD_VEHICLE.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:69-73,96",
+      "quote": "export const meansOfTransport = {\n  id: '45e6f7a8-b9c0-4d1b-8ecd-4f5a6b7c8d9e',\n  name: 'meansOfTransport',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-052",
+      "statement": "The transport identification is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:75-79",
+      "quote": "export const transportIdentification = {\n  id: '56f7a8b9-c0d1-4e2c-8fde-5a6b7c8d9e0f',\n  name: 'transportIdentification',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-053",
+      "statement": "The transport document reference is always asked and is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:81-85",
+      "quote": "export const transportDocumentReference = {\n  id: '67a8b9c0-d1e2-4f3d-8aef-6b7c8d9e0f1a',\n  name: 'transportDocumentReference',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-054",
+      "statement": "Transited countries are asked only when the means of transport is railway or road vehicle; for any other mode the question leaves scope and saved countries are deleted.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:87-89,98-111",
+      "quote": "// Conditional in-scope-OPTIONAL multi-select — stored as an array of\n// country strings. Out of scope (and purged) when means-of-transport\n// is not RAILWAY or ROAD_VEHICLE.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-055",
+      "statement": "Existing ruling (design release 1): transited countries are never compulsory; a trader may leave the list empty, the row reads Optional and submission is not held up.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:91-93",
+      "quote": "// Asked of rail and road consignments, but never compulsory (design\n// release 1): a trader who travels through nowhere they can name leaves\n// the list empty, the row reads Optional and submission is not held up.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-056",
+      "statement": "Transited countries are a multi-select stored as a list of countries.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:87-88",
+      "quote": "stored as an array of\n// country strings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-057",
+      "statement": "Every consignment must have at least one commodity line; a notification with none fails with the error code obligation.commodityLine.atLeastOne.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:24-31",
+      "quote": "  // Collection floor: V4 requires at least one commodity line on\n  // every consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-058",
+      "statement": "Each commodity line holds a commodity, a type of commodity, species, a number of animals and, for some commodities, a number of packages.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:10-15",
+      "quote": "// Commodity line — user-driven indexed group. Each commodity line\n// carries commodityCode + commodityType + species + numberOfAnimals and\n// (conditionally) numberOfPackages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-059",
+      "statement": "Each commodity line must have a commodity selected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:34-39",
+      "quote": "  name: 'commoditySelection',\n  within: commodityLine,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-060",
+      "statement": "Each commodity line must have a type of commodity, asked of every commodity.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:41-50",
+      "quote": "Modelled\n// as unconditional field record for now.",
+      "confidence": "verbatim",
+      "note": "The source records an ambiguity: V4 says \"Where applicable for given commodity, user is able to filter species by type\", and it is unclear whether Type itself is commodity-gated."
+    },
+    {
+      "id": "repo-frontend-p2-061",
+      "statement": "Each commodity line must have species selected, stored as a list (multi-select).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:52-59",
+      "quote": "// Multi-select; stored value is an array of species strings per line.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-062",
+      "statement": "Each commodity line must have a number of animals.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:61-66",
+      "quote": "  name: 'numberOfAnimalsQuantity',\n  within: commodityLine,\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-063",
+      "statement": "The number of packages is asked only on lines whose commodity is on the package-count list, and is optional there.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:4-8,76-84",
+      "quote": "'numberOfPackages applies on lines whose commodityCode is in the package-count list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-064",
+      "statement": "Commodity line ids are opaque generated identifiers (ULIDs).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:13-15",
+      "quote": "Line-instance ids are opaque\n// orchestrator-generated ULIDs",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-065",
+      "statement": "The CPH number is one answer per notification, asked and mandatory when any commodity line has a commodity that needs a CPH; otherwise it is out of scope.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:8-27",
+      "quote": "'CPH applies when any commodity line has a CPH-required commodityCode'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-066",
+      "statement": "Whether the consignment contains unweaned animals is a yes/no question per notification, asked and mandatory only when at least one line has a commodity on the unweaned list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/aggregates.js:29-55",
+      "quote": "// Contains unweaned animals — notification-level yes/no, gated on the\n// active commodities. Only mandatory when the consignment includes at\n// least one commodity design release 1 asks the question of;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-067",
+      "statement": "Each commodity line holds its own collection of animal-identifier records, which is always in scope.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:51-61",
+      "quote": "// Unit record — nested user-driven indexed group inside commodityLine.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-068",
+      "statement": "Every animal-identifier record must carry at least one of: microchip, passport, tattoo, ear tag or horse name; otherwise it fails with obligation.unitRecord.identifiersRequired.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:63-66,104-112",
+      "quote": "  // V4 spec (Confluence page 6497338582): \"Field Block - Mandatory\n  // to Submit - At least one Animal Identifier\". Every unit-record\n  // must carry ≥ 1 of the five identifier obligations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-069",
+      "statement": "A record missing an identifier gives one error per record, and the identification subsection stays In progress until it is fixed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:71-74",
+      "quote": "  // `groupInvariantErrors` (state-queries.js) walks in-scope\n  // instances and emits one error per instance that violates the\n  // invariant, so the per-unit-records subsection stays In progress\n  // until the user fixes it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-070",
+      "statement": "On a line whose commodity has no identifier of its own, no identifier records are asked for and none are demanded.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:76-84",
+      "quote": "  // Design release 1 asks for identification only where the\n  // commodity has an identifier of its own; such a line gets no\n  // unit records and none are demanded of it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-071",
+      "statement": "Existing ruling (design release 1): animal identifiers are optional unless multiple species are selected, in which case at least one identifier is required per species.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:86-92",
+      "quote": "Design release 1's own rule is \"Animal identifiers are\n  // optional unless multiple species are selected, in which case at\n  // least one identifier is required per species\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-072",
+      "statement": "A consignment with only one identified commodity line can be submitted with no identifier records saved at all.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:90-99,113-115",
+      "quote": "so a consignment\n  // carrying one identified species can be submitted with no identifier\n  // saved at all,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-073",
+      "statement": "When more than one line carries a commodity with identifiers, each such line needs one complete identifier record, never one per animal.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:91-99",
+      "quote": "and one carrying several is asked for one complete\n  // record per species, never one per animal.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-074",
+      "statement": "The number of animals a line declares is shown as progress on the identification page and on Check your answers, but no longer gates submission.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:101-103",
+      "quote": "  // The number of animals a line declares is still shown as progress on\n  // the identification page and on Check your answers; it no longer\n  // gates the submission.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-075",
+      "statement": "A microchip number is asked on each animal record of a line whose commodity is on the microchip list, and is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:16-20,127-135",
+      "quote": "'microchip applies on units of lines whose commodityCode is in the microchip list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-076",
+      "statement": "A passport number is asked on each animal record of a line whose commodity is on the passport list, and is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:22-26,137-149",
+      "quote": "'passport applies on units of lines whose commodityCode is in the passport list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-077",
+      "statement": "A tattoo is asked on each animal record of a line whose commodity is on the tattoo list, and is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:28-32,151-159",
+      "quote": "'tattoo applies on units of lines whose commodityCode is in the tattoo list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-078",
+      "statement": "An ear tag is asked on each animal record of a line whose commodity is on the ear-tag list, and is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:34-38,161-169",
+      "quote": "'earTag applies on units of lines whose commodityCode is in the ear-tag list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-079",
+      "statement": "A horse name is asked on each animal record of a horse-commodity line, and is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:40-43,171-179",
+      "quote": "explanation: 'horseName applies on units of horse-commodity lines'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-080",
+      "statement": "A permanent address is mandatory on each animal record of a line whose commodity is on the permanent-address list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:45-49,188-196",
+      "quote": "'permanentAddress applies on units of lines whose commodityCode requires per-animal permanent address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-081",
+      "statement": "There is no free-text identifier fallback: a commodity on no identifier list, such as ornamental fish, is asked for no identifier and gets no panel on the identification page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js:181-186",
+      "quote": "// A commodity on none of the identifier allowlists is asked for no\n// identifier at all. There is no free-text fallback: design release 1\n// asks for identification only where the commodity has an identifier\n// type of its own, so an unlisted commodity — ornamental fish, say —\n// carries no identifier obligation and gets no panel on the\n// identification page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-082",
+      "statement": "The commodity picker offers five commodities today: Cow, Horse, Cat, Dog and Fish.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:1",
+      "quote": "export const COMMODITY_OPTIONS = ['Cow', 'Horse', 'Cat', 'Dog', 'Fish']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-083",
+      "statement": "Commodity codes are: Cow 0102, Horse 0101, Cat 01061900, Dog 01061900 and Fish 0301.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:3-10",
+      "quote": "  Cow: '0102',\n  Horse: '0101',\n  // Cat and Dog share the CN code; reverse lookup returns Cat first\n  Cat: '01061900',\n  Dog: '01061900',\n  Fish: '0301'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-084",
+      "statement": "Cat and Dog share one commodity code, so looking up a commodity by code 01061900 returns Cat.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:6; services/commodities/index.js:25-26",
+      "quote": "  // Cat and Dog share the CN code; reverse lookup returns Cat first",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-085",
+      "statement": "Cow offers four species: Bison bison (American bison, 716661), Bos spp. (Cattle, 1388624), Bos taurus (Domestic cattle, 1148346) and Bubalus bubalis (Water buffalo, 749313).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:19-24",
+      "quote": "    { value: '716661', text: 'Bison bison', commonName: 'American bison' },\n    { value: '1388624', text: 'Bos spp.', commonName: 'Cattle' },\n    { value: '1148346', text: 'Bos taurus', commonName: 'Domestic cattle' },\n    { value: '749313', text: 'Bubalus bubalis', commonName: 'Water buffalo' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-086",
+      "statement": "Horse offers one species: Equus caballus (Horse, 822332).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:25",
+      "quote": "  Horse: [{ value: '822332', text: 'Equus caballus', commonName: 'Horse' }],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-087",
+      "statement": "Cat offers one species, Felis catus (Cat, 923501), and Dog one, Canis lupus familiaris (Dog, 923502).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:26-27",
+      "quote": "  Cat: [{ value: '923501', text: 'Felis catus', commonName: 'Cat' }],\n  Dog: [{ value: '923502', text: 'Canis lupus familiaris', commonName: 'Dog' }],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-088",
+      "statement": "Fish offers one species: Salmo salar (Atlantic salmon, 801204).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:28-30",
+      "quote": "    { value: '801204', text: 'Salmo salar', commonName: 'Atlantic salmon' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-089",
+      "statement": "A species' scientific name is what goes to the backend; its English common name is what users see, and a species with no common name is shown under its commodity's name.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:12-17; services/commodities/index.js:48-51",
+      "quote": "`text` is the scientific name the backend\n// payload carries; `commonName` is what the animal is called in English, and a\n// species the catalogue holds no common name for is shown under the name of its\n// commodity instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-090",
+      "statement": "Cow is split into two types: Domestic (id 16) holding American bison, Domestic cattle and Water buffalo, and Game (id 24) holding Bos spp.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:39-48",
+      "quote": "  Cow: [\n    { id: '16', text: 'Domestic', species: ['716661', '1148346', '749313'] },\n    { id: '24', text: 'Game', species: ['1388624'] }\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-091",
+      "statement": "Horse, Cat and Dog each have one type with id 2 and no display text, and Fish one type with id 0301 and no display text; a blank type is dropped from the backend payload.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:40-42,49-52; services/commodities/index.js:36-39",
+      "quote": "The single-type commodities carry one blank-text type,\n// so their type maps to nothing in the backend payload.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-092",
+      "statement": "Types of commodity come from the real IPAFFS commodity-categories MDM extract, and every stored line has a type.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:35-38",
+      "quote": "// Type of commodity, per commodity, from the real IPAFFS commodity-categories\n// MDM extract (commodity-type-data/commodity-types.json). Each type carries its\n// real id, its display text and the species values that belong to it — the\n// value is always the real non-blank type id, so every stored line has a type.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-093",
+      "statement": "A line's type of commodity is derived from its species, because each species belongs to exactly one type; the trader is not asked for it separately on single-type commodities.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/services/commodities/index.js:30-34",
+      "quote": "// The type id whose species list holds this species value — a species belongs\n// to exactly one type, so the line's stored commodityType derives from its\n// species. Single-type commodities collapse to their one type id.",
+      "confidence": "verbatim",
+      "note": "The statement's second half (not asked separately) is read from \"collapse to their one type id\"; whether the Cow page asks for type is page behaviour in another part."
+    },
+    {
+      "id": "repo-frontend-p2-094",
+      "statement": "A chosen species under commodity code 01061900 (cat, dog, ferret and other live mammals) is listed under its own name rather than folded into the commodity (design 01-14).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/index.js:53-60",
+      "quote": "// Commodity code 01061900 covers several commodities — cat, dog, ferret and\n// other live mammals — and hundreds of species between them. The design lists a\n// chosen species of one of those under its own name rather than folding it into\n// the commodity (design 01-14).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-095",
+      "statement": "The package-count list holds 54 entries: Cat, Cow, Dog and Horse plus 50 code-prefixed names from the wider catalogue (bees, birds of prey, embryos and ova, ferrets, game birds, goats, donkey, insects, Asian hornet, pigs, poultry, hatching eggs, parrots, rabbits, reptiles, rodents, semen, sheep and SPF eggs).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:55-110",
+      "quote": "export const PACKAGE_COUNT_COMMODITIES = [\n  '01064100 - Bees',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-096",
+      "statement": "Of today's five picker commodities, Cow, Horse, Cat and Dog lines are asked the number of packages and Fish lines are not, because only entries that match a picker name can apply.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:74-75; services/commodities/stub.js:55-110",
+      "quote": "// The allowlist is the service's package-count list; only entries that\n// are picker names can ever match a stored selection.",
+      "confidence": "inferred",
+      "note": "Fish is absent from PACKAGE_COUNT_COMMODITIES; the 50 code-prefixed names cannot match any current picker name."
+    },
+    {
+      "id": "repo-frontend-p2-097",
+      "statement": "The order identifiers are asked in belongs to the commodity, and a commodity's identifier list drives both which identifiers apply and their order on the panel.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:112-122",
+      "quote": "// The five per-identifier allowlists below are DERIVED from this map, so an\n// identifier's gate and its position on the panel cannot drift apart.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-098",
+      "statement": "A cow is asked for its ear tag first, then its passport, and nothing else.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:113-115,124-127",
+      "quote": "  Cow: ['animalIdentifierEarTag', 'animalIdentifierPassport'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-099",
+      "statement": "A cow is not asked for a tattoo, because design release 1 puts the tattoo on code 01061900 (cat, dog, ferret) and not on 0102.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:124-126",
+      "quote": "  // A cow is asked for an ear tag and a passport and nothing else: design\n  // release 1 puts the tattoo on commodity code 01061900 — the cat, dog and\n  // ferret code — and not on 0102 (design 01-14/16/17).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-100",
+      "statement": "A horse is asked for its microchip first, then passport, then horse name.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:115-116,128",
+      "quote": "  Horse: ['animalIdentifierMicrochip', 'animalIdentifierPassport', 'horseName'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-101",
+      "statement": "A cat and a dog are each asked for microchip, then passport, then tattoo.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:129-138",
+      "quote": "  Cat: [\n    'animalIdentifierMicrochip',\n    'animalIdentifierPassport',\n    'animalIdentifierTattoo'\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-102",
+      "statement": "Fish is asked for no identifier: its line gets no identification panel and no animal records.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:116-118,139",
+      "quote": "A commodity with an empty list — Fish — is asked for\n// nothing at all: design release 1 offers no free-text fallback, so such a\n// line gets no identification panel and no animal records.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-103",
+      "statement": "Design release 1 asks for a microchip on code 0101 (horse) and on 01061900, so ferrets will be asked for a microchip under the same entry as cats and dogs once the picker offers them.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:147-153",
+      "quote": "// The equine and companion-animal commodities. Design release 1 asks for a\n// microchip on commodity code 0101 (Horse) and on 01061900 — the code Cat, Dog,\n// ferret and the other live mammals share — so ferret is covered by the same\n// entry as Cat and Dog once the picker offers it (design 01-16/17).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-104",
+      "statement": "The commodities a trader is asked to identify are those with at least one identifier of their own: today Cow, Horse, Cat and Dog.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:165-171",
+      "quote": "// The commodities design release 1 asks a trader to identify at all — the\n// ones the catalogue gives an identifier of their own.",
+      "confidence": "verbatim",
+      "note": "The list of four is derived from COMMODITY_IDENTIFIERS (Fish is empty)."
+    },
+    {
+      "id": "repo-frontend-p2-105",
+      "statement": "A permanent address is asked per animal for Cat and Dog only, and every permanent-address commodity must also be an identified commodity or the address is never collected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:173-177",
+      "quote": "// A mandatory unitRecord obligation, so every commodity here must also be in\n// IDENTIFIED_COMMODITIES above — a commodity asked for a permanent address but\n// missing from that list gets no identification panel and no per-animal count\n// rule, so the address is never collected. Pinned by commodities/index.test.js.\nexport const PERMANENT_ADDRESS_COMMODITIES = ['Cat', 'Dog']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-106",
+      "statement": "The unweaned-animals question is asked only for Cow today; design release 1 puts unweaned options on cattle and pigs alone, not horses, sheep or goats, and Pig joins the list when the catalogue holds it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:179-185",
+      "quote": "// The commodities design release 1 asks the unweaned-animals question of. It\n// asks it only where a selected commodity carries unweaned options, and its\n// catalogue puts those on cattle and pigs alone — not on horses, and not on\n// sheep or goats. Of the five commodities this catalogue offers today only Cow\n// qualifies; Pig joins the list when the catalogue grows to hold it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-107",
+      "statement": "Design release 1 asks for a CPH number on every consignment except those whose commodity code is exempt; the exempt codes are 0101 (horses and donkeys) and 01061900 (cat, dog and ferret).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:187-199",
+      "quote": "// Design release 1 asks for a CPH number on every consignment and names the\n// commodity codes that escape the question rather than the ones that need it:\n// a code has to be listed to be let off. Two live-animal codes are — 0101, the\n// horses and donkeys code, and 01061900, the cat, dog and ferret code,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-108",
+      "statement": "The cat, dog and ferret code is asked for each animal's permanent address instead of a CPH number.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:190-191",
+      "quote": "01061900, the cat, dog and ferret code, which is\n// asked for each animal's permanent address instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-109",
+      "statement": "Of today's picker commodities, Cow and Fish lines bring the CPH question into scope; Horse, Cat and Dog lines do not.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:201-204",
+      "quote": "export const CPH_COMMODITIES = COMMODITY_OPTIONS.filter(\n  (name) => !CPH_EXEMPT_COMMODITY_CODES.includes(COMMODITY_CODES[name])\n)",
+      "confidence": "inferred",
+      "note": "Derived from the codes in COMMODITY_CODES against the two exempt codes."
+    },
+    {
+      "id": "repo-frontend-p2-110",
+      "statement": "The CPH exemption is by commodity code, so a commodity added under any other code is asked the CPH question by default, and ferrets and donkeys are exempt without a further change.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:192-198",
+      "quote": "// Exempting by CODE rather than by picker name is what makes the rule hold as\n// the catalogue grows: ferrets join Cat and Dog under 01061900 and donkeys join\n// Horse under 0101 without a second edit here, and a commodity added under any\n// other code is asked the question rather than silently let off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-111",
+      "statement": "The commodity service answers with the full commodity list and a flat species list across every commodity, so a single species search can select across commodity codes; it has no search function of its own.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/services/commodities/index.js:21,41; services/commodities/stub.js:12-14,33",
+      "quote": "the others carry one representative species each so the batch search\n// can select across commodity codes.",
+      "confidence": "inferred",
+      "note": "The service exposes list(), species(), speciesFor(), speciesLabel() and isCommoditySpecies(); how the search page matches typed text is in the search controller, another part."
+    },
+    {
+      "id": "repo-frontend-p2-112",
+      "statement": "All commodity, species, type and allow-list data is stub data held in the frontend and does not prove compatibility with an external master-data source.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/limits.md:8-12",
+      "quote": "Species options, Cow Domestic/Game mapping and obligation allow-lists come from the\nset-owned commodities service. They are stub data in this application and do not\nprove compatibility with an external master-data source.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-113",
+      "statement": "The commodity reference service is handed to the notification mapper at boot, so the backend payload uses the same commodity vocabulary.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/docs/services.md:14-18",
+      "quote": "At boot, this set's gateway\n[`src/server/app/routes-live-animals.js`](../../../routes-live-animals.js) (the\n[`routes.js`](../../../routes.js) barrel only re-exports it) passes the service to\n[`configureCommodityReference()`](../../../services/persistence/records/notification-mapper/commodity-reference.js)\nso generic notification-mapper code does not import the set.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-114",
+      "statement": "The journey also reads shared reference services for countries, ports, address books, document uploads, document types, certification purposes, transport reference data and import-reason purposes.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/docs/services.md:20-25",
+      "quote": "The journey also calls shared service barrels for countries, ports, address books,\ndocument uploads, document types, certification purposes, transport reference data\nand import-reason purposes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-115",
+      "statement": "All user-facing text exists in English and Welsh, and the two locales must have the same shape.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/features.md:30-41",
+      "quote": "User-facing text lives in English and Welsh copy modules beside the feature.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-116",
+      "statement": "The documents page keeps its entry form and the list of added documents on one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/features.md:81-82",
+      "quote": "keeps its entry form and read-back list on one page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-117",
+      "statement": "The journey has ten ordered flow sections, and the review section can be entered only when the notification is ready for Check your answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:7-12",
+      "quote": "[`flow.js`](../journeys/linear/flow/flow.js) exports ten ordered `sections`. A flow\nsection is a navigation sequence. The `review` section has the one authored section\ngate: it requires `scope.readyForCheckYourAnswers`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-118",
+      "statement": "The declaration answer is held only in the session's flow store, not saved as part of the notification's answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:14-15",
+      "quote": "`FLOW_ONLY_KEYS` contains `declaration`. That value uses the session's flow-only\nstore rather than canonical obligation fulfilment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-119",
+      "statement": "The task list (hub) has twelve task rows; each is a hub item and a unit of submit readiness, and every row contributes to whether the notification is ready for Check your answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:17-30",
+      "quote": "[`task-rows.js`](../journeys/linear/flow/task-rows.js) exports twelve `taskRows`. A\ntask row is a hub item and a submit-readiness unit; it is not a flow section.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-120",
+      "statement": "The commodity lines are split across three task rows, each with its own status: the commodity selection on the commodities row, the numbers on the consignment details row, and the identifiers on the animal identification row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:22-28",
+      "quote": "The commodity line is split three ways — the selection\non the `commodities` row, the numbers on the `consignmentDetails` row, the\nidentifiers on the `animalIdentification` row — so each of the three pages over\nthat one collection carries a status of its own.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-121",
+      "statement": "A task row that does not apply to the consignment is hidden from the task list; the animal identification row leaves when it does not apply, and the transit countries row leaves when its question is out of scope.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:28-40,49-50",
+      "quote": "A row that does not apply to this consignment leaves the list instead\n(`conditional`, and `applies` where the parts cannot express it).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-122",
+      "statement": "Existing ruling (design release 1): a trader can start any task in any order; no row is ever locked, every row is a link with a real status from the moment the notification exists, and nothing says \"Cannot start yet\".",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:46-50",
+      "quote": "Design release 1 lets a trader start any task on the notification in any order.\nNo row on the hub is ever shut: every row is a link carrying a real status from\nthe moment the notification exists, and nothing on the page says \"Cannot start\nyet\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-123",
+      "statement": "The review is not a task row: a primary \"Review and submit\" button sits under the task list beside a secondary \"Return to dashboard\", offered however much is still outstanding.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:52-55",
+      "quote": "The review is not a task row at all. Design release 1 reaches it from a primary\n\"Review and submit\" button under the task list, beside the secondary \"Return to\ndashboard\", and offers it whatever the notification still owes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-124",
+      "statement": "The review page renders an unfinished notification and names what is outstanding, but submitting is refused until the notification is ready.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:54-57",
+      "quote": "the review page\nrenders an unfinished notification and names what is outstanding. The review\nsection's authored gate on `readyForCheckYourAnswers` still stands between that\npage and submitting: the check-answers POST refuses on the same verdict.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-125",
+      "statement": "Every page behind a task row must render and save sensibly when nothing else is answered; the consignment details page sends the user to the commodity question when the notification has no commodity line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:59-63",
+      "quote": "the consignment-details page\n([`consignment-details.controller.js`](../journeys/linear/features/commodities/consignment-details/consignment-details.controller.js))\nredirects to the commodity question when the notification holds no line.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-126",
+      "statement": "A new notification is carried through one opening run, in this order: origin, what you are importing, consignment details, reason for import, animal identification, additional details, arrival details, transit countries, transporter, documents, roles and addresses, CPH number, contact address, then the review page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:71-78",
+      "quote": "The run is the whole notification, not its first leg. `RUN_STEPS` runs origin,\nwhat you are importing, the consignment details, the reason for import, animal\nidentification, the additional details, the arrival details, the transit\ncountries, the transporter, the uploaded documents, the roles and addresses, the\nCPH number, the contact address and then the review page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-127",
+      "statement": "The primary button reads \"Save and continue\" on every page in the run except the review page, which reads \"Continue\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:75-77",
+      "quote": "the primary button —\n\"Save and continue\" on every one of them but the review page, which ends with\n\"Continue\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-128",
+      "statement": "Every page has a secondary \"Save and return to overview\" button that takes the user to the task list; the run never puts them on the task list between sections.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:78-81",
+      "quote": "The hub is somewhere the user chooses\nto go — through the secondary \"Save and return to overview\" button on every\npage, or by opening the notification from the dashboard — not somewhere the run\nputs them between sections.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-129",
+      "statement": "Once the task list has been shown, the opening run is over: saving a page then moves through its own section and returns to the task list at the section's end.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:81-87",
+      "quote": "rendering it completes the run\n([`completeOpeningRun`](../../../flow/run-state.js), called from\n[`features/hub/controller.js`](../journeys/linear/features/hub/controller.js)).\nAfter that, saving a page follows `nextInSection` and returns to the hub at the\nend of each section: the run is not re-entered for that notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-130",
+      "statement": "A run that reaches the review step while the notification is incomplete, or whose remaining steps are all closed, falls through to the task list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:87-91",
+      "quote": "The review\nstep\ncarries the same authored gate the review flow section does, so a run that\narrives with the notification incomplete falls through to the hub; so does a run\nwhose remaining steps are all gated out.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-131",
+      "statement": "The opening run begins only when a notification is created from the dashboard; the origin page is the journey's entry page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:93-97",
+      "quote": "The opening run begins when the notification is created — the dashboard's\ncreate POST in\n[`features/dashboard/controller.js`](../journeys/linear/features/dashboard/controller.js)\nis the only caller of `beginOpeningRun`. The origin page is the journey entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-132",
+      "statement": "A deep link to a notification this session never created and that holds no answers is redirected to the origin page; the origin page itself is exempt.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:99-103",
+      "quote": "The guard admits a request when the opening run has begun for that journey in\nthis session, or the journey carries committed user answers. A journey with\nneither — a deep link to an id this session never created and that holds no\nanswers — is sent to the origin page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-133",
+      "statement": "Existing ruling: a returning user without run state who saves the origin page goes to the task list rather than into the opening run; only a notification created in this session runs through the sequence.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:105-111",
+      "quote": "That is the accepted\nrule for a returning user without run state: they land on the task list and work\nfrom there. Only a notification created in this session sequences through\n`RUN_STEPS`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-134",
+      "statement": "Each page shows a section caption directly above its heading, sized to match the heading, naming the part of the notification it belongs to.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:131-141",
+      "quote": "files every page under the section of the notification it belongs to, and names\nthose sections in its own `copy/` bundles.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-135",
+      "statement": "Caption sections are finer than the task-list groups: animal identification is captioned with the other consignment questions, and arrival, transit and adding a transporter each have their own caption; a page left out of the caption map shows none.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:143-148",
+      "quote": "the caption keeps\nanimal identification with the other consignment questions and separates arrival,\ntransit and adding a transporter, where the hub does not. A page left out of the\nmap renders no caption;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-136",
+      "statement": "Only the dashboard, declaration and confirmation pages sit outside the opening run; any other question page left out of the run is skipped while the run is active and reachable only from its task row.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-page.md:197-202",
+      "quote": "every new question page gets\na `RUN_STEPS` entry unless it is deliberately outside the run (the dashboard,\ndeclaration and confirmation are the only ones today) — a page left out is jumped\nstraight over while the run is active and is reachable only from its hub row.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-137",
+      "statement": "Existing ruling (design release 1): task rows carry no hint, except \"Roles and addresses\", which is the one hinted row.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-section.md:226-229",
+      "quote": "Hub task rows carry no hint:\nDesign release 1 keeps the hub to one-line rows and \"Roles and addresses\" is\nthe one hinted row,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-138",
+      "statement": "The transport flow section has five pages, shown on the task list as three rows: arrival details, transit countries and transporter.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-section.md:51-53",
+      "quote": "The transport flow section has five pages. The hub does not render that\nsection directly. It renders three task rows: arrival details, transit\ncountries and transporter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-139",
+      "statement": "A task row's statuses are Not yet started, In progress, Completed, Optional and Not applicable.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-section.md:236-238",
+      "quote": "for Not yet started, In\n  progress, Completed, Optional or Not applicable states",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-140",
+      "statement": "An incomplete mandatory task row holds back submission: the task list still offers the review, and it is the Check your answers submit that refuses.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-section.md:244-246",
+      "quote": "Every task row participates in `readyForCheckYourAnswers`. A mandatory new row\ntherefore holds the notification back from submission until it is complete —\nthe hub still offers the review, and the check-answers POST is what refuses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-141",
+      "statement": "On Check your answers, summary rows carry no Change link: each card's heading carries the one Change link for every answer inside it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-field.md:153-155; docs/add-a-page.md:209-218",
+      "quote": "Rows carry no Change link: the card's\nheading carries the one link for every answer inside it,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-142",
+      "statement": "On Check your answers, a stored code is shown through its service label, and a conditional row is shown only while its answer is in scope.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-field.md:155-157",
+      "quote": "Use a service label function when\nthe stored value is a code. Show a conditional row only while the same\nobligation path is in scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-143",
+      "statement": "A conditional field that is out of scope is not shown, validated or saved, and any stored value is removed when it leaves scope.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-field.md:103-105; docs/add-a-section.md:141-143",
+      "quote": "For a conditional field, use `scope.has(fieldName)` to decide whether to render\nand validate it. Do not commit a hidden value. The evaluator removes stored\ndata when the obligation leaves scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-144",
+      "statement": "An invalid submission re-shows the user's raw entries with status 400; a recoverable save failure re-shows the same entries with a recoverable-error message and status 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-page.md:105-115",
+      "quote": "3. re-renders raw values with status 400 on error\n4. commits cleaned values with `state.commit()`\n5. redirects through `await kit.nextTarget(request, page, committed.scope)`\n\nWrap the write in `kit.recoverableSave()`. A marked persistence failure renders\nthe same values with `recoverableError: true` and status 500.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-145",
+      "statement": "Each error-summary link targets the field by its id and moves focus to the control.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-field.md:130-132",
+      "quote": "Keep the input name, input id and validation error key the same. This lets the\nerror-summary link target `#<fieldName>` and move focus to the control.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-146",
+      "statement": "A field the backend notification has no home for is kept out of the backend payload rather than given an invented property.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-field.md:165-176; docs/limits.md:14-19",
+      "quote": "If the backend has no field home, leave the mapper unchanged and add or update\nan explicit omission assertion. Do not invent a payload property.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-147",
+      "statement": "The backend payload has two projections: Mapper B layers its extra fields over Mapper A, so the saved answers can hold values one projection cannot represent.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/docs/limits.md:14-19",
+      "quote": "Canonical fulfilment can contain values that one backend projection cannot\nrepresent. Mapper B layers its additional fields over Mapper A.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-148",
+      "statement": "Positions in a collection (line0, unit1) are not durable record ids: every save replaces the whole snapshot, and removing an earlier item can renumber later ones.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/limits.md:21-25; docs/add-a-collection.md:116-120",
+      "quote": "Grouped fulfilment tokens such as `line0` and `unit1` are positions in one canonical\nsnapshot, not durable record identifiers. Removing an earlier entry can renumber\nlater entries.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-149",
+      "statement": "On the documents page, Add validates the entry, appends it and redirects back to the page for the next one.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:208-210",
+      "quote": "`action === 'add'` validates the entry\nfields, appends, and redirects back to the page for the next one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-150",
+      "statement": "On the documents page, Continue also adds the entry when the trader has started one (chosen a document type), and otherwise moves on without saving anything.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:210-214",
+      "quote": "Continue\nposts the same entry fields with it, so it appends too when the payload holds\na started entry — `startsADocument` in\n[`form/payload.js`](../journeys/linear/features/documents/form/payload.js)\nkeys that on the trader having chosen a document type — and otherwise advances\nwith no write.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-151",
+      "statement": "Every successful document add ends in a redirect, so reloading the page never adds the document twice, and an unsaved draft is never stored as a half-created entry.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:214-219",
+      "quote": "so every successful append ends in a redirect rather than\na render: the POST mutated state and a reload must not replay it. The append\ncreates the snapshot-local position — until that POST the draft lives only in\nthe payload, never a half-created instance in the store:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-152",
+      "statement": "Removing a document is a form button (not a link a GET can trigger); an index the collection has no entry for is refused.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:228-238",
+      "quote": "Remove is a third branch of the same POST — a submit button named\n`action` with a `remove:<index>` value, so the page form's crumb travels\nwith it and no GET can trigger a delete.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-153",
+      "statement": "Saving the commodity search creates one commodity line per selected species, keeps a still-selected line's data (including its identifier records) and deletes a deselected line.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:246-263",
+      "quote": "`reconcileEntriesAt` keys existing instances by `keyOf`, keeps a still-selected\nline's data (including its nested identifier records), and drops a deselected\nline with wipe semantics.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-154",
+      "statement": "The consignment details page shows a table of the selected commodities with a Remove per commodity and an Add another link, and edits every line's quantities in place.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:263-267",
+      "quote": "collects nothing (`collects: []`), renders the selected-commodities table with a\nper-commodity Remove and an Add-another link, and edits every line's quantities\nin place",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-155",
+      "statement": "Animal identifiers are collected with one card per commodity line on the identification page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:269-272",
+      "quote": "The `animalIdentifiers` collection lives one level down, one card per commodity\nline.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-156",
+      "statement": "A collection reached from a Change link on Check your answers keeps that context through its add, remove and save round-trips; only its final Continue returns to Check your answers, and a return to the task list wins first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:289-297",
+      "quote": "Only the exit repoints to check-your-answers;\nmid-loop actions must never bounce there early.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-157",
+      "statement": "A line's animal-identifier records are capped at that line's number of animals; adding one at the cap is refused, and an unanswered number of animals means no cap.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:299-325",
+      "quote": "Each `animalIdentifiers` collection is capped at its line's\n`numberOfAnimalsQuantity`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-158",
+      "statement": "Removing an identifier record with an out-of-range or non-integer index is refused, so a malformed remove cannot create a phantom line or delete the first record.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:327-340",
+      "quote": "`isValidIndex` in\n   [`src/server/app/engine/write/pipeline/predicates.js`](../../../engine/write/pipeline/predicates.js) uses `Number.isInteger` because\n   `splice(NaN, 1)` coerces to `splice(0, 1)` — a malformed remove URL would\n   otherwise destroy the first instance.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-159",
+      "statement": "When one field of a collection entry leaves scope, only that field's value is wiped; the entry itself is kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:155-158",
+      "quote": "When an instance falls out of scope, the engine wipes that instance's stale\nvalue — a field-level wipe inside one instance, not a whole-instance delete.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-160",
+      "statement": "A collection entry with no saved field is not persisted; an entry is committed only after validation produces at least one value.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:224-226",
+      "quote": "A leaf-less entry has no canonical record from which to infer an instance and\nis therefore not persisted. Collection forms should commit an entry only after\nvalidation has produced at least one bound leaf.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-161",
+      "statement": "A field inside a collection can depend on an answer in the same entry or an enclosing one, but not on an answer in an unrelated sibling entry.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:357-364",
+      "quote": "It\ncannot read a value in a sibling frame at the same depth.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-162",
+      "statement": "Every changed page is checked with axe on its first render and its validation-error state, failing on any serious or critical WCAG 2 A or AA violation.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/docs/testing.md:23-25",
+      "quote": "Every changed page needs happy-path and validation coverage. Axe checks cover the\ninitial page and its validation-error state, failing on serious or critical WCAG 2 A\nor AA violations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-163",
+      "statement": "The transport group's accessibility checks also run the WCAG 2.1 and 2.2 rule tags (wcag21a, wcag21aa, wcag22aa).",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-section.md:368-378",
+      "quote": "Its tags are\n`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-164",
+      "statement": "Each browser feature test starts its own notification.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/testing.md:19",
+      "quote": "Each feature test starts its own notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-165",
+      "statement": "Lighthouse audits 19 fixed URLs once each with the desktop preset, signing in through the Defra ID stub first.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/docs/lighthouse.md:10-21",
+      "quote": "- collects 19 literal URLs on `http://localhost:3000`\n- runs each URL once\n- uses the desktop preset",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-166",
+      "statement": "Lighthouse fails a page below 0.60 for performance, 0.70 for accessibility or 0.70 for best practices; there is no SEO assertion.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/docs/lighthouse.md:26-36",
+      "quote": "| Performance    | 0.60    |\n| Accessibility  | 0.70    |\n| Best practices | 0.70    |\n\nThere is no SEO assertion.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-167",
+      "statement": "Lighthouse scores are not lowered without agreement, and removing an audited URL needs a recorded reason.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/docs/lighthouse.md:57-58",
+      "quote": "Do not lower a score to make a change pass without agreement. Record why a URL\nis removed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-168",
+      "statement": "Lighthouse runs in CI after a branch image is published (or by hand), keeps its report for 14 days and publishes it to GitHub Pages.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/docs/lighthouse.md:84-91",
+      "quote": "`.github/workflows/lighthouse.yml` runs after a successful branch image\npublish, or by manual dispatch.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-169",
+      "statement": "Existing ruling: pages are the journey spine; a page has an id, a slug and the answers it collects, and that one identity drives dispatch, gates and navigation.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:3-7",
+      "quote": "## Pages are the journey spine\n\nA page descriptor has an `id`, a `slug` and page-owned `collects`. The same identity\nis used by dispatch, gates and navigation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-170",
+      "statement": "Existing ruling: shared code is a library that never discovers features or imports a set; set and journey policy is supplied through explicit configuration.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:9-13",
+      "quote": "## Shared code is a library\n\nControllers call small functions from `shared/`, `lib/`, `engine/` and `flow/`.\nThose modules do not discover features or import a set.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-171",
+      "statement": "Existing ruling: the model decides what is in scope and whether it is mandatory or optional; the journey decides page order; task rows decide grouping on the task list.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:15-20",
+      "quote": "## The model owns applicability; the journey owns sequence\n\nThe obligation evaluator decides what is in scope and whether it is mandatory or\noptional. Journey sections decide page order. Task rows decide how work is grouped\non a hub.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-172",
+      "statement": "Existing ruling: page and section gates are derived by default from page ownership, scope and prerequisites; an authored gate is reserved for policy the derived rule cannot express.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:22-26",
+      "quote": "## Gates are derived by default\n\n[`src/server/app/flow/gates.js`](../flow/gates.js) derives normal page and section\ngates from dispatch ownership, scope and prerequisites. Authored gates are reserved\nfor journey policy that the derived rule cannot represent.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-173",
+      "statement": "Existing ruling: each answer is owned by exactly one page; duplicate or missing ownership is rejected, and a page claims a collection's root rather than each nested field.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:28-32",
+      "quote": "## One obligation has one page owner\n\n[`src/server/app/flow/dispatch.js`](../flow/dispatch.js) rejects duplicate and\nmissing ownership.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-174",
+      "statement": "Existing ruling: the model holds no display copy; labels, hints, options, validation messages and templates belong to the journey, and a boot-time purity check rejects display-shaped keys in the model.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:34-38; src/server/app/obligation-purity.js:4-9",
+      "quote": "## The model has no display copy\n\nObligations contain stable domain identity, scope, mandate and invariants. Journeys\nown labels, hints, options, validation messages and templates. Boot-time purity\nchecks reject display-shaped keys in the model.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-175",
+      "statement": "Existing ruling: the bridge is the only seam between the model and the pages; a journey registers its field bindings with it.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:40-45",
+      "quote": "## The bridge is the model-to-page seam",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-176",
+      "statement": "Existing ruling: composition is explicit; only a set's own gateway knows which set and journey exist, and the model, bridge, engine and flow receive their policy keyed by set id.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/decisions.md:47-56",
+      "quote": "## Composition is explicit\n\nA set's own gateway — today\n[`routes-live-animals.js`](../routes-live-animals.js),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-177",
+      "statement": "Platform limit: the obligation model is executable code (scope rules are functions), not portable JSON configuration.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/limits.md:3-6",
+      "quote": "Obligation `applyTo` rules are JavaScript functions. Helper metadata makes their\ndependencies inspectable, but the manifest is not portable JSON configuration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-178",
+      "statement": "Platform limit: a page's derived gate opens when at least one answer it collects is in scope and its prerequisites pass.",
+      "kind": "rule",
+      "ref": "src/server/app/docs/limits.md:8-12",
+      "quote": "The normal page gate passes when at least one collected obligation is in scope and\nits prerequisites pass.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-179",
+      "statement": "Platform limit: a list-valued answer (such as species) cannot drive a single-value scope gate; collection conditions use group-aware rules instead.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/limits.md:14-17",
+      "quote": "The standard scalar gate helpers expect scalar fulfilment values. Collection\nconditions use group-aware helpers and cardinality rules instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-180",
+      "statement": "Platform limit: ownership of nested collection fields is derived from the collection root a page claims; no second page may own a nested field.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/limits.md:19-23",
+      "quote": "Do not declare a second page owner for a nested leaf.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-181",
+      "statement": "Platform limit: saving is not transactional across backend projections; a partial failure is reported to the user as a recoverable backend error.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/limits.md:25-29",
+      "quote": "Real persistence can update\nmore than one backend projection, and adapter code is responsible for reporting\npartial failures as recoverable backend errors.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p2-182",
+      "statement": "Field and collection names must not contain a dot or square brackets; the service refuses to start otherwise.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/docs/add-a-collection.md:73-76",
+      "quote": "They must be path-safe — no `.`, `[` or `]` — or `buildDispatch` throws at\n  boot",
+      "confidence": "verbatim"
+    }
+  ]
+}

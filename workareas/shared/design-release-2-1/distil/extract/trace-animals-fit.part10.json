@@ -1,0 +1,750 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 10 mined all 25 traces of identification.fit.spec.js in its four in-scope describe blocks: 'animal identification' (12 tests: :245 dd986, :278 b2d23, :305 19c03, :320 bfdf8, :335 b2ce6, :357 fe9ed, :380 66033, :394 e3b1e, :403 b2704, :427 fab50, :432 a2cb0, :447 dcde6), 'in-card save button' (3: :473 05b15, :503 a783b, :533 4fc89), 'selected commodities summary' (3: :553 7044e, :585 e7929, :600 d6eef) and 'records' (7: :723 07a52, :764 26bc8, :795 d1d4b, :818 285e7, :824 8b38b, :835 fdf5c, :853 0e965). The trace CLI refused every zip (TraceVersionError: trace made by a newer Playwright than tim's viewer), so each zip's extracted raw files (already unpacked under the part10 working folder as t01..t25, one per read entry in order, each confirmed by its recorded test title) were read with jq: every 'before' call event for the action list, frame-snapshots rendered to the DOM of <main> at the identification page, and resource-snapshots for the network log (crumb values redacted). Every trace walks the same set-up: stub sign-in, Start a new notification, Origin of the import (France, No), Overview, What are you importing? (search and tick one or more species), Commodity details (number of animals per line), Overview, then the 'Identification details' task row into the page under test. Pages reached: Overview (task row 'Identification details' under '2. Description of the goods', absent when nothing is identifiable), Identification details at /live-animals/notifications/{ref}/commodities/identification (always the subject), Commodity details at /consignment-details (via Change number of animals and the count-drop error), What are you importing? at /commodities (via Change and Add another commodity). Identification page skeleton in order: journey strip (Draft tag, notification reference), caption 'About the consignment', h1 'Identification details', inset text, 'Selected commodities' summary table (code, common name, number of animals, Change link), 'Add another commodity' link, then one form holding a visually hidden 'Save and finish' submit, one card section per identifiable commodity line (h2 '<Common> (<code>) — <species>', Change number of animals link, saved-animals table once a record exists, h3 'Enter details for <species> N of M', identifier inputs in the commodity's own order, for cat and dog a fraud warning, permanent-address guidance and eight address inputs, an in-card secondary button 'Save and add another' or 'Save and finish' when the line holds more than one animal), then the button group (Save and continue, Save and return to overview, Cancel and return to overview). Species walked: cattle (Bos taurus: ear tag, passport), horse (Equus caballus: microchip, passport, horse name), cat (Felis catus: microchip, passport, tattoo plus permanent address), dog (Canis lupus familiaris: same as cat), salmon (Salmo salar: no identifiers, no card). Identifier and address validation are part 11 and are not claimed here; the count-drop and stale-add cap errors fall in this slice's records tests and are claimed.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p10-001",
+      "statement": "The identification page is reached from the Overview task list by a task row link named 'Identification details', which sits second under '2. Description of the goods', after 'Commodity details'.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377; overview snapshot, task id description-of-the-goods-2-status",
+      "quote": "Identification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-002",
+      "statement": "The Identification details task row shows the status 'To do' (blue tag) before any animal is identified.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) overview before call@1377, description-of-the-goods-2-status",
+      "quote": "To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-003",
+      "statement": "Once every animal on the only identifiable line has a saved record, the Identification details task row shows 'Complete' (green tag).",
+      "kind": "behaviour",
+      "ref": "trace a783b (identification.fit.spec.js:503) overview after call@1649, description-of-the-goods-2-status",
+      "quote": "Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-004",
+      "statement": "The identification page lives at /live-animals/notifications/{reference}/commodities/identification.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) network, GET after the Identification details click",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-D09581/commodities/identification 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-005",
+      "statement": "The page's browser title is 'Identification details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace e3b1e (identification.fit.spec.js:394) TITLE element on the identification page",
+      "quote": "Identification details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-006",
+      "statement": "When the page shows an error summary its browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace fdf5c (identification.fit.spec.js:835) TITLE after the stale add action",
+      "quote": "Error: Identification details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-007",
+      "statement": "The page heading (h1, govuk-heading-l) is 'Identification details'.",
+      "kind": "copy",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot, main h1",
+      "quote": "Identification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-008",
+      "statement": "The heading carries the section caption 'About the consignment'.",
+      "kind": "copy",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot, span.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-009",
+      "statement": "The caption 'About the consignment' does not match the Overview section the task row sits in ('2. Description of the goods').",
+      "kind": "copy",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 before and after snapshots",
+      "quote": "About the consignment",
+      "confidence": "inferred",
+      "note": "Read from the two rendered pages side by side; the trace does not say which wording is intended."
+    },
+    {
+      "id": "trace-animals-fit-p10-010",
+      "statement": "Above the caption the page shows the journey strip: a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot, div.app-journey-strip",
+      "quote": "Draft GBN-AG-26-D09581",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-011",
+      "statement": "Below the heading an inset text tells the trader all identification details must be added before arrival at the port of entry.",
+      "kind": "copy",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1381",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-012",
+      "statement": "The page has a back link 'Back' that returns to the notification's Overview.",
+      "kind": "behaviour",
+      "ref": "trace e3b1e (identification.fit.spec.js:394) call@1305 to call@1307",
+      "quote": "\"href\":\"/live-animals/notifications/GBN-AG-26-PVF54S\",\"class\":\"govuk-back-link\"},\"Back\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-013",
+      "statement": "The page opens with a 'Selected commodities' table (caption size m) listing every commodity line in the consignment, placed before the first identification card.",
+      "kind": "behaviour",
+      "ref": "trace 7044e (identification.fit.spec.js:553) call@1403 to call@1421",
+      "quote": "Selected commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-014",
+      "statement": "The Selected commodities table has the column headings 'Commodity code', 'Common name' and 'Number of animals', plus a visually hidden 'Actions' column.",
+      "kind": "copy",
+      "ref": "trace 7044e (identification.fit.spec.js:553) call@1403, call@1405, call@1407; dd986 call@1377 snapshot",
+      "quote": "Commodity code | Common name | Number of animals | Actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-015",
+      "statement": "Each Selected commodities row shows the commodity code, the common name and the number of animals entered on Commodity details, for example cattle as '0102', 'Domestic cattle', '2' and horse as '0101', 'Horse', '3'.",
+      "kind": "data",
+      "ref": "trace 7044e (identification.fit.spec.js:553) call@1409 to call@1419",
+      "quote": "0102 Domestic cattle 2 ... 0101 Horse 3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-016",
+      "statement": "The Selected commodities table also lists a commodity that has nothing to identify, such as Atlantic salmon (0301), even though that line gets no identification card.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot",
+      "quote": "0301 Atlantic salmon 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-017",
+      "statement": "The summary row's common name comes from the commodity code rather than the species: cat and dog both show code 01061900, and their common names are 'Cat' and 'Dog'.",
+      "kind": "data",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 snapshot; trace d1d4b (identification.fit.spec.js:795) call@1941 snapshot",
+      "quote": "01061900 Cat 2 ... 01061900 Dog 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-018",
+      "statement": "Each Selected commodities row has a 'Change' link (visually hidden suffix naming the common name, e.g. 'Change Domestic cattle') that goes to the What are you importing? page at /commodities.",
+      "kind": "behaviour",
+      "ref": "trace e7929 (identification.fit.spec.js:585) call@1483 to call@1485",
+      "quote": "Change Domestic cattle",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-019",
+      "statement": "Below the summary table an 'Add another commodity' link goes to the What are you importing? page, and it shows while there are commodities to identify.",
+      "kind": "behaviour",
+      "ref": "trace d6eef (identification.fit.spec.js:600) call@1551 to call@1553",
+      "quote": "Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-020",
+      "statement": "Each commodity line that has identifiers gets its own card section (id identification-card-<line index>) headed '<Common name> (<code>) — <species>', for example 'Cow (0102) — Bos taurus'.",
+      "kind": "copy",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot",
+      "quote": "Cow (0102) — Bos taurus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-021",
+      "statement": "The card heading uses a different common name from the summary table for the same cattle line: 'Cow' on the card, 'Domestic cattle' in Selected commodities.",
+      "kind": "copy",
+      "ref": "trace 7044e (identification.fit.spec.js:553) call@1421 innerHTML of main",
+      "quote": "Domestic cattle ... Cow (0102) — Bos taurus",
+      "confidence": "verbatim",
+      "note": "Recorded as rendered; whether the two names should agree is for the reconciler."
+    },
+    {
+      "id": "trace-animals-fit-p10-022",
+      "statement": "A commodity line with no identifier of its own (Atlantic salmon, Salmo salar) gets no identification card and no address fields.",
+      "kind": "rule",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1395 to call@1399",
+      "quote": "#identification-card-2 to.have.count",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-023",
+      "statement": "When no line in the consignment has anything to identify, the Overview leaves out the Identification details task row.",
+      "kind": "rule",
+      "ref": "trace dcde6 (identification.fit.spec.js:447) overview snapshot before call@1391",
+      "quote": "2. Description of the goods ... Commodity details ... Additional details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-024",
+      "statement": "Requesting the identification page directly for a consignment with nothing to identify redirects (302) to the Overview instead of showing the page.",
+      "kind": "rule",
+      "ref": "trace dcde6 (identification.fit.spec.js:447) call@1391 to call@1395; network",
+      "quote": "GET .../GBN-AG-26-VSMR3P/commodities/identification 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-VSMR3P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-025",
+      "statement": "Every card has a 'Change number of animals' link (visually hidden suffix naming the card heading) that goes to the Commodity details page at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace b2704 (identification.fit.spec.js:403) call@1457 to call@1461",
+      "quote": "Change number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-026",
+      "statement": "Following Change number of animals lands on the Commodity details page with the line's saved count prefilled.",
+      "kind": "behaviour",
+      "ref": "trace b2704 (identification.fit.spec.js:403) call@1461, call@1463",
+      "quote": "#numberOfAnimalsQuantity-0 to.have.value 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-027",
+      "statement": "Each card asks for one animal at a time under an h3 counter 'Enter details for <species> N of M', where M is the line's number of animals and N the next animal without a record.",
+      "kind": "copy",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1487; trace 0e965 (identification.fit.spec.js:853) call@2077",
+      "quote": "Enter details for Bos taurus 1 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-028",
+      "statement": "A cattle line (Bos taurus) asks for exactly two identifiers, ear tag first then passport, and no tattoo or microchip.",
+      "kind": "rule",
+      "ref": "trace b2d23 (identification.fit.spec.js:278) call@661; trace dd986 call@1383 to call@1393",
+      "quote": "Ear tag || Passport",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-029",
+      "statement": "A horse line (Equus caballus) asks for microchip number, passport and horse name, in that order.",
+      "kind": "rule",
+      "ref": "trace b2d23 (identification.fit.spec.js:278) call@663",
+      "quote": "Microchip number || Passport || Horse name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-030",
+      "statement": "A cat line (Felis catus) asks for microchip number, passport and tattoo, in that order.",
+      "kind": "rule",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 after snapshot",
+      "quote": "Microchip number ... Passport ... Tattoo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-031",
+      "statement": "A dog line (Canis lupus familiaris) asks for the same identifiers as a cat: microchip number, passport and tattoo.",
+      "kind": "rule",
+      "ref": "trace d1d4b (identification.fit.spec.js:795) call@1941 snapshot",
+      "quote": "Microchip number ... Passport ... Tattoo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-032",
+      "statement": "The ear tag field is labelled 'Ear tag' (bold small label) with the hint 'For example, UK123456789012'; it is a 20-character-wide text input named animalIdentifierEarTag-<line>.",
+      "kind": "data",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot; trace 19c03 call@1305",
+      "quote": "Ear tag For example, UK123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-033",
+      "statement": "The passport field is labelled 'Passport' with the hint 'For example, UK123456789'; it is a 20-character-wide text input named animalIdentifierPassport-<line>.",
+      "kind": "data",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot; trace 19c03 call@1303",
+      "quote": "Passport For example, UK123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-034",
+      "statement": "The microchip field is labelled 'Microchip number' with the hint 'For example, 900123456789012'; it is a 20-character-wide text input named animalIdentifierMicrochip-<line>.",
+      "kind": "data",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot (horse card)",
+      "quote": "Microchip number For example, 900123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-035",
+      "statement": "The tattoo field is labelled 'Tattoo' with the hint 'For example, AB1234'; it is a 20-character-wide text input named animalIdentifierTattoo-<line>.",
+      "kind": "data",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 after snapshot",
+      "quote": "Tattoo For example, AB1234",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-036",
+      "statement": "The horse name field is labelled 'Horse name', has no hint, and is a 20-character-wide text input named horseName-<line>.",
+      "kind": "data",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 after snapshot (horse card)",
+      "quote": "Horse name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-037",
+      "statement": "Identifier inputs are keyed by the commodity line index, not the animal: the same input (e.g. animalIdentifierEarTag-0) is reused for each successive animal on the line.",
+      "kind": "data",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1483, call@1493",
+      "quote": "fill #animalIdentifierEarTag-0 UK000000000001 ... fill #animalIdentifierEarTag-0 UK000000000002",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-038",
+      "statement": "The microchip entry label 'Microchip number' differs from its saved-animals column heading 'Microchip', while passport and ear tag use the same words in both places.",
+      "kind": "copy",
+      "ref": "trace 07a52 (identification.fit.spec.js:723) call@1747 snapshot; trace 19c03 call@1303 to call@1305",
+      "quote": "Microchip number ... Microchip",
+      "confidence": "verbatim",
+      "note": "The spec comment says Design release 1 has not settled the microchip entry wording."
+    },
+    {
+      "id": "trace-animals-fit-p10-039",
+      "statement": "Cattle and horse cards ask for no permanent address; only cat and dog cards show the permanent address block.",
+      "kind": "rule",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1399; trace b2704 call@1453 snapshot; trace bfdf8 call@1339 snapshot",
+      "quote": "#nameOrOrganisationName-0 to.have.count",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-040",
+      "statement": "The permanent address block opens with a warning text (govuk-warning-text) saying a false address is fraud.",
+      "kind": "copy",
+      "ref": "trace fe9ed (identification.fit.spec.js:357) call@1545",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-041",
+      "statement": "The warning is followed by guidance defining a permanent address as where the animal will permanently reside and can be checked by APHA, as a bulleted list.",
+      "kind": "copy",
+      "ref": "trace fe9ed (identification.fit.spec.js:357) call@1547 to call@1551",
+      "quote": "A permanent address is where an animal: will permanently reside | can be checked by the Animal and Plant Health Agency (APHA)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-042",
+      "statement": "The address fields sit under the h3 question 'Where will their permanent address be?'.",
+      "kind": "copy",
+      "ref": "trace fe9ed (identification.fit.spec.js:357) call@1553",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-043",
+      "statement": "The permanent address asks for eight fields in this order: Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Phone number, Email address.",
+      "kind": "data",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1343 to call@1357 and call@1339 snapshot",
+      "quote": "Name or organisation name | Address line 1 | Address line 2 (optional) | Town or city | County (optional) | Postcode or Zip code | Phone number | Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-044",
+      "statement": "Address line 2 and County are marked optional in their labels; the other six address fields carry no optional marker.",
+      "kind": "rule",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 snapshot",
+      "quote": "Address line 2 (optional) ... County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-045",
+      "statement": "The permanent address never asks for a country, and the page has no select control at all.",
+      "kind": "rule",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1359, call@1361",
+      "quote": "#country-0 to.have.count ... select to.have.count",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-046",
+      "statement": "The phone number field has the hint 'For international numbers include the country code' as its accessible description.",
+      "kind": "copy",
+      "ref": "trace b2ce6 (identification.fit.spec.js:335) call@1393",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-047",
+      "statement": "The postcode field is labelled 'Postcode or Zip code' and is a 10-character-wide input with autocomplete postal-code.",
+      "kind": "data",
+      "ref": "trace b2ce6 (identification.fit.spec.js:335) call@1391; trace bfdf8 call@1339 snapshot",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-048",
+      "statement": "Address inputs carry browser autocomplete tokens: name, address-line1, address-line2, address-level2 (town or city), postal-code, tel and email; County has none. Phone is type tel and email is type email.",
+      "kind": "data",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 snapshot",
+      "quote": "autocomplete=\"name\" ... autocomplete=\"address-line1\" ... autocomplete=\"address-line2\" ... autocomplete=\"address-level2\" ... autocomplete=\"postal-code\" ... type=\"tel\" ... autocomplete=\"tel\" ... type=\"email\" ... autocomplete=\"email\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-049",
+      "statement": "Address inputs are sized by field: name, address lines and email full width; town or city and county two-thirds width; postcode 10 characters; phone 20 characters.",
+      "kind": "constraint",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 snapshot",
+      "quote": "govuk-input ... govuk-!-width-two-thirds ... govuk-input--width-10 ... govuk-input--width-20",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-050",
+      "statement": "Each animal on a cat or dog line has its own permanent address: after one animal is saved, the next animal's address fields are empty again.",
+      "kind": "behaviour",
+      "ref": "trace 07a52 (identification.fit.spec.js:723) call@1747 snapshot",
+      "quote": "Enter details for Felis catus 2 of 2 ... nameOrOrganisationName-0 ... value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-051",
+      "statement": "While a line has more than one animal still without a record, the card ends with a secondary in-card button 'Save and add another'.",
+      "kind": "behaviour",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1481",
+      "quote": "Save and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-052",
+      "statement": "On the last animal a line still owes, the in-card button reads 'Save and finish' instead, and 'Save and add another' is gone.",
+      "kind": "behaviour",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1487 to call@1491",
+      "quote": "Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-053",
+      "statement": "A line of exactly one animal shows no in-card button at all ('1 of 1'); the page's Save and continue saves that animal's record.",
+      "kind": "rule",
+      "ref": "trace a783b (identification.fit.spec.js:503) call@1641 to call@1653",
+      "quote": "Enter details for Bos taurus 1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-054",
+      "statement": "Both in-card buttons submit the same action, add:<line index>, so 'Save and add another' and 'Save and finish' differ only in wording.",
+      "kind": "behaviour",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) network POSTs; call@1487 snapshot",
+      "quote": "value=\"add:0\" name=\"action\" ... Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-055",
+      "statement": "Saving a record with an in-card button posts the whole form to the identification URL and redirects (302) back to the same page, which re-renders with the record in the table and the counter moved on.",
+      "kind": "behaviour",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) network; call@1485 to call@1487",
+      "quote": "POST .../commodities/identification 302 .../commodities/identification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-056",
+      "statement": "When every animal on a line has a record, the card drops the entry fields and the in-card button and shows a completion line naming the count and species.",
+      "kind": "copy",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1497; trace 0e965 call@2087 to call@2089",
+      "quote": "You have entered details for all 2 Bos taurus animals. Remove a record if you need to replace it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-057",
+      "statement": "For a line of one animal the completion line reads 'all 1 Bos taurus animals', with no singular form.",
+      "kind": "copy",
+      "ref": "trace a783b (identification.fit.spec.js:503) call@1651 after snapshot",
+      "quote": "You have entered details for all 1 Bos taurus animals. Remove a record if you need to replace it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-058",
+      "statement": "Once a line has at least one record, the card shows a saved-animals table above the entry fields, with one row per saved animal.",
+      "kind": "behaviour",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1487 snapshot",
+      "quote": "Animal | Ear tag | Passport ... Bos taurus 1 | UK000000000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-059",
+      "statement": "Before any record is saved the card shows no saved-animals table.",
+      "kind": "behaviour",
+      "ref": "trace bfdf8 (identification.fit.spec.js:320) call@1339 snapshot; trace 285e7 (identification.fit.spec.js:818) call@1897 snapshot",
+      "quote": "Enter details for Felis catus 1 of 2",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a table in the rendered card when no record exists, including straight after the only record is removed."
+    },
+    {
+      "id": "trace-animals-fit-p10-060",
+      "statement": "The saved-animals table's first column is 'Animal' and each row is named '<species> <number>', for example 'Bos taurus 1'.",
+      "kind": "copy",
+      "ref": "trace 26bc8 (identification.fit.spec.js:764) call@1815, call@1821",
+      "quote": "Animal ... Bos taurus 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-061",
+      "statement": "The saved-animals table has a column for every identifier the commodity declares, in the commodity's own order, even when a record left that identifier blank: cattle 'Ear tag', 'Passport'; cat and dog 'Microchip', 'Passport', 'Tattoo'.",
+      "kind": "rule",
+      "ref": "trace 26bc8 (identification.fit.spec.js:764) call@1815 to call@1821; trace 07a52 call@1747 to call@1753",
+      "quote": "Animal | Ear tag | Passport ... Animal | Microchip | Passport | Tattoo | Permanent address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-062",
+      "statement": "For cat and dog the saved-animals table adds a 'Permanent address' column, which shows only the name or organisation name (e.g. 'Pet Owner'), not the full address.",
+      "kind": "data",
+      "ref": "trace 07a52 (identification.fit.spec.js:723) call@1755, call@1761 and call@1747 snapshot",
+      "quote": "Permanent address ... Pet Owner",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-063",
+      "statement": "A blank identifier on a saved record shows as an empty cell in the saved-animals table.",
+      "kind": "data",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1497 snapshot",
+      "quote": "Bos taurus 1 | UK000000000001 | ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-064",
+      "statement": "A cat record with microchip, passport and a full permanent address saves and reads back its microchip number, passport number and owner name in its row.",
+      "kind": "behaviour",
+      "ref": "trace 07a52 (identification.fit.spec.js:723) call@1725 to call@1761",
+      "quote": "Felis catus 1 | 900123456789012 | UK123456789 | | Pet Owner",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-065",
+      "statement": "A dog identified only by its microchip number, with a permanent address and no passport or tattoo, is accepted and saved.",
+      "kind": "rule",
+      "ref": "trace d1d4b (identification.fit.spec.js:795) call@1919 to call@1943",
+      "quote": "Canis lupus familiaris 1 | 900123456789012 | | | Pet Owner",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-066",
+      "statement": "A cattle animal identified only by its ear tag, with no passport, is accepted and saved.",
+      "kind": "rule",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1483 to call@1487",
+      "quote": "animalIdentifierEarTag-0=UK000000000001 ... animalIdentifierPassport-0=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-067",
+      "statement": "Saved records persist on the server: after a page reload the saved dog's microchip still shows in its row.",
+      "kind": "behaviour",
+      "ref": "trace d1d4b (identification.fit.spec.js:795) call@1941 to call@1943",
+      "quote": "reload ... Canis lupus familiaris 1 ... 900123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-068",
+      "statement": "Each saved-animals row has a 'Remove' control (a button styled as a link, visually hidden suffix ' animal <n>') that submits action remove:<line>:<record index>.",
+      "kind": "behaviour",
+      "ref": "trace 285e7 (identification.fit.spec.js:818) call@1895; network POST",
+      "quote": "Remove animal 1 ... action=remove:0:0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-069",
+      "statement": "Remove deletes the record straight away with no confirmation step; the page reloads without the row and the counter steps back.",
+      "kind": "behaviour",
+      "ref": "trace 285e7 (identification.fit.spec.js:818) call@1895 to call@1897 and snapshot",
+      "quote": "POST .../commodities/identification 302 ... Enter details for Felis catus 1 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-070",
+      "statement": "Saved records cannot be edited in place: the saved-animals row offers only Remove, and the completion line tells the trader to remove a record to replace it.",
+      "kind": "rule",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) call@1497 snapshot",
+      "quote": "Remove a record if you need to replace it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-071",
+      "statement": "Removing a record from a full line reopens entry for that line: the counter returns to the removed slot ('2 of 2') and the in-card 'Save and finish' button comes back.",
+      "kind": "behaviour",
+      "ref": "trace 0e965 (identification.fit.spec.js:853) call@2105 to call@2107 and snapshot",
+      "quote": "Enter details for Bos taurus 2 of 2 ... Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-072",
+      "statement": "An add action posted for a line that already has a record for every animal is rejected: the page re-renders (200, no redirect) with an error summary 'There is a problem' and saves nothing.",
+      "kind": "rule",
+      "ref": "trace fdf5c (identification.fit.spec.js:835) call@1943 to call@1945; network POST 200",
+      "quote": "You have already entered details for all 2 animals — remove a record before adding another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-073",
+      "statement": "The cap-reached error summary link points to the line's card (#identification-card-<line>), and no inline error message is shown on the card.",
+      "kind": "behaviour",
+      "ref": "trace fdf5c (identification.fit.spec.js:835) call@1947 to call@1949 and call@1945 snapshot",
+      "quote": "<a href=\"#identification-card-0\">You have already entered details for all 2 animals — remove a record before adding another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-074",
+      "statement": "On Commodity details, lowering a line's number of animals below the number of saved identification records is blocked with an error on the count field.",
+      "kind": "rule",
+      "ref": "trace 0e965 (identification.fit.spec.js:853) call@2097 to call@2101 and snapshot",
+      "quote": "You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-075",
+      "statement": "The count-drop error summary link goes to the identification page, anchored at the line's card (/commodities/identification#identification-card-<line>).",
+      "kind": "behaviour",
+      "ref": "trace 0e965 (identification.fit.spec.js:853) call@2101 snapshot, call@2103",
+      "quote": "href=\"/live-animals/notifications/GBN-AG-26-62GPV9/commodities/identification#identification-card-0\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-076",
+      "statement": "A rejected count drop keeps the earlier saved count: the identification page still shows 2 animals for the line after the trader followed the error.",
+      "kind": "behaviour",
+      "ref": "trace 0e965 (identification.fit.spec.js:853) call@2107 snapshot",
+      "quote": "0102 Domestic cattle 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-077",
+      "statement": "The page ends with a button group: primary 'Save and continue', secondary 'Save and return to overview', and the link 'Cancel and return to overview' to the Overview.",
+      "kind": "copy",
+      "ref": "trace 66033 (identification.fit.spec.js:380) call@1055; trace dd986 call@1377 snapshot",
+      "quote": "Save and continue | Save and return to overview | Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-078",
+      "statement": "The page's own save actions never read 'Save and finish'; that wording belongs only to the in-card button.",
+      "kind": "rule",
+      "ref": "trace 66033 (identification.fit.spec.js:380) call@1057",
+      "quote": ".govuk-button-group >> internal:role=button[name=\"Save and finish\"i] to.have.count",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-079",
+      "statement": "Save and continue posts the form and redirects (302) to the Overview.",
+      "kind": "behaviour",
+      "ref": "trace a783b (identification.fit.spec.js:503) network POST; trace 0e965 network",
+      "quote": "POST .../commodities/identification 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-PWZVT2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-080",
+      "statement": "Save and continue with filled entry fields on a line saves them as that line's next record (no action field is sent).",
+      "kind": "behaviour",
+      "ref": "trace a783b (identification.fit.spec.js:503) network POST, call@1651 snapshot",
+      "quote": "concurrencyToken=0&animalIdentifierEarTag-0=UK000000000001&animalIdentifierPassport-0=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-081",
+      "statement": "The form starts with a visually hidden submit button 'Save and finish' (action finish), so pressing Enter in a field triggers that action rather than an in-card add.",
+      "kind": "behaviour",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 snapshot",
+      "quote": "<button type=\"submit\" name=\"action\" value=\"finish\" class=\"govuk-visually-hidden\">Save and finish",
+      "confidence": "inferred",
+      "note": "Inferred from HTML implicit-submission rules (the first submit button is the default); no trace presses Enter, so what 'finish' does is unseen."
+    },
+    {
+      "id": "trace-animals-fit-p10-082",
+      "statement": "The form posts as application/x-www-form-urlencoded with a CSRF crumb and a hidden concurrencyToken, which stayed 0 across every save in these traces.",
+      "kind": "integration",
+      "ref": "trace 05b15 (identification.fit.spec.js:473) network POST postData",
+      "quote": "crumb=[REDACTED] ... {\"name\":\"concurrencyToken\",\"value\":\"0\"}",
+      "confidence": "verbatim",
+      "note": "Crumb value redacted. A token that never moves after saves may mean it is not a per-save version; the trace cannot say."
+    },
+    {
+      "id": "trace-animals-fit-p10-083",
+      "statement": "The form is novalidate, so browser-side validation is off and every check happens on the server.",
+      "kind": "constraint",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 snapshot",
+      "quote": "<form method=\"post\" novalidate=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-084",
+      "statement": "The page has no serious or critical axe accessibility violations with a cattle line, with a cat's microchip field rendered, on the last outstanding animal, and once an animal is saved.",
+      "kind": "non-functional",
+      "ref": "traces fab50 (:427) call@751-769, a2cb0 (:432) call@1489-1507, 4fc89 (:533) call@1151-1169, 8b38b (:824) call@1219-1237",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim",
+      "note": "The traces show axe running; the source records every test as passed, which is where the result comes from."
+    },
+    {
+      "id": "trace-animals-fit-p10-085",
+      "statement": "Apart from govuk-frontend components (table, inset text, warning text, inputs, hints, buttons, button group, back link, tag, section break) the page uses three non-standard pieces: the 'app-journey-strip' header strip, 'app-link-button' (a submit button styled as a link for Remove), and a visually hidden default submit button.",
+      "kind": "constraint",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 snapshot; trace 05b15 call@1487 snapshot",
+      "quote": "app-journey-strip ... govuk-link app-link-button ... class=\"govuk-visually-hidden\">Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-086",
+      "statement": "Cards are separated by a visible large section break, and each card is a plain section, not a govuk summary card.",
+      "kind": "constraint",
+      "ref": "trace dd986 (identification.fit.spec.js:245) call@1377 snapshot",
+      "quote": "<section id=\"identification-card-0\" class=\"govuk-!-margin-bottom-6\"> ... govuk-section-break govuk-section-break--l govuk-section-break--visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p10-087",
+      "statement": "The browser only talks to the frontend; the backend calls that persist identification records cannot be seen in these traces.",
+      "kind": "integration",
+      "ref": "all 25 traces, network logs",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p10-088",
+      "statement": "No trace presses 'Save and return to overview' or 'Cancel and return to overview', so whether either saves the entry fields is unseen.",
+      "kind": "behaviour",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p10-089",
+      "statement": "No trace walks a ferret line or any species other than cattle, horse, cat, dog and salmon, so their identifier sets are unseen.",
+      "kind": "rule",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec comment names cat, dog and ferret as sharing the tattoo code."
+    },
+    {
+      "id": "trace-animals-fit-p10-090",
+      "statement": "No trace fills a tattoo or horse name and reads it back, so how those values show in the saved-animals table is unseen; no horse record is saved at all, so the horse table's columns are unseen.",
+      "kind": "data",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p10-091",
+      "statement": "No trace shows the Identification details task status for a partly identified consignment (some animals saved, some not), so any 'In progress' state is unseen.",
+      "kind": "behaviour",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p10-092",
+      "statement": "No trace saves records on two cards at once or uses the second card's in-card button (add:1), so multi-line saving is unseen.",
+      "kind": "behaviour",
+      "ref": "trace b2704 (identification.fit.spec.js:403) call@1453 snapshot shows add:1 but it is never pressed",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

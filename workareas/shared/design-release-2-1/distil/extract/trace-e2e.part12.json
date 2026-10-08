@@ -1,0 +1,689 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 12, Accompanying documents (animals journey). Read in full: the five spec files (documents-limits.spec.ts, documents-refresh-no-js.spec.ts, documents-reject.spec.ts, documents-scan-lifecycle.spec.ts, promoted-documents.spec.ts) and all 8 trace zips, every one passed: docum-7a260 (fifteen accepted, sixteenth refused), docum-dcd41 (10MB accepted, one byte over refused in the browser), docum-db5e9 (no-JavaScript refresh fallback), docum-5bc5b (oversize file refused by the server), docum-8deec (infected upload: Scanning for virus, then Virus found), docum-263a0 (clean upload: Scanning for virus, then Check completed), promo-ba4a7 (upload, scan, download and remove through the real uploader) and promo-532a9 (unsupported .txt refused). The traces were recorded by Playwright 1.64 and `tim distil trace -- open` refuses them with TraceVersionError, so each zip was unzipped into this part's work folder and its N-trace.trace (actions, after-results, frame-snapshot DOM rendered to HTML with a jq renderer), N-trace.network (requests and responses) and test.trace were read with jq; every action of every trace was listed. Each trace reaches the documents page the same way: dashboard, Start a new notification, Origin of the import, Overview, What are you importing?, Commodity details, back to Overview, then the task link Upload documents (those earlier pages belong to other parts and are not claimed here). Page inventory: (1) the Overview task list entry '4. Documents / Upload documents' (pointer promo-ba4a7 call@597); (2) the one documents page, /live-animals/notifications/<ref>/accompanying-documents, caption 'Documents', heading 'Upload documents' (pointers promo-ba4a7 call@599, call@613, call@615, call@624), in these states: empty; with a document Scanning for virus; Check completed with View file; Virus found with an error summary; a client-side oversize error; a server-side oversize or wrong-type error; the maximum-documents error; and, without JavaScript, the Refresh virus scan status link at ?attempt=N; (3) the file download at /accompanying-documents/<upload id>/file (network only); (4) the JSON scan-status endpoint /accompanying-documents/status (network only, body not captured). Nothing in the part pressed Save and continue, Save and return to overview or Cancel; every document used type ITAHC and issue date 03/01/2026; only PDFs and one .txt were uploaded. Those silences are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-e2e-p12-001",
+      "statement": "The Overview task list has a section headed '4. Documents' holding one task, 'Upload documents', which links to the notification's accompanying-documents page.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@597 (Overview task list)",
+      "quote": "<H3 class=\"govuk-heading-m\">4. Documents</H3> ... <A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents\" aria-describedby=\"documents-1-status\">Upload documents</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-002",
+      "statement": "On a new notification with no documents, the Upload documents task shows a blue 'To do' status tag.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@575 and call@597 (div#documents-1-status)",
+      "quote": "<DIV class=\"govuk-task-list__status\" id=\"documents-1-status\"><STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-003",
+      "statement": "The documents page is at /live-animals/notifications/<notification reference>/accompanying-documents.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 network (GET after click on 'Upload documents', action call@599)",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-004",
+      "statement": "The documents page has the caption 'Documents' and the heading 'Upload documents'.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (main)",
+      "quote": "<SPAN class=\"govuk-caption-l\">Documents</SPAN> <H1 class=\"govuk-heading-l\">Upload documents</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-005",
+      "statement": "The page title is 'Upload documents - Import notification service - GOV.UK', and it is prefixed 'Error: ' when the page shows an error.",
+      "kind": "copy",
+      "ref": "trace docum-8deec and promo-ba4a7 1-trace.trace (TITLE nodes in frame snapshots)",
+      "quote": "Upload documents - Import notification service - GOV.UK / Error: Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-006",
+      "statement": "Above the caption, a journey strip shows the notification status as a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (div.app-journey-strip)",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"><STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG><SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-5RS0MM</SPAN></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-007",
+      "statement": "The page has a Back link to the notification's Overview.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@599 (a.govuk-back-link)",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-5RS0MM\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-008",
+      "statement": "The page opens with guidance: an ITAHC must be attached if the consignment needs one and can be added later; all documents should be uploaded before the consignment arrives at the UK port; documents must be in English with every page uploaded.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (first p.govuk-body in main)",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-009",
+      "statement": "The guidance lists other documents the user may need to attach: import licences or authorisations, and commercial documents or invoices.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (p.govuk-body and ul.govuk-list--bullet)",
+      "quote": "Other documents you may need to attach include: import licences or authorisations / commercial documents or invoices",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-010",
+      "statement": "A details component titled 'Check which additional documents you must upload' holds a table (visually hidden caption 'Additional documents by type of consignment', columns 'Consignment' and 'Documents needed') with three rows: animals that do not need a health certificate need an exporter's fit-to-travel declaration; livestock transiting bluetongue restricted territories need Bluetongue declaration GBHC172; rodents imported for research need an RM39 licence and supplementary health certificate.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (details.govuk-details)",
+      "quote": "Check which additional documents you must upload ... Additional documents by type of consignment ... Consignment | Documents needed ... Animals that do not need a health certificate | An exporter's declaration that they are fit to travel ... Livestock transiting bluetongue restricted territories | Bluetongue declaration GBHC172 ... Rodents imported for research purposes | An RM39 licence and supplementary health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-011",
+      "statement": "Inside the details component a link opens the GOV.UK import guidance in a new tab.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (details a.govuk-link)",
+      "quote": "<A href=\"https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system\" class=\"govuk-link\" rel=\"noreferrer noopener\" target=\"_blank\">Check the documents you need on GOV.UK (opens in a new tab)</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-012",
+      "statement": "The upload form is a multipart POST back to the documents page itself, and the fields sit in a summary card titled 'File upload'.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@599 (form and section.govuk-summary-card)",
+      "quote": "<FORM method=\"post\" enctype=\"multipart/form-data\" novalidate=\"\" ...> ... <H2 class=\"govuk-summary-card__title\" id=\"file-upload-heading\">File upload</H2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-013",
+      "statement": "The form carries a hidden concurrency token beside the CSRF crumb.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (hidden inputs)",
+      "quote": "<INPUT type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\"> <INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"3\">",
+      "confidence": "verbatim",
+      "note": "The crumb is a CSRF token and is redacted."
+    },
+    {
+      "id": "trace-e2e-p12-014",
+      "statement": "The user gives a document reference in a text input labelled 'Document reference' with the hint 'For example, GBHC1234567890.'.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (input#accompanyingDocumentReference); filled at call@603",
+      "quote": "Document reference / For example, GBHC1234567890.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-015",
+      "statement": "The user picks a document type from a select labelled 'Document type' whose first option is 'Select one'.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (select#accompanyingDocumentType); chosen at call@605",
+      "quote": "Document type ... <OPTION value=\"\">Select one</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-016",
+      "statement": "The document type list offers 14 types: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Health certificate, Journey log and Other.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (select#accompanyingDocumentType options)",
+      "quote": "ITAHC=Intra Trade Animal Health Certificate (ITAHC) | VETERINARY_HEALTH_CERTIFICATE=Veterinary health certificate | AIR_WAYBILL=Air waybill | IMPORT_PERMIT=Import permit | LETTER_OF_AUTHORITY=Letter of authority (Directive 2008/61/EC) | COMMERCIAL_INVOICE=Commercial invoice | SEA_WAYBILL=Sea waybill | RAIL_WAYBILL=Rail waybill | BILL_OF_LADING=Bill of lading | CATCH_CERTIFICATE=Catch certificate | LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN=Laboratory sampling results for aflatoxin (Reg 2019/1793) | HEALTH_CERTIFICATE=Health certificate | JOURNEY_LOG=Journey log | OTHER=Other",
+      "confidence": "verbatim",
+      "note": "Every trace in the part chose ITAHC; no other type was submitted."
+    },
+    {
+      "id": "trace-e2e-p12-017",
+      "statement": "The user gives the date of issue in one text field labelled 'Date of issue' with the hint 'For example, 12/12/2025'; the traces typed it as dd/mm/yyyy.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (input#accompanyingDocumentDateOfIssue); filled at call@607 with '03/01/2026'",
+      "quote": "Date of issue / For example, 12/12/2025",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-018",
+      "statement": "With JavaScript on, the date of issue field is enhanced by the MOJ date picker: a 'Choose date' toggle opens a calendar dialog with Previous year, Previous month, Next month and Next year buttons, a month-and-year title, a Monday-first day grid, and 'Select' and 'Close' buttons.",
+      "kind": "constraint",
+      "ref": "trace promo-ba4a7 action call@613 (div.moj-datepicker[data-moj-date-picker-init])",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Choose date</SPAN> ... Previous year ... Previous month ... October 2026 ... Next month ... Next year ... Mon ... Sun ... <BUTTON type=\"button\" class=\"govuk-button moj-js-datepicker-ok\">Select</BUTTON> <BUTTON type=\"button\" class=\"govuk-button govuk-button--secondary moj-js-datepicker-cancel\">Close</BUTTON>",
+      "confidence": "verbatim",
+      "note": "An MOJ Pattern Library component, outside the govuk-frontend toolbox; the GOV.UK Date input is the standard alternative. Without JavaScript the field stays a plain text input (trace docum-db5e9 action call@419)."
+    },
+    {
+      "id": "trace-e2e-p12-019",
+      "statement": "The user attaches one file in a file input labelled 'Attachment'; with JavaScript on it is the GOV.UK file upload enhancement showing a 'Choose file' button, the status 'No file chosen' and 'or drop file'.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@613 (div.govuk-file-upload-wrapper[data-govuk-file-upload-init])",
+      "quote": "Attachment ... <SPAN class=\"govuk-body govuk-file-upload-button__status\" aria-live=\"polite\">No file chosen</SPAN> ... Choose file ... or drop file",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-020",
+      "statement": "The Attachment hint lists the file rules: smaller than 10MB; a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX; up to a maximum of 15 files; ZIP files are not allowed for security reasons.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (div#file-hint)",
+      "quote": "Your file must be: / smaller than 10MB / a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX / up to a maximum of 15 files / ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-021",
+      "statement": "The file input limits the browser's file picker to .pdf, .doc, .docx, .jpeg, .jpg, .png, .xls and .xlsx.",
+      "kind": "rule",
+      "ref": "trace promo-ba4a7 action call@599 (input#file accept attribute)",
+      "quote": "accept=\".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-022",
+      "statement": "Inside the File upload card a secondary button 'Save and add another' submits one document (one file) at a time.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@611 (click button 'Save and add another')",
+      "quote": "<BUTTON type=\"submit\" value=\"add\" name=\"action\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">Save and add another</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-023",
+      "statement": "Before any document is added, the File upload card says 'You have not added any documents yet.'.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (p.govuk-body in the summary card)",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-024",
+      "statement": "Below the card the page offers a primary 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link to the Overview.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@599 (div.govuk-button-group)",
+      "quote": "<BUTTON type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\">Save and continue</BUTTON> <BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview</BUTTON> <A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-5RS0MM\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-025",
+      "statement": "The page's three submit buttons each send a different value: Save and add another sends action=add, Save and continue sends action=continue, and Save and return to overview sends exit=hub.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (button name and value attributes)",
+      "quote": "value=\"add\" name=\"action\" ... value=\"continue\" name=\"action\" ... value=\"hub\" name=\"exit\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-026",
+      "statement": "No trace pressed Save and continue, Save and return to overview or Cancel and return to overview on the documents page, so where each goes and what each saves is not shown.",
+      "kind": "behaviour",
+      "ref": "all 8 traces in part 12 (action lists)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-027",
+      "statement": "Adding a clean PDF posts the form, which redirects (302) back to the documents page, where the new document is listed.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 network (POST /accompanying-documents 302, location /accompanying-documents, then GET 200); action call@613",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents 302 ... location: /live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-028",
+      "statement": "After each add the user is back on the same page with the form ready for the next document, so several documents are added one after another without leaving the page.",
+      "kind": "behaviour",
+      "ref": "trace docum-7a260 actions call@377 to call@555 (fill, select, fill, setInputFiles, click 'Save and add another', fifteen times on the same page)",
+      "quote": "click internal:role=button[name=\"Save and add another\"i] ... fill internal:label=\"Document reference\"i value PWCAP17913948310432",
+      "confidence": "inferred",
+      "note": "Inferred from the test refilling the form after each add with no navigation in between; the server-rendered field values after the redirect are empty."
+    },
+    {
+      "id": "trace-e2e-p12-029",
+      "statement": "Added documents are listed in a table (visually hidden caption 'Documents you have added') with the columns Document reference, Document type, Date of issue, Status and a visually hidden 'Actions' column, inside the File upload card in place of the empty-state text.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@613 (div#documents-added table)",
+      "quote": "<CAPTION class=\"govuk-table__caption govuk-visually-hidden\">Documents you have added</CAPTION> ... Document reference | Document type | Date of issue | Status | <SPAN class=\"govuk-visually-hidden\">Actions</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-030",
+      "statement": "Each row shows the reference as entered, the document type's display name and the date of issue as entered.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@613 (row for PW1791394835520)",
+      "quote": "PW1791394835520 | Intra Trade Animal Health Certificate (ITAHC) | 03/01/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-031",
+      "statement": "The Status cell starts with visually hidden text naming the document, 'Virus check status for <reference>', before the status tag.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@613 (status td)",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Virus check status for PW1791394835520</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-032",
+      "statement": "Straight after upload a document's status is a blue 'Scanning for virus' tag while its virus scan is pending.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@613; trace docum-263a0 action call@431",
+      "quote": "data-scan-status=\"PENDING\"><SPAN class=\"govuk-visually-hidden\">Virus check status for PW1791394835520</SPAN><STRONG class=\"govuk-tag govuk-tag--blue\">Scanning for virus</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-033",
+      "statement": "While a document is still scanning its row offers only Remove: there is no View file link.",
+      "kind": "rule",
+      "ref": "trace docum-263a0 action call@431 (row textContent) and call@433",
+      "quote": "Virus check status for PWSCAN1791394828049Scanning for virus\n      Remove document 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-034",
+      "statement": "When the scan finds the file clean, the status becomes a green 'Check completed' tag.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@615; trace docum-263a0 action call@435",
+      "quote": "data-scan-status=\"COMPLETE\"><SPAN class=\"govuk-visually-hidden\">Virus check status for PW1791394835520</SPAN><STRONG class=\"govuk-tag govuk-tag--green\">Check completed</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-035",
+      "statement": "Once a document's check is completed, its row shows a 'View file' link (visually hidden suffix 'for document N') before Remove.",
+      "kind": "rule",
+      "ref": "trace promo-ba4a7 action call@615 (actions td); trace docum-263a0 action call@437",
+      "quote": "<A class=\"govuk-link govuk-!-margin-right-3\" href=\"/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents/9d91891b-3c08-47c0-8a79-4b94db5d8565/file\">View file<SPAN class=\"govuk-visually-hidden\"> for document 1</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-036",
+      "statement": "An infected upload is first accepted and listed as 'Scanning for virus', exactly like a clean one.",
+      "kind": "behaviour",
+      "ref": "trace docum-8deec action call@450 (row textContent); network POST /accompanying-documents 302",
+      "quote": "Virus check status for PWVIRUS1791394827860Scanning for virus\n      Remove document 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-037",
+      "statement": "When the scan finds a virus, the status becomes a red 'Virus found' tag.",
+      "kind": "behaviour",
+      "ref": "trace docum-8deec action call@452 (row for PWVIRUS1791394827860)",
+      "quote": "data-scan-status=\"REJECTED\"><SPAN class=\"govuk-visually-hidden\">Virus check status for PWVIRUS1791394827860</SPAN><STRONG class=\"govuk-tag govuk-tag--red\">Virus found</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-038",
+      "statement": "A document with a virus raises an error summary 'There is a problem' whose message names the uploaded file and links to the documents table.",
+      "kind": "rule",
+      "ref": "trace docum-8deec action call@452 (div.govuk-error-summary on ?attempt=1)",
+      "quote": "There is a problem ... <A href=\"#documents-added\">eicar-virus-file.pdf contains a virus. Remove it and try again with a different file.</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-039",
+      "statement": "A document with a virus keeps its row with Remove but no View file link, and no inline error message is shown on a field.",
+      "kind": "rule",
+      "ref": "trace docum-8deec action call@452 (actions td) and call@458",
+      "quote": "<TD class=\"govuk-table__cell\" data-view-file-text=\"View file\" data-view-file-hidden=\"for document 1\"><BUTTON type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"remove:0\">Remove<SPAN class=\"govuk-visually-hidden\"> document 1</SPAN></BUTTON></TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-040",
+      "statement": "No trace removed an infected document, so whether removing it clears the virus error summary is not shown.",
+      "kind": "behaviour",
+      "ref": "trace docum-8deec (ends at call@458 with the infected row still listed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-041",
+      "statement": "The page defines a fourth scan status, a grey 'Unknown' tag, which no trace reached.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@599 (div#js-scan-status-announcer data-scan-copy)",
+      "quote": "\"UNKNOWN\":{\"text\":\"Unknown\",\"classes\":\"govuk-tag--grey\"}",
+      "confidence": "verbatim",
+      "note": "What makes a document's status Unknown is not shown."
+    },
+    {
+      "id": "trace-e2e-p12-042",
+      "statement": "A polite live region announces a settled scan to screen-reader users: 'Document scan complete: the file is safe to use' for a clean file and 'Document scan failed: a virus was found. Remove the file and try again.' for an infected one.",
+      "kind": "copy",
+      "ref": "trace docum-7a260 (div#js-scan-status-announcer text); trace promo-ba4a7 action call@599 (data-scan-copy)",
+      "quote": "aria-live=\"polite\" aria-atomic=\"true\" ... >Document scan complete: the file is safe to use< ... \"REJECTED\":{\"text\":\"Virus found\",\"classes\":\"govuk-tag--red\",\"announcement\":\"Document scan failed: a virus was found. Remove the file and try again.\"}",
+      "confidence": "verbatim",
+      "note": "The clean announcement was seen rendered in docum-7a260; the infected one only in the copy attribute."
+    },
+    {
+      "id": "trace-e2e-p12-043",
+      "statement": "With JavaScript on, while a document is scanning the page polls a JSON scan-status endpoint for the notification's documents, about every three seconds.",
+      "kind": "integration",
+      "ref": "trace docum-263a0 network (GET /accompanying-documents/status at 17:40:31.754 and 17:40:34.861); trace docum-7a260 network",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-9FE5EP/accompanying-documents/status 200 application/json; charset=utf-8",
+      "confidence": "inferred",
+      "note": "The interval is read from request timestamps. The response bodies were not captured (one response was 91 bytes for one document)."
+    },
+    {
+      "id": "trace-e2e-p12-044",
+      "statement": "With JavaScript on, once every scan has settled the page reloads itself at ?attempt=N, so the server renders the final statuses, View file links and any virus error.",
+      "kind": "behaviour",
+      "ref": "trace docum-263a0 network (status, status, then GET /accompanying-documents?attempt=1 with no user action); trace docum-8deec network; data-settled-href",
+      "quote": "data-settled-href=\"/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents?attempt=1\"",
+      "confidence": "inferred",
+      "note": "Inferred from the data-settled-href attribute and the GET that follows the last status poll."
+    },
+    {
+      "id": "trace-e2e-p12-045",
+      "statement": "While a document is scanning the server renders a 'Refresh virus scan status' link to the same page at ?attempt=N; with JavaScript on it is hidden because the page polls instead.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@613 (p#js-refresh-fallback hidden); trace docum-db5e9 action call@425 (same paragraph without hidden)",
+      "quote": "<P id=\"js-refresh-fallback\" class=\"govuk-body\" hidden=\"\"><A href=\"/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents?attempt=1\" class=\"govuk-link\">Refresh virus scan status</A></P>",
+      "confidence": "inferred",
+      "note": "That script, not the server, hides it is inferred from the same paragraph rendering visible in the no-JavaScript trace."
+    },
+    {
+      "id": "trace-e2e-p12-046",
+      "statement": "The page holds a hidden hint 'Still checking some documents. Refresh again in a moment.', apparently for when polling stops while a scan is still pending; no trace showed it.",
+      "kind": "copy",
+      "ref": "trace promo-ba4a7 action call@613 (p#js-timeout-message hidden)",
+      "quote": "<P id=\"js-timeout-message\" class=\"govuk-hint\" hidden=\"\">Still checking some documents. Refresh again in a moment.</P>",
+      "confidence": "inferred",
+      "note": "When it shows is inferred from its id; no trace waited long enough to reveal it."
+    },
+    {
+      "id": "trace-e2e-p12-047",
+      "statement": "Once no document is scanning, the Refresh virus scan status link is not rendered at all.",
+      "kind": "rule",
+      "ref": "trace promo-ba4a7 action call@615 and trace docum-8deec action call@452 (only p#js-timeout-message present); trace docum-db5e9 call@455",
+      "quote": "await expect(animalsPages.accompanyingDocuments.refreshStatus).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-048",
+      "statement": "Without client JavaScript, a pending document shows a visible 'Refresh virus scan status' link to ?attempt=1, and the user refreshes the status by following it.",
+      "kind": "behaviour",
+      "ref": "trace docum-db5e9 action call@425 (snapshot) and call@429 to call@433",
+      "quote": "<P id=\"js-refresh-fallback\" class=\"govuk-body\"><A href=\"/live-animals/notifications/GBN-AG-26-T0GW96/accompanying-documents?attempt=1\" class=\"govuk-link\">Refresh virus scan status</A></P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-049",
+      "statement": "Each no-JavaScript refresh re-renders the page with the current status and a refresh link whose attempt number is one higher.",
+      "kind": "behaviour",
+      "ref": "trace docum-db5e9 actions call@433 to call@449; network GET ?attempt=1 to ?attempt=5",
+      "quote": "accompanying-documents?attempt=2 ... ?attempt=3 ... ?attempt=4 ... ?attempt=5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-050",
+      "statement": "In the no-JavaScript run the document was still 'Scanning for virus' after four refreshes and showed 'Check completed' with View file on the fifth; no limit on refreshes was reached.",
+      "kind": "behaviour",
+      "ref": "trace docum-db5e9 textContent results call@427, call@435, call@439, call@443, call@447, call@451",
+      "quote": "Virus check status for PWNOJS1791394827969Scanning for virus ... Virus check status for PWNOJS1791394827969Check completed View file for document 1Remove document 1",
+      "confidence": "verbatim",
+      "note": "Whether the attempt counter ever stops or changes the copy is not shown."
+    },
+    {
+      "id": "trace-e2e-p12-051",
+      "statement": "Without JavaScript the documents page still works end to end: the date of issue is a plain text field, the attachment a native file input, and the upload posts and redirects as with JavaScript.",
+      "kind": "non-functional",
+      "ref": "trace docum-db5e9 actions call@413 to call@425; network POST /accompanying-documents 302",
+      "quote": "<INPUT class=\"govuk-file-upload\" id=\"file\" name=\"file\" type=\"file\" aria-describedby=\"file-hint\" accept=\".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-052",
+      "statement": "View file downloads the stored file through the service at /accompanying-documents/<upload id>/file: status 200, content type application/pdf, Content-Disposition attachment with the original file name, and X-Content-Type-Options nosniff.",
+      "kind": "integration",
+      "ref": "trace promo-ba4a7 0-trace.network (GET .../accompanying-documents/9d91891b-3c08-47c0-8a79-4b94db5d8565/file)",
+      "quote": "content-type: application/pdf; content-disposition: attachment; filename=\"=?UTF-8?Q?safe-file-1kb.pdf?=\"; filename*=UTF-8''safe-file-1kb.pdf; x-content-type-options: nosniff; cache-control: no-cache",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-053",
+      "statement": "The downloaded file is byte-for-byte the file the user uploaded.",
+      "kind": "behaviour",
+      "ref": "promoted-documents.spec.ts:7 (expect(downloaded).toEqual(uploaded)); trace promo-ba4a7 passed",
+      "quote": "expect(downloaded).toEqual(uploaded);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-054",
+      "statement": "Each row has a Remove button (visually hidden suffix 'document N') that submits the form with action remove:<index>; the POST redirects back to the documents page, and removing the only document returns the card to 'You have not added any documents yet.'.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 actions call@622 to call@626; network POST ?attempt=1 302 then GET /accompanying-documents",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"remove:0\">Remove<SPAN class=\"govuk-visually-hidden\"> document 1</SPAN></BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-055",
+      "statement": "Remove takes effect at once, with no confirmation step.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 actions call@622 then call@624 (row count 0 on the next page)",
+      "quote": "click internal:role=button[name=\"Remove document 1\"s] ... Expect \"toHaveCount\" .govuk-table__row >> internal:has-text=\"PW1791394835520\"i expectedNumber 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-056",
+      "statement": "Remove is a submit button styled as a link with a custom class, app-link-button, outside the govuk-frontend toolbox.",
+      "kind": "constraint",
+      "ref": "trace promo-ba4a7 action call@613 (button.govuk-link.app-link-button)",
+      "quote": "class=\"govuk-link app-link-button\"",
+      "confidence": "verbatim",
+      "note": "A GOV.UK secondary or warning button, or a link to a remove confirmation page, is the standard alternative."
+    },
+    {
+      "id": "trace-e2e-p12-057",
+      "statement": "Rows are numbered for screen readers in the order added ('document 1' to 'document 15'), while Remove targets a zero-based index (remove:0 to remove:14).",
+      "kind": "data",
+      "ref": "trace docum-7a260 (final list: 'for document 15' with value remove:14)",
+      "quote": "for document 15< ... value=\"remove:14\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-058",
+      "statement": "No trace showed editing an added document: rows offer only View file and Remove, so changing a document appears to mean removing and re-adding it.",
+      "kind": "behaviour",
+      "ref": "trace promo-ba4a7 action call@615 (actions td has View file and Remove only)",
+      "quote": "View file<SPAN class=\"govuk-visually-hidden\"> for document 1</SPAN></A><BUTTON type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"remove:0\">Remove",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p12-059",
+      "statement": "A user can add up to 15 documents: fifteen clean uploads were each accepted, scanned to 'Check completed' and listed, with no error summary and 'Save and add another' still shown.",
+      "kind": "rule",
+      "ref": "trace docum-7a260 (15 POSTs answered 302; actions call@557 to call@561)",
+      "quote": "Expect \"toHaveCount\" #documents-added tbody tr expectedNumber 15 ... Expect \"toBeVisible\" internal:role=button[name=\"Save and add another\"i] ... Expect \"toHaveCount\" .govuk-error-summary expectedNumber 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-060",
+      "statement": "A sixteenth document is refused by the server (400) with the error summary 'There is a problem' and 'You can upload a maximum of 15 files', linking to the documents table; no inline field error is shown and the list stays at 15.",
+      "kind": "rule",
+      "ref": "trace docum-7a260 (final POST ?attempt=1 400; error summary snapshot; actions call@573 to call@581)",
+      "quote": "<A href=\"#documents-added\">You can upload a maximum of 15 files</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-061",
+      "statement": "A file of exactly 10,000,000 bytes (10MB) is accepted, scanned to 'Check completed' and listed with no error.",
+      "kind": "rule",
+      "ref": "trace docum-dcd41 actions call@387 to call@393 (row for PWEXACT1791394824818); documents-limits.spec.ts:53",
+      "quote": "Expect \"toContainText\" .govuk-table__row >> internal:has-text=\"PWEXACT1791394824818\"i \"Check completed\" ... Expect \"toHaveCount\" .govuk-error-summary expectedNumber 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-062",
+      "statement": "With JavaScript on, a file one byte over 10MB is refused in the browser before anything is sent: no POST is made, an error summary 'There is a problem' links to the file field with 'The selected file must be smaller than 10MB', and the field shows the same message inline.",
+      "kind": "rule",
+      "ref": "trace docum-dcd41 action call@403 (data-client-error markers); network shows no POST after the first upload",
+      "quote": "<LI data-client-error=\"file-size-summary\"><A href=\"#file\">The selected file must be smaller than 10MB</A></LI> ... <P class=\"govuk-error-message\" data-client-error=\"file-size-message\" id=\"file-error\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> The selected file must be smaller than 10MB</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-063",
+      "statement": "A refused oversize file adds no document: the list keeps only the documents already added.",
+      "kind": "rule",
+      "ref": "trace docum-dcd41 actions call@411 and call@413",
+      "quote": "Expect \"toHaveCount\" #documents-added tbody tr expectedNumber 1 ... has-text=\"PWOVER1791394832635\"i expectedNumber 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-064",
+      "statement": "The browser-side size check reads its limit (10000000 bytes) and its message from attributes on the form.",
+      "kind": "constraint",
+      "ref": "trace promo-ba4a7 action call@599 (form attributes)",
+      "quote": "data-max-file-size=\"10000000\" data-oversize-error=\"The selected file must be smaller than 10MB\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-065",
+      "statement": "A file well over 10MB that reaches the server (10.2MB in the trace) is refused with a 400: error summary 'There is a problem' linking to #file, the inline error 'The selected file must be smaller than 10MB' on the Attachment field, and no document added.",
+      "kind": "rule",
+      "ref": "trace docum-5bc5b network (POST /accompanying-documents 400); action call@453 snapshot",
+      "quote": "<A href=\"#file\">The selected file must be smaller than 10MB</A> ... <P id=\"file-error\" class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> The selected file must be smaller than 10MB</P>",
+      "confidence": "verbatim",
+      "note": "In this trace the browser check did not stop the submit (no data-client-error markers), so the server's own size check answered. The spec says the file is above the server's payload cap (the 10MB limit plus multipart headroom)."
+    },
+    {
+      "id": "trace-e2e-p12-066",
+      "statement": "After a refused file with no documents yet added, the card still says 'You have not added any documents yet.'.",
+      "kind": "rule",
+      "ref": "trace docum-5bc5b action call@457; trace promo-532a9 action call@585",
+      "quote": "Expect \"toBeVisible\" internal:text=\"You have not added any documents yet.\"i",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-067",
+      "statement": "After a server-side file refusal, the re-rendered form comes back empty: the reference, document type and date of issue the user gave are not kept.",
+      "kind": "behaviour",
+      "ref": "trace docum-5bc5b action call@453 (server-rendered value attributes after the 400)",
+      "quote": "<INPUT class=\"govuk-input govuk-input--width-20\" id=\"accompanyingDocumentReference\" name=\"accompanyingDocumentReference\" type=\"text\" value=\"\" ...> ... <INPUT ... id=\"accompanyingDocumentDateOfIssue\" ... value=\"\" ...>",
+      "confidence": "inferred",
+      "note": "Read from the server-rendered value attributes in the 400 response's DOM; the trace does not record live field values, so this is inferred."
+    },
+    {
+      "id": "trace-e2e-p12-068",
+      "statement": "A refused upload saves nothing to the notification: the concurrency token on the re-rendered form is unchanged.",
+      "kind": "behaviour",
+      "ref": "trace docum-5bc5b (concurrencyToken value 3 before and after the 400)",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"3\">",
+      "confidence": "inferred",
+      "note": "Inferred from the unchanged token; the token is seen rising after successful adds elsewhere."
+    },
+    {
+      "id": "trace-e2e-p12-069",
+      "statement": "A file of an unsupported type (a .txt file) is refused by the server with a 400: error summary 'There is a problem' linking to #file with 'The selected file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', the same message inline on the Attachment field, and no document added.",
+      "kind": "rule",
+      "ref": "trace promo-532a9 network (POST /accompanying-documents 400); action call@583 snapshot",
+      "quote": "<A href=\"#file\">The selected file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX</A> ... <SPAN class=\"govuk-visually-hidden\">Error:</SPAN> The selected file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-070",
+      "statement": "The browser does not check the file type before sending: the .txt file was posted and only the server refused it.",
+      "kind": "behaviour",
+      "ref": "trace promo-532a9 network (POST /accompanying-documents 400, no client-error markers)",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-RZJW31/accompanying-documents 400",
+      "confidence": "inferred",
+      "note": "The accept attribute limits the picker, but the test set the file directly; whether a client-side type check exists for files that bypass the picker is inferred from the POST being made."
+    },
+    {
+      "id": "trace-e2e-p12-071",
+      "statement": "Errors on the documents page use the GOV.UK error summary titled 'There is a problem', inline messages prefixed with visually hidden 'Error:', and the error style on the Attachment form group and file input.",
+      "kind": "copy",
+      "ref": "trace docum-5bc5b action call@453 (div#js-error-summary-container, div.govuk-form-group--error, input.govuk-file-upload--error)",
+      "quote": "data-error-summary-title=\"There is a problem\" data-error-prefix=\"Error:\" ... <DIV class=\"govuk-form-group govuk-form-group--error\"> ... class=\"govuk-file-upload govuk-file-upload--error\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-072",
+      "statement": "The documents page loads a page-specific script, documents.js, besides the shared application.js; it appears to drive the scan polling, live announcements and browser-side size check.",
+      "kind": "constraint",
+      "ref": "trace promo-ba4a7 network (GET /public/javascripts/documents.js 200)",
+      "quote": "GET http://localhost:3000/public/javascripts/documents.js 200 text/javascript; charset=utf-8",
+      "confidence": "inferred",
+      "note": "Which behaviour the script holds is inferred from the js-* and data-client-error hooks on the page."
+    },
+    {
+      "id": "trace-e2e-p12-073",
+      "statement": "The browser never talks to the upload service directly: the file is posted to the frontend's own documents page, and scan status and download also go through the frontend, with the cdp-uploader and its virus scan behind it.",
+      "kind": "integration",
+      "ref": "trace promo-ba4a7 network (every documents request is to localhost:3000/live-animals/...)",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-5RS0MM/accompanying-documents 302",
+      "confidence": "inferred",
+      "note": "The spec title says the upload goes 'through the real uploader'; the trace shows only the frontend's side of that call."
+    },
+    {
+      "id": "trace-e2e-p12-074",
+      "statement": "The page's Content-Security-Policy allows forms to post to the page's own origin and to http://localhost:3002, a second origin in the local stack, though this form posts to its own origin.",
+      "kind": "integration",
+      "ref": "trace promo-ba4a7 network (Content-Security-Policy header on GET /accompanying-documents)",
+      "quote": "form-action 'self' http://localhost:3002",
+      "confidence": "inferred",
+      "note": "That localhost:3002 is the uploader is a guess; the trace does not name the service on that port."
+    },
+    {
+      "id": "trace-e2e-p12-075",
+      "statement": "Each uploaded document gets an upload id (a UUID) that keys its scan status and its file download.",
+      "kind": "data",
+      "ref": "trace promo-ba4a7 action call@613 (data-upload-id) and call@615 (View file href)",
+      "quote": "data-upload-id=\"9d91891b-3c08-47c0-8a79-4b94db5d8565\" ... /accompanying-documents/9d91891b-3c08-47c0-8a79-4b94db5d8565/file",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p12-076",
+      "statement": "The calls between the frontend and the upload service (initiating an upload, the scan callback, fetching the file) are not visible in a browser trace.",
+      "kind": "integration",
+      "ref": "all 8 traces in part 12 (network logs hold only localhost:3000 requests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-077",
+      "statement": "No trace submitted the documents form with the reference, type or date blank or invalid, so whether they are mandatory and what their error messages say is not shown.",
+      "kind": "rule",
+      "ref": "all 8 traces in part 12 (every submit filled a reference, ITAHC and 03/01/2026)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-078",
+      "statement": "No trace pressed Save and add another with no file attached, so whether a document can be recorded without a file, and the message for a missing file, are not shown.",
+      "kind": "rule",
+      "ref": "all 8 traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-079",
+      "statement": "No trace returned to the Overview after adding a document, so the Upload documents task status once documents exist, are scanning or are infected is not shown.",
+      "kind": "behaviour",
+      "ref": "all 8 traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-080",
+      "statement": "No trace uploaded a DOC, DOCX, JPEG, JPG, PNG, XLS, XLSX or ZIP file, so acceptance of the other allowed types and the refusal of ZIP files are not shown.",
+      "kind": "rule",
+      "ref": "all 8 traces in part 12 (files used: PDF, padded PDFs, EICAR PDF, .txt)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-081",
+      "statement": "No trace opened the date picker or chose a date with it; dates were always typed.",
+      "kind": "behaviour",
+      "ref": "all 8 traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-082",
+      "statement": "No trace showed what happens when the notification changed elsewhere between loading and submitting the documents page, so the concurrency-token conflict behaviour is not shown.",
+      "kind": "behaviour",
+      "ref": "all 8 traces in part 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p12-083",
+      "statement": "The documents page uses govuk-frontend components throughout (caption, heading, body, bullet list, details, table, summary card, input, select, file upload, button group, tag, error summary, error message, back link), with three exceptions: the MOJ date picker, the app-link-button Remove style and the app-journey-strip wrapper.",
+      "kind": "constraint",
+      "ref": "trace promo-ba4a7 actions call@599, call@613 and call@615 (classes in main)",
+      "quote": "govuk-summary-card ... govuk-file-upload-wrapper ... moj-datepicker ... app-link-button ... app-journey-strip",
+      "confidence": "verbatim"
+    }
+  ]
+}

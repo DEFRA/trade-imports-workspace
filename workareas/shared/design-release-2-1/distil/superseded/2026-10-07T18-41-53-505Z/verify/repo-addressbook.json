@@ -1,0 +1,222 @@
+{
+  "source": "repo:addressbook",
+  "extractHash": "1bf935132dd3b599e02c6a0bd017b1f9293f8d67297811d5e0fb5ace47e7d51d",
+  "verdicts": [
+    {
+      "id": "repo-addressbook-001",
+      "holds": true,
+      "reason": "Address.java javadoc quote is present and the entity fields are the flat set listed (plus server-owned fields)."
+    },
+    {
+      "id": "repo-addressbook-002",
+      "holds": true,
+      "reason": "OperatorResponse record has exactly the listed fields; OperatorMapper.java:22 ignores status, version, expireAt. Quote is in OperatorMapper.java."
+    },
+    {
+      "id": "repo-addressbook-003",
+      "holds": true,
+      "reason": "AddressRequest.java:19-20 quote present; Address and OperatorResponse carry no type, role, usage or default field."
+    },
+    {
+      "id": "repo-addressbook-004",
+      "holds": true,
+      "reason": "@Null(message = \"type is not a supported field\") and the role twin at AddressRequest.java:103-107; javadoc lines 19-24 say it lands as a per-field 400 in the errors map."
+    },
+    {
+      "id": "repo-addressbook-005",
+      "holds": true,
+      "reason": "AddressRequest.java:36-37 matches."
+    },
+    {
+      "id": "repo-addressbook-006",
+      "holds": true,
+      "reason": "AddressRequest.java:45-46 matches."
+    },
+    {
+      "id": "repo-addressbook-007",
+      "holds": true,
+      "reason": "AddressRequest.java:54 matches."
+    },
+    {
+      "id": "repo-addressbook-008",
+      "holds": true,
+      "reason": "AddressRequest.java:57-58 matches."
+    },
+    {
+      "id": "repo-addressbook-009",
+      "holds": true,
+      "reason": "AddressRequest.java:66 matches."
+    },
+    {
+      "id": "repo-addressbook-010",
+      "holds": true,
+      "reason": "AddressRequest.java:69-70 matches; no pattern annotation on postcode, so no format check."
+    },
+    {
+      "id": "repo-addressbook-011",
+      "holds": true,
+      "reason": "AddressRequest.java:78 @NotBlank 'Enter a country' with no @Size or @Pattern; javadoc lines 30-31 quote present."
+    },
+    {
+      "id": "repo-addressbook-012",
+      "holds": false,
+      "reason": "README.md:136-137 does say '2-character ISO code' but the statement presents it as service behaviour. The code enforces no length (claim 011, AddressRequest.java:78-83), so the service does not guarantee 2 characters; it stores whatever is sent. Overstates enforcement."
+    },
+    {
+      "id": "repo-addressbook-013",
+      "holds": true,
+      "reason": "AddressRequest.java:84-85 matches; AddressRequestValidationTest.java:205-207 phoneIsNotFormatValidatedSoAFreeStringIsAccepted confirms free string."
+    },
+    {
+      "id": "repo-addressbook-014",
+      "holds": true,
+      "reason": "AddressRequest.java:93-95 matches all three messages."
+    },
+    {
+      "id": "repo-addressbook-015",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:44-67 builds an errors map from every FieldError, type validation-error, application/problem+json; javadoc lines 24-26 quote present."
+    },
+    {
+      "id": "repo-addressbook-016",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:24 quote present; type-mismatch (74-87), malformed JSON (90-103) and BadRequestException return Problem with no errors; missing header is rejected in IdentityHeaderFilter.java:93-96 with a Problem. Missing-header handling is in the filter, not the cited handler lines (loose ref)."
+    },
+    {
+      "id": "repo-addressbook-017",
+      "holds": true,
+      "reason": "AddressRequest.java:14-17 quote present; OperatorController.java:135-136 says organisationId is stamped from the header; OperatorMapper ignores server-owned targets."
+    },
+    {
+      "id": "repo-addressbook-018",
+      "holds": true,
+      "reason": "OperatorController.java:36-41 and IdentityHeaderFilter.java:26 quotes present; every controller method calls authoriseOrg and passes sessionOrg to the service."
+    },
+    {
+      "id": "repo-addressbook-019",
+      "holds": true,
+      "reason": "IdentityHeaderFilter.java:72-73 pattern and 93-105 rejection with 400 bad-request; shouldNotFilter scopes it to /organisation/ paths."
+    },
+    {
+      "id": "repo-addressbook-020",
+      "holds": true,
+      "reason": "OperatorController.java:55-57 and 64-68 plus IdentityHeaderFilter.java:107-115 return 404 'Address not found'; no 403 anywhere."
+    },
+    {
+      "id": "repo-addressbook-021",
+      "holds": true,
+      "reason": "OperatorService.java:152-155 quote present; findByIdAndOrganisationId scopes by org; Problem record has no instance (GlobalExceptionHandler.java:30-32)."
+    },
+    {
+      "id": "repo-addressbook-022",
+      "holds": true,
+      "reason": "README.md:85-109 says no Spring Security layer, no JWT or API key validation, the upstream hop owns auth and header stripping, and direct access can act as any org."
+    },
+    {
+      "id": "repo-addressbook-023",
+      "holds": true,
+      "reason": "README.md:117-123 table lists the five routes; controller mappings match."
+    },
+    {
+      "id": "repo-addressbook-024",
+      "holds": true,
+      "reason": "OperatorController.java:142 and 194-200 return 201 with Location and body; OperatorService.java:130 sets ACTIVE; mapper derives deleted false."
+    },
+    {
+      "id": "repo-addressbook-025",
+      "holds": true,
+      "reason": "OperatorService.java:73-77 sort and 97-98/ACTIVE-only queries."
+    },
+    {
+      "id": "repo-addressbook-026",
+      "holds": true,
+      "reason": "OperatorPageResponse shape and README.md:138,142; OperatorService.java:44 default 25. OperatorListIT.java:192 sends page_size=5 and the test is in integration/OperatorListIT.java, not address/ (loose ref)."
+    },
+    {
+      "id": "repo-addressbook-027",
+      "holds": true,
+      "reason": "OperatorService.java:69-71 throws BadRequestException; non-numeric page goes through handleTypeMismatch (400, no errors); OperatorListIT.java:228 list_shouldReturnEmptyItems_whenPageIsBeyondTheLast. Test path is integration/ (loose ref)."
+    },
+    {
+      "id": "repo-addressbook-028",
+      "holds": true,
+      "reason": "OperatorService.java:115-117 Pattern.quote of the whole trimmed term; OperatorRepository.java:25-31 regex with option i over name, townOrCity, postcode."
+    },
+    {
+      "id": "repo-addressbook-029",
+      "holds": true,
+      "reason": "OperatorRepository.java:33-35 exact match; OperatorService.java:111-112 trims."
+    },
+    {
+      "id": "repo-addressbook-030",
+      "holds": true,
+      "reason": "OperatorRepository.java:37-42 puts countryCode inside the $or; README.md:131 says OR semantics, not AND."
+    },
+    {
+      "id": "repo-addressbook-031",
+      "holds": true,
+      "reason": "OperatorController.java:81 javadoc quote present. It is a javadoc comment about the code, so the 'integration' kind is loose but the claim stands."
+    },
+    {
+      "id": "repo-addressbook-032",
+      "holds": true,
+      "reason": "OperatorController.java:204-207 javadoc and OperatorService.get (no status filter); README.md:239-241."
+    },
+    {
+      "id": "repo-addressbook-033",
+      "holds": true,
+      "reason": "OperatorService.java:166-171 javadoc; update maps client fields only via updateEntity (server fields ignored), save audits modifiedAt; controller returns the updated address with 200."
+    },
+    {
+      "id": "repo-addressbook-034",
+      "holds": true,
+      "reason": "OperatorService.java:183 filter on DELETED then NotFoundException (404)."
+    },
+    {
+      "id": "repo-addressbook-035",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:105-119 409 conflict with that detail; Address.java:78-79 @Version."
+    },
+    {
+      "id": "repo-addressbook-036",
+      "holds": true,
+      "reason": "OperatorService.java:208-221 flips status, no-op when already DELETED, 404 when unknown; controller returns 204; README.md:233-245. No restore route exists in OperatorController."
+    },
+    {
+      "id": "repo-addressbook-037",
+      "holds": true,
+      "reason": "README.md:245 quote present."
+    },
+    {
+      "id": "repo-addressbook-038",
+      "holds": true,
+      "reason": "README.md:247-263 and AddressTtlConfig.java:35 (@NotBlank environment); OperatorService.java:143-149 stamps only when days set and not prod; TTL index gated on ADDRESS_TTL_EXPIRY_ENABLED per README."
+    },
+    {
+      "id": "repo-addressbook-039",
+      "holds": true,
+      "reason": "README.md:135 quote present; GlobalExceptionHandler.java:34-35 says the wire is camelCase and traceId is the Problem field."
+    },
+    {
+      "id": "repo-addressbook-040",
+      "holds": true,
+      "reason": "Controller operationIds at lines 86, 146, 215, 266, 332; the type names are Operator*; locked contract is referenced in README.md:215. Inference is sound."
+    },
+    {
+      "id": "repo-addressbook-041",
+      "holds": true,
+      "reason": "Address.java:42-80 has no default, line 3, note, usage or purpose field and the controller has no purpose filter; the source is silent as stated."
+    },
+    {
+      "id": "repo-addressbook-042",
+      "holds": true,
+      "reason": "OperatorService.create (127-136) does no duplicate check, and no unique index or duplicate handling exists in src/main (grep). The only index is the non-unique org_status_created."
+    },
+    {
+      "id": "repo-addressbook-043",
+      "holds": true,
+      "reason": "OperatorController.list (119-128) takes only page, q and countryCode and the sort is fixed; there is no bulk route. Note the page response does carry totalItems, which counts the filtered result, not the whole book."
+    }
+  ],
+  "missed": []
+}

@@ -1,0 +1,1278 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 2 (Start: notification type, origin and what are you importing), read at commit 04a073b (checkout HEAD). Read in full: the three DR2.1 view overrides app/views/design-release-2.1/notification-type.html (57 lines), origin-of-the-import.html (179) and what-are-you-importing.html (143); the root partial app/views/partials/region-of-origin-code-input.html (31); the reference lists app/data/countries.js (79), country-region-prefixes.js (44), commodities.js (295), commodities-germinal-products.js (151), commodities-0101-species.js (20), commodities-0102-species.js (28), commodities-01061900-species.js (123); app/utils/commodity-search-data.js (36); and app/routes.js lines 68-272, 402-435, 500-823, 1011-1037, 10586-10675 and 11105-11308. For context only (claimed only where they shape these three pages), also read routes.js helpers outside the range: ensurePrototypeNotificationReference and resetNotificationJourneySession (291-365), redirectIfNoOrigin and isFromHub (436-451), getJourneyFormAction/isJourneySoftSaveAction/getJourneySaveRedirect (1560-1586), getSectionContinueRedirect (1588-1602), isGerminalProductCommodity (832), generateDesignReleaseNotificationReference (7820-7844), and partials/design-release-2.1/journey-form-actions.html for the button labels each page's options produce. Pages covered: GET /create-notification (reset and routing), GET and POST /notification-type, GET and POST /origin-of-the-import (country search, region of origin code with country prefix, internal reference), GET and POST /what-are-you-importing (commodity and species search, selection, removal, type filtering), plus the country list (27 member states, 11 territories, 3 crown dependencies), the 41-entry region prefix map, the 21 live-animal commodities, the 15 germinal-product commodities and the three species lists (3, 11 and 106 entries). Claims run page by page in journey order, then the reference lists. Not covered here: client-side search behaviour in app/assets (out of the source's scope; recorded as a gap), the notification-status partial's own content and the journey-form-actions partial's amend and template-review variants (other parts).",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p2-001",
+      "statement": "GET /create-notification clears the current notification journey from the session but keeps the address book additions, draft notifications, deleted notification references, submitted notifications, saved templates, deleted template ids and the per-version session nests.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:329-365 (resetNotificationJourneySession), called at app/routes.js:11109",
+      "quote": "resetNotificationJourneySession(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-002",
+      "statement": "GET /create-notification also clears any in-progress template creation flag.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11110",
+      "quote": "delete req.session.data.isCreatingTemplate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-003",
+      "statement": "In Design Release 2.1, GET /create-notification with no category in the query string sends the user to the notification type page (/notification-type).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11112-11114",
+      "quote": "if (isDr21 && !category) {\n    return res.redirect('/notification-type')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-004",
+      "statement": "GET /create-notification with a recognised category query (for example from a category dashboard) skips the notification type page: it records that the journey started from a category dashboard, starts the notification with that type, and sends the user straight to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11116-11119",
+      "quote": "req.session.data.startedFromCategoryDashboard = Boolean(category)\n  startNotificationJourney(req.session.data, category || null)\n\n  return res.redirect('/origin-of-the-import')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-005",
+      "statement": "Starting a notification sets its type, sets its status to Draft, clears the template-creation flag, gives it a new notification reference (in the design releases) and saves it as a draft notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10615-10625 (startNotificationJourney)",
+      "quote": "sessionData.notificationType = notificationType\n  sessionData.notificationStatus = 'Draft'\n  delete sessionData.isCreatingTemplate\n\n  if (isDesignRelease2SessionData(sessionData)) {\n    sessionData.notificationReference = generateDesignReleaseNotificationReference(sessionData)\n  }\n\n  persistDraftNotification(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-006",
+      "statement": "A new design-release notification reference has the form GBN-AG-26- followed by six random upper-case letters or digits, and is chosen so it does not clash with the fixed sample reference, the current reference, dashboard notifications, drafts or submitted notifications.",
+      "kind": "rule",
+      "ref": "app/routes.js:7820-7844 (generateDesignReleaseNotificationReference)",
+      "quote": "const reference = `GBN-AG-26-${code}`\n\n    if (!existing.has(reference)) {",
+      "confidence": "verbatim",
+      "note": "Read for context; the generator sits outside this part's line ranges."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-007",
+      "statement": "Outside Design Release 2.1, GET and POST /notification-type redirect to /create-notification: the notification type page exists only in DR2.1.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11122-11125 and 11133-11136",
+      "quote": "if (!isDesignRelease21SessionData(req.session.data)) {\n    return res.redirect('/create-notification')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-008",
+      "statement": "GET /notification-type clears any previous errors before showing the page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11127-11130",
+      "quote": "req.session.data.errorList = null\n  req.session.data.errors = null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-009",
+      "statement": "The notification type page's heading, shown as the radio group's legend, is \"What are you importing?\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:39",
+      "quote": "html: '<span class=\"govuk-caption-l\">About the consignment</span> What are you importing?',\n            isPageHeading: true,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-010",
+      "statement": "The notification type page shows the caption \"About the consignment\" above its heading.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:39",
+      "quote": "<span class=\"govuk-caption-l\">About the consignment</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-011",
+      "statement": "The notification type page's page name is \"What are you importing?\", the same as the commodity page that follows origin.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:7",
+      "quote": "{% set pageName = \"What are you importing?\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-012",
+      "statement": "The notification type page offers five radio options, in this order: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products.",
+      "kind": "data",
+      "ref": "app/routes.js:125-131 (NOTIFICATION_TYPE_OPTIONS)",
+      "quote": "{ value: 'live-animals', text: 'Live animals' },\n  { value: 'germinal-products', text: 'Germinal products (semen, ova, embryos)' },\n  { value: 'plants-for-planting', text: 'Plants for planting' },\n  { value: 'potatoes', text: 'Potatoes (seed and ware)' },\n  { value: 'wood-products', text: 'Wood products' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-013",
+      "statement": "None of the notification type options has hint text, and the radio group has no hint.",
+      "kind": "copy",
+      "ref": "app/routes.js:125-138 and app/views/design-release-2.1/notification-type.html:34-46",
+      "quote": "return NOTIFICATION_TYPE_OPTIONS.map((option) => ({\n    ...option,\n    checked: selectedValue === option.value\n  }))",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any hint property on the options or the govukRadios call."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-014",
+      "statement": "The notification type page pre-selects the type already held for the notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10609",
+      "quote": "notificationTypeItems: buildNotificationTypeItems(getNotificationType(sessionData)),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-015",
+      "statement": "When no type is stored, the notification's type is worked out from its selections: germinal products only means germinal products, and selected species that are all live-animal species means live animals; otherwise the type is empty.",
+      "kind": "rule",
+      "ref": "app/routes.js:195-213 (getNotificationType)",
+      "quote": "if (hasGerminalProductsOnly(sessionData)) {\n    return 'germinal-products'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-016",
+      "statement": "If no notification type is selected, the page shows the error \"Select what you are importing\", both inline and in the error summary, linking to the notificationType field.",
+      "kind": "rule",
+      "ref": "app/routes.js:151-160 (validateNotificationType)",
+      "quote": "notificationType: { text: 'Select what you are importing' }\n    },\n    errorList: [{\n      text: 'Select what you are importing',\n      href: '#notificationType'\n    }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-017",
+      "statement": "The notification type, origin and commodity pages show their errors in an error summary titled \"There is a problem\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:25-30; origin-of-the-import.html:31-36; what-are-you-importing.html:30-35",
+      "quote": "titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-018",
+      "statement": "The server accepts a notification type given either as its value or as its display label (case-insensitive), and also recognises three types the page does not offer: products of animal origin or animal by-products, high-risk food or feed of non-animal origin, and plants, plant products or other objects.",
+      "kind": "rule",
+      "ref": "app/routes.js:72-123 (normaliseNotificationType)",
+      "quote": "type === 'products-of-animal-origin' ||\n    type === 'high-risk-food' ||\n    type === 'plants'",
+      "confidence": "verbatim",
+      "note": "Those three types can arrive through the /create-notification category query; the radio page never offers them."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-019",
+      "statement": "The notification type page has a single \"Continue\" button and no save-and-return-to-overview button or cancel link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:48-53",
+      "quote": "continueText: \"Continue\",\n        showHub: false,\n        showCancel: false",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-020",
+      "statement": "The notification type page's back link goes to the dashboard (/), or to /templates when the user is creating a template; the service navigation highlights Dashboard, or Templates when creating a template.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10606-10608 (renderNotificationTypePage)",
+      "quote": "backLink: isCreatingTemplate ? '/templates' : '/',\n    serviceNavActive: isCreatingTemplate ? 'templates' : 'dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-021",
+      "statement": "Choosing a notification type marks the journey as not started from a category dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11151",
+      "quote": "req.session.data.startedFromCategoryDashboard = false",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-022",
+      "statement": "Changing the notification type to a different one from before clears every selected commodity and species.",
+      "kind": "rule",
+      "ref": "app/routes.js:11153-11155",
+      "quote": "if (previousType && previousType !== validation.notificationType) {\n    applySpeciesSelectionToSession(req.session.data, [])\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-023",
+      "statement": "When creating a template, choosing a notification type stores the type, sets the status to Draft and sends the user to /templates/create instead of the origin page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11157-11161",
+      "quote": "if (isCreatingTemplateJourney(req.session.data)) {\n    req.session.data.notificationType = validation.notificationType\n    req.session.data.notificationStatus = 'Draft'\n    return res.redirect('/templates/create')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-024",
+      "statement": "Choosing a notification type starts a new notification (reference, Draft status, saved draft) when there is no notification reference yet; when there is one, it updates the type and saves the draft again.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11163-11168",
+      "quote": "if (!req.session.data.notificationReference) {\n    startNotificationJourney(req.session.data, validation.notificationType)\n  } else {\n    req.session.data.notificationType = validation.notificationType\n    persistDraftNotification(req.session.data)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-025",
+      "statement": "After a valid notification type is chosen, every type (including plants for planting, potatoes and wood products) goes on to /origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11170",
+      "quote": "return res.redirect('/origin-of-the-import')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-026",
+      "statement": "The three start pages show an Alpha phase banner reading \"This is a new service. Help us improve it and give your feedback by email.\", with the feedback link pointing at #.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-type.html:10-15; origin-of-the-import.html:14-19; what-are-you-importing.html:13-18",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-027",
+      "statement": "GET and POST /origin-of-the-import make sure the notification has a design-release reference (GBN-AG-26-...), generating one if it has none or has a reference in another format.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11173-11179; app/routes.js:291-304 (ensurePrototypeNotificationReference)",
+      "quote": "if (!value || !isDesignReleaseNotificationReference(value)) {\n    sessionData.notificationReference = generateDesignReleaseNotificationReference(sessionData)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-028",
+      "statement": "The origin page's back link goes to /templates/create when creating a template, to the category dashboard list for the notification's type when the journey started from a category dashboard, and otherwise to /notification-type.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10586-10600 (getOriginBackLink), used at 10636",
+      "quote": "if (isCreatingTemplateJourney(sessionData)) {\n    return '/templates/create'\n  }\n\n  if (isDesignRelease21SessionData(sessionData) && sessionData.startedFromCategoryDashboard) {\n    return getDashboardListPath(sessionData, getNotificationType(sessionData))\n  }\n\n  if (isDesignRelease21SessionData(sessionData)) {\n    return '/notification-type'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-029",
+      "statement": "The origin page and the commodity page show the notification status block (which carries the notification reference) above the form.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:29; what-are-you-importing.html:28; app/routes.js:10639 and 10667",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "inferred",
+      "note": "The partial's content is another part's; the reference is passed as notificationReference to both renders."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-030",
+      "statement": "The origin page has the caption \"About the consignment\" and the heading \"Origin of the import\", which is also its page name.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:11 and 38-41",
+      "quote": "<p class=\"app-origin-page__caption\">About the consignment</p>\n      <h1 class=\"app-origin-page__heading\">Origin of the import</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-031",
+      "statement": "The origin page asks for the country of origin under the sub-heading \"Country of origin\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:50",
+      "quote": "<h2 class=\"app-eu-heading-m app-origin-country__label\">Country of origin</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-032",
+      "statement": "The country of origin is chosen through a search box with the placeholder \"Search for a country\", a search button (\"Search\", visually hidden text) and a results list labelled \"Country search results\"; the chosen country is submitted in a hidden countryOfOrigin field.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:57-102",
+      "quote": "placeholder=\"Search for a country\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-033",
+      "statement": "The country search has a polite live region for announcing search status to screen readers.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:101",
+      "quote": "<div class=\"app-country-search__status govuk-visually-hidden\" aria-live=\"polite\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-034",
+      "statement": "The country search shows no hint text.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:49-103",
+      "quote": "<h2 class=\"app-eu-heading-m app-origin-country__label\">Country of origin</h2>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any hint element in the country form group."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-035",
+      "statement": "The country of origin field shows an inline error (prefixed \"Error:\" for screen readers) when the server sets a countryOfOrigin error.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:51-56",
+      "quote": "{% if data.errors and data.errors.countryOfOrigin %}\n          <p id=\"country-of-origin-error\" class=\"govuk-error-message\">",
+      "confidence": "verbatim",
+      "note": "No validation in this part's routes sets this error; see the gap on country validation."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-036",
+      "statement": "The countries offered for country of origin are the 27 EU member states: Austria, Belgium, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Italy, Latvia, Lithuania, Luxembourg, Malta, Netherlands, Poland, Portugal, Republic of Ireland, Romania, Slovakia, Slovenia, Spain and Sweden.",
+      "kind": "data",
+      "ref": "app/data/countries.js:1-29",
+      "quote": "const memberStates = [\n  'Austria',\n  'Belgium',\n  'Bulgaria',\n  'Croatia',\n  'Cyprus',\n  'Czech Republic',\n  'Denmark',\n  'Estonia',\n  'Finland',\n  'France',\n  'Germany',\n  'Greece',\n  'Hungary',\n  'Italy',\n  'Latvia',\n  'Lithuania',\n  'Luxembourg',\n  'Malta',\n  'Netherlands',\n  'Poland',\n  'Portugal',\n  'Republic of Ireland',\n  'Romania',\n  'Slovakia',\n  'Slovenia',\n  'Spain',\n  'Sweden'\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-037",
+      "statement": "The country list also offers 11 territories, each shown as \"Name (Parent)\": Azores (Portugal), Canary Islands (Spain), Ceuta (Spain), French Guiana (France), Guadeloupe (France), Madeira (Portugal), Martinique (France), Mayotte (France), Melilla (Spain), Reunion (France) and Saint Martin (France).",
+      "kind": "data",
+      "ref": "app/data/countries.js:31-43 and 51-53",
+      "quote": "{ name: 'Azores', parent: 'Portugal' },\n  { name: 'Canary Islands', parent: 'Spain' },\n  { name: 'Ceuta', parent: 'Spain' },\n  { name: 'French Guiana', parent: 'France' },\n  { name: 'Guadeloupe', parent: 'France' },\n  { name: 'Madeira', parent: 'Portugal' },\n  { name: 'Martinique', parent: 'France' },\n  { name: 'Mayotte', parent: 'France' },\n  { name: 'Melilla', parent: 'Spain' },\n  { name: 'Reunion', parent: 'France' },\n  { name: 'Saint Martin', parent: 'France' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-038",
+      "statement": "The country list also offers the 3 crown dependencies, shown as Guernsey (United Kingdom), Jersey (United Kingdom) and Isle of Man (United Kingdom).",
+      "kind": "data",
+      "ref": "app/data/countries.js:45-53",
+      "quote": "{ name: 'Guernsey', parent: 'United Kingdom' },\n  { name: 'Jersey', parent: 'United Kingdom' },\n  { name: 'Isle of Man', parent: 'United Kingdom' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-039",
+      "statement": "The 41 country options are sorted alphabetically by their displayed label, and the stored value is the displayed label (so a territory is stored as \"Name (Parent)\").",
+      "kind": "rule",
+      "ref": "app/data/countries.js:55-71",
+      "quote": "label: formatTerritoryLabel(name, parent),\n    value: formatTerritoryLabel(name, parent),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-040",
+      "statement": "The country of origin list holds no country outside the EU, its territories and the crown dependencies, so no third country can be chosen as the origin.",
+      "kind": "constraint",
+      "ref": "app/data/countries.js:55-71; app/routes.js:10640",
+      "quote": "countriesJson: JSON.stringify(countryOptions),",
+      "confidence": "inferred",
+      "note": "Inferred from the full contents of countries.js, the only list the page receives."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-041",
+      "statement": "The origin page asks \"Does the consignment have a region of origin code?\" with Yes and No radios.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:109-131",
+      "quote": "Does the consignment have a region of origin code?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-042",
+      "statement": "The region of origin question has the hint \"Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.\"",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:133-135",
+      "quote": "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-043",
+      "statement": "The region of origin radios show an inline error when the server sets a regionOfOriginRequired error.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:136-141",
+      "quote": "{% if data.errors and data.errors.regionOfOriginRequired %}\n            {{ govukErrorMessage({\n              id: \"region-of-origin-error\",",
+      "confidence": "verbatim",
+      "note": "No validation in this part's routes sets this error; see the gap on the region radio."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-044",
+      "statement": "Answering Yes to the region of origin question reveals a region of origin code field beneath the Yes option; No reveals nothing.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:105-123",
+      "quote": "checked: data.regionOfOriginRequired == \"Yes\",\n          conditional: {\n            html: regionOfOriginCodeConditional\n          }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-045",
+      "statement": "The region of origin code field is labelled \"Enter the region of origin code\" with the hint \"Enter up to 5 characters.\"",
+      "kind": "copy",
+      "ref": "app/views/partials/region-of-origin-code-input.html:2-7",
+      "quote": "Enter the region of origin code\n  </label>\n  <div id=\"region-of-origin-code-hint\" class=\"govuk-hint app-region-origin-code__hint\">\n    Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-046",
+      "statement": "The region of origin code input accepts at most 5 characters, with autocomplete and spellcheck turned off.",
+      "kind": "constraint",
+      "ref": "app/views/partials/region-of-origin-code-input.html:19-29",
+      "quote": "maxlength=\"5\"\n      autocomplete=\"off\"\n      spellcheck=\"false\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-047",
+      "statement": "The region of origin code input shows the chosen country's two-letter prefix in front of it (hidden from screen readers), so the user types only the suffix.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/region-of-origin-code-input.html:18; app/routes.js:10642",
+      "quote": "<div class=\"govuk-input__prefix app-region-origin-code__prefix\" id=\"region-of-origin-code-prefix\" aria-hidden=\"true\">{{ regionOfOriginCodePrefix }}</div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-048",
+      "statement": "The region prefix map is also sent to the page alongside the country list, so the prefix can follow the country the user picks.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:62; app/routes.js:10641",
+      "quote": "countryPrefixesJson: JSON.stringify(countryRegionPrefixes),",
+      "confidence": "inferred",
+      "note": "The client script that applies it is in app/assets, outside this source's scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-049",
+      "statement": "Region of origin prefixes are the ISO 3166-1 alpha-2 codes of the chosen country, one per member state: Austria AT, Belgium BE, Bulgaria BG, Croatia HR, Cyprus CY, Czech Republic CZ, Denmark DK, Estonia EE, Finland FI, France FR, Germany DE, Greece GR, Hungary HU, Italy IT, Latvia LV, Lithuania LT, Luxembourg LU, Malta MT, Netherlands NL, Poland PL, Portugal PT, Republic of Ireland IE, Romania RO, Slovakia SK, Slovenia SI, Spain ES, Sweden SE.",
+      "kind": "data",
+      "ref": "app/data/country-region-prefixes.js:1-44",
+      "quote": "// ISO 3166-1 alpha-2 prefixes shown before the region of origin code suffix",
+      "confidence": "verbatim",
+      "note": "Greece is GR, not the EU's EL."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-050",
+      "statement": "Territories take their parent state's prefix (Azores and Madeira PT, Canary Islands ES, French Guiana, Guadeloupe, Martinique, Mayotte, Reunion and Saint Martin FR), except Ceuta, which is XC, and Melilla, which is XL.",
+      "kind": "data",
+      "ref": "app/data/country-region-prefixes.js:4,7,8,16,19,28,30,31,32,37,39",
+      "quote": "'Ceuta (Spain)': 'XC',",
+      "confidence": "verbatim",
+      "note": "Melilla line: 'Melilla (Spain)': 'XL',"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-051",
+      "statement": "The crown dependencies have their own prefixes: Guernsey GG, Isle of Man IM, Jersey JE.",
+      "kind": "data",
+      "ref": "app/data/country-region-prefixes.js:20,23,24",
+      "quote": "'Guernsey (United Kingdom)': 'GG',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-052",
+      "statement": "With no country chosen, or a country missing from the prefix map, no prefix is shown.",
+      "kind": "rule",
+      "ref": "app/routes.js:245-251 (getCountryRegionPrefix)",
+      "quote": "return countryRegionPrefixes[countryName] || ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-053",
+      "statement": "The region of origin code suffix is trimmed and converted to upper case when saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:11183",
+      "quote": "const regionOfOriginCodeSuffix = (req.body.regionOfOriginCodeSuffix || '').trim().toUpperCase()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-054",
+      "statement": "With Yes, a country and a suffix, the full region of origin code is saved as prefix, hyphen, suffix (for example FR-ABC12); if the country has no prefix, the code is the suffix alone.",
+      "kind": "rule",
+      "ref": "app/routes.js:11190-11195",
+      "quote": "req.session.data.regionOfOriginCode = countryPrefix\n      ? `${countryPrefix}-${regionOfOriginCodeSuffix}`\n      : regionOfOriginCodeSuffix",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-055",
+      "statement": "Answering No (or not answering) to the region of origin question clears any saved region of origin code and suffix.",
+      "kind": "rule",
+      "ref": "app/routes.js:11196-11201",
+      "quote": "req.session.data.regionOfOriginCodeSuffix = regionOfOriginRequired === 'Yes'\n      ? (regionOfOriginCodeSuffix || null)\n      : null\n    req.session.data.regionOfOriginCode = null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-056",
+      "statement": "Answering Yes with a suffix but no country keeps the suffix but saves no full region of origin code.",
+      "kind": "rule",
+      "ref": "app/routes.js:11190 and 11196-11201",
+      "quote": "if (regionOfOriginRequired === 'Yes' && countryOfOrigin && regionOfOriginCodeSuffix) {",
+      "confidence": "inferred",
+      "note": "Follows from the else branch keeping the suffix when the answer is Yes but setting regionOfOriginCode to null."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-057",
+      "statement": "When the page is shown again, the suffix field is filled from the saved suffix, or else from the saved full code with everything up to the first hyphen removed.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:253-271 (getRegionOfOriginCodeSuffix), used at 10643",
+      "quote": "const separatorIndex = code.indexOf('-')\n\n  if (separatorIndex === -1) {\n    return code.trim()\n  }\n\n  return code.slice(separatorIndex + 1).trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-058",
+      "statement": "If Yes is chosen and no region of origin code is entered, the page shows the error \"Enter the region of origin code\", inline and in the summary, linking to the code input.",
+      "kind": "rule",
+      "ref": "app/routes.js:425-431 (validateOriginOfImport)",
+      "quote": "if (regionOfOriginRequired === 'Yes' && !regionOfOriginCodeSuffix) {\n    errors.regionOfOriginCodeSuffix = { text: 'Enter the region of origin code' }\n    errorList.push({\n      text: 'Enter the region of origin code',\n      href: '#region-of-origin-code-suffix'\n    })\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-059",
+      "statement": "The origin page does not validate the country of origin: a user can continue with no country chosen, and no error message for a missing or invalid country is defined, although the view has a slot to show one.",
+      "kind": "rule",
+      "ref": "app/routes.js:417-434 (validateOriginOfImport) and app/views/design-release-2.1/origin-of-the-import.html:51-56",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in validateOriginOfImport and the POST handler (11178-11226): countryOfOrigin is passed in but never checked."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-060",
+      "statement": "The origin page does not require an answer to \"Does the consignment have a region of origin code?\": no error message for a missing answer is defined, although the view has a slot to show one.",
+      "kind": "rule",
+      "ref": "app/routes.js:417-434 and app/views/design-release-2.1/origin-of-the-import.html:136-141",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only the Yes-without-code case is validated."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-061",
+      "statement": "The source gives no format rule for the region of origin code suffix beyond the 5-character limit on the input: no allowed characters, minimum length or server-side length check.",
+      "kind": "rule",
+      "ref": "app/routes.js:417-434; app/views/partials/region-of-origin-code-input.html:25",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-062",
+      "statement": "The origin page has an optional text field labelled \"Your internal reference for this consignment (optional)\" with the hint \"Enter any internal reference you want to use to identify this consignment, or leave blank.\"",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:155-169",
+      "quote": "text: \"Your internal reference for this consignment (optional)\",",
+      "confidence": "verbatim",
+      "note": "Hint: \"Enter any internal reference you want to use to identify this consignment, or leave blank.\""
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-063",
+      "statement": "The internal reference is trimmed and saved, or cleared when left blank; it has no validation.",
+      "kind": "rule",
+      "ref": "app/routes.js:11184 and 11188",
+      "quote": "req.session.data.internalReference = internalReference || null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-064",
+      "statement": "The country of origin and region of origin answer are saved as soon as the origin form is posted, before validation, so they are kept even when the page shows an error.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11186-11203",
+      "quote": "req.session.data.countryOfOrigin = countryOfOrigin || null\n  req.session.data.regionOfOriginRequired = regionOfOriginRequired || null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-065",
+      "statement": "The origin page normally shows a single \"Save and continue\" button, with no save-and-return-to-overview button and no cancel link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:171-175; partials/design-release-2.1/journey-form-actions.html (continueText default)",
+      "quote": "showHub: false,\n        showCancel: false",
+      "confidence": "inferred",
+      "note": "The \"Save and continue\" label is the partial's default continueText. In amend or template-review states the partial shows its own buttons (another part)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-066",
+      "statement": "Saving the origin page with the \"return to overview\" or \"return to review\" action skips validation, saves the draft and goes to the notification hub or the review page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11209-11213; 1564-1586",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    req.session.data.errorList = null\n    req.session.data.errors = null\n    return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-067",
+      "statement": "A valid origin page continues to /what-are-you-importing, or back to the notification hub when opened from the hub, to the review page when opened from review, or to the template review when editing a template.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11225; 1588-1602 (getSectionContinueRedirect)",
+      "quote": "return res.redirect(getSectionContinueRedirect(req, '/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-068",
+      "statement": "When the origin or commodity page is opened from the notification hub, the form carries from=hub so that saving returns to the hub.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/origin-of-the-import.html:45-47; what-are-you-importing.html:49-51",
+      "quote": "{% if fromHub %}\n        <input type=\"hidden\" name=\"from\" value=\"hub\">\n      {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-069",
+      "statement": "Origin details count as complete only when a country is chosen and the region question is answered, and, when the answer is Yes, a region of origin code suffix is held.",
+      "kind": "rule",
+      "ref": "app/routes.js:402-415 (hasOriginDetails)",
+      "quote": "if (!countryOfOrigin || !regionOfOriginRequired) {\n    return false\n  }\n\n  if (regionOfOriginRequired === 'Yes') {\n    return Boolean(getRegionOfOriginCodeSuffix(sessionData))\n  }\n\n  return regionOfOriginRequired === 'No'",
+      "confidence": "verbatim",
+      "note": "Used by status and hub logic in other parts; it is stricter than the page's own validation."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-070",
+      "statement": "The commodity page can be opened without origin details: its guard against missing origin never redirects.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:436-438 (redirectIfNoOrigin), used at 11231 and 11243",
+      "quote": "function redirectIfNoOrigin (req, res) {\n  return false\n}",
+      "confidence": "inferred",
+      "note": "The guard is called but is a stub; read for context, it sits just outside this part's line range."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-071",
+      "statement": "GET /what-are-you-importing makes sure the notification has a design-release reference and clears any leftover search text before showing the page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11228-11238",
+      "quote": "delete req.session.data.commoditySearch",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-072",
+      "statement": "The commodity page has the caption \"About the consignment\" and the heading \"What are you importing?\", which is also its page name.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:10 and 37-40",
+      "quote": "<p class=\"app-what-importing-page__caption\">About the consignment</p>\n      <h1 class=\"app-what-importing-page__heading\">What are you importing?</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-073",
+      "statement": "The commodity page shows inset text: \"You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.\"",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:42-45",
+      "quote": "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-074",
+      "statement": "The commodity page's back link goes to /origin-of-the-import (or the journey's own back route when opened from elsewhere).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10664",
+      "quote": "backLink: getJourneyBackLink(req, '/origin-of-the-import'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-075",
+      "statement": "The commodity search field is labelled \"Search for a commodity\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:54-56",
+      "quote": "Search for a commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-076",
+      "statement": "For live animals (and any type other than germinal products), the commodity search hint is \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\"",
+      "kind": "copy",
+      "ref": "app/routes.js:10650-10656 (getCommoditySearchHint)",
+      "quote": "return 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-077",
+      "statement": "For germinal products in DR2.1, the commodity search hint is \"You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).\"",
+      "kind": "copy",
+      "ref": "app/routes.js:10651-10653",
+      "quote": "return 'You can search for semen, ova or embryos, or by common name (for example, cattle), Latin name (Bos taurus) or commodity code (05119985).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-078",
+      "statement": "The commodity search is a search box with a search button (\"Search\", visually hidden text), a results list labelled \"Commodity search results\" and a polite live region for status messages.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:66-119",
+      "quote": "aria-label=\"Commodity search results\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-079",
+      "statement": "The commodity page shows the user's selections in a panel with a heading and a \"Clear all\" button that is hidden until something is selected.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:104-112",
+      "quote": "<button class=\"app-commodity-search__selected-clear\" type=\"button\">\n                Clear all\n              </button>",
+      "confidence": "verbatim",
+      "note": "The panel heading text is filled by the client script in app/assets, outside this source's scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-080",
+      "statement": "The commodity page submits its selections in hidden fields: a commodity id, a commodity code, the selected species and the full list of selections.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:115-118",
+      "quote": "<input type=\"hidden\" name=\"commodityId\" class=\"app-commodity-search__commodity-id\">\n          <input type=\"hidden\" name=\"commodityCode\" class=\"app-commodity-search__commodity-code\">\n          <input type=\"hidden\" name=\"selectedSpecies\" class=\"app-commodity-search__species-value\">\n          <input type=\"hidden\" name=\"commoditySelections\" class=\"app-commodity-search__selections-value\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-081",
+      "statement": "How the commodity and country searches behave in the browser (matching, result layout, picking species, the selection panel heading, removing a single selection) is not defined in the server code or views this source scopes in.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:66-120 (data-module=\"app-commodity-search\"); origin-of-the-import.html:57-102 (data-module=\"app-country-search\")",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The client modules live in app/assets, which the partition left out of scope; the rendered-traces source covers client behaviour."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-082",
+      "statement": "In DR2.1 the commodity search lists only germinal-product commodities when the notification type is germinal products, and only live-animal commodities when it is live animals.",
+      "kind": "rule",
+      "ref": "app/routes.js:219-235 (getSearchCommodities)",
+      "quote": "if (type === 'germinal-products') {\n    return sortCommoditiesByName(germinalProductCommodities)\n  }\n\n  if (type === 'live-animals') {\n    return sortCommoditiesByName(commodities)\n  }\n\n  return []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-083",
+      "statement": "For plants for planting, potatoes, wood products, or no type, the DR2.1 commodity search has nothing to offer, so a user on those types cannot select a commodity and cannot pass the commodity page's validation.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:234 and 1015-1032",
+      "quote": "return []",
+      "confidence": "inferred",
+      "note": "Inferred: getSearchCommodities returns an empty list for those types and validateCommoditySelection requires a selection. Those journeys look unbuilt beyond the origin page in this source."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-084",
+      "statement": "Commodity search results are sorted alphabetically by commodity name, and each commodity's species are sorted by \"common name (Latin name)\", or by \"commodity name (Latin name)\" when a species has no common name.",
+      "kind": "rule",
+      "ref": "app/utils/commodity-search-data.js:1-32",
+      "quote": "if (species.commonName) {\n    return `${species.commonName} (${species.label})`\n  }\n\n  return `${commodity.name} (${species.label})`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-085",
+      "statement": "Each commodity search entry offers the commodity's id, name, code and species, and each species its id, Latin name and (where it has one) common name.",
+      "kind": "data",
+      "ref": "app/utils/commodity-search-data.js:13-31",
+      "quote": "id: commodity.id,\n      name: commodity.name,\n      code: commodity.code,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-086",
+      "statement": "The commodity page opens with the notification's existing selections already chosen, filtered to those that match the current notification type.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:552-595 (getInitialCommoditySelections), used at 10669",
+      "quote": "return values.filter((value) => {\n    if (value.startsWith('species:')) {\n      return speciesMatchesNotificationType(value.slice('species:'.length), type)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-087",
+      "statement": "The commodity page has a \"Help with commodity codes\" details component explaining: \"Commodity codes are internationally recognised reference numbers.\" and \"A commodity code describes a specific product when importing or exporting goods.\"",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:123-136",
+      "quote": "Commodity codes are internationally recognised reference numbers.</p>\n        <p class=\"govuk-body app-what-importing-page__details-paragraph\">A commodity code describes a specific product when importing or exporting goods.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-088",
+      "statement": "The commodity code help says \"You can look up commodity codes using the Trade Tariff tool (opens in a new tab).\", linking to https://www.gov.uk/trade-tariff in a new tab.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:126-129",
+      "quote": "You can look up commodity codes using the <a class=\"govuk-link\" href=\"https://www.gov.uk/trade-tariff\" rel=\"noreferrer noopener\" target=\"_blank\">Trade Tariff tool</a><br>\n          (opens in a new tab).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-089",
+      "statement": "The commodity page uses the default journey buttons: \"Save and continue\", a secondary \"Save and return to overview\" button and a \"Cancel and return to overview\" link to the notification hub.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/what-are-you-importing.html:138-139; partials/design-release-2.1/journey-form-actions.html defaults",
+      "quote": "{% set journeyFormActionOptions = {} %}",
+      "confidence": "inferred",
+      "note": "Labels come from the partial's defaults: 'Save and continue', 'Save and return to overview', 'Cancel and return to overview'. Amend and template-review variants are another part's."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-090",
+      "statement": "If nothing is selected, the commodity page shows the error \"Select a commodity\", inline and in the summary, linking to the commodity search box.",
+      "kind": "rule",
+      "ref": "app/routes.js:1015-1032 (validateCommoditySelection)",
+      "quote": "commoditySearch: { text: 'Select a commodity' }\n    },\n    errorList: [{\n      text: 'Select a commodity',\n      href: '#commodity-search'\n    }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-091",
+      "statement": "The commodity page accepts either selected species or a list of selections to pass validation, so a commodity selected with no species still passes, but only species are saved as the notification's selection.",
+      "kind": "rule",
+      "ref": "app/routes.js:1015-1021 and 669-678",
+      "quote": "const hasSelection = normalizeSelectedSpecies(selectedSpecies).length > 0 ||\n    parseCommoditySelections(commoditySelections).length > 0",
+      "confidence": "inferred",
+      "note": "Inferred: applySpeciesSelectionToSession keeps only species ids, then the posted commoditySelections overwrite the records (11293-11296). hasCommoditySelection (1011-1013) counts species only, so such a notification would read as having no commodity elsewhere."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-092",
+      "statement": "Submitted species and selections that do not belong to the notification's type are dropped before saving (for example, a germinal-product species on a live-animals notification).",
+      "kind": "rule",
+      "ref": "app/routes.js:11247-11267",
+      "quote": "const selectedSpecies = filterSpeciesIdsForNotificationType(\n    normalizeSelectedSpecies(req.body.selectedSpecies),\n    notificationType\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-093",
+      "statement": "A commodity belongs to germinal products if it is flagged as a germinal product; every other commodity belongs to live animals; for any other notification type, all commodities match.",
+      "kind": "rule",
+      "ref": "app/routes.js:163-179 (commodityMatchesNotificationType); 832-834",
+      "quote": "if (type === 'germinal-products') {\n    return isGerminal\n  }\n\n  if (type === 'live-animals') {\n    return !isGerminal\n  }\n\n  return true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-094",
+      "statement": "Species ids that match no known species are dropped when the selection is saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:669-678 (applySpeciesSelectionToSession)",
+      "quote": ".filter((speciesId) => Boolean(getSpeciesMatch(speciesId)))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-095",
+      "statement": "Selected species may be submitted as a list, a JSON array, a single JSON string or a comma-separated string.",
+      "kind": "data",
+      "ref": "app/routes.js:500-532 (normalizeSelectedSpecies)",
+      "quote": "return trimmed.split(',').map((item) => item.trim()).filter(Boolean)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-096",
+      "statement": "The saved selection records each selected species with its commodity id, commodity code and species id.",
+      "kind": "data",
+      "ref": "app/routes.js:731-748 (buildSpeciesSelectionRecords)",
+      "quote": "type: 'species',\n        commodityId: match.commodity.id,\n        commodityCode: match.commodity.code,\n        speciesId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-097",
+      "statement": "The notification's main commodity (id, code and name) is the commodity of the first selected species; with no species it is cleared.",
+      "kind": "rule",
+      "ref": "app/routes.js:648-660 (updatePrimaryCommoditySessionFields)",
+      "quote": "const primaryCommodity = commodityIds.length ? getCommodityById(commodityIds[0]) : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-098",
+      "statement": "When every selected species is under commodity code 01061900 (cat, dog, ferret or other live mammals), any unweaned animals answer is cleared.",
+      "kind": "rule",
+      "ref": "app/routes.js:662-666; also 603-605",
+      "quote": "if (commodityCodes.length > 0 && commodityCodes.every((code) => code === '01061900')) {\n    sessionData.unweanedAnimals = null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-099",
+      "statement": "Saving the commodity page with the \"return to overview\" or \"return to review\" action skips validation, saves any valid species selection, saves the draft and goes to the notification hub or review page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11269-11282",
+      "quote": "if (applySpeciesSelectionToSession(req.session.data, selectedSpecies)) {\n      req.session.data.commoditySelections = commoditySelections.length\n        ? commoditySelections\n        : req.session.data.commoditySelections\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-100",
+      "statement": "After a valid commodity selection, the user goes on to /reason-for-import, or back to the hub, review or template review as the entry point dictates; when creating a template, the user goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11302-11306",
+      "quote": "if (isCreatingTemplateJourney(req.session.data)) {\n    return res.redirect('/notification-hub')\n  }\n\n  return res.redirect(getSectionContinueRedirect(req, '/reason-for-import'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-101",
+      "statement": "Removing a species from the selection also removes its number of animals, number of packages, net weight and package type.",
+      "kind": "rule",
+      "ref": "app/routes.js:750-781 (removeSpeciesFromSession)",
+      "quote": "if (sessionData.numberOfAnimals && sessionData.numberOfAnimals[speciesId] != null) {\n    delete sessionData.numberOfAnimals[speciesId]\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-102",
+      "statement": "Removing a commodity removes all of its selected species, along with each species' number of animals, number of packages, net weight and package type.",
+      "kind": "rule",
+      "ref": "app/routes.js:783-822 (removeCommodityFromSession)",
+      "quote": "return match && match.commodity.id !== commodityId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-103",
+      "statement": "Removing the last selected species or commodity clears the notification's main commodity id, code and name.",
+      "kind": "rule",
+      "ref": "app/routes.js:773-777 and 814-818",
+      "quote": "if (speciesIds.length === 0) {\n    sessionData.commodityId = null\n    sessionData.commodityCode = null\n    sessionData.commodityName = null\n    return\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-104",
+      "statement": "A selected commodity is summarised as \"code (name)\", for example \"0102 (Cattle)\".",
+      "kind": "copy",
+      "ref": "app/routes.js:680-692 (getSelectedCommoditySummary)",
+      "quote": "text: `${commodity.code} (${commodity.name})`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-105",
+      "statement": "A selected species is titled \"code (common name - Latin name)\", using the commodity name when the species has no common name, for example \"0102 (Domestic cattle - Bos taurus)\".",
+      "kind": "copy",
+      "ref": "app/routes.js:694-696 and 724-729 (formatSpeciesDisplayTitle)",
+      "quote": "return `${commodity.code} (${commonName} - ${latinName})`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-106",
+      "statement": "A species' label in a list of selected species is its Latin name, or its common name when it has no Latin name.",
+      "kind": "copy",
+      "ref": "app/routes.js:698-710 (getSelectedSpeciesLabels)",
+      "quote": "return match.species.label || match.species.commonName || ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-107",
+      "statement": "Species and commodities are looked up across both the live-animal and germinal-product lists together, by id.",
+      "kind": "data",
+      "ref": "app/routes.js:66, 237-243, 608-618",
+      "quote": "const allCommodities = commodities.concat(germinalProductCommodities)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-108",
+      "statement": "A commodity looked up by code returns the first commodity with that code, although several commodities share codes (cat, dog, ferret and other live mammals share 01061900; most germinal products share 05119985).",
+      "kind": "data",
+      "ref": "app/routes.js:241-243 (getCommodityByCode)",
+      "quote": "return allCommodities.find((commodity) => commodity.code === commodityCode)",
+      "confidence": "inferred",
+      "note": "Ambiguity recorded, not resolved."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-109",
+      "statement": "The live-animal commodity list is described as UK live animal commodities with CN codes from Trade Tariff chapter 01 and the species commonly used in GB import notifications (IPAFFS / CHEDA), and is sorted alphabetically by name.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:1-2 and 293-295",
+      "quote": "// UK live animal commodities — CN codes based on Trade Tariff chapter 01 (live animals)\n// and common species used in GB import notifications (IPAFFS / CHEDA).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-110",
+      "statement": "Live-animal commodity: Cattle, code 0102, with the 11 cattle species of the 0102 list.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:10-25",
+      "quote": "id: 'cattle',\n    name: 'Cattle',\n    code: '0102',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-111",
+      "statement": "Live-animal commodity: Horse, code 0101, with the 3 species of the 0101 list.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:26-43",
+      "quote": "id: 'horse',\n    name: 'Horse',\n    code: '0101',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-112",
+      "statement": "Live-animal commodity: Pig, code 0103, species Sus scrofa domesticus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:44-61",
+      "quote": "name: 'Pig',\n    code: '0103',",
+      "confidence": "verbatim",
+      "note": "Species: { id: 'pig-sus-scrofa', label: 'Sus scrofa domesticus' }"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-113",
+      "statement": "Live-animal commodity: Sheep, code 010410, species Ovis aries.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:62-80",
+      "quote": "name: 'Sheep',\n    code: '010410',",
+      "confidence": "verbatim",
+      "note": "Species: { id: 'sheep-ovis-aries', label: 'Ovis aries' }"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-114",
+      "statement": "Live-animal commodity: Goat, code 010420, species Capra hircus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:81-99",
+      "quote": "name: 'Goat',\n    code: '010420',",
+      "confidence": "verbatim",
+      "note": "Species: { id: 'goat-capra-hircus', label: 'Capra hircus' }"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-115",
+      "statement": "Live-animal commodity: Chicken, code 010511, species Gallus domesticus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:100-108",
+      "quote": "name: 'Chicken',\n    code: '010511',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-116",
+      "statement": "Live-animal commodity: Turkey, code 010512, species Meleagris gallopavo.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:109-117",
+      "quote": "name: 'Turkey',\n    code: '010512',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-117",
+      "statement": "Live-animal commodity: Duck, code 010513, species Anas platyrhynchos domesticus and Cairina moschata.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:118-127",
+      "quote": "{ id: 'duck-anas-platyrhynchos', label: 'Anas platyrhynchos domesticus' },\n      { id: 'duck-cairina-moschata', label: 'Cairina moschata' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-118",
+      "statement": "Live-animal commodity: Goose, code 010514, species Anser anser domesticus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:128-136",
+      "quote": "name: 'Goose',\n    code: '010514',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-119",
+      "statement": "Live-animal commodity: Guinea fowl, code 010515, species Numida meleagris.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:137-145",
+      "quote": "name: 'Guinea fowl',\n    code: '010515',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-120",
+      "statement": "Live-animal commodity: Cat, code 01061900, species Felis catus (common name Domestic cat).",
+      "kind": "data",
+      "ref": "app/data/commodities.js:146-165",
+      "quote": "{ id: 'cat-felis-catus', label: 'Felis catus', commonName: 'Domestic cat' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-121",
+      "statement": "Live-animal commodity: Dog, code 01061900, species Canis familiaris (common name Domestic dog).",
+      "kind": "data",
+      "ref": "app/data/commodities.js:166-185",
+      "quote": "{ id: 'dog-canis-familiaris', label: 'Canis familiaris', commonName: 'Domestic dog' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-122",
+      "statement": "Live-animal commodity: Ferret, code 01061900, species Mustela putorius furo (common name Ferret).",
+      "kind": "data",
+      "ref": "app/data/commodities.js:186-205",
+      "quote": "{ id: 'ferret-mustela-putorius-furo', label: 'Mustela putorius furo', commonName: 'Ferret' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-123",
+      "statement": "Cat, dog and ferret commodities are marked as needing a permanent address; Other live mammals, which shares their code, is not.",
+      "kind": "rule",
+      "ref": "app/data/commodities.js:150, 170, 190 and 206-222",
+      "quote": "requiresPermanentAddress: true,",
+      "confidence": "verbatim",
+      "note": "The permanent address pages that use this flag are another part's."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-124",
+      "statement": "Live-animal commodity: Other live mammals, code 01061900, with the 106 species of the 01061900 list.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:206-222",
+      "quote": "id: 'other-live-mammals',\n    name: 'Other live mammals',\n    code: '01061900',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-125",
+      "statement": "Live-animal commodity: Rabbit, code 010614, species Oryctolagus cuniculus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:223-231",
+      "quote": "name: 'Rabbit',\n    code: '010614',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-126",
+      "statement": "Live-animal commodity: Camel, code 010613, species Camelus dromedarius and Camelus bactrianus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:232-241",
+      "quote": "{ id: 'camel-dromedarius', label: 'Camelus dromedarius' },\n      { id: 'camel-bactrianus', label: 'Camelus bactrianus' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-127",
+      "statement": "Live-animal commodity: Ostrich, code 010633, species Struthio camelus.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:242-250",
+      "quote": "name: 'Ostrich',\n    code: '010633',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-128",
+      "statement": "Live-animal commodity: Parrot, code 010632, species Psittaciformes.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:251-259",
+      "quote": "name: 'Parrot',\n    code: '010632',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-129",
+      "statement": "Live-animal commodity: Reptile, code 010620, species Serpentes and Testudines.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:260-269",
+      "quote": "{ id: 'reptile-serpentes', label: 'Serpentes' },\n      { id: 'reptile-testudines', label: 'Testudines' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-130",
+      "statement": "Live-animal commodity: Bees, code 01064100, species Apis mellifera and Bombus spp.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:270-279",
+      "quote": "{ id: 'bees-apis-mellifera', label: 'Apis mellifera' },\n      { id: 'bees-bombus-spp', label: 'Bombus spp.' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-131",
+      "statement": "Live-animal commodity: Ornamental fish, code 030111, species Cyprinidae, Poeciliidae and Cichlidae.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:280-290",
+      "quote": "{ id: 'fish-cyprinidae', label: 'Cyprinidae' },\n      { id: 'fish-poeciliidae', label: 'Poeciliidae' },\n      { id: 'fish-cichlidae', label: 'Cichlidae' }",
+      "confidence": "verbatim",
+      "note": "Code 030111 is outside Trade Tariff chapter 01, though the file header says chapter 01."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-132",
+      "statement": "Among the live-animal commodities, only the cat, dog and ferret species and the horse, cattle and other-live-mammal species lists give common names; the pig, sheep, goat, poultry, rabbit, camel, ostrich, parrot, reptile, bee and fish species have only Latin names.",
+      "kind": "data",
+      "ref": "app/data/commodities.js:58-289",
+      "quote": "{ id: 'chicken-gallus-domesticus', label: 'Gallus domesticus' }",
+      "confidence": "inferred",
+      "note": "Matters for search by common name and for the species titles, which fall back to the commodity name."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-133",
+      "statement": "Horse species (code 0101): Eq cabalus*asinus (Mule), Equus asinus (Donkey), Equus cabalus (Horse).",
+      "kind": "data",
+      "ref": "app/data/commodities-0101-species.js:3-7",
+      "quote": "{ label: 'Eq cabalus*asinus', commonName: 'Mule' },\n  { label: 'Equus asinus', commonName: 'Donkey', id: 'horse-equus-asinus' },\n  { label: 'Equus cabalus', commonName: 'Horse', id: 'horse-equus-caballus' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-134",
+      "statement": "Cattle species (code 0102), with common names: Bibos spp. (Gaur), Bison bison (Bison bison), Bison spp (Bison), Bos spp (Cattle), Bos taurus (Domestic cattle), Bubalus bubalis (Water buffalo), Bubalus spp (including Anoa) (Buffalo), Novibos spp (Banteng), Ovibos spp (Musk ox), Poephagus spp. (Yak), Syncerus spp. (African buffalo).",
+      "kind": "data",
+      "ref": "app/data/commodities-0102-species.js:3-15",
+      "quote": "{ label: 'Bibos spp.', commonName: 'Gaur' },\n  { label: 'Bison bison', commonName: 'Bison bison', id: 'cattle-bison-bison' },\n  { label: 'Bison spp', commonName: 'Bison' },\n  { label: 'Bos spp', commonName: 'Cattle', id: 'cattle-bos-spp' },\n  { label: 'Bos taurus', commonName: 'Domestic cattle', id: 'cattle-bos-taurus' },\n  { label: 'Bubalus bubalis', commonName: 'Water buffalo', id: 'cattle-bubalus-bubalis' },\n  { label: 'Bubalus spp (including Anoa)', commonName: 'Buffalo' },\n  { label: 'Novibos spp', commonName: 'Banteng' },\n  { label: 'Ovibos spp', commonName: 'Musk ox' },\n  { label: 'Poephagus spp.', commonName: 'Yak' },\n  { label: 'Syncerus spp.', commonName: 'African buffalo' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-135",
+      "statement": "Other live mammals species (code 01061900) are a list of 106 Latin names, each with a common name, from Aepyceros spp. (Impala) to Xenarthra (Xenarthran), including deer, antelope, zebra, elephant, rhinoceros, squirrel, bat and catch-all groups such as Other Carnivora, Other Lagomorpha and Other Rodentia.",
+      "kind": "data",
+      "ref": "app/data/commodities-01061900-species.js:3-110",
+      "quote": "{ label: 'Aepyceros spp.', commonName: 'Impala' },",
+      "confidence": "verbatim",
+      "note": "Full list at lines 4-109; the last entry is { label: 'Xenarthra', commonName: 'Xenarthran' }."
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-136",
+      "statement": "The other live mammals list holds two near-duplicate entries, \"Other mammalia\" and \"Other Mammalia\", both with the common name \"Other mammal\".",
+      "kind": "data",
+      "ref": "app/data/commodities-01061900-species.js:74-75",
+      "quote": "{ label: 'Other mammalia', commonName: 'Other mammal', id: 'other-live-mammals-other-mammalia-lower' },\n  { label: 'Other Mammalia', commonName: 'Other mammal', id: 'other-live-mammals-other-mammalia-upper' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-137",
+      "statement": "Several other live mammals entries share a common name (Hartebeest for Alcelaphus spp. and Sigmoceros-Alecelaphus spp.; Gazelle for Gazella spp. and Procapra spp.; Chevrotain for Hyemoschus spp. and Tragulus-Moschiola spp.), and Equus spp. is listed with the common name Horse.",
+      "kind": "data",
+      "ref": "app/data/commodities-01061900-species.js:5, 35, 37, 46, 86, 100, 107",
+      "quote": "{ label: 'Equus spp.', commonName: 'Horse' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-138",
+      "statement": "The germinal-product commodities all carry the germinal-product flag, have no animal identifiers and no packaging fields.",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:9-17",
+      "quote": "isGerminalProduct: true,\n    identifiers: [],\n    certificationPurposeOptions: germinalCertificationPurposeOptions,\n    packagingFields: [],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-139",
+      "statement": "The germinal-product commodity list has 15 entries, sorted alphabetically by name, each named \"Animal, Embryos/Ova\" or \"Animal, Semen\".",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:19-151",
+      "quote": "module.exports = germinalProductCommodities.slice().sort((a, b) =>\n  a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })\n)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-140",
+      "statement": "Germinal product: Cat, Embryos/Ova, code 05119985, species Felis catus (Domestic cat).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:20-27",
+      "quote": "name: 'Cat, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-141",
+      "statement": "Germinal product: Cat, Semen, code 05119985, species Felis catus (Domestic cat).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:28-35",
+      "quote": "name: 'Cat, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-142",
+      "statement": "Germinal product: Cattle, Embryos/Ova, code 05119985, species Bison bison, Bos taurus (Domestic cattle) and Bubalus bubalis (Water buffalo).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:36-45",
+      "quote": "name: 'Cattle, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-143",
+      "statement": "Germinal product: Cattle, Semen, code 05111000 (the only germinal product not under 05119985), species Bison bison, Bos taurus (Domestic cattle), Bovidae and Bubalus bubalis (Water buffalo).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:46-56",
+      "quote": "name: 'Cattle, Semen',\n    code: '05111000',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-144",
+      "statement": "Germinal product: Dog, Embryos/Ova, code 05119985, species Canis familiaris (Domestic dog).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:57-64",
+      "quote": "name: 'Dog, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-145",
+      "statement": "Germinal product: Dog, Semen, code 05119985, species Canis familiaris (Domestic dog).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:65-72",
+      "quote": "name: 'Dog, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-146",
+      "statement": "Germinal product: Goat, Embryos/Ova, code 05119985, species Capra hircus (Goat).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:73-80",
+      "quote": "name: 'Goat, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-147",
+      "statement": "Germinal product: Goat, Semen, code 05119985, species Capra hircus (Goat).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:81-88",
+      "quote": "name: 'Goat, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-148",
+      "statement": "Germinal product: Horse, Semen, code 05119985, species Equus asinus (Donkey) and Equus cabalus (Horse).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:89-97",
+      "quote": "name: 'Horse, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-149",
+      "statement": "Germinal product: Horse, Embryos/Ova, code 05119985, species Equus asinus (Donkey) and Equus cabalus (Horse).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:98-106",
+      "quote": "name: 'Horse, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-150",
+      "statement": "Germinal product: Pig, Embryos/Ova, code 05119985, species Sus scrofa domesticus (Pig).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:107-114",
+      "quote": "name: 'Pig, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-151",
+      "statement": "Germinal product: Pig, Semen, code 05119985, species Sus scrofa domesticus (Pig).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:115-122",
+      "quote": "name: 'Pig, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-152",
+      "statement": "Germinal product: Rabbit/Rodent, Semen, code 05119985, with a single species labelled Rabbit/Rodent.",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:123-130",
+      "quote": "{ id: 'rabbit-rodent-semen', label: 'Rabbit/Rodent' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-153",
+      "statement": "Germinal product: Sheep, Embryos/Ova, code 05119985, species Ovis aries (Sheep).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:131-138",
+      "quote": "name: 'Sheep, Embryos/Ova',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-154",
+      "statement": "Germinal product: Sheep, Semen, code 05119985, species Ovis aries (Sheep).",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:139-146",
+      "quote": "name: 'Sheep, Semen',\n    code: '05119985',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p2-155",
+      "statement": "No germinal product is offered for any poultry, fish, bee or other-live-mammal species, and there is no Rabbit/Rodent Embryos/Ova entry.",
+      "kind": "data",
+      "ref": "app/data/commodities-germinal-products.js:19-147",
+      "quote": "name: 'Rabbit/Rodent, Semen',",
+      "confidence": "inferred",
+      "note": "Inferred from the full list of 15 entries."
+    }
+  ]
+}

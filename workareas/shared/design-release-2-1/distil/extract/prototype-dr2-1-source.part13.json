@@ -1,0 +1,863 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 13, Dashboard. Read in full at commit 04a073b: the five DR2.1 dashboard views (dashboard-home.html 136 lines, the overall home at /design-release-2.1/; dashboard.html 254 lines, the notifications list at /live-animals and /germinal-products; dashboard-actions.html 114 lines at /actions; dashboard-changes.html 53 lines at /changes; dashboard-inspection.html 120 lines at /inspection), the notification card macro partials/design-release-2.1/dashboard-notification-card.html (73 lines), the seeded list app/data/dashboard-notifications.js (16 notifications, page size 8, four sort options), and the routes.js ranges the partition names: 6610-6902 (list, actions and inspection page hrefs and pagination, the two dashboard categories, list path, changes sections, delay filter, date format), 7107-7675 (view, copy and delete hrefs, delete, arrival date format, commodity and quantity labels, enrichDesignRelease2Notification with its demo index overrides, getDashboardNotificationList, results text, sort items), 8667-8926 (date range, type and status filter items, getDashboardViewModel, renderOverallDashboardPage, renderDashboardPage), 9020-9123 (actions, changes and inspection view models and renders) and the GET handlers for /, /live-animals, /germinal-products, /actions, /changes, /inspection and /dashboard. To read what the pages show, it also looked (without claiming their own pages) at helpers outside the ranges: toDesignReleaseDashboardReference (routes.js:306), mapStatusTextToReviewVariant (5632), the action-required error message helpers (6371-6397), getDashboardBackLink (7093), the version mount's path prefixing (app/lib/version-mount.js:11-117) and app/data/dashboard-notification-snapshots.js (the action-required snapshot has no documents). Claims run: overall home (headings, messages link, buttons, three service sections and their glance cards with fixed counts and links); routes and redirects; list page (back link, success banner, heading by category, buttons, Summary glance cards, search, sort, additional filters with date range radios, date pickers, type and status selects, tabs, section subheadings, pagination, absence of results text and empty state); notification card (every field, status tag or text, error marker and message, Copy as new and View links, inspection tag; delete and amend not shown); actions, changes and inspection pages (heading, caption, description, details, search, sort, results text, sections, pagination, back links); and the seeded notifications as a fresh DR2.1 session shows them (tab membership, action, status-change and inspection selections). Templates are part 14's.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p13-001",
+      "statement": "In Design Release 2.1, GET / (served at /design-release-2.1) renders the overall dashboard home rather than a notifications list.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11539-11545",
+      "quote": "router.get('/', (req, res) => {\n  if (isDesignRelease21SessionData(req.session.data)) {\n    return renderOverallDashboardPage(req, res)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-002",
+      "statement": "The overall dashboard home shows the Alpha phase banner with the text 'This is a new service. Help us improve it and give your feedback by email.', where the feedback link goes to '#'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:9-14",
+      "quote": "text: \"Alpha\"\n    },\n    html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-003",
+      "statement": "The overall dashboard home has no back link.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:8-15",
+      "quote": "{% block beforeContent %}\n  {{ govukPhaseBanner({",
+      "confidence": "inferred",
+      "note": "Inferred because the home's beforeContent block holds only the phase banner, while the list, actions, changes and inspection pages add a govukBackLink."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-004",
+      "statement": "The overall dashboard home has the caption 'Dashboard' above the h1 heading 'Import notification service'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:23-24",
+      "quote": "<p class=\"govuk-caption-xl app-dr2-dashboard-intro__caption govuk-!-margin-bottom-0\">Dashboard</p>\n        <h1 class=\"govuk-heading-xl app-dr2-dashboard-intro__heading govuk-!-margin-bottom-0\" id=\"overall-dashboard-heading\">Import notification service</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-005",
+      "statement": "The overall dashboard home shows a 'Messages' link followed by an unread message count, with the screen-reader text '<count> unread messages'; the link goes to '#' and the count is fixed at 12.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:27-31; app/routes.js:8877-8878",
+      "quote": "<a class=\"govuk-link\" href=\"{{ messagesHref }}\">Messages</a>\n        <span class=\"app-overall-dashboard__message-count\" aria-hidden=\"true\">{{ messageCount }}</span>\n        <span class=\"govuk-visually-hidden\">{{ messageCount }} unread messages</span>",
+      "confidence": "verbatim",
+      "note": "routes.js sets messagesHref: '#' and messageCount: 12; no messages page exists in the slice."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-006",
+      "statement": "The overall dashboard home has a primary 'Create new' button linking to /create-notification (with no category), and a secondary 'Use template' button linking to /templates.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:34-42; app/routes.js:8879-8880",
+      "quote": "text: \"Create new\",\n          href: createNotificationHref\n        }) }}\n        {{ govukButton({\n          text: \"Use template\",\n          href: templatesHref,\n          classes: \"govuk-button--secondary\"",
+      "confidence": "verbatim",
+      "note": "routes.js: createNotificationHref: '/create-notification', templatesHref: '/templates'; the version mount prefixes both with /design-release-2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-007",
+      "statement": "The overall dashboard home has a 'Live animals' section (h2) with a 'View dashboard' link to /live-animals.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:46-53; app/routes.js:8882",
+      "quote": "Live animals\n        </h2>\n        <p class=\"govuk-body govuk-!-margin-bottom-0 app-overall-dashboard-section__dashboard-link\">\n          <a class=\"govuk-link\" href=\"{{ liveAnimals.dashboardHref }}\">View dashboard</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-008",
+      "statement": "The Live animals section of the home has an 'Action needed' card ('Tasks requiring your attention') whose count is fixed at 4 and whose 'View tasks' link goes to /actions?category=live-animals.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:57-62; app/routes.js:8883-8885",
+      "quote": "<h3 class=\"govuk-heading-m app-dr2-dashboard-glance-card__title govuk-!-margin-bottom-0\">Action needed</h3>\n          <p class=\"govuk-body app-dr2-dashboard-glance-card__description govuk-!-margin-bottom-0\">Tasks requiring your attention</p>\n          <p class=\"app-dr2-dashboard-glance-card__count govuk-!-font-weight-bold\">{{ liveAnimals.actionNeeded }}</p>\n          <a class=\"govuk-link app-dr2-dashboard-glance-card__link\" href=\"{{ liveAnimals.tasksHref }}\">View tasks</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-009",
+      "statement": "The Live animals section of the home has a 'Status updates' card ('Changes in the past 24 hours') whose count is fixed at 8 and whose 'View updates' link goes to /changes?category=live-animals.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:64-69; app/routes.js:8884-8886",
+      "quote": "<h3 class=\"govuk-heading-m app-dr2-dashboard-glance-card__title govuk-!-margin-bottom-0\">Status updates</h3>\n          <p class=\"govuk-body app-dr2-dashboard-glance-card__description govuk-!-margin-bottom-0\">Changes in the past 24 hours</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-010",
+      "statement": "The overall dashboard home has a 'Germinal products' section with a 'View dashboard' link to /germinal-products, an 'Action needed' card fixed at 2 linking 'View tasks' to /actions?category=germinal-products, and a 'Status updates' card fixed at 1 linking 'View updates' to /changes?category=germinal-products.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:73-98; app/routes.js:8888-8894",
+      "quote": "germinal: {\n      dashboardHref: '/germinal-products',\n      tasksHref: '/actions?category=germinal-products',\n      updatesHref: '/changes?category=germinal-products',\n      actionNeeded: 2,\n      statusChange: 1\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-011",
+      "statement": "The overall dashboard home has a 'Plants, plant products or other objects' section with a 'View dashboard' link and three cards: 'Action needed' (4, 'View tasks'), 'Status updates' (4, 'View updates') and 'Inspection required' ('Consignments due at the BCP', 6, 'View requirements'); every plants link goes to '#'.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:100-131; app/routes.js:8895-8903",
+      "quote": "Plants, plant products or<br>other objects",
+      "confidence": "verbatim",
+      "note": "routes.js: plants: { dashboardHref: '#', tasksHref: '#', updatesHref: '#', inspectionHref: '#', actionNeeded: 4, statusChange: 4, inspectionRequired: 6 }. The heading has a line break after 'or'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-012",
+      "statement": "Only the plants section of the home has an 'Inspection required' card; the Live animals and Germinal products sections have no inspection card, so nothing on the DR2.1 home links to the /inspection page.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-home.html:125-130",
+      "quote": "<h3 class=\"govuk-heading-m app-dr2-dashboard-glance-card__title govuk-!-margin-bottom-0\">Inspection required</h3>\n          <p class=\"govuk-body app-dr2-dashboard-glance-card__description govuk-!-margin-bottom-0\">Consignments due at the BCP</p>",
+      "confidence": "inferred",
+      "note": "Inferred from the plants inspectionHref being '#' and no other inspection card in the view."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-013",
+      "statement": "The glance-card counts on the overall home are fixed numbers in the route, not counted from the notifications, so they can differ from the counts the category list pages show for the same seeded notifications.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8870-8904",
+      "quote": "actionNeeded: 4,\n      statusChange: 8",
+      "confidence": "inferred",
+      "note": "With the seeded data a fresh session's Live animals list counts 1 action needed and 2 status changes (see the seeded-data claims), against the home's 4 and 8."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-014",
+      "statement": "The home and every dashboard page set the service navigation's active item to 'dashboard'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8876, 8920, 9063, 9085, 9119",
+      "quote": "serviceNavActive: 'dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-015",
+      "statement": "GET /live-animals and GET /germinal-products each render the notifications list page, for that category.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11547-11553; app/routes.js:6701-6713",
+      "quote": "router.get('/live-animals', (req, res) => {\n  return renderDashboardPage(req, res)\n})\n\nrouter.get('/germinal-products', (req, res) => {\n  return renderDashboardPage(req, res)\n})",
+      "confidence": "verbatim",
+      "note": "getDashboardCategoryFromRequest takes the category from a path ending /live-animals or /germinal-products, otherwise from ?category=."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-016",
+      "statement": "In DR2.1, GET /dashboard redirects to /live-animals keeping its query string when it has one, and to the overall home (/) when it has none.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11724-11736",
+      "quote": "if (isDesignRelease21SessionData(req.session.data)) {\n    if (queryString) {\n      return res.redirect(`/live-animals?${queryString}`)\n    }\n\n    return res.redirect('/')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-017",
+      "statement": "A notification's category is decided by its category label: the live-animals list shows only notifications labelled 'Live animals' and the germinal-products list only those labelled 'Germinal products'.",
+      "kind": "rule",
+      "ref": "app/routes.js:6715-6731",
+      "quote": "if (category === 'live-animals') {\n    return label === 'live animals'\n  }\n\n  if (category === 'germinal-products') {\n    return label === 'germinal products'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-018",
+      "statement": "A notification with no category label is labelled 'Germinal products' when its snapshot holds only germinal products, otherwise 'Live animals'.",
+      "kind": "rule",
+      "ref": "app/routes.js:7315-7319",
+      "quote": "let categoryLabel = notification.categoryLabel || (\n    snapshot && hasGerminalProductsOnly(snapshot)\n      ? 'Germinal products'\n      : 'Live animals'\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-019",
+      "statement": "The notifications list page shows the Alpha phase banner and a 'Back' link to the overall home (/).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:17-27; app/routes.js:8911-8913",
+      "quote": "const backLink = isDesignRelease21SessionData(req.session.data)\n    ? '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-020",
+      "statement": "When the session holds a dashboard success message, the list page shows a green success notification banner titled 'Success' with that message, marked to dismiss itself after 5000 milliseconds, and the message is cleared so it shows only once.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:34-44; app/routes.js:8908-8917",
+      "quote": "type: \"success\",\n        titleText: \"Success\",\n        text: successMessage,\n        classes: \"app-dr2-dashboard__success-banner\",\n        attributes: {\n          \"data-auto-dismiss-ms\": \"5000\"\n        }",
+      "confidence": "verbatim",
+      "note": "The message itself (dashboardSuccessMessage) is set by other parts' handlers, such as delete or cancel."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-021",
+      "statement": "The list page has the caption 'Dashboard' and an h1 naming the category: 'Live animals' on /live-animals and 'Germinal products' on /germinal-products, falling back to 'Live animals and germinal products' with no category.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:48-49; app/routes.js:6690-6699, 8771-8772",
+      "quote": "const dashboardPageHeading = (DASHBOARD_CATEGORIES[category] && DASHBOARD_CATEGORIES[category].heading) ||\n    'Live animals and germinal products'",
+      "confidence": "verbatim",
+      "note": "In DR2.1 the list is always reached with a category (/ renders the home and /dashboard redirects to /live-animals), so the fallback heading is not normally seen."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-022",
+      "statement": "The list page's 'Create new' button goes to /create-notification?category=<category>, carrying the list's category into the create journey.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:53-56; app/routes.js:8864-8866",
+      "quote": "createNotificationHref: category\n      ? `/create-notification?category=${encodeURIComponent(category)}`\n      : '/create-notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-023",
+      "statement": "The list page's secondary 'Use template' button goes to /design-release-2.1/templates.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:57-61",
+      "quote": "text: \"Use template\",\n          href: \"/design-release-2.1/templates\",\n          classes: \"govuk-button--secondary\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-024",
+      "statement": "The list page has a 'Summary' section with two glance cards: 'Action needed' ('Tasks requiring your attention', 'View tasks' to /actions?category=<category>) and 'Status updated' ('Changes in the past 24 hours', 'View updates' to /changes?category=<category>).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:65-83; app/routes.js:8773-8774",
+      "quote": "<h2 class=\"app-dr2-dashboard-glance__heading\" id=\"dashboard-glance-heading\">Summary</h2>",
+      "confidence": "verbatim",
+      "note": "The list page titles the second card 'Status updated' while the overall home titles it 'Status updates'. The list page has no inspection card."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-025",
+      "statement": "The list page's glance counts are counted live: Action needed is the number of the category's notifications needing action, and Status updated the number with a status change.",
+      "kind": "rule",
+      "ref": "app/routes.js:8740-8747, 8803-8809",
+      "quote": "glanceCounts: isDr2\n      ? {\n        actionNeeded: actionNotifications.length,\n        statusChange: statusChangeNotifications.length,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-026",
+      "statement": "The list page has a 'Notifications' section (h2) holding a GET search form that submits to the list's own path, carrying the current tab (unless it is 'in-progress') and the current page (when above 1) as hidden fields.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:86-94",
+      "quote": "<form method=\"get\" action=\"{{ dashboardListPath }}\" class=\"app-dr2-dashboard-search\">\n        {% if activeTab and activeTab != \"in-progress\" %}\n          <input type=\"hidden\" name=\"tab\" value=\"{{ activeTab }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-027",
+      "statement": "The list page has a search field labelled 'Search by' with the hint 'Keyword, notification number, commodity, consignee or consignor', which keeps the searched text, and a search button with the accessible name 'Search' showing a magnifying-glass icon.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:98-115",
+      "quote": "text: \"Search by\",\n                classes: \"app-dr2-dashboard-search__label\"\n              },\n              hint: {\n                text: \"Keyword, notification number, commodity, consignee or consignor\"\n              },\n              value: search,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-028",
+      "statement": "The list page has a 'Sort by:' select with the options 'Select one', 'Newest first', 'Oldest first' and 'Arrival date', keeping the chosen option selected.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/dashboard.html:118-129; app/data/dashboard-notifications.js:288-293; app/routes.js:7660-7674",
+      "quote": "sortItems: [\n    { value: '', text: 'Select one' },\n    { value: 'newest', text: 'Newest first' },\n    { value: 'oldest', text: 'Oldest first' },\n    { value: 'arrival-date', text: 'Arrival date' }\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-029",
+      "statement": "The search text, sort order and every additional filter are read back into the form but never applied: the list shows the same notifications, in the same order, whatever is searched, sorted or filtered.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8716-8769",
+      "quote": "const visibleNotifications = activeTab === 'drafts'\n    ? draftNotifications\n    : activeTab === 'completed'\n      ? completedNotifications\n      : inProgressNotifications",
+      "confidence": "inferred",
+      "note": "Inferred: getDashboardViewModel reads search, sort, dateRange, startDate, endDate, type and status from the query but filters only by category and tab, and slices by page. The same holds for search and sort on the actions and inspection pages."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-030",
+      "statement": "The list page has a collapsible 'Additional filters' section with a chevron, which starts open when any date range, start date, end date, type or status filter is set.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:132-136; app/routes.js:8851",
+      "quote": "<details class=\"app-dr2-dashboard-filters\"{% if additionalFiltersOpen %} open{% endif %}>\n          <summary class=\"app-dr2-dashboard-filters__summary\">\n            <span class=\"app-dr2-dashboard-filters__summary-text\">Additional filters</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-031",
+      "statement": "The additional filters have a 'By arrival date' column of small radios named dateRange with the options 'Today', 'Tomorrow' and 'Next 7 days' (DR2.1 uses the numeral; other versions say 'Next seven days'), keeping the chosen one checked.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/dashboard.html:139-154; app/routes.js:8667-8677, 8842",
+      "quote": "{ value: 'today', text: 'Today', checked: selectedValue === 'today' },\n    { value: 'tomorrow', text: 'Tomorrow', checked: selectedValue === 'tomorrow' },\n    {\n      value: 'next-seven-days',\n      text: options.numericSeven ? 'Next 7 days' : 'Next seven days',",
+      "confidence": "verbatim",
+      "note": "The radios' fieldset legend 'By arrival date' is visually hidden; the visible column heading carries the same words."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-032",
+      "statement": "The additional filters have a 'By date range' column with the hint 'For example, 27/3/2026' and two MOJ date pickers, 'Start date' (startDate) and 'End date' (endDate), which keep the entered dates.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:156-185",
+      "quote": "<p class=\"app-dr2-dashboard-filters__column-heading\">By date range</p>\n                <p class=\"app-dr2-dashboard-filters__hint\">For example, 27/3/2026</p>",
+      "confidence": "verbatim",
+      "note": "No validation of the dates exists in the slice."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-033",
+      "statement": "The 'By type' select is shown only when the list has no category, so on the DR2.1 /live-animals and /germinal-products lists it is not shown.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:188-199; app/routes.js:8846-8848",
+      "quote": "typeFilterItems: isDr2 && !category\n      ? buildDashboardTypeFilterItems(typeFilter, { hidePlants: isDr21 })\n      : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-034",
+      "statement": "Where the 'By type' select is shown in DR2.1, its options are 'Select one', 'Live animals' and 'Products of animal origin'; DR2.1 hides 'Plants' and ignores type=plants in the query.",
+      "kind": "data",
+      "ref": "app/routes.js:8679-8696, 8728-8730",
+      "quote": "if (!options.hidePlants) {\n    items.push({ value: 'plants', text: 'Plants', selected: selectedValue === 'plants' })\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-035",
+      "statement": "The additional filters have a 'Status' select whose DR2.1 options are 'Select one', 'Action required', 'Submitted' and 'Completed'; DR2.1 hides 'Draft' and ignores status=draft in the query.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/dashboard.html:201-210; app/routes.js:8698-8714, 8732-8734",
+      "quote": "if (!options.hideDraft) {\n    items.push({ value: 'draft', text: 'Draft', selected: selectedValue === 'draft' })\n  }\n\n  items.push(\n    { value: 'action-required', text: 'Action required', selected: selectedValue === 'action-required' },\n    { value: 'submitted', text: 'Submitted', selected: selectedValue === 'submitted' },\n    { value: 'completed', text: 'Completed', selected: selectedValue === 'completed' }\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-036",
+      "statement": "The additional filters have no apply button of their own; the only submit control in the form is the search button.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:88-215",
+      "quote": "<button class=\"app-dr2-dashboard-search__button\" type=\"submit\" aria-label=\"Search\">",
+      "confidence": "inferred",
+      "note": "Inferred from the form markup: client-side script (app/assets, out of scope) may submit on change."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-037",
+      "statement": "The list page has three tabs: 'In progress', 'Draft' (DR2.1; other versions say 'Drafts') and 'Completed'; only the 'In progress' tab shows its count, in bold brackets.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:217-227; app/routes.js:8778-8797",
+      "quote": "{{ tabItem.text }}{% if tabItem.id == \"in-progress\" %} <strong>({{ tabItem.count }})</strong>{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-038",
+      "statement": "The tabs are links: 'In progress' goes to the list path, 'Draft' to <list path>?tab=drafts and 'Completed' to <list path>?tab=completed; an unknown or missing tab shows 'In progress'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8720, 8752-8753, 8778-8797",
+      "quote": "const validTabs = new Set(['in-progress', 'drafts', 'completed'])\n  const activeTab = validTabs.has(tab) ? tab : 'in-progress'",
+      "confidence": "verbatim",
+      "note": "Tab links drop search, sort and filters."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-039",
+      "statement": "The 'In progress' tab lists submitted and action-required notifications, 'Draft' lists drafts, and 'Completed' lists completed notifications.",
+      "kind": "rule",
+      "ref": "app/routes.js:8754-8758",
+      "quote": "const inProgressNotifications = allNotifications.filter((notification) =>\n    notification.reviewVariant === 'submitted' || notification.reviewVariant === 'action-required'\n  )\n  const draftNotifications = allNotifications.filter((notification) => notification.reviewVariant === 'draft')\n  const completedNotifications = allNotifications.filter((notification) => notification.reviewVariant === 'submission-complete')",
+      "confidence": "verbatim",
+      "note": "A notification shown as 'Delayed' has a status style outside these, so it keeps its underlying variant for tab membership."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-040",
+      "statement": "Under the tabs the list shows an h3 subheading for the tab: 'Notifications in progress', 'Draft notifications' or 'Completed notifications'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard.html:229; app/routes.js:8798-8802",
+      "quote": "notificationSectionHeading: activeTab === 'drafts'\n      ? 'Draft notifications'\n      : activeTab === 'completed'\n        ? 'Completed notifications'\n        : 'Notifications in progress',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-041",
+      "statement": "Lists show 8 notifications a page; a page number below 1 or not a number shows page 1, and one past the last page shows the last page.",
+      "kind": "rule",
+      "ref": "app/data/dashboard-notifications.js:286; app/routes.js:8735-8769",
+      "quote": "const requestedPage = Math.max(1, Number(query.page) || 1)\n  const pageSize = dashboardData.pageSize",
+      "confidence": "verbatim",
+      "note": "pageSize: 8. The same page size and clamping apply on the actions and inspection pages."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-042",
+      "statement": "When a list has more than one page it shows GOV.UK pagination with numbered page links, a 'Previous' link from page 2 on, and a 'Next' link before the last page; a list of one page shows no pagination.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6847-6881; app/views/design-release-2.1/dashboard.html:237-249",
+      "quote": "next: currentPage < totalPages\n      ? {\n          href: buildDashboardPageHref(currentPage + 1, sort, tab, dashboardPath),\n          text: 'Next'\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-043",
+      "statement": "The list's page links keep the tab (unless 'in-progress') and the sort, but drop the search text and the additional filters.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6610-6628",
+      "quote": "if (tab && tab !== 'in-progress') {\n    params.set('tab', tab)\n  }\n\n  if (sort) {\n    params.set('sort', sort)\n  }\n\n  if (page > 1) {\n    params.set('page', String(page))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-044",
+      "statement": "The list page does not show a results count, although one is worked out for it.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:229-235; app/routes.js:8856",
+      "quote": "resultsText: buildDashboardResultsText(startIndex + 1, endIndex, totalCount, { testing: isTesting }),",
+      "confidence": "inferred",
+      "note": "Inferred: the DR2.1 dashboard.html never outputs resultsText, while the actions and inspection pages do."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-045",
+      "statement": "No list, actions, changes or inspection page shows a message when it has no notifications to show; the list area is simply empty.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard.html:231-235; dashboard-actions.html:91-95; dashboard-changes.html:39-49; dashboard-inspection.html:97-101",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked for an empty-state branch in all four views and their view models; none exists. On the actions and inspection pages the results text reads 'Show 0 of 0 results'; the changes page renders no sections."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-046",
+      "statement": "Each notification shows as a card labelled for screen readers 'Notification <reference>', with the reference as its h3.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:2-9",
+      "quote": "aria-label=\"Notification {{ notification.reference }}\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-047",
+      "statement": "The card's header has a 'Copy as new' link, shown when the notification can be copied (always, in DR2.1), and a 'View' link.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:11-16",
+      "quote": "{% if notification.copyHref %}\n        <a class=\"govuk-link app-dr2-dashboard-notification-card__action-link\" href=\"{{ notification.copyHref }}\">Copy as new</a>\n      {% endif %}\n      <a class=\"govuk-link app-dr2-dashboard-notification-card__action-link\" href=\"{{ notification.viewHref }}\">View</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-048",
+      "statement": "A card's 'View' link opens /design-release-2.1/review-notification with ?submitted=<id> for a notification the user submitted in the session, or ?reference=<reference> for a draft or seeded notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7107-7120, 7548-7550, 7588-7590, 7620-7622; app/routes.js:7093-7106",
+      "quote": "if (options.submittedId) {\n    params.set('submitted', options.submittedId)\n  } else if (options.reference) {\n    params.set('reference', options.reference)\n  }\n\n  const query = params.toString()\n\n  return query ? `${basePath}/review-notification?${query}` : `${basePath}/review-notification`",
+      "confidence": "verbatim",
+      "note": "basePath is getDashboardBackLink, the design-release base path /design-release-2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-049",
+      "statement": "A card's 'Copy as new' link goes to /notifications/copy-as-new with ?submitted=<id> for a session-submitted notification, or ?reference=<reference> otherwise.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7122-7134",
+      "quote": "return query ? `/notifications/copy-as-new?${query}` : '/notifications/copy-as-new'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-050",
+      "statement": "The dashboard card shows no 'Delete' link and no 'Amend' link, although a delete link (/notifications/delete?submitted=<id> or ?reference=<reference>) is worked out for every DR2.1 notification.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:11-16; app/routes.js:7136-7148",
+      "quote": "return query ? `/notifications/delete?${query}` : '/notifications/delete'",
+      "confidence": "inferred",
+      "note": "Inferred: the card macro renders only copyHref and viewHref. Delete and amend are reached from the notification hub (part 12)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-051",
+      "statement": "Deleting a notification removes it from the session's submitted notifications (by id or by reference) and its drafts (by reference), and records the reference as deleted so a seeded notification with that reference no longer shows on any dashboard list.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7174-7199, 7608, 7635-7639",
+      "quote": "if (!sessionData.deletedNotificationReferences.includes(reference)) {\n      sessionData.deletedNotificationReferences.push(reference)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-052",
+      "statement": "A card in the error variant (action required or delayed) carries a red marker and shows its error message under the header.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:2-5, 19-21",
+      "quote": "{% if notification.cardVariant == 'error' %}\n    <span class=\"app-dr2-dashboard-notification-card__error-marker\" aria-hidden=\"true\"></span>\n  {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-053",
+      "statement": "The card's first row shows 'Commodity', 'Arrival date', 'Consignee' and 'Notification status'.",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:24-46",
+      "quote": "<dt class=\"app-dr2-dashboard-notification-card__key\">Commodity</dt>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-054",
+      "statement": "The card's second row shows the quantity ('Number of animals' or 'Number of packages'), 'Origin', 'Consignor' and, when inspection is required, an 'Inspection' field with a 'Required' tag.",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/dashboard-notification-card.html:49-70",
+      "quote": "<dt class=\"app-dr2-dashboard-notification-card__key\">Inspection</dt>\n          <dd class=\"app-dr2-dashboard-notification-card__value\">\n            <strong class=\"govuk-tag app-dr2-dashboard-status-tag app-dr2-dashboard-status-tag--inspection\">Required</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-055",
+      "statement": "The card shows the arrival date as dd/mm/yyyy with leading zeros, the stored text where it cannot be read as a date, and 'Not applicable' when there is none.",
+      "kind": "rule",
+      "ref": "app/routes.js:7201-7212",
+      "quote": "const day = String(date.getDate()).padStart(2, '0')\n  const month = String(date.getMonth() + 1).padStart(2, '0')\n\n  return `${day}/${month}/${date.getFullYear()}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-056",
+      "statement": "The card's commodity is the notification's commodity name; when it has only codes, the common names of the animals in its snapshot; then a name looked up from the commodity codes; otherwise 'Not applicable'.",
+      "kind": "rule",
+      "ref": "app/routes.js:7228-7254",
+      "quote": "return existing && !isCommodityCodeLabel(existing) ? existing : 'Not applicable'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-057",
+      "statement": "The commodity code look-up maps '010410, 010420' to 'Goats and Sheep', '0102' to 'Cattle', '0101' to 'Horses', '0103' to 'Pigs', '01061900' to 'Camelids', '010511, 010512' to 'Poultry', '010614' to 'Rabbits' and '010410' to 'Sheep'.",
+      "kind": "data",
+      "ref": "app/routes.js:7301-7310",
+      "quote": "'010410, 010420': 'Goats and Sheep',\n    '0102': 'Cattle',\n    '0101': 'Horses',\n    '0103': 'Pigs',\n    '01061900': 'Camelids',\n    '010511, 010512': 'Poultry',\n    '010614': 'Rabbits',\n    '010410': 'Sheep'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-058",
+      "statement": "A germinal-products notification's card shows 'Number of packages', taken from its package count, a stored quantity, or the snapshot's total packages, else 'Not applicable'.",
+      "kind": "rule",
+      "ref": "app/routes.js:7214-7226, 7256-7275",
+      "quote": "return {\n      quantityLabel: 'Number of packages',\n      quantityValue: packageValue || 'Not applicable',\n      numberOfAnimals: null\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-059",
+      "statement": "A live-animals notification's card shows 'Number of animals'; when no number is stored, the prototype fills in a placeholder of 8 to 12 based on the card's position.",
+      "kind": "rule",
+      "ref": "app/routes.js:7277-7283",
+      "quote": "const numberOfAnimals = notification.numberOfAnimals || String(8 + (index % 5))",
+      "confidence": "verbatim",
+      "note": "The placeholder number is demo data, not a rule for the real service."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-060",
+      "statement": "When a notification has no consignee or consignor, the card fills one in from fixed demo lists by position (consignees Glen Keen Farm, Northern Livestock Imports, West Coast Animal Imports, Britannia Trade Livestock, Prime Livestock UK; consignors Monk Park Farm, Green Valley Farm, Oak Hill Farm, Riverside Farm, Valea Mare Farm).",
+      "kind": "data",
+      "ref": "app/routes.js:7287-7300, 7467-7468",
+      "quote": "consignee: notification.consignee || consignees[index % consignees.length],\n    consignor: notification.consignor || consignors[index % consignors.length],",
+      "confidence": "verbatim",
+      "note": "Draft cards take consignee and consignor names from the draft's snapshot addresses first."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-061",
+      "statement": "A submitted notification shows the status as plain text 'Submitted'; a completed one shows plain text 'Completed'.",
+      "kind": "copy",
+      "ref": "app/routes.js:7329-7340; dashboard-notification-card.html:40-44",
+      "quote": "text: 'Submitted',\n      style: 'submitted'\n    }\n  } else if (reviewVariant === 'submission-complete') {\n    statusDisplay = {\n      type: 'text',\n      text: 'Completed',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-062",
+      "statement": "A draft notification shows a 'Draft' tag as its status.",
+      "kind": "copy",
+      "ref": "app/routes.js:7349-7355",
+      "quote": "statusDisplay = {\n      type: 'tag',\n      text: 'Draft',\n      style: 'draft'\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-063",
+      "statement": "A notification needing action shows an 'Action required' tag, an error-variant card and an error message.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7341-7348",
+      "quote": "cardVariant = 'error'\n    statusDisplay = {\n      type: 'tag',\n      text: 'Action required',\n      style: 'action-required'\n    }\n    errorMessage = getDashboardActionRequiredErrorMessage(notification)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-064",
+      "statement": "The action-required message is 'ITAHC is missing' when no ITAHC is attached, otherwise 'Information is missing' when required animal identifiers are incomplete, defaulting to 'ITAHC is missing'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6371-6397",
+      "quote": "if (!hasAttachedItahc(sessionData)) {\n    return 'ITAHC is missing'\n  }\n\n  if (\n    hasAnimalIdentifiersRequired(sessionData) &&\n    !hasAnimalIdentifiersComplete(sessionData)\n  ) {\n    return 'Information is missing'\n  }",
+      "confidence": "verbatim",
+      "note": "Helpers sit outside this part's routes.js ranges; read only to state what the card shows."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-065",
+      "statement": "A delayed notification shows a 'Delayed' tag on an error-variant card, with the placeholder message 'Error message' when it has no other.",
+      "kind": "copy",
+      "ref": "app/routes.js:7420-7428",
+      "quote": "text: 'Delayed',\n        style: 'delayed'\n      }\n      finalErrorMessage = finalErrorMessage || 'Error message'",
+      "confidence": "verbatim",
+      "note": "'Error message' is placeholder copy."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-066",
+      "statement": "Status text maps to variants: 'submitted' to submitted; 'submission complete', 'complete' or 'completed' to completed; 'submitted action required' or 'action required' to action required; anything else (including 'draft', 'new', 'in progress') to draft.",
+      "kind": "rule",
+      "ref": "app/routes.js:5632-5653",
+      "quote": "if (normalised === 'submitted action required' || normalised === 'action required') {\n    return 'action-required'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-067",
+      "statement": "The prototype fakes dashboard states by a notification's position in its list: non-draft, non-completed notifications at positions 2, 8, 14 and 20 become 'Action required'; position 4 becomes a 'needs inspection' status change, 7 'passed inspection', 11 'delayed'; and positions 5, 10, 16, 17, 22 and 23 are chosen for inspection.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7379-7445",
+      "quote": "const actionDemoIndices = new Set([2, 8, 14, 20])\n  const statusChangeDemoMap = {\n    4: 'needs-inspection',\n    7: 'passed-inspection',\n    11: 'delayed'\n  }\n  const chosenForInspectionDemoIndices = new Set([5, 10, 16, 17, 22, 23])",
+      "confidence": "verbatim",
+      "note": "Demo data only. The status-change category and chosen-for-inspection flag are set by position even for drafts and completed notifications, whose displayed status is kept."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-068",
+      "statement": "A non-draft, non-completed notification without its own category label is shown as 'Plants' and 'Submitted' at every sixth position from 3, and as 'Submitted' with inspection required at every sixth position from 4.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7357-7377",
+      "quote": "if (!preserveStatusVariant && !notificationHasCategoryLabel && index % 6 === 3) {\n    categoryLabel = 'Plants'",
+      "confidence": "verbatim",
+      "note": "Demo data; a 'Plants' notification matches neither category list."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-069",
+      "statement": "A notification counts as needing action only when it shows the 'Action required' tag with an error message; one with only a 'Delayed' tag does not.",
+      "kind": "rule",
+      "ref": "app/routes.js:7443",
+      "quote": "const needsAction = finalCardVariant === 'error' && Boolean(finalErrorMessage) && finalStatusDisplay.style === 'action-required'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-070",
+      "statement": "Dashboard lists show the session's drafts first, then notifications submitted in the session, then the seeded notifications, leaving out any seeded one whose reference matches a draft, a submitted notification or a deleted reference.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7606-7641",
+      "quote": "return [...drafts, ...submitted, ...staticNotifications]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-071",
+      "statement": "A submitted notification needing action takes its error message from its own snapshot (missing ITAHC or missing animal identifier information).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7566-7569",
+      "quote": "const errorMessage = reviewVariant === 'action-required'\n      ? getSubmittedNotificationDashboardErrorMessage(snapshot)\n      : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-072",
+      "statement": "The seeded dashboard holds 16 notifications with references GBN-AG-26-... for live animals and GBN-GP-26-... for germinal products: 9 live-animals and 7 germinal-products.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:1-283",
+      "quote": "reference: 'GBN-AG-26-7K8M2P',",
+      "confidence": "verbatim",
+      "note": "References already in GBN form are kept unchanged by toDesignReleaseDashboardReference (routes.js:306)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-073",
+      "statement": "Seeded live-animals notifications: GBN-AG-26-7K8M2P Goats and Sheep, Republic of Ireland, arrival 21 June 2026, Glen Keen Farm from Monk Park Farm, 12 animals, submitted action required; GBN-AG-26-7K8M2S Cattle, Belgium, 25 June 2026, North Moor Farm from Flanders Livestock Export, 18 animals, draft; GBN-AG-26-7K8M2U Horses, Republic of Ireland, 23 June 2026, Westbridge Equine Imports from Curragh Sport Horses, 4 animals, submitted.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:2-19, 54-71, 89-106",
+      "quote": "reference: 'GBN-AG-26-7K8M2S',\n    commodities: '0102',\n    commodityLabel: 'Cattle',\n    categoryLabel: 'Live animals',\n    statusText: 'Draft',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-074",
+      "statement": "Seeded completed live-animals notifications: GBN-AG-26-7K8M2W Pigs (Germany, 20 June, 24 animals), 7K8M2X Cattle (Netherlands, 19 June, 15), 7K8M2Z Horses (France, 17 June, 3), 7K8M3A Goats and Sheep (Republic of Ireland, 16 June, 20), 7K8M3C Camelids (Germany, 14 June, 7) and 7K8M3E Poultry (Netherlands, 12 June, 150).",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:124-282",
+      "quote": "reference: 'GBN-AG-26-7K8M3E',\n    commodities: '010511, 010512',\n    commodityLabel: 'Poultry',\n    categoryLabel: 'Live animals',\n    statusText: 'Completed',",
+      "confidence": "verbatim",
+      "note": "Each has its own consignee and consignor names in the data file."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-075",
+      "statement": "Seeded germinal-products notifications: GBN-GP-26-7K8M2Q Cattle, Semen (Netherlands, 24 June, 10 packages, submitted); 7K8M2R Horse, Embryos/Ova (France, 22 June, 6, completed); 7K8M2T Pig, Embryos/Ova (Denmark, 26 June, 8, draft); 7K8M2V Sheep, Semen (Spain, 27 June, 14, submitted action required); 7K8M2Y Cattle, Semen (Belgium, 18 June, 11, completed); 7K8M3B Horse, Embryos/Ova (Spain, 15 June, 5, completed); 7K8M3D Pig, Embryos/Ova (Denmark, 13 June, 9, completed).",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:20-53, 72-88, 107-123, 160-176, 213-229, 248-264",
+      "quote": "reference: 'GBN-GP-26-7K8M2V',\n    commodities: '05119985',\n    commodityLabel: 'Sheep, Semen',\n    categoryLabel: 'Germinal products',\n    statusText: 'Submitted action required',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-076",
+      "statement": "In a fresh DR2.1 session the Live animals list shows In progress (2): GBN-AG-26-7K8M2P (Action required, 'ITAHC is missing') and GBN-AG-26-7K8M2U (Submitted, inspection Required); Draft: GBN-AG-26-7K8M2S; Completed: the six completed live-animals notifications.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7379-7445, 7609-7641, 8754-8758; app/data/dashboard-notifications.js",
+      "quote": "const chosenForInspectionDemoIndices = new Set([5, 10, 16, 17, 22, 23])",
+      "confidence": "inferred",
+      "note": "Worked out by applying enrichDesignRelease2Notification to the 16 seeded notifications at positions 0-15 with no session drafts or submissions. 7K8M2P gets 'ITAHC is missing' because the action-required snapshot has no documents (app/data/dashboard-notification-snapshots.js:195-205)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-077",
+      "statement": "In a fresh DR2.1 session the Germinal products list shows In progress (2): GBN-GP-26-7K8M2Q (Submitted) and GBN-GP-26-7K8M2V (Action required, 'ITAHC is missing'); Draft: GBN-GP-26-7K8M2T; Completed: 7K8M2R, 7K8M2Y, 7K8M3B and 7K8M3D.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7379-7445, 7609-7641, 8754-8758; app/data/dashboard-notifications.js",
+      "quote": "statusText: 'Submitted action required',",
+      "confidence": "inferred",
+      "note": "Worked out from the seeded data and the demo position rules, as for the Live animals list."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-078",
+      "statement": "In a fresh DR2.1 session the list Summary cards count Live animals at 1 action needed and 2 status updated, and Germinal products at 1 and 1.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7441-7444, 8740-8747",
+      "quote": "const hasStatusChange = Boolean(statusChangeCategory)",
+      "confidence": "inferred",
+      "note": "Status changes fall at positions 4 (GBN-GP-26-7K8M2T, a draft, needs inspection), 7 (GBN-AG-26-7K8M2W, passed inspection) and 11 (GBN-AG-26-7K8M3A, delayed), but the drafts and completed ones keep their displayed status. Counts shift as the user adds drafts or submissions, because positions move."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-079",
+      "statement": "GET /actions shows the actions page in DR2.1, and redirects to / in versions before Design Release 2.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11708-11710, 9057-9066",
+      "quote": "if (!isDesignRelease2SessionData(req.session.data)) {\n    return res.redirect('/')\n  }\n\n  return res.render('dashboard-actions', {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-080",
+      "statement": "The actions page has the caption 'Action needed', the h1 'Tasks requiring your attention' and the description 'Add missing information or upload documents to prevent your consignment from being delayed.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-actions.html:34-36",
+      "quote": "<p class=\"app-dr2-dashboard-intro__caption\">Action needed</p>\n            <h1 class=\"app-dr2-dashboard-intro__heading\" id=\"dashboard-actions-heading\">Tasks requiring your attention</h1>\n            <p class=\"app-dr2-dashboard-intro__description\">Add missing information or upload documents to prevent your consignment from being delayed.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-081",
+      "statement": "The actions page shows the Alpha phase banner and a 'Back' link to the category's list (/live-animals or /germinal-products) when it has a category, otherwise to the overall home.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-actions.html:12-24; app/routes.js:9040-9042",
+      "quote": "backLink: category\n      ? getDashboardListPath(sessionData, category)\n      : getDashboardBackLink(sessionData),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-082",
+      "statement": "The actions page lists only the notifications needing action, filtered to its ?category= when given.",
+      "kind": "rule",
+      "ref": "app/routes.js:6745-6747, 9027-9028",
+      "quote": "const actionNotifications = getDashboardActionNotifications(sessionData)\n    .filter((notification) => notificationMatchesDashboardCategory(notification, category))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-083",
+      "statement": "The actions page has a visually hidden h2 'Notifications needing action' and a GET search form posting to /design-release-2.1/actions, keeping the category and the page (when above 1) as hidden fields, with the 'Search by' field and hint and the 'Sort by:' select.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-actions.html:43-87",
+      "quote": "<form method=\"get\" action=\"/design-release-2.1/actions\" class=\"app-dr2-dashboard-search\">\n        {% if dashboardCategory %}\n          <input type=\"hidden\" name=\"category\" value=\"{{ dashboardCategory }}\">",
+      "confidence": "verbatim",
+      "note": "The search field here has no value binding, so the searched text is not kept after submitting. The actions page has no additional filters."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-084",
+      "statement": "DR2.1 drops the actions page's delay filter (Today, Next 3 days, Already delayed): it ignores ?delayFilter= and shows no delay radios.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9022-9023, 9043-9045, 6827-6845",
+      "quote": "const skipDelayFilter = isDesignRelease21SessionData(sessionData)\n  const delayFilter = skipDelayFilter ? '' : (query.delayFilter || '').trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-085",
+      "statement": "The actions and inspection pages show a results line 'Show <first>-<last> of <total> results', or 'Show 0 of 0 results' when there are none.",
+      "kind": "copy",
+      "ref": "app/routes.js:7644-7658; dashboard-actions.html:89; dashboard-inspection.html:95",
+      "quote": "if (!total) {\n    return 'Show 0 of 0 results'\n  }\n\n  return `Show ${start}-${end} of ${total} results`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-086",
+      "statement": "The actions page paginates 8 to a page, its page links keeping the sort and category.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6630-6688, 9050",
+      "quote": "if (category) {\n    params.set('category', category)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-087",
+      "statement": "GET /changes shows the changes page in DR2.1, and redirects to / in versions before Design Release 2.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11712-11714, 9079-9088",
+      "quote": "return res.render('dashboard-changes', {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-088",
+      "statement": "The changes page has the caption 'Status updated', the h1 'Changes in past 24 hours' and the description 'Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-changes.html:31-33",
+      "quote": "<p class=\"app-dr2-dashboard-intro__caption\">Status updated</p>\n            <h1 class=\"app-dr2-dashboard-intro__heading\" id=\"dashboard-changes-heading\">Changes in past 24 hours</h1>\n            <p class=\"app-dr2-dashboard-intro__description\">Notifications that have progressed, or been validated, rejected, cancelled, or replaced in the past 24 hours.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-089",
+      "statement": "The changes page shows the Alpha phase banner and a 'Back' link to the category's list when it has a category, otherwise to the overall home.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-changes.html:9-21; app/routes.js:9071-9075",
+      "quote": "backLink: category\n      ? getDashboardListPath(sessionData, category)\n      : getDashboardBackLink(sessionData),\n    sections: getDashboardChangesSections(sessionData, category)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-090",
+      "statement": "The changes page groups the category's status-changed notifications under h2 sections in the order 'Passed inspection', 'Needs inspection', 'Delayed', and leaves out any section with no notifications.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6809-6825; app/views/design-release-2.1/dashboard-changes.html:39-49",
+      "quote": "{ id: 'passed-inspection', heading: 'Passed inspection' },\n  { id: 'needs-inspection', heading: 'Needs inspection' },\n  { id: 'delayed', heading: 'Delayed' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-091",
+      "statement": "The changes page has no search, sort, filters, results count or pagination.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-changes.html:23-53",
+      "quote": "{% for section in sections %}",
+      "confidence": "inferred",
+      "note": "Inferred from the view holding only the intro and the sections loop."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-092",
+      "statement": "In a fresh DR2.1 session, /changes?category=live-animals shows 'Passed inspection' with GBN-AG-26-7K8M2W and 'Delayed' with GBN-AG-26-7K8M3A, both still showing 'Completed'; /changes?category=germinal-products shows 'Needs inspection' with GBN-GP-26-7K8M2T, still showing 'Draft'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7357, 7380-7384, 7441, 6815-6825",
+      "quote": "const statusChangeCategory = statusChangeDemoMap[index] || null",
+      "confidence": "inferred",
+      "note": "Worked out from the seeded data: the status-change category is set by position even when the draft or completed status is preserved, so the section heading and the card's status disagree."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-093",
+      "statement": "GET /inspection shows the inspection page in DR2.1, and redirects to / in versions before Design Release 2.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11716-11718, 9113-9122",
+      "quote": "return res.render('dashboard-inspection', {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-094",
+      "statement": "The inspection page has the caption 'Inspection required', the h1 'Consignments due at the border control post (BCP)' and the description 'Consignments that must go to your chosen BCP for inspection.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-inspection.html:35-37",
+      "quote": "<p class=\"app-dr2-dashboard-intro__caption\">Inspection required</p>\n            <h1 class=\"app-dr2-dashboard-intro__heading\" id=\"dashboard-inspection-heading\">Consignments due at the border control post (BCP)</h1>\n            <p class=\"app-dr2-dashboard-intro__description\">Consignments that must go to your chosen BCP for inspection.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-095",
+      "statement": "The inspection page has a details component 'What to do at a border inspection' explaining that consignments needing sanitary or phytosanitary checks must be taken to the chosen BCP, with a link opening the GOV.UK guidance in a new tab.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-inspection.html:40-46",
+      "quote": "summaryText: \"What to do at a border inspection\",\n            classes: \"app-dr2-dashboard-intro__details\",\n            html: '\n              <p class=\"govuk-body\">If your consignments need to have sanitary or phytosanitary checks, you or the transporter must take it to your chosen border control post (BCP).</p>\n              <p class=\"govuk-body\">Read the guidance on <a class=\"govuk-link\" href=\"https://www.gov.uk/guidance/sanitary-and-phytosanitary-sps-checks-at-border-control-posts-bcps\" rel=\"noreferrer noopener\" target=\"_blank\">what you need to do at a border inspection</a></p>'",
+      "confidence": "verbatim",
+      "note": "The guidance paragraph has no closing full stop, and the new-tab link does not say it opens in a new tab."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-096",
+      "statement": "The inspection page shows the Alpha phase banner and a 'Back' link to the overall home, whatever the category.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-inspection.html:13-25; app/routes.js:9103",
+      "quote": "backLink: getDashboardBackLink(sessionData),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-097",
+      "statement": "The inspection page lists the notifications chosen for inspection across all categories; it does not filter by category.",
+      "kind": "rule",
+      "ref": "app/routes.js:6753-6755, 9094; app/routes.js:7442",
+      "quote": "const chosenForInspection = chosenForInspectionDemoIndices.has(index) && !actionDemoIndices.has(index)",
+      "confidence": "inferred",
+      "note": "Inferred: getDashboardInspectionViewModel reads no category. In a fresh session it lists GBN-AG-26-7K8M2U (Submitted, inspection Required) and GBN-AG-26-7K8M2Z (Completed), so 'Show 1-2 of 2 results'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-098",
+      "statement": "The inspection page has a visually hidden h2 'Notifications chosen for inspection' and a GET search form to /design-release-2.1/inspection with the 'Search by' field and hint and the 'Sort by:' select, keeping the page (when above 1) as a hidden field.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-inspection.html:52-93",
+      "quote": "<h2 class=\"govuk-visually-hidden\" id=\"dashboard-inspection-notifications-heading\">Notifications chosen for inspection</h2>\n\n      <form method=\"get\" action=\"/design-release-2.1/inspection\" class=\"app-dr2-dashboard-search\">",
+      "confidence": "verbatim",
+      "note": "As on the actions page, the searched text is not kept in the field."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-099",
+      "statement": "The inspection page paginates 8 to a page, its page links keeping only the sort.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6757-6807, 9108",
+      "quote": "if (sort) {\n    params.set('sort', sort)\n  }\n\n  if (page > 1) {\n    params.set('page', String(page))\n  }\n\n  const queryString = params.toString()\n\n  return queryString ? `/inspection?${queryString}` : '/inspection'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-100",
+      "statement": "Each dashboard page names itself for the page title: 'Dashboard' for the home and the lists, 'Tasks requiring your attention' for actions, 'Changes in past 24 hours' for changes, and 'Consignments due at the border control post (BCP)' for inspection.",
+      "kind": "copy",
+      "ref": "dashboard-home.html:6; dashboard.html:14; dashboard-actions.html:10; dashboard-changes.html:7; dashboard-inspection.html:11",
+      "quote": "{% set pageName = \"Tasks requiring your attention\" %}",
+      "confidence": "inferred",
+      "note": "Inferred that pageName feeds the browser title through the Prototype Kit's base layout; layouts/main.html itself does not reference it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-101",
+      "statement": "Dashboard date values written as ISO timestamps or arrival-style dates are shown in the declaration date format, with 'Not applicable' when empty and the raw text when unreadable.",
+      "kind": "rule",
+      "ref": "app/routes.js:6883-6901",
+      "quote": "if (!value) {\n    return 'Not applicable'\n  }",
+      "confidence": "verbatim",
+      "note": "formatDateForDashboard is not used by the DR2.1 card, which shows arrival dates as dd/mm/yyyy."
+    },
+    {
+      "id": "prototype-dr2-1-source-p13-102",
+      "statement": "The DR2.1 dashboard shows no date submitted or date created on its cards, although the seeded data holds them.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notifications.js:10, 62; app/views/partials/design-release-2.1/dashboard-notification-card.html:23-71",
+      "quote": "dateSubmitted: '20 June 2026',",
+      "confidence": "inferred",
+      "note": "Inferred: the card macro has no field for dateSubmitted or dateCreated."
+    }
+  ]
+}

@@ -1,0 +1,564 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 20, adding a transporter that is not on the list. Read in full: commercial-transporter-details.fit.spec.js (describe 'adding a commercial transporter that is not on the list', 9 tests at lines 142-265; describe 'commercial transporter form accessibility', 2 tests at 331 and 342) and transporters.fit.spec.js (describe 'adding a transporter that is not on the list', 9 tests at lines 573-683), plus all 20 trace zips the partition names, each opened and mined: every action, the frame snapshots of every transporter page, and the browser network log. Refs name a trace by the hash part of its folder (commercial-t-3037e, -89fa5, -9bd01, -6cbe9, -11d4a, -15566, -ff364, -ec025, -ddddd, -43e29, -82a00; transporters-f13e0, -652d3, -438f1, -b4f2f, -d8c54, -6a6f2, -71a45, -46b7b, -6c105). Every trace walks the same set-up: stub sign-in, start a notification, origin France, commodity Felis catus with 1 animal, then Arrival details saved blank, which redirects to the transporter list. Pages in order: (1) Transporter details list at /live-animals/notifications/{ref}/transporters, caption 'Transport and arrival', with the secondary 'Add a transporter' button (a link styled as a button) - only its add entry point and how added rows show is claimed here; (2) the type question 'Choose a transporter type' at /transporters/add, caption 'Add a new transporter', warning text, a visually hidden legend and two radios (Private transporter, Commercial with a hint), only 'Save and continue'; an error state for an out-of-list value; (3a) Commercial branch: 'Add commercial transporter' at /transporters/add/commercial - notification banner of authorisation guidance, authorisation number, name, address lines, town, county, postcode, a disabled Country select fixed to Northern Ireland with a hidden country field, an 'Enter contact details' heading, email and phone (with hint), only 'Save and continue'; its error state for a blank authorisation number; save redirects to the Overview; (3b) Private branch: 'Add private transporter' at /transporters/add/private (heading, caption, intro, fields and a country select of 34 options seen here; its own validations belong to other parts). Conditional: 3a only after Commercial, 3b only after Private; the ?change=1 context carries from the list to the type question. Cross-notification: a transporter added on one notification appears, marked New, on the transporter list of the organisation's next notification. Network log shows only browser-to-frontend calls (GET/POST with 302 redirects); no backend or address-book call is visible in the browser log. Both axe checks (form, and form in error) recorded an empty violation list.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p20-001",
+      "statement": "The transporter list page offers an 'Add a transporter' control that takes the trader to the add route /transporters/add; it is a link styled as a secondary button, not a form submit.",
+      "kind": "behaviour",
+      "ref": "trace transporters-f13e0 action pw:api@64; trace commercial-t-3037e frame snapshot of /transporters (Add a transporter anchor, class govuk-button govuk-button--secondary)",
+      "quote": "Add a transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-002",
+      "statement": "The type question is reached only from the transporter list: the trader lands on the list first after saving Arrival details, and the add route opens after choosing 'Add a transporter' there.",
+      "kind": "behaviour",
+      "ref": "trace transporters-f13e0 actions expect@63 to expect@66 (Transporter details visible, then Choose a transporter type, URL /transporters/add)",
+      "quote": "reaches the type question from the list, not before it",
+      "confidence": "verbatim",
+      "note": "Quote is the test title; the trace shows the list heading before the add page."
+    },
+    {
+      "id": "trace-animals-fit-p20-003",
+      "statement": "The type question page heading (h1) is 'Choose a transporter type', and the browser title is 'Choose a transporter type - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace transporters-652d3 action expect@66; trace commercial-t-3037e frame snapshot of GET /transporters/add",
+      "quote": "Choose a transporter type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-004",
+      "statement": "The type question sits under the caption 'Add a new transporter', rendered as a large caption directly before the h1.",
+      "kind": "copy",
+      "ref": "trace transporters-652d3 actions expect@66 and expect@67 (span.govuk-caption-l + h1.govuk-heading-l)",
+      "quote": "Add a new transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-005",
+      "statement": "The type question shows a GOV.UK warning text telling the trader to search for the transporter before adding it.",
+      "kind": "copy",
+      "ref": "trace transporters-652d3 action expect@68; frame snapshot of /transporters/add (govuk-warning-text)",
+      "quote": "Before you add this transporter, please ensure you have already searched for it first.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-006",
+      "statement": "The radio group's legend 'What type of transporter will move the animals?' is visually hidden, so it names the group for screen readers without competing with the visible heading.",
+      "kind": "copy",
+      "ref": "trace transporters-652d3 action expect@69; frame snapshot of /transporters/add (legend class govuk-fieldset__legend govuk-visually-hidden)",
+      "quote": "What type of transporter will move the animals?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-007",
+      "statement": "The type question offers exactly two radio options, in this order: 'Private transporter' (value Private) and 'Commercial' (value Commercial), posted as field transporterType.",
+      "kind": "data",
+      "ref": "trace transporters-f13e0 actions expect@67 to expect@72; frame snapshot of /transporters/add",
+      "quote": "Private transporter | Commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-008",
+      "statement": "The Commercial option carries a hint saying it can only be a commercial transporter from Northern Ireland; the Private option has no hint.",
+      "kind": "copy",
+      "ref": "trace transporters-f13e0 actions expect@71 and expect@73; frame snapshot of /transporters/add (transporterType-2-item-hint)",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-009",
+      "statement": "The type question has no question-level hint on the fieldset (design release 1 dropped the journey-describing group hint).",
+      "kind": "copy",
+      "ref": "trace transporters-f13e0 action expect@74 (locator fieldset > .govuk-hint count)",
+      "quote": "fieldset > .govuk-hint",
+      "confidence": "inferred",
+      "note": "Inferred from the count assertion and the spec helper expectBranchOptions comment; the snapshot shows no fieldset hint."
+    },
+    {
+      "id": "trace-animals-fit-p20-010",
+      "statement": "The type question ends with the 'Save and continue' button alone: there is no 'Save and return to overview' button and no 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "trace transporters-f13e0 actions expect@75 to expect@77",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-011",
+      "statement": "The type question's back link returns to the transporter list (/transporters), whose heading is 'Transporter details'.",
+      "kind": "behaviour",
+      "ref": "trace transporters-b4f2f actions pw:api@66 and expect@67",
+      "quote": "Transporter details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-012",
+      "statement": "When the transporter list is open in change mode (?change=1), the 'Add a transporter' link carries ?change=1 to the type question, and the type question's back link points to /transporters?change=1.",
+      "kind": "behaviour",
+      "ref": "trace transporters-d8c54 actions pw:api@64 to expect@67; frame snapshot of /transporters?change=1 (add href /transporters/add?change=1) and of /transporters/add?change=1 (back href /transporters?change=1)",
+      "quote": "/transporters/add?change=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-013",
+      "statement": "No trace shows where the type question or the add forms go after saving when they are reached in change mode (?change=1).",
+      "kind": "behaviour",
+      "ref": "trace transporters-d8c54 (stops at the type question)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p20-014",
+      "statement": "Submitting a transporter type outside the two options re-renders the type question (HTTP 200, no redirect) with an error summary 'There is a problem' linking to #transporterType with the message 'Select a valid option'.",
+      "kind": "rule",
+      "ref": "trace transporters-6a6f2 actions pw:api@67 to expect@68; network POST /transporters/add transporterType=Invalid transporter type -> 200; frame snapshot call@4984",
+      "quote": "Select a valid option",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-015",
+      "statement": "In the type question's error state the same message shows inline in the radio group as 'Error: Select a valid option', the browser title is prefixed 'Error: ', the error-summary link moves focus to the first radio, and no radio is left checked.",
+      "kind": "rule",
+      "ref": "trace transporters-6a6f2 actions pw:api@69 to expect@71; frame snapshot call@4984 (transporterType-error, title)",
+      "quote": "Error: Choose a transporter type - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-016",
+      "statement": "No trace in this part submits the type question with nothing selected, so the message for an empty choice is not shown here.",
+      "kind": "rule",
+      "ref": "transporters.fit.spec.js 'adding a transporter that is not on the list' (only an out-of-list value is driven)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p20-017",
+      "statement": "Choosing Private on the type question redirects (302) to /transporters/add/private.",
+      "kind": "rule",
+      "ref": "trace transporters-71a45 action expect@69; trace transporters-6c105 network POST /transporters/add transporterType=Private -> 302 /transporters/add/private",
+      "quote": "private branch routes to its details page and persists on back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-018",
+      "statement": "Choosing Commercial on the type question redirects (302) to /transporters/add/commercial.",
+      "kind": "rule",
+      "ref": "trace transporters-46b7b action expect@69; trace commercial-t-3037e network POST /transporters/add transporterType=Commercial -> 302 /transporters/add/commercial",
+      "quote": "commercial branch routes to the add-commercial form",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-019",
+      "statement": "The chosen transporter type is remembered: going back from either add form shows the type question with the chosen radio (Private transporter or Commercial) already checked.",
+      "kind": "behaviour",
+      "ref": "trace transporters-71a45 actions pw:api@70 and expect@71; trace commercial-t-11d4a frame snapshot call@4655 (Commercial CHECKED)",
+      "quote": "Private transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-020",
+      "statement": "The private add form is headed 'Add private transporter' under the same 'Add a new transporter' caption.",
+      "kind": "copy",
+      "ref": "trace transporters-438f1 actions expect@68 to expect@70",
+      "quote": "Add private transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-021",
+      "statement": "The private add form opens with the intro line 'Enter the name and address of the private transporter moving the animals.' and has no transporter authorisation number field and no authorisation guidance banner.",
+      "kind": "copy",
+      "ref": "trace transporters-438f1 frame snapshot call@4591 (/transporters/add/private)",
+      "quote": "Enter the name and address of the private transporter moving the animals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-022",
+      "statement": "The private add form asks for Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), 'Postcode or Zip code', Country, then under 'Enter contact details' Email address and Phone number (hint 'For international numbers include the country code').",
+      "kind": "data",
+      "ref": "trace transporters-438f1 frame snapshot call@4591",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim",
+      "note": "The private form labels the postcode 'Postcode or Zip code' (capital Z) where the commercial form says 'Postcode or zip code'."
+    },
+    {
+      "id": "trace-animals-fit-p20-023",
+      "statement": "The private form's Country is an editable select of 34 options: 'Select a country', a divider '──────────', 'United Kingdom', then European countries alphabetically from Austria to Switzerland.",
+      "kind": "data",
+      "ref": "trace transporters-438f1 frame snapshot call@4591 (select#country options)",
+      "quote": "Select a country | ────────── | United Kingdom | Austria | Belgium | Bulgaria | Croatia | Cyprus | Czechia | Denmark | Estonia | Finland | France | Germany | Greece | Hungary | Iceland | Ireland | Italy | Latvia | Liechtenstein | Lithuania | Luxembourg | Malta | Netherlands (the) | Norway | Poland | Portugal | Romania | Slovakia | Slovenia | Spain | Sweden | Switzerland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-024",
+      "statement": "The commercial add form's heading (h1) is 'Add commercial transporter' under the caption 'Add a new transporter', and its browser title is 'Add commercial transporter - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace commercial-t-3037e actions expect@66 to expect@69; frame snapshot call@4997",
+      "quote": "Add commercial transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-025",
+      "statement": "The commercial add form opens with a GOV.UK notification banner titled 'Help with transporter authorisation'.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@67; frame snapshot of /transporters/add/commercial (govuk-notification-banner__title)",
+      "quote": "Help with transporter authorisation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-026",
+      "statement": "The banner says the transporter must hold a valid authorisation issued by DAERA or APHA when any of three conditions apply, listed as bullets.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@68",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-027",
+      "statement": "First authorisation condition in the banner: transporting live vertebrate animals in, to, from or through GB.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@69",
+      "quote": "transporting any live vertebrate animals in, to, from or through Great Britain (GB)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-028",
+      "statement": "Second authorisation condition in the banner: journeys over 65 km.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@70",
+      "quote": "travelling on journeys of over 65 km",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-029",
+      "statement": "Third authorisation condition in the banner: transporting as part of an economic (commercial) activity.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@71",
+      "quote": "transporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-030",
+      "statement": "The banner links to GOV.UK guidance on transporting animals in connection with an economic activity, opening in a new tab (target _blank, rel noreferrer noopener).",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@74; frame snapshot call@4997 attributes",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)",
+      "confidence": "verbatim",
+      "note": "href https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity"
+    },
+    {
+      "id": "trace-animals-fit-p20-031",
+      "statement": "The banner states that DAERA-issued documents are valid in GB.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@72",
+      "quote": "Documents issued by DAERA are valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-032",
+      "statement": "The banner states that documents issued in any EU member state are not valid in GB.",
+      "kind": "copy",
+      "ref": "trace commercial-t-89fa5 action expect@73",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-033",
+      "statement": "The commercial form's guidance is the same authorisation guidance the transporter list shows in its body, but on the form it sits inside a notification banner with its own title, and the list's lead line 'This is the person or company responsible for transporting the consignment.' is not repeated.",
+      "kind": "copy",
+      "ref": "trace commercial-t-3037e frame snapshots of /transporters (call@4991) and /transporters/add/commercial (call@4997)",
+      "quote": "opens with the transporter-authorisation guidance the list states",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-034",
+      "statement": "The commercial form asks for a 'Transporter authorisation number' (text input, name approvalNumber, two-thirds width).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 action expect@67; frame snapshot call@4997 (input#approvalNumber)",
+      "quote": "Transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-035",
+      "statement": "The commercial form asks for 'Name or organisation name' (text input, autocomplete name).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 action expect@68; frame snapshot call@4997",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-036",
+      "statement": "The commercial form asks for 'Address line 1' (autocomplete address-line1) and an optional 'Address line 2 (optional)' (autocomplete address-line2).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 actions expect@69 and expect@70; frame snapshot call@4997",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-037",
+      "statement": "The commercial form asks for 'Town or city' (two-thirds width, autocomplete address-level2) and an optional 'County (optional)' (two-thirds width).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 actions expect@71 and expect@72; frame snapshot call@4997",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-038",
+      "statement": "The commercial form asks for 'Postcode or zip code' (width-10 input, autocomplete postal-code).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 action expect@73; frame snapshot call@4997",
+      "quote": "Postcode or zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-039",
+      "statement": "The commercial form's Country is a disabled select with a single option, Northern Ireland, so the trader cannot change it.",
+      "kind": "rule",
+      "ref": "trace commercial-t-6cbe9 actions expect@67 to expect@69; frame snapshot call@4997 (select#country disabled)",
+      "quote": "Northern Ireland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-040",
+      "statement": "Because a disabled control posts nothing, the commercial form posts country=Northern Ireland from a hidden field beside the select, even when every other field is blank.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-6cbe9 action expect@70; trace commercial-t-ddddd network POST /transporters/add/commercial (country=Northern Ireland, all else empty)",
+      "quote": "input[type=\"hidden\"][name=\"country\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-041",
+      "statement": "The commercial form groups the contact fields under a medium heading 'Enter contact details'.",
+      "kind": "copy",
+      "ref": "trace commercial-t-9bd01 action expect@77; frame snapshot call@4997 (h2.govuk-heading-m)",
+      "quote": "Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-042",
+      "statement": "The commercial form asks for 'Email address' (type email, autocomplete email).",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 action expect@75; frame snapshot call@4997",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-043",
+      "statement": "The commercial form asks for 'Phone number' (type tel, width-20, autocomplete tel) with the hint 'For international numbers include the country code' as its accessible description.",
+      "kind": "data",
+      "ref": "trace commercial-t-9bd01 actions expect@76 and expect@78; frame snapshot call@4997 (telephoneNumber-hint)",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-044",
+      "statement": "The commercial form's back link returns to the type question ('Choose a transporter type') at /transporters/add.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-11d4a actions pw:api@67 and expect@68; frame snapshot call@4997 back href /transporters/add",
+      "quote": "Choose a transporter type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-045",
+      "statement": "The commercial form ends with 'Save and continue' alone: no 'Save and return to overview' button and no 'Cancel and return to overview' link, because it is reached from the type question.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-15566 actions expect@67 to expect@69",
+      "quote": "ends with the primary alone, being reached from the type question",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-046",
+      "statement": "Saving a fully completed commercial transporter redirects (302) to the notification Overview.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ff364 network POST /transporters/add/commercial -> 302 /live-animals/notifications/GBN-AG-26-TPA7H5; action expect after submit (heading Overview)",
+      "quote": "Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-047",
+      "statement": "The commercial form posts approvalNumber, nameOrOrganisationName, addressLine1, addressLine2, townOrCity, county, postalOrZipCode, country, emailAddress and telephoneNumber, plus a concurrencyToken.",
+      "kind": "data",
+      "ref": "trace commercial-t-ff364 network POST /transporters/add/commercial",
+      "quote": "concurrencyToken=0&approvalNumber=UK/BELF/T2/00104115&nameOrOrganisationName=Lough Neagh Livestock Ltd&addressLine1=4 Quay Road&addressLine2=Unit 3&townOrCity=Belfast&county=County Antrim&postalOrZipCode=BT1 3LG&country=Northern Ireland&emailAddress=movements@lough-neagh.example.com&telephoneNumber=+44 28 9000 0111",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-048",
+      "statement": "Every value of a saved commercial transporter persists: reopening /transporters/add/commercial shows each field filled with what was entered, and Country still Northern Ireland.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ff364 (revisit of /transporters/add/commercial); trace commercial-t-ec025 frame snapshot call@5131",
+      "quote": "saves a hand-entered commercial transporter and persists every value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-049",
+      "statement": "After a commercial transporter is saved, the Overview task 'Transport details' shows Complete.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ff364 hub snapshot (Transport details, govuk-tag--green Complete)",
+      "quote": "Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-050",
+      "statement": "A commercial transporter the trader added joins the transporter list as a row: name, the address joined with commas (including line 2 and county), the authorisation number, type Commercial and status tag 'New' (magenta).",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ec025 frame snapshot call@5123 (/transporters)",
+      "quote": "Lough Neagh Livestock Ltd | 4 Quay Road, Unit 3, Belfast, County Antrim, BT1 3LG, Northern Ireland | UK/BELF/T2/00104115 | Commercial | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-051",
+      "statement": "Returning to the transporter list after adding a transporter shows that transporter's radio already checked, because the notification now names it; the list carries the selection in a hidden 'selected' field.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ec025 action expect (radio 'Lough Neagh Livestock Ltd' toBeChecked); frame snapshot call@5123 (input name=selected, radio CHECKED)",
+      "quote": "a transporter the trader added is on the list, checked, and saving the list again leaves it alone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-052",
+      "statement": "Saving the transporter list again with the added transporter still selected redirects to the Overview and leaves the hand-entered record unchanged (the authorisation number is still there on the commercial form).",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ec025 network POST /transporters selected=c2e6...&transporter=c2e6...&action=save -> 302 Overview; revisit /transporters/add/commercial",
+      "quote": "UK/BELF/T2/00104115",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-053",
+      "statement": "A transporter added by hand gets a generated identifier (a UUID) as its list value, whereas seeded list transporters use readable slugs such as garcia-livestock-transport.",
+      "kind": "data",
+      "ref": "trace commercial-t-ec025 frame snapshot call@5123 (radio values)",
+      "quote": "c2e6cca6-2859-4a1c-aad0-dae27287c099",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-054",
+      "statement": "A completely blank commercial transporter form is optional: submitting it with no values redirects to the Overview without errors.",
+      "kind": "rule",
+      "ref": "trace commercial-t-ddddd network POST /transporters/add/commercial (all fields empty except country) -> 302 Overview",
+      "quote": "a completely blank commercial transporter record is optional",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-055",
+      "statement": "After saving a blank commercial transporter, the Overview task 'Transport details' stays 'To do'.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ddddd hub snapshot (Transport details, govuk-tag--blue To do)",
+      "quote": "To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-056",
+      "statement": "Once any commercial field is filled, the authorisation number becomes required: leaving it blank re-renders the form (HTTP 200) with the error 'Enter the transporter authorisation number' in a summary linking to #approvalNumber and inline above the input.",
+      "kind": "rule",
+      "ref": "trace commercial-t-82a00 actions pw:api@67 to expect@78; network POST /transporters/add/commercial -> 200; frame snapshot call@5367",
+      "quote": "Enter the transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-057",
+      "statement": "In the commercial form's error state the other values entered are kept, and the browser title is prefixed 'Error: '.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-82a00 frame snapshot call@5367",
+      "quote": "Error: Add commercial transporter - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-058",
+      "statement": "The commercial form has no serious or critical axe accessibility violations in its first state.",
+      "kind": "non-functional",
+      "ref": "trace commercial-t-43e29 action expect@78 (Full axe violations: [])",
+      "quote": "the form has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-059",
+      "statement": "The commercial form has no serious or critical axe accessibility violations in its error state.",
+      "kind": "non-functional",
+      "ref": "trace commercial-t-82a00 action expect@90 (Full axe violations: [])",
+      "quote": "the form in its error state has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-060",
+      "statement": "A transporter added on one notification appears on the transporter list of the next notification the same organisation starts, ready to pick, with its address, type Private and status New; its approval number cell is empty.",
+      "kind": "behaviour",
+      "ref": "trace transporters-6c105 actions expect@111 to expect@114; frame snapshot call@5513",
+      "quote": "Dupont Transport SARL | 12 Rue des Fermes, Amiens, 80000, France | Private | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-061",
+      "statement": "On the next notification the reused transporter is not pre-selected: the list posts no 'selected' value until the trader picks it.",
+      "kind": "behaviour",
+      "ref": "trace transporters-6c105 network POST /transporters on GBN-AG-26-4AX1DV (search=&transporter=086a...&action=save, no selected field)",
+      "quote": "concurrencyToken=0&search=&transporter=086a7cdf-3cfe-4de1-adf6-3f7dc826f4c0&action=save",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-062",
+      "statement": "Picking a previously added private transporter on the list fills the notification's transporter record: the private form then shows its name, town and email.",
+      "kind": "behaviour",
+      "ref": "trace transporters-6c105 actions pw:api@115 to expect@121",
+      "quote": "jean.dupont@example.fr",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-063",
+      "statement": "Transporters added by the trader appear above the seeded transporters on the list, the most recently added first.",
+      "kind": "behaviour",
+      "ref": "trace transporters-6c105 frame snapshot call@5513 (Dupont Transport SARL, Jean Dupont, Lough Neagh Livestock Ltd, then García Livestock Transport SL ...)",
+      "quote": "Dupont Transport SARL",
+      "confidence": "inferred",
+      "note": "Inferred from the order in one snapshot after earlier tests added Jean Dupont and Lough Neagh; the trace does not state the ordering rule. The added rows from other tests also show the list is shared state for the organisation (stub-org-1)."
+    },
+    {
+      "id": "trace-animals-fit-p20-064",
+      "statement": "Transporters the trader adds are stored outside the notification, scoped to the organisation, since a second notification lists them; the browser network log shows no call to the store, so the backend or address-book integration that holds them is not visible here.",
+      "kind": "integration",
+      "ref": "trace transporters-6c105 network log (only frontend GET/POST); frame snapshot call@5513",
+      "quote": "a transporter added on one notification is on the list of the next one, ready to pick",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-animals-fit-p20-065",
+      "statement": "No trace shows the server-side call that saves a hand-entered transporter or reads the transporter list (service, method, path or payload).",
+      "kind": "integration",
+      "ref": "all 20 traces' network logs (browser to frontend only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p20-066",
+      "statement": "Every form in this slice posts a hidden concurrencyToken (value 0 here) alongside the crumb.",
+      "kind": "data",
+      "ref": "trace commercial-t-3037e network POST /transporters/add and POST /port-of-entry; frame snapshots (input name=concurrencyToken)",
+      "quote": "concurrencyToken=0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p20-067",
+      "statement": "Pages in this slice show a journey strip above the content with a blue 'Draft' tag and the notification reference (for example GBN-AG-26-D8ND1C); it uses a non-govuk class app-journey-strip.",
+      "kind": "constraint",
+      "ref": "trace commercial-t-3037e frame snapshot call@4997 (div.app-journey-strip, govuk-tag--blue)",
+      "quote": "Draft",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is the only non-govuk class in main on the add pages; everything else is govuk-* (notification banner, warning text, radios, inputs, select, error summary)."
+    },
+    {
+      "id": "trace-animals-fit-p20-068",
+      "statement": "No trace shows a 'New' trader-added transporter changing to 'Approved', or what makes it change.",
+      "kind": "behaviour",
+      "ref": "trace commercial-t-ec025 and transporters-6c105 list snapshots (added rows tagged New)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p20-069",
+      "statement": "No trace shows the service stopping the trader from adding a transporter already on the list; the only guard seen is the warning to search first.",
+      "kind": "rule",
+      "ref": "trace transporters-652d3 (warning text); no duplicate-add trace",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

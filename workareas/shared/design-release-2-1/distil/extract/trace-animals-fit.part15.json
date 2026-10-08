@@ -1,0 +1,568 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 15 mined all 11 traces its partition names, every one opened and read in full: hub-picker.fit.spec.js > party picker search (3: :231 Denmark search narrows and keeps the query [trace dir f-5d831], :244 no-match empty state [f-ddb58], :254 validation after no matches [f-952b8]); hub-picker.fit.spec.js > party picker details and pagination (3: :276 View details expands [f-50608], :288 later-page selection carried off-page [f-aa0ea], :311 axe [f-19512]); party-edit.fit.spec.js > edit a copied address (5: :58 pre-filled and captioned [party-edit f-a071f], :73 save [f-3d8f9], :85 postcode rule [f-967c6], :99 cancel [f-995a4], :111 axe [f-24c8a]). Both spec files were read for titles and assertions. Method: `tim distil trace -- open` refuses these zips (TraceVersionError: the trace was made by a newer Playwright than tim's viewer), so each zip, already unzipped into this part's working folder, was read straight from its 0-trace/1-trace .trace and .network files with jq: every `before` event (action list), the full DOM of each page's richest frame snapshot (rendered to text), the resource snapshots (request method, URL, status, Location, form body) and the axe `after` results. Every trace walks the same set-up (stub sign-in, start notification, origin France, commodity Felis catus, 1 animal, Overview, Roles and addresses) before its subject; that set-up belongs to other parts and is not claimed here. Pages in this slice, in journey order: (1) the Consignment addresses hub /addresses, only as the place the picker and edit page are reached from and return to (rows after a save); (2) the consignor party picker /consignors/select, always reached from the hub row's Add or Change link, in five states: first visit (page 1 of 3, 13 addresses, 5 a page), search results (2 of 2, no pagination), no matches (empty state, no table), error after no matches (error summary links to the search box), and Change with a saved off-page selection (inset text, hidden selected field); pages 2 and 3 by pagination link; (3) Edit address details /consignors/edit?return=addresses, reached only from the hub row's Edit details link once a party is chosen, in its pre-filled state and its postcode-required error state; Save changes and Cancel both return to the hub. Only the consignor role is exercised in this slice. No browser-side call to an address-book API appears in any network log: the frontend renders the book server-side.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p15-001",
+      "statement": "From the Consignment addresses hub, the consignor row's Add link opens the party picker for that role at /consignors/select under the notification.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 (hub-picker.fit.spec.js:231) call@303; network GET /live-animals/notifications/GBN-AG-26-J87XMF/consignors/select -> 200",
+      "quote": ".govuk-summary-list__row >> internal:has=\"internal:text=\\\"Consignor or exporter\\\"s\" >> internal:role=link[name=\"Add\"i]",
+      "confidence": "verbatim",
+      "note": "The quote is the test's locator for the link; the hub itself belongs to another part."
+    },
+    {
+      "id": "trace-animals-fit-p15-002",
+      "statement": "The consignor picker's browser page title is 'Consignor or exporter - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@303 after-snapshot <title>",
+      "quote": "Consignor or exporter - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-003",
+      "statement": "The picker shows the caption 'Consignment parties' directly above the role heading 'Consignor or exporter'.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@303 after-snapshot main: span.govuk-caption-l + h1.govuk-heading-l",
+      "quote": "Consignment parties / Consignor or exporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-004",
+      "statement": "Under the heading, the consignor picker repeats the role's description as body text.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@303 after-snapshot main p.govuk-body",
+      "quote": "This is the sender of the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-005",
+      "statement": "The picker has a 'Back' link that returns to the Consignment addresses hub (/addresses).",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@303 after-snapshot a.govuk-back-link",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-J87XMF/addresses class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-006",
+      "statement": "Above the content, the picker and the edit page both show a journey strip with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@303 after-snapshot div.app-journey-strip; trace f-a071f call@411 after-snapshot",
+      "quote": "Draft GBN-AG-26-J87XMF",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-007",
+      "statement": "The journey strip uses a service-specific class, app-journey-strip, outside govuk-frontend; it wraps a govuk-tag and a govuk-body span and could be built from a standard tag and body text.",
+      "kind": "constraint",
+      "ref": "trace f-967c6 call@743 after-snapshot class list (only non-govuk class in main besides js hooks)",
+      "quote": "app-journey-strip govuk-!-margin-bottom-4",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-008",
+      "statement": "The picker has a text field labelled 'Search' (small label, field name q, two-thirds width) for filtering the address book.",
+      "kind": "data",
+      "ref": "trace f-5d831 call@303 after-snapshot label[for=q], input#q",
+      "quote": "<label for=q class=govuk-label govuk-label--s> Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-009",
+      "statement": "The Search field carries the hint 'Name, address or country', tied to it as its accessible description.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@303 after-snapshot div.govuk-hint#q-hint; input aria-describedby=q-hint",
+      "quote": "Name, address or country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-010",
+      "statement": "A secondary 'Search' button submits the picker form to its own URL as a POST with action=search; the server answers 200 and re-renders the picker with the results rather than redirecting.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@309; network POST /consignors/select -> 200 body page=1&q=Denmark&action=search",
+      "quote": "<button type=submit class=govuk-button govuk-button--secondary name=action value=search> Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-011",
+      "statement": "Searching for a country name narrows the address book to the addresses in that country: 'Denmark' returns Danish Meat Export ApS and Jutland Swine ApS only.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@311 after-snapshot table rows",
+      "quote": "Danish Meat Export ApS | Havnegade 21, Copenhagen, 1058 | Denmark ... Jutland Swine ApS | Sondergade 4, Aarhus, 8000 | Denmark",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-012",
+      "statement": "After a search the table caption counts the matches.",
+      "kind": "copy",
+      "ref": "trace f-5d831 call@311 after-snapshot caption.govuk-table__caption",
+      "quote": "Showing 2 of 2 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-013",
+      "statement": "The search query stays in the Search field after the results are shown.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@315 (toHaveValue 'Denmark'); call@311 after-snapshot input#q",
+      "quote": "<input type=text name=q id=q value=Denmark describedby=q-hint>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-014",
+      "statement": "When every match fits on one page the picker shows no pagination: the 2-of-2 Denmark results have no pagination block.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@311 after-snapshot (no nav.govuk-pagination after the table)",
+      "quote": "Showing 2 of 2 addresses",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the pagination nav in the rendered results, against its presence on the unfiltered 13-address list."
+    },
+    {
+      "id": "trace-animals-fit-p15-015",
+      "statement": "A search with no matches replaces the address table with the empty-state message 'No addresses match your search.'.",
+      "kind": "behaviour",
+      "ref": "trace f-ddb58 (hub-picker.fit.spec.js:244) call@637 after-snapshot",
+      "quote": "No addresses match your search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-016",
+      "statement": "The no-match search query also stays in the Search field.",
+      "kind": "behaviour",
+      "ref": "trace f-ddb58 call@639 (toHaveValue); call@637 after-snapshot input#q",
+      "quote": "<input type=text name=q id=q value=no such address describedby=q-hint>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-017",
+      "statement": "Pressing 'Save and continue' on the consignor picker without choosing an address is refused (HTTP 400) and shows an error summary 'There is a problem' with the message 'Select a consignor from the list'.",
+      "kind": "rule",
+      "ref": "trace f-952b8 (hub-picker.fit.spec.js:254) call@501, call@503 after-snapshot; network POST /consignors/select -> 400 body q=no such address&action=save",
+      "quote": "There is a problem / Select a consignor from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-018",
+      "statement": "When the no-selection error happens on a search with no matches (so there are no radios), the error summary link points at the Search field (#q), and following it focuses the Search field, which still holds the query.",
+      "kind": "rule",
+      "ref": "trace f-952b8 call@503 after-snapshot error summary; call@505 click; call@507 toBeFocused; call@509 toHaveValue",
+      "quote": "<a href=#q class=>Select a consignor from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-019",
+      "statement": "In the error state the picker's page title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace f-952b8 call@503 after-snapshot <title>",
+      "quote": "Error: Consignor or exporter - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-020",
+      "statement": "In the no-match error state, the inline error message (id party-error) sits between the search button and the empty-state text, but the Search form group is not given govuk-form-group--error and the Search input is not given govuk-input--error, so the field the summary links to is not visibly marked in error.",
+      "kind": "constraint",
+      "ref": "trace f-952b8 call@503 after-snapshot p.govuk-error-message#party-error; div.govuk-form-group (class 'govuk-form-group'); input#q class 'govuk-input govuk-!-width-two-thirds'",
+      "quote": "Error: Select a consignor from the list",
+      "confidence": "verbatim",
+      "note": "Record of the rendered markup; whether this is intended is for the reconciler."
+    },
+    {
+      "id": "trace-animals-fit-p15-021",
+      "statement": "The picker lists the address book as a table with columns Select (visually hidden), Name, Address, Country and Actions (visually hidden).",
+      "kind": "data",
+      "ref": "trace f-5d831 call@303 after-snapshot table header row",
+      "quote": "Select | Name | Address | Country | Actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-022",
+      "statement": "Each table row starts with a small radio (field name party, value the address's id such as 'astra-rosales') whose visually hidden label is 'Select ' followed by the address name.",
+      "kind": "data",
+      "ref": "trace f-5d831 call@303 after-snapshot td div.govuk-radios.govuk-radios--small",
+      "quote": "<input type=radio name=party id=party value=astra-rosales> ... Select Astra Rosales",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-023",
+      "statement": "The Address column shows the first address line, town and postcode joined by commas; the Country column shows the country name.",
+      "kind": "data",
+      "ref": "trace f-5d831 call@303 after-snapshot row 'Tech Imports Ltd'",
+      "quote": "Tech Imports Ltd | 18 Dockside Road, London, E14 9GE | United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-024",
+      "statement": "Each row's Actions cell has a 'View details' disclosure (visually hidden suffix ' for <name>') holding the full address as a list: name, address line(s), town, postcode, country, phone number and email address.",
+      "kind": "data",
+      "ref": "trace f-5d831 call@303 after-snapshot details.govuk-details in row 'Astra Rosales'",
+      "quote": "View details for Astra Rosales ... Astra Rosales / 43 East Hague Extension / Bern / 30055 / Switzerland / 01632 960000 / astra-rosales@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-025",
+      "statement": "Clicking 'View details' in a row opens that row's disclosure in place, revealing the full address (for Tech Imports Ltd, its town London).",
+      "kind": "behaviour",
+      "ref": "trace f-50608 (hub-picker.fit.spec.js:276) call@615 (details gains open attribute in after-snapshot); call@617 toContainText 'London'",
+      "quote": "View details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-026",
+      "statement": "The stub organisation's address book holds 13 addresses, offered to the consignor picker in this order: Astra Rosales, Tech Imports Ltd, Origin Farm, British Livestock Ltd, Import Co UK (page 1); Animal and Plant Health Agency, Danish Meat Export ApS, Jutland Swine ApS, Laiterie du Nord SARL, Nordvik Seafood AS (page 2); Alpine Dairy GmbH, Irish Beef Traders Ltd, Iberian Swine SA (page 3).",
+      "kind": "data",
+      "ref": "trace f-aa0ea (hub-picker.fit.spec.js:288) call@601 after, call@605 after, call@609 action snapshots",
+      "quote": "Showing 5 of 13 addresses",
+      "confidence": "verbatim",
+      "note": "The order is neither alphabetical nor by country; the trace does not show what decides it."
+    },
+    {
+      "id": "trace-animals-fit-p15-027",
+      "statement": "The picker shows 5 addresses a page; the caption gives the number on the current page out of the total ('Showing 5 of 13 addresses' on pages 1 and 2, 'Showing 3 of 13 addresses' on page 3), not a range.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@605 after (page 2), call@609 action (page 3); trace f-5d831 call@303 after (page 1)",
+      "quote": "Showing 3 of 13 addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-028",
+      "statement": "Below the table a GOV.UK pagination block lists numbered page links (1, 2, 3) with the current one marked, a 'Next page' link on every page but the last and a 'Previous page' link on every page but the first; each link is a GET to ?page=N, and the numbered links are announced as 'Page N'.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@605 click link 'Page 2', call@607 click 'Page 3'; call@605 after-snapshot nav.govuk-pagination; network GET /consignors/select?page=2 and ?page=3 -> 200",
+      "quote": "Previous page ... 1 2 3 ... Next page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-029",
+      "statement": "The picker form carries the current page number as a hidden field and posts it with Search and Save and continue.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@609 action snapshot input[name=page] value 3; network POST /consignors/select?page=3 body page=3&q=&party=iberian-swine-sa&action=save",
+      "quote": "<input type=hidden name=page id= value=3>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-030",
+      "statement": "The picker's only action button is the primary 'Save and continue' (action=save); the picker offers no cancel link, only the Back link.",
+      "kind": "behaviour",
+      "ref": "trace f-5d831 call@303 after-snapshot div.govuk-button-group",
+      "quote": "<button type=submit class=govuk-button name=action value=save> Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-031",
+      "statement": "An address chosen on a later page is saved: choosing Iberian Swine SA on page 3 and pressing Save and continue redirects (302) to the hub, whose consignor row then shows 'Iberian Swine SA'.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@609-613; network POST /consignors/select?page=3 -> 302 /addresses; call@613 after-snapshot hub row",
+      "quote": "Consignor or exporter ... Iberian Swine SA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-032",
+      "statement": "Once an address is saved for the consignor, the hub row shows only the chosen address's name and offers two links: 'Change' (back to the picker) and 'Edit details' (to /consignors/edit?return=addresses), each with a visually hidden ' consignor or exporter' suffix.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@613 after-snapshot dd.govuk-summary-list__actions",
+      "quote": "Change consignor or exporter ... Edit details consignor or exporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-033",
+      "statement": "Reopening the picker with Change shows the saved address in inset text as 'Selected address: <name>' above the table, on page 1.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@615 after-snapshot div.govuk-inset-text; call@617 toBeVisible",
+      "quote": "Selected address: Iberian Swine SA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-034",
+      "statement": "When the saved address is not on the page being shown, no radio for it is rendered, but the picker keeps the selection in a hidden 'selected' field and adds '&selected=<id>' to every pagination link.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@615 after-snapshot input[name=selected], nav.govuk-pagination hrefs; call@619 toHaveCount 0",
+      "quote": "<input type=hidden name=selected id= value=iberian-swine-sa> ... select?page=2&selected=iberian-swine-sa",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-035",
+      "statement": "Pressing Save and continue on a page that does not show the saved address, without choosing another, keeps the saved address: the form posts selected=<id> with no party, redirects to the hub and the row still shows it.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@621, call@623; network POST /consignors/select -> 302 /addresses body page=1&selected=iberian-swine-sa&q=&action=save",
+      "quote": "Iberian Swine SA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-036",
+      "statement": "The trace does not show whether a radio checked but not yet saved survives moving to another page: the pagination links are plain GET links that carry only the saved selection.",
+      "kind": "behaviour",
+      "ref": "trace f-aa0ea call@605 after-snapshot pagination hrefs (no party parameter)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-037",
+      "statement": "The consignor picker page has no accessibility violations of any impact when checked with axe against the wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa tags.",
+      "kind": "non-functional",
+      "ref": "trace f-19512 (hub-picker.fit.spec.js:311) axe evaluate result for /consignors/select",
+      "quote": "picker page has no serious or critical axe violations",
+      "confidence": "verbatim",
+      "note": "The axe result in the trace holds 0 violations; the test only fails on serious or critical ones."
+    },
+    {
+      "id": "trace-animals-fit-p15-038",
+      "statement": "The picker is built from standard govuk-frontend components: Table, small Radios, Details, Pagination, Inset text, Error summary, Error message, Hint and Button; the only non-govuk class is the journey strip.",
+      "kind": "constraint",
+      "ref": "trace f-aa0ea call@615 after-snapshot; trace f-952b8 call@503 after-snapshot",
+      "quote": "govuk-table govuk-radios govuk-radios--small govuk-details govuk-pagination govuk-inset-text govuk-error-summary",
+      "confidence": "inferred",
+      "note": "Read from the rendered main's classes across the picker states; the full class list was dumped on the edit page only."
+    },
+    {
+      "id": "trace-animals-fit-p15-039",
+      "statement": "The picker's search, paging and saving all go to the frontend's own /consignors/select route; no browser-side call to an address-book service appears, so the address-book lookup (and its search) happens server-side and its call shape is not visible in this source.",
+      "kind": "integration",
+      "ref": "network logs of f-5d831, f-ddb58, f-952b8, f-50608, f-aa0ea, f-19512",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-040",
+      "statement": "Search is only exercised by country ('Denmark') and by a non-matching phrase; the hint promises matching on name and address too, but no trace searches by name, address line, postcode or partial word, or shows whether matching is case-insensitive.",
+      "kind": "behaviour",
+      "ref": "hub-picker.fit.spec.js:231-273; hint 'Name, address or country'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-041",
+      "statement": "Search, details, pagination and the edit page are exercised only for the consignor; how they behave for place of origin, consignee, importer and place of destination is not shown in this slice.",
+      "kind": "behaviour",
+      "ref": "hub-picker.fit.spec.js CONSIGNOR constant; party-edit.fit.spec.js openConsignorEdit",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-042",
+      "statement": "No trace shows the search results paginated (more than 5 matches), a cleared search returning the full list, or what Search does with an empty query.",
+      "kind": "behaviour",
+      "ref": "hub-picker.fit.spec.js > party picker search",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-043",
+      "statement": "After a party is saved, the hub row's 'Edit details' link opens 'Edit address details' at /consignors/edit?return=addresses.",
+      "kind": "behaviour",
+      "ref": "trace f-a071f (party-edit.fit.spec.js:58) call@411; network GET /consignors/edit?return=addresses -> 200",
+      "quote": "Edit details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-044",
+      "statement": "The edit page's browser page title is 'Edit address details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace f-a071f call@411 after-snapshot <title>",
+      "quote": "Edit address details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-045",
+      "statement": "The edit page heading is 'Edit address details', captioned directly above with the role being edited ('Consignor or exporter').",
+      "kind": "copy",
+      "ref": "trace f-a071f call@411 after-snapshot; call@415, call@417 toHaveText",
+      "quote": "Consignor or exporter / Edit address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-046",
+      "statement": "The edit page tells the user that edits only change this notification's copy, not the address book.",
+      "kind": "copy",
+      "ref": "trace f-a071f call@411 after-snapshot main p.govuk-body",
+      "quote": "Changes apply to this notification only. Your address book is not changed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-047",
+      "statement": "The edit page has a 'Back' link to the Consignment addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace f-a071f call@411 after-snapshot a.govuk-back-link",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-51XRGZ/addresses class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-048",
+      "statement": "The edit page opens pre-filled from the notification's copy of the chosen address (for Astra Rosales: name, 43 East Hague Extension, Bern, 30055, Switzerland selected, 01632 960000, astra-rosales@example.com; address line 2 and county empty).",
+      "kind": "behaviour",
+      "ref": "trace f-a071f call@411 after-snapshot inputs; option CH selected; call@419 toHaveValue",
+      "quote": "<input type=text name=name id=name value=Astra Rosales>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-049",
+      "statement": "The edit page has a text field 'Name or organisation name' (field name, autocomplete organization).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-050",
+      "statement": "The edit page has a text field 'Address line 1' (field addressLine1, autocomplete address-line1).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#addressLine1",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-051",
+      "statement": "The edit page has an optional text field 'Address line 2 (optional)' (field addressLine2, autocomplete address-line2).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-052",
+      "statement": "The edit page has a text field 'Town or city' (field townOrCity, autocomplete address-level2).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#townOrCity",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-053",
+      "statement": "The edit page has an optional text field 'County (optional)' (field county, no autocomplete attribute).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#county; call@421 toBeVisible",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-054",
+      "statement": "The edit page has a narrow text field 'Postcode or Zip code' (field postcode, width-10, autocomplete postal-code).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#postcode",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-055",
+      "statement": "The edit page has a plain 'Country' select (field countryCode, ISO codes as values) with a 'Select a country' placeholder, then United Kingdom, then 31 European countries alphabetically: Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands (the), Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland.",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot select#countryCode options (33 incl. placeholder)",
+      "quote": "Select a country / United Kingdom / Austria / ... / Netherlands (the) / ... / Switzerland",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-056",
+      "statement": "The edit page has a 'Phone number' field (type tel, autocomplete tel) with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#phone, div.govuk-hint#phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-057",
+      "statement": "The edit page has an 'Email address' field (type email, autocomplete email, spellcheck off).",
+      "kind": "data",
+      "ref": "trace f-a071f call@411 after-snapshot input#email",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-058",
+      "statement": "Name, address line 1, town or city, postcode, country, phone number and email address carry no '(optional)' marker, so they read as required; only address line 2 and county are labelled optional.",
+      "kind": "rule",
+      "ref": "trace f-a071f call@411 after-snapshot labels",
+      "quote": "Address line 2 (optional) ... County (optional)",
+      "confidence": "inferred",
+      "note": "Inferred from the GOV.UK convention of marking optional fields; only the postcode rule is exercised."
+    },
+    {
+      "id": "trace-animals-fit-p15-059",
+      "statement": "'Save changes' posts every field to the edit URL and redirects (302) to the hub, where the role's row shows the edited name ('Edited Consignor Ltd').",
+      "kind": "behaviour",
+      "ref": "trace f-3d8f9 (party-edit.fit.spec.js:73) call@641-647; network POST /consignors/edit?return=addresses -> 302 /addresses body name=Edited Consignor Ltd&addressLine1=...&countryCode=CH&phone=...&email=...; call@645 after-snapshot",
+      "quote": "Edited Consignor Ltd",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-060",
+      "statement": "After Save changes the hub shows no confirmation or notification banner; the change shows only in the row's value.",
+      "kind": "behaviour",
+      "ref": "trace f-3d8f9 call@645 after-snapshot main",
+      "quote": "Consignment addresses",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any govuk-notification-banner in the rendered hub after the redirect."
+    },
+    {
+      "id": "trace-animals-fit-p15-061",
+      "statement": "Clearing the postcode and saving is refused (HTTP 400) with 'Enter a postcode' in an error summary 'There is a problem' and inline above the field; the summary link goes to #postcode and focuses the field.",
+      "kind": "rule",
+      "ref": "trace f-967c6 (party-edit.fit.spec.js:85) call@739-747; network POST /consignors/edit?return=addresses -> 400 postcode=; call@743 after-snapshot",
+      "quote": "Enter a postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-062",
+      "statement": "In the postcode error state the postcode form group gets govuk-form-group--error, the input gets govuk-input--error and is described by postcode-error, and the page title is prefixed 'Error: '; the other fields keep the values the user posted.",
+      "kind": "rule",
+      "ref": "trace f-967c6 call@743 after-snapshot div.govuk-form-group--error, input#postcode, <title>",
+      "quote": "Error: Edit address details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-063",
+      "statement": "The edit page's validation messages are described by the tests as the address book's own messages, but only the empty-postcode message is shown; the messages for name, address line 1, town or city, country, phone and email, and any format rules (postcode shape, phone, email), are not exercised.",
+      "kind": "rule",
+      "ref": "party-edit.fit.spec.js:85 test title; trace f-967c6",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-064",
+      "statement": "A secondary 'Cancel' button (cancel=true) beside Save changes returns to the hub without applying the edits: the form is posted with the edited values plus cancel=true, the server redirects (302) to the hub, and the row still shows the original name.",
+      "kind": "behaviour",
+      "ref": "trace f-995a4 (party-edit.fit.spec.js:99) call@609-615; network POST /consignors/edit?return=addresses -> 302 /addresses body ...&cancel=true",
+      "quote": "<button type=submit class=govuk-button govuk-button--secondary name=cancel value=true> Cancel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-065",
+      "statement": "No trace checks that saving an edit leaves the address book unchanged (for example by reopening the picker afterwards), so the page's promise that 'Your address book is not changed' is stated but not demonstrated.",
+      "kind": "behaviour",
+      "ref": "party-edit.fit.spec.js:73",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p15-066",
+      "statement": "The edit form switches off browser validation (novalidate), so its rules are enforced server-side only.",
+      "kind": "constraint",
+      "ref": "trace f-a071f call@411 after-snapshot form",
+      "quote": "{\"method\":\"post\",\"novalidate\":\"\"}",
+      "confidence": "verbatim",
+      "note": "novalidate read on the edit form; the picker form was not inspected for it."
+    },
+    {
+      "id": "trace-animals-fit-p15-067",
+      "statement": "The edit page has no accessibility violations of any impact when checked with axe against the wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa tags.",
+      "kind": "non-functional",
+      "ref": "trace f-24c8a (party-edit.fit.spec.js:111) axe evaluate result for /consignors/edit?return=addresses",
+      "quote": "edit page has no serious or critical axe violations",
+      "confidence": "verbatim",
+      "note": "The axe result in the trace holds 0 violations."
+    },
+    {
+      "id": "trace-animals-fit-p15-068",
+      "statement": "The edit page is all govuk-frontend apart from the journey strip: Input, Select (a plain select, not an autocomplete), Hint, Error summary, Error message, Button group and Back link.",
+      "kind": "constraint",
+      "ref": "trace f-967c6 call@743 after-snapshot class list",
+      "quote": "govuk-input govuk-input--error govuk-input--width-10 govuk-select govuk-error-summary govuk-error-message govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p15-069",
+      "statement": "The edit and picker pages are served by the frontend only; saving an edit posts to the frontend route and no call to a backend or address-book service is visible, so how the notification's copy is stored is not shown in this source.",
+      "kind": "integration",
+      "ref": "network logs of f-a071f, f-3d8f9, f-967c6, f-995a4, f-24c8a",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

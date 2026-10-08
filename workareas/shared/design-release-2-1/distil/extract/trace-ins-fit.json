@@ -1,0 +1,2059 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "A Playwright trace corpus of the INS frontend's fit specs, recorded at trade-imports-ins-frontend 406e300: 50 folders under workareas/shared/design-release-2-1/sources/traces-ins-fit/, each holding one trace.zip, plus report.json (the Playwright JSON report, with an npm/webpack preamble before the JSON) that maps every test to its folder. All 50 tests passed. They come from 7 spec files: fit/smoke.fit.spec.js (1 test: sign in, dashboard, add, view and delete an address), and under src/server/app/features/: address-book/fit/add.fit.spec.js (21 tests: the add form, 7 empty-field errors, 8 over-length errors, a malformed email, two axe checks, save and cancel), address-book/fit/list.fit.spec.js (6: navigation, the table, add link, axe, pagination over 25, empty state), address-book/fit/view.fit.spec.js (5: open, every Standard Address Block field, Edit and Delete, Back, axe), address-book/fit/edit.fit.spec.js (7: prefill, axe, rejected save keeps edits, malformed email, error-state axe, save, cancel) and address-book/fit/delete.fit.spec.js (4: confirmation, cancel, confirm, axe), and dashboard/dashboard.fit.spec.js (6: statuses and columns, axe, submitted links to notification-view, draft links to the journey hub, search by reference, no results). It covers the INS front door only: the address book (list, view, add, edit, delete) and the notifications dashboard, as the real INS frontend renders them today. It leaves out the animals journey, which trace:animals-fit holds. The corpus is indexed from report.json in trace-ins-fit.work/index.md. The traces were written by Playwright 1.63.0 and tim's bundled Playwright (1.62.1) cannot open them (TraceVersionError), so action and error counts are not indexed, and each part also names its spec file so the agent can read the steps and asserted copy until tim's Playwright is upgraded.\n\nExtracted in 4 parts:\nPart 1, address-book/fit/add.fit.spec.js: Part 1 mined all 21 traces of repos/trade-imports-ins-frontend/src/server/app/features/address-book/fit/add.fit.spec.js (spec read in full, with its helper address-form.js for the labels and messages the tests drive). The Playwright CLI that tim runs refused these zips (TraceVersionError: trace created by a newer Playwright), so each trace was read from its already-unpacked copy in this part's work folder (render, axe, req-name, req-line1, req-town, req-postcode, req-country, req-phone, req-email, max-name, max-line1, max-line2, max-town, max-county, max-postcode, max-phone, max-email, bad-email, err-axe, save, cancel): actions from 1-trace.trace 'before' events, the network log from 1-trace.network, and every frame snapshot rendered to HTML with a jq filter (render.jq), plus test.trace for the axe results. Refs below name the trace by its folder hash (for example a-31686) and the action's callId. Pages, in order: (1) stub sign-in GET /auth/stub-sign-in?organisationId=... which 302s to / ('Dashboard | Import notification service'), always, as the harness entry; (2) the add address page GET /address-book/add, 'Add address details', always: two H2 sections ('Enter address details': Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country select; 'Enter contact details': Email address, Phone number with hint), then 'Save and continue' and 'Cancel and return to address book' buttons; (3) the same page in its error state, conditional on a failed submit (POST returns 400, title prefixed 'Error: ', error summary 'There is a problem' with one link per error, inline error message, value preserved): driven for 7 empty required fields, 8 over-length fields and 1 malformed email, one error per trace; (4) the address book list GET /address-book after a successful save (POST 302) with the 'Success' notification banner and the new row, or after cancel (POST 302, no banner, nothing created). Two traces ran axe on page 2 and page 3: both reported zero serious or critical violations. The add page and its error state are built entirely from govuk-frontend components (Input, Select, Hint, Error summary, Error message, Button, secondary Button, Button group); no non-govuk class appears inside main. No caption and no back link render on the add page. The country list held only 4 countries. No backend call is visible: the frontend's calls to the address book service are server side and leave no trace in the browser network log.\nPart 2, address-book list and view: Part 2, address-book list and view. Read in full: list.fit.spec.js and view.fit.spec.js, and all 11 traces they recorded (list.fit 762a7 navigation, 3e618 table, fe734 add link, 49f4e axe, d7e93 pagination, 964e2 empty state; view.fit 4a433 open from a row, cd84f every field, 2e5d8 Edit and Delete, 4811a Back, 14089 axe). tim's bundled Playwright cannot open these traces (TraceVersionError), so each trace's unzipped contents in this part's working folder were read directly: test.trace for the action list (every action transcribed) and 1-trace.trace for the DOM snapshots, rendered to HTML with jq, plus 1-trace.network for the requests. Pages reached, in order: stub sign-in (302) lands on the Dashboard at / (part 4 owns its content; only the service navigation is claimed here); the Address book list at /address-book (title 'Address book | Import notification service', H1 'Address book', intro line, a Search addresses form, an Add a new address button-link, a 'Showing x-y of z' results label, a table of Name, Address, Country and a visually hidden Action column with a View link per row); the same list at /address-book?page=2 when an organisation has 30 addresses (25 per page, GOV.UK pagination with numbered links, Next and Previous); the empty state for an organisation with no addresses (message, no table, no results label, the Add a new address button still shown); the view address page at /address-book/{id} (title and H1 are the address name, a Back link to /address-book above main, a summary list of nine Standard Address Block rows, then Edit and Delete button-links in a button group). The Add a new address click is followed only as far as the add form's URL and heading; parts 1 and 3 own the add, edit and delete pages. Both pages are entirely govuk-frontend components (service navigation, table, pagination, button, summary list, back link, input, button group). Each page passed an axe check for serious or critical violations. All page loads are server-rendered GETs; no address-book API call is visible from the browser, so the backend integration is recorded as a gap. Search, an unknown address id, ordering rules and pagination beyond two pages were never exercised and are recorded as gaps.\nPart 3, address-book edit and delete: Part 3, address-book edit and delete. Read in full: edit.fit.spec.js (7 tests) and delete.fit.spec.js (4 tests) in trade-imports-ins-frontend, plus axe.js for the axe tags, and all 11 trace zips the part names. The tim trace CLI refused every zip (TraceVersionError: trace created by a newer Playwright than tim's viewer), so each trace was mined from its unzipped raw files in this part's work folder (edit-prefill 759a1, edit-axe dafdd, edit-rejected af334, edit-email e9676, edit-erraxe dd003, edit-save de4e5, edit-cancel 36446, del-confirm 967cd, del-cancel d5c0d, del-yes fe6bc, del-axe 7d4d4): the test.trace step list (every navigate, fill, click and expect with its locator), the 1-trace.network log (method, URL, status, Location, form body) and the rendered HTML resources. Action ids in refs are the test.trace callIds (pw:api@N, expect@N). Pages, in order: (1) Edit address details, /address-book/{id}/edit, always reached by direct navigation after stub sign-in; its validation error state (HTTP 400 re-render, same URL), driven by an empty name and by a malformed email; save (302 to /address-book with a success banner) and Cancel (302 to /address-book, nothing saved). (2) Delete address, /address-book/{id}/delete, a confirmation with a warning button and Cancel; Cancel 302s to the details page /address-book/{id}, confirming 302s to /address-book with a success banner and, for the only address, the empty state. The address book list and details pages appear only as landing pages; part 2 owns them. Every surface is entirely govuk-* inside main. Axe runs on the edit page, its error state and the delete page, each with no violations of any impact. Gaps recorded: other edit validation messages, unknown or foreign ids, downstream failure, the entry controls, editing country and optional fields, and the effect of deleting an address in use.\nPart 4, dashboard and smoke: Part 4, dashboard and smoke. Read in full: dashboard/dashboard.fit.spec.js (6 tests) and fit/smoke.fit.spec.js (1 test), and all 7 trace zips the part names. tim's Playwright (1.62.1) refuses these traces (TraceVersionError, confirmed again on this run), so each trace was read from its unzipped contents in this part's working folder (t1..t7), with jq over the browser trace (1-trace.trace: every call, every frame snapshot), the network log (1-trace.network) and the test step log (test.trace). Trace map: t1 = dashboard-dashboard.fit-da-7c8cd (spec :23, AC1/AC2 statuses and columns), t2 = da-62c16 (spec :54, axe), t3 = da-44f5e (spec :61, submitted link to notification-view), t4 = da-2eeb5 (spec :74, draft link to journey hub), t5 = da-21d7c (spec :87, search by reference), t6 = da-7e579 (spec :106, No notifications found), t7 = smoke.fit-a-trader-signs-i-62e11 (smoke.fit.spec.js:13). Pages, in journey order: stub sign-in (/auth/stub-sign-in?organisationId=..., a 302 with no page of its own) -> Dashboard (/, title 'Dashboard | Import notification service') in three states: the default list (t1-t4, t7, call@259/call@13), search results (t5 call@295, ?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-000001) and no results (t6 call@265, referenceNumber=GBN-AG-26-999999). The smoke trace then walks the address book: list (/address-book) -> add (/address-book/add) -> list with success banner -> view (/address-book/<id>) -> delete (/address-book/<id>/delete) -> list with deleted banner, then axe; those pages are claimed here only as the signed-in journey, since parts 1 to 3 own their detail. The dashboard itself is always present after sign-in; the search-results and no-results states appear only after a search.",
+  "scopeHash": "1c20bda205914b652abac5e642fca5866607ff7564cc7f26d7a330e0a2ba6adb",
+  "claims": [
+    {
+      "id": "trace-ins-fit-p1-001",
+      "statement": "The fit harness signs in through a stub sign-in route that takes an organisation id and redirects (302) to the service root, which renders the Dashboard page.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@11; network GET /auth/stub-sign-in 302 Location /",
+      "quote": "Dashboard | Import notification service",
+      "confidence": "verbatim",
+      "note": "Harness entry only; the dashboard itself belongs to another part."
+    },
+    {
+      "id": "trace-ins-fit-p1-002",
+      "statement": "A signed-in user reaches the add address page at /address-book/add.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@13 (GET /address-book/add 200)",
+      "quote": "/address-book/add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-003",
+      "statement": "The add address page's browser title is 'Add address details | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot TITLE",
+      "quote": "Add address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-004",
+      "statement": "The add address page's H1 heading is 'Add address details'.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@15 (heading assertion); snapshot main H1.govuk-heading-l",
+      "quote": "Add address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-005",
+      "statement": "The add address page shows no caption above the heading.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main (no govuk-caption-* element)",
+      "quote": "<H1 class=\"govuk-heading-l\">Add address details</H1>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any caption element in the rendered main; the covers list expected a caption."
+    },
+    {
+      "id": "trace-ins-fit-p1-006",
+      "statement": "The add address page has no back link; the only ways off the page within main are the two form buttons.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@13 snapshot main (no govuk-back-link)",
+      "quote": "Cancel and return to address book",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a govuk-back-link in the snapshot."
+    },
+    {
+      "id": "trace-ins-fit-p1-007",
+      "statement": "The add address page highlights 'Address book' as the current item in the service navigation (Dashboard, Address book, Manage account, Log out).",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot header govuk-service-navigation__item--active",
+      "quote": "<STRONG class=\"govuk-service-navigation__active-fallback\">Address book</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-008",
+      "statement": "The form's first section is headed 'Enter address details' (an H2).",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main H2.govuk-heading-m",
+      "quote": "Enter address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-009",
+      "statement": "The user must give a name or organisation name, in a full-width text input labelled 'Name or organisation name' (name=name).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@17; snapshot input#name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-010",
+      "statement": "The user must give address line 1, in a full-width text input labelled 'Address line 1' (name=addressLine1).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@19; snapshot input#addressLine1",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-011",
+      "statement": "The user may give address line 2, in a full-width text input labelled 'Address line 2 (optional)' (name=addressLine2).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@31; snapshot input#addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-012",
+      "statement": "The user must give a town or city, in a half-width text input labelled 'Town or city' (name=townOrCity).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@21; snapshot input#townOrCity class govuk-!-width-one-half",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-013",
+      "statement": "The user may give a county, in a half-width text input labelled 'County (optional)' (name=county).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@33; snapshot input#county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-014",
+      "statement": "The user must give a postcode, in a half-width text input labelled 'Postcode or Zip code' (name=postcode).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@23; snapshot input#postcode",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-015",
+      "statement": "The user must choose a country from a half-width select labelled 'Country' (name=countryCode), which starts on the empty placeholder option 'Select a country'.",
+      "kind": "data",
+      "ref": "trace a-31686 actions call@25 and call@37 (toHaveValue ''); snapshot select#countryCode",
+      "quote": "<OPTION __playwright_selected_=\"true\" value=\"\">Select a country</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-016",
+      "statement": "The Country select offers four countries after the placeholder, submitted as ISO codes: United Kingdom (GB), France (FR), Germany (DE), Ireland (IE).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@39; snapshot select#countryCode options",
+      "quote": "<OPTION value=\"GB\">United Kingdom</OPTION> <OPTION value=\"FR\">France</OPTION> <OPTION value=\"DE\">Germany</OPTION> <OPTION value=\"IE\">Ireland</OPTION>",
+      "confidence": "verbatim",
+      "note": "Option tags quoted without Playwright's __playwright_selected_ attributes. Only four countries render here; the list's source (reference data or stub) is not visible in the trace."
+    },
+    {
+      "id": "trace-ins-fit-p1-017",
+      "statement": "The trace does not show where the country list comes from or whether the full set of countries is offered outside the fit stack; only four options rendered.",
+      "kind": "integration",
+      "ref": "trace a-31686 network log (no reference-data call visible)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-018",
+      "statement": "The form's second section is headed 'Enter contact details' (an H2) and comes after the Country select.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main second H2.govuk-heading-m",
+      "quote": "Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-019",
+      "statement": "The user must give an email address, in a full-width text input labelled 'Email address' (name=email, type text, autocomplete=email), shown before the phone number.",
+      "kind": "data",
+      "ref": "trace a-31686 action call@29; snapshot input#email",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-020",
+      "statement": "The user must give a phone number, in a half-width text input labelled 'Phone number' (name=phone).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@27; snapshot input#phone",
+      "quote": "Phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-021",
+      "statement": "The Phone number field carries the hint 'For international numbers include the country code', linked to the input by aria-describedby.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@35; snapshot div#phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-022",
+      "statement": "No field on the add address page other than Phone number has a hint.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main (one govuk-hint)",
+      "quote": "<DIV id=\"phone-hint\" class=\"govuk-hint\">",
+      "confidence": "inferred",
+      "note": "Inferred from only one govuk-hint element in the rendered form."
+    },
+    {
+      "id": "trace-ins-fit-p1-023",
+      "statement": "The primary button is 'Save and continue', which submits the form.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@33; snapshot button.govuk-button",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-024",
+      "statement": "A secondary button 'Cancel and return to address book' sits beside the primary button in a button group; it is a submit button that posts the form with cancel=true.",
+      "kind": "copy",
+      "ref": "trace c-03995 action call@121; snapshot button[name=cancel][value=true].govuk-button--secondary",
+      "quote": "Cancel and return to address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-025",
+      "statement": "The form posts to its own URL with browser validation turned off (novalidate) and carries a hidden CSRF field named crumb.",
+      "kind": "constraint",
+      "ref": "trace a-31686 action call@13 snapshot FORM method=post novalidate; input[name=crumb]",
+      "quote": "<FORM method=\"post\" novalidate=\"\"> <INPUT type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\">",
+      "confidence": "verbatim",
+      "note": "Token value redacted."
+    },
+    {
+      "id": "trace-ins-fit-p1-026",
+      "statement": "The add address page and its error state use only govuk-frontend components inside main: Input (with width-one-half modifiers), Select, Hint, Error summary, Error message, Button, secondary Button and Button group.",
+      "kind": "constraint",
+      "ref": "trace a-31686 action call@13 and a-df4d5 action call@35 snapshots, classes in main",
+      "quote": "govuk-form-group govuk-input govuk-select govuk-hint govuk-button-group govuk-button--secondary govuk-error-summary govuk-error-message",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-027",
+      "statement": "The add address page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace a-9c973 test.trace expect@51",
+      "quote": "Add address has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-028",
+      "statement": "A submit that fails validation re-renders the add address page at the same URL with HTTP status 400.",
+      "kind": "behaviour",
+      "ref": "trace a-3fb1a network POST /address-book/add 400; action call@35 toHaveURL /address-book/add",
+      "quote": "POST http://localhost:3002/address-book/add 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-029",
+      "statement": "On a validation failure the browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot TITLE",
+      "quote": "Error: Add address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-030",
+      "statement": "On a validation failure an error summary titled 'There is a problem' appears above the H1, in a role=alert region.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot div.govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-031",
+      "statement": "Each error in the summary is a link to its field's id; following it moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "trace a-df4d5 actions call@39 (click summary link) and call@41 (toBeFocused)",
+      "quote": "<A href=\"#name\">Enter a name</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-032",
+      "statement": "The field in error shows the same message inline above its input, prefixed with visually hidden 'Error:', and the input takes the error style and aria-describedby the message.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot p#name-error and input.govuk-input--error",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-033",
+      "statement": "After a validation failure every value the user entered is shown again in its field, including the value that failed.",
+      "kind": "behaviour",
+      "ref": "trace a-df4d5 action call@35 snapshot (other fields keep 14 Drover's Way, Unit 3, Inverness, Highland, IV2 3JH, GB, exports@example.com, +44 1463 234567); action call@45",
+      "quote": "<INPUT class=\"govuk-input\" id=\"addressLine1\" name=\"addressLine1\" type=\"text\" value=\"14 Drover's Way\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-034",
+      "statement": "Leaving Name or organisation name empty shows 'Enter a name'.",
+      "kind": "rule",
+      "ref": "trace a-df4d5 action call@37",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-035",
+      "statement": "Leaving Address line 1 empty shows 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "trace a-e05ed action call@35 snapshot error summary",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-036",
+      "statement": "Leaving Town or city empty shows 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "trace a-2e436 action call@35 snapshot error summary",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-037",
+      "statement": "Leaving Postcode or Zip code empty shows 'Enter a postcode'.",
+      "kind": "rule",
+      "ref": "trace a-af791 action call@35 snapshot error summary",
+      "quote": "Enter a postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-038",
+      "statement": "Leaving Country on the 'Select a country' placeholder shows 'Enter a country'.",
+      "kind": "rule",
+      "ref": "trace a-3fb1a action call@35 snapshot error summary",
+      "quote": "Enter a country",
+      "confidence": "verbatim",
+      "note": "The message says 'Enter' although the control is a select."
+    },
+    {
+      "id": "trace-ins-fit-p1-039",
+      "statement": "Leaving Phone number empty shows 'Enter a telephone number'.",
+      "kind": "rule",
+      "ref": "trace a-32110 action call@35 snapshot error summary",
+      "quote": "Enter a telephone number",
+      "confidence": "verbatim",
+      "note": "The message says 'telephone number' while the label says 'Phone number'."
+    },
+    {
+      "id": "trace-ins-fit-p1-040",
+      "statement": "Leaving Email address empty shows 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "trace a-2f2aa action call@35 snapshot error summary",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-041",
+      "statement": "A Name or organisation name over 255 characters shows 'Name must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-8c033 action call@35 snapshot error summary",
+      "quote": "Name must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-042",
+      "statement": "An Address line 1 over 255 characters shows 'Address line 1 must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-83fe4 action call@35 snapshot error summary",
+      "quote": "Address line 1 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-043",
+      "statement": "An Address line 2 over 255 characters shows 'Address line 2 must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-138a0 action call@35 snapshot error summary",
+      "quote": "Address line 2 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-044",
+      "statement": "A Town or city over 100 characters shows 'Town or city must be 100 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-351ad action call@35 snapshot error summary",
+      "quote": "Town or city must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-045",
+      "statement": "A County over 100 characters shows 'County must be 100 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-6d292 action call@35 snapshot error summary",
+      "quote": "County must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-046",
+      "statement": "A Postcode or Zip code over 12 characters shows 'Postcode must be 12 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-e58a8 action call@35 snapshot error summary",
+      "quote": "Postcode must be 12 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-047",
+      "statement": "A Phone number over 20 characters shows 'Telephone number must be 20 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-0a2d0 action call@35 snapshot error summary",
+      "quote": "Telephone number must be 20 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-048",
+      "statement": "An Email address over 254 characters shows 'Email address must be 254 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-f93b2 action call@35 snapshot error summary and input#email value (255 'A's)",
+      "quote": "Email address must be 254 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-049",
+      "statement": "An over-length email address that is also malformed shows only the length error, not the format error, so the length check wins for that field.",
+      "kind": "rule",
+      "ref": "trace a-f93b2 action call@35 snapshot error summary (single link)",
+      "quote": "Email address must be 254 characters or fewer",
+      "confidence": "inferred",
+      "note": "Inferred: the test filled 255 'A's (no @) and only the length message rendered."
+    },
+    {
+      "id": "trace-ins-fit-p1-050",
+      "statement": "An email address in the wrong format (for example 'not-an-email') shows 'Enter an email address in the correct format' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-29872 action call@35 snapshot error summary",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-051",
+      "statement": "The add address page in its validation error state has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace a-66af9 test.trace expect step",
+      "quote": "Add address validation error has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-052",
+      "statement": "No trace submits more than one invalid field at once, so how the summary orders several errors is not shown.",
+      "kind": "behaviour",
+      "ref": "all validation traces: one error link each",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-053",
+      "statement": "No trace exercises format checks on postcode or phone number, or a duplicate address check; whether any exist is not shown.",
+      "kind": "rule",
+      "ref": "add.fit.spec.js validation traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-054",
+      "statement": "A valid submit redirects (302) from /address-book/add to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace s-3e860 network POST /address-book/add 302 Location /address-book; action call@139",
+      "quote": "POST http://localhost:3002/address-book/add 302 /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-055",
+      "statement": "After a save the address book shows a success notification banner titled 'Success', in a role=alert region.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@139 snapshot div#address-book-success-banner",
+      "quote": "Success",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-056",
+      "statement": "The success banner's heading names the saved address: '<name> added to your address book'.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@141 (getByText) snapshot p.govuk-notification-banner__heading",
+      "quote": "Highland Livestock Ltd added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-057",
+      "statement": "The saved address appears as a row in the address book table with its name in the Name column.",
+      "kind": "behaviour",
+      "ref": "trace s-3e860 action call@143 snapshot table row 2",
+      "quote": "<TD class=\"govuk-table__cell\">Highland Livestock Ltd</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-058",
+      "statement": "The new row's Address column shows address line 1, town or city and postcode joined by commas, without address line 2 or county.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 Address cell",
+      "quote": "14 Drover's Way, Inverness, IV2 3JH",
+      "confidence": "verbatim",
+      "note": "The submitted address line 2 'Unit 3' and county 'Highland' do not appear in the list cell."
+    },
+    {
+      "id": "trace-ins-fit-p1-059",
+      "statement": "The new row's Country column shows the country's name, not its code.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 Country cell",
+      "quote": "United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-060",
+      "statement": "The new row has a 'View' link to /address-book/<id>, with the address name as visually hidden text.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 action cell",
+      "quote": "View<SPAN class=\"govuk-visually-hidden\"> Highland Livestock Ltd</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-061",
+      "statement": "A saved address is given a 24-character hexadecimal id that appears in its view URL.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot View href",
+      "quote": "/address-book/b3f7b42851c746d995efbcb2",
+      "confidence": "inferred",
+      "note": "Inferred from one id; its shape matches a MongoDB ObjectId."
+    },
+    {
+      "id": "trace-ins-fit-p1-062",
+      "statement": "In the fit stack a newly signed-in organisation's address book already holds one stub address, 'Stub Farm 1', so after one save the list reads 'Showing 1-2 of 2'.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot results label and table row 1",
+      "quote": "Showing 1-2 of 2",
+      "confidence": "inferred",
+      "note": "Inferred: the organisation id was random per run, yet 'Stub Farm 1, 1 Stub Way, Stubton, ST1 1UB' was already listed. Likely stub seeding, not service behaviour."
+    },
+    {
+      "id": "trace-ins-fit-p1-063",
+      "statement": "The address is saved by the frontend calling the address book service server side; the call's method, path and payload are not visible in the browser trace.",
+      "kind": "integration",
+      "ref": "trace s-3e860 network log (only browser-to-frontend requests recorded)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-064",
+      "statement": "Cancel and return to address book redirects (302) to /address-book without validating the form, even when required fields are empty.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 action call@121; network POST /address-book/add 302 Location /address-book",
+      "quote": "POST http://localhost:3002/address-book/add 302 /address-book",
+      "confidence": "verbatim",
+      "note": "Only Name was filled ('Should not be saved'); every other required field was empty and no error page rendered."
+    },
+    {
+      "id": "trace-ins-fit-p1-065",
+      "statement": "Cancel creates no address: the typed name does not appear in the address book, which still reads 'Showing 1-1 of 1'.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 action call@125 (toHaveCount 0); snapshot results label",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-066",
+      "statement": "After cancel the address book shows no success banner.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 address book snapshot (no govuk-notification-banner)",
+      "quote": "Address book | Import notification service",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the banner element in the post-cancel snapshot."
+    },
+    {
+      "id": "trace-ins-fit-p1-067",
+      "statement": "No trace shows what happens when saving fails in the address book service (for example a service error) or what the user sees then.",
+      "kind": "behaviour",
+      "ref": "add.fit.spec.js save and confirm",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-068",
+      "statement": "No trace shows the add address page reached without signing in, so its access control is not evidenced here.",
+      "kind": "rule",
+      "ref": "add.fit.spec.js (every test signs in first)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-001",
+      "statement": "After the stub sign-in the user is redirected to the Dashboard at /, whose page title is 'Dashboard | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 action pw:api@29 (GET /auth/stub-sign-in 302, then GET / 200); DOM snapshot call@199",
+      "quote": "<TITLE>Dashboard | Import notification service</TITLE>",
+      "confidence": "verbatim",
+      "note": "Dashboard content belongs to part 4; recorded here only as the starting point of the navigation test."
+    },
+    {
+      "id": "trace-ins-fit-p2-002",
+      "statement": "The header's service navigation shows the service name 'Import notification service', linking to /.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, section.govuk-service-navigation",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-003",
+      "statement": "The service navigation has a 'Dashboard' link to /.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 action expect@30; DOM snapshot call@227 in list.fit--3e618",
+      "quote": "getByRole('link', { name: 'Dashboard' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-004",
+      "statement": "The service navigation has an 'Address book' link to /address-book; clicking it opens the page whose heading is 'Address book'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 actions expect@31, pw:api@32, expect@33, expect@34",
+      "quote": "getByRole('heading', { name: 'Address book', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-005",
+      "statement": "The service navigation also shows a 'Manage account' item whose link goes nowhere yet (href '#').",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, govuk-service-navigation__list",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"#\">Manage account</A>",
+      "confidence": "verbatim",
+      "note": "No test drives this item."
+    },
+    {
+      "id": "trace-ins-fit-p2-006",
+      "statement": "The service navigation shows a 'Log out' link to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, govuk-service-navigation__list",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\">Log out</A>",
+      "confidence": "verbatim",
+      "note": "No test in this part drives it."
+    },
+    {
+      "id": "trace-ins-fit-p2-007",
+      "statement": "The navigation item for the current section is marked active and aria-current: Dashboard on /, Address book on the address book list and on the view address page.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshots call@227 (/) and call@229 (/address-book/000000000000000000000001); list.fit--3e618 call@227",
+      "quote": "<LI class=\"govuk-service-navigation__item govuk-service-navigation__item--active\"><A class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-008",
+      "statement": "The address book list is at /address-book and its page title is 'Address book | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 action pw:api@30, DOM snapshot call@227",
+      "quote": "<TITLE>Address book | Import notification service</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-009",
+      "statement": "The address book list's heading is 'Address book', as an extra-large heading.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main h1",
+      "quote": "<H1 class=\"govuk-heading-xl\">Address book</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-010",
+      "statement": "Under the heading the list page says 'Manage addresses used across import and export services.'",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main p.govuk-body",
+      "quote": "Manage addresses used across import and export services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-011",
+      "statement": "The list page has a search form: a search input labelled 'Search addresses' (name q) and a 'Search' button, submitting by GET to /address-book.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main form[action=/address-book]",
+      "quote": "<LABEL class=\"govuk-label\" for=\"q\">Search addresses</LABEL><INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"q\" name=\"q\" type=\"search\" value=\"\">",
+      "confidence": "verbatim",
+      "note": "The search form renders on the list page and on the empty state, but no test in this part submits it."
+    },
+    {
+      "id": "trace-ins-fit-p2-012",
+      "statement": "No trace shows what the address search matches on, what results it returns, or what the page says when a search finds nothing.",
+      "kind": "behaviour",
+      "ref": "list.fit.spec.js (no search test); all 6 list.fit traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-013",
+      "statement": "The list page has an 'Add a new address' control, a link styled as a button (role button) to /address-book/add.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 action expect@37; DOM snapshot call@227",
+      "quote": "<A href=\"/address-book/add\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Add a new address</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-014",
+      "statement": "Clicking 'Add a new address' opens /address-book/add, headed 'Add address details'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--fe734 actions pw:api@31, expect@32, expect@33; DOM snapshot call@181",
+      "quote": "<H1 class=\"govuk-heading-l\">Add address details</H1>",
+      "confidence": "verbatim",
+      "note": "The add form itself is part 1's."
+    },
+    {
+      "id": "trace-ins-fit-p2-015",
+      "statement": "Above the table the list page shows a results label in the form 'Showing <first>-<last> of <total>', for example 'Showing 1-1 of 1' for one address.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, p[data-testid=address-book-results-label]",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-016",
+      "statement": "Addresses are listed in a table whose column headers are 'Name', 'Address' and 'Country', plus a fourth column whose header 'Action' is visually hidden.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 actions expect@31 to expect@33; DOM snapshot call@227, table thead",
+      "quote": "<TH scope=\"col\" class=\"govuk-table__header\">Name</TH><TH scope=\"col\" class=\"govuk-table__header\">Address</TH><TH scope=\"col\" class=\"govuk-table__header\">Country</TH><TH scope=\"col\" class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Action</SPAN></TH>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-017",
+      "statement": "The Name column shows the address's name or organisation name.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@34",
+      "quote": "getByRole('cell', { name: 'Stub Farm 1', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-018",
+      "statement": "The Address column shows address line 1, town or city and postcode joined into one line by commas.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@35; view.fit--cd84f shows the same address's fields",
+      "quote": "getByRole('cell', { name: '1 Stub Way, Stubton, ST1 1UB', exact: true })",
+      "confidence": "verbatim",
+      "note": "The seed address has no address line 2 or county, so the trace does not show whether those fields join the Address cell when present."
+    },
+    {
+      "id": "trace-ins-fit-p2-019",
+      "statement": "No trace shows whether address line 2 and county appear in the Address column when an address has them.",
+      "kind": "data",
+      "ref": "all list.fit traces: every listed address leaves address line 2 and county empty",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-020",
+      "statement": "The Country column shows the country's name, such as 'United Kingdom', not a code.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@36",
+      "quote": "getByRole('cell', { name: 'United Kingdom', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-021",
+      "statement": "Each row ends in a 'View' link to /address-book/{id}, whose accessible name adds the address's name in visually hidden text ('View Stub Farm 1').",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, tbody td:last-child; view.fit--4a433 action pw:api@31",
+      "quote": "<A class=\"govuk-link\" href=\"/address-book/000000000000000000000001\">View<SPAN class=\"govuk-visually-hidden\"> Stub Farm 1</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-022",
+      "statement": "The list shows only the addresses of the signed-in user's organisation: signing in as different organisations gives one address, 30 addresses or none.",
+      "kind": "rule",
+      "ref": "traces list.fit--3e618 (stub-org-1), list.fit--d7e93 (stub-org-paginated), list.fit--964e2 (stub-org-empty), action pw:api@29 in each",
+      "quote": "Navigate {\"url\":\"/auth/stub-sign-in?organisationId=stub-org-empty\"}",
+      "confidence": "inferred",
+      "note": "Inferred from each organisation id producing a different list; no trace signs in as two users of one organisation or shows another organisation's addresses being hidden."
+    },
+    {
+      "id": "trace-ins-fit-p2-023",
+      "statement": "The list shows 25 addresses per page: with 30 addresses page 1 says 'Showing 1-25 of 30' and holds 25 rows.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 action expect@31; DOM snapshot call@43 (25 rows, Stub Farm 1 to Stub Farm 25)",
+      "quote": "Showing 1-25 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-024",
+      "statement": "When there is more than one page, a GOV.UK pagination block appears under the table with numbered page links, each with an accessible name 'Page N', and the current page marked aria-current.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, nav.govuk-pagination",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book?page=2\" aria-label=\"Page 2\">2</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-025",
+      "statement": "On page 1 the pagination shows a 'Next' link (with visually hidden ' page') to /address-book?page=2 and no Previous link.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, div.govuk-pagination__next",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book?page=2\" rel=\"next\"><SPAN class=\"govuk-pagination__link-title\">Next<SPAN class=\"govuk-visually-hidden\"> page</SPAN></SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-026",
+      "statement": "Clicking 'Page 2' loads /address-book?page=2, which says 'Showing 26-30 of 30' and lists the remaining 5 addresses.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 actions pw:api@32, expect@33, expect@34; DOM snapshot call@47 (/address-book?page=2)",
+      "quote": "Showing 26-30 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-027",
+      "statement": "The page is chosen by a 'page' query parameter; the Page 1 link goes to /address-book without one.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@47, nav.govuk-pagination",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book\" aria-label=\"Page 1\">1</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-028",
+      "statement": "On the last page the pagination shows a 'Previous' link (with visually hidden ' page') to /address-book and no Next link.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@47, div.govuk-pagination__prev",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book\" rel=\"prev\">",
+      "confidence": "verbatim",
+      "note": "The link title text is 'Previous' followed by visually hidden ' page'."
+    },
+    {
+      "id": "trace-ins-fit-p2-029",
+      "statement": "With 25 or fewer addresses no pagination block is shown.",
+      "kind": "rule",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227 (one address: table, no nav.govuk-pagination)",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "inferred",
+      "note": "Inferred from the single-address page having no pagination; no trace shows exactly 25 addresses."
+    },
+    {
+      "id": "trace-ins-fit-p2-030",
+      "statement": "No trace shows the pagination with more than two pages, so whether it collapses page numbers with ellipses is unknown.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 (30 addresses, two pages only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-031",
+      "statement": "Addresses were listed in the order Stub Farm 1 to Stub Farm 30 (numeric, not plain alphabetical, since 2 comes before 10); the trace does not say what the ordering rule is.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 DOM snapshots call@43 and call@47, tbody rows",
+      "quote": "<TD class=\"govuk-table__cell\">Stub Farm 2</TD>",
+      "confidence": "inferred",
+      "note": "The seed ids also run 000…001 to 000…030 in the same order, so the list may be in id or creation order. No test asserts an order."
+    },
+    {
+      "id": "trace-ins-fit-p2-032",
+      "statement": "When the organisation has no addresses, the list page says 'You have no addresses yet.'",
+      "kind": "copy",
+      "ref": "trace list.fit--964e2 action expect@31; DOM snapshot call@211",
+      "quote": "You have no addresses yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-033",
+      "statement": "In the empty state the 'Add a new address' button-link is still shown, as the option to add one.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--964e2 action expect@32; DOM snapshot call@215",
+      "quote": "getByRole('button', { name: 'Add a new address' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-034",
+      "statement": "In the empty state no table and no 'Showing' results label are shown; the heading, intro line and search form still are.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--964e2 DOM snapshot call@211, main",
+      "quote": "<P class=\"govuk-body\">You have no addresses yet.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-035",
+      "statement": "The address book list page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace list.fit--49f4e action expect@42",
+      "quote": "Address book list has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim",
+      "note": "Checked with one address listed (stub-org-1); the paginated and empty states were not axe-checked."
+    },
+    {
+      "id": "trace-ins-fit-p2-036",
+      "statement": "Clicking a row's View link opens that address at /address-book/{id}, headed with the address's name.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--4a433 actions pw:api@31, expect@32, expect@33",
+      "quote": "getByRole('heading', { name: 'Stub Farm 1', level: 1 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-037",
+      "statement": "The view address page's title is the address's name followed by ' | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229",
+      "quote": "<TITLE>Stub Farm 1 | Import notification service</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-038",
+      "statement": "The view address page's heading is the address's name, as a large heading in a two-thirds column.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, main",
+      "quote": "<H1 class=\"govuk-heading-l\">Stub Farm 1</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-039",
+      "statement": "The view address page shows the address in a summary list of nine rows, in this order: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number'.",
+      "kind": "data",
+      "ref": "trace view.fit--cd84f action expect@31; DOM snapshot call@229, dl.govuk-summary-list",
+      "quote": "[Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County, Postcode or Zip code, Country, Email address, Phone number]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-040",
+      "statement": "Each summary list row shows the stored value against its label, for example '1 Stub Way', 'Stubton', 'ST1 1UB', 'United Kingdom', 'stub-farm-1@example.com' and '01234567890'.",
+      "kind": "data",
+      "ref": "trace view.fit--cd84f action expect@32",
+      "quote": "[Stub Farm 1, 1 Stub Way, , Stubton, , ST1 1UB, United Kingdom, stub-farm-1@example.com, 01234567890]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-041",
+      "statement": "An optional field with no value still has its row on the view page, with an empty value and no placeholder text (Address line 2 and County are blank).",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f action expect@32; DOM snapshot call@229, rows 3 and 5",
+      "quote": "<DT class=\"govuk-summary-list__key\">County</DT><DD class=\"govuk-summary-list__value\"></DD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-042",
+      "statement": "The view page's 'County' label carries no '(optional)' marker although the value is empty, while 'Address line 2 (optional)' does.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f action expect@31",
+      "quote": "Address line 2 (optional), Town or city, County",
+      "confidence": "verbatim",
+      "note": "Recorded as rendered; whether County is required is the add form's to say (part 1)."
+    },
+    {
+      "id": "trace-ins-fit-p2-043",
+      "statement": "The view page's summary list rows have no per-row Change links; the only actions are the Edit and Delete buttons below it.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, dl.govuk-summary-list (no govuk-summary-list__actions)",
+      "quote": "<DIV class=\"govuk-summary-list__row\"><DT class=\"govuk-summary-list__key\">Name or organisation name</DT><DD class=\"govuk-summary-list__value\">Stub Farm 1</DD></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-044",
+      "statement": "The view page offers an 'Edit' button-link to /address-book/{id}/edit.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--2e5d8 actions expect@31, expect@32; DOM snapshot in view.fit--cd84f call@229, div.govuk-button-group",
+      "quote": "<A href=\"/address-book/000000000000000000000001/edit\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Edit</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-045",
+      "statement": "The view page offers a 'Delete' button-link, styled as a warning button, to /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--2e5d8 actions expect@33, expect@34; DOM snapshot in view.fit--cd84f call@229",
+      "quote": "<A href=\"/address-book/000000000000000000000001/delete\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\">Delete</A>",
+      "confidence": "verbatim",
+      "note": "The delete confirmation page is part 3's."
+    },
+    {
+      "id": "trace-ins-fit-p2-046",
+      "statement": "The Edit and Delete buttons sit together in a GOV.UK button group below the summary list.",
+      "kind": "constraint",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229",
+      "quote": "<DIV class=\"govuk-button-group\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-047",
+      "statement": "The view page has a 'Back' link above the main content, linking to /address-book.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, a.govuk-back-link before main",
+      "quote": "<A href=\"/address-book\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-048",
+      "statement": "Clicking Back on the view page returns to /address-book, headed 'Address book'.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--4811a actions pw:api@31, expect@32, expect@33",
+      "quote": "getByRole('heading', { name: 'Address book', level: 1 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-049",
+      "statement": "The view address page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace view.fit--14089 action expect@42",
+      "quote": "Address details has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-050",
+      "statement": "The view page can be opened directly by its URL, /address-book/{id}, without going through the list first.",
+      "kind": "behaviour",
+      "ref": "traces view.fit--cd84f, view.fit--2e5d8, view.fit--4811a, view.fit--14089, action pw:api@30 in each",
+      "quote": "Navigate {\"url\":\"/address-book/000000000000000000000001\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-051",
+      "statement": "Address ids in the URLs are 24-character hexadecimal strings.",
+      "kind": "data",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, View link hrefs",
+      "quote": "/address-book/000000000000000000000030",
+      "confidence": "inferred",
+      "note": "Inferred from every id seen having 24 hex digits, the shape of a MongoDB ObjectId; the seed ids are synthetic."
+    },
+    {
+      "id": "trace-ins-fit-p2-052",
+      "statement": "No trace shows what happens when the view page is opened for an address id that does not exist, or that belongs to another organisation.",
+      "kind": "behaviour",
+      "ref": "view.fit.spec.js (no such test); all 5 view.fit traces open the seed address of the signed-in organisation",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-053",
+      "statement": "The list and view pages are rendered on the server: the browser only issues page GETs (/address-book, /address-book?page=2, /address-book/{id}) and static assets, so the address-book data service the frontend reads from is not visible in these traces.",
+      "kind": "integration",
+      "ref": "trace list.fit--d7e93 1-trace.network (GET /address-book 200, GET /address-book?page=2 200)",
+      "quote": "GET http://localhost:3002/address-book?page=2 200",
+      "confidence": "gap",
+      "note": "The backend call shape (path, paging parameters, organisation scoping) must come from another source."
+    },
+    {
+      "id": "trace-ins-fit-p2-054",
+      "statement": "The list and view pages use only govuk-frontend components: service navigation, input, button, table, pagination, summary list, back link and button group, with govuk-! spacing and width overrides.",
+      "kind": "constraint",
+      "ref": "traces list.fit--3e618 call@227, list.fit--d7e93 call@43, view.fit--cd84f call@229, class names in main",
+      "quote": "<NAV class=\"govuk-pagination\" aria-label=\"Pagination\">",
+      "confidence": "inferred",
+      "note": "Inferred from reading every class in each page's main: none fall outside govuk-*. The header carries one extra class, app-header, outside main."
+    },
+    {
+      "id": "trace-ins-fit-p3-001",
+      "statement": "A signed-in user reaches the edit address page at /address-book/{id}/edit for an address in their organisation's address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 action pw:api@30; network GET /address-book/000000000000000000000001/edit 200",
+      "quote": "/address-book/000000000000000000000001/edit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-002",
+      "statement": "The edit page's h1 heading is 'Edit address details'.",
+      "kind": "copy",
+      "ref": "trace edit 759a1 action expect@31; resources/152b104b.html h1",
+      "quote": "Edit address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-003",
+      "statement": "The edit page's browser title is 'Edit address details | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace edit 759a1 resources/152b104b.html title",
+      "quote": "Edit address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-004",
+      "statement": "The edit page has a Back link to the address's details page, /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 action expect@42; resources/152b104b.html govuk-back-link",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-005",
+      "statement": "The edit form shows the same nine fields as the add form, in this order: Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country, Phone number, Email address.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html form; actions expect@32 to expect@40",
+      "quote": "Name or organisation name / Address line 1 / Address line 2 (optional) / Town or city / County (optional) / Postcode or Zip code / Country / Phone number / Email address",
+      "confidence": "verbatim",
+      "note": "That they match the add form rests on the shared fieldLabels helper in address-form.js; the add page itself is another part's."
+    },
+    {
+      "id": "trace-ins-fit-p3-006",
+      "statement": "Every edit field is prefilled from the stored address: name, address line 1, town or city, postcode, country, phone and email carry the stored values, and the optional address line 2 and county are empty when nothing is stored.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 actions expect@32 to expect@40",
+      "quote": "getByLabel('Name or organisation name') expected \"Stub Farm 1\"; getByLabel('Address line 1') expected \"1 Stub Way\"; getByLabel('Town or city') expected \"Stubton\"; getByLabel('Postcode or Zip code') expected \"ST1 1UB\"; getByLabel('Country') expected \"GB\"; getByLabel('Phone number') expected \"01234567890\"; getByLabel('Email address') expected \"stub-farm-1@example.com\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-007",
+      "statement": "Name or organisation name is a text input with id and name 'name', two-thirds width, and no hint.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #name",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"name\" name=\"name\" type=\"text\" value=\"Stub Farm 1\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-008",
+      "statement": "Address line 1 is a text input named 'addressLine1', two-thirds width, with no hint.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #addressLine1",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"addressLine1\" name=\"addressLine1\" type=\"text\" value=\"1 Stub Way\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-009",
+      "statement": "Address line 2 is an optional text input named 'addressLine2', labelled 'Address line 2 (optional)'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-010",
+      "statement": "Town or city is a text input named 'townOrCity', two-thirds width.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #townOrCity",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"townOrCity\" name=\"townOrCity\" type=\"text\" value=\"Stubton\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-011",
+      "statement": "County is an optional text input named 'county', labelled 'County (optional)'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-012",
+      "statement": "Postcode is a text input named 'postcode', labelled 'Postcode or Zip code', at the fixed width of 10 characters.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #postcode",
+      "quote": "<input class=\"govuk-input govuk-input--width-10\" id=\"postcode\" name=\"postcode\" type=\"text\" value=\"ST1 1UB\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-013",
+      "statement": "Country is a select named 'countryCode' with a 'Select a country' placeholder and four countries: United Kingdom (GB), France (FR), Germany (DE) and Ireland (IE); the stored country is preselected.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #countryCode",
+      "quote": "<option value=\"\">Select a country</option> <option value=\"GB\" selected>United Kingdom</option> <option value=\"FR\">France</option> <option value=\"DE\">Germany</option> <option value=\"IE\">Ireland</option>",
+      "confidence": "verbatim",
+      "note": "Four options looks like a short list from stub or fixed data rather than a full country reference list; this trace does not show where the list comes from."
+    },
+    {
+      "id": "trace-ins-fit-p3-014",
+      "statement": "Phone number is a text input named 'phone' with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "trace edit 759a1 action expect@41; resources/152b104b.html #phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-015",
+      "statement": "Email address is a plain text input (type text, not email) named 'email', with autocomplete set to email.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html #email",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"email\" name=\"email\" type=\"text\" value=\"stub-farm-1@example.com\" autocomplete=\"email\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-016",
+      "statement": "No edit field carries an autocomplete attribute apart from Email address.",
+      "kind": "data",
+      "ref": "trace edit 759a1 resources/152b104b.html form",
+      "quote": "autocomplete=\"email\"",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered inputs: only #email has autocomplete; name, address, postcode and phone have none."
+    },
+    {
+      "id": "trace-ins-fit-p3-017",
+      "statement": "The edit form posts back to its own URL, has browser validation turned off (novalidate) and carries a hidden CSRF crumb field.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 resources/152b104b.html form",
+      "quote": "<form method=\"post\" novalidate> <input type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-018",
+      "statement": "The edit page's primary button is 'Save changes'.",
+      "kind": "copy",
+      "ref": "trace edit de4e5 action pw:api@33; resources/152b104b.html govuk-button-group",
+      "quote": "Save changes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-019",
+      "statement": "The edit page's Cancel control is a secondary submit button inside the form (name 'cancel', value 'true'), not a link, so Cancel posts the whole form.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 action pw:api@32; network POST /address-book/000000000000000000000001/edit form fields",
+      "quote": "<button type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-020",
+      "statement": "The edit page uses only GOV.UK Frontend components inside main: Back link, Input (with width-two-thirds and width-10 modifiers), Select, Hint, Button and Button group with a secondary button.",
+      "kind": "constraint",
+      "ref": "trace edit 759a1 resources/152b104b.html main classes",
+      "quote": "govuk-back-link govuk-heading-l govuk-form-group govuk-label govuk-input govuk-!-width-two-thirds govuk-input--width-10 govuk-select govuk-hint govuk-button-group govuk-button govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-021",
+      "statement": "The edit page shows the service navigation with 'Address book' marked as the current item.",
+      "kind": "behaviour",
+      "ref": "trace edit 759a1 resources/152b104b.html govuk-service-navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-022",
+      "statement": "Saving the edit form with a required field cleared is rejected: the server answers the POST with HTTP 400 and re-renders the edit page at the same /address-book/{id}/edit URL.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@33, expect@34; network POST /address-book/000000000000000000000001/edit 400",
+      "quote": "POST http://localhost:3002/address-book/000000000000000000000001/edit 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-023",
+      "statement": "Clearing Name or organisation name and saving shows the error 'Enter a name'.",
+      "kind": "rule",
+      "ref": "trace edit af334 actions pw:api@32, expect@35; resources/4be36055.html #name-error",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-024",
+      "statement": "A rejected save keeps every value the user typed, not the stored address: the town edited to 'Fort William' stays 'Fort William' and the cleared name stays empty.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@31, expect@38, expect@39; resources/4be36055.html #townOrCity",
+      "quote": "<input class=\"govuk-input govuk-!-width-two-thirds\" id=\"townOrCity\" name=\"townOrCity\" type=\"text\" value=\"Fort William\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-025",
+      "statement": "In the error state the browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace edit af334 resources/4be36055.html title",
+      "quote": "Error: Edit address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-026",
+      "statement": "In the error state an error summary titled 'There is a problem' appears above the h1, inside a role=alert container.",
+      "kind": "copy",
+      "ref": "trace edit af334 action expect@35; resources/4be36055.html govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-027",
+      "statement": "Each error summary entry links to the field in error by its id (#name, #email), and following the link moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 actions pw:api@36, expect@37; trace edit e9676 actions pw:api@35, expect@36",
+      "quote": "<a href=\"#name\">Enter a name</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-028",
+      "statement": "The field in error shows its message inline above the input, prefixed by visually hidden 'Error:', with the error modifiers on the form group and input and the input described by the message.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 resources/4be36055.html #name-error",
+      "quote": "<p id=\"name-error\" class=\"govuk-error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Enter a name </p> <input class=\"govuk-input govuk-!-width-two-thirds govuk-input--error\" id=\"name\" name=\"name\" type=\"text\" value=\"\" aria-describedby=\"name-error\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-029",
+      "statement": "Saving the edit form with a malformed email shows 'Enter an email address in the correct format', re-renders the edit page with HTTP 400 and keeps the typed value 'not-an-email'.",
+      "kind": "rule",
+      "ref": "trace edit e9676 actions pw:api@31, pw:api@32, expect@34, expect@37; resources/713f64f6.html #email-error; network POST 400",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-030",
+      "statement": "When only the email is invalid, the error summary lists only that one error and the other fields keep their stored values.",
+      "kind": "behaviour",
+      "ref": "trace edit e9676 resources/713f64f6.html govuk-error-summary__list and form",
+      "quote": "<a href=\"#email\">Enter an email address in the correct format</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-031",
+      "statement": "The edit page's Back link and its Save changes and Cancel buttons are unchanged in the error state.",
+      "kind": "behaviour",
+      "ref": "trace edit af334 resources/4be36055.html back link and govuk-button-group",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-032",
+      "statement": "The edit page's other validation errors were not driven: clearing address line 1, town or city, postcode, country, phone or email, and over-length values, are never submitted on the edit page, so whether edit shows the same messages as add is not shown.",
+      "kind": "rule",
+      "ref": "edit.fit.spec.js; address-form.js requiredValidations and maxLengthValidations",
+      "quote": "",
+      "confidence": "gap",
+      "note": "address-form.js lists the add form's messages (Enter address line 1, Enter a town or city, Enter a postcode, Enter a country, Enter a telephone number, Enter an email address, and the 'must be N characters or fewer' set); only Enter a name and the email format error are exercised against edit."
+    },
+    {
+      "id": "trace-ins-fit-p3-033",
+      "statement": "The edit form submits every field as a URL-encoded form: crumb, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email.",
+      "kind": "data",
+      "ref": "trace edit de4e5 network POST /address-book/000000000000000000000001/edit postData",
+      "quote": "application/x-www-form-urlencoded: name=Glen Tanar Estate, addressLine1=1 Stub Way, addressLine2=, townOrCity=Aboyne, county=, postcode=ST1 1UB, countryCode=GB, phone=01234567890, email=stub-farm-1@example.com",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-034",
+      "statement": "Saving valid changes redirects (HTTP 302) to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 actions pw:api@33, expect@34; network POST /address-book/000000000000000000000001/edit 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/edit 302 location: /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-035",
+      "statement": "After saving, the address book shows a success notification banner titled 'Success' with the heading '<name> updated in your address book', using the new name.",
+      "kind": "copy",
+      "ref": "trace edit de4e5 action expect@35; resources/22f20bd3.html #address-book-success-banner",
+      "quote": "Glen Tanar Estate updated in your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-036",
+      "statement": "The success banner is the GOV.UK success notification banner with role=alert and id address-book-success-banner.",
+      "kind": "constraint",
+      "ref": "trace edit de4e5 resources/22f20bd3.html govuk-notification-banner",
+      "quote": "<div class=\"govuk-notification-banner govuk-notification-banner--success\" role=\"alert\" aria-labelledby=\"govuk-notification-banner-title\" data-module=\"govuk-notification-banner\" id=\"address-book-success-banner\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-037",
+      "statement": "After saving, the address book list shows the edited values: the row's name is the new name and its address shows the new town, and no row has the old name.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 actions expect@36, expect@37; resources/22f20bd3.html govuk-table",
+      "quote": "<td class=\"govuk-table__cell\">Glen Tanar Estate</td> <td class=\"govuk-table__cell\">1 Stub Way, Aboyne, ST1 1UB</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-038",
+      "statement": "Saving an edit updates the existing address in place rather than adding a new one: the list still holds one address, with the same id.",
+      "kind": "behaviour",
+      "ref": "trace edit de4e5 resources/22f20bd3.html results label and View link",
+      "quote": "Showing 1-1 of 1 ... href=\"/address-book/000000000000000000000001\"",
+      "confidence": "inferred",
+      "note": "Inferred from the count staying at 1 and the View link keeping id 000000000000000000000001."
+    },
+    {
+      "id": "trace-ins-fit-p3-039",
+      "statement": "Cancel on the edit page redirects (HTTP 302) to the address book list at /address-book, not to the address details page the Back link points at.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 actions pw:api@32, expect@33; network POST /address-book/000000000000000000000001/edit 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/edit 302 location: /address-book",
+      "confidence": "verbatim",
+      "note": "Back goes to /address-book/{id}; Cancel goes to /address-book. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-ins-fit-p3-040",
+      "statement": "Cancel on the edit page discards the typed changes: the address keeps its stored name and the typed name appears nowhere on the address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 actions pw:api@31, expect@34, expect@35; resources/fa8e5dea.html govuk-table",
+      "quote": "<td class=\"govuk-table__cell\">Stub Farm 1</td>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-041",
+      "statement": "Cancel on the edit page shows no success banner on the address book.",
+      "kind": "behaviour",
+      "ref": "trace edit 36446 resources/fa8e5dea.html main",
+      "quote": "<h1 class=\"govuk-heading-xl\">Address book</h1>",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered list page having no notification banner; the spec does not assert it."
+    },
+    {
+      "id": "trace-ins-fit-p3-042",
+      "statement": "Edit Cancel skips validation: the cancel POST carries the edited form fields plus cancel=true, and the server redirects without saving them.",
+      "kind": "rule",
+      "ref": "trace edit 36446 network POST /address-book/000000000000000000000001/edit postData",
+      "quote": "name=Should not be saved ... cancel=true",
+      "confidence": "inferred",
+      "note": "Inferred: the cancel button submits the whole form and the server answers 302 rather than validating or saving. Cancel was only driven with valid-looking data, so cancel with invalid data is not shown."
+    },
+    {
+      "id": "trace-ins-fit-p3-043",
+      "statement": "The edit page has no serious or critical axe violations against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace edit dafdd action expect@42; axe.js TAGS",
+      "quote": "Edit address has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-044",
+      "statement": "The edit page's validation error state has no serious or critical axe violations; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace edit dd003 actions expect@33, expect@45",
+      "quote": "Edit address validation error has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-045",
+      "statement": "A signed-in user reaches the delete address confirmation at /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd action pw:api@30; network GET /address-book/000000000000000000000001/delete 200",
+      "quote": "/address-book/000000000000000000000001/delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-046",
+      "statement": "The delete confirmation's h1 heading is 'Delete address'.",
+      "kind": "copy",
+      "ref": "trace delete 967cd action expect@31; resources/aa74722c.html h1",
+      "quote": "Delete address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-047",
+      "statement": "The delete confirmation's browser title is 'Delete address | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace delete 967cd resources/aa74722c.html title",
+      "quote": "Delete address | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-048",
+      "statement": "The delete confirmation asks 'Are you sure you want to delete <name> from your address book?', naming the address in bold.",
+      "kind": "copy",
+      "ref": "trace delete 967cd action expect@32; resources/aa74722c.html govuk-body",
+      "quote": "Are you sure you want to delete <strong>Stub Farm 1</strong> from your address book?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-049",
+      "statement": "The delete confirmation has a Back link to the address's details page, /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd action expect@33; resources/aa74722c.html govuk-back-link",
+      "quote": "<a href=\"/address-book/000000000000000000000001\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-050",
+      "statement": "The delete confirmation's primary button is a warning button labelled 'Yes, delete this address'.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action pw:api@31; resources/aa74722c.html govuk-button--warning",
+      "quote": "<button type=\"submit\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\"> Yes, delete this address </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-051",
+      "statement": "The delete confirmation's Cancel is a secondary submit button (name 'cancel', value 'true') in the same POST form as the delete button, which carries a CSRF crumb.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d action pw:api@40; resources/aa74722c.html form; network POST /address-book/000000000000000000000001/delete form fields",
+      "quote": "<button type=\"submit\" value=\"true\" name=\"cancel\" class=\"govuk-button govuk-button--secondary\" data-module=\"govuk-button\"> Cancel </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-052",
+      "statement": "The delete confirmation uses only GOV.UK Frontend components inside main: Back link, body text, and a Button group with a warning and a secondary button; it has no radios or yes/no question.",
+      "kind": "constraint",
+      "ref": "trace delete 967cd resources/aa74722c.html main classes",
+      "quote": "govuk-back-link govuk-heading-l govuk-body govuk-button-group govuk-button govuk-button--warning govuk-button--secondary",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-053",
+      "statement": "Cancel on the delete confirmation redirects (HTTP 302) to the address's details page, /address-book/{id}, which shows the address's name as its h1.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d actions pw:api@40, expect@41, expect@42; network POST /address-book/000000000000000000000001/delete 302 Location /address-book/000000000000000000000001",
+      "quote": "POST /address-book/000000000000000000000001/delete 302 location: /address-book/000000000000000000000001",
+      "confidence": "verbatim",
+      "note": "Delete Cancel returns to the details page, whereas edit Cancel returns to the list. Recorded, not reconciled."
+    },
+    {
+      "id": "trace-ins-fit-p3-054",
+      "statement": "Cancel on the delete confirmation deletes nothing: the address is still listed on the address book afterwards.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d actions pw:api@43, expect@44",
+      "quote": "getByRole('link', { name: 'View Stub Farm 1' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-055",
+      "statement": "Cancel on the delete confirmation shows no banner on the details page or on the address book.",
+      "kind": "behaviour",
+      "ref": "trace delete d5c0d resources/e179597b.html and resources/0d00cbd8.html",
+      "quote": "<h1 class=\"govuk-heading-l\">Stub Farm 1</h1>",
+      "confidence": "inferred",
+      "note": "Inferred from neither rendered page carrying a notification banner; the spec does not assert it."
+    },
+    {
+      "id": "trace-ins-fit-p3-056",
+      "statement": "Confirming the delete redirects (HTTP 302) to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace delete fe6bc actions pw:api@31, expect@32; network POST /address-book/000000000000000000000001/delete 302 Location /address-book",
+      "quote": "POST /address-book/000000000000000000000001/delete 302 location: /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-057",
+      "statement": "After a delete, the address book shows a success notification banner titled 'Success' with the heading '<name> deleted from your address book'.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action expect@33; resources/41e0792b.html #address-book-success-banner",
+      "quote": "Stub Farm 1 deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-058",
+      "statement": "Confirming the delete removes the address from the address book: it is no longer listed.",
+      "kind": "behaviour",
+      "ref": "trace delete fe6bc action expect@34",
+      "quote": "getByRole('link', { name: 'View Stub Farm 1' }) toHaveCount 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-059",
+      "statement": "Deleting the only address leaves the address book on its empty state, 'You have no addresses yet.', shown under the success banner.",
+      "kind": "copy",
+      "ref": "trace delete fe6bc action expect@35; resources/41e0792b.html main",
+      "quote": "You have no addresses yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-060",
+      "statement": "The delete confirmation has no serious or critical axe violations against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA; the run found no violations of any impact.",
+      "kind": "non-functional",
+      "ref": "trace delete 7d4d4 action expect@42; axe.js TAGS",
+      "quote": "Delete address has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-061",
+      "statement": "Edit and delete are scoped to the signed-in user's organisation: each test signs in as its own organisation id through the stub sign-in, and the same address id 000000000000000000000001 resolves in every organisation's own store.",
+      "kind": "rule",
+      "ref": "every part 3 trace action pw:api@29 Navigate /auth/stub-sign-in?organisationId=...; edit.fit.spec.js lines 114-116",
+      "quote": "Saving mutates the stub's per-organisation store, which is shared across parallel workers, so this test needs an organisation of its own.",
+      "confidence": "inferred",
+      "note": "Inferred from the spec comments and per-test organisation ids; the browser never sees the store."
+    },
+    {
+      "id": "trace-ins-fit-p3-062",
+      "statement": "The address-book API calls behind edit and delete (reading the stored address, updating it, deleting it) happen server side and never appear in the browser's network log, so their shape is not shown.",
+      "kind": "integration",
+      "ref": "network logs of traces de4e5 and fe6bc: only frontend routes /address-book/{id}/edit, /address-book/{id}/delete and /address-book",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-063",
+      "statement": "No trace opens edit or delete for an address id that does not exist or belongs to another organisation, so the not-found or forbidden behaviour is not shown.",
+      "kind": "behaviour",
+      "ref": "edit.fit.spec.js, delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-064",
+      "statement": "No trace shows what happens when the save or delete fails downstream (the address-book service erroring or unavailable).",
+      "kind": "behaviour",
+      "ref": "edit.fit.spec.js, delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-065",
+      "statement": "No trace reaches the edit or delete page by its Edit or Delete control on the address details page: every test navigates straight to the URL, so the entry points themselves are not shown in this slice.",
+      "kind": "behaviour",
+      "ref": "every part 3 trace action pw:api@30 Navigate",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Part 2's view traces cover the Edit and Delete controls on the details page."
+    },
+    {
+      "id": "trace-ins-fit-p3-066",
+      "statement": "No trace changes the Country select or the optional address line 2 and county on the edit page, so editing those fields and clearing the country are not shown.",
+      "kind": "data",
+      "ref": "edit.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-067",
+      "statement": "No trace shows that deleting an address affects any notification that uses it, or any warning about addresses in use.",
+      "kind": "rule",
+      "ref": "delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p3-068",
+      "statement": "Confirming the delete posts only the CSRF crumb: the delete form carries no other field.",
+      "kind": "data",
+      "ref": "trace delete fe6bc action pw:api@31; network POST /address-book/000000000000000000000001/delete postData params",
+      "quote": "application/x-www-form-urlencoded params: crumb=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-069",
+      "statement": "The delete confirmation shows the service navigation with 'Address book' marked as the current item.",
+      "kind": "behaviour",
+      "ref": "trace delete 967cd resources/aa74722c.html govuk-service-navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p3-070",
+      "statement": "The edit and delete pages use the h1 size govuk-heading-l, inside a two-thirds grid column.",
+      "kind": "constraint",
+      "ref": "trace edit 759a1 resources/152b104b.html main; trace delete 967cd resources/aa74722c.html main",
+      "quote": "<div class=\"govuk-grid-column-two-thirds\"> ... <h1 class=\"govuk-heading-l\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-001",
+      "statement": "Signing in (in the fit stack, through the stub sign-in route with an organisation id) redirects the trader straight to the dashboard at the service root.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) 1-trace.network: GET /auth/stub-sign-in?organisationId=stub-org-1",
+      "quote": "GET http://localhost:3002/auth/stub-sign-in?organisationId=stub-org-1 302 -> http://localhost:3002/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-002",
+      "statement": "The traces never show the real Defra ID sign-in pages: every trace signs in through the stub route that sets the organisation id directly, so the real sign-in journey (Defra ID redirect, organisation choice, return) is not evidenced here.",
+      "kind": "integration",
+      "ref": "all 7 traces, first goto call (e.g. t7 call@11)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-003",
+      "statement": "The dashboard page's title is 'Dashboard | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 after snapshot, TITLE",
+      "quote": "Dashboard | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-004",
+      "statement": "The dashboard's main heading is 'Dashboard', an extra-large GOV.UK heading.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@261 (expect heading 'Dashboard'); call@259 snapshot H1.govuk-heading-xl",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-005",
+      "statement": "The dashboard has no caption, intro paragraph or button to start a new notification: under the heading come only the search form, the sort form, the results count and the table.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, MAIN",
+      "quote": "Dashboard ... Search by notification reference ... Sort by ... Showing 1-3 of 3",
+      "confidence": "inferred",
+      "note": "Read from the whole rendered main element: nothing else is in it. Whether a start-notification entry point belongs here is for the reconciler."
+    },
+    {
+      "id": "trace-ins-fit-p4-006",
+      "statement": "The header carries a GOV.UK service navigation whose service name is 'Import notification service', linking to the service root.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, SECTION.govuk-service-navigation",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-007",
+      "statement": "The service navigation's first item is 'Dashboard', linking to /, and is marked as the current item (aria-current, active modifier) while the trader is on the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, LI.govuk-service-navigation__item--active",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-008",
+      "statement": "The service navigation's second item is 'Address book', linking to /address-book.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-009",
+      "statement": "The service navigation's third item is 'Manage account', whose link goes nowhere yet (href '#'), so the account-management destination is not built.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Manage account",
+      "confidence": "verbatim",
+      "note": "The href is a literal '#' placeholder."
+    },
+    {
+      "id": "trace-ins-fit-p4-010",
+      "statement": "The service navigation's fourth item is 'Log out', linking to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, service navigation list",
+      "quote": "Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-011",
+      "statement": "No trace follows 'Log out', so what signing out does and where it lands is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 7 traces: no click on 'Log out'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-012",
+      "statement": "Every page shows an Alpha phase banner inviting feedback by email to APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, .govuk-phase-banner",
+      "quote": "Alpha ... This is a new service. Help us improve it and give your feedback by email.",
+      "confidence": "verbatim",
+      "note": "The feedback link is a mailto:APHAServiceDesk@apha.gov.uk link."
+    },
+    {
+      "id": "trace-ins-fit-p4-013",
+      "statement": "The dashboard has a search field labelled 'Search by notification reference' (a search-type text input named referenceNumber, two-thirds width).",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@291 fill by label; t1 call@259 snapshot LABEL for=referenceNumber",
+      "quote": "Search by notification reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-014",
+      "statement": "The search field is submitted with a primary button labelled 'Search'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@293 click button 'Search'",
+      "quote": "Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-015",
+      "statement": "Search is a plain GET form to the dashboard that also carries the current sort, so a search lands on /?sort=arrivalDate%2Cdesc&referenceNumber=<value>.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 frameUrl; call@259 snapshot FORM method=get action=/ with hidden sort",
+      "quote": "http://localhost:3002/?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-016",
+      "statement": "The dashboard has a 'Sort by' select with four options: 'Arrival date (newest first)', 'Arrival date (oldest first)', 'Last updated (newest first)' and 'Last updated (oldest first)'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, SELECT#sort",
+      "quote": "Sort by: Arrival date (newest first) | Arrival date (oldest first) | Last updated (newest first) | Last updated (oldest first)",
+      "confidence": "verbatim",
+      "note": "Option values: arrivalDate,desc / arrivalDate,asc / lastUpdated,desc / lastUpdated,asc."
+    },
+    {
+      "id": "trace-ins-fit-p4-017",
+      "statement": "The default sort is 'Arrival date (newest first)'.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, OPTION selected",
+      "quote": "Arrival date (newest first)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-018",
+      "statement": "The sort is applied with a separate secondary button labelled 'Update sort', in its own GET form that carries the current search reference, so sorting works without JavaScript and keeps the search.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, second FORM with hidden referenceNumber and BUTTON.govuk-button--secondary",
+      "quote": "Update sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-019",
+      "statement": "No trace changes the sort, so the order under the other three sort options is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 6 dashboard traces: no selectOption on 'Sort by'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-020",
+      "statement": "Above the table, a results count reads 'Showing 1-3 of 3' for the default list.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, P[data-testid=dashboard-results-label]",
+      "quote": "Showing 1-3 of 3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-021",
+      "statement": "The notifications are shown in a GOV.UK table with a visually hidden caption 'Notifications'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TABLE.govuk-table CAPTION",
+      "quote": "Notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-022",
+      "statement": "The table's columns are 'Reference number', 'Status', 'Origin country', 'Commodity', 'Arrival date' and a final action column whose header 'Action' is visually hidden.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, THEAD",
+      "quote": "Reference number | Status | Origin country | Commodity | Arrival date | Action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-023",
+      "statement": "Each row's reference number is the notification's GBN-AG reference, such as GBN-AG-26-000001.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@263 to call@267 (expect cells GBN-AG-26-000001/2/3)",
+      "quote": "GBN-AG-26-000001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-024",
+      "statement": "Notifications of every status appear together in the one list: the stub data's DRAFT, SUBMITTED and AMEND notifications all show.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@269, call@271, call@273",
+      "quote": "SUBMITTED / DRAFT / AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-025",
+      "statement": "The status is shown as the raw upper-case status code in a plain table cell ('DRAFT', 'SUBMITTED', 'AMEND'), not as a GOV.UK tag and not as plain-English words.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TD.govuk-table__cell under Status",
+      "quote": "DRAFT",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-026",
+      "statement": "Only DRAFT, SUBMITTED and AMEND statuses are in the stub data, so how any other status (for example cancelled, rejected or validated) renders on the dashboard is not evidenced.",
+      "kind": "data",
+      "ref": "all 6 dashboard traces: table rows",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-027",
+      "statement": "A soft-deleted notification (stub GBN-AG-26-000004) never appears on the dashboard.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@275 (expect cell GBN-AG-26-000004 to have count 0)",
+      "quote": "GBN-AG-26-000004 to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-028",
+      "statement": "The 'Origin country' column shows the country of origin by name, such as Ireland, France or Germany.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY",
+      "quote": "Ireland / France / Germany",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-029",
+      "statement": "The 'Commodity' column shows the commodity name ('Cattle' on the submitted notification) and is left blank on the draft and amend notifications in the stub data.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY Commodity cells",
+      "quote": "Cattle",
+      "confidence": "verbatim",
+      "note": "Blank cells render as an empty td, with no placeholder text."
+    },
+    {
+      "id": "trace-ins-fit-p4-030",
+      "statement": "The 'Arrival date' column shows the date as day, short month and year, such as '12 Sep 2026'.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY Arrival date cells",
+      "quote": "12 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-031",
+      "statement": "Under the default sort the rows run newest arrival date first: 12 Sep 2026, then 10 Sep 2026, then 8 Sep 2026.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, TBODY row order",
+      "quote": "GBN-AG-26-000002 ... 12 Sep 2026; GBN-AG-26-000001 ... 10 Sep 2026; GBN-AG-26-000003 ... 8 Sep 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-032",
+      "statement": "Each row ends with a 'View' link whose accessible name adds the reference in visually hidden text ('View GBN-AG-26-000001').",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 link /View.*GBN-AG-26-000001/; t1 call@259 snapshot A.govuk-link",
+      "quote": "View<span class=\"govuk-visually-hidden\"> GBN-AG-26-000001</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-033",
+      "statement": "A submitted notification's 'View' link opens the read-only notification-view page of the live-animals journey: /live-animals/notifications/<reference>/notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 expect href",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-034",
+      "statement": "A draft notification's 'View' link opens the live-animals journey hub for that notification (/live-animals/notifications/<reference>), not notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-2eeb5 (t4) call@249 expect href",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000002",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-035",
+      "statement": "An AMEND notification's 'View' link also opens the journey hub (/live-animals/notifications/<reference>), like a draft, rather than notification-view.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, GBN-AG-26-000003 row link",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000003",
+      "confidence": "verbatim",
+      "note": "Rendered in the DOM; no test asserts it."
+    },
+    {
+      "id": "trace-ins-fit-p4-036",
+      "statement": "The dashboard's 'View' links leave the INS front door for the separate live-animals frontend, on a different origin, through absolute URLs (INS on :3002, live animals on :3000 in the fit stack).",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot frameUrl vs link hrefs",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-037",
+      "statement": "Searching by a complete reference number shows only the matching notification, with the count 'Showing 1-1 of 1'.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295, call@297; call@295 snapshot results label",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-038",
+      "statement": "After a search, the search field keeps the reference the trader entered.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, INPUT#referenceNumber value",
+      "quote": "value=\"GBN-AG-26-000001\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-039",
+      "statement": "After a search, a 'Clear search' link back to the unfiltered dashboard (/) appears under the results count.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@295 snapshot, A[data-testid=dashboard-clear-search]",
+      "quote": "Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-040",
+      "statement": "A search that matches no notification shows the message 'No notifications found'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-7e579 (t6) call@265; call@265 snapshot P[data-testid=dashboard-no-results]",
+      "quote": "No notifications found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-041",
+      "statement": "In the no-results state the sort form, the results count and the table are not shown; the search form stays, keeping the entered reference, and a 'Clear search' link to / follows the message.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7e579 (t6) call@265 snapshot, MAIN",
+      "quote": "No notifications found ... Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-042",
+      "statement": "Only an exact, complete reference is searched; whether a partial reference, different letter case or surrounding spaces match is not evidenced.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-21d7c (t5) call@291 and dashboard-dashboard.fit-da-7e579 (t6) call@261",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-043",
+      "statement": "No trace submits an empty search, so what an empty or malformed reference does is not evidenced.",
+      "kind": "rule",
+      "ref": "all 6 dashboard traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-044",
+      "statement": "The dashboard only ever shows three notifications in these traces, so its page size and pagination are not evidenced, although the 'Showing 1-3 of 3' count implies the list is paged.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, results label",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-045",
+      "statement": "No trace shows a trader with no notifications at all, so the dashboard's empty state (as opposed to a search with no results) is not evidenced.",
+      "kind": "behaviour",
+      "ref": "all 7 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p4-046",
+      "statement": "A trader signed in as a freshly generated organisation (the smoke trace's stub-org-smoke-<uuid>) sees the same three notifications as stub-org-1, so in this stack the dashboard list is not scoped to the signed-in organisation, or the stub returns the same notifications for every organisation.",
+      "kind": "rule",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@11 organisationId and call@13 snapshot TBODY",
+      "quote": "Showing 1-3 of 3",
+      "confidence": "inferred",
+      "note": "Inferred from the identical rows under two different organisation ids. The traces cannot tell a stub that ignores the organisation from a real lack of scoping."
+    },
+    {
+      "id": "trace-ins-fit-p4-047",
+      "statement": "The browser makes no data calls for the dashboard: the network log shows only the page GET and static assets, so the notification list is fetched server-side and the backend it reads from is not visible in the traces.",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) 1-trace.network",
+      "quote": "GET http://localhost:3002/ 200",
+      "confidence": "gap",
+      "note": "The read model behind the list (expected to be the INS backend's aggregate) is not observable from the browser."
+    },
+    {
+      "id": "trace-ins-fit-p4-048",
+      "statement": "The dashboard has no serious or critical axe accessibility violations against the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rule tags.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-62c16 (t2) call@237 to call@255 (axe run, test passed)",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-049",
+      "statement": "The dashboard is built entirely from GOV.UK Frontend components and classes: service navigation, phase banner, text input, select, button (primary and secondary), table and links, with spacing overrides only; no custom component appears in main.",
+      "kind": "constraint",
+      "ref": "trace dashboard-dashboard.fit-da-7c8cd (t1) call@259 snapshot, class list of MAIN and header",
+      "quote": "govuk-heading-xl, govuk-form-group, govuk-label, govuk-input govuk-!-width-two-thirds, govuk-button, govuk-select, govuk-button--secondary, govuk-body, govuk-table",
+      "confidence": "verbatim",
+      "note": "The header also carries one custom class, app-header, alongside govuk-header."
+    },
+    {
+      "id": "trace-ins-fit-p4-050",
+      "statement": "From the dashboard the trader reaches the address book by the 'Address book' service navigation link, landing on /address-book with the heading 'Address book' and the title 'Address book | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@17, call@19, call@21",
+      "quote": "Address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-051",
+      "statement": "From the address book list, 'Add a new address' (a link styled as a button) opens /address-book/add, titled 'Add address details | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@23, call@25; call@23 snapshot TITLE",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-052",
+      "statement": "Saving a valid address with 'Save and continue' posts the form and returns the trader to the address book list, which shows a success banner '<name> added to your address book' and the new entry.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@45 to call@49; 1-trace.network POST /address-book/add 302 -> /address-book",
+      "quote": "Highland Livestock Ltd added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-053",
+      "statement": "The entry's 'View <name>' link opens the address at /address-book/<id>, headed with the name and titled '<name> | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@51, call@53; call@51 snapshot TITLE",
+      "quote": "Highland Livestock Ltd | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-054",
+      "statement": "On the address, 'Delete' opens a confirmation page at /address-book/<id>/delete, titled 'Delete address | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@55, call@57; call@55 snapshot TITLE",
+      "quote": "Delete address | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-055",
+      "statement": "Confirming with 'Yes, delete this address' posts the deletion and returns the trader to the address book list, with a success banner '<name> deleted from your address book' and the entry gone.",
+      "kind": "behaviour",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@59 to call@65; 1-trace.network POST /address-book/<id>/delete 302 -> /address-book",
+      "quote": "Highland Livestock Ltd deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-056",
+      "statement": "A freshly generated organisation's address book already holds an entry 'Stub Farm 1' (1 Stub Way, Stubton, ST1 1UB) before the trader adds anything, so the address book stub seeds or shares that entry across organisations.",
+      "kind": "data",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@47 and call@61 after snapshots, TBODY",
+      "quote": "Stub Farm 1 | 1 Stub Way, Stubton, ST1 1UB | United Kingdom",
+      "confidence": "inferred",
+      "note": "Inferred from the list after add showing 'Showing 1-2 of 2' for an organisation id generated for this run."
+    },
+    {
+      "id": "trace-ins-fit-p4-057",
+      "statement": "The address book list, after the add-view-delete run, has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace smoke.fit-a-trader-signs-i-62e11 (t7) call@67 to call@85 (axe run, test passed)",
+      "quote": "address book after the smoke run",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p4-058",
+      "statement": "No trace follows a dashboard 'View' link into the live-animals journey, so the pages it lands on (notification-view, journey hub) are not evidenced by this source.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-44f5e (t3) call@255 and dashboard-dashboard.fit-da-2eeb5 (t4) call@249 assert href only",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

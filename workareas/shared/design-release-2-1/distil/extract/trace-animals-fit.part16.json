@@ -1,0 +1,745 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 16, Arrival details and port of entry. Read: arrival-transit.fit.spec.js (lines 1-700 and 1000-1060, the helpers and the 25 tests in scope) and all 25 trace zips the partition names, each already unpacked in the part16 working folder (a1-a7, s1, t1-t2, v1-v11, x1-x4; folder-to-test mapping taken from each trace's 0-trace.trace title). The tim trace CLI could not open these zips (TraceVersionError: trace written by a newer Playwright than the viewer tim installs), so every trace was mined directly from its unpacked trace and network files with jq: every action of every trace (before/after events with selectors, filled values and expectations), the full DOM snapshot of the arrival page after navigation (a1 call@3803, a7 call@4177 without JavaScript), the error-state snapshot of every validation trace (v1, v7, v8, v9, v10, t1, t2, x4), the type-ahead menu snapshots (a3, a4, a6), the POST bodies in the network logs (s1, x2) and the axe results (x1-x4). Refs read 'trace <hash> action <callId>', where the hash is the 5-character id in the trace folder name (a1=ee136, a2=e1726, a3=95002, a4=a03eb, a5=a99ed, a6=36dd8, a7=e4248, v1=dac5d, v2=3b375, v3=105ac, v4=f8fa6, v5=f9607, v6=22eae, v7=69e67, v8=5ed04, v9=d029e, v10=339a9, v11=4f6af, t1=9c626, t2=83c7f, s1=c021c, x1=f1d7f, x2=5dbf9, x3=9359e, x4=af6b6). Every trace starts with the same set-up (stub sign-in, start a notification, origin France, commodity Felis catus, 1 animal, back to the overview), which belongs to earlier parts and is not claimed here. Pages in this slice, in journey order: (1) the overview task link 'Arrival details'; (2) Arrival details (/live-animals/notifications/{ref}/port-of-entry), always reached, caption 'Transport and arrival', with five questions: arrival date at port of entry (text input enhanced by the MoJ date picker), port of entry (native select enhanced into an accessible-autocomplete type-ahead; a plain select without JavaScript), means of transport to the port of entry (select), transport identification and transport document reference (text inputs); its error states for an impossible date, a date outside the allowed window, an out-of-list port, an out-of-list means and an over-58-character reference; (3) the onward route to 'Which countries will the consignment travel through?' (transit-countries) when the means is Road Vehicle, whose own content belongs to part 17 and is claimed here only as far as the four accessibility traces exercise it. Trace date: 7 October 2026 (axe timestamp), which fixes the date window seen (30/9/2026 to 7/4/2027). Not reached by any trace in this part: routing for Airplane, Railway or Vessel, 'Save and return to overview', 'Cancel and return to overview', and required-field errors on a blank submit; these are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p16-001",
+      "statement": "The overview carries a link named 'Arrival details' that opens the arrival details page at /live-animals/notifications/{reference}/port-of-entry.",
+      "kind": "behaviour",
+      "ref": "trace ee136 action call@3801 (navigates to .../GBN-AG-26-MRTKH3/port-of-entry)",
+      "quote": "Arrival details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-002",
+      "statement": "The arrival details page heading (H1, govuk-heading-l) is 'Arrival details'.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803",
+      "quote": "Arrival details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-003",
+      "statement": "The arrival details page carries the section caption 'Transport and arrival' (govuk-caption-l) above its heading.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803",
+      "quote": "Transport and arrival",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-004",
+      "statement": "The browser page title of the arrival details page is 'Arrival details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (TITLE element)",
+      "quote": "Arrival details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-005",
+      "statement": "When the arrival page shows validation errors, the page title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace dac5d action call@4071 (TITLE element); same in 69e67, 5ed04, d029e, 339a9, 9c626, 83c7f",
+      "quote": "Error: Arrival details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-006",
+      "statement": "Above the caption, the arrival page shows a journey strip with a blue 'Draft' status tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (div.app-journey-strip > strong.govuk-tag.govuk-tag--blue, span.govuk-body.govuk-!-font-weight-bold)",
+      "quote": "Draft GBN-AG-26-MRTKH3",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a service-specific class wrapping standard govuk-tag and govuk-body elements."
+    },
+    {
+      "id": "trace-animals-fit-p16-007",
+      "statement": "The arrival page has a 'Back' link (govuk-back-link) whose target is the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace ee136 action call@3803 (a.govuk-back-link href=/live-animals/notifications/GBN-AG-26-MRTKH3)",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-008",
+      "statement": "Clicking the arrival page's back link returns the user to the page headed 'Overview'.",
+      "kind": "behaviour",
+      "ref": "trace e1726 actions call@3411-call@3413; arrival-transit.fit.spec.js:272",
+      "quote": "arrival back link returns to the overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-009",
+      "statement": "The arrival form posts back to the same URL and is marked novalidate, so validation is server-side only.",
+      "kind": "constraint",
+      "ref": "trace ee136 action call@3803 (form method=post action='' novalidate)",
+      "quote": "<form method=post action= novalidate=true>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-010",
+      "statement": "The arrival form carries a hidden CSRF field named 'crumb' with a per-session token value.",
+      "kind": "constraint",
+      "ref": "trace ee136 action call@3803; trace c021c POST /port-of-entry body",
+      "quote": "name=crumb value=[REDACTED]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-011",
+      "statement": "The arrival form carries a hidden 'concurrencyToken' field, value 0 on a fresh notification, which is posted with the answers; this reads as an optimistic-concurrency guard.",
+      "kind": "constraint",
+      "ref": "trace ee136 action call@3803; trace c021c POST /port-of-entry body",
+      "quote": "{\"name\": \"concurrencyToken\", \"value\": \"0\"}",
+      "confidence": "inferred",
+      "note": "The guard's behaviour on a stale token is not exercised in this part."
+    },
+    {
+      "id": "trace-animals-fit-p16-012",
+      "statement": "The arrival page asks for the arrival date in a single text input labelled 'Arrival date at port of entry' (field name arrivalDateAtPort, autocomplete off, width-10), not a three-part GOV.UK date input.",
+      "kind": "data",
+      "ref": "trace ee136 action call@3803 (input#arrivalDateAtPort type=text class=govuk-input moj-js-datepicker-input govuk-input--width-10)",
+      "quote": "Arrival date at port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-013",
+      "statement": "The arrival date label is a small bold label (govuk-label--s), not the page heading.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (label for=arrivalDateAtPort class=govuk-label govuk-label--s)",
+      "quote": "<label for=arrivalDateAtPort class=govuk-label govuk-label--s>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-014",
+      "statement": "The arrival date hint reads 'The expected date of arrival at the port of entry. For example, 7/10/2026' and is the field's accessible description; the example date is the trace's own date (today).",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3805 (toHaveAccessibleDescription)",
+      "quote": "The expected date of arrival at the port of entry. For example, 7/10/2026",
+      "confidence": "verbatim",
+      "note": "The spec says the example is computed (dateWindow.exampleText), not hard-coded, so it moves with the date."
+    },
+    {
+      "id": "trace-animals-fit-p16-015",
+      "statement": "The arrival date is entered as day/month/year with no leading zeros (for example 7/11/2026).",
+      "kind": "data",
+      "ref": "trace c021c action call@4727 and POST /port-of-entry body arrivalDateAtPort",
+      "quote": "7/11/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-016",
+      "statement": "With JavaScript, the arrival date input is enhanced by the MoJ date picker: a toggle button whose accessible name is 'Choose date' sits beside the input and opens a calendar dialog.",
+      "kind": "behaviour",
+      "ref": "trace ee136 action call@3803 (button.moj-datepicker__toggle aria-haspopup=dialog aria-controls=datepicker-arrivalDateAtPort); trace 3b375 action call@3919",
+      "quote": "Choose date",
+      "confidence": "verbatim",
+      "note": "moj-datepicker is the MoJ Frontend date picker, outside govuk-frontend."
+    },
+    {
+      "id": "trace-animals-fit-p16-017",
+      "statement": "The calendar is a modal dialog (role dialog, aria-modal) titled by its month and year (for example 'October 2026'), with buttons 'Previous year', 'Previous month', 'Next month' and 'Next year'.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (div#datepicker-arrivalDateAtPort role=dialog aria-modal=true)",
+      "quote": "Previous year Previous month October 2026 Next month Next year",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-018",
+      "statement": "The calendar grid has column headers Mon to Sun (full day names for screen readers) and one button per day whose accessible name is the full date, for example 'Wednesday 30 September 2026'.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (table.moj-datepicker__calendar)",
+      "quote": "MonMonday TueTuesday ... Wednesday 30 September 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-019",
+      "statement": "The calendar has a primary 'Select' button and a secondary 'Close' button.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (button.govuk-button.moj-js-datepicker-ok, button.govuk-button--secondary.moj-js-datepicker-cancel)",
+      "quote": "Select / Close",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-020",
+      "statement": "Days before the allowed window are shown in the calendar as excluded, with the accessible name prefixed 'Excluded date, '.",
+      "kind": "rule",
+      "ref": "trace ee136 action call@3803 (Excluded date, Monday 28 September 2026; Excluded date, Tuesday 29 September 2026); trace f9607 action call@3511",
+      "quote": "Excluded date, Tuesday 29 September 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-021",
+      "statement": "The first day of the window (30 September 2026 on a 7 October 2026 trace) is selectable in the calendar, and picking it fills the input with '30/9/2026'.",
+      "kind": "behaviour",
+      "ref": "trace f9607 actions call@3505-call@3515",
+      "quote": "30/9/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-022",
+      "statement": "The allowed arrival date window runs from 7 days before today to 6 months after today: on a 7 October 2026 trace the bounds are 30/9/2026 and 7/4/2027.",
+      "kind": "rule",
+      "ref": "trace d029e action call@4623; trace 339a9 action call@4293; axe timestamp 2026-10-07 in trace f1d7f",
+      "quote": "Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "inferred",
+      "note": "The offsets are inferred from the bounds and the trace date; the spec names DAYS_BEFORE and arrivalWindow() but its constants are not in the trace."
+    },
+    {
+      "id": "trace-animals-fit-p16-023",
+      "statement": "The open calendar sits in the flow of the page: opening it pushes the port of entry question down so that the question starts below the calendar's bottom edge rather than being covered.",
+      "kind": "behaviour",
+      "ref": "trace 3b375 actions call@3915-call@3927; arrival-transit.fit.spec.js:391",
+      "quote": "the open calendar sits in the flow of the page and pushes the port question below it",
+      "confidence": "verbatim",
+      "note": "The positions are measured by element evaluate calls the trace does not record; the test passed, so the assertion held."
+    },
+    {
+      "id": "trace-animals-fit-p16-024",
+      "statement": "The calendar toggle button is styled as a blue GOV.UK button with a white icon: background rgb(29, 112, 184), text and icon colour white, no bottom border, and the darker blue (rgb(15, 56, 92)) bottom shadow.",
+      "kind": "non-functional",
+      "ref": "trace 105ac actions call@4165-call@4189; arrival-transit.fit.spec.js:412",
+      "quote": "the button that opens the calendar is a blue button with a white icon",
+      "confidence": "verbatim",
+      "note": "Computed-style values come from the spec's assertions; the trace records the waits and the hover but not the evaluate results. The test passed."
+    },
+    {
+      "id": "trace-animals-fit-p16-025",
+      "statement": "Hovering the calendar toggle darkens its background to rgb(22, 84, 138) and keeps the icon white.",
+      "kind": "non-functional",
+      "ref": "trace 105ac action call@4183 (hover); arrival-transit.fit.spec.js:428-435",
+      "quote": "Hovering darkens the blue rather than handing hover back to the component's grey default.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-026",
+      "statement": "When the calendar toggle has keyboard focus it shows the GOV.UK focus indicator: yellow background rgb(255, 221, 0) with near-black text rgb(11, 12, 12).",
+      "kind": "non-functional",
+      "ref": "trace f8fa6 actions call@4523-call@4529; arrival-transit.fit.spec.js:438",
+      "quote": "the button that opens the calendar keeps the GOV.UK focus indicator",
+      "confidence": "verbatim",
+      "note": "The spec notes the MoJ component drops the browser focus ring, so the service restates the GOV.UK focus rule."
+    },
+    {
+      "id": "trace-animals-fit-p16-027",
+      "statement": "The date field's form group carries a service-specific class app-date-picker alongside the MoJ moj-datepicker wrapper; this is outside govuk-frontend and is used to restyle the MoJ toggle in GOV.UK blue and focus colours.",
+      "kind": "constraint",
+      "ref": "trace ee136 action call@3803 (div.govuk-form-group.app-date-picker inside div.moj-datepicker)",
+      "quote": "govuk-form-group app-date-picker",
+      "confidence": "inferred",
+      "note": "That app-date-picker carries the toggle restyling is inferred from the colour tests; a standard GOV.UK date input with no picker would replace the whole component."
+    },
+    {
+      "id": "trace-animals-fit-p16-028",
+      "statement": "The worked example in the arrival date hint (today's date, 7/10/2026) is itself accepted: submitting it raises no error, moves on to transit countries, and is shown again when the page is revisited.",
+      "kind": "rule",
+      "ref": "trace 22eae actions call@3900-call@3910",
+      "quote": "7/10/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-029",
+      "statement": "An impossible arrival date (31/2/2026) is rejected with the message 'Enter a real arrival date' in the error summary and inline.",
+      "kind": "rule",
+      "ref": "trace dac5d action call@4071",
+      "quote": "Enter a real arrival date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-030",
+      "statement": "The inline arrival date error reads 'Error: Enter a real arrival date' (visually hidden 'Error:' prefix), with id arrivalDateAtPort-error added to the input's aria-describedby.",
+      "kind": "copy",
+      "ref": "trace dac5d action call@4071 (p#arrivalDateAtPort-error; input aria-describedby=arrivalDateAtPort-hint arrivalDateAtPort-error)",
+      "quote": "Error: Enter a real arrival date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-031",
+      "statement": "The error summary is titled 'There is a problem' and each entry links to the field in error (for example #arrivalDateAtPort).",
+      "kind": "copy",
+      "ref": "trace dac5d action call@4071 (div.govuk-error-summary, h2.govuk-error-summary__title)",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-032",
+      "statement": "Following an arrival date error link moves focus to the date input, and the invalid value the user typed is kept in it.",
+      "kind": "behaviour",
+      "ref": "trace dac5d actions call@4073-call@4077",
+      "quote": "31/2/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-033",
+      "statement": "When one arrival field fails validation, the other answers on the page are kept: the chosen port remains selected after an arrival date error.",
+      "kind": "behaviour",
+      "ref": "trace dac5d action call@4079 (select#portOfEntry-select has value GB ABD)",
+      "quote": "GB ABD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-034",
+      "statement": "A typed arrival date one day before the window (29/9/2026) is rejected with 'Arrival date at port of entry must be between 30/9/2026 and 7/4/2027'.",
+      "kind": "rule",
+      "ref": "trace d029e actions call@4619-call@4623",
+      "quote": "Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-035",
+      "statement": "A typed arrival date one day after the window (8/4/2027) is rejected with the same message, 'Arrival date at port of entry must be between 30/9/2026 and 7/4/2027'.",
+      "kind": "rule",
+      "ref": "trace 339a9 actions call@4289-call@4293",
+      "quote": "Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-036",
+      "statement": "The out-of-window message names the window's bounds as dates in the same d/m/yyyy format the user types.",
+      "kind": "copy",
+      "ref": "trace d029e action call@4623 (inline p#arrivalDateAtPort-error)",
+      "quote": "Error: Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-037",
+      "statement": "After an out-of-window date error, the error link focuses the date input, the typed date is kept, and the port, means of transport and transport identification answers are kept.",
+      "kind": "behaviour",
+      "ref": "trace d029e actions call@4625-call@4635; trace 339a9 actions call@4295-call@4305",
+      "quote": "8/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-038",
+      "statement": "Without JavaScript the arrival date stays a plain editable text input (type text) with the same label and hint, and no 'Choose date' button is rendered.",
+      "kind": "behaviour",
+      "ref": "trace 4f6af actions call@4163-call@4165; trace e4248 action call@4177 (no moj-datepicker__toggle in the no-JS DOM)",
+      "quote": "the arrival date stays an editable text input that saves an in-window date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-039",
+      "statement": "Without JavaScript, a typed in-window arrival date (7/11/2026) saves, moves on to transit countries, and is shown again when the page is revisited.",
+      "kind": "behaviour",
+      "ref": "trace 4f6af actions call@4167-call@4187",
+      "quote": "7/11/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-040",
+      "statement": "The port of entry question is labelled 'Port of entry' (small bold label).",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (label for=portOfEntry class=govuk-label govuk-label--s)",
+      "quote": "Port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-041",
+      "statement": "The port of entry hint reads 'Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.'",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3807",
+      "quote": "Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-042",
+      "statement": "The port of entry is a native select (name portOfEntry) whose placeholder option is 'Select port of entry' with an empty value.",
+      "kind": "data",
+      "ref": "trace ee136 action call@3803 (select#portOfEntry-select, first option value='')",
+      "quote": "Select port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-043",
+      "statement": "The port of entry list holds 78 GB ports and airports from reference data, each labelled 'name (code)' with the code as the submitted value, in alphabetical order by name; it starts Aberdeen Airport (GB DYC), Aberdeen Harbour (GB ABD), Avonmouth Docks (GB AVO), Ayr Port (GB AYR), Barking Port (GB BKG), Birmingham International Airport (GB BHM), Cambridge Airport (GB CBG), Chatham Docks (GB CTM), Coventry Airport (GB CVT), Dartford, Thames Europort (GB DFD), Dundee Port (GB DUN), East Midlands Airport (GB EMA), Edinburgh Airport (GB EDI), Farnborough Airport (GB FBO), Felixstowe Port (GB FXT), Fishguard Port (GB FIS), Folkestone (GB FOL), Fraserburgh Harbour (GB FRB), Gatwick Airport (GB LGW), Glasgow Airport (GB GLW) and ends Tilbury Port (GB TILL).",
+      "kind": "data",
+      "ref": "trace ee136 action call@3823 (evalOnSelectorAll select#portOfEntry-select option, 78 entries after the placeholder)",
+      "quote": "Aberdeen Airport (GB DYC) | Aberdeen Harbour (GB ABD) | Avonmouth Docks (GB AVO) | ... | Tilbury 2 Ro-Ro Terminal (GB TILR) | Tilbury Port (GB TILL)",
+      "confidence": "verbatim",
+      "note": "Truncated to the first twenty; treat as reference data. The test asserts the list equals the captured fixture portsOfEntry (services/_capture/fixtures.js)."
+    },
+    {
+      "id": "trace-animals-fit-p16-044",
+      "statement": "The rendered port list shows data-quality oddities carried straight from reference data: 'Teestort (GB TEE)', 'Port of Sheerness (GBSHS)' beside 'Port of Sheerness (GB SHS)', 'Pembroke Port' twice (GB PED and GB PEM), 'Portsmouth  Port (GB PME)' with a double space, and 'TILBURY (GB TIL)' in capitals beside 'Tilbury Port (GB TILL)'.",
+      "kind": "data",
+      "ref": "trace ee136 action call@3823",
+      "quote": "Pembroke Port (GB PED) | Pembroke Port (GB PEM) | ... | Port of Sheerness (GBSHS) | Port of Sheerness (GB SHS) | Portsmouth  Port (GB PME) | ... | TILBURY (GB TIL) | Teesside International Airport (GB MME) | Teestort (GB TEE)",
+      "confidence": "verbatim",
+      "note": "Recorded as observed; whether these are errors is for the reconciler."
+    },
+    {
+      "id": "trace-animals-fit-p16-045",
+      "statement": "With JavaScript, the port select is enhanced into a type-ahead combobox (accessible-autocomplete): the visible text input takes the id portOfEntry and the label, and the native select is hidden, renamed portOfEntry-select, and still submits the port code.",
+      "kind": "behaviour",
+      "ref": "trace ee136 action call@3803 (input#portOfEntry role=combobox class=autocomplete__input autocomplete__input--show-all-values; select#portOfEntry-select name=portOfEntry)",
+      "quote": "autocomplete__input autocomplete__input--show-all-values",
+      "confidence": "verbatim",
+      "note": "accessible-autocomplete (alphagov) is outside govuk-frontend but is the GOV.UK-recommended enhancement of a select."
+    },
+    {
+      "id": "trace-animals-fit-p16-046",
+      "statement": "The port type-ahead carries the assistive hint 'When autocomplete results are available use up and down arrows to review and enter to select.  Touch device users, explore by touch or with swipe gestures.'",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (portOfEntry__assistiveHint)",
+      "quote": "When autocomplete results are available use up and down arrows to review and enter to select.  Touch device users, explore by touch or with swipe gestures.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-047",
+      "statement": "Clicking into the port type-ahead before typing opens the menu with every port: 78 options, including 'Port of Dover (GB DVR)'.",
+      "kind": "behaviour",
+      "ref": "trace 95002 actions call@4069-call@4073 (toHaveCount 78)",
+      "quote": "Port of Dover (GB DVR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-048",
+      "statement": "The port type-ahead filters case-insensitively on part of the port name: typing 'DOV' shows Port of Dover (GB DVR), Port of Dover (Eastern) (GB DVRE) and Port of Dover (Western) (GB DVRW).",
+      "kind": "behaviour",
+      "ref": "trace a03eb actions call@4425-call@4427 (menu snapshot after call@4425)",
+      "quote": "Port of Dover (GB DVR) | Port of Dover (Eastern) (GB DVRE) | Port of Dover (Western) (GB DVRW)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-049",
+      "statement": "The port type-ahead also matches on the port code, case-insensitively: typing 'gb dvr' shows Port of Dover (GB DVR) and its Eastern and Western variants.",
+      "kind": "behaviour",
+      "ref": "trace a03eb actions call@4429-call@4431 (menu snapshot after call@4429)",
+      "quote": "gb dvr",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-050",
+      "statement": "Choosing a port in the type-ahead shows its name and code in the field ('Port of Dover (GB DVR)') and sets the hidden select to the code 'GB DVR', which is what is submitted.",
+      "kind": "behaviour",
+      "ref": "trace a99ed actions call@4501-call@4509",
+      "quote": "Port of Dover (GB DVR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-051",
+      "statement": "When nothing matches what is typed in the port type-ahead ('zzzzzz'), the menu shows a single disabled option reading 'No ports found'.",
+      "kind": "copy",
+      "ref": "trace 36dd8 actions call@3788-call@3790 (li.autocomplete__option--no-results aria-disabled=true)",
+      "quote": "No ports found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-052",
+      "statement": "Without JavaScript, the port of entry stays a native select with id portOfEntry, linked to its hint, and the user chooses a port by its option.",
+      "kind": "behaviour",
+      "ref": "trace e4248 action call@4177 (select name=portOfEntry id=portOfEntry aria-describedby=portOfEntry-hint); action call@4165",
+      "quote": "<select name=portOfEntry id=portOfEntry class=govuk-select aria-describedby=portOfEntry-hint>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-053",
+      "statement": "Without JavaScript, the chosen port code (GB ABD) submits, the user moves on to transit countries, and the port is shown selected when the page is revisited.",
+      "kind": "behaviour",
+      "ref": "trace e4248 actions call@4165-call@4179",
+      "quote": "GB ABD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-054",
+      "statement": "A port value that is not in the list is rejected with 'Select a valid option', linked from the error summary to #portOfEntry.",
+      "kind": "rule",
+      "ref": "trace 69e67 action call@4045",
+      "quote": "Select a valid option",
+      "confidence": "verbatim",
+      "note": "Reached by injecting an INVALID option into the hidden select before submit; it is a server-side guard against a tampered post."
+    },
+    {
+      "id": "trace-animals-fit-p16-055",
+      "statement": "After an out-of-list port error, the inline error reads 'Error: Select a valid option' (id portOfEntry-error), the hidden select carries govuk-select--error, and the type-ahead input is cleared.",
+      "kind": "copy",
+      "ref": "trace 69e67 action call@4045 (p#portOfEntry-error; select.govuk-select--error; input#portOfEntry value '')",
+      "quote": "Error: Select a valid option",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-056",
+      "statement": "Following the port error link focuses the type-ahead input, which is empty, while the transport identification and means of transport answers are kept.",
+      "kind": "behaviour",
+      "ref": "trace 69e67 actions call@4047-call@4055",
+      "quote": "FR-892-LK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-057",
+      "statement": "The means of transport question is labelled 'Means of transport to the port of entry' and is a select (name meansOfTransport) with no hint.",
+      "kind": "data",
+      "ref": "trace ee136 actions call@3803, call@3809",
+      "quote": "Means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-058",
+      "statement": "The means of transport select opens on the placeholder 'Select one' with nothing chosen.",
+      "kind": "data",
+      "ref": "trace ee136 action call@3811 (toHaveValue '')",
+      "quote": "Select one",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-059",
+      "statement": "The means of transport options are, in order, Airplane (AIRPLANE), Railway (RAILWAY), Road Vehicle (ROAD_VEHICLE) and Vessel (VESSEL).",
+      "kind": "data",
+      "ref": "trace ee136 action call@3813 and the select in snapshot call@3803",
+      "quote": "Select one, Airplane, Railway, Road Vehicle, Vessel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-060",
+      "statement": "A means of transport value that is not in the list is rejected with 'Select a valid option', linked to #meansOfTransport, with inline error 'Error: Select a valid option' (id meansOfTransport-error).",
+      "kind": "rule",
+      "ref": "trace 5ed04 action call@4307",
+      "quote": "Select a valid option",
+      "confidence": "verbatim",
+      "note": "Reached by injecting an INVALID option before submit."
+    },
+    {
+      "id": "trace-animals-fit-p16-061",
+      "statement": "Following the means error link focuses the means of transport select, which is reset to the placeholder, while the chosen port is kept.",
+      "kind": "behaviour",
+      "ref": "trace 5ed04 actions call@4309-call@4315",
+      "quote": "GB ABD",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-062",
+      "statement": "The out-of-list port and means messages are the same generic text, 'Select a valid option', not a field-specific message.",
+      "kind": "copy",
+      "ref": "trace 69e67 action call@4045; trace 5ed04 action call@4307",
+      "quote": "Select a valid option",
+      "confidence": "inferred",
+      "note": "The spec takes it from validatorDefaults.oneOf, a shared default."
+    },
+    {
+      "id": "trace-animals-fit-p16-063",
+      "statement": "The transport identification question is a text input labelled 'Transport identification' (name transportIdentification, half width).",
+      "kind": "data",
+      "ref": "trace ee136 action call@3803 (input#transportIdentification class=govuk-input govuk-!-width-one-half)",
+      "quote": "Transport identification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-064",
+      "statement": "The transport identification hint is a lead-in sentence followed by a bulleted list of four alternatives: flight number; train number; road vehicle registration number; vessel name (for ferries, also the road vehicle registration number).",
+      "kind": "copy",
+      "ref": "trace ee136 actions call@3817, call@3819 (div#transportIdentification-hint p, ul.govuk-list--bullet li)",
+      "quote": "To identify the means of transport, enter (one of the following): flight number / train number / road vehicle registration number / vessel name (for ferries, also the road vehicle registration number)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-065",
+      "statement": "The transport identification input is described by its hint (aria-describedby transportIdentification-hint).",
+      "kind": "non-functional",
+      "ref": "trace ee136 action call@3815",
+      "quote": "aria-describedby=transportIdentification-hint",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-066",
+      "statement": "Transport identification longer than 58 characters is rejected with 'Transport identification must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "trace 9c626 actions call@3625-call@3629 (59 characters typed)",
+      "quote": "Transport identification must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-067",
+      "statement": "After a transport identification length error, the inline error reads 'Error: Transport identification must be 58 characters or less', the error link focuses the field, the over-long value is kept, and the chosen port is kept.",
+      "kind": "behaviour",
+      "ref": "trace 9c626 actions call@3629-call@3637",
+      "quote": "Error: Transport identification must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-068",
+      "statement": "The transport document reference question is a text input labelled 'Transport document reference' (name transportDocumentReference, half width).",
+      "kind": "data",
+      "ref": "trace ee136 action call@3803 (input#transportDocumentReference)",
+      "quote": "Transport document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-069",
+      "statement": "The transport document reference hint reads 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.' and is the field's accessible description.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3821",
+      "quote": "Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-070",
+      "statement": "A transport document reference longer than 58 characters is rejected with 'Transport document reference must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "trace 83c7f actions call@4641-call@4645 (59 characters typed)",
+      "quote": "Transport document reference must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-071",
+      "statement": "After a transport document reference length error, the inline error reads 'Error: Transport document reference must be 58 characters or less', the error link focuses the field, the over-long value is kept, and the chosen port is kept.",
+      "kind": "behaviour",
+      "ref": "trace 83c7f actions call@4645-call@4653",
+      "quote": "Error: Transport document reference must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-072",
+      "statement": "The arrival page's primary button is 'Save and continue'.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (button.govuk-button type=submit)",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-073",
+      "statement": "The arrival page has a secondary submit button 'Save and return to overview', which posts exit=hub.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (button.govuk-button--secondary name=exit value=hub)",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-074",
+      "statement": "The arrival page has a link 'Cancel and return to overview' that goes to the notification overview.",
+      "kind": "copy",
+      "ref": "trace ee136 action call@3803 (a.govuk-link href=/live-animals/notifications/GBN-AG-26-MRTKH3)",
+      "quote": "Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-075",
+      "statement": "Saving the arrival page posts arrivalDateAtPort, portOfEntry (the port code), meansOfTransport (the option code), transportIdentification and transportDocumentReference as a form to /port-of-entry, and the server answers with a redirect.",
+      "kind": "integration",
+      "ref": "trace c021c network: POST /live-animals/notifications/GBN-AG-26-P5HPJ9/port-of-entry -> 302",
+      "quote": "arrivalDateAtPort=7/11/2026, portOfEntry=GB ABD, meansOfTransport=ROAD_VEHICLE, transportIdentification=FR-892-LK, transportDocumentReference=CMR-2026-884721",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-076",
+      "statement": "When the means of transport is Road Vehicle, 'Save and continue' takes the user to the transit countries page, headed 'Which countries will the consignment travel through?'.",
+      "kind": "rule",
+      "ref": "trace c021c actions call@4745-call@4747; network 302 to /transit-countries",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-077",
+      "statement": "Every arrival answer persists: revisiting the arrival page after saving shows the same date (7/11/2026), port (GB ABD), means (ROAD_VEHICLE), transport identification (FR-892-LK) and transport document reference (CMR-2026-884721).",
+      "kind": "behaviour",
+      "ref": "trace c021c actions call@4753-call@4765",
+      "quote": "7/11/2026 / GB ABD / ROAD_VEHICLE / FR-892-LK / CMR-2026-884721",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-078",
+      "statement": "The transit countries page's back link returns to the overview, not to the arrival page.",
+      "kind": "behaviour",
+      "ref": "trace c021c actions call@4749-call@4751",
+      "quote": "Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-079",
+      "statement": "The arrival page saves with blank answers: submitting only a means of transport (Road Vehicle), with date, port, identification and document reference all empty, raises no error and moves on to transit countries.",
+      "kind": "rule",
+      "ref": "trace 5dbf9 actions call@4617-call@4621; network POST /port-of-entry with empty arrivalDateAtPort, portOfEntry, transportIdentification, transportDocumentReference -> 302 /transit-countries",
+      "quote": "{\"name\":\"arrivalDateAtPort\",\"value\":\"\"},{\"name\":\"portOfEntry\",\"value\":\"\"},{\"name\":\"meansOfTransport\",\"value\":\"ROAD_VEHICLE\"}",
+      "confidence": "verbatim",
+      "note": "So the page has no required-field validation on save; completeness must be checked elsewhere (for example at submit)."
+    },
+    {
+      "id": "trace-animals-fit-p16-080",
+      "statement": "Validation messages on the arrival page are styled with the standard error classes: the form group gets govuk-form-group--error, the input govuk-input--error and the select govuk-select--error.",
+      "kind": "constraint",
+      "ref": "trace dac5d action call@4071; trace 69e67 action call@4045; trace 5ed04 action call@4307",
+      "quote": "govuk-form-group govuk-form-group--error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-081",
+      "statement": "Apart from the MoJ date picker (moj-datepicker classes), the accessible-autocomplete type-ahead (autocomplete__ classes) and two layout hooks (app-journey-strip, app-date-picker), the arrival page uses only govuk-frontend components: label, hint, input, select, list, button, button group, link, tag, error summary and error message.",
+      "kind": "constraint",
+      "ref": "trace ee136 action call@3803 (class inventory of main)",
+      "quote": "app-date-picker app-journey-strip autocomplete__input ... govuk-button govuk-button--secondary govuk-button-group ... moj-datepicker moj-datepicker__toggle",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-082",
+      "statement": "The arrival page with the date picker calendar open has no accessibility violations at all under axe-core 4.13.0 run against WCAG 2.0, 2.1 and 2.2 A and AA tags (the test requires no serious or critical ones).",
+      "kind": "non-functional",
+      "ref": "trace f1d7f actions call@3857-call@3879 (finishRun violations [])",
+      "quote": "arrival page with date picker has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-083",
+      "statement": "The transit countries page, reached from the arrival page with Road Vehicle, has no axe violations under the same WCAG A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace 5dbf9 actions call@4623-call@4641 (finishRun violations [])",
+      "quote": "transit page has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p16-084",
+      "statement": "The transit countries page with one country added (France, chosen through the 'Enter a country' type-ahead and the 'Add country' button, giving a table cell 'France' and a 'Remove France' button) has no axe violations.",
+      "kind": "non-functional",
+      "ref": "trace 9359e actions call@4236-call@4270 (finishRun violations [])",
+      "quote": "Remove France",
+      "confidence": "verbatim",
+      "note": "The transit page's own content belongs to part 17; claimed here only as the accessibility test exercises it."
+    },
+    {
+      "id": "trace-animals-fit-p16-085",
+      "statement": "Pressing 'Add country' on the transit countries page with nothing chosen shows the error 'Enter a country to add' (linked to #transitedCountry), and that error state has no axe violations.",
+      "kind": "non-functional",
+      "ref": "trace af6b6 actions call@4517-call@4539 (error summary at call@4519; finishRun violations [])",
+      "quote": "Enter a country to add",
+      "confidence": "verbatim",
+      "note": "The message itself is part 17's to claim in full; recorded here because this part's trace renders it."
+    },
+    {
+      "id": "trace-animals-fit-p16-086",
+      "statement": "No trace in this part shows where Airplane, Railway or Vessel lead after 'Save and continue'; only the Road Vehicle route (to transit countries) is exercised.",
+      "kind": "rule",
+      "ref": "all 25 traces: meansOfTransport is only ever ROAD_VEHICLE",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p16-087",
+      "statement": "No trace presses 'Save and return to overview' or follows 'Cancel and return to overview' on the arrival page, so what each does (save or discard, and where it lands) is not shown.",
+      "kind": "behaviour",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p16-088",
+      "statement": "No trace drives a blank means of transport, or a date in another format (for example 07/11/2026, 2026-11-07 or text), so whether those are accepted, and with what message, is not shown.",
+      "kind": "rule",
+      "ref": "all 25 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p16-089",
+      "statement": "The traces show only the browser's form posts to the frontend; where the port list comes from (a reference-data service or a captured fixture) and how the arrival answers are persisted behind the frontend are server-side calls the traces do not record.",
+      "kind": "integration",
+      "ref": "trace c021c network log (only same-origin page GETs and form POSTs)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec compares the port list with portsOfEntry from services/_capture/fixtures.js, which suggests captured reference data."
+    },
+    {
+      "id": "trace-animals-fit-p16-090",
+      "statement": "No trace shows the arrival page reached in a state where the overview task is marked complete or in progress after saving, so the effect of the arrival answers on the overview's task status is not shown in this part.",
+      "kind": "behaviour",
+      "ref": "trace c021c action call@4751 (Overview reached, but its task status not asserted)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

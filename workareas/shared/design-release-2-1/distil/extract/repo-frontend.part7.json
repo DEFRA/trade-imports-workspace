@@ -1,0 +1,942 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 7 (Import reason and additional details) read repos/trade-imports-animals-frontend at main 4c2119da in full for two journey pages of the live-animals linear journey. (1) features/import-reason/: page.js (id and slug import-reason), evaluation.js (binds reasonForImport, purposeInInternalMarket, destinationCountry, portOfExit and exitDate to their obligations), controller.js (GET/POST, render, reference-data selects, recoverable save, redirect to the next target), validate.js (reveal map per reason, required and stale-answer rules, payload/answer mapping), template.njk (visually hidden legend, one radio per reason with a conditional reveal for internal market, transhipment, transit and temporary admission horses), copy/copy.en.js and copy/copy.cy.js (English and machine-draft Welsh), and import-reason.fit.spec.js (20 tests in three describe blocks: feature, reveals, reveal accessibility). (2) features/additional-details/: page.js, evaluation.js (binds containsUnweanedAnimals and animalsCertifiedFor), controller.js, validate.js (unweaned gate derived from commodity lines), template.njk (certified-for radios, unweaned yes/no radios behind the gate), copy/copy.en.js, copy/copy.cy.js and additional-details.fit.spec.js (9 tests in four describe blocks: rendering, unweaned commodity gate, validation, persistence and accessibility). To claim option labels and the default validator message verbatim it also read the reference stubs the pages render from: src/server/app/services/import-reason-purpose/ (index.js, stub.js), src/server/app/services/certification-purposes/ (index.js, stub.js), the validatorDefaults block of src/server/app/shared/copy.en.js, oneOf in src/server/app/lib/validate/validators.js, and UNWEANED_ANIMAL_COMMODITIES in sets/live-animals/services/commodities/stub.js. Claims cover each page's route, back link, caption slot, heading, every field, option and hint, required or optional, every validation message verbatim, every conditional reveal, what is saved, where save leads and the save-failure path, the Welsh copy, and each fit test. Section caption text, task-list rows, flow order and obligation status belong to parts 1 and 2 and are only referenced here.",
+  "claims": [
+    {
+      "id": "repo-frontend-p7-001",
+      "statement": "The import reason page is served at /notifications/{notificationId}/import-reason under the live-animals journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/page.js:1; import-reason.fit.spec.js:60",
+      "quote": "export const importReasonPage = { id: 'import-reason', slug: 'import-reason' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-002",
+      "statement": "The import reason page's back link returns the user to the notification hub (task list).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:64",
+      "quote": "backLink: hubPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-003",
+      "statement": "The import reason page's h1 heading is 'Main reason for import'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:2; template.njk:12",
+      "quote": "title: 'Main reason for import',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-004",
+      "statement": "The import reason page's browser title is built from the same page title, 'Main reason for import'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:63",
+      "quote": "...kit.base(copy.title, {",
+      "confidence": "inferred",
+      "note": "kit.base composes the document title; the exact suffix is part 1's (shared/kit.js)."
+    },
+    {
+      "id": "repo-frontend-p7-005",
+      "statement": "The import reason page shows a section caption above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:11",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "verbatim",
+      "note": "The caption text comes from flow/section-captions (part 1)."
+    },
+    {
+      "id": "repo-frontend-p7-006",
+      "statement": "The reason question 'What is the main reason for importing the animals?' is the radio group's legend, visually hidden so only a screen reader meets it, because the page is headed by its name.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:3; template.njk:101-111",
+      "quote": "legend: 'What is the main reason for importing the animals?',",
+      "confidence": "verbatim",
+      "note": "Template comment: 'The page is headed with its name, so the question stays as the group's legend for a screen reader without being the largest thing on the page — as Design release 1 does.'"
+    },
+    {
+      "id": "repo-frontend-p7-007",
+      "statement": "The reason for import is a single-choice radio group offering, in order: Internal market, Transhipment or onward travel, Transit, Re-entry, Temporary admission horses.",
+      "kind": "data",
+      "ref": "src/server/app/services/import-reason-purpose/stub.js:1-7; import-reason/controller.js:73-77",
+      "quote": "internalMarket: 'Internal market',\n  transhipmentOrOnwardTravel: 'Transhipment or onward travel',\n  transit: 'Transit',\n  reEntry: 'Re-entry',\n  temporaryAdmissionHorses: 'Temporary admission horses'",
+      "confidence": "verbatim",
+      "note": "Stored codes are internalMarket, transhipmentOrOnwardTravel, transit, reEntry, temporaryAdmissionHorses."
+    },
+    {
+      "id": "repo-frontend-p7-008",
+      "statement": "The 'Internal market' reason carries the hint 'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:5-6",
+      "quote": "'For imports of animals intended for sale or use in Great Britain (England, Scotland or Wales).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-009",
+      "statement": "The 'Transhipment or onward travel' reason carries the hint 'For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:7-8",
+      "quote": "'For animals intended for direct travel to a third country, that will stay only within the same port or airport in Great Britain while moving to another means of transport.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-010",
+      "statement": "The 'Transit' reason carries the hint 'For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:9-10",
+      "quote": "'For animals moving through Great Britain for direct travel to a third country, that will enter Great Britain at one port or airport and leave from a different one within England, Scotland or Wales.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-011",
+      "statement": "The 'Re-entry' reason carries the hint 'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:11-12",
+      "quote": "'For animals authorised for re-entry, or rejected exports re-entering Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-012",
+      "statement": "The 'Temporary admission horses' reason carries the hint 'For horses authorised for temporary entry.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:13",
+      "quote": "temporaryAdmissionHorses: 'For horses authorised for temporary entry.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-013",
+      "statement": "The reason for import is optional to proceed: saving with no reason chosen is accepted, with no 'required' error.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:79-80,112-115; lib/validate/validators.js:169-176",
+      "quote": "// The reason radio itself is optional to proceed (Design release 1); the\n// reveal's questions are required on submit.",
+      "confidence": "verbatim",
+      "note": "oneOf allows the empty string, so a blank reason passes validation."
+    },
+    {
+      "id": "repo-frontend-p7-014",
+      "statement": "A submitted reason that is not one of the offered options is refused with the message 'Select a valid option', and the invalid selection is not kept.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:112-115; shared/copy.en.js:93; import-reason.fit.spec.js:124-145",
+      "quote": "oneOf: 'Select a valid option',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-015",
+      "statement": "Each reason that needs follow-up questions opens them in a conditional reveal directly under its own radio, so the whole reason is answered in one submit.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:14-17,83-92",
+      "quote": "Each reason that needs follow-up questions opens them underneath itself,\n     so the whole reason is answered in one go.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-016",
+      "statement": "Choosing 'Re-entry' opens no reveal and asks no follow-up question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:42; template.njk:76-81",
+      "quote": "reEntry: []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-017",
+      "statement": "Choosing 'Internal market' reveals a radio question with the legend 'Purpose in the internal market', set at the medium legend size.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:18-30; copy/copy.en.js:16",
+      "quote": "legend: 'Purpose in the internal market',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-018",
+      "statement": "The purpose in the internal market offers, in order: Transfer of ownership - Sale/gift, Transfer of ownership - Rescue, Breeding, Research, Racing, competition, show or training, Approved premises or body, Companion animal not for resale or rehoming, Production, Slaughter, Fattening, Restocking.",
+      "kind": "data",
+      "ref": "src/server/app/services/import-reason-purpose/stub.js:9-23",
+      "quote": "'transfer-of-ownership-sale-gift': 'Transfer of ownership - Sale/gift',\n  'transfer-of-ownership-rescue': 'Transfer of ownership - Rescue',\n  breeding: 'Breeding',\n  research: 'Research',\n  'racing-competition-show-or-training':\n    'Racing, competition, show or training',\n  'approved-premises-or-body': 'Approved premises or body',\n  'companion-animal-not-for-resale-or-rehoming':\n    'Companion animal not for resale or rehoming',\n  production: 'Production',\n  slaughter: 'Slaughter',\n  fattening: 'Fattening',\n  restocking: 'Restocking'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-019",
+      "statement": "The purpose 'Transfer of ownership - Sale/gift' carries a hint describing any movement aimed at sale or transfer of ownership, including gifts.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:18-19",
+      "quote": "'Any movement of an animal that has as its aim the sale of or the transfer of ownership of the animal from one person or entity to another. For example, animals that have been sold and are being moved to a new owner or will be sold once in Great Britain, purchases from a breeder/shop overseas and where an animal is being moved to a new owner with no sale involved (for example a gift).'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-020",
+      "statement": "The purpose 'Transfer of ownership - Rescue' carries a hint about rehoming, adoption or fostering.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:20-21",
+      "quote": "'Ownership of animal/s changes from one person or entity to another through rehoming and is adopted/fostered by new families, with or without an exchange or donation of money.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-021",
+      "statement": "The purpose 'Breeding' carries a hint about reproduction and breeding programmes.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:22-23",
+      "quote": "'Animals for reproduction. This includes animals intended to contribute to the genetic pool of a breeding program, improve livestock quality, or produce offspring.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-022",
+      "statement": "The purpose 'Research' carries the hint 'Animals for use in scientific or medical research.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:24",
+      "quote": "research: 'Animals for use in scientific or medical research.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-023",
+      "statement": "The purpose 'Racing, competition, show or training' carries the hint 'Animals to participate in competitive or training events.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:25-26",
+      "quote": "'Animals to participate in competitive or training events.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-024",
+      "statement": "The purpose 'Approved premises or body' carries the hint 'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:27-28",
+      "quote": "'Animals for exhibition, zoos, collections, or conservation programmes where a licence or approval is needed.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-025",
+      "statement": "The purpose 'Companion animal not for resale or rehoming' carries a hint about privately owned animals that cannot meet the non-commercial rules.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:29-30",
+      "quote": "\"Privately owned animals being imported under the commercial rules as the animal is unable to meet the non-commercial requirements, for example, one or more animals being transported by a commercial transporter without their owner or an authorised person, owner that is not traveling within five days of the animals' movement or a group of five or more animals being accompanied by their owner.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-026",
+      "statement": "The purpose 'Production' carries the hint 'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:31-32",
+      "quote": "'Animals that are farmed for the production of meat, milk, eggs, wool or any other animal product or by-product.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-027",
+      "statement": "The purpose 'Slaughter' carries the hint 'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:33-34",
+      "quote": "'Animals to be slaughtered and processed for meat production shortly after arrival into Great Britain.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-028",
+      "statement": "The purpose 'Fattening' carries the hint 'Animals to be fattened for meat production.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:35",
+      "quote": "fattening: 'Animals to be fattened for meat production.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-029",
+      "statement": "The purpose 'Restocking' carries the hint 'To replenish or enhance populations of species, for example, restocking of game or fish.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:36-37",
+      "quote": "'To replenish or enhance populations of species, for example, restocking of game or fish.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-030",
+      "statement": "When 'Internal market' is chosen, the purpose is required on submit; leaving it blank shows 'Select a purpose in the internal market'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:84-91; copy/copy.en.js:53",
+      "quote": "purposeRequired: 'Select a purpose in the internal market',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-031",
+      "statement": "Choosing 'Transhipment or onward travel' reveals one question only: a 'Destination country' select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:32-41; validate.js:31-33",
+      "quote": "transhipmentOrOnwardTravel: [\n    { field: TRANSHIPMENT_COUNTRY_FIELD, answer: 'destinationCountry' }\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-032",
+      "statement": "Choosing 'Transit' reveals two selects in order: 'Port of exit', then 'Destination country'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:43-61; validate.js:34-37",
+      "quote": "transit: [\n    { field: TRANSIT_PORT_FIELD, answer: 'portOfExit' },\n    { field: TRANSIT_COUNTRY_FIELD, answer: 'destinationCountry' }\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-033",
+      "statement": "Choosing 'Temporary admission horses' reveals two questions in order: an 'Exit date' date picker, then a 'Port of exit' select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:63-74; validate.js:38-41",
+      "quote": "temporaryAdmissionHorses: [\n    { field: TEMPORARY_ADMISSION_DATE_FIELD, answer: 'exitDate' },\n    { field: TEMPORARY_ADMISSION_PORT_FIELD, answer: 'portOfExit' }\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-034",
+      "statement": "The destination country select is labelled 'Destination country' at the small label size, with no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:41; template.njk:36,56",
+      "quote": "label: 'Destination country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-035",
+      "statement": "The destination country select starts with the placeholder 'Select a country', then a disabled divider line, then the country list the service offers as countries of origin.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:38-44; copy/copy.en.js:42",
+      "quote": "const countryItems = async () => [\n  { value: '', text: copy.country.placeholder },\n  DIVIDER_OPTION,\n  ...(await countries.originCountries())\n]",
+      "confidence": "verbatim",
+      "note": "The destination list reuses countries.originCountries(), the same list as the country of origin."
+    },
+    {
+      "id": "repo-frontend-p7-036",
+      "statement": "The port of exit select is labelled 'Port of exit' at the small label size, with no hint.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:45; template.njk:47,69",
+      "quote": "label: 'Port of exit',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-037",
+      "statement": "The port of exit select starts with the placeholder 'Select port of exit', then a disabled divider, then every port from the ports service shown as 'Name (CODE)'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:46-53; copy/copy.en.js:46",
+      "quote": "text: `${port.name} (${port.code})`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-038",
+      "statement": "The exit date is an MOJ date picker labelled 'Exit date' with the hint 'For example, 27/3/2026', and has a 'Choose date' button that opens a calendar dialog.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.en.js:48-51; template.njk:64; import-reason.fit.spec.js:20,261-266",
+      "quote": "date: {\n    label: 'Exit date',\n    hint: 'For example, 27/3/2026'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-039",
+      "statement": "A revealed destination country is required on submit; leaving it blank shows 'Select a destination country'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:65-70; copy/copy.en.js:54",
+      "quote": "countryRequired: 'Select a destination country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-040",
+      "statement": "A revealed port of exit is required on submit; leaving it blank shows 'Select a port of exit'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:72-77; copy/copy.en.js:57",
+      "quote": "portRequired: 'Select a port of exit',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-041",
+      "statement": "A revealed exit date is required on submit; leaving it blank shows 'Enter an exit date'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:99-105; copy/copy.en.js:60",
+      "quote": "dateRequired: 'Enter an exit date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-042",
+      "statement": "An exit date that is not a real date is refused with 'Enter a real date'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:102-105; copy/copy.en.js:61",
+      "quote": "dateInvalid: 'Enter a real date'",
+      "confidence": "verbatim",
+      "note": "The page sets no past/future bound on the exit date; only required and real-date rules apply."
+    },
+    {
+      "id": "repo-frontend-p7-043",
+      "statement": "When the saved destination country is no longer in the reference list, reopening the page shows 'The saved destination country is no longer available. Select a country from the list.'",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:65-70; copy/copy.en.js:55-56; controller.js:98-102",
+      "quote": "'The saved destination country is no longer available. Select a country from the list.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-044",
+      "statement": "When the saved port of exit is no longer in the reference list, reopening the page shows 'The saved port of exit is no longer available. Select a port from the list.'",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:72-77; copy/copy.en.js:58-59",
+      "quote": "'The saved port of exit is no longer available. Select a port from the list.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-045",
+      "statement": "A stale saved country or port is blanked in every reveal that prefills from it, not only the one the current reason opens, so no reveal shows it as chosen.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:59-63; controller.js:93-97",
+      "quote": "// A stale answer must blank every field that prefills from it, across every\n// reveal — otherwise a reveal the trader isn't looking at still offers the\n// value the reader no longer recognises.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-046",
+      "statement": "A saved purpose or exit date is never reported as stale on reopening, because both are the service's own words rather than reference data.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:80-86,99-101",
+      "quote": "Purpose and exit-date are the\n// service's own words rather than reference data, so neither can go stale —\n// the stored reading asks nothing of them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-047",
+      "statement": "Only the chosen reason's reveal is validated and saved; answers typed into another reason's reveal are ignored.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:108-121,150-162",
+      "quote": "// Only the current reason's reveal is measured; fields from other branches\n// arrive empty and are neither validated nor committed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-048",
+      "statement": "Changing to a reason that no longer asks a question removes the earlier reason's answers (purpose, destination country, port of exit, exit date) from the notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:150-151",
+      "quote": "// Commits only the current reveal's answers; the evaluator purges any\n// belonging to a reason no longer chosen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-049",
+      "statement": "The page saves five answers: reasonForImport, purposeInInternalMarket, destinationCountry, portOfExit and exitDate.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:23-33; evaluation.js:13-22",
+      "quote": "collects: [\n    'reasonForImport',\n    'purposeInInternalMarket',\n    'destinationCountry',\n    'portOfExit',\n    'exitDate'\n  ],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-050",
+      "statement": "Transhipment and transit both save to the one destinationCountry answer, and transit and temporary admission both save to the one portOfExit answer, each through its own form field.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:25-43",
+      "quote": "Two reasons ask the destination country and two\n// ask the port of exit — form inputs can't share a name, so each branch has\n// its own field mapping back to the one answer.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-051",
+      "statement": "On reopening, every reveal is prefilled from the saved answers, so switching between reasons that share a question keeps the answer in front of the user.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:138-148",
+      "quote": "// Prefill every branch, so flipping between reasons that share a question\n// keeps the answer in front of the user.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-052",
+      "statement": "The exit date is entered as dd/mm/yyyy text and saved as a day, month and year.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:131-135,157-159",
+      "quote": "// Date stays as dd/mm/yyyy text — the shape the rule reads and the field\n  // renders. `toAnswers` converts to the `{day,month,year}` object.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-053",
+      "statement": "A submit with errors re-renders the import reason page with HTTP 400, an error summary, the chosen reason's reveal still open and the user's valid entries kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:104-113; template.njk:9; import-reason.fit.spec.js:309-323",
+      "quote": "return (await render(h, journey, values, errors)).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-054",
+      "statement": "Each error is shown both in the error summary, as a link that moves focus to the field, and inline on the field inside its reveal.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:27,38,49,58,71; import-reason.fit.spec.js:325-343",
+      "quote": "errorMessage: errors.purposeInInternalMarket and { text: errors.purposeInInternalMarket },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-055",
+      "statement": "A valid submit saves the answers and redirects to the journey's next target, which is the notification hub in the fit tests.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:131-132; import-reason.fit.spec.js:162",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, scope))",
+      "confidence": "verbatim",
+      "note": "nextTarget's rule (hub vs next page in an opening run) is part 1's flow."
+    },
+    {
+      "id": "repo-frontend-p7-056",
+      "statement": "If saving fails, the import reason page is shown again with the user's entries and a recoverable-error message, with HTTP 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js:116-129",
+      "quote": "return (await render(h, journey, values, {}, true)).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim",
+      "note": "The recoverable-error banner copy is shared (part 1)."
+    },
+    {
+      "id": "repo-frontend-p7-057",
+      "statement": "The import reason form ends with the shared save actions, pointing back to the hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:113",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim",
+      "note": "The fit spec submits with the form's first submit button; the button labels are part 1's (shared/save-actions.njk)."
+    },
+    {
+      "id": "repo-frontend-p7-058",
+      "statement": "The import reason form posts with a CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk:95-96",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-059",
+      "statement": "The import reason page has Welsh copy that is a machine draft not reviewed by a translator; its Welsh title is 'Prif reswm dros fewnforio'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js:1-3",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-060",
+      "statement": "The Welsh import reason copy translates every English string, including the legend, reason and purpose hints, field labels, placeholders and all seven error messages.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.cy.js:4-64",
+      "quote": "purposeRequired: 'Dewiswch ddiben yn y farchnad fewnol',\n    countryRequired: 'Dewiswch wlad gyrchfan',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-061",
+      "statement": "The fit test 'heads the page with its name and keeps the question as a legend only a screen reader meets' proves the h1 is 'Main reason for import', the question is not a heading, and the visually hidden legend still names the radio group.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:89-104",
+      "quote": "test('heads the page with its name and keeps the question as a legend only a screen reader meets'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-062",
+      "statement": "The fit test 'renders the service-backed reasons and feature copy' proves every reason renders in service order with its label and hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:106-122",
+      "quote": "test('renders the service-backed reasons and feature copy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-063",
+      "statement": "The fit test 'reason validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection' proves a tampered reason shows 'Select a valid option', the summary link focuses the first radio and no radio is left checked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:124-145",
+      "quote": "test('reason validation: when the submitted option is invalid, links to and focuses the group without preserving an invalid selection'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-064",
+      "statement": "The fit test 'saves a valid reason, redirects and persists the answer' proves choosing Internal market with purpose Breeding redirects to the hub and both are checked on return.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:147-170",
+      "quote": "test('saves a valid reason, redirects and persists the answer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-065",
+      "statement": "The fit test 'back link returns to the notification hub' proves the import reason page's Back link leads to the hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:172-178",
+      "quote": "test('back link returns to the notification hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-066",
+      "statement": "The fit test 'has no serious or critical axe violations' proves the import reason page meets WCAG 2 A and AA with no serious or critical axe violations, discounting govuk-frontend's aria-expanded on conditional-reveal radios as a known false positive.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:29-50,180-182",
+      "quote": "const isGovukConditionalRevealFalsePositive = (violation) =>\n  violation.id === 'aria-allowed-attr' &&",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-067",
+      "statement": "The fit test 'opens no reveal until a reason that needs one is chosen' proves reveals start hidden and that the Re-entry radio controls no reveal.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:191-200",
+      "quote": "test('opens no reveal until a reason that needs one is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-068",
+      "statement": "The fit test 'asks the internal-market purpose under its own radio' proves the Internal market reveal shows the purpose legend and every purpose with its label and hint in service order.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:202-222",
+      "quote": "test('asks the internal-market purpose under its own radio'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-069",
+      "statement": "The fit test 'asks transit for the port of exit and then the destination country' proves the Transit reveal holds the port then the country select, both labelled without hints, and that the country list after the placeholder and divider matches the origin countries.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:224-252",
+      "quote": "test('asks transit for the port of exit and then the destination country'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-070",
+      "statement": "The fit test 'asks temporary admission for the exit date and then the port of exit' proves the reveal holds a 'Choose date' picker described by the date hint, then the port select with no hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:254-274",
+      "quote": "test('asks temporary admission for the exit date and then the port of exit'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-071",
+      "statement": "The fit test 'asks transhipment for the destination country alone' proves the Transhipment reveal holds only the destination country select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:276-290",
+      "quote": "test('asks transhipment for the destination country alone'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-072",
+      "statement": "The fit test 'saves a reason and its reveal in one submit, and offers the answers back' proves Transit with port GB DVR and country IE saves in one submit and is prefilled on return.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:292-307",
+      "quote": "test('saves a reason and its reveal in one submit, and offers the answers back'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-073",
+      "statement": "The fit test 'refuses an unanswered reveal, links to the field and keeps the reveal open' proves Transit without a country shows 'Select a destination country', the link focuses the country select and the chosen port is kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:309-323",
+      "quote": "test('refuses an unanswered reveal, links to the field and keeps the reveal open'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-074",
+      "statement": "The fit test 'refuses an unanswered internal-market purpose, links to the first radio and keeps the reveal open' proves the purpose error shows in the summary and inside the open reveal, and its link focuses the first purpose radio.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:325-343",
+      "quote": "test('refuses an unanswered internal-market purpose, links to the first radio and keeps the reveal open'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-075",
+      "statement": "The fit test 'saves an exit date chosen from the picker inside the reveal, and offers it back' proves a date picked from the calendar saves with the port and is prefilled on return.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:345-360",
+      "quote": "test('saves an exit date chosen from the picker inside the reveal, and offers it back'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-076",
+      "statement": "The fit test 'refuses a blank exit date, links to the picker input and keeps the port the user did choose' proves 'Enter an exit date' shows in the summary and the reveal, the link focuses the date input and the port is kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:362-380",
+      "quote": "test('refuses a blank exit date, links to the picker input and keeps the port the user did choose'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-077",
+      "statement": "The fit test 'has no serious or critical axe violations with the exit date missing' proves the temporary admission reveal in error has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:389-397",
+      "quote": "test('has no serious or critical axe violations with the exit date missing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-078",
+      "statement": "The fit test 'has no serious or critical axe violations with a reveal open and in error' proves the Transit reveal in error has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:399-407",
+      "quote": "test('has no serious or critical axe violations with a reveal open and in error'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-079",
+      "statement": "The fit test 'has no serious or critical axe violations with the internal-market purpose reveal open' proves the open purpose reveal has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:409-417",
+      "quote": "test('has no serious or critical axe violations with the internal-market purpose reveal open'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-080",
+      "statement": "The fit test 'has no serious or critical axe violations with the internal-market purpose reveal in error' proves the purpose reveal in error has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:419-427",
+      "quote": "test('has no serious or critical axe violations with the internal-market purpose reveal in error'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-081",
+      "statement": "The fit test 'has no serious or critical axe violations with the picker dialog open inside a reveal' proves the open date-picker dialog has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js:429-438",
+      "quote": "test('has no serious or critical axe violations with the picker dialog open inside a reveal'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-082",
+      "statement": "The additional details page is served at /notifications/{notificationId}/additional-details under the live-animals journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/page.js:1-4",
+      "quote": "export const additionalDetailsPage = {\n  id: 'additional-details',\n  slug: 'additional-details'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-083",
+      "statement": "The additional details page's back link returns the user to the notification hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:40; additional-details.fit.spec.js:83-89",
+      "quote": "backLink: hubPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-084",
+      "statement": "The additional details page's h1 heading, and the basis of its browser title, is 'Additional details'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:2; template.njk:10; controller.js:39",
+      "quote": "title: 'Additional details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-085",
+      "statement": "The additional details page shows a section caption above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:9",
+      "quote": "{{ sectionCaption(caption) }}",
+      "confidence": "verbatim",
+      "note": "Caption text comes from flow/section-captions (part 1)."
+    },
+    {
+      "id": "repo-frontend-p7-086",
+      "statement": "The first question on additional details is the radio group 'What are the animals certified for?' at the medium legend size.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:4; template.njk:16-27",
+      "quote": "legend: 'What are the animals certified for?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-087",
+      "statement": "The certified-for question has the hint 'This information can be found on the ITAHC.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:5",
+      "quote": "hint: 'This information can be found on the ITAHC.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-088",
+      "statement": "The certified-for question offers 16 options with no hints, in order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "src/server/app/services/certification-purposes/stub.js:1-20; additional-details/controller.js:50-53",
+      "quote": "'further-keeping': 'Further keeping',\n  slaughter: 'Slaughter',\n  'confined-establishment': 'Confined establishment',\n  'germinal-products': 'Germinal products',\n  'registered-equine-animal': 'Registered equine animal',\n  'travelling-circus-animal-act': 'Travelling circus/animal act',\n  exhibition: 'Exhibition',\n  'event-or-activity-near-borders': 'Event or activity near borders',\n  'release-into-the-wild': 'Release into the wild',\n  'dispatch-centre': 'Dispatch centre',\n  'relaying-area-purification-centre': 'Relaying area / purification centre',\n  'ornamental-aquaculture-establishment':\n    'Ornamental aquaculture establishment',\n  'technical-use': 'Technical use',\n  'quarantine-or-similar-establishment': 'Quarantine or similar establishment',\n  'live-aquatic-animals-for-human-consumption':\n    'Live aquatic animals for human consumption',\n  other: 'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-089",
+      "statement": "Choosing 'Other' for what the animals are certified for reveals no follow-up question; no certified-for option has a conditional reveal.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:16-27",
+      "quote": "items: certifiedOptions",
+      "confidence": "inferred",
+      "note": "The options are rendered with value, text and checked only; no conditional is set on any item."
+    },
+    {
+      "id": "repo-frontend-p7-090",
+      "statement": "What the animals are certified for is optional to save: a blank answer is accepted with no 'required' error.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js:26-31; lib/validate/validators.js:169-176",
+      "quote": "Joi.string()\n      .allow('')\n      .valid('', ...values)",
+      "confidence": "inferred",
+      "note": "The page applies only oneOf, which allows an empty value; completeness for the task list is part 2's obligation call."
+    },
+    {
+      "id": "repo-frontend-p7-091",
+      "statement": "A submitted certified-for value that is not one of the options is refused with 'Select a valid option', and no option is left checked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js:23-31; shared/copy.en.js:93",
+      "quote": "// One rule, two audiences: submit falls back to the generic `defaults.oneOf`;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-092",
+      "statement": "When the saved certification purpose has been retired, reopening the page shows 'The certification purpose you chose is no longer offered. Select a purpose from the list.'",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js:26-31; copy/copy.en.js:14-15",
+      "quote": "'The certification purpose you chose is no longer offered. Select a purpose from the list.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-093",
+      "statement": "The second question is the radio group 'Does the consignment contain any unweaned animals?' at the medium legend size, with the hint 'These are animals that are still feeding from their mother.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:8-9; template.njk:29-42",
+      "quote": "legend: 'Does the consignment contain any unweaned animals?',\n    hint: 'These are animals that are still feeding from their mother.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-094",
+      "statement": "The unweaned-animals question offers two options, Yes and No, saved as yes and no.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.en.js:10-11; controller.js:28,54-58",
+      "quote": "const UNWEANED_LABEL = { yes: copy.unweaned.yes, no: copy.unweaned.no }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-095",
+      "statement": "The unweaned-animals question is asked only when at least one commodity line on the notification is a commodity on the unweaned list; otherwise the page asks only what the animals are certified for.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js:16-21; controller.js:63,72; template.njk:29",
+      "quote": "export const unweanedApplies = (answers) =>\n  asArray(answers?.commodityLines).some((line) =>\n    commodities.unweanedCommodities().includes(line?.commoditySelection)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-096",
+      "statement": "The unweaned list today holds only cattle ('Cow'), so cattle are asked the unweaned question and a horses-only consignment is not.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/services/commodities/stub.js:185; additional-details.fit.spec.js:17-19,92-94",
+      "quote": "export const UNWEANED_ANIMAL_COMMODITIES = ['Cow']",
+      "confidence": "verbatim",
+      "note": "Fit spec comment: 'Design release 1 asks the unweaned-animals question only of a commodity that carries unweaned options — cattle, not horses'."
+    },
+    {
+      "id": "repo-frontend-p7-097",
+      "statement": "When shown, the unweaned answer is optional on submit, but a value other than yes or no is refused with 'Select a valid option'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/validate.js:32; lib/validate/validators.js:169-176",
+      "quote": "const unweanedField = oneOf('containsUnweanedAnimals', ['yes', 'no'])",
+      "confidence": "verbatim",
+      "note": "The obligation model marks containsUnweanedAnimals mandatory when an applicable commodity is present (part 2); the page itself does not refuse a blank."
+    },
+    {
+      "id": "repo-frontend-p7-098",
+      "statement": "The unweaned answer is saved only when the question is shown, so a commodity change that removes the question does not keep a stale unweaned answer.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:86-94",
+      "quote": "// The reveal decides which of the two fields the notification carries —\n      // committing the unweaned answer under a commodity that does not ask for\n      // it would keep it around after a flip.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-099",
+      "statement": "The additional details page saves two answers: animalsCertifiedFor and containsUnweanedAnimals.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:19-23; evaluation.js:10-16",
+      "quote": "collects: ['animalsCertifiedFor', 'containsUnweanedAnimals'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-100",
+      "statement": "A submit with errors re-renders additional details with HTTP 400, an error summary whose link focuses the group's first radio, and the other question's valid answer kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:77-81; template.njk:7,25,39",
+      "quote": "return render(h, journey, values, showUnweaned, errors).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-101",
+      "statement": "A valid submit on additional details saves and redirects to the journey's next target, which is the notification hub in the fit tests.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:105; additional-details.fit.spec.js:217",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, committed.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-102",
+      "statement": "If saving additional details fails, the page is shown again with the user's entries and a recoverable-error message, with HTTP 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.js:96-103",
+      "quote": "render(h, journey, values, showUnweaned, {}, true).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-103",
+      "statement": "The additional details form posts with a CSRF crumb and concurrency token, and ends with the shared save actions pointing back to the hub, whose submit button reads 'Save and continue'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/template.njk:13-14,44; additional-details.fit.spec.js:15",
+      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-104",
+      "statement": "The additional details page has machine-draft Welsh copy, not reviewed by a translator: title 'Manylion ychwanegol', Yes/No as 'Ydy'/'Nac ydy', and every legend, hint and error translated.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.cy.js:1-17",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-105",
+      "statement": "The fit test 'renders service-backed certification options and conditional copy' proves the certified-for group shows its hint and every option in service order, and that for cattle the unweaned group shows its hint and Yes and No.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:43-68",
+      "quote": "test('renders service-backed certification options and conditional copy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-106",
+      "statement": "The fit test 'sets both question legends at the medium size' proves both question legends carry the medium legend size, so the two questions read as two groups under one h1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:70-81",
+      "quote": "test('sets both question legends at the medium size'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-107",
+      "statement": "The fit test 'back link returns to the notification hub' proves the additional details Back link leads to the hub.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:83-89",
+      "quote": "test('back link returns to the notification hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-108",
+      "statement": "The fit test 'does not ask a horses-only consignment about unweaned animals' proves an Equus caballus consignment sees the certified-for question and no unweaned question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:101-110",
+      "quote": "test('does not ask a horses-only consignment about unweaned animals'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-109",
+      "statement": "The fit test 'saves a horses-only consignment without an unweaned answer' proves a horses-only consignment saves Slaughter, redirects to the hub and returns with Slaughter checked and still no unweaned question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:112-130",
+      "quote": "test('saves a horses-only consignment without an unweaned answer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-110",
+      "statement": "The fit test 'certification validation: invalid option links to and focuses the group while preserving the valid unweaned answer' proves a tampered certified-for value shows 'Select a valid option', the link focuses the first certified radio, none is left checked and the unweaned 'No' is kept.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:139-167",
+      "quote": "test('certification validation: invalid option links to and focuses the group while preserving the valid unweaned answer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-111",
+      "statement": "The fit test 'unweaned validation: invalid option links to and focuses the group while preserving the valid certification' proves a tampered unweaned value shows 'Select a valid option', the link focuses the first unweaned radio and Slaughter stays checked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:169-199",
+      "quote": "test('unweaned validation: invalid option links to and focuses the group while preserving the valid certification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-112",
+      "statement": "The fit test 'saves both answers, redirects and persists them' proves Slaughter and No save, redirect to the hub and are checked on return.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:208-225",
+      "quote": "test('saves both answers, redirects and persists them'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-113",
+      "statement": "The fit test 'has no serious or critical axe violations' proves the additional details page, answered, has no serious or critical WCAG 2 A/AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js:227-242",
+      "quote": "test('has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p7-114",
+      "statement": "No fit test proves the stale-answer messages on either page (a saved destination country, port of exit or certification purpose that the reference data no longer offers).",
+      "kind": "behaviour",
+      "ref": "import-reason.fit.spec.js and additional-details.fit.spec.js (searched every test)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The behaviour exists in validate.js; only the fit specs were searched, not the unit tests (controller.test.js, validate.test.js), which sit outside this part's read list."
+    },
+    {
+      "id": "repo-frontend-p7-115",
+      "statement": "No fit test proves the 'Enter a real date' message for an invalid exit date, nor the port-of-exit required message.",
+      "kind": "behaviour",
+      "ref": "import-reason.fit.spec.js (searched every test)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

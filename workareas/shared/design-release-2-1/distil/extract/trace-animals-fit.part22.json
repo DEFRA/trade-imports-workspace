@@ -1,0 +1,692 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 22 mined all 17 traces of upload.fit.spec.js describes 'document upload page' (4: 0b0a7 renders copy/constraints/empty state, 5906a fourteen document types, a24dd file upload region grouping, 60a36 back link), 'document upload continue' (3: 876de continue saves then leaves once scanned, e6cdc continue with only a type, a3d09 untouched continue), 'document upload saved rows' (5: bbc31 upload and saved row, 299e5 saved row inside the region, 2ab74 limit stays stated, 1867c download headers, 182e4 remove restores empty state) and 'document upload capacity and accessibility' (5: 77b8b capacity of 15, a1b9f empty axe, c504b error axe, 01ae3 date picker axe, 43a1e populated axe), reading the spec file for titles and assertions. Each trace was unzipped into the part's work folder (t01..t17, in read order) and mined with jq over its action log, DOM snapshots and network log. Every trace walks the same set-up: stub sign-in, start a notification, origin (France, No), overview, commodities (Felis catus), commodity details (1 animal), overview, then the 'Upload documents' task link to /live-animals/notifications/{ref}/accompanying-documents. Pages in this slice: (1) the Upload documents page in four states - empty, error (400 re-render), scanning (saved row tagged 'Scanning for virus', after a POST/302/GET) and complete (?attempt=N reload after a /status JSON poll, row tagged 'Check completed' with a View file link); (2) the Overview page, reached by back link, by Continue with an untouched form (task stays 'To do') and by Continue once a document is scanned (task 'Complete'); (3) the saved file download at accompanying-documents/{uploadId}/file; (4) the MOJ date picker dialog. Page layout: back link, Draft tag and notification reference strip, caption 'Documents', H1 'Upload documents', guidance and details (left to part 24), then one multipart form: a 'File upload' summary-card region holding Document reference, Document type, Date of issue, Attachment, 'Save and add another' and the saved-documents table or empty message, and outside it the button group 'Save and continue', 'Save and return to overview', 'Cancel and return to overview'. Per-field validation messages beyond the ones these traces render are part 23; the enhanced drop zone and the guidance copy are part 24.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p22-001",
+      "statement": "The trader reaches the document upload page from the overview's 'Upload documents' task link, which is followed once origin, commodities and commodity details have been completed; it lives at /live-animals/notifications/{notification reference}/accompanying-documents.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 (network GET /accompanying-documents 200)",
+      "quote": "Upload documents",
+      "confidence": "verbatim",
+      "note": "Every trace in the part unlocks sections (origin, commodities, commodity details) before following the link; whether the link is available before that is not shown here."
+    },
+    {
+      "id": "trace-animals-fit-p22-002",
+      "statement": "The page's browser title is 'Upload documents - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 <title>",
+      "quote": "Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-003",
+      "statement": "When the page re-renders with validation errors its browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-e6cdc call@2441 <title>",
+      "quote": "Error: Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-004",
+      "statement": "The page's main heading (H1, govuk-heading-l) is 'Upload documents', under the section caption 'Documents' (govuk-caption-l).",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 main",
+      "quote": "Documents / Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-005",
+      "statement": "Above the caption the page shows a blue 'Draft' tag and the notification reference (for example GBN-AG-26-6B6EC5) in a strip that uses the non-govuk class app-journey-strip.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 main (classes: app-journey-strip, govuk-tag--blue)",
+      "quote": "Draft GBN-AG-26-6B6EC5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-006",
+      "statement": "The page has a 'Back' link (govuk-back-link) pointing at the notification overview; following it shows the 'Overview' heading.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-60a36 call@2667 to call@2669",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-007",
+      "statement": "The page holds one POST form, submitted as multipart/form-data with browser validation turned off (novalidate), carrying the maximum file size (10000000 bytes) and the oversize message as data attributes.",
+      "kind": "constraint",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 FORM attributes",
+      "quote": "\"enctype\":\"multipart/form-data\",\"novalidate\":\"\",\"data-max-file-size\":\"10000000\",\"data-oversize-error\":\"The selected file must be smaller than 10MB\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-008",
+      "statement": "The form carries a hidden CSRF token field named crumb.",
+      "kind": "constraint",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 FORM input[name=crumb]",
+      "quote": "<input type=hidden name=crumb value=[REDACTED]>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-009",
+      "statement": "The form carries a hidden concurrencyToken field (value 0 on a new notification), which reads as an optimistic-concurrency check on the save.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 FORM input[name=concurrencyToken]",
+      "quote": "<input type=hidden name=concurrencyToken value=0>",
+      "confidence": "inferred",
+      "note": "Purpose inferred from the field name; no trace in this part exercises a concurrency conflict."
+    },
+    {
+      "id": "trace-animals-fit-p22-010",
+      "statement": "The add-a-document fields sit inside a section labelled by an H2 'File upload', exposed as a region named 'File upload'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-a24dd call@2915; snapshot SECTION aria-labelledby=file-upload-heading",
+      "quote": "File upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-011",
+      "statement": "The 'File upload' region is built from the GOV.UK summary card component (govuk-summary-card, __title-wrapper, __title, __content) used as a container for form fields rather than for a summary list.",
+      "kind": "constraint",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 SECTION class=govuk-summary-card",
+      "quote": "SECTION {\"class\":\"govuk-summary-card\",\"aria-labelledby\":\"file-upload-heading\"}",
+      "confidence": "verbatim",
+      "note": "A non-standard use of a govuk-frontend component: a summary card normally wraps a summary list."
+    },
+    {
+      "id": "trace-animals-fit-p22-012",
+      "statement": "The 'File upload' region contains the Document reference, Document type and Date of issue fields, the Attachment upload control and the 'Save and add another' button.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-a24dd call@2915 to call@2925",
+      "quote": "region[name=\"File upload\"] >> label=\"Document reference\" / \"Document type\" / \"Date of issue\" / button[name=\"Attachment\"] / button[name=\"Save and add another\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-013",
+      "statement": "The page actions ('Save and continue' and the rest of the button group) sit outside the 'File upload' region: the region contains no 'Save and continue' button, while the page has one.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-a24dd call@2927 to call@2929",
+      "quote": "region[name=\"File upload\"] >> button[name=\"Save and continue\"] toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-014",
+      "statement": "The first field is a text input 'Document reference' (name accompanyingDocumentReference, width-20, small label), empty by default.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 #accompanyingDocumentReference",
+      "quote": "Document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-015",
+      "statement": "The Document reference field's hint, set as its accessible description, is 'For example, GBHC1234567890.'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2853 #accompanyingDocumentReference-hint",
+      "quote": "For example, GBHC1234567890.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-016",
+      "statement": "The second field is a select 'Document type' (name accompanyingDocumentType, govuk-select) whose value is empty by default.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2857 #accompanyingDocumentType",
+      "quote": "Document type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-017",
+      "statement": "The Document type select starts with the placeholder option 'Select one' (empty value) followed by fourteen document types, with these values and labels in this order: ITAHC 'Intra Trade Animal Health Certificate (ITAHC)', VETERINARY_HEALTH_CERTIFICATE 'Veterinary health certificate', AIR_WAYBILL 'Air waybill', IMPORT_PERMIT 'Import permit', LETTER_OF_AUTHORITY 'Letter of authority (Directive 2008/61/EC)', COMMERCIAL_INVOICE 'Commercial invoice', SEA_WAYBILL 'Sea waybill', RAIL_WAYBILL 'Rail waybill', BILL_OF_LADING 'Bill of lading', CATCH_CERTIFICATE 'Catch certificate', LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN 'Laboratory sampling results for aflatoxin (Reg 2019/1793)', HEALTH_CERTIFICATE 'Health certificate', JOURNEY_LOG 'Journey log', OTHER 'Other'.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-5906a call@2989; options read from trace documents-fit-upload.fit-d-0b0a7 call@2849",
+      "quote": "Select one | Intra Trade Animal Health Certificate (ITAHC) | Veterinary health certificate | Air waybill | Import permit | Letter of authority (Directive 2008/61/EC) | Commercial invoice | Sea waybill | Rail waybill | Bill of lading | Catch certificate | Laboratory sampling results for aflatoxin (Reg 2019/1793) | Health certificate | Journey log | Other",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-018",
+      "statement": "The document type list is a fixed list held in the page, not looked up from reference data: no network call fetches it.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 network log (only the page GET precedes the render)",
+      "quote": "GET | http://localhost:3000/live-animals/notifications/GBN-AG-26-6B6EC5/accompanying-documents | 200",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any browser-side lookup; a server-side lookup would not show in the trace."
+    },
+    {
+      "id": "trace-animals-fit-p22-019",
+      "statement": "In document order the fields are Document reference, then Document type, then Date of issue: the type select sits between the reference and the date.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-5906a call@2991 (evalOnSelectorAll)",
+      "quote": "#accompanyingDocumentReference, #accompanyingDocumentType, #accompanyingDocumentDateOfIssue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-020",
+      "statement": "The third field is a text input 'Date of issue' (name accompanyingDocumentDateOfIssue, width-10, autocomplete off) enhanced by the MOJ date picker component (moj-datepicker), typed as a single dd/mm/yyyy string.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 #accompanyingDocumentDateOfIssue; values filled 03/01/2026 and 12/12/2025",
+      "quote": "Date of issue",
+      "confidence": "verbatim",
+      "note": "A single text input with a date picker rather than the GOV.UK date input (day/month/year) component."
+    },
+    {
+      "id": "trace-animals-fit-p22-021",
+      "statement": "The Date of issue field's hint, set as its accessible description, is 'For example, 12/12/2025'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2855 #accompanyingDocumentDateOfIssue-hint",
+      "quote": "For example, 12/12/2025",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-022",
+      "statement": "Once scripts run, the Date of issue input gains a 'Choose date' toggle button (visually hidden text) that opens the date picker dialog (aria-haspopup=dialog, aria-controls=datepicker-accompanyingDocumentDateOfIssue).",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-01ae3 call@3249 to call@3251",
+      "quote": "Choose date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-023",
+      "statement": "The date picker dialog (role dialog, aria-modal) opens on the current month, headed with the month and year (for example 'October 2026'), with today's date selected and marked current, previous/next month and year buttons, weekday headings Mon to Sun, a calendar grid of day buttons, and 'Select' and 'Close' buttons.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-01ae3 call@3249 DIV#datepicker-accompanyingDocumentDateOfIssue; buttons read from trace documents-fit-upload.fit-d-bbc31 rendered DOM",
+      "quote": "October 2026 ... Previous year / Previous month / Next month / Next year ... Select / Close",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-024",
+      "statement": "The fourth field is a file upload labelled 'Attachment' (name file) that accepts .pdf, .doc, .docx, .jpeg, .jpg, .png, .xls and .xlsx.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2859 input[type=file]",
+      "quote": ".pdf,.doc,.docx,.jpeg,.jpg,.png,.xls,.xlsx",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-025",
+      "statement": "With scripts running, the upload control the trader reaches is a button named 'Attachment' (the GOV.UK enhanced file upload); the real file input is hidden behind it.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-a24dd call@2923; DOM BUTTON#file aria-labelledby=file-label file-comma file, INPUT#file-input hidden",
+      "quote": "button[name=\"Attachment\"]",
+      "confidence": "verbatim",
+      "note": "The drop zone itself is part 24's."
+    },
+    {
+      "id": "trace-animals-fit-p22-026",
+      "statement": "The Attachment hint opens with the bold line 'Your file must be:' followed by a bulleted list.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2861 #file-hint",
+      "quote": "Your file must be:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-027",
+      "statement": "The first upload constraint bullet states the size limit: 'smaller than 10MB'.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2863 #file-hint li",
+      "quote": "smaller than 10MB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-028",
+      "statement": "The second upload constraint bullet lists the allowed file types.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2865 #file-hint li",
+      "quote": "a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-029",
+      "statement": "The third upload constraint bullet states the document limit: 'up to a maximum of 15 files'.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2867 #file-hint li",
+      "quote": "up to a maximum of 15 files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-030",
+      "statement": "The fourth upload constraint bullet says ZIP files are refused.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2869 #file-hint li",
+      "quote": "ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-031",
+      "statement": "The document-limit bullet stays on the page once a document has been saved, so the trader still sees the total with rows present.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-2ab74 call@3155 to call@3157",
+      "quote": "up to a maximum of 15 files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-032",
+      "statement": "Inside the 'File upload' region, below the fields, is a secondary button 'Save and add another' (name action, value add).",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2873; DOM BUTTON value=add",
+      "quote": "Save and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-033",
+      "statement": "With no documents saved, the region shows the empty-state message 'You have not added any documents yet.' below the 'Save and add another' button.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2871",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-034",
+      "statement": "Outside the region, the page's button group holds the primary 'Save and continue' button (name action, value continue).",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2875; DOM BUTTON value=continue",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-035",
+      "statement": "The button group also holds a secondary 'Save and return to overview' button (name exit, value hub).",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 DOM BUTTON name=exit value=hub",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-036",
+      "statement": "The button group ends with a 'Cancel and return to overview' link to the notification overview.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 DOM A.govuk-link",
+      "quote": "Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-037",
+      "statement": "No trace in this part presses 'Save and return to overview' or follows 'Cancel and return to overview', so what each saves and where it lands is not shown.",
+      "kind": "behaviour",
+      "ref": "all 17 traces of part 22 (action logs)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p22-038",
+      "statement": "Saving a complete document with 'Save and add another' posts the form (multipart) and redirects back to the upload page (POST 302 to the same URL, then GET 200).",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 call@3251; network POST /accompanying-documents 302 -> /accompanying-documents",
+      "quote": "POST | .../accompanying-documents | 302 | .../accompanying-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-039",
+      "statement": "After a successful add, the add-a-document fields are cleared: Document reference is empty again.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 call@3259",
+      "quote": "label=\"Document reference\" toHaveValue(\"\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-040",
+      "statement": "Saved documents are listed in a table inside the 'File upload' region (wrapper id documents-added), below 'Save and add another', with the visually hidden caption 'Documents you have added'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3211 DIV#documents-added TABLE; region containment trace documents-fit-upload.fit-d-299e5 call@2817",
+      "quote": "Documents you have added",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-041",
+      "statement": "The saved-documents table has the column headings 'Document reference', 'Document type', 'Date of issue', 'Status' and a fifth, visually hidden heading 'Actions'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3211 THEAD",
+      "quote": "Document reference | Document type | Date of issue | Status | Actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-042",
+      "statement": "A saved row shows the reference as entered, the document type by its label (not its code) and the date of issue as dd/mm/yyyy, as entered.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 call@3253 to call@3255",
+      "quote": "GBHC1234567890 | Intra Trade Animal Health Certificate (ITAHC) | 12/12/2025",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-043",
+      "statement": "A saved row does not show the uploaded file's name.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 rendered row; trace documents-fit-upload.fit-d-876de call@3211",
+      "quote": "ITAHC-2026-0001 | Intra Trade Animal Health Certificate (ITAHC) | 03/01/2026 | Scanning for virus | Remove document 1",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered row cells: none carries the file name (itahc-upload.pdf)."
+    },
+    {
+      "id": "trace-animals-fit-p22-044",
+      "statement": "Straight after saving, a row's Status cell shows a blue tag 'Scanning for virus', preceded by visually hidden text 'Virus check status for {reference}'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 call@3257; DOM TD data-scan-status=PENDING",
+      "quote": "Virus check status for ITAHC-2026-0001 Scanning for virus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-045",
+      "statement": "Once the scan finishes the row's tag changes to a green 'Check completed'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 call@3261; rendered row on ?attempt=1",
+      "quote": "Check completed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-046",
+      "statement": "The page knows four scan states and their tags: COMPLETE 'Check completed' (green), REJECTED 'Virus found' (red), PENDING 'Scanning for virus' (blue) and UNKNOWN 'Unknown' (grey).",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 DOM #js-scan-status-announcer data-scan-copy",
+      "quote": "{\"COMPLETE\":{\"text\":\"Check completed\",\"classes\":\"govuk-tag--green\"},\"REJECTED\":{\"text\":\"Virus found\",\"classes\":\"govuk-tag--red\"},\"PENDING\":{\"text\":\"Scanning for virus\",\"classes\":\"govuk-tag--blue\"},\"UNKNOWN\":{\"text\":\"Unknown\",\"classes\":\"govuk-tag--grey\"}}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-047",
+      "statement": "When a scan completes, screen reader users hear 'Document scan complete: the file is safe to use' through a visually hidden polite live region.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 DOM #js-scan-status-announcer (aria-live=polite, aria-atomic=true, data-scan-copy COMPLETE.announcement)",
+      "quote": "Document scan complete: the file is safe to use",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-048",
+      "statement": "When a scan finds a virus, screen reader users are to hear 'Document scan failed: a virus was found. Remove the file and try again.'.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 DOM #js-scan-status-announcer data-scan-copy REJECTED.announcement",
+      "quote": "Document scan failed: a virus was found. Remove the file and try again.",
+      "confidence": "verbatim",
+      "note": "Present only as configuration in the DOM; no trace renders a rejected document."
+    },
+    {
+      "id": "trace-animals-fit-p22-049",
+      "statement": "No trace in this part shows a document whose scan finds a virus (or ends Unknown): the row, its tag, its actions and what Continue does then are not shown.",
+      "kind": "behaviour",
+      "ref": "all 17 traces of part 22",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p22-050",
+      "statement": "While a document is scanning, the page polls GET /accompanying-documents/status (JSON) about three seconds after loading and, once the scan settles, reloads itself at ?attempt=1 (the next settled link is ?attempt=2).",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 network 17:36:19.861 GET page, 17:36:23.010 GET /status (application/json), 17:36:23.022 GET ?attempt=1; #js-scan-status-announcer data-settled-href",
+      "quote": "GET | .../accompanying-documents/status | 200 | application/json; charset=utf-8",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-051",
+      "statement": "The body of the /status poll response is not captured in the traces, so its shape is not shown.",
+      "kind": "integration",
+      "ref": "trace documents-fit-upload.fit-d-876de network GET /accompanying-documents/status",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p22-052",
+      "statement": "While any document is scanning the page also holds a 'Refresh virus scan status' link to ?attempt=1 and the hint 'Still checking some documents. Refresh again in a moment.', both hidden when scripts run.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3211 P#js-refresh-fallback[hidden], P#js-timeout-message[hidden]",
+      "quote": "Refresh virus scan status / Still checking some documents. Refresh again in a moment.",
+      "confidence": "verbatim",
+      "note": "The refresh link is absent once every row is complete; no trace runs without scripts or reaches the timeout message."
+    },
+    {
+      "id": "trace-animals-fit-p22-053",
+      "statement": "A completed row's actions cell offers a 'View file' link with visually hidden text 'for document N', pointing at /accompanying-documents/{upload id}/file.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-1867c call@2983; rendered row in trace documents-fit-upload.fit-d-bbc31",
+      "quote": "View file for document 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-054",
+      "statement": "A row that is still scanning shows no View file link, only Remove.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3211 TD data-view-file-text",
+      "quote": "TD {\"data-view-file-text\":\"View file\",\"data-view-file-hidden\":\"for document 1\"} BUTTON Remove document 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-055",
+      "statement": "Downloading a saved document returns 200 with content-type application/pdf, the body of the PDF, and the header x-content-type-options: nosniff.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-1867c test step pw:api@70 GET .../file; expect@71 to expect@74",
+      "quote": "content-type: application/pdf; x-content-type-options: nosniff",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-056",
+      "statement": "The download is served inline with cache-control no-cache and a content-disposition naming the file; through the configured stub the name is 'placeholder.pdf', not the name the trader uploaded.",
+      "kind": "integration",
+      "ref": "trace documents-fit-upload.fit-d-1867c network GET /accompanying-documents/f7e87592-.../file response headers",
+      "quote": "content-disposition: inline; filename=\"placeholder.pdf\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-057",
+      "statement": "Each row's actions cell has a 'Remove' button styled as a link (govuk-link plus the non-govuk class app-link-button), with visually hidden text 'document N', submitting action=remove:{index}.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-182e4 call@2549; DOM BUTTON value=remove:0",
+      "quote": "Remove document 1",
+      "confidence": "verbatim",
+      "note": "app-link-button is outside govuk-frontend; a standard secondary/warning button or a link to a confirm page would stay inside the toolbox."
+    },
+    {
+      "id": "trace-animals-fit-p22-058",
+      "statement": "Remove deletes the row at once, with no confirmation page (POST 302 back to the upload page), and the empty-state message 'You have not added any documents yet.' returns when the last row goes.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-182e4 call@2549 to call@2553; network second POST 302",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-059",
+      "statement": "A document can be removed while it is still scanning.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-182e4 call@2547 to call@2549 (remove clicked straight after the add, with no wait for Check completed)",
+      "quote": "click | .govuk-table__row >> has-text=\"ITAHC-2026-0001\" >> button[name=\"Remove document 1\"]",
+      "confidence": "inferred",
+      "note": "Inferred from the timing: the test does not wait for the scan before removing."
+    },
+    {
+      "id": "trace-animals-fit-p22-060",
+      "statement": "Saved rows have no change or edit action: the trader can only view or remove a document.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 rendered complete row",
+      "quote": "View file for document 1 / Remove document 1",
+      "confidence": "inferred",
+      "note": "Inferred from the actions the row renders."
+    },
+    {
+      "id": "trace-animals-fit-p22-061",
+      "statement": "'Save and continue' with the add-a-document fields filled saves the document too: the POST redirects back to the upload page, which now shows the new row.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3209 to call@3211; network POST 302 -> /accompanying-documents",
+      "quote": "POST | .../accompanying-documents | 302 | .../accompanying-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-062",
+      "statement": "After that continue the trader stays on the upload page while the document scans; pressing 'Save and continue' again once the row shows 'Check completed' leaves for the Overview.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3213 to call@3217; network POST ?attempt=1 302 -> overview",
+      "quote": "continue saves the document the trader filled in, then leaves once it is scanned",
+      "confidence": "verbatim",
+      "note": "Whether continue holds the trader back because of the pending scan or simply because a document was just added is not separated by the trace."
+    },
+    {
+      "id": "trace-animals-fit-p22-063",
+      "statement": "'Save and continue' with only a document type chosen does not leave: the page re-renders (HTTP 400) with the error summary listing the missing reference, date and file, and the chosen type stays selected.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-e6cdc call@2437 to call@2447; network POST 400; selected option ITAHC",
+      "quote": "Enter a document reference / Enter a date of issue / Upload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-064",
+      "statement": "'Save and continue' with an untouched form leaves for the Overview (POST 302 to the overview): uploading documents is optional.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-a3d09 call@3303 to call@3305; network POST 302 -> overview",
+      "quote": "continue with an untouched form leaves the page, uploading being optional",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-065",
+      "statement": "After continuing with no documents, the overview's 'Upload documents' task stays 'To do' (blue tag).",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-a3d09 call@3305 overview task list",
+      "quote": "Upload documents To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-066",
+      "statement": "After continuing with one scanned document, the overview's 'Upload documents' task, under the heading '4. Documents', shows 'Complete' (green tag).",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3217 overview task list",
+      "quote": "4. Documents ... Upload documents Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-067",
+      "statement": "The error summary's title is 'There is a problem' and each message links to its field: #accompanyingDocumentReference, #accompanyingDocumentType, #accompanyingDocumentDateOfIssue and #file.",
+      "kind": "copy",
+      "ref": "trace documents-fit-upload.fit-d-c504b call@2915 .govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-068",
+      "statement": "Pressing 'Save and add another' with nothing filled in shows four errors, in field order: 'Enter a document reference', 'Select a document type', 'Enter a date of issue', 'Upload a document'.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-c504b call@2913 to call@2917",
+      "quote": "Enter a document reference / Select a document type / Enter a date of issue / Upload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-069",
+      "statement": "Each field in error carries the GOV.UK inline error pattern: govuk-form-group--error, a govuk-error-message with visually hidden 'Error:' prefix placed after the hint, the error id added to the control's aria-describedby, and the input's --error modifier.",
+      "kind": "constraint",
+      "ref": "trace documents-fit-upload.fit-d-e6cdc call@2441 FORM tree",
+      "quote": "P {\"id\":\"accompanyingDocumentReference-error\",\"class\":\"govuk-error-message\"} Error: Enter a document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-070",
+      "statement": "After a failed submit, a chosen file is not kept: the upload control reads 'No file chosen' again, while the typed reference and date are kept.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-77b8b rendered error page (reference ITAHC-ONE-TOO-MANY, date 03/01/2026, upload button 'No file chosen')",
+      "quote": "value=ITAHC-ONE-TOO-MANY ... value=03/01/2026 ... No file chosen",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-071",
+      "statement": "A notification holds at most 15 documents: fifteen documents can be added one after another with 'Save and add another'.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-77b8b call@3297 to call@3445 (ITAHC-CAPACITY-1 to ITAHC-CAPACITY-15)",
+      "quote": "up to a maximum of 15 files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-072",
+      "statement": "Adding a sixteenth document is refused (HTTP 400) with the error 'You can upload a maximum of 15 files', whose summary link points at the saved-documents table (#documents-added).",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-77b8b call@3455 to call@3461; network final POST 400",
+      "quote": "You can upload a maximum of 15 files",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-073",
+      "statement": "The capacity error appears only in the error summary: no field shows an inline error message for it.",
+      "kind": "rule",
+      "ref": "trace documents-fit-upload.fit-d-77b8b DOM (no govuk-error-message or govuk-form-group--error)",
+      "quote": "<a href=#documents-added>You can upload a maximum of 15 files",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any inline error element in the trace's snapshots."
+    },
+    {
+      "id": "trace-animals-fit-p22-074",
+      "statement": "When the capacity error fires, the refused document's reference is kept in the Document reference field.",
+      "kind": "behaviour",
+      "ref": "trace documents-fit-upload.fit-d-77b8b call@3463",
+      "quote": "label=\"Document reference\" toHaveValue(\"ITAHC-ONE-TOO-MANY\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-075",
+      "statement": "Rows are listed in the order they were added and numbered from 1 in their hidden action text (Remove document 1 ... Remove document 15).",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-77b8b rendered table rows",
+      "quote": "Remove document 1 ... Remove document 15",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-076",
+      "statement": "The empty upload page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-a1b9f call@3397 (axe run; test passed)",
+      "quote": "Empty document upload page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-077",
+      "statement": "The upload page in its error state (empty add, error summary and #accompanyingDocumentType-error showing) has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-c504b call@2913 to call@2919 (test passed)",
+      "quote": "Document upload error state",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-078",
+      "statement": "The open date of issue picker dialog has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-01ae3 call@3249 to call@3253 (test passed)",
+      "quote": "Document date picker dialog",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-079",
+      "statement": "The upload page with a saved, scanned document has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-43a1e call@2645 to call@2657 (test passed)",
+      "quote": "Populated document upload page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-080",
+      "statement": "The file is uploaded with the form to the frontend itself; the onward hand-off to a document store and virus scanner (the 'configured stub' the test names) happens server side and does not appear in the browser's network log, so its call shape is not shown.",
+      "kind": "integration",
+      "ref": "trace documents-fit-upload.fit-d-bbc31 network log (only localhost:3000 calls)",
+      "quote": "uploads through the configured stub and renders the saved row",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p22-081",
+      "statement": "Each saved document has an upload id (a UUID) the page carries on its status cell and in its file link.",
+      "kind": "data",
+      "ref": "trace documents-fit-upload.fit-d-876de call@3211 TD data-upload-id; trace documents-fit-upload.fit-d-bbc31 View file href",
+      "quote": "data-upload-id=\"3c3a56c9-df63-464a-bdab-62b957f92d84\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-082",
+      "statement": "Every page response (page, status poll and file) is sent with cache-control no-cache and x-content-type-options nosniff.",
+      "kind": "non-functional",
+      "ref": "trace documents-fit-upload.fit-d-876de network response headers",
+      "quote": "cache-control: no-cache; x-content-type-options: nosniff",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p22-083",
+      "statement": "No trace in this part revisits the upload page from the overview after documents are saved, so whether saved rows and their scan states persist across visits is not shown directly.",
+      "kind": "behaviour",
+      "ref": "all 17 traces of part 22",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p22-084",
+      "statement": "The page's components are govuk-frontend throughout (back link, caption, heading, tag, summary card, form group, label, hint, input, select, file upload, button, button group, table, details, error summary) plus the MOJ date picker; the only non-govuk classes are app-journey-strip and app-link-button.",
+      "kind": "constraint",
+      "ref": "trace documents-fit-upload.fit-d-0b0a7 call@2849 class inventory of main; trace documents-fit-upload.fit-d-876de call@3211",
+      "quote": "app-journey-strip ... moj-datepicker ... govuk-summary-card ... govuk-file-upload ... app-link-button",
+      "confidence": "verbatim"
+    }
+  ]
+}

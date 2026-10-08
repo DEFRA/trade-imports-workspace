@@ -1,0 +1,335 @@
+{
+  "source": "document:dr1-parity-backlog",
+  "structure": "Part 5, Commodities, identification and documents. Read in full the seven backlog.json rows in this slice by their line ranges: inc-087 (5106-5312, commodity search, done, one openQuestion on the search hint wording), inc-091 (6112-6386, per-species rows for 01061900, done, one openQuestion on the commodity stub, plus the run A versus run C banding judgement in finding.difference and provenance.judged), inc-103 (8456-8666, an animal counts as identified once one identifier is filled, deferred, decision by Rhys 2026-09-04), inc-136 (14669-15088, document type select, done, one openQuestion on the error-summary ordering helper, plus a correction saying the builder should take DR1's option text), inc-137 (15089-15219, drag and drop upload, done, two openQuestions: second-submit error clearing and the no-JavaScript fallback), inc-138 (15525-15708, 50MB document size limit, done, two openQuestions: the CDP ingress cap blocking deploy and container memory headroom) and inc-094 (30484-30633, lowering the number of animals below those identified, dropped, decision by Sam 2026-08-21). Each done row gets one context claim saying what landed, then a claim per decision, departure from the prototype and open question; each deferred or dropped row gets its ruling, its reason and the behaviour on each side it rules between. Evidence, screens, citations, PR bookkeeping and run-matching provenance were read for context and not claimed, except inc-091's band choice, which the row itself calls the decision with money attached.",
+  "claims": [
+    {
+      "id": "document-dr1-parity-backlog-p5-001",
+      "statement": "inc-087 is done: the commodity page replaces the printed tick-box list of every commodity with Design release 1's search — a labelled search box, a results panel once at least three characters are entered grouping matching species under their commodity heading with a tick box each, and a running list of what has been chosen headed with the count and a way to clear it.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-087, status and finding.difference",
+      "quote": "Replace the printed tick-box list on the commodity page with a search: a labelled search box over the reference list, a results panel that appears once at least three characters are entered and groups matching species under their commodity heading with a tick box each, and a running list of what has been chosen so far, headed with the count, with a way to clear it.",
+      "confidence": "verbatim",
+      "note": "status is done (commit 6891b3e9). Context for the open question that follows; not itself a departure from the prototype."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-002",
+      "statement": "The commodity search hint that shipped departs from Design release 1's wording: it reads \"You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.\" where Design release 1 reads \"You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "What landed is src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:8-9 — \"You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.\" — three substantive term changes (common name -> commodity name, cattle -> Cow, Latin name -> species name) plus an added sentence.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-003",
+      "statement": "The Welsh commodity search hint mirrors the implemented wording, so both locales agree with each other and both differ from the acceptance criteria.",
+      "kind": "copy",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "copy.cy.js:12-14 mirrors the implemented wording, so the two locales agree with each other and both diverge from the AC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-004",
+      "statement": "The hint departs from Design release 1 because the frontend's commodity data has no common names: a trader following Design release 1's hint and typing \"cattle\" gets \"No results found\", so that wording promises a search that cannot work until species common names (inc-090) land.",
+      "kind": "rule",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "a trader following the AC's hint and typing \"cattle\" gets \"No results found\" — the AC wording promises a search that cannot work until inc-090 (species common names) lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-005",
+      "statement": "The added sentence \"Enter at least 3 characters.\" states the three-character minimum search length, which Design release 1 conveys through live typing and a static server-rendered page cannot; Design release 1 has no equivalent sentence.",
+      "kind": "copy",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "The added \"Enter at least 3 characters.\" sentence is likewise a real, useful statement of MIN_SEARCH_LENGTH (search/matching.js:4) that Design release 1 conveys through live typing and a static server-rendered page cannot.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-006",
+      "statement": "Open and unruled: which wording the commodity search hint ships with is a copy decision for design and content. They must either confirm the implemented wording as a deliberate, data-driven correction and record the ruling, or return to Design release 1's wording as part of inc-090 once common names exist, deciding then whether to keep or drop \"Enter at least 3 characters.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "ACTION for design/content: either (a) confirm the implemented wording as a deliberate, data-driven correction and record that ruling here so the next capture pass does not re-open it, or (b) schedule the return to the AC wording as part of inc-090, when common names exist and \"cattle\" actually returns the Cow group — in which case the \"Enter at least 3 characters.\" sentence needs an explicit keep/drop decision too, since Design release 1 has no equivalent.",
+      "confidence": "gap",
+      "note": "DEFERRED in the row, not decided. A re-capture of the parity comparison will re-raise inc-087 on the hint; the FIT test asserts only that the hint is visible, not its wording."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-007",
+      "statement": "Nothing pins the commodity search hint to any particular wording: the test only asserts that the hint is visible, so the parity capture is what will flag the difference again.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-087, openQuestions[0]",
+      "quote": "the parity capture compares this page's rendered copy against dr1-what-are-you-importing, so a re-capture will re-raise inc-087 as unclosed on the hint. Nothing pins the string to the AC either: fit/search.fit.spec.js:46 asserts only that copy.search.searchHint is visible.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-008",
+      "statement": "inc-091 is done: on the consignment-details page each chosen species of a commodity on code 01061900 is its own row in Selected commodities, named by the species, with a Remove that takes out that species only; every other commodity keeps its commodity-level row.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-091, status and finding.difference",
+      "quote": "On the consignment-details page, list each chosen species of a 01061900 commodity as its own row in Selected commodities, named by the species, with a Remove that takes out that species only and leaves the rest of the commodity. Everything else keeps the commodity-level row it has now.",
+      "confidence": "verbatim",
+      "note": "status is done (commit 65941868)."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-009",
+      "statement": "The per-species rows were banded frontend-work (run C) rather than needs-backend (run A): the store already holds one line per species, so the change is to the table and what Remove submits and can be built against today's stub without waiting for a reference-data API.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-091, finding.difference paragraph 2 and provenance.judged",
+      "quote": "The band carried here is run C's, because the judge found run C's evidence decisive on what is buildable today; run A would have banded it higher.",
+      "confidence": "verbatim",
+      "note": "The row calls the band \"the decision with money attached\". Run A held the work behind a reference-data API for the commodity and species catalogue."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-010",
+      "statement": "The headline case of inc-091 — two chosen species under one 01061900 commodity, each its own row, with a Remove that drops one and keeps the other — cannot be reached through the journey today, because the frontend's commodity stub gives Cat and Dog one species each; the tests seed the two-line case straight into the store and no browser-level test can reach it.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-091, openQuestions[0], FIRST",
+      "quote": "the increment's headline case — two chosen species under one 01061900 commodity, each its own row, a Remove that drops one and keeps the sibling — is not reachable through the journey today, because a stored line's species is filtered against that commodity's catalogue (search/selection/keys.js:8-11,23-26 via isCommoditySpecies). The unit and controller tests added by this increment therefore seed the two-line case directly into the store rather than driving it through the search page, and no browser-level test can reach it at all.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-011",
+      "statement": "The shipped frontend still names the 01061900 dog row \"Dog\" where Design release 1 names it \"Domestic dog\" (and \"Cat\" where Design release 1 has \"Domestic cat\"): the row-building code names it from the species common name, but the stub's species common names equal the commodity names, and the increment deliberately left the stub data alone.",
+      "kind": "copy",
+      "ref": "backlog.json inc-091, openQuestions[0], SECOND",
+      "quote": "Run C's finding contract excludes 'what a stub happens to contain' (FINDING-CONTRACT.md:415-436), so this increment deliberately left the data alone; the effect is that the shipped frontend still renders 'Dog' where Design release 1 renders 'Domestic dog'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-012",
+      "statement": "Open and unruled: the service team must decide whether the commodity stub should model a 01061900 commodity with more than one species (for example adding a dingo, Canis lupus dingo, under Dog) and whether Cat and Dog should take Design release 1's common names \"Domestic cat\" and \"Domestic dog\".",
+      "kind": "data",
+      "ref": "backlog.json inc-091, openQuestions[0], ACTION FOR THE SERVICE TEAM",
+      "quote": "ACTION FOR THE SERVICE TEAM: decide whether the stub should model a multi-species 01061900 commodity (e.g. adding { value: '923503', text: 'Canis lupus dingo', commonName: 'Dingo' } to COMMODITY_SPECIES.Dog and its value to COMMODITY_TYPE_DATA.Dog[0].species) and whether Cat/Dog should adopt Design release 1's 'Domestic cat'/'Domestic dog'.",
+      "confidence": "gap",
+      "note": "Held out of the increment because either fixture change moves the commodity search page's labels and counts and the species labels the tests repo drives. The question becomes moot if the catalogue moves to the reference-data API."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-013",
+      "statement": "The stub question for 01061900 species becomes moot if the commodity catalogue moves to the reference-data API, which is the banding disagreement already recorded on inc-091.",
+      "kind": "integration",
+      "ref": "backlog.json inc-091, openQuestions[0], last sentence",
+      "quote": "It also becomes moot if the catalogue moves to the reference-data API, which is the banding disagreement already recorded on this increment (run A: needs-backend; run C: frontend-work).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-014",
+      "statement": "inc-103 is deferred: it was ruled \"defer\" by Rhys on 2026-09-04, because every disputed-band increment is held for a separate adjudication pass that no implementor can settle.",
+      "kind": "rule",
+      "ref": "backlog.json inc-103, decision.ruling and decision.note",
+      "quote": "Deferred by Rhys, 2026-09-04: every disputed-band increment is held for a separate adjudication pass. Each turns on a requirement the two runs read oppositely, and none can be settled by an implementor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-015",
+      "statement": "Open and unruled: the design authority must say whether Design release 1's behaviour (every identifier for the commodity filled) or the V4 data-fields line \"At least one Animal Identifier\" governs when an animal counts as identified; on one reading the finding is struck rather than built.",
+      "kind": "rule",
+      "ref": "backlog.json inc-103, decision.note",
+      "quote": "inc-103 needs the design authority to say whether Design release 1's per-commodity identifier behaviour or the V4 \"At least one Animal Identifier\" line governs, and on one reading the finding is struck rather than built. Held so the build loop stops re-deriving them; revisit as a group.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-016",
+      "statement": "The frontend counts an animal as identified once one identifier is filled, refusing only an entirely empty animal with \"Enter at least one identifier for this animal\", which matches the V4 field block \"Field Block - Mandatory to Submit - At least one Animal Identifier\".",
+      "kind": "rule",
+      "ref": "backlog.json inc-103, finding.frontend and finding.difference",
+      "quote": "One identifier is enough. A trader who fills the ear tag and leaves the passport blank presses \"Save and add another\", the animal is added to the summary list as \"Animal 1 — Ear tag: UK123456789012\", and the counter moves on to \"Enter details for Bos taurus 2 of 2\". Only an entirely empty animal is refused, with \"Enter at least one identifier for this animal\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-017",
+      "statement": "Design release 1 counts an animal as entered only when every identifier for its commodity has a value, shows no error for a partly filled animal, keeps the trader on that animal with the counter unmoved, and lists only complete animals in the saved table.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-103, finding.prototype",
+      "quote": "An animal counts as entered only when every identifier declared for its commodity carries a value (app/routes.js:1526-1532), so a cattle animal needs both an ear tag and a passport and a horse needs a microchip, a passport and a horse name. A partly filled animal is not refused and no error is shown — the page simply re-renders the same animal with the values kept and the counter unmoved, and the saved-animals table lists only complete animals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-018",
+      "statement": "If every identifier is ruled required, the work is: each individual identifier becomes mandatory so each empty box names itself in the error summary, new error copy is written (Design release 1 supplies none), and the change follows the correction of the commodity identifier sets (inc-110), since otherwise it would demand a tattoo for every cow.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-103, finding.difference and finding.relatedTo inc-110",
+      "quote": "move the individual identifier obligations from optional to mandatory so each empty box names itself in the error summary rather than the record failing as a whole, and write the error copy for it, which Design release 1 does not supply because it shows no message at all; if they are not required, Frontend is already right and this finding should be struck. Any such change also has to follow the commodity identifier sets being corrected, because the rule is only as good as the set it ranges over — with tattoo still on cattle it would demand a tattoo for every cow.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-019",
+      "statement": "The frontend's empty-animal check is weaker than its rule suggests: it fires only when no card anywhere on the page holds data, so on a page with two commodities an empty card is skipped silently while the filled one saves.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-103, finding.correction",
+      "quote": "Frontend's rule is weaker in practice than the frontend slot suggests: the empty-record guard at src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/form/forms.js:124-135 fires only when no card anywhere on the page holds data, so on a two-commodity page an empty card is skipped silently while the filled one saves.",
+      "confidence": "verbatim",
+      "note": "Recorded in the correction as worth noting, not ruled on."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-020",
+      "statement": "Design release 1's own submit gate for identification is weaker still: it needs only one complete animal per species, and only when more than one species is selected.",
+      "kind": "rule",
+      "ref": "backlog.json inc-103, finding.correction",
+      "quote": "Design release 1's own submit gate is weaker still, needing only one complete animal per species and only when more than one species is selected (app/routes.js:1514-1523).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-021",
+      "statement": "inc-136 is done: the document upload form has a Document type select between the document reference and the date of issue, opening on \"Select one\", offering Design release 1's thirteen types in its order, bound to the accompanyingDocumentType field and mandatory when the row is saved, replacing the guess of the type from the filename.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-136, status and finding.difference",
+      "quote": "Add a Document type select to the upload form, between the reference and the date of issue, bound to the existing accompanyingDocumentType obligation, with a \"Select one\" placeholder and DR1's thirteen options in DR1's order, and validate it as mandatory when the row is saved.",
+      "confidence": "verbatim",
+      "note": "status is done (commits ffb746cc b7d44ec). The thirteen are listed in finding.prototype: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-022",
+      "statement": "The document type options take Design release 1's option text, not the frontend's existing labels: the frontend labelled ITAHC as the bare acronym \"ITAHC\" where Design release 1 says \"Intra Trade Animal Health Certificate (ITAHC)\", and the frontend's list carries a fourteenth type, HEALTH_CERTIFICATE, that Design release 1 does not offer to a design-release user.",
+      "kind": "copy",
+      "ref": "backlog.json inc-136, finding.correction and finding.difference",
+      "quote": "The claim that \"the user-facing labels for every member are already written\" is therefore true of the mechanism but not of the wording, and whoever builds the select should take DR1's option text.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-023",
+      "statement": "Open: the code that orders a merged error summary by field is hand-written in four places, and the order it produces is what the accessibility tests pin; a standalone refactor ticket should lift one shared helper and point all four at it.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-136, openQuestions[0]",
+      "quote": "Each copy has to be kept in step with its own template by hand, and the resulting summary order is what the accessibility tests pin. ... ACTION: raise a standalone refactor ticket for the shared orderedErrors helper.",
+      "confidence": "gap",
+      "note": "Not fixed in the increment because it touches three features outside an add-field increment and carries accessibility-ordering regression risk for no behavioural gain. No user-visible behaviour changes."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-024",
+      "statement": "inc-137 is done: the documents page uses the design system's JavaScript-enhanced file upload — a drop zone, a \"Choose file\" button, the words \"or drop file\" and a live region naming the chosen file — rather than rebuilding Design release 1's hand-built markup, because the requirement is the behaviour, not the bespoke classes.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-137, status and finding.difference",
+      "quote": "Design release 1 hand-built the same thing in the prototype's own markup, so the requirement is the behaviour, not the bespoke classes; the design-system component satisfies it and should be used instead of rebuilding one.",
+      "confidence": "verbatim",
+      "note": "status is done (commits 24b08e2b 2503575). A recorded choice to depart from the prototype's markup while matching its behaviour."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-025",
+      "statement": "The drop zone shows its own error state when the attachment fails validation, and the plain file input stays behind it as the fallback for a trader whose JavaScript does not run.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-137, finding.difference",
+      "quote": "The zone's own error state comes with the component, and the unenhanced input stays behind it as the no-JavaScript fallback, so nothing is taken away from a trader whose JavaScript does not run.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-026",
+      "statement": "Open: nothing tests clearing an earlier client-side oversize error on a second submit. If it went wrong, a trader who hits the oversize error, swaps in a valid file and presses Add another would be left with a stale error reference on the drop-zone button and a stale error style on the input. The team must decide whether the documents client code gets a browser-environment unit-test lane, and if so add the test.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-137, openQuestions[0]",
+      "quote": "The failure it would let through: a trader hits the oversize error, swaps in a valid file and presses Add another; if the control/input resolution were wrong the stale aria-describedby=\"file-hint file-error\" would survive on the drop-zone button after clearPreviousClientErrors had already removed the <p id=\"file-error\">, leaving a dangling idref, plus a stale govuk-file-upload--error class on the input. ... ACTION: decide whether documents/client/ gets a jsdom unit-test lane",
+      "confidence": "gap",
+      "note": "DEFERRED: it would be the first jsdom unit test in the frontend repo, a test-infrastructure decision wider than the increment."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-027",
+      "statement": "Open: nothing proves the documents upload still works with JavaScript off. If the plain input were hidden, a trader without JavaScript would see an empty dashed wrapper and could not attach a document, and the suite would stay green. A JavaScript-off route to the documents page and a test that a plain input is visible and attaches a document are still to be added.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-137, openQuestions[1]",
+      "quote": "Hide the raw input for real — app CSS such as .govuk-file-upload-wrapper .govuk-file-upload { display: none }, or a {% if %} around the macro call — and a JS-off trader is left with a dashed empty wrapper and no way to attach a document, while the suite stays green. This increment renames that test to what it really pins; the missing coverage stays open.",
+      "confidence": "gap",
+      "note": "DEFERRED because reaching the documents page with JavaScript off needs a no-JavaScript variant of the shared journey set-up (country of origin answered through the native select rather than the type-ahead), which touches every feature's set-up."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-028",
+      "statement": "inc-138 is done in code: the accepted document size rises from 10 MB to Design release 1's 50MB, with the hint bullet and the oversize error message changed to match.",
+      "kind": "rule",
+      "ref": "backlog.json inc-138, status and finding.difference",
+      "quote": "Raise the accepted file size from 10 MB to 50MB and change the hint bullet and the oversize error message to match.",
+      "confidence": "verbatim",
+      "note": "status is done (commits 3fe7da19 50ff56f), but the first open question says it must not be deployed until the platform ingress cap is confirmed."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-029",
+      "statement": "The size limit's unit is written the Design release 1 way, \"50MB\" with no space, rather than the frontend's former \"10 MB\" with a space.",
+      "kind": "copy",
+      "ref": "backlog.json inc-138, finding.difference and openQuestions[0]",
+      "quote": "Settle the unit in the same edit — Design release 1 writes \"50MB\" with no space where the frontend writes \"10 MB\" with one.",
+      "confidence": "inferred",
+      "note": "Inferred that the unspaced form was adopted: the difference asks for the unit to be settled, and openQuestions[0] names the fallback as \"only the unit/label correction ('10 MB' -> '10MB') lands\"."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-030",
+      "statement": "The 50MB limit depends on the hosting platform: the request-body cap on the platform's ingress and on whatever receives the upload must allow at least 50MB first, or a large file is refused by the infrastructure and the trader gets a platform error page instead of a validation message.",
+      "kind": "integration",
+      "ref": "backlog.json inc-138, finding.difference and finding.correction",
+      "quote": "the request-body cap on the hosting platform's ingress and on whatever receives the upload has to be raised to at least 50MB first, otherwise a large file will be rejected by the infrastructure before the service sees it and the trader will get a platform error page instead of a validation message.",
+      "confidence": "verbatim",
+      "note": "Banded needs-backend as the nearest band; the dependency is the platform ingress cap, not a backend service change."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-031",
+      "statement": "Blocking before deploy and unconfirmed: the CDP nginx ingress request-body cap in front of the animals frontend must be confirmed as at least 50,001,024 bytes. Nothing in the workspace confirms it, and the tests repo still records it as 10 MiB.",
+      "kind": "integration",
+      "ref": "backlog.json inc-138, openQuestions[0]",
+      "quote": "BLOCKING BEFORE DEPLOY — has the CDP nginx ingress request-body cap in front of trade-imports-animals-frontend been raised to at least 50,001,024 bytes (MAX_PAYLOAD_BYTES)?",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-032",
+      "statement": "The backend half of the 50MB dependency is met: the animals backend accepts files of 50MB, requests of 51MB, and an uploader maximum of 52428800 bytes, so the platform ingress is the only limit still outstanding.",
+      "kind": "integration",
+      "ref": "backlog.json inc-138, openQuestions[0]",
+      "quote": "The backend half of the dependency IS met and was verified: repos/trade-imports-animals-backend/src/main/resources/application.yml:29 sets spring.servlet.multipart.max-file-size to 50MB, :30 max-request-size 51MB, :45 cdp.uploader.max-file-size 52428800. So the ingress is the single outstanding limit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-033",
+      "statement": "If deployed before the ingress cap is raised, every file between 10,485,760 and 50,000,000 bytes passes the service's checks and is then refused by the ingress: the trader gets a platform 413 error page and loses the document type, reference and date of issue they typed, which is worse than today's inline 10 MB error that keeps them.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-138, openQuestions[0], CONSEQUENCE IF DEPLOYED UNCONFIRMED",
+      "quote": "The trader gets a platform 413 error page and loses the document type, reference and issue date they had typed, because handleOversizePayload (controller.js:309-311) is an onPreResponse extension and never runs for a request that never reaches hapi. That is strictly worse than today's inline 'The selected file must be smaller than 10 MB' with the metadata preserved — a user-visible regression across a 5x band of file sizes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-034",
+      "statement": "A configurable file-size limit read from an environment setting was considered and rejected for this increment: a default of 10 gives no parity anywhere and leaves the end-to-end tests not knowing which limit is in force, and a default of 50 ships the regression anyway.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-138, openQuestions[0]",
+      "quote": "The reviewed alternative — sourcing MAX_FILE_SIZE_MB from convict in src/config/config.js behind DOCUMENT_MAX_FILE_SIZE_MB so the app limit can be flipped independently — was rejected as a fix for this increment: with a default of 10 the increment achieves no parity in any environment and the E2E suite can no longer know which limit is in force, and with a default of 50 the regression ships anyway",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-035",
+      "statement": "Action for the service team: confirm the ingress body-size cap is at least 50,001,024 and record the confirmation against EUDPA-518 before the branch is deployed; if it cannot be raised, hold the merge and split the increment so only the unit and label correction ('10 MB' to '10MB') lands.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-138, openQuestions[0], ACTION FOR THE SERVICE TEAM",
+      "quote": "ACTION FOR THE SERVICE TEAM: confirm the ingress proxy-body-size in front of this service is >= 50,001,024 and record the confirmation (ticket or config reference) against EUDPA-518 before this branch is deployed to CDP; if it cannot be raised, hold the merge and split the increment so only the unit/label correction ('10 MB' -> '10MB') lands.",
+      "confidence": "gap",
+      "note": "The ingress is a CDP platform setting owned outside every repo in the workspace."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-036",
+      "statement": "Open: the frontend container's memory headroom under the 50MB limit is unknown. Each in-flight upload is held about three times in memory (about 150 MB at 50MB), nothing bounds it, and a few concurrent large uploads could crash the instance and drop every journey on it. The team must decide whether to confirm and record the container memory and concurrency it supports, or to stream uploads instead of buffering them, sized as its own increment.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-138, openQuestions[1]",
+      "quote": "A handful of concurrent large certificate uploads on a small CDP container would exhaust the heap and OOM-restart the pod, dropping every in-flight journey on that instance, not only the uploads. ... ACTION: decide which, and size it as its own increment.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-037",
+      "statement": "inc-094 is dropped: Sam ruled on 2026-08-21 to keep the frontend's rule that refuses a number of animals lower than the identification records already entered for that species, together with its message, rather than follow Design release 1.",
+      "kind": "rule",
+      "ref": "backlog.json inc-094, decision.ruling and decision.note",
+      "quote": "The frontend holds the user on the consignment-details page until they either remove the records or restore the count, which is the correct behaviour. Keep the frontend as built; the count-drop rule and its copy stay. Ruled by Sam, 2026-08-21.",
+      "confidence": "verbatim",
+      "note": "decision.ruling is \"reject\"; status is dropped."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-038",
+      "statement": "The reason for keeping the rule: Design release 1 accepts the lower count and simply stops showing the surplus identification record, leaving data the trader entered orphaned in the session with neither a warning nor a deletion.",
+      "kind": "rule",
+      "ref": "backlog.json inc-094, decision.note",
+      "quote": "The frontend implementation is right compared to the design. Design release 1 accepts the lower count and simply stops rendering the surplus identifier record, leaving data the trader entered orphaned in the session with neither a warning nor a deletion.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p5-039",
+      "statement": "When a user lowers the count below the identification records entered, the error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link goes to that line's identification card rather than to the number box; nothing is saved until the number goes back up or records are deleted.",
+      "kind": "copy",
+      "ref": "backlog.json inc-094, finding.frontend",
+      "quote": "The error summary and the field both read \"You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.\", and the summary link sends the user to the identification card for that line rather than to the box they just typed in. Nothing is saved until they either put the number back up or go and delete records by hand",
+      "confidence": "verbatim",
+      "note": "This is the behaviour the inc-094 ruling keeps."
+    }
+  ]
+}

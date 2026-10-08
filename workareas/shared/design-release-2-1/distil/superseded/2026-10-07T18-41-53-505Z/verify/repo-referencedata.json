@@ -1,0 +1,101 @@
+{
+  "source": "repo:referencedata",
+  "extractHash": "24bfd731ee282b9bf9317a8326f3ce0c550219bbf5cc9b2aab2b55c55f9b9a29",
+  "verdicts": [
+    {
+      "id": "repo-referencedata-001",
+      "holds": true,
+      "reason": "CountriesController.java:18 has @RequestMapping(\"/countries\"); Country has code, name, subDivisions."
+    },
+    {
+      "id": "repo-referencedata-002",
+      "holds": true,
+      "reason": "Line 30 sorts with Comparator.comparing(Country::getName); verified."
+    },
+    {
+      "id": "repo-referencedata-003",
+      "holds": true,
+      "reason": "Country.java:22-23 maps effectiveAlpha2 to code and effectiveAlias to name; IT asserts the same."
+    },
+    {
+      "id": "repo-referencedata-004",
+      "holds": true,
+      "reason": "MdmService.java:49 filters out GB; IT lines 45-46 assert GB and GB-NIR are absent."
+    },
+    {
+      "id": "repo-referencedata-005",
+      "holds": true,
+      "reason": "MdmService.java:54-59 quote is exact; null blocks or null country blocks passes. Controller has optional blocks param (CountriesController.java:26)."
+    },
+    {
+      "id": "repo-referencedata-006",
+      "holds": true,
+      "reason": "Country.java:27-39 filters null codes, returns List.of() when empty; IT lines 48-50 assert Canary Islands and ES-CN. Ref says IT lines 48-50, which match."
+    },
+    {
+      "id": "repo-referencedata-007",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:17-31 maps /ports-of-entry, sorts by name; PortOfEntry exposes code and name per the extractor (controller maps via PortOfEntry::new)."
+    },
+    {
+      "id": "repo-referencedata-008",
+      "holds": true,
+      "reason": "MdmClient.java:20 and 27 give /mdm/geo/countries and /mdm/trade/bcp/poes with subscription key header; SYSTEM=GBNAG at MdmService.java:17. Docs confirm no reference data held, MongoDB unused."
+    },
+    {
+      "id": "repo-referencedata-009",
+      "holds": true,
+      "reason": "CacheConfig.java:16 default 60 and lines 32-44 register both caches with the TTL; application.yml:5-7 sets CACHE_MDM_TTL_MINUTES. Unless clause on MdmService.java:22,35. Per-blocks caching proved by IT lines 105-116. Comment at CacheConfig.java:30-31 confirmed. Note the cache maximumSize is 20 entries."
+    },
+    {
+      "id": "repo-referencedata-010",
+      "holds": true,
+      "reason": "MdmService.java:28-31 and 44-47 log a warning and return List.of() on null body."
+    },
+    {
+      "id": "repo-referencedata-011",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-reference-data.md lines 20-22 say no notification, address or user data and no inbound auth found in controllers; correctly inferred, and controllers shown carry no security annotations."
+    },
+    {
+      "id": "repo-referencedata-012",
+      "holds": true,
+      "reason": "ADR 0002 dated 2026-05-07, Accepted; lines 17-24 list Countries as current and commodity codes and BCPs/POEs as planned. Out-of-date note is right, since PortsOfEntryController exists."
+    },
+    {
+      "id": "repo-referencedata-013",
+      "holds": true,
+      "reason": "grep -rliE for commodit, species, transporter, certification, document-type over src/main returned no files."
+    },
+    {
+      "id": "repo-referencedata-014",
+      "holds": true,
+      "reason": "Only CountriesController and PortsOfEntryController exist; no commodity-related match in src/main."
+    },
+    {
+      "id": "repo-referencedata-015",
+      "holds": true,
+      "reason": "No transporter match in src/main."
+    },
+    {
+      "id": "repo-referencedata-016",
+      "holds": true,
+      "reason": "No document-type or documentType match in src/main."
+    },
+    {
+      "id": "repo-referencedata-017",
+      "holds": true,
+      "reason": "No certification match in src/main."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-referencedata-005-m1",
+      "statement": "The blocks value is also forwarded to MDM as a query parameter on the countries call, so MDM filters first and this service filters again on block name and includeCountry.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:20-25; MdmService.java:40",
+      "quote": "@RequestParam(value = \"blocks\", required = false) String blocks",
+      "confidence": "verbatim"
+    }
+  ]
+}

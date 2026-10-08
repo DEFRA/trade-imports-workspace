@@ -1,0 +1,939 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 4, Dashboard, sign-in and cross-service sessions. Read in full: 8 specs and 11 support files. Animals specs: tests/animals/e2e/pages/notification-dashboard.spec.ts (8 tests: start a journey and list the draft; 4 'dashboard basics' tests for landing, starting a notification, list and result count, card details; 3 'notification card actions by status' tests for draft actions, submitted actions and copy-as-new), tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts (1 test: GOV.UK pagination and result range), tests/animals/e2e/features/notification-dashboard-sort.spec.ts (3 test definitions: default option, the four options, and a loop that generates one 'submits and reloads' test per option, so 6 tests at run time), tests/animals/e2e/features/notification-dashboard-search.spec.ts (7 tests: search form, whole-reference match, View after search, no match, free text, sort keeps the search, page param keeps the search), tests/animals/e2e/features/auth.spec.ts (10 tests: 8 sign-in/sign-out tests and 2 'unauthenticated entry' tests for a deep journey page). INS specs: tests/ins/e2e/features/notification-dashboard-navigation.spec.ts (1 test: INS dashboard View opens the animals notification view), tests/ins/e2e/features/aggregated-notification.spec.ts (1 compose-only test of the INS backend's aggregated notification document through draft and submit), tests/ins/e2e/features/cross-service-sessions.spec.ts (1 compose-only test: animals, INS and plants sessions held together in one browser). Support code: page-objects/animals/dashboard-page.ts (heading, start button, sort, search form, results label, summary cards and their fields, pagination, card actions), page-objects/ins/dashboard-page.ts and index.ts (INS dashboard heading, search, row, View link, no-results), page-objects/shared/auth sign-in, organisation picker and sign-out pages, fixtures/auth-state.ts (per-service session cookies, per-target landing pages, cold start), domain/animals/constants/sort-by-values.ts, domain/ins/models/db/aggregated-notification-document.ts, flows/animals/seeded-journey.ts (seeding through the frontend's own form routes, the create, amend, cancel-amend and delete routes) and adapters/http/notification-api-client.ts (backend notification API routes). Claims run spec by spec, then the support code's facts the specs do not assert, then gaps: the organisation picker has a page object but no spec in this slice, sort order and the empty dashboard are not proven end to end, and the INS dashboard's no-results state and columns are not asserted.",
+  "claims": [
+    {
+      "id": "repo-tests-p4-001",
+      "statement": "Starting a new notification from the animals dashboard lands the user on that notification's overview page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:8 'starts a journey at the origin page and lists the draft'",
+      "quote": "const journeyId = await animalsJourney.startNotification();\n\n    await expect(pages.page).toHaveURL(animalsPages.overview.expectedUrl(journeyId));\n    await expect(animalsPages.overview.heading).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The test title says 'at the origin page' but the assertion is the overview URL and heading: the startNotification flow (not in this slice) may answer the origin page first."
+    },
+    {
+      "id": "repo-tests-p4-002",
+      "statement": "A newly started notification appears on the animals dashboard as a card with the status 'Draft', found by searching its reference.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:14-20",
+      "quote": "await animalsPages.dashboard.searchForReference(journeyId);\n      await expect(card).toBeVisible({ timeout: 2_000 });\n    }).toPass({ timeout: 15_000 });\n    await expect(card.getByText('Draft', { exact: true })).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The test retries for up to 15 seconds, so the dashboard listing is eventually consistent with the start of a notification."
+    },
+    {
+      "id": "repo-tests-p4-003",
+      "statement": "A draft notification's dashboard card offers Resume, Copy as new and Delete actions.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:21-23 and :66 'shows resume, copy and delete actions for a draft notification'",
+      "quote": "await expect(animalsPages.dashboard.resume(referenceNumber)).toBeVisible();\n      await expect(animalsPages.dashboard.copyAsNew(referenceNumber)).toBeVisible();\n      await expect(animalsPages.dashboard.delete(referenceNumber)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-004",
+      "statement": "A draft notification's dashboard card does not offer an Amend action.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:75",
+      "quote": "await expect(animalsPages.dashboard.amend(referenceNumber)).not.toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-005",
+      "statement": "The animals notification dashboard is the live-animals set's base path, and a signed-in user reaching it sees the level 1 heading 'Import notification service'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:27 'lands on the notification dashboard'; page-objects/animals/dashboard-page.ts:13-17",
+      "quote": "readonly expectedUrl = SET_BASES.liveAnimals;\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Import notification service' });",
+      "confidence": "verbatim",
+      "note": "Tagged @smoke. SET_BASES is in page-objects/shared/sets, outside this slice; auth.spec.ts:94 shows the base is followed by /notifications/<id>/origin for journey pages."
+    },
+    {
+      "id": "repo-tests-p4-006",
+      "statement": "The animals dashboard has a 'Start a new notification' button, and pressing it lands on the origin of the import page, the journey's entry page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:33 'allows creating a new notification, landing on the journey entry page'; page-objects/animals/dashboard-page.ts:19-21",
+      "quote": "return this.page.getByRole('button', { name: 'Start a new notification' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-007",
+      "statement": "Starting a new notification is a form post to the live-animals set's /notifications path, which redirects to the new notification's origin page at /notifications/<reference>/origin.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:16-17 and :33-39",
+      "quote": "export const CREATE_PATH = `${SET_BASES.liveAnimals}/notifications`;\nconst CREATED_AT_ORIGIN = new RegExp(`^${CREATE_PATH}/(?<journeyId>[^/]+)/origin$`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-008",
+      "statement": "The animals dashboard lists notifications as summary cards and shows a result count.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:39 'displays the notification list and result count'; page-objects/animals/dashboard-page.ts:55-57",
+      "quote": "await expect(animalsPages.dashboard.totalResults).toBeVisible();\n      await expect(animalsPages.dashboard.notificationCards).toHaveCount(1);",
+      "confidence": "verbatim",
+      "note": "Cards are located by the GOV.UK class: this.page.locator('.govuk-summary-card')."
+    },
+    {
+      "id": "repo-tests-p4-009",
+      "statement": "A notification card's heading (level 3) shows the notification's reference number.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:56; page-objects/animals/dashboard-page.ts:74",
+      "quote": "await expect(details.heading).toContainText(referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-010",
+      "statement": "A notification card shows a 'Commodity' row.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:57; page-objects/animals/dashboard-page.ts:75",
+      "quote": "commodity: this.cardField(card, 'Commodity'),",
+      "confidence": "verbatim",
+      "note": "The spec asserts only that the row's value is visible, not what it holds."
+    },
+    {
+      "id": "repo-tests-p4-011",
+      "statement": "A notification card shows an 'Origin' row.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:58; page-objects/animals/dashboard-page.ts:76",
+      "quote": "origin: this.cardField(card, 'Origin'),",
+      "confidence": "verbatim",
+      "note": "The spec asserts only that the value is visible."
+    },
+    {
+      "id": "repo-tests-p4-012",
+      "statement": "A notification card shows an 'Arrival at destination' row holding a date written as day, month name and year (such as 3 November 2026).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:5 and :59; page-objects/animals/dashboard-page.ts:77",
+      "quote": "const DISPLAYED_DATE_PATTERN = /\\d{1,2} \\w+ \\d{4}/;\n...\nawait expect(details.arrivalAtDestination).toContainText(DISPLAYED_DATE_PATTERN);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-013",
+      "statement": "A notification card shows a 'Status' row, which reads 'Submitted' for a submitted notification.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:60; page-objects/animals/dashboard-page.ts:80",
+      "quote": "await expect(details.status).toContainText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-014",
+      "statement": "A notification card's 'Status' row reads 'Draft' for a draft notification.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:71",
+      "quote": "await expect(animalsPages.dashboard.notificationCardDetails(0).status).toContainText('Draft');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-015",
+      "statement": "A notification card shows a 'Date created' row holding only a date in day, month name and year form.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:61; page-objects/animals/dashboard-page.ts:81",
+      "quote": "await expect(details.dateCreated).toHaveText(DISPLAYED_DATE_PATTERN);",
+      "confidence": "verbatim",
+      "note": "toHaveText with an unanchored regex: the cell text contains a date of that shape."
+    },
+    {
+      "id": "repo-tests-p4-016",
+      "statement": "The page object models 'Consignee' and 'Consignor' rows on a notification card, so the card is expected to carry them, but no spec in this slice asserts them.",
+      "kind": "data",
+      "ref": "page-objects/animals/dashboard-page.ts:78-79",
+      "quote": "consignee: this.cardField(card, 'Consignee'),\n      consignor: this.cardField(card, 'Consignor'),",
+      "confidence": "inferred",
+      "note": "Inferred from the page object only: these rows are not proven end to end here."
+    },
+    {
+      "id": "repo-tests-p4-017",
+      "statement": "A submitted notification's dashboard card offers View, Copy as new and Amend actions.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:78 'shows view, copy and amend actions for a submitted notification'",
+      "quote": "await expect(animalsPages.dashboard.view(referenceNumber)).toBeVisible();\n      await expect(animalsPages.dashboard.copyAsNew(referenceNumber)).toBeVisible();\n      await expect(animalsPages.dashboard.amend(referenceNumber)).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "The test does not assert that Resume or Delete are absent for a submitted notification."
+    },
+    {
+      "id": "repo-tests-p4-018",
+      "statement": "Card actions carry the notification's reference in their accessible name: 'Resume notification <ref>' and 'Delete notification <ref>' and 'View notification <ref>' are links; 'Copy as new notification <ref>' and 'Amend notification <ref>' are buttons.",
+      "kind": "copy",
+      "ref": "page-objects/animals/dashboard-page.ts:169-209",
+      "quote": "name: `Copy as new notification ${reference}`,\n...\nname: `Amend notification ${reference}`,\n...\nreturn this.notificationCard(reference).getByRole('link', {\n      name: `View notification ${reference}`,\n...\nname: `Resume notification ${reference}`,\n...\nname: `Delete notification ${reference}`,",
+      "confidence": "verbatim",
+      "note": "Copy and Amend are buttons (form posts); Resume, View and Delete are links."
+    },
+    {
+      "id": "repo-tests-p4-019",
+      "statement": "Pressing Copy as new on a submitted notification's card creates a new notification with a different reference number and lands on the new notification's overview page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:89 'copies a submitted notification from its searched dashboard card'",
+      "quote": "await animalsPages.dashboard.copyAsNew(originalReferenceNumber).click();\n\n        await animalsPages.overview.heading.waitFor();\n...\n        expect(copiedReferenceNumber).toMatch(WHOLE_REFERENCE_NUMBER_PATTERN);\n        expect(copiedReferenceNumber).not.toEqual(originalReferenceNumber);",
+      "confidence": "verbatim",
+      "note": "Tagged @smoke. The new reference is read from the page's reference number caption."
+    },
+    {
+      "id": "repo-tests-p4-020",
+      "statement": "An animals notification reference number has the form GBN-AG-, two digits, a hyphen, then six capital letters or digits (such as GBN-AG-26-ABC123).",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:3-4",
+      "quote": "const WHOLE_REFERENCE_NUMBER_PATTERN = /^GBN-AG-\\d{2}-[0-9A-Z]{6}$/;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-021",
+      "statement": "With more than 25 notifications, the animals dashboard shows 25 per page and the first page's count reads 'Showing 1 to 25 of <total> Results'.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:4 'uses GOV.UK pagination and reports the result range'",
+      "quote": "await expect(animalsPages.dashboard.totalResults).toHaveText(/^Showing 1 to 25 of \\d+ Results$/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-022",
+      "statement": "The animals dashboard uses GOV.UK pagination with a 'Next' link when there is a further page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:13; page-objects/animals/dashboard-page.ts:121-127",
+      "quote": "return this.page.locator('.govuk-pagination');\n...\nreturn this.pagination.getByRole('link', { name: 'Next', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-023",
+      "statement": "Following 'Next' moves to page 2 with the page number in the URL as page=2, and page 2 shows a 'Previous' link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:16-18",
+      "quote": "await animalsPages.dashboard.linkNextPage.click();\n    await expect(pages.page).toHaveURL(/[?&]page=2(?:&|$)/);\n    await expect(animalsPages.dashboard.linkPreviousPage).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-024",
+      "statement": "Page 2's count starts at 26, reading 'Showing 26 of <total> Results' or 'Showing 26 to <n> of <total> Results'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:19",
+      "quote": "await expect(animalsPages.dashboard.totalResults).toHaveText(/^Showing 26(?: to \\d+)? of \\d+ Results$/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-025",
+      "statement": "Page 2 of the dashboard lists different notifications from page 1.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts:21-22",
+      "quote": "expect(secondPageReference).not.toBe(firstPageReference);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-026",
+      "statement": "The dashboard's result count wording has three forms: 'Showing 1 Result' when there is one, 'Showing <n> of <total> Results' when a page holds one, and 'Showing <start> to <end> of <total> Results' otherwise.",
+      "kind": "copy",
+      "ref": "page-objects/animals/dashboard-page.ts:100-119",
+      "quote": "if (total === 1) return 'Showing 1 Result';\n    if (start === end) return `Showing ${start} of ${total} Results`;\n    return `Showing ${start} to ${end} of ${total} Results`;",
+      "confidence": "verbatim",
+      "note": "'Results' is capitalised in every form."
+    },
+    {
+      "id": "repo-tests-p4-027",
+      "statement": "Any dashboard page can be opened directly by adding page=<n> to the dashboard URL.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/dashboard-page.ts:142-146",
+      "quote": "await this.navigateToFrontend(pageNumber <= 1 ? this.expectedUrl : `${this.expectedUrl}?page=${pageNumber}`);",
+      "confidence": "inferred",
+      "note": "Inferred from a page-object helper (openDashboardPage/goToLastPage) that no spec in this slice calls; it relies on the frontend honouring ?page=."
+    },
+    {
+      "id": "repo-tests-p4-028",
+      "statement": "The animals dashboard has a sort control labelled 'Sort by' and an 'Update sort' button that applies it.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/dashboard-page.ts:23-29 and :164-167",
+      "quote": "return this.page.getByLabel('Sort by');\n...\nreturn this.page.getByRole('button', { name: 'Update sort' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-029",
+      "statement": "The dashboard's sort defaults to 'Arrival (newest to oldest)'.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:9 'default sort option is \"Arrival (newest to oldest)\"'",
+      "quote": "const selectedOption = animalsPages.dashboard.dropdownSort.locator('option:checked');\n    await expect(selectedOption).toHaveText(sortByValues.arrivalNewestToOldest);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-030",
+      "statement": "The sort control offers exactly four options, in this order: 'Arrival (newest to oldest)', 'Arrival (oldest to newest)', 'Date created (newest to oldest)', 'Date created (oldest to newest)'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:14 'sort dropdown contains all four expected options'; domain/animals/constants/sort-by-values.ts:1-6",
+      "quote": "arrivalNewestToOldest: 'Arrival (newest to oldest)',\n  arrivalOldestToNewest: 'Arrival (oldest to newest)',\n  dateCreatedNewestToOldest: 'Date created (newest to oldest)',\n  dateCreatedOldestToNewest: 'Date created (oldest to newest)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-031",
+      "statement": "Choosing any of the four sort options and pressing Update sort reloads the dashboard with a sort parameter in the URL, without error.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:25-33 (one test per option: 'selecting \"<value>\" submits and reloads without error')",
+      "quote": "await animalsPages.dashboard.sortBy(value);\n      await expect(pages.page).toHaveURL(/\\?sort=/);\n      await expect(animalsPages.dashboard.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-032",
+      "statement": "The 'Date created (newest to oldest)' sort is sent as sort=createdAt,desc in the URL.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:89-92",
+      "quote": "await animalsPages.dashboard.sortBy(sortByValues.dateCreatedNewestToOldest);\n...\n    await expect(pages.page).toHaveURL(/sort=createdAt%2Cdesc/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-033",
+      "statement": "The end-to-end suite does not prove the order notifications appear in under any sort option; the sort spec checks only that the option is submitted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-sort.spec.ts:31",
+      "quote": "// Sort order correctness is covered by lower-level tests; this spec validates sort option submission only.",
+      "confidence": "gap",
+      "note": "Looked in the four dashboard specs: no assertion orders cards by arrival or date created. The URL values of the other three options are not asserted either."
+    },
+    {
+      "id": "repo-tests-p4-034",
+      "statement": "The animals dashboard shows a 'Filter notifications' heading (level 3) above a search form.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:19 'displays the filter notifications search form'; page-objects/animals/dashboard-page.ts:31-37",
+      "quote": "return this.page.getByRole('heading', { level: 3, name: 'Filter notifications' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-035",
+      "statement": "The dashboard search form has one text field labelled 'Keyword or reference' and a 'Search' button.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:22-23; page-objects/animals/dashboard-page.ts:39-45",
+      "quote": "return this.searchForm.getByLabel('Keyword or reference');\n...\nreturn this.searchForm.getByRole('button', { name: 'Search' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-036",
+      "statement": "Dashboard search is server-side: submitting the search reloads the dashboard with the search text as referenceNumber=<text> in the URL.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/dashboard-page.ts:91-98; tests/animals/e2e/features/notification-dashboard-search.spec.ts:37",
+      "quote": "/** Server-side dashboard search via GET ?referenceNumber=. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-037",
+      "statement": "Searching by a whole reference number shows only that notification's card, and the count reads 'Showing 1 Result'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:26 'returns matching notification when searching by complete reference number'",
+      "quote": "await expect(animalsPages.dashboard.notificationCards).toHaveCount(1);\n    await expect(animalsPages.dashboard.notificationCardDetails(0).heading).toContainText(referenceNumber);\n    await expect(animalsPages.dashboard.resultsLabel).toHaveText('Showing 1 Result');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-038",
+      "statement": "Following View on a searched submitted notification opens its read-only notification view, whose caption shows the reference number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:43 'opens notification view when clicking View after searching by reference number'",
+      "quote": "await animalsPages.dashboard.viewLink(referenceNumber).click();\n\n    await expect(pages.page).toHaveURL(new RegExp(animalsPages.notificationView.expectedUrl(referenceNumber)));\n    await expect(animalsPages.notificationView.heading).toBeVisible();\n    await expect(animalsPages.notificationView.referenceNumberCaption).toContainText(referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-039",
+      "statement": "A search that matches nothing shows no cards and the message 'No notifications found'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:62 'shows no notifications found when search has no matches'",
+      "quote": "await expect(animalsPages.dashboard.notificationCards).toHaveCount(0);\n    await expect(animalsPages.dashboard.resultsLabel).toHaveText('No notifications found');",
+      "confidence": "verbatim",
+      "note": "Proven with the well-formed but unknown reference GBN-AG-26-ZZZZZZ."
+    },
+    {
+      "id": "repo-tests-p4-040",
+      "statement": "Free text that is not a reference number is accepted as a search, not rejected: it shows 'No notifications found' and no error summary.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:70 'shows no notifications found when search text is free text'",
+      "quote": "await animalsPages.dashboard.searchForReference('not-a-valid-reference');\n\n    await expect(pages.page).toHaveURL(/referenceNumber=not-a-valid-reference/);\n    await expect(animalsPages.dashboard.notificationCards).toHaveCount(0);\n    await expect(animalsPages.dashboard.resultsLabel).toHaveText('No notifications found');\n    await expect(animalsPages.dashboard.errorSummary).not.toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-041",
+      "statement": "Changing the sort after a search keeps the search: the URL keeps referenceNumber and the search field keeps its text.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:79 'preserves referenceNumber when updating sort after search'",
+      "quote": "await expect(pages.page).toHaveURL(referenceNumberAnywhereInUrlPattern(referenceNumber));\n    await expect(pages.page).toHaveURL(/sort=createdAt%2Cdesc/);\n    await expect(animalsPages.dashboard.inputReferenceSearch).toHaveValue(referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-042",
+      "statement": "Opening the dashboard with both referenceNumber and page parameters keeps the search: the URL keeps referenceNumber and the search field is filled with it.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:96 'preserves referenceNumber in the URL when a page param is present'",
+      "quote": "await pages.page.goto(`${SET_BASES.liveAnimals}?referenceNumber=${NO_MATCH_REFERENCE_NUMBER}&page=2`);\n...\n    await expect(pages.page).toHaveURL(referenceNumberAnywhereInUrlPattern(NO_MATCH_REFERENCE_NUMBER));\n    await expect(animalsPages.dashboard.inputReferenceSearch).toHaveValue(NO_MATCH_REFERENCE_NUMBER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-043",
+      "statement": "The service root '/' redirects to the live-animals dashboard but drops the query string on the way.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts:99-100",
+      "quote": "// Straight to the set's dashboard: `/` redirects to it but drops the query\n    // string on the way, which is the very thing this test is asserting survives.",
+      "confidence": "verbatim",
+      "note": "Stated in a comment; no test asserts that the query is dropped."
+    },
+    {
+      "id": "repo-tests-p4-044",
+      "statement": "The suite does not prove that searching by part of a reference number or by a keyword other than a reference finds a notification, though the field is labelled 'Keyword or reference'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-dashboard-search.spec.ts (all 7 tests)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Every match test searches by the whole reference; the only other inputs tested match nothing."
+    },
+    {
+      "id": "repo-tests-p4-045",
+      "statement": "The suite does not prove what the animals dashboard shows to a user with no notifications at all (the empty dashboard, as distinct from a search with no matches).",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts, notification-dashboard-search.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The shared test user always has notifications; 'No notifications found' is proven only for a search."
+    },
+    {
+      "id": "repo-tests-p4-046",
+      "statement": "The suite does not prove what pressing Delete or Resume on a dashboard card does from the dashboard in this slice; their visibility alone is asserted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-dashboard.spec.ts:21-23, :72-74",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Delete and amend flows sit in the lifecycle specs (part 3). The seeded flow shows delete posts to /notifications/<ref>/delete and redirects with ?deleted=1 (claim repo-tests-p4-100)."
+    },
+    {
+      "id": "repo-tests-p4-047",
+      "statement": "Opening the animals dashboard without a session sends the user to the sign-in page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:14 'lands on the sign in page when opening the notification dashboard'",
+      "quote": "await expect(pages.page).toHaveURL(pages.signIn.expectedUrl);\n    await expect(pages.signIn.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-048",
+      "statement": "The sign-in page has the heading 'Sign in using Government Gateway', a 'Government Gateway user ID' field, a 'Password' field and a 'Sign in' button.",
+      "kind": "copy",
+      "ref": "page-objects/shared/auth/sign-in-page.ts:6-24",
+      "quote": "readonly headingName = 'Sign in using Government Gateway';\n...\nreturn this.page.getByRole('textbox', { name: 'Government Gateway user ID' });\n...\nreturn this.page.getByRole('textbox', { name: 'Password' });\n...\nreturn this.page.getByRole('button', { name: 'Sign in' });",
+      "confidence": "verbatim",
+      "note": "This is the Defra ID sign-in (the defra-id-stub locally), not a page of the animals frontend."
+    },
+    {
+      "id": "repo-tests-p4-049",
+      "statement": "The sign-in page's URL ends in /dcidmtest.onmicrosoft.com/oauth2/authresp.",
+      "kind": "integration",
+      "ref": "page-objects/shared/auth/sign-in-page.ts:5",
+      "quote": "readonly expectedUrl = new RegExp('/dcidmtest.onmicrosoft.com/oauth2/authresp$');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-050",
+      "statement": "The default test user signs in with a customer reference number (CRN) as the Government Gateway user ID.",
+      "kind": "data",
+      "ref": "page-objects/shared/auth/sign-in-page.ts:31",
+      "quote": "const userId = options?.userId ?? defaultUser.crn;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-051",
+      "statement": "Signing in from the dashboard's sign-in redirect returns the user to the animals dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:19 'allows signing into the notification dashboard'",
+      "quote": "await pages.signIn.signIn();\n    await expect(pages.page).toHaveURL(animalsPages.dashboard.expectedUrl);\n    await expect(animalsPages.dashboard.heading).toBeVisible();",
+      "confidence": "verbatim",
+      "note": "Tagged @smoke."
+    },
+    {
+      "id": "repo-tests-p4-052",
+      "statement": "Signing in with an invalid user ID keeps the user on the sign-in page with an error summary 'There is a problem' saying 'Enter a valid 10-digit customer reference number (CRN) and password'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:25 'displays an error message when signing in with invalid user id'; page-objects/shared/auth/sign-in-page.ts:26-28",
+      "quote": "await expect(pages.signIn.errorSummary).toContainText('Enter a valid 10-digit customer reference number (CRN) and password');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-053",
+      "statement": "Signing in with a wrong password shows the same error, 'Enter a valid 10-digit customer reference number (CRN) and password', on the sign-in page.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:31 'displays an error message when signing in with invalid password'",
+      "quote": "await pages.signIn.signIn({ password: 'invalid' });\n    await expect(pages.page).toHaveURL(pages.signIn.expectedUrl);\n    await expect(pages.signIn.errorSummary).toContainText('Enter a valid 10-digit customer reference number (CRN) and password');",
+      "confidence": "verbatim",
+      "note": "One message covers both fields, so it does not say which was wrong."
+    },
+    {
+      "id": "repo-tests-p4-054",
+      "statement": "No journey set is served at the service root any more: '/' redirects a signed-in user to the default set's dashboard, the live-animals dashboard.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:37-45 'redirects the service root to the default set’s dashboard'",
+      "quote": "// No set is served at the root any more, so `/` is a server-wide redirect to\n  // the default set. This is the path a user takes with no stored redirect —\n  // signing in and being put somewhere sensible rather than nowhere.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-055",
+      "statement": "The animals dashboard has a sign-out link that points to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:49; page-objects/shared/auth/sign-out-page.ts:4",
+      "quote": "await expect(animalsPages.dashboard.linkSignOut).toHaveAttribute('href', pages.signOut.path);",
+      "confidence": "verbatim",
+      "note": "linkSignOut is defined on the shared base page (outside this slice). The comment at auth.spec.ts:55-56 says the link reads 'Log out' in the service navigation."
+    },
+    {
+      "id": "repo-tests-p4-056",
+      "statement": "Signing out lands on the Defra ID sign-out page with the heading 'You have signed out'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:47 'allows signing out after signing in'; page-objects/shared/auth/sign-out-page.ts:5-11",
+      "quote": "readonly expectedUrl = new RegExp('/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/signout($|\\\\?)');\n...\nreturn this.page.getByRole('heading', { level: 1, name: 'You have signed out' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-057",
+      "statement": "Design release 1 shows no signed-in identity: the animals dashboard does not show the signed-in user's email address.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:55-60 'does not display the signed in user after signing in'",
+      "quote": "// Design release 1 shows no signed-in identity: the email address and the strip that carried it are gone,\n  // and sign-out lives in the service navigation as \"Log out\". Asserting the absence keeps that decision covered.",
+      "confidence": "verbatim",
+      "note": "Recorded in the suite as an existing design decision."
+    },
+    {
+      "id": "repo-tests-p4-058",
+      "statement": "Sign-out sits in the service navigation, labelled 'Log out'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:56",
+      "quote": "and sign-out lives in the service navigation as \"Log out\".",
+      "confidence": "verbatim",
+      "note": "Stated in a comment; the test asserts the link's href, not its text."
+    },
+    {
+      "id": "repo-tests-p4-059",
+      "statement": "After signing out, opening the animals dashboard again sends the user back to the sign-in page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:62 'lands on the sign in page when reopening the notification dashboard after sign out'",
+      "quote": "await animalsPages.dashboard.linkSignOut.click();\n    await pages.signOut.heading.waitFor();\n    await animalsPages.dashboard.open(false);\n    await expect(pages.page).toHaveURL(pages.signIn.expectedUrl);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-060",
+      "statement": "Opening a journey page without a sign-in session, while still holding that journey's own cookies, sends the user to the sign-in page.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:71-90 'lands on the sign in page when opening a page further in the journey'",
+      "quote": "const journeyCookies = (await pages.page.context().cookies()).filter(({ name }) => name.startsWith('liveAnimals'));\n      await pages.page.context().clearCookies();\n      await pages.page.context().addCookies(journeyCookies);\n      await animalsPages.originOfImport.open(journeyId, false);",
+      "confidence": "verbatim",
+      "note": "The journey's own state cookies are named with a 'liveAnimals' prefix; they do not carry sign-in on their own."
+    },
+    {
+      "id": "repo-tests-p4-061",
+      "statement": "Signing in after being redirected from a journey page returns the user to that same page, /notifications/<reference>/origin under the live-animals set.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:92 'allows signing into a page further in the journey'",
+      "quote": "await expect(pages.page).toHaveURL(new RegExp(`${SET_BASES.liveAnimals}/notifications/${journeyId}/origin$`));\n      await expect(animalsPages.originOfImport.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-062",
+      "statement": "The origin of the import page asks for a country and whether the import requires an origin code (Yes/No), then Save and continue.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:78-80",
+      "quote": "await animalsPages.originOfImport.selectCountry('France');\n      await animalsPages.originOfImport.radioRequiresOriginCode('No').check();\n      await animalsPages.originOfImport.saveAndContinue.click();",
+      "confidence": "inferred",
+      "note": "Inferred from set-up steps; the origin page itself is part 1's."
+    },
+    {
+      "id": "repo-tests-p4-063",
+      "statement": "After sign-in, a user whose identity has more than one organisation is shown a 'Choose your organisation' page listing each organisation as a radio button ending in 'SBI <number>', with a Continue button.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/auth/organisation-picker-page.ts:3-26",
+      "quote": "* defra-id-stub's \"Choose your organisation\" screen, shown after sign-in only\n * for identities with more than one organisation (POST /organisations, radio\n * value keyed by sbi).",
+      "confidence": "verbatim",
+      "note": "Described by the page object's doc comment and locators."
+    },
+    {
+      "id": "repo-tests-p4-064",
+      "statement": "No spec in this slice proves the organisation picker end to end: choosing an organisation, where it leads, or that a single-organisation user skips it.",
+      "kind": "behaviour",
+      "ref": "page-objects/shared/auth/organisation-picker-page.ts (no caller among the 8 specs in part 4)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in all 8 specs of this part; none uses OrganisationPickerPage. It may be used by address-book specs (part 5)."
+    },
+    {
+      "id": "repo-tests-p4-065",
+      "statement": "Each service keeps its own sign-in session cookie: on the local stack animals uses 'sid', INS uses 'ins-sid' and plants uses 'plants-sid'; elsewhere all use 'sid'.",
+      "kind": "integration",
+      "ref": "fixtures/auth-state.ts:20-40",
+      "quote": "export const AUTH_COOKIE_NAME = 'sid';\n\nconst LOCAL_STACK_HOSTS = ['localhost', '127.0.0.1', 'cdp-docker.test'];\n\nconst COMPOSE_AUTH_COOKIE_NAMES: Record<string, string> = { ins: 'ins-sid', plants: 'plants-sid' };",
+      "confidence": "verbatim",
+      "note": "An AUTH_SESSION_COOKIE_NAME environment variable overrides the name."
+    },
+    {
+      "id": "repo-tests-p4-066",
+      "statement": "The services share the localhost cookie domain but keep separate session stores, so a session started on one service is not recognised by another.",
+      "kind": "constraint",
+      "ref": "fixtures/auth-state.ts:71-72",
+      "quote": "// The services share the localhost cookie domain but keep separate session-store\n// prefixes, so a sid minted against one is a cache miss against the others.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-067",
+      "statement": "Signing in to animals, then INS, then plants in one browser keeps all three sessions: going back to each service's dashboard afterwards shows it without signing in again.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:9 'signing in to animals, then ins, then plants in one browser keeps all three sessions'",
+      "quote": "await animalsPages.dashboard.open(false);\n    await expect(pages.page).toHaveURL((url) => url.origin === new URL(animalsBaseUrl).origin && url.pathname === SET_BASES.liveAnimals);\n...\n    await insPages.dashboard.open(false);\n...\n    await plantsPages.dashboard.open(false);",
+      "confidence": "verbatim",
+      "note": "Tagged @compose: runs only against the local stack."
+    },
+    {
+      "id": "repo-tests-p4-068",
+      "statement": "After signing in to all three services, the browser holds each service's own session cookie at once.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:41-48",
+      "quote": "expect(cookieNames).toEqual(\n      expect.arrayContaining([\n        authCookieNameFor('animals', animalsBaseUrl),\n        authCookieNameFor('ins', insBaseUrl),\n        authCookieNameFor('plants', plantsBaseUrl),\n      ]),\n    );",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-069",
+      "statement": "The plants dashboard is served at the high-risk-plants set's base path on the plants frontend.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:38",
+      "quote": "url.origin === new URL(plantsBaseUrl).origin && url.pathname === SET_BASES.highRiskPlants",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-070",
+      "statement": "Animals, INS and plants frontends each run at their own base URL (origin).",
+      "kind": "constraint",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts:16-18",
+      "quote": "const animalsBaseUrl = requireBaseUrl('TRADE_IMPORTS_ANIMALS_FRONTEND_BASE_URL');\n    const insBaseUrl = requireBaseUrl('TRADE_IMPORTS_INS_FRONTEND_BASE_URL');\n    const plantsBaseUrl = requireBaseUrl('TRADE_IMPORTS_PLANTS_FRONTEND_BASE_URL');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-071",
+      "statement": "The INS dashboard is the INS frontend's root '/', with the level 1 heading 'Dashboard'.",
+      "kind": "copy",
+      "ref": "page-objects/ins/dashboard-page.ts:5-9; tests/ins/e2e/features/cross-service-sessions.spec.ts:32-35",
+      "quote": "readonly expectedUrl = '/';\n\n  get heading(): Locator {\n    return this.page.getByRole('heading', { level: 1, name: 'Dashboard', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-072",
+      "statement": "The INS dashboard has a search field labelled 'Search by notification reference' and a 'Search' button.",
+      "kind": "copy",
+      "ref": "page-objects/ins/dashboard-page.ts:11-17",
+      "quote": "return this.page.getByLabel('Search by notification reference');\n...\nreturn this.page.getByRole('button', { name: 'Search', exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-073",
+      "statement": "The INS dashboard lists notifications as table rows, each with a 'View' link whose accessible name adds the reference number as visually hidden text.",
+      "kind": "copy",
+      "ref": "page-objects/ins/dashboard-page.ts:23-34",
+      "quote": "* The action cell's accessible name is \"View\" plus a visually-hidden reference\n   * number (`notification-dashboard-helper.js`/`buildTableRows`), so match loosely\n   * across the two text nodes rather than a single exact string.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-074",
+      "statement": "Following View on a submitted notification on the INS dashboard opens that notification's read-only view in the animals frontend, at /notifications/<reference>/notification-view under the live-animals set.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:7 'viewing a submitted notification from the INS dashboard opens it in the owning journey frontend'",
+      "quote": "await expect(pages.page).toHaveURL(new RegExp(`${SET_BASES.liveAnimals}/notifications/${referenceNumber}/notification-view$`));\n    await expect(animalsPages.notificationView.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-075",
+      "statement": "The INS dashboard's View link goes to the notification view only once the aggregated store holds the notification as SUBMITTED; until then it points to the notification's hub page.",
+      "kind": "rule",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:23-35",
+      "quote": "// When — the notification is found on the INS dashboard once the aggregated store has\n    // caught up to SUBMITTED (its \"View\" link resolves to the hub, not notification-view,\n    // until then) and its \"View\" link is opened",
+      "confidence": "verbatim",
+      "note": "So a draft's View link on INS goes to the animals hub (overview). The store is eventually consistent; the test polls for a long timeout."
+    },
+    {
+      "id": "repo-tests-p4-076",
+      "statement": "A user moving from the INS dashboard into the animals frontend lands there signed in, without a second sign-in prompt, once they have an animals session.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:36-40",
+      "quote": "await insPages.dashboard.viewLink(referenceNumber).click();\n\n    // Then — it lands on that notification's read-only view in trade-imports-animals-frontend",
+      "confidence": "inferred",
+      "note": "Inferred: the test already holds an animals session from submitting, so it does not prove first entry to animals from INS without one."
+    },
+    {
+      "id": "repo-tests-p4-077",
+      "statement": "The INS dashboard has an empty-results state, but no spec in this slice proves its wording or when it shows.",
+      "kind": "behaviour",
+      "ref": "page-objects/ins/dashboard-page.ts:19-21",
+      "quote": "return this.page.getByTestId('dashboard-no-results');",
+      "confidence": "gap",
+      "note": "The locator exists; no spec asserts it. The INS dashboard's table columns are likewise not asserted."
+    },
+    {
+      "id": "repo-tests-p4-078",
+      "statement": "The confirmation page after submitting an animals notification has the heading 'Import notification submitted'.",
+      "kind": "copy",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:78; tests/ins/e2e/features/notification-dashboard-navigation.spec.ts:21",
+      "quote": "await pages.page.getByRole('heading', { name: 'Import notification submitted' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-079",
+      "statement": "Submitting an animals notification needs the declaration's confirmation box ticked before Continue.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:76-77",
+      "quote": "await animalsPages.declaration.confirmation.check();\n      await animalsPages.declaration.continueButton.click();",
+      "confidence": "inferred",
+      "note": "Inferred from set-up steps; the declaration page is another part's."
+    },
+    {
+      "id": "repo-tests-p4-080",
+      "statement": "The INS backend keeps one aggregated notification document per animals notification in the 'notifications' collection of its own database, with the id 'Imports.Notification.GBN-AG.<reference>'.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:10 and :33",
+      "quote": "const aggregateIdFor = (referenceNumber: string): string => `Imports.Notification.GBN-AG.${referenceNumber}`;\n...\nconst collection = client.collection<AggregatedNotificationDocument>('trade-imports-ins-backend', 'notifications');",
+      "confidence": "verbatim",
+      "note": "Tagged @compose and @mongodb: skipped outside the local stack, because it reads the database directly."
+    },
+    {
+      "id": "repo-tests-p4-081",
+      "statement": "The aggregated notification document holds: id, aggregateVersion, referenceNumber, status, originCountry, commodity, arrivalDate and lastUpdated.",
+      "kind": "data",
+      "ref": "domain/ins/models/db/aggregated-notification-document.ts:1-10",
+      "quote": "_id: string;\n  aggregateVersion: number;\n  referenceNumber?: string;\n  status?: string;\n  originCountry?: string;\n  commodity?: string;\n  arrivalDate?: Date;\n  lastUpdated?: Date;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-082",
+      "statement": "The aggregated document is created as soon as the notification is created, before transport details are filled in.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:38-40",
+      "quote": "// NOTIFICATION_CREATED fires immediately at creation (before transport details are filled in),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-083",
+      "statement": "While the notification is a draft, the aggregated document has status 'DRAFT' and carries its reference, origin country, commodity, arrival date and last-updated date as edits are saved.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:60-71",
+      "quote": "expect(draftDoc.status).toBe('DRAFT');\n      expect(draftDoc.originCountry).toBe(defaultJourneyOptions.countryCode.value);\n...\n      expect(draftDoc.commodity).toBe(commodityCodes.cow);\n      expect(draftDoc.arrivalDate).toBeInstanceOf(Date);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-084",
+      "statement": "The aggregated document's origin country is the country code chosen in the journey, not its name.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:63",
+      "quote": "expect(draftDoc.originCountry).toBe(defaultJourneyOptions.countryCode.value);",
+      "confidence": "inferred",
+      "note": "Inferred from the constant's name 'countryCode.value'; the constant's file is outside this slice."
+    },
+    {
+      "id": "repo-tests-p4-085",
+      "statement": "The aggregated document's commodity is the commodity's common name: choosing the species Bos taurus stores 'Cow'.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:64-67",
+      "quote": "// animalsJourney.answerCommodity() always selects the 'Bos taurus' species, which the frontend\n      // resolves to commodity.name 'Cow'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-086",
+      "statement": "The aggregated document's arrival date is a date in the future for a notification with a future arrival.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:68-69 and :91-92",
+      "quote": "expect(draftDoc.arrivalDate.getTime()).toBeGreaterThan(Date.now());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-087",
+      "statement": "The aggregated document's version is greater than zero once events have been applied.",
+      "kind": "data",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:71",
+      "quote": "expect(draftDoc.aggregateVersion).toBeGreaterThan(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-088",
+      "statement": "Submitting the notification updates the same aggregated document to status 'SUBMITTED' rather than creating a second one.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:80-88",
+      "quote": "// Then — same document is updated to SUBMITTED (no duplicate created)\n...\n      expect(await collection.countDocuments({ _id: aggregateId })).toBe(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-089",
+      "statement": "After submission the aggregated document keeps its reference, origin country, commodity, arrival date and last-updated date, and its version is higher than it was as a draft.",
+      "kind": "integration",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:86-94",
+      "quote": "expect(submittedDoc.commodity).toBe(commodityCodes.cow);\n...\n      expect(submittedDoc.aggregateVersion).toBeGreaterThan(draftVersion);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-090",
+      "statement": "The aggregated store is eventually consistent with the animals journey: it can lag a save or a submission, so readers poll for the expected state.",
+      "kind": "non-functional",
+      "ref": "tests/ins/e2e/features/aggregated-notification.spec.ts:42-56 and :81",
+      "quote": "await expect.poll(() => collection.findOne({ _id: aggregateId, status: 'SUBMITTED' }), { timeout: timeouts.long }).not.toBeNull();",
+      "confidence": "inferred",
+      "note": "Inferred from the polling with a long timeout."
+    },
+    {
+      "id": "repo-tests-p4-091",
+      "statement": "Each service has its own landing page after sign-in: animals, animals-admin and plants land on '/', and INS lands on '/address-book'.",
+      "kind": "behaviour",
+      "ref": "fixtures/auth-state.ts:59-67",
+      "quote": "animals: { landingPath: '/', landingHeading: (page) => new AnimalsDashboardPage(page).heading },\n...\n  ins: {\n    landingPath: '/address-book',",
+      "confidence": "verbatim",
+      "note": "The suite signs in each service through its landing path and checks that service's own landing heading."
+    },
+    {
+      "id": "repo-tests-p4-092",
+      "statement": "The sign-in failure page has its own level 1 heading, so a bare heading is not proof of sign-in.",
+      "kind": "behaviour",
+      "ref": "fixtures/auth-state.ts:57-58",
+      "quote": "// The sign-in failure page also has an h1, so each target asserts its own landing\n// heading — a bare level-1 check would save an unauthenticated state file.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-093",
+      "statement": "Besides the sign-in session cookie, the frontend sets a 'session' cookie carrying the user's journey state.",
+      "kind": "integration",
+      "ref": "fixtures/auth-state.ts:142",
+      "quote": "/** The yar `session` cookie carries per-user journey state that would bleed across a worker's tests. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-094",
+      "statement": "A sign-in session cookie on its own is enough to reach a service's landing page signed in.",
+      "kind": "behaviour",
+      "ref": "fixtures/auth-state.ts:108-111 and :151-166",
+      "quote": "const authOnlyState = stripToAuthCookie(await context.storageState(), baseURL, authCookieNameFor(targetName, baseURL));\n...\n      await verifySavedState(browser, contextOptions, target, mintingPath);",
+      "confidence": "inferred",
+      "note": "Inferred: the fixture saves only the auth cookie and verifies it reaches the landing heading."
+    },
+    {
+      "id": "repo-tests-p4-095",
+      "statement": "The suite seeds notifications only through the animals frontend's own save-and-continue form routes, one post per page, because only the frontend writes the notification alongside its fulfilments record.",
+      "kind": "constraint",
+      "ref": "flows/animals/seeded-journey.ts:19-23",
+      "quote": "* Seeds through the frontend's save-and-continue routes, never the backend: only the frontend\n * writes the notification document alongside the fulfilments blob. One post per page, because a\n * save replaces the whole record but a route accepts only its own page's fields.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-096",
+      "statement": "Each journey page's save route accepts only that page's own fields, and a save replaces the whole notification record.",
+      "kind": "rule",
+      "ref": "flows/animals/seeded-journey.ts:21-22",
+      "quote": "a\n * save replaces the whole record but a route accepts only its own page's fields.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-097",
+      "statement": "Submitting from the declaration page lands on a confirmation page at .../confirmation; a refused submission lands back on check your answers instead.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:50-57",
+      "quote": "// redirectsTo is the assertion: a refused submission lands back on check-your-answers, not the confirmation.\n    await this.forms.postForm(`${CREATE_PATH}/${journeyId}/${declarationStep.slug}`, declarationStep.form, {\n      redirectsTo: /\\/confirmation$/,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-098",
+      "statement": "Amending a submitted notification posts to /notifications/<reference>/amend and lands on that notification's hub at /notifications/<reference>.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:65-67",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/amend`, {}, { redirectsTo: new RegExp(`^${CREATE_PATH}/${journeyId}$`) });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-099",
+      "statement": "Cancelling an amendment posts to /notifications/<reference>/cancel-amend and lands on the notification view with cancelled=1.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:69-71",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/cancel-amend`, {}, { redirectsTo: /\\/notification-view\\?cancelled=1$/ });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-100",
+      "statement": "Deleting a notification posts to /notifications/<reference>/delete and returns to a page with deleted=1 in the URL.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:73-75",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/delete`, {}, { redirectsTo: /\\?deleted=1$/ });",
+      "confidence": "verbatim",
+      "note": "The delete is a soft delete (method softDelete)."
+    },
+    {
+      "id": "repo-tests-p4-101",
+      "statement": "Consignment parties used in seeding (by role) are looked up by name in the organisation's address book, so seeded notifications reference address-book entries.",
+      "kind": "integration",
+      "ref": "flows/animals/seeded-journey.ts:83-89",
+      "quote": "const found = await Promise.all(roles.map((role) => this.addressBook.findByName(PARTY_NAMES[role])));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-102",
+      "statement": "The animals backend exposes a notification API: create (POST /notifications), whole-record save (PUT /notifications/<id>), fulfilments (GET /notifications/<id>/fulfilments), submit, amend, cancel-amend, copy and soft-delete (POST /notifications/<id>/<action>).",
+      "kind": "integration",
+      "ref": "adapters/http/notification-api-client.ts:23-75",
+      "quote": "return this.rest.get<NotificationFulfilments>(`/notifications/${id}/fulfilments`);\n...\nreturn this.rest.post<Notification>('/notifications', {\n...\nreturn this.rest.put<Notification>(`/notifications/${id}`, {\n...\n`/notifications/${id}/submit`\n...\n`/notifications/${id}/amend`\n...\n`/notifications/${id}/cancel-amend`\n...\n`/notifications/${id}/copy?concurrencyToken=${concurrencyToken}`\n...\n`/notifications/${id}/soft-delete`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-103",
+      "statement": "Creating a notification with an empty body makes the backend mint and return the reference number.",
+      "kind": "rule",
+      "ref": "adapters/http/notification-api-client.ts:27-37",
+      "quote": "* Mint a new notification. Empty nested notification → server mints the\n   * reference number via ReferenceNumberGenerator and returns it in the response.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-104",
+      "statement": "A whole-record save returns 404 for an unknown reference and 400 without a matching concurrency token.",
+      "kind": "rule",
+      "ref": "adapters/http/notification-api-client.ts:39-44",
+      "quote": "* Whole-record replace of an existing notification via PUT /notifications/{id}.\n   * 404 if the reference is unknown, 400 without a matching concurrencyToken.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-105",
+      "statement": "A save can carry an actor with the organisation id, so address-book party references resolve onto the notification-edited event.",
+      "kind": "integration",
+      "ref": "adapters/http/notification-api-client.ts:42-44",
+      "quote": "The\n   * optional actor supplies organisationId so address-book party references\n   * resolve onto the NotificationEdited event.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-106",
+      "statement": "Copying a notification through the API requires the source notification's concurrency token.",
+      "kind": "rule",
+      "ref": "adapters/http/notification-api-client.ts:69-71",
+      "quote": "return this.rest.post<Notification>(`/notifications/${id}/copy?concurrencyToken=${concurrencyToken}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-107",
+      "statement": "A second submit or amend of the same notification within the first's outbox lock window fails with a server error (500); people clicking do not hit this, but back-to-back API calls do.",
+      "kind": "constraint",
+      "ref": "adapters/http/notification-api-client.ts:7-11",
+      "quote": "// Per-aggregate outbox lock (NotificationService.writeWithOutbox via ShedLock) fails a\n// second submit/amend that lands inside the first's lock window with a 500. Human clicks\n// never race like this; back-to-back API calls in a test do.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p4-108",
+      "statement": "Calls to the animals backend notification API from outside carry a developer API key.",
+      "kind": "integration",
+      "ref": "adapters/http/notification-api-client.ts:19-21",
+      "quote": "constructor(request: APIRequestContext, baseUrl: string = getBackendBaseUrl(), apiKey: string | undefined = getDeveloperApiKey()) {",
+      "confidence": "inferred",
+      "note": "Inferred from the client passing an optional API key; the key value is never copied."
+    },
+    {
+      "id": "repo-tests-p4-109",
+      "statement": "The suite keeps the sign-in password out of test traces when filling it.",
+      "kind": "non-functional",
+      "ref": "page-objects/shared/auth/sign-in-page.ts:35-53",
+      "quote": "// evaluate() instead of fill() — avoids logging the value in traces.",
+      "confidence": "verbatim",
+      "note": "A rule the suite holds itself to, not a service behaviour."
+    },
+    {
+      "id": "repo-tests-p4-110",
+      "statement": "The sign-in and cross-service session tests start with no stored session, so they prove the unauthenticated path rather than a pre-signed-in one.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/features/auth.spec.ts:6-7; tests/ins/e2e/features/cross-service-sessions.spec.ts:6; fixtures/auth-state.ts:47-50",
+      "quote": "// These tests ARE the sign-in journey, so they start unauthenticated.\ntest.use({ storageState: COLD_START });",
+      "confidence": "verbatim",
+      "note": "Applies to auth.spec.ts and cross-service-sessions.spec.ts; the other specs start signed in."
+    },
+    {
+      "id": "repo-tests-p4-111",
+      "statement": "The suite does not prove sign-out from the INS or plants frontends, or whether signing out of one service ends the others' sessions.",
+      "kind": "behaviour",
+      "ref": "tests/ins/e2e/features/cross-service-sessions.spec.ts; tests/animals/e2e/features/auth.spec.ts",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Sign-out is proven only from the animals dashboard."
+    }
+  ]
+}

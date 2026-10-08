@@ -1,0 +1,789 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 3 mined all 12 trace zips its read names, from three spec files in the tests repo's animals project: features/notification-delete.spec.ts (2: deletes a draft notification [9d8f3]; deletes the notification and removes it from the dashboard [2e3c2]), pages/notification-dashboard-pagination.spec.ts (1: uses GOV.UK pagination and reports the result range [029ca]) and pages/notification-dashboard.spec.ts (9: starts a journey at the origin page and lists the draft [93765]; lands on the notification dashboard [c058e]; allows creating a new notification, landing on the journey entry page [7d727]; displays the notification list and result count [2ad56]; displays details on a notification card [118d4]; shows resume, copy and delete actions for a draft notification [015ef]; shows view, copy and amend actions for a submitted notification [e7a9a]; copies a submitted notification from its searched dashboard card, first attempt timed out [a1f4f] and retry 1 passed [a1f4f-retry1]). The bundled trace viewer refused every zip (TraceVersionError: recorded by Playwright 1.64 alpha), so each zip was unzipped into this part's work folder and read with jq: N-trace.trace (before/after actions, frame-snapshot DOM rendered back to HTML from the snapshot arrays), N-trace.network (resource snapshots) and test.trace (steps and errors); the failed attempt's final screen came from its last screencast frame. Refs below name the trace by its folder hash fragment, then the call id and snapshot phase. Pages in this slice, in the order a user meets them: (1) the animals dashboard at /live-animals (caption Dashboard, h1 Import notification service, Start a new notification start button, Your notifications, a Filter notifications aside with the Keyword or reference search, a toolbar with the result count and Sort by, then up to 25 GOV.UK summary cards and GOV.UK block pagination); its variants are unfiltered (Showing 1 to 25 of N Results with Next), page 2 (?page=2, Showing 26 to 50 of N Results, Previous and Next), searched to one card (Showing 1 Result), searched to none (No notifications found) and after a delete (?deleted=1, success notification banner); (2) the notification card itself, whose action list depends on status: Draft (blue tag) offers Resume, Copy as new, Delete; Submitted (green) offers View, Amend, Copy as new, Delete; Amending (yellow, seen in the list but not driven) offers Resume, Copy as new, Cancel amendment, Delete; (3) the delete confirmation at /live-animals/notifications/{ref}/delete (Delete this notification?), reached by direct URL for a draft and from the card's Delete link for a submitted notification; (4) the journey entry page the Start button lands on, /notifications/{ref}/origin (Origin of the import), mined only for what proves the landing, since its fields belong to the origin part; (5) the overview at /notifications/{ref} (Overview), reached by Resume and by Copy as new, mined only for the reference strip and, after a copy, what the new draft carries. The copy test's first attempt never reached the dashboard: it timed out after 90 s in the UI submit journey when the place-of-destination picker search returned HTTP 500 and rendered a bare 500 error page. Network logs show only browser-to-frontend traffic; seeding runs through the frontend's own form posts from an API request context, plus address-book lookups. What is conditional: the card actions (by status), the pagination links (by page and total), the result-count wording (by result count) and the success banner (by ?deleted=1).",
+  "claims": [
+    {
+      "id": "trace-e2e-p3-001",
+      "statement": "The animals notifications dashboard is served at /live-animals and is where a signed-in user lands.",
+      "kind": "behaviour",
+      "ref": "trace c058e (lands on the notification dashboard) call@1093 to.have.url",
+      "quote": "http://localhost:3000/live-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-002",
+      "statement": "The dashboard's level-1 heading is \"Import notification service\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, main h1.govuk-heading-xl",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-003",
+      "statement": "The dashboard heading has an extra-large caption above it reading \"Dashboard\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, span.govuk-caption-xl",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-004",
+      "statement": "Under the heading the dashboard shows one paragraph of introductory body text.",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, p.govuk-body after h1",
+      "quote": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-005",
+      "statement": "The dashboard offers a GOV.UK start button labelled \"Start a new notification\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, button.govuk-button.govuk-button--start",
+      "quote": "Start a new notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-006",
+      "statement": "The Start a new notification button submits a form that POSTs to /live-animals/notifications with a CSRF crumb, so a new notification is created server-side on the click rather than by following a link.",
+      "kind": "behaviour",
+      "ref": "trace 2ad56 call@1138 after-snapshot, form[method=post][action=/live-animals/notifications] with hidden input name=crumb",
+      "quote": "<FORM method=\"post\" action=\"/live-animals/notifications\"> <INPUT type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-007",
+      "statement": "Starting a new notification creates a draft with a new reference number and redirects (302) straight to that draft's origin page, /live-animals/notifications/{reference}/origin.",
+      "kind": "behaviour",
+      "ref": "trace 93765 network: POST /live-animals/notifications 302; also traces 7d727, 9d8f3, 029ca, a1f4f-retry1",
+      "quote": "POST | http://localhost:3000/live-animals/notifications | 302 | /live-animals/notifications/GBN-AG-26-6ZJMGG/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-008",
+      "statement": "A live-animals notification reference has the form GBN-AG-, a two-digit year, a hyphen and six upper-case letters or digits.",
+      "kind": "data",
+      "ref": "notification-dashboard.spec.ts REFERENCE_NUMBER_PATTERN; every reference seen in the traces, e.g. trace 7d727 call@989",
+      "quote": "GBN-AG-26-821ANW",
+      "confidence": "verbatim",
+      "note": "The spec asserts /^GBN-AG-\\d{2}-[0-9A-Z]{6}$/; 26 matches the 2026 run year, which is why the two digits read as the year (inferred)."
+    },
+    {
+      "id": "trace-e2e-p3-009",
+      "statement": "The journey entry page the Start button lands on has the level-1 heading \"Origin of the import\".",
+      "kind": "copy",
+      "ref": "trace 7d727 (allows creating a new notification) call@989 after-snapshot, h1.govuk-heading-l",
+      "quote": "Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-010",
+      "statement": "The journey entry page carries the caption \"About the consignment\" above its heading.",
+      "kind": "copy",
+      "ref": "trace 7d727 call@989 after-snapshot, span.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim",
+      "note": "The origin page's fields belong to the origin part; only the landing is claimed here."
+    },
+    {
+      "id": "trace-e2e-p3-011",
+      "statement": "From its first page the new notification shows a journey strip with a blue Draft tag and the new reference in bold, so the user sees the reference they were given straight away.",
+      "kind": "behaviour",
+      "ref": "trace 7d727 call@989 after-snapshot, div.app-journey-strip",
+      "quote": "Draft GBN-AG-26-821ANW",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-012",
+      "statement": "Below the start button the dashboard has a medium level-2 heading \"Your notifications\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, h2.govuk-heading-m",
+      "quote": "Your notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-013",
+      "statement": "The list sits in a two-column layout: a one-third column holding a filter aside headed \"Filter notifications\" and a two-thirds column holding the toolbar, cards and pagination.",
+      "kind": "behaviour",
+      "ref": "trace 2ad56 call@1138 after-snapshot, div.notification-list__layout > govuk-grid-column-one-third aside.notification-list__filters h3#filter-notifications-heading; govuk-grid-column-two-thirds",
+      "quote": "Filter notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-014",
+      "statement": "The filter aside holds one text input labelled \"Keyword or reference\" (name referenceNumber) and a \"Search\" button, in a GET form to /live-animals that also carries the current sort as a hidden field.",
+      "kind": "data",
+      "ref": "trace 2ad56 call@1138 after-snapshot, form.notification-list__search-form",
+      "quote": "Keyword or reference",
+      "confidence": "verbatim",
+      "note": "Search behaviour itself is part 2's slice; claimed here as part of the page's layout."
+    },
+    {
+      "id": "trace-e2e-p3-015",
+      "statement": "Searching by reference reloads the dashboard as a GET to /live-animals with the sort and the referenceNumber in the query string.",
+      "kind": "behaviour",
+      "ref": "trace 2ad56 network: GET /live-animals?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-RHN1KV 200",
+      "quote": "http://localhost:3000/live-animals?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-RHN1KV",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-016",
+      "statement": "The toolbar beside the result count holds a \"Sort by\" select with four options and an \"Update sort\" secondary button; the default is Arrival (newest to oldest).",
+      "kind": "data",
+      "ref": "trace 2ad56 call@1138 after-snapshot, form.notification-list__sort-form select#sort",
+      "quote": "Arrival (newest to oldest) | Arrival (oldest to newest) | Date created (newest to oldest) | Date created (oldest to newest)",
+      "confidence": "verbatim",
+      "note": "Option values arrivalDate,desc / arrivalDate,asc / createdAt,desc / createdAt,asc. Sorting behaviour is part 2's slice."
+    },
+    {
+      "id": "trace-e2e-p3-017",
+      "statement": "When the list runs to more than one page, the result count reads \"Showing {first} to {last} of {total} Results\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1138 after-snapshot, p.notification-list__results",
+      "quote": "Showing 1 to 25 of 122 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-018",
+      "statement": "When exactly one notification matches, the result count reads \"Showing 1 Result\".",
+      "kind": "copy",
+      "ref": "trace 2ad56 call@1156 before-snapshot, p.notification-list__results",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-019",
+      "statement": "When no notification matches, the result-count line reads \"No notifications found\" and no cards or pagination render.",
+      "kind": "copy",
+      "ref": "trace 2e3c2 (deletes the notification and removes it from the dashboard) call@637 before-snapshot",
+      "quote": "No notifications found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-020",
+      "statement": "The result count is styled as a small bold label (govuk-label govuk-label--s) in a paragraph, not as a heading.",
+      "kind": "constraint",
+      "ref": "trace 2ad56 call@1138 after-snapshot",
+      "quote": "<P class=\"govuk-label govuk-label--s notification-list__results\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-021",
+      "statement": "The dashboard shows 25 notification cards a page.",
+      "kind": "rule",
+      "ref": "traces 2ad56 call@1138, c058e call@1085, 029ca call@1059 and call@1067: 25 div.govuk-summary-card each",
+      "quote": "Showing 1 to 25 of 185 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-022",
+      "statement": "Each notification is shown as a GOV.UK summary card whose title is the notification reference as a level-3 heading.",
+      "kind": "behaviour",
+      "ref": "trace 118d4 (displays details on a notification card) call@1176 before-snapshot, div.govuk-summary-card.notification-list h3.govuk-summary-card__title",
+      "quote": "GBN-AG-26-80T0HK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-023",
+      "statement": "A card's body shows eight labelled values in three rows of up to three: Commodity, Origin, Arrival at destination; Consignee, Consignor, Status; Date created, Date submitted.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot, dl.notification-list__card-row x3",
+      "quote": "Commodity | Origin | Arrival at destination | Consignee | Consignor | Status | Date created | Date submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-024",
+      "statement": "The card's Commodity value shows the commodity's common name: a notification whose commodity was chosen as Bos taurus shows \"Cow\".",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot (Commodity dd); commodity chosen as \"Bos taurus\" in trace a1f4f-retry1 call@98, card in call@320",
+      "quote": "Cow",
+      "confidence": "inferred",
+      "note": "Inferred from the journey choosing \"Bos taurus\" and the card showing \"Cow\" for the same notification; how a notification with several commodities displays was not seen."
+    },
+    {
+      "id": "trace-e2e-p3-025",
+      "statement": "The card's Origin value is the country of origin's name.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot (Origin dd); trace 2ad56 call@1138 shows France and Belgium",
+      "quote": "France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-026",
+      "statement": "The card's Arrival at destination value is a date written as day, abbreviated month and four-digit year.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot; spec asserts /\\d{1,2} \\w+ \\d{4}/ at call@1182",
+      "quote": "7 Nov 2026",
+      "confidence": "verbatim",
+      "note": "The arrival date was entered as 7/11/2026 on the arrival page (trace a1f4f-retry1 call@216)."
+    },
+    {
+      "id": "trace-e2e-p3-027",
+      "statement": "The card's Consignee value is the chosen consignee's name.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot",
+      "quote": "British Livestock Ltd",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-028",
+      "statement": "The card's Consignor value is the chosen consignor or exporter's name.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot",
+      "quote": "Astra Rosales",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-029",
+      "statement": "The card's Status is a GOV.UK tag: Draft is blue.",
+      "kind": "data",
+      "ref": "trace 015ef (draft actions) call@949 before-snapshot, strong.govuk-tag.govuk-tag--blue",
+      "quote": "Draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-030",
+      "statement": "A submitted notification's Status tag reads \"Submitted\" and is green.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot, strong.govuk-tag.govuk-tag--green",
+      "quote": "Submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-031",
+      "statement": "A notification being amended shows a yellow \"Amending\" Status tag on its card.",
+      "kind": "data",
+      "ref": "trace 2ad56 call@1138 after-snapshot, card GBN-AG-26-SS0RWN, strong.govuk-tag.govuk-tag--yellow",
+      "quote": "Amending",
+      "confidence": "verbatim",
+      "note": "Seen in the unfiltered list (left by other tests); no test in this part drives an amendment."
+    },
+    {
+      "id": "trace-e2e-p3-032",
+      "statement": "The card's Date created value is a date written as day, abbreviated month and four-digit year.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176 before-snapshot; spec asserts toHaveText /\\d{1,2} \\w+ \\d{4}/ at call@1186",
+      "quote": "7 Oct 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-033",
+      "statement": "The card's Date submitted value is empty even for submitted notifications: on every card seen, Submitted ones included and one submitted through the real UI, the Date submitted value is blank.",
+      "kind": "data",
+      "ref": "trace 118d4 call@1176; trace a1f4f-retry1 call@320 (UI-submitted GBN-AG-26-NC55KG); all 25 cards in trace 2ad56 call@1138",
+      "quote": "<DT>Date submitted</DT> <DD></DD>",
+      "confidence": "verbatim",
+      "note": "Looks like a defect (the date is never populated) or an unfinished field; no test asserts it."
+    },
+    {
+      "id": "trace-e2e-p3-034",
+      "statement": "A card shows an empty value, with no placeholder such as \"Not provided\", for any field the notification has not answered yet: a draft with only its origin answered shows blank Commodity, Arrival, Consignee and Consignor.",
+      "kind": "data",
+      "ref": "trace 93765 (starts a journey and lists the draft) call@938 before-snapshot",
+      "quote": "<DT>Commodity</DT> <DD></DD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-035",
+      "statement": "A card's details are laid out with plain dt/dd pairs inside govuk-grid columns (dl.govuk-grid-row.notification-list__card-row) rather than the summary card's standard govuk-summary-list rows.",
+      "kind": "constraint",
+      "ref": "trace 118d4 call@1176 before-snapshot, div.govuk-summary-card__content",
+      "quote": "<DL class=\"govuk-grid-row notification-list__card-row\"> <DIV class=\"govuk-grid-column-one-third\"> <DT>Commodity</DT>",
+      "confidence": "verbatim",
+      "note": "The custom classes are notification-list, notification-list__layout, __filters, __search-form, __toolbar, __results, __sort-form and __card-row. A govuk-summary-list inside the card would be the standard alternative."
+    },
+    {
+      "id": "trace-e2e-p3-036",
+      "statement": "A Draft card offers three actions in its title bar, in this order: Resume, Copy as new, Delete.",
+      "kind": "rule",
+      "ref": "trace 015ef call@949 before-snapshot, ul.govuk-summary-card__actions",
+      "quote": "Resume | Copy as new | Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-037",
+      "statement": "A Draft card offers no Amend action.",
+      "kind": "rule",
+      "ref": "trace 015ef call@957 expect not.toBeVisible role=button[name=\"Amend notification GBN-AG-26-FTCK0Y\"]",
+      "quote": "\"isNot\":true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-038",
+      "statement": "A Submitted card offers four actions in its title bar, in this order: View, Amend, Copy as new, Delete.",
+      "kind": "rule",
+      "ref": "trace e7a9a (submitted actions) call@1096 before-snapshot, ul.govuk-summary-card__actions",
+      "quote": "View | Amend | Copy as new | Delete",
+      "confidence": "verbatim",
+      "note": "The spec asserts View, Copy and Amend only; Delete is also rendered on Submitted cards."
+    },
+    {
+      "id": "trace-e2e-p3-039",
+      "statement": "An Amending card offers four actions in this order: Resume, Copy as new, Cancel amendment, Delete.",
+      "kind": "rule",
+      "ref": "trace 2ad56 call@1138 after-snapshot, card GBN-AG-26-SS0RWN",
+      "quote": "Resume | Copy as new | Cancel amendment | Delete",
+      "confidence": "verbatim",
+      "note": "Rendered but not driven by any test in this part."
+    },
+    {
+      "id": "trace-e2e-p3-040",
+      "statement": "Each card action's accessible name adds visually hidden text \" notification {reference}\", so a screen reader hears, for example, \"Resume notification GBN-AG-26-6ZJMGG\".",
+      "kind": "non-functional",
+      "ref": "trace 93765 call@942 locator role=link[name=\"Resume notification GBN-AG-26-6ZJMGG\"]; span.govuk-visually-hidden",
+      "quote": "Resume<SPAN class=\"govuk-visually-hidden\"> notification GBN-AG-26-6ZJMGG</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-041",
+      "statement": "Resume is a link to the notification's overview, /live-animals/notifications/{reference}.",
+      "kind": "behaviour",
+      "ref": "trace 93765 call@938 before-snapshot, a.govuk-link Resume href",
+      "quote": "/live-animals/notifications/GBN-AG-26-6ZJMGG",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-042",
+      "statement": "The overview a draft resumes to has the level-1 heading \"Overview\" and the same Draft and reference journey strip.",
+      "kind": "copy",
+      "ref": "trace 93765 call@912 after-snapshot (GET /live-animals/notifications/GBN-AG-26-6ZJMGG), h1.govuk-heading-xl",
+      "quote": "Overview",
+      "confidence": "verbatim",
+      "note": "The overview's task list belongs to the hub part."
+    },
+    {
+      "id": "trace-e2e-p3-043",
+      "statement": "View on a Submitted card is a link to /live-animals/notifications/{reference}/notification-view.",
+      "kind": "behaviour",
+      "ref": "trace e7a9a call@1096 before-snapshot",
+      "quote": "/live-animals/notifications/GBN-AG-26-1PGJ9E/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-044",
+      "statement": "Amend on a Submitted card is a link-styled button in a form that POSTs to /live-animals/notifications/{reference}/amend with the CSRF crumb.",
+      "kind": "behaviour",
+      "ref": "trace e7a9a call@1096 before-snapshot, form.app-form-inline button.govuk-link.app-link-button",
+      "quote": "<FORM method=\"post\" action=\"/live-animals/notifications/GBN-AG-26-1PGJ9E/amend\" class=\"app-form-inline\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-045",
+      "statement": "Copy as new is a link-styled button in a form that POSTs to /live-animals/notifications/{reference}/copy, with the CSRF crumb, the notification's concurrencyToken and copyOrigin=dashboard as hidden fields.",
+      "kind": "behaviour",
+      "ref": "trace e7a9a call@1096 before-snapshot; trace 2ad56 call@1156",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"4\"> <INPUT type=\"hidden\" name=\"copyOrigin\" value=\"dashboard\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-046",
+      "statement": "Cancel amendment on an Amending card is a link to /live-animals/notifications/{reference}/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "trace 2ad56 call@1138 after-snapshot, card GBN-AG-26-SS0RWN",
+      "quote": "/live-animals/notifications/GBN-AG-26-SS0RWN/cancel-amend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-047",
+      "statement": "Delete on a card is a link (GET) to /live-animals/notifications/{reference}/delete, a confirmation page, not an immediate delete.",
+      "kind": "behaviour",
+      "ref": "trace 2e3c2 call@611 click role=link[name=\"Delete notification GBN-AG-26-4YFY6W\"], lands on /delete",
+      "quote": "/live-animals/notifications/GBN-AG-26-4YFY6W/delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-048",
+      "statement": "Amend and Copy as new are buttons (forms) styled as links with a custom app-link-button class and an app-form-inline form wrapper, inside the summary card's action list.",
+      "kind": "constraint",
+      "ref": "trace e7a9a call@1096 before-snapshot",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-link app-link-button\">",
+      "confidence": "verbatim",
+      "note": "GOV.UK Frontend has no link-styled button; the alternative is a secondary button or a GET link to a confirmation page."
+    },
+    {
+      "id": "trace-e2e-p3-049",
+      "statement": "A newly started draft appears on the dashboard: searching for its reference finds its card with a Draft status and the Resume, Copy as new and Delete actions.",
+      "kind": "behaviour",
+      "ref": "trace 93765 call@938-call@946",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-050",
+      "statement": "When there are more results than one page holds, the dashboard shows GOV.UK pagination in its block variant, labelled \"Pagination\", below the cards.",
+      "kind": "behaviour",
+      "ref": "trace 029ca (pagination) call@1059 after-snapshot, nav.govuk-pagination.govuk-pagination--block",
+      "quote": "<NAV class=\"govuk-pagination govuk-pagination--block\" aria-label=\"Pagination\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-051",
+      "statement": "On the first page the pagination shows only a \"Next\" link, to /live-animals?page=2.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1059 after-snapshot, div.govuk-pagination__next",
+      "quote": "Next",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-052",
+      "statement": "Following Next opens /live-animals?page=2, which shows the next 25 results under \"Showing 26 to 50 of {total} Results\".",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1067 after-snapshot",
+      "quote": "Showing 26 to 50 of 185 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-053",
+      "statement": "A middle page shows both a \"Previous\" link and a \"Next\" link, and the page 1 Previous link goes to plain /live-animals with no page parameter.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1067 after-snapshot, div.govuk-pagination__prev a[href=/live-animals][rel=prev], div.govuk-pagination__next a[href=/live-animals?page=3]",
+      "quote": "Previous",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-054",
+      "statement": "The pagination shows no numbered page links, only Previous and Next.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1067 after-snapshot, nav.govuk-pagination contents",
+      "quote": "<DIV class=\"govuk-pagination__prev\"> ... <DIV class=\"govuk-pagination__next\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-055",
+      "statement": "The pagination links carry only the page number: the Next href has no sort or referenceNumber, so it may drop a chosen sort or search.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1059 after-snapshot, a.govuk-pagination__link href",
+      "quote": "/live-animals?page=2",
+      "confidence": "inferred",
+      "note": "Seen only on the unfiltered default-sort list. That a sorted or searched list loses its state on Next is inferred from the href; no trace paginates a searched or re-sorted list."
+    },
+    {
+      "id": "trace-e2e-p3-056",
+      "statement": "Page 2 shows different notifications from page 1: its first card heading differs from page 1's first card.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@1065 and call@1075 textContent of .govuk-summary-card >> nth=0 heading",
+      "quote": "expect(secondPageReference).not.toBe(firstPageReference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-057",
+      "statement": "Under the default Arrival (newest to oldest) sort, drafts with no arrival date seem to come after notifications that have one: 26 drafts created just before the check appear on neither page 1 nor page 2, and every card on both pages has an arrival date.",
+      "kind": "rule",
+      "ref": "trace 029ca: 26 Start a new notification clicks call@905-call@1055; page 1 call@1059 and page 2 call@1067 cards all show Arrival at destination 7 Nov 2026",
+      "quote": "Showing 1 to 25 of 185 Results",
+      "confidence": "inferred",
+      "note": "Inferred from absence; the trace never reaches the last page to confirm where undated drafts land."
+    },
+    {
+      "id": "trace-e2e-p3-058",
+      "statement": "Each Start a new notification click creates another draft: 26 clicks gave 26 distinct references, each landing on its own origin page.",
+      "kind": "behaviour",
+      "ref": "trace 029ca call@905-call@1057 (e.g. GBN-AG-26-BWH57T ... GBN-AG-26-WR472T)",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-WR472T/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-059",
+      "statement": "The delete confirmation page has the level-1 heading \"Delete this notification?\".",
+      "kind": "copy",
+      "ref": "trace 9d8f3 (deletes a draft) call@587 after-snapshot, h1.govuk-heading-l",
+      "quote": "Delete this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-060",
+      "statement": "The delete confirmation page warns in one paragraph that the deletion is permanent.",
+      "kind": "copy",
+      "ref": "trace 9d8f3 call@587 after-snapshot, p.govuk-body",
+      "quote": "This cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-061",
+      "statement": "The delete confirmation's primary action is a red warning button \"Yes, delete notification\" that POSTs to /live-animals/notifications/{reference}/delete with the CSRF crumb and the notification's concurrencyToken.",
+      "kind": "behaviour",
+      "ref": "trace 9d8f3 call@587 after-snapshot, form[method=post] button.govuk-button--warning",
+      "quote": "Yes, delete notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-062",
+      "statement": "Beside the delete button, a secondary button-styled link \"No, return to dashboard\" goes back to /live-animals.",
+      "kind": "copy",
+      "ref": "trace 9d8f3 call@587 after-snapshot, a[role=button].govuk-button--secondary href=/live-animals",
+      "quote": "No, return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-063",
+      "statement": "The delete confirmation page has a \"Back\" link to the dashboard (/live-animals).",
+      "kind": "copy",
+      "ref": "trace 9d8f3 call@587 after-snapshot, a.govuk-back-link",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-064",
+      "statement": "The delete confirmation page shows the notification's status tag and reference in the journey strip above the heading: Draft for a draft, Submitted for a submitted notification.",
+      "kind": "behaviour",
+      "ref": "trace 9d8f3 call@587 (Draft GBN-AG-26-Z4GMME); trace 2e3c2 call@613 (Submitted GBN-AG-26-4YFY6W)",
+      "quote": "Submitted GBN-AG-26-4YFY6W",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-065",
+      "statement": "The delete confirmation page can be opened directly by URL, without going through the dashboard card.",
+      "kind": "behaviour",
+      "ref": "trace 9d8f3 call@587 goto /live-animals/notifications/GBN-AG-26-Z4GMME/delete 200",
+      "quote": "Frame.goto {\"url\":\"/live-animals/notifications/GBN-AG-26-Z4GMME/delete\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-066",
+      "statement": "Confirming the delete redirects (302) to the dashboard with ?deleted=1.",
+      "kind": "behaviour",
+      "ref": "trace 9d8f3 network: POST /live-animals/notifications/GBN-AG-26-Z4GMME/delete 302",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-Z4GMME/delete | 302 | /live-animals?deleted=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-067",
+      "statement": "After a delete the dashboard shows a GOV.UK success notification banner, with role alert, titled \"Notification deleted\".",
+      "kind": "copy",
+      "ref": "trace 9d8f3 call@593 after-snapshot, div.govuk-notification-banner--success[role=alert] h2.govuk-notification-banner__title",
+      "quote": "Notification deleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-068",
+      "statement": "The success banner's content heading reads \"The notification has been deleted.\"",
+      "kind": "copy",
+      "ref": "trace 9d8f3 call@593 after-snapshot, p.govuk-notification-banner__heading",
+      "quote": "The notification has been deleted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-069",
+      "statement": "The delete banner sits above the Dashboard caption and heading, with the rest of the dashboard below it.",
+      "kind": "behaviour",
+      "ref": "trace 9d8f3 call@593 after-snapshot, order inside main",
+      "quote": "Notification deleted ... Dashboard ... Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-070",
+      "statement": "The delete success banner depends on the ?deleted=1 query parameter rather than a one-time flash message.",
+      "kind": "rule",
+      "ref": "trace 9d8f3 call@593 URL; trace 2e3c2 call@619 then reloads /live-animals without the parameter",
+      "quote": "http://localhost:3000/live-animals?deleted=1",
+      "confidence": "inferred",
+      "note": "Inferred from the URL; no trace reloads ?deleted=1 to see whether the banner shows again."
+    },
+    {
+      "id": "trace-e2e-p3-071",
+      "statement": "A submitted notification can be deleted from the dashboard: its card offers Delete, the confirmation accepts it, and the same success banner shows.",
+      "kind": "rule",
+      "ref": "trace 2e3c2 call@611-call@617",
+      "quote": "The notification has been deleted.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-072",
+      "statement": "A deleted notification no longer appears on the dashboard: searching for its reference afterwards gives \"No notifications found\" and no cards.",
+      "kind": "behaviour",
+      "ref": "trace 2e3c2 call@637 expect .govuk-summary-card toHaveCount 0",
+      "quote": "No notifications found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-073",
+      "statement": "Copy as new on a submitted notification's card creates a new notification and redirects (302) straight to the new notification's overview at /live-animals/notifications/{new reference}.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f-retry1 network: POST /live-animals/notifications/GBN-AG-26-NC55KG/copy 302",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-NC55KG/copy | 302 | /live-animals/notifications/GBN-AG-26-79SWM3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-074",
+      "statement": "The copy gets a new reference, different from the original's, and starts with Draft status.",
+      "kind": "rule",
+      "ref": "trace a1f4f-retry1 call@322 after-snapshot, div.app-journey-strip; spec expects copied reference not equal to original",
+      "quote": "Draft GBN-AG-26-79SWM3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-075",
+      "statement": "A copy of a submitted notification carries its answers: the copy's overview shows 1 animal and 5 packages, and Origin, Commodities, Main reason for import, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Roles and addresses and Contact address all marked Complete.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f-retry1 call@322 after-snapshot, app-commodity-total values and govuk-task-list statuses",
+      "quote": "Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-076",
+      "statement": "A copy does not carry the original's documents: Upload documents shows To do on the copied draft's overview.",
+      "kind": "rule",
+      "ref": "trace a1f4f-retry1 call@322 after-snapshot, documents-1-status",
+      "quote": "Upload documents ... To do",
+      "confidence": "verbatim",
+      "note": "The original journey never uploaded a document either (trace a1f4f-retry1 has no accompanying-documents step), so whether documents would be copied is not shown. Recorded as what rendered."
+    },
+    {
+      "id": "trace-e2e-p3-077",
+      "statement": "Copying shows no confirmation banner or message on the new draft's overview; the only sign of the copy is the new reference in the journey strip.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f-retry1 call@322 after-snapshot, main contents",
+      "quote": "Overview",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any notification banner in the rendered main."
+    },
+    {
+      "id": "trace-e2e-p3-078",
+      "statement": "A notification submitted through the UI appears on the dashboard as a Submitted card with its commodity, origin, arrival date, consignee and consignor filled in.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f-retry1 call@320 before-snapshot, card GBN-AG-26-NC55KG",
+      "quote": "Cow | France | 7 Nov 2026 | British Livestock Ltd | Astra Rosales | Submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-079",
+      "statement": "On the copy test's first attempt, searching for the place of destination in the address picker (POST /live-animals/notifications/{reference}/destinations/select) returned HTTP 500.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f (first attempt) network: POST destinations/select 500 at 2026-10-07T17:41:13Z; call@1078 click Search",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-J5EYWD/destinations/select | 500",
+      "confidence": "verbatim",
+      "note": "The same step succeeded on the retry (200 then 302). An intermittent server error in the picker search, not a dashboard fault; the picker itself is another part's slice."
+    },
+    {
+      "id": "trace-e2e-p3-080",
+      "statement": "The service's 500 error page shows a heading \"500\" and the line \"Something went wrong\", keeps the service header and navigation, and offers no back link, guidance or way to retry.",
+      "kind": "copy",
+      "ref": "trace a1f4f (first attempt) final screencast frame page@c1a915568a6c4378a4276561235b379e-1791394873901.jpeg",
+      "quote": "500 Something went wrong",
+      "confidence": "verbatim",
+      "note": "Read from the screenshot; no DOM snapshot was taken after the 500. GOV.UK's service-unavailable/problem pattern ('Sorry, there is a problem with the service') would replace it."
+    },
+    {
+      "id": "trace-e2e-p3-081",
+      "statement": "When the picker search failed, the browser console logged the 500.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f (first attempt) 1-trace.trace console event",
+      "quote": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-082",
+      "statement": "The copy test's first attempt then timed out after 90 seconds waiting for the \"Select Tech Imports Ltd\" radio, which never rendered because the page was the 500 error.",
+      "kind": "non-functional",
+      "ref": "trace a1f4f (first attempt) test.trace error, party-picker-page.ts:46 via journey.ts:157 fillAddressesToCph",
+      "quote": "Error: locator.check: Test timeout of 90000ms exceeded. Call log: - waiting for getByRole('radio', { name: 'Select Tech Imports Ltd', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-083",
+      "statement": "Draft cards render with a server-issued concurrencyToken on their copy form, and the delete confirmation form carries one too, so the copy and delete posts look protected against acting on a stale version.",
+      "kind": "rule",
+      "ref": "trace 9d8f3 call@587 (delete form concurrencyToken 1); trace 93765 call@938 (copy form concurrencyToken 1)",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"1\">",
+      "confidence": "inferred",
+      "note": "Inferred from the field name; no trace submits a stale token to see the response."
+    },
+    {
+      "id": "trace-e2e-p3-084",
+      "statement": "The test harness seeds draft and submitted notifications by posting the frontend's own journey forms in order (origin, commodities, consignment-details, identification, import-reason, additional-details, the five party selects, addresses, cph-number, port-of-entry, transit-countries, transporters, contact select, declaration), and the declaration post redirects to /confirmation.",
+      "kind": "integration",
+      "ref": "trace 118d4 3-trace.network and 3-trace.trace APIRequestContext.fetch calls",
+      "quote": "POST | http://localhost:3000/live-animals/notifications/GBN-AG-26-80T0HK/declaration | 302 | /live-animals/notifications/GBN-AG-26-80T0HK/confirmation",
+      "confidence": "verbatim",
+      "note": "Test seeding, not a user path; it shows the form endpoints accept a direct urlencoded POST."
+    },
+    {
+      "id": "trace-e2e-p3-085",
+      "statement": "Before seeding, the test harness looks parties up in the address book API: GET /organisation/{organisationId}/addresses?q={name} on port 8089, with an x-api-key header and a Trade-Imports-Organisation-Id header.",
+      "kind": "integration",
+      "ref": "trace 118d4 2-trace.trace call@1104-call@1114; same in traces 2e3c2 0-trace and e7a9a",
+      "quote": "http://localhost:8089/organisation/5900001/addresses?q=Astra%20Rosales  x-api-key: [REDACTED]  Trade-Imports-Organisation-Id: 5900001",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p3-086",
+      "statement": "The dashboard's data calls (listing, searching, paging, copying, deleting) reach the frontend only; which backend calls the frontend makes for the list, the result count and the copy/delete is not visible in the trace.",
+      "kind": "integration",
+      "ref": "all 12 traces' 1-trace.network: only localhost:3000 document requests",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-087",
+      "statement": "No trace shows the dashboard for a user with no notifications at all, so its zero-state copy (beyond the searched \"No notifications found\") is not recorded.",
+      "kind": "copy",
+      "ref": "all dashboard traces start with 64 to 185 existing results",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-088",
+      "statement": "No trace reaches the last page of results, so the last page's pagination (Previous only) and its partial result range are not recorded.",
+      "kind": "behaviour",
+      "ref": "trace 029ca stops at page 2",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-089",
+      "statement": "No trace follows View, Amend or Cancel amendment from a card, so where they land and what they do is not recorded in this part.",
+      "kind": "behaviour",
+      "ref": "traces e7a9a, 2ad56: actions asserted visible but never clicked",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-090",
+      "statement": "No trace chooses \"No, return to dashboard\" or Back on the delete confirmation, so the cancel path is not recorded.",
+      "kind": "behaviour",
+      "ref": "traces 9d8f3, 2e3c2",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-091",
+      "statement": "No trace copies a draft or an amending notification from its card, or copies from anywhere but the dashboard, so how copy behaves from those states and other copyOrigin values is not recorded.",
+      "kind": "behaviour",
+      "ref": "trace a1f4f-retry1 copies a submitted notification only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-092",
+      "statement": "No trace shows what happens when a copy or delete fails (a stale concurrency token, a notification already deleted, a backend error), so their error messages are not recorded.",
+      "kind": "rule",
+      "ref": "traces 9d8f3, 2e3c2, a1f4f-retry1: success paths only",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-093",
+      "statement": "No trace shows a card with any status other than Draft, Submitted and Amending (for example rejected, cancelled or validated), so other statuses' tag colours and actions are not recorded.",
+      "kind": "data",
+      "ref": "all cards in traces 2ad56, c058e, 029ca",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-094",
+      "statement": "No trace shows a notification with more than one commodity or origin on its card, so how the card summarises several commodities is not recorded.",
+      "kind": "data",
+      "ref": "every card seen shows Commodity Cow",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p3-095",
+      "statement": "No trace shows whether the dashboard list is limited to the signed-in user's own notifications or organisation: every card seen was created by the test suite's single stubbed user.",
+      "kind": "rule",
+      "ref": "traces 2ad56, c058e, 029ca: one user, organisation 5900001 in seeding headers",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The corpus has one user only, so whether another user's or organisation's notifications would be hidden is not shown."
+    }
+  ]
+}

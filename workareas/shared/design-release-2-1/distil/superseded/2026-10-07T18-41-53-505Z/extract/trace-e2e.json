@@ -1,0 +1,762 @@
+{
+  "source": "trace:e2e",
+  "structure": "A corpus of 190 trace.zip folders (one per Playwright test run, folder names animals-e2e-... or ins-e2e-...) plus report.json (Playwright 1.63.0 JSON report, run 2026-10-07: 181 expected, 6 skipped, 0 unexpected, 2 flaky; two traces are retry1 folders). Specs live under animals/e2e/{features,features/address-book,journeys,journeys/persistence,pages,visual} and ins/e2e/features[/address-book] in the tests repo. IMPORTANT LIMIT: the prescribed trace CLI (tim distil trace -> playwright trace open) refuses every trace with 'TraceVersionError: The trace was created by a newer version of Playwright', so no snapshot, rendered DOM, action list or request log could be read through it. The only trace content read was ONE trace (ins-e2e-features-address-b-98ed4-e-address-book-landing-page-ins) unzipped by hand and read as raw JSONL (actions and network log). A bulk unzip of the other traces was denied by the permission classifier and not pursued. Everything else here comes from report.json: spec file, line and test title for every one of the ~190 runs, which states what each test proves. Scope line: every trace in the folder is in scope (whole folder, no filtering); no page copy, field labels, hints, option lists or validation message text were readable, so none is recorded and every such surface is written as a gap. Journeys and features covered by titles: animals project (sign-in/auth, dashboard list/search/sort/pagination/actions, journey entry and reference strip, hub with six numbered groups, per-page specs for origin, commodities, consignment, arrival, transporter(s), transit countries, CPH, additional details, animal identification, import reason/purpose, contact address, declaration, check-your-answers, submit/amend/cancel-amend/copy/delete lifecycle, documents upload and scan lifecycle, address-book handshake with INS and copied addresses, persistence to Mongo) and ins project (address book CRUD and organisation scoping, add-handshake guard, aggregated notification, cross-service sessions, dashboard view hand-off). Claims are ordered as the report lists them.",
+  "scopeHash": "54bfcde7dfa00dec7b06ef904641bd4efbaf64e4b336ae04e46ec128a8874bee",
+  "claims": [
+    {
+      "id": "trace-e2e-001",
+      "statement": "The e2e run's traces could not be opened with the Playwright version the distil tooling installs, so rendered page content is not available from this source.",
+      "kind": "constraint",
+      "ref": "report.json config.version; tim distil trace open on every trace tried",
+      "quote": "TraceVersionError: The trace was created by a newer version of Playwright and is not supported by this version of the viewer.",
+      "confidence": "verbatim",
+      "note": "Reconciler: weigh this source as titles of proven behaviours only, not as rendered copy."
+    },
+    {
+      "id": "trace-e2e-002",
+      "statement": "Run summary: the animals and ins projects ran against the workspace stack; 181 tests passed first time, 6 skipped, none failed, 2 flaky (notification dashboard copy-from-searched-card and transited countries 'continuing with none' both passed on retry1).",
+      "kind": "non-functional",
+      "ref": "report.json stats; folders animals-e2e-pages-notifica-a1f4f-...-retry1 and animals-e2e-pages-transite-263c1-...-retry1",
+      "quote": "{\"expected\":181,\"skipped\":6,\"unexpected\":0,\"flaky\":2}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-003",
+      "statement": "Opening the notification dashboard while signed out lands on the sign-in page.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:14",
+      "quote": "lands on the sign in page when opening the notification dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-004",
+      "statement": "A user can sign in and reach the notification dashboard.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:19",
+      "quote": "allows signing into the notification dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-005",
+      "statement": "Signing in with an invalid user id shows an error message.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:25",
+      "quote": "displays an error message when signing in with invalid user id",
+      "confidence": "verbatim",
+      "note": "The message text is not readable from this source."
+    },
+    {
+      "id": "trace-e2e-006",
+      "statement": "Signing in with an invalid password shows an error message.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:31",
+      "quote": "displays an error message when signing in with invalid password",
+      "confidence": "verbatim",
+      "note": "The message text is not readable from this source."
+    },
+    {
+      "id": "trace-e2e-007",
+      "statement": "The service root redirects to the default journey set's dashboard.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:40",
+      "quote": "redirects the service root to the default set’s dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-008",
+      "statement": "A signed-in user can sign out, and reopening the dashboard afterwards lands on the sign-in page.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:47 and :62",
+      "quote": "lands on the sign in page when reopening the notification dashboard after sign out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-009",
+      "statement": "After sign-in the signed-in user is not displayed on the page.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:57",
+      "quote": "does not display the signed in user after signing in",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-010",
+      "statement": "Opening a page further in the journey while signed out lands on sign-in, and signing in returns the user to that page.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/auth.spec.ts:87 and :92",
+      "quote": "allows signing into a page further in the journey",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-011",
+      "statement": "Sign-in is an OIDC authorisation-code flow against a stubbed Defra ID tenant: a protected path (the INS /address-book/add) redirects to /auth/sign-in?redirect=..., then to the tenant's authorize endpoint with serviceId, client_id and a redirect_uri of /auth/sign-in-oidc, then back with code and state; the user keyed a Government Gateway user ID and a password and pressed Sign in.",
+      "kind": "integration",
+      "ref": "trace ins-e2e-features-address-b-98ed4-e-address-book-landing-page-ins 1-trace.network and 1-trace.trace (hand-unzipped)",
+      "quote": "internal:role=textbox[name=\"Government Gateway user ID\"i]",
+      "confidence": "verbatim",
+      "note": "Password value deliberately not copied: [REDACTED]. The accessible names of the sign-in controls are the only rendered labels read from any trace."
+    },
+    {
+      "id": "trace-e2e-012",
+      "statement": "The INS address-book add page, once signed in, shows a level-1 heading 'Add address details'.",
+      "kind": "copy",
+      "ref": "trace ins-e2e-features-address-b-98ed4-e-address-book-landing-page-ins 1-trace.trace, last action",
+      "quote": "internal:role=heading[level=1][name=\"Add address details\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-013",
+      "statement": "The dashboard has a filter-notifications search form.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/notification-dashboard-search.spec.ts:19",
+      "quote": "displays the filter notifications search form",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-014",
+      "statement": "Searching the dashboard by complete reference number returns the matching notification, and its View action opens the notification view.",
+      "kind": "behaviour",
+      "ref": "report.json notification-dashboard-search.spec.ts:26 and :43",
+      "quote": "returns matching notification when searching by complete reference number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-015",
+      "statement": "A search with no matches, and a free-text search (not a reference number), both show a no-notifications-found state.",
+      "kind": "behaviour",
+      "ref": "report.json notification-dashboard-search.spec.ts:62 and :70",
+      "quote": "shows no notifications found when search text is free text",
+      "confidence": "verbatim",
+      "note": "The empty-state wording is not readable here."
+    },
+    {
+      "id": "trace-e2e-016",
+      "statement": "The search term is carried in the referenceNumber query parameter and is preserved when the sort is updated and when a page parameter is present.",
+      "kind": "rule",
+      "ref": "report.json notification-dashboard-search.spec.ts:79 and :96",
+      "quote": "preserves referenceNumber in the URL when a page param is present",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-017",
+      "statement": "The dashboard sort defaults to 'Arrival (newest to oldest)'.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/features/notification-dashboard-sort.spec.ts:9",
+      "quote": "default sort option is \"Arrival (newest to oldest)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-018",
+      "statement": "The sort dropdown offers four options: Arrival (newest to oldest), Arrival (oldest to newest), Date created (newest to oldest), Date created (oldest to newest); each submits and reloads without error.",
+      "kind": "data",
+      "ref": "report.json notification-dashboard-sort.spec.ts:14 and :26",
+      "quote": "selecting \"Date created (oldest to newest)\" submits and reloads without error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-019",
+      "statement": "The dashboard uses GOV.UK pagination and reports the result range.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/pages/notification-dashboard-pagination.spec.ts:4",
+      "quote": "uses GOV.UK pagination and reports the result range",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-020",
+      "statement": "The dashboard shows the notification list and a result count, and details on each notification card.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/pages/notification-dashboard.spec.ts:39 and :49",
+      "quote": "displays details on a notification card",
+      "confidence": "verbatim",
+      "note": "Which details a card shows is not readable here."
+    },
+    {
+      "id": "trace-e2e-021",
+      "statement": "A draft notification's card shows resume, copy and delete actions; a submitted notification's card shows view, copy and amend actions.",
+      "kind": "behaviour",
+      "ref": "report.json notification-dashboard.spec.ts:66 and :78",
+      "quote": "shows view, copy and amend actions for a submitted notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-022",
+      "statement": "A submitted notification can be copied from its (searched) dashboard card, producing a new draft.",
+      "kind": "behaviour",
+      "ref": "report.json notification-dashboard.spec.ts:89",
+      "quote": "copies a submitted notification from its searched dashboard card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-023",
+      "statement": "Creating a new notification from the dashboard lands on the journey entry page, which is the origin page; the draft is then listed.",
+      "kind": "behaviour",
+      "ref": "report.json notification-dashboard.spec.ts:8 and :33",
+      "quote": "starts a journey at the origin page and lists the draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-024",
+      "statement": "A draft notification can be deleted and then disappears from the dashboard.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/notification-delete.spec.ts:6 and :17",
+      "quote": "deletes the notification and removes it from the dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-025",
+      "statement": "The Draft tag and GBN-AG reference show from the journey entry page onwards and not on the dashboard.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/reference-strip.spec.ts:6",
+      "quote": "the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-026",
+      "statement": "The hub groups its tasks under six numbered group headings with nothing after them.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/hub-groups-and-cya-rows.spec.ts:6",
+      "quote": "the hub groups its tasks under the six numbered group headings, with nothing after them",
+      "confidence": "verbatim",
+      "note": "Heading wording not readable here."
+    },
+    {
+      "id": "trace-e2e-027",
+      "statement": "After every section is complete the check-your-answers page renders the answered rows; and it lists all six operators with the picked name and country.",
+      "kind": "behaviour",
+      "ref": "report.json hub-groups-and-cya-rows.spec.ts:52; all-operators.spec.ts:7",
+      "quote": "check your answers lists all six operators with the picked name and country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-028",
+      "statement": "A Change link on check-your-answers opens the answering page in change context and saving returns to check-your-answers with the new value.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/change-from-cya.spec.ts:4",
+      "quote": "a Change link opens the answering page with change context and the save returns to check your answers with the new value",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-029",
+      "statement": "Task pages have two exits: 'Cancel and return to overview' discards typed input; 'Save and return to overview' commits and lands on the hub.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/features/task-page-exits.spec.ts:4",
+      "quote": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-030",
+      "statement": "The notification view in draft state renders the recorded answers in the numbered design sections, shows a Draft strip with the notification reference, shows Change links, and offers submission but none of the post-submit actions.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/pages/notification-view-states.spec.ts:13, :27, :32, :37",
+      "quote": "offers submission and none of the post-submit actions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-031",
+      "statement": "Pressing Continue on an unfinished notification stays on the page and names what is left; once every section is answered there is no error summary and Continue moves on to the declaration.",
+      "kind": "rule",
+      "ref": "report.json notification-view-states.spec.ts:44, :60, :65",
+      "quote": "Continue: when the notification is unfinished, stays put and names what is left",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-032",
+      "statement": "After submission the user lands on the view page with a Submitted strip and the reference; the read-only view still renders the recorded answers and offers Copy as new and Delete; copying creates a new draft.",
+      "kind": "behaviour",
+      "ref": "report.json notification-view-states.spec.ts:78, :84, :90, :102",
+      "quote": "offers Copy as new and Delete on the read-only view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-033",
+      "statement": "Origin page: renders the country selector on load, accepts valid origin details, and a country selector filters as you type, submits the country code and persists it.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/pages/origin.spec.ts:17, :21; features/country-of-origin-type-ahead.spec.ts:4",
+      "quote": "filters as you type, submits the country code and persists it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-034",
+      "statement": "Origin page: submitting without a country still saves what the user has.",
+      "kind": "rule",
+      "ref": "report.json origin.spec.ts:37",
+      "quote": "saves what the user has when submitted without a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-035",
+      "statement": "Origin page: claiming a region of origin code without giving one shows an error summary; a region of origin code and a country subdivision selection each persist.",
+      "kind": "rule",
+      "ref": "report.json origin.spec.ts:53, :61, :75",
+      "quote": "shows an error summary when a region of origin code is claimed but not given",
+      "confidence": "verbatim",
+      "note": "Error text not readable here."
+    },
+    {
+      "id": "trace-e2e-036",
+      "statement": "Port of entry is a select enhanced to filter by name or code; it submits and persists the code.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/features/port-of-entry-select.spec.ts:8",
+      "quote": "enhances the select, filters by name or code, submits and persists the code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-037",
+      "statement": "Commodities page: offers a search box and lists nothing until used; a query shorter than three characters lists nothing; matching species are grouped under their commodity heading; a no-match query says so.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/pages/commodities.spec.ts:18, :26, :31, :42",
+      "quote": "lists nothing for a query shorter than three characters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-038",
+      "statement": "Commodities page: multiple commodity-species pairs found under different queries are accepted and persisted; a count of what has been chosen is shown and can be cleared; submitting empty shows an error summary.",
+      "kind": "behaviour",
+      "ref": "report.json commodities.spec.ts:48, :74, :85",
+      "quote": "counts what has been chosen and clears it on request",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-039",
+      "statement": "Consignment details page: the number of animals is empty on load and valid consignment details are accepted.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/pages/consignment-details.spec.ts:15, :19",
+      "quote": "leaves the number of animals empty on load",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-040",
+      "statement": "The unweaned-animals question shows only when a triggering commodity line exists.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/additional-details-scope.spec.ts:4",
+      "quote": "the unweaned-animals question shows only when a triggering commodity line exists",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-041",
+      "statement": "Additional details page: unchecked on load; valid additional details accepted.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/pages/additional-details.spec.ts:15, :20",
+      "quote": "leaves the additional details unchecked on load",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-042",
+      "statement": "The CPH number page and its addresses-hub row show only when a CPH-triggering commodity line exists; the CPH number is empty on load, a valid one is accepted, and submitting empty shows an error summary.",
+      "kind": "rule",
+      "ref": "report.json features/cph-scope.spec.ts:4; pages/cph-number.spec.ts:16, :22, :29",
+      "quote": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-043",
+      "statement": "Arrival details: unanswered on load; valid details accepted; submitting empty saves a draft and moves on.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/pages/arrival-details.spec.ts:22, :28, :44",
+      "quote": "saves a draft and moves on when submitted empty",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-044",
+      "statement": "Arrival date: the date picker is restricted to one week back and six months ahead; a typed date outside that window is rejected and not saved.",
+      "kind": "rule",
+      "ref": "report.json arrival-details.spec.ts:51, :56, :67",
+      "quote": "restricts the date picker to one week back and six months ahead",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-045",
+      "statement": "Import reason page: unchecked on load; a valid reason is accepted; choosing the internal market reason reveals an import purpose which is accepted, and leaving it unanswered is refused.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/pages/import-reason.spec.ts:18, :24, :31, :43",
+      "quote": "refuses an unanswered purpose under the internal market reason",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-046",
+      "statement": "Purpose is owed only for the internal market reason and is wiped when the reason changes.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/reason-purpose-scope.spec.ts:4",
+      "quote": "purpose is owed only for the internal market and is wiped when the reason changes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-047",
+      "statement": "Transporter selection page lists both a commercial and a private transporter, every transporter is unchecked on load, and a picked transporter is accepted.",
+      "kind": "data",
+      "ref": "report.json animals/e2e/pages/transporter.spec.ts:16, :21, :26",
+      "quote": "lists both a commercial and a private transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-048",
+      "statement": "Transporter add page: transporter type is unchecked on load and a valid type is accepted. Transporter selection (separate page spec) leaves the transporter unchecked on load and accepts a valid one.",
+      "kind": "data",
+      "ref": "report.json pages/transporter-add.spec.ts:19, :23; pages/transporter-selection.spec.ts:18, :22",
+      "quote": "leaves the transporter type unchecked on load",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-049",
+      "statement": "Commercial transporter details are owed only for the commercial type and are wiped when the type changes; a trader can submit using a hand-added commercial transporter.",
+      "kind": "rule",
+      "ref": "report.json features/commercial-transporter-scope.spec.ts:16; commercial-transporter-submission.spec.ts:15",
+      "quote": "commercial transporter is owed only for the commercial type and is wiped when the type changes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-050",
+      "statement": "Keyed-in transporter details are owed only for the private type; a partial fill blocks the save; changing the type wipes them.",
+      "kind": "rule",
+      "ref": "report.json features/private-transporter-scope.spec.ts:17",
+      "quote": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-051",
+      "statement": "Transit countries page: renders a country search and an empty list; multiple countries can be added and persist; a country can be removed leaving the others; the list is optional so continuing with none saves and goes on; pressing Add country with none chosen shows an error summary.",
+      "kind": "behaviour",
+      "ref": "report.json animals/e2e/pages/transited-countries.spec.ts:8, :15, :27, :36, :47",
+      "quote": "transit countries are optional: continuing with none saves and goes on",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-052",
+      "statement": "The transit-countries page is routed only for rail or road transport; changing the means wipes saved countries.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/features/transit-means-scope.spec.ts:4",
+      "quote": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-053",
+      "statement": "Animal identification: the ear tag is empty on load and a valid ear tag is accepted; a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs.",
+      "kind": "rule",
+      "ref": "report.json pages/animal-identification.spec.ts:18, :22; features/animal-identifiers-conditional.spec.ts:4",
+      "quote": "a unit form shows only the identifier types the commodity requires, plus the permanent address for cats and dogs",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-054",
+      "statement": "A commodity with no identifier type of its own gets no identification panel while lines that have one keep theirs; a consignment where no commodity has an identifier type never reaches the identification page.",
+      "kind": "rule",
+      "ref": "report.json animal-identifiers-conditional.spec.ts:67, :99",
+      "quote": "a consignment where no commodity has an identifier type never reaches the identification page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-055",
+      "statement": "Identification records have an N-of-M counter capped at the declared number of animals; removing a record frees a slot; reducing the declared count below the records held is blocked with an error naming the species.",
+      "kind": "rule",
+      "ref": "report.json features/animal-identifiers-cap.spec.ts:4",
+      "quote": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-056",
+      "statement": "Declaration page: shows an error summary when submitted unconfirmed.",
+      "kind": "rule",
+      "ref": "report.json animals/e2e/pages/declaration.spec.ts:15",
+      "quote": "shows an error summary when submitted unconfirmed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-057",
+      "statement": "Documents: a fifteenth document is accepted and a sixteenth is rejected with a maximum-documents error; a 10MB PDF is accepted and the same real file at one byte over is rejected.",
+      "kind": "constraint",
+      "ref": "report.json animals/e2e/features/documents-limits.spec.ts:21, :53",
+      "quote": "accepts a 10MB PDF and rejects the same real file at one byte over",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-058",
+      "statement": "An oversize file pick is refused without adding a document, and an unsupported file type is rejected without adding a document.",
+      "kind": "rule",
+      "ref": "report.json documents-reject.spec.ts:8; promoted-documents.spec.ts:39",
+      "quote": "rejects an unsupported file type without adding a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-059",
+      "statement": "Document scan lifecycle: a clean upload shows 'Scanning for virus' with no view link and then 'Check completed' with a view link; an infected upload is accepted while scanning, then shows 'Virus found' with an error summary and no view link.",
+      "kind": "behaviour",
+      "ref": "report.json documents-scan-lifecycle.spec.ts:15, :37",
+      "quote": "clean upload: shows Scanning for virus with no view link, then Check completed with a view link",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-060",
+      "statement": "Without client JavaScript a refresh fallback reflects scan progress.",
+      "kind": "non-functional",
+      "ref": "report.json documents-refresh-no-js.spec.ts:11",
+      "quote": "the refresh fallback reflects scan progress without client JavaScript",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-061",
+      "statement": "A document is uploaded, scanned, downloaded and removed through the real uploader.",
+      "kind": "integration",
+      "ref": "report.json features/promoted-documents.spec.ts:7",
+      "quote": "uploads, scans, downloads and removes a document through the real uploader",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-062",
+      "statement": "The promoted frontend sends a Content-Security-Policy header.",
+      "kind": "non-functional",
+      "ref": "report.json features/headers.spec.ts:5",
+      "quote": "promoted frontend sends a Content-Security-Policy header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-063",
+      "statement": "Lifecycle: a notification is created, submitted, amended, cancelled, copied and soft-deleted; the fulfilment view reflects each transition; a copy no longer dedupes.",
+      "kind": "behaviour",
+      "ref": "report.json features/promoted-lifecycle.spec.ts:6",
+      "quote": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-064",
+      "statement": "A submitted notification renders read-only and an amendment re-enters at Overview.",
+      "kind": "behaviour",
+      "ref": "report.json promoted-lifecycle.spec.ts:55",
+      "quote": "renders a submitted notification read-only and re-enters an amendment at Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-065",
+      "statement": "An amended notification resubmits Submitted to Amending to Submitted with the edited answer kept.",
+      "kind": "rule",
+      "ref": "report.json features/amend-resubmit.spec.ts:14",
+      "quote": "resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-066",
+      "statement": "While amending, a Cancel amendment link is shown and opens a confirmation page; Yes cancels and restores the submitted answers; No returns to the notification view with the amendment still in progress.",
+      "kind": "behaviour",
+      "ref": "report.json features/cancel-amend-ui.spec.ts:10, :15, :29, :40",
+      "quote": "Yes cancels the amendment and restores the submitted answers",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-067",
+      "statement": "A submitted promoted live-animals notification goes through the hub-owned spine end to end.",
+      "kind": "behaviour",
+      "ref": "report.json journeys/promoted-notification.spec.ts:5",
+      "quote": "submits a promoted live-animals notification through the hub-owned spine",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-068",
+      "statement": "Persistence: a draft persists as DRAFT up to the declaration; a submitted notification persists the journey answers and reloads read-only; an uploaded document persists to Mongo and reloads.",
+      "kind": "integration",
+      "ref": "report.json journeys/persistence/persistence-notification.spec.ts:21, :39; persistence-accompanying-document.spec.ts:23",
+      "quote": "draft notification persists as DRAFT up to declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-069",
+      "statement": "A notification seeded through the API stores what the same journey stores through the browser.",
+      "kind": "integration",
+      "ref": "report.json journeys/persistence/api-seed-parity.spec.ts:12",
+      "quote": "a seeded notification stores what the same journey stores through the browser",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-070",
+      "statement": "The animals journey's Address book item follows through to the INS address book and back.",
+      "kind": "integration",
+      "ref": "report.json features/address-book/address-book-navigation.spec.ts:6",
+      "quote": "follows the Address book item from the animals journey to the INS address book and back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-071",
+      "statement": "Saving a new address in INS returns to the picker with it selected and committed; cancelling the INS add returns to the picker without saving an address.",
+      "kind": "integration",
+      "ref": "report.json addresses-add-handshake.spec.ts:13, :58",
+      "quote": "saving a new address in INS returns to the picker with it selected and committed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-072",
+      "statement": "The contact-address picker searches and pages the address book, and the row selected on a later page is the one that saves.",
+      "kind": "behaviour",
+      "ref": "report.json addresses-picker.spec.ts:4",
+      "quote": "the picker searches and pages the address book, and the row selected on a later page is the one that saves",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-073",
+      "statement": "The animals frontend's own create-address page is no longer served; in stub mode there is no INS add link, and with the full stack running the pages link to INS to add an address (asserted on the hub, contact page and the other address pages).",
+      "kind": "rule",
+      "ref": "report.json addresses-read-only.spec.ts:37, :43, :54; pages/contact-address.spec.ts:54, :59",
+      "quote": "the create-address page is no longer served",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-074",
+      "statement": "Picking an address-book record copies it into the notification: a contact address chosen is shown as the current contact on return, still chosen, and saving again keeps it; saving with none selected is allowed and exits to the hub; picking for a role with no address shows every field of the record on the review page.",
+      "kind": "behaviour",
+      "ref": "report.json pages/contact-address.spec.ts:26, :47; addresses-copied.spec.ts:67",
+      "quote": "saving with no contact address selected is allowed and exits to the hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-075",
+      "statement": "A copied address is independent of the address book: editing or deleting the book record leaves the copy on a draft notification unchanged (deleting also shows no error and drops it from the picker); after submit, renaming or deleting the book record changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy.",
+      "kind": "rule",
+      "ref": "report.json addresses-copied.spec.ts:4, :110; addresses-submit-freeze.spec.ts:4, :81",
+      "quote": "deleting the record in the address book leaves the copy on a draft notification unchanged, with no error, and drops it from the picker",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-076",
+      "statement": "A copied address that breaks the address book rules is named on the review page, blocks continue and submit, and clears once corrected.",
+      "kind": "rule",
+      "ref": "report.json addresses-copied.spec.ts:169",
+      "quote": "a copied address that breaks the address book rules is named on the review page, blocks continue and submit, and clears once corrected",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-077",
+      "statement": "A copied address can be edited on the notification: the edit form opens with the copied details including the county; an edit changes only this notification; an edit that breaks the address book rules is refused with messages at the top and against each field and nothing is saved; cancelling returns to where the edit started and leaves the copy as it was.",
+      "kind": "behaviour",
+      "ref": "report.json addresses-edit.spec.ts:28, :73, :99, :130, :195",
+      "quote": "an edit that breaks the address book rules is refused with its messages, at the top and against each field, and nothing is saved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-078",
+      "statement": "A copied address offers both Change and Edit details on the hub, the contact page and the review page; an unanswered role offers only Add.",
+      "kind": "behaviour",
+      "ref": "report.json addresses-edit.spec.ts:162",
+      "quote": "a copied address offers both Change and Edit details on the hub, the contact page and the review, and an unanswered role offers only Add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-079",
+      "statement": "INS address book: renders after signing in; opening a page past the landing page while signed out lands on sign-in and signing in returns there.",
+      "kind": "behaviour",
+      "ref": "report.json ins/e2e/features/address-book/address-book.spec.ts:4; address-book-auth.spec.ts:12, :17",
+      "quote": "lands on the sign in page when opening a page past the address book landing page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-080",
+      "statement": "INS address book: a created address persists with its full Standard Address Block.",
+      "kind": "data",
+      "ref": "report.json address-book-persistence.spec.ts:13",
+      "quote": "a created address persists with its full Standard Address Block",
+      "confidence": "verbatim",
+      "note": "The block's fields are not readable here."
+    },
+    {
+      "id": "trace-e2e-081",
+      "statement": "INS address book: an edit replaces the whole record, clearing optional fields left blank; the edited address replaces the old one in the book.",
+      "kind": "rule",
+      "ref": "report.json address-book-edit.spec.ts:15, :49",
+      "quote": "an edit replaces the whole record, clearing the optional fields left blank",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-082",
+      "statement": "INS address book: deleting through the UI tombstones the record rather than removing it, and it is gone for another user in the same organisation.",
+      "kind": "rule",
+      "ref": "report.json address-book-delete.spec.ts:16, :35",
+      "quote": "deleting through the UI tombstones the record rather than removing it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-083",
+      "statement": "INS address book records are scoped to the organisation: an address added by one user is visible to another user in the same organisation.",
+      "kind": "rule",
+      "ref": "report.json address-book-cross-user-visibility.spec.ts:7",
+      "quote": "an address added by one user is visible to another user in the same organisation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-084",
+      "statement": "The INS add handshake refuses an unrecognised journey type.",
+      "kind": "rule",
+      "ref": "report.json address-book-add-handshake-guard.spec.ts:9",
+      "quote": "refuses an unrecognised journey type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-085",
+      "statement": "INS aggregates a notification document: it is created and updated through the submission lifecycle.",
+      "kind": "integration",
+      "ref": "report.json ins/e2e/features/aggregated-notification.spec.ts:17",
+      "quote": "creates and updates aggregated notification document through the submission lifecycle",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-086",
+      "statement": "Signing in to animals, then INS, then plants in one browser keeps all three sessions.",
+      "kind": "integration",
+      "ref": "report.json ins/e2e/features/cross-service-sessions.spec.ts:9",
+      "quote": "signing in to animals, then ins, then plants in one browser keeps all three sessions",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-087",
+      "statement": "Viewing a submitted notification from the INS dashboard opens it in the owning journey frontend.",
+      "kind": "integration",
+      "ref": "report.json ins/e2e/features/notification-dashboard-navigation.spec.ts:7",
+      "quote": "viewing a submitted notification from the INS dashboard opens it in the owning journey frontend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-088",
+      "statement": "A visual test asserts the origin-of-import page's appearance on first load.",
+      "kind": "non-functional",
+      "ref": "report.json animals/e2e/visual/origin-of-import.visual.spec.ts:17",
+      "quote": "shows expected page appearance on first load",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-089",
+      "statement": "Rendered copy (headings, labels, hints, option lists, error summaries and messages) for every page is not recoverable from this source because the traces could not be opened.",
+      "kind": "copy",
+      "ref": "all traces",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Prefer the fit traces and the code for copy; this source proves behaviours only."
+    },
+    {
+      "id": "trace-e2e-090",
+      "statement": "No component-level evidence (govuk-frontend classes, non-govuk classes) was readable for any page.",
+      "kind": "constraint",
+      "ref": "all traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-091",
+      "statement": "No test in the animals or ins projects covers an INS dashboard list, filter, sort or status display of its own; the INS dashboard appears only through a single navigation hand-off test, although the goal scope names the dashboard.",
+      "kind": "behaviour",
+      "ref": "report.json ins project spec list",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-092",
+      "statement": "No end-to-end test covers templates (creating, listing or starting from a template), although the programme goal names templates.",
+      "kind": "behaviour",
+      "ref": "report.json spec list",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-093",
+      "statement": "Pages with no dedicated spec here: the transport-means page, border-control and other consignment pages not named in any test title, and the declaration success state beyond the error case.",
+      "kind": "behaviour",
+      "ref": "report.json spec list",
+      "quote": "",
+      "confidence": "gap",
+      "note": "May simply be exercised inside the lifecycle and promoted-notification journeys whose actions were unreadable."
+    }
+  ]
+}

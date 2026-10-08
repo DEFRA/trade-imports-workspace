@@ -1,0 +1,738 @@
+{
+  "source": "repo:insbackend",
+  "extractHash": "1f5bcaabcf76686345080bc0b28764739bd2184001472a484c2c93406f42d495",
+  "verdicts": [
+    {
+      "id": "repo-insbackend-p1-001",
+      "holds": true,
+      "reason": "AggregatedNotification.java:12 has @Document(collection = \"notifications\"); application.yml:33 has database: ${MONGO_DATABASE:trade-imports-ins-backend}. One record per aggregate id follows from @Id on aggregateId."
+    },
+    {
+      "id": "repo-insbackend-p1-002",
+      "holds": true,
+      "reason": "AggregatedNotification.java:21-31 declares exactly these eight fields and no others."
+    },
+    {
+      "id": "repo-insbackend-p1-003",
+      "holds": true,
+      "reason": "AggregatedNotification.java:16-21: @EqualsAndHashCode(onlyExplicitlyIncluded = true), with @EqualsAndHashCode.Include and @Id on aggregateId."
+    },
+    {
+      "id": "repo-insbackend-p1-004",
+      "holds": true,
+      "reason": "NotificationSqsListenerIT.java:16 has AGGREGATE_ID = \"Imports.Notification.GBN-AG.GBN-AG-26-001\". Correctly marked inferred: only test data shows the shape, and neither NotificationUpsertService nor the listener parses the id."
+    },
+    {
+      "id": "repo-insbackend-p1-005",
+      "holds": true,
+      "reason": "AggregatedNotification.java:26-29 declares all four as plain String; no enum, validation or code list exists in the notification package."
+    },
+    {
+      "id": "repo-insbackend-p1-006",
+      "holds": true,
+      "reason": "AggregatedNotification.java:30-31 declares both as Instant; AggregatedNotificationControllerIT.java:40 asserts arrivalDate is returned as \"2026-08-20T00:00:00Z\". No Jackson date config in src/main overrides ISO output."
+    },
+    {
+      "id": "repo-insbackend-p1-007",
+      "holds": true,
+      "reason": "AggregatedNotification.java:13 has the quoted @CompoundIndex verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-008",
+      "holds": true,
+      "reason": "AggregatedNotification.java:25-26: @Indexed with no unique attribute, so the index is not unique."
+    },
+    {
+      "id": "repo-insbackend-p1-009",
+      "holds": true,
+      "reason": "application.yml:34 has auto-index-creation: true."
+    },
+    {
+      "id": "repo-insbackend-p1-010",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:33-37: data -> exchangedDocument, then textOrNull(exchangedDocument.path(\"identifier\"))."
+    },
+    {
+      "id": "repo-insbackend-p1-011",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:38 reads exchangedDocument.notificationStatusCode."
+    },
+    {
+      "id": "repo-insbackend-p1-012",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:39 reads exchangedDocument.issueDateTime, parsed into lastUpdated at lines 56-63."
+    },
+    {
+      "id": "repo-insbackend-p1-013",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:64-66: else { lastUpdated = Instant.now(); } when issueDateTime is absent (or blank or not a string, via textOrNull)."
+    },
+    {
+      "id": "repo-insbackend-p1-014",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:81-84 always sets aggregateVersion and lastUpdated; lines 86-90 set the other fields only when non-null."
+    },
+    {
+      "id": "repo-insbackend-p1-015",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:41-42 reads specifiedConsignment.originCountry.code.value; tests use 'GB' (NotificationSqsListenerIT:134) and 'FR' (AggregatedNotificationControllerIT seed)."
+    },
+    {
+      "id": "repo-insbackend-p1-016",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:44-48 reads mainCarriageLogisticsTransportMovement[0].arrivalEvent[0].scheduledOccurrenceDateTime exactly as stated."
+    },
+    {
+      "id": "repo-insbackend-p1-017",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:50-54 reads includedConsignmentItem[0].includedTradeLineItem[0].commonName. The 'only the first' consequence is a sound inference from the fixed [0] indexes, correctly marked inferred."
+    },
+    {
+      "id": "repo-insbackend-p1-018",
+      "holds": true,
+      "reason": "NotificationSqsListenerIT.java:140-141 carries classCode 01059900 and commonName 'Dog'; the upsert reads only commonName (line 54) and the record has no code field. 'Live cattle' comes from the ControllerIT seed, not an event, but is still a stored commodity value."
+    },
+    {
+      "id": "repo-insbackend-p1-019",
+      "holds": true,
+      "reason": "textOrNull at NotificationUpsertService.java:101-103 returns null for missing, non-textual or blank nodes, and lines 86-90 skip the set when null. Lines 86-90 are where the conditional sets are, as cited."
+    },
+    {
+      "id": "repo-insbackend-p1-020",
+      "holds": true,
+      "reason": "The Update only ever calls set (lines 81-90), never unset, so a stored value survives an event that omits it; NotificationSqsListenerIT.java:85-93 proves commodity survives a NotificationSubmitted with no includedConsignmentItem. Inference sound."
+    },
+    {
+      "id": "repo-insbackend-p1-021",
+      "holds": true,
+      "reason": "Checked AggregatedNotification.java:17-32 and every path NotificationUpsertService reads (lines 37-54): no journey/type, importer/organisation, creator, creation date, port/point of entry or commodity code field exists."
+    },
+    {
+      "id": "repo-insbackend-p1-022",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:19 DELETED_STATUS = \"DELETED\"; NotificationSqsListenerIT.java:130 \"DRAFT\" and :159 \"SUBMITTED\"."
+    },
+    {
+      "id": "repo-insbackend-p1-023",
+      "holds": true,
+      "reason": "Gap confirmed: status is copied from notificationStatusCode (line 38) and set as-is (line 87); OutboxEventType holds wire names only, and no fixture shows a status for amendment or deletion events."
+    },
+    {
+      "id": "repo-insbackend-p1-024",
+      "holds": true,
+      "reason": "AggregatedNotificationController.java:19-28: @RequestMapping(\"/notifications\"), the 'Read-only query operations' @Tag, and a single @GetMapping method; no other controller in the package."
+    },
+    {
+      "id": "repo-insbackend-p1-025",
+      "holds": true,
+      "reason": "AggregatedNotificationController.java:29-30 @Operation description quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-026",
+      "holds": true,
+      "reason": "Gap confirmed: the controller (lines 28-42) has only findAll, mapped to the collection path with no path variable."
+    },
+    {
+      "id": "repo-insbackend-p1-027",
+      "holds": true,
+      "reason": "Workspace doc docs/repos/trade-imports-ins-backend.md line 32, Integrations table row quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-028",
+      "holds": true,
+      "reason": "AggregatedNotificationController.java:37 @RequestParam(defaultValue = \"1\") @Min(1) int page; 1-based conversion confirmed in AggregatedNotificationQueryService.java:32."
+    },
+    {
+      "id": "repo-insbackend-p1-029",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerTest.java:47-61 proves 400 for page 0 (verifying the query service is never called) and page -1; AggregatedNotificationControllerIT.java:113-118 proves 400 for page 0 against the real app."
+    },
+    {
+      "id": "repo-insbackend-p1-030",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:85-93 takes the text after the last '.' in the property path as the key; GlobalExceptionHandlerTest.java:96-114 asserts errors.page = 'must be greater than or equal to 1'. As the note says, that message is simulated in the unit test (it is the Bean Validation default for @Min(1)); no test asserts it end to end."
+    },
+    {
+      "id": "repo-insbackend-p1-031",
+      "holds": true,
+      "reason": "Sound inference: GlobalExceptionHandler.java:151-156 catches RuntimeException, and Spring's MethodArgumentTypeMismatchException is a RuntimeException (via NestedRuntimeException), and controller-advice handlers run before Spring's default resolver. Correctly marked inferred and untested."
+    },
+    {
+      "id": "repo-insbackend-p1-032",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:32,49-50 pass any page >= 1 straight to a paged repository query with no upper-bound check; a page past the end gives an empty Page and 200. Inference sound, untested as the note says."
+    },
+    {
+      "id": "repo-insbackend-p1-033",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:32 PageRequest.of(page - 1, ...); AggregatedNotificationQueryServiceTest.java:61-71 asserts page 2 becomes page number 1."
+    },
+    {
+      "id": "repo-insbackend-p1-034",
+      "holds": true,
+      "reason": "application.yml:150-153 quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-035",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:24-28 injects notification.list.page-size; the controller signature (lines 36-39) has only page, sort and referenceNumber."
+    },
+    {
+      "id": "repo-insbackend-p1-036",
+      "holds": true,
+      "reason": "AggregatedNotificationPageResponse.java:10-16 record components quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-037",
+      "holds": true,
+      "reason": "AggregatedNotificationPageResponse.java:21 pageResult.getNumber() + 1."
+    },
+    {
+      "id": "repo-insbackend-p1-038",
+      "holds": true,
+      "reason": "AggregatedNotificationPageResponse.java:6-9 Javadoc quoted verbatim; content is List<AggregatedNotification>, a Lombok @Data class whose getters expose all eight fields, aggregateId and aggregateVersion included. No Jackson view or ignore annotation exists in src/main."
+    },
+    {
+      "id": "repo-insbackend-p1-039",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:49 findAllByStatusNot(DELETED_STATUS, pageable); AggregatedNotificationControllerIT.java:25-48 proves it against a real database."
+    },
+    {
+      "id": "repo-insbackend-p1-040",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:37-38 findByReferenceNumberAndStatusNot(trimmedReference, DELETED_STATUS); proven by AggregatedNotificationControllerIT.java:93-102."
+    },
+    {
+      "id": "repo-insbackend-p1-041",
+      "holds": true,
+      "reason": "The only status condition in either query is 'not DELETED' (QueryService:19,38,49); AggregatedNotificationControllerIT.java:28-37 lists a DRAFT notification first."
+    },
+    {
+      "id": "repo-insbackend-p1-042",
+      "holds": true,
+      "reason": "Sound inference: a derived StatusNot query on the constant \"DELETED\" (QueryService:19) is an exact Mongo $ne on a string, which is case-sensitive. Marked inferred."
+    },
+    {
+      "id": "repo-insbackend-p1-043",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:59-69: the resolved event type is only logged, and every type calls upsertService.upsert(parsedBody); the upsert has no delete. Inference sound, marked inferred."
+    },
+    {
+      "id": "repo-insbackend-p1-044",
+      "holds": true,
+      "reason": "Gap confirmed: AggregatedNotificationController.java:36-39 has no status parameter. The note's index observation (status_sort_fields leads on status, AggregatedNotification.java:13) is accurate."
+    },
+    {
+      "id": "repo-insbackend-p1-045",
+      "holds": true,
+      "reason": "Gap confirmed: the controller has only page, sort and referenceNumber (lines 36-39) and the repository only findAllByStatusNot and findByReferenceNumberAndStatusNot (lines 10-12)."
+    },
+    {
+      "id": "repo-insbackend-p1-046",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:5-8 Javadoc quoted verbatim; line 22 splits on ','. The parameter is optional per AggregatedNotificationController.java:38 (required = false)."
+    },
+    {
+      "id": "repo-insbackend-p1-047",
+      "holds": true,
+      "reason": "AggregatedNotificationController.java:31 quoted verbatim; AggregatedNotificationSort.java:32-36 accepts exactly these two fields with either direction."
+    },
+    {
+      "id": "repo-insbackend-p1-048",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:18-20 and 39-41 quoted; AggregatedNotificationSortTest.java:10-22 proves null and blank."
+    },
+    {
+      "id": "repo-insbackend-p1-049",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:22-25 quoted; AggregatedNotificationSortTest.java:24-29 proves 'arrivalDate' alone falls back. No error is raised."
+    },
+    {
+      "id": "repo-insbackend-p1-050",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:35 default -> defaultSort(); AggregatedNotificationSortTest.java:31-36 quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-051",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:11-12 and the switch at 32-36 recognise only arrivalDate and lastUpdated; every other field falls to the default. The statement is a consequence rather than the quoted words, but it follows directly."
+    },
+    {
+      "id": "repo-insbackend-p1-052",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:28-30 quoted verbatim; AggregatedNotificationSortTest.java:59-71 proves 'ASC' and 'sideways'."
+    },
+    {
+      "id": "repo-insbackend-p1-053",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:27-28 strip both parts and line 32 switches on the exact string, so field case matters and surrounding spaces do not. Inference sound, untested as noted."
+    },
+    {
+      "id": "repo-insbackend-p1-054",
+      "holds": true,
+      "reason": "AggregatedNotificationSort.java:33-34,40 build single-key sorts with no secondary key. The paging instability is a sound inference about ties in Mongo skip/limit paging."
+    },
+    {
+      "id": "repo-insbackend-p1-055",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:68-76 leaves arrivalDate null when absent and line 89 then never sets it; Mongo orders missing/null below every date, so first ascending and last descending. Inference sound, untested."
+    },
+    {
+      "id": "repo-insbackend-p1-056",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:25-48 seeds 1 Aug and 20 Aug arrivals and asserts content[0] is GBN-AG-26-002 (20 Aug) and content[1] GBN-AG-26-001 (1 Aug) with no sort param."
+    },
+    {
+      "id": "repo-insbackend-p1-057",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:50-61 quoted; asserts GBN-AG-26-001 (1 Aug) first under arrivalDate,asc."
+    },
+    {
+      "id": "repo-insbackend-p1-058",
+      "holds": true,
+      "reason": "Gap confirmed: AggregatedNotificationControllerIT seeds lastUpdated = Instant.now() (line 130) and never passes a lastUpdated sort; lastUpdated sorts appear only in AggregatedNotificationSortTest.java:45-57 and as a pass-through in the mocked AggregatedNotificationControllerTest.java:63-76."
+    },
+    {
+      "id": "repo-insbackend-p1-059",
+      "holds": true,
+      "reason": "AggregatedNotificationController.java:32 quoted verbatim; line 39 @RequestParam(required = false) String referenceNumber."
+    },
+    {
+      "id": "repo-insbackend-p1-060",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryService.java:34 StringUtils.trimToNull(referenceNumber); AggregatedNotificationQueryServiceTest.java:119-127 quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-061",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryServiceTest.java:129-138 calls findAll(1, null, \"   \") and verifies findAllByStatusNot(eq(\"DELETED\"), any()) and never the reference lookup; QueryService.java:34 uses StringUtils.trimToNull."
+    },
+    {
+      "id": "repo-insbackend-p1-062",
+      "holds": true,
+      "reason": "Repository.java:12 is a derived equality query with no IgnoreCase; QueryService.java:34 only trims. The inference is sound and correctly marked inferred."
+    },
+    {
+      "id": "repo-insbackend-p1-063",
+      "holds": true,
+      "reason": "QueryService.java:37-45 maps an Optional to a one-item PageImpl or an empty page; test name at QueryServiceTest.java:74 is verbatim and asserts never findAllByStatusNot."
+    },
+    {
+      "id": "repo-insbackend-p1-064",
+      "holds": true,
+      "reason": "Comment quoted verbatim at QueryService.java:39-40; QueryServiceTest.java:101-117 asks for page 3 and asserts page 1, totalPages 1."
+    },
+    {
+      "id": "repo-insbackend-p1-065",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:81-91 asserts status 200, content size 0 and totalElements 0 for GBN-AG-26-999; quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-066",
+      "holds": true,
+      "reason": "QueryService.java:41 builds firstPage with pageable.getSort() but the lookup at :38 ignores it; a result of at most one item has no order. Sound inference."
+    },
+    {
+      "id": "repo-insbackend-p1-067",
+      "holds": true,
+      "reason": "Repository.java:12 returns Optional (single result); AggregatedNotification.java:25 @Indexed on referenceNumber is not unique; Spring Data raises IncorrectResultSizeDataAccessException (a RuntimeException) on more than one match, which GlobalExceptionHandler.java:151-172 maps to 500. Sound inference, correctly hedged as likely."
+    },
+    {
+      "id": "repo-insbackend-p1-068",
+      "holds": true,
+      "reason": "Quote verbatim in docs/repos/trade-imports-ins-backend.md:22; Repository.java:10-12 filters only on status. Stated in general terms as the brief requires."
+    },
+    {
+      "id": "repo-insbackend-p1-069",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-ins-backend.md:22 says the ins-frontend notes it is deferred to a later ticket. Second-hand (the doc reports the frontend's note), but the quote is verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-070",
+      "holds": true,
+      "reason": "Quote verbatim at docs/repos/trade-imports-ins-backend.md:23. application.yml:13-26 excludes every Boot security auto-configuration so no SecurityFilterChain exists; a grep of src/main finds only tracing, health-check and outbound-client filters/interceptors. Note the doc's 'no Spring Security dependency' is stale (yml says spring-security-config is on the classpath for the outbound OAuth2 client), but the statement holds."
+    },
+    {
+      "id": "repo-insbackend-p1-071",
+      "holds": true,
+      "reason": "@Timed(\"controller.getAllNotifications.time\") at AggregatedNotificationController.java:35."
+    },
+    {
+      "id": "repo-insbackend-p1-072",
+      "holds": true,
+      "reason": "application.yml:35 read-preference ${MONGO_READ_PREFERENCE:secondary}; replica lag is a sound inference."
+    },
+    {
+      "id": "repo-insbackend-p1-073",
+      "holds": true,
+      "reason": "application.yml:36 write-concern ${MONGO_WRITE_CONCERN:majority}."
+    },
+    {
+      "id": "repo-insbackend-p1-074",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:34 @SqsListener(\"${aws.sqs.notification.queue-url}\"); application.yml:67-69 queue-url ${NOTIFICATION_SQS_QUEUE_URL:}."
+    },
+    {
+      "id": "repo-insbackend-p1-075",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-ins-backend.md:30-31 Integrations table names both the FIFO queue and the SNS FIFO topic with raw message delivery; quote verbatim (elided with ...)."
+    },
+    {
+      "id": "repo-insbackend-p1-076",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-ins-backend.md:31 quote verbatim; the plants part is an absence correctly hedged in the statement and note."
+    },
+    {
+      "id": "repo-insbackend-p1-077",
+      "holds": true,
+      "reason": "application.yml:70-71 wait-time-seconds 10 and max-messages 10; AwsConfig.java:55-57 wires them to pollTimeout and maxMessagesPerPoll."
+    },
+    {
+      "id": "repo-insbackend-p1-078",
+      "holds": true,
+      "reason": "OutboxEventType.java:7-14 lists exactly these eight wire values."
+    },
+    {
+      "id": "repo-insbackend-p1-079",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:59 reads eventType; OutboxEventType.java:31 uses equals (exact, case-sensitive); OutboxEventTypeTest.java:68-75 asserts the namespace prefix."
+    },
+    {
+      "id": "repo-insbackend-p1-080",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:68-69: the resolved type is only logged and every type calls upsertService.upsert(parsedBody); no switch on type anywhere."
+    },
+    {
+      "id": "repo-insbackend-p1-081",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:44-46 quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-082",
+      "holds": true,
+      "reason": "Quote verbatim at docs/repos/trade-imports-ins-backend.md:14; NotificationSqsListener.java:37 binds the message group id header to a parameter named aggregateId. Per-group ordering is a property of SQS FIFO, fairly stated as the intent."
+    },
+    {
+      "id": "repo-insbackend-p1-083",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:23 reads body.aggregateId; the listener (NotificationSqsListener.java:44-69) only checks the header is non-blank and never compares it. Sound inference."
+    },
+    {
+      "id": "repo-insbackend-p1-084",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:48-50; also covers a blank body (body.isBlank())."
+    },
+    {
+      "id": "repo-insbackend-p1-085",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:53-57 quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-086",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:60-66 comment and log.error quoted verbatim; throws SqsNonRetryableException."
+    },
+    {
+      "id": "repo-insbackend-p1-087",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:26-28; also rejects a blank aggregateId."
+    },
+    {
+      "id": "repo-insbackend-p1-088",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:24 asLong(-1) and :29-31 incomingVersion < 0 throws; quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-089",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:57-63 catches DateTimeParseException from Instant.parse and throws SqsNonRetryableException."
+    },
+    {
+      "id": "repo-insbackend-p1-090",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:69-75 quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-091",
+      "holds": true,
+      "reason": "Instant.parse at NotificationUpsertService.java:59,71 uses ISO_INSTANT, which needs a time and a zone/offset, so '2026-08-20' fails. Sound inference; 'only a full UTC instant' in the note is slightly loose (an offset is accepted in recent JDKs) but the statement itself holds."
+    },
+    {
+      "id": "repo-insbackend-p1-092",
+      "holds": true,
+      "reason": "Comment at NotificationUpsertService.java:78-80 verbatim; query at :92-94 filters aggregateVersion lt incoming in a single mongoTemplate.upsert."
+    },
+    {
+      "id": "repo-insbackend-p1-093",
+      "holds": true,
+      "reason": "NotificationUpsertService.java:81-82,96 setOnInsert _id and upsert; no event-type check in the upsert, and NotificationSqsListenerIT.java:28-42 shows a NotificationEdited creating the record."
+    },
+    {
+      "id": "repo-insbackend-p1-094",
+      "holds": true,
+      "reason": "Upsert query {_id: X, aggregateVersion < v} matches nothing when the stored version is >= v, so Mongo attempts an insert with _id X and raises a duplicate-key error; that exception is unclassified, so NotificationErrorHandler.java:37-38 counts it as discarded and logs at error. Sound, correctly hedged as likely; ITs (NotificationSqsListenerIT.java:44-75) only prove the stored state."
+    },
+    {
+      "id": "repo-insbackend-p1-095",
+      "holds": true,
+      "reason": "NotificationErrorHandler.java:28-39 quote verbatim: retryable rethrown (left for retry), everything else counted discarded and logged 'message will be deleted'. The handler is wired via AwsConfig.java:59."
+    },
+    {
+      "id": "repo-insbackend-p1-096",
+      "holds": true,
+      "reason": "findClassifiedCause at NotificationErrorHandler.java:41-50 walks getCause(); NotificationErrorHandlerTest.java:39-49 proves a two-level nested cause is found."
+    },
+    {
+      "id": "repo-insbackend-p1-097",
+      "holds": true,
+      "reason": "NotificationErrorHandler.java:49 returns t when nothing is classified, then :37-38 discards; NotificationErrorHandlerTest.java:51-59 proves IllegalStateException is discarded. 'Such as a database failure' is an example, not tested, but follows."
+    },
+    {
+      "id": "repo-insbackend-p1-098",
+      "holds": true,
+      "reason": "A grep of src/main finds SqsRetryableException only defined (SqsRetryableException.java) and checked (NotificationErrorHandler.java:31,44), never thrown; so all failures, including Mongo errors, are discarded. Sound inference; the note's mitigation (a later event catches up) is fair."
+    },
+    {
+      "id": "repo-insbackend-p1-099",
+      "holds": true,
+      "reason": "NotificationErrorHandler.java:24 description 'message deleted'; NotificationSqsListenerIT.java:106 comment verbatim; the listener log says 'dead-lettering' (NotificationSqsListener.java:63). No DLQ is read or configured in the scoped files. Sound inference."
+    },
+    {
+      "id": "repo-insbackend-p1-100",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:28-31 builds the counter and :70 increments it after a successful upsert."
+    },
+    {
+      "id": "repo-insbackend-p1-101",
+      "holds": true,
+      "reason": "NotificationErrorHandler.java:18-25 quote verbatim; incremented at :32 and :37."
+    },
+    {
+      "id": "repo-insbackend-p1-102",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:41-42 and NotificationUpsertService.java:98 quoted verbatim; neither logs the body. (On an invalid-JSON error the logged cause may carry a parser message, but the receive and apply logs do not log the body.)"
+    },
+    {
+      "id": "repo-insbackend-p1-103",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:18-27 Javadoc quoted verbatim; every handler sets type, title and status/detail and adds traceId only when MDC trace.id is non-null (e.g. :50-53)."
+    },
+    {
+      "id": "repo-insbackend-p1-104",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:68-96 (ConstraintViolationException, the one GET /notifications raises) and :37-63 (MethodArgumentNotValidException) both set these exact strings and an errors map; quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-105",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:151-173 quote verbatim; the detail is a fixed string, the exception message is only logged."
+    },
+    {
+      "id": "repo-insbackend-p1-106",
+      "holds": true,
+      "reason": "Titles at GlobalExceptionHandler.java:112 and :135; a grep of src/main finds NotFoundException and ConflictException only defined and handled, never thrown. Sound inference."
+    },
+    {
+      "id": "repo-insbackend-p1-107",
+      "holds": true,
+      "reason": "Comment at GlobalExceptionHandler.java:147-149 verbatim; NoResourceFoundException is a ServletException, not a RuntimeException, so the catch-all at :151-155 does not catch it. The caveat note is fair."
+    },
+    {
+      "id": "repo-insbackend-p1-108",
+      "holds": true,
+      "reason": "application.yml:155-160 quote verbatim; not overridable by env var in this file."
+    },
+    {
+      "id": "repo-insbackend-p1-109",
+      "holds": true,
+      "reason": "application.yml:2 port ${PORT:8090}."
+    },
+    {
+      "id": "repo-insbackend-p1-110",
+      "holds": true,
+      "reason": "compose/mongo/10-init.js:1-6 is comments only, quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-111",
+      "holds": true,
+      "reason": "README.md:1 'CDP Java Spring Boot backend template.'; docs/repos/trade-imports-ins-backend.md:7 quote verbatim. Kind non-functional is a loose fit (it is a documentation fact) but the claim holds."
+    },
+    {
+      "id": "repo-insbackend-p1-112",
+      "holds": true,
+      "reason": "Gap confirmed: find for *decision* to depth 3 in the repo returns nothing, and no rulings file is in the partition's read list."
+    },
+    {
+      "id": "repo-insbackend-p1-113",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerTest.java:29-45 stubs findAll(1, null, null), asserts content array empty, page 1, size 25, totalElements 0, and verifies the call; quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-114",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerTest.java:63-109 verifies findAll(1, \"lastUpdated,asc\", null), findAll(1, null, \"GBN-AG-26-001\"), findAll(2, null, null), and asserts page 2, totalElements 120, totalPages 5."
+    },
+    {
+      "id": "repo-insbackend-p1-115",
+      "holds": true,
+      "reason": "AggregatedNotificationQueryServiceTest.java:38-59 quote verbatim, plus never findByReferenceNumberAndStatusNot at :58."
+    },
+    {
+      "id": "repo-insbackend-p1-116",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:25-48 seeds three including a DELETED one, asserts size 2 and all five display fields on both; quote verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-117",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:63-79 asserts one result with reference, status, origin country, commodity and arrival date; :93-102 asserts the DELETED reference returns empty content."
+    },
+    {
+      "id": "repo-insbackend-p1-118",
+      "holds": true,
+      "reason": "AggregatedNotificationControllerIT.java:104-111 and :113-118; comment quoted verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-119",
+      "holds": true,
+      "reason": "Gap confirmed: the ITs seed at most three records, a grep of src/test finds no assertion on numberOfElements, and multi-page and page-2 behaviour are only stubbed (ControllerTest.java:93-109, QueryServiceTest.java:61-71)."
+    },
+    {
+      "id": "repo-insbackend-p1-120",
+      "holds": true,
+      "reason": "AggregatedNotificationSortTest.java:10-71 test names quoted verbatim. Slight looseness: arrivalDate descending is proven only as the default output (malformed, unrecognised-direction cases), not by an explicit 'arrivalDate,desc' input; the other three field/direction pairs are tested directly."
+    },
+    {
+      "id": "repo-insbackend-p1-121",
+      "holds": true,
+      "reason": "NotificationUpsertServiceTest.java:46-59 asserts the query has _id 'agg-1' and aggregateVersion {$lt: 3}, $setOnInsert holds _id, and $set holds referenceNumber, status DRAFT and originCountry GB; lines 120-134 assert a body with no data node writes neither referenceNumber nor status. Quote is verbatim at lines 46 and 133-134. The stale-event test (104-118) confirms the same $lt guard."
+    },
+    {
+      "id": "repo-insbackend-p1-122",
+      "holds": true,
+      "reason": "Lines 62-102 hold the three named tests, each asserting SqsNonRetryableException. No test in src/test sends a malformed scheduledOccurrenceDateTime (grep finds it only in valid fixtures), although NotificationUpsertService.java:68-76 does reject one, so the 'no test' half holds."
+    },
+    {
+      "id": "repo-insbackend-p1-123",
+      "holds": true,
+      "reason": "NotificationSqsListenerTest.java:32-88: the known-event test verifies upsert and the processed counter equals 1; unknown event type ('Unrecognised eventType'), blank and null body ('Empty message body'), invalid JSON ('not valid JSON'), blank and null group id ('MESSAGE_GROUP_ID') each throw SqsNonRetryableException with verify(upsertService, never())."
+    },
+    {
+      "id": "repo-insbackend-p1-124",
+      "holds": true,
+      "reason": "Lines 90-118 hold the five named delegation tests; the known-event test at 32-37 uses NotificationEdited. Neither NotificationSubmitted nor NotificationSubmissionAmended appears in the listener unit test. The note is right: Submitted is sent in NotificationSqsListenerIT:150-167 and SubmissionAmended appears only in OutboxEventTypeTest:22-25."
+    },
+    {
+      "id": "repo-insbackend-p1-125",
+      "holds": true,
+      "reason": "OutboxEventTypeTest.java:9-55 has eight fromWireValue tests, one per event type; 57-66 assert empty for UnknownEvent and null; 68-75 asserts every type's wireValue starts with 'uk.gov.defra.imports.notification.'. Quoted test names are verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-126",
+      "holds": true,
+      "reason": "NotificationErrorHandlerTest.java:16-59: retryable is rethrown with errors counter action=retry 1; non-retryable returns without throwing with action=discarded 1; a SqsRetryableException wrapped in two RuntimeExceptions is rethrown and counted retry; an IllegalStateException is swallowed and counted discarded. All four test names verbatim."
+    },
+    {
+      "id": "repo-insbackend-p1-127",
+      "holds": true,
+      "reason": "NotificationSqsListenerIT.java:27-42 asserts referenceNumber GBN-AG-26-001, status DRAFT, originCountry GB, commodity Dog and aggregateVersion 1L; quote verbatim at 36-39. The note is right: arrivalDate and lastUpdated are not asserted."
+    },
+    {
+      "id": "repo-insbackend-p1-128",
+      "holds": true,
+      "reason": "Lines 44-59 send the same body twice and assert repository.count() stays 1 over 5 seconds (comment 'version guard means second delivery is a no-op'); lines 61-75 send version 5 then 3 and assert the stored aggregateVersion stays 5. Quote verbatim at 56 and 73-74."
+    },
+    {
+      "id": "repo-insbackend-p1-129",
+      "holds": true,
+      "reason": "Lines 77-94 prime a DRAFT with commodity Dog, send a NotificationSubmitted (version 2) whose fixture at 150-167 has no includedConsignmentItem, then assert status SUBMITTED and commodity still Dog. Quote verbatim at 85 and 88."
+    },
+    {
+      "id": "repo-insbackend-p1-130",
+      "holds": true,
+      "reason": "Lines 96-119: the unknown event type and 'not valid json {{{' are sent, awaitQueueEmpty() is called (comments: 'message must be deleted from the queue (not redelivered)'), then findById is empty and count is zero respectively. The test names say 'DeadLettered', but what is proven is deletion from the queue, as the statement says."
+    },
+    {
+      "id": "repo-insbackend-p1-131",
+      "holds": true,
+      "reason": "Gap confirmed: NotificationSqsListenerIT sends only NotificationEdited, NotificationSubmitted, an unknown type and invalid JSON; AggregatedNotificationControllerIT.java:30 and 96 seed DELETED records directly via seed(); the listener unit test sends NotificationDeleted and NotificationSubmissionDeleted to a mocked upsert (lines 108-118). No test drives a deletion event through to the list. kind 'non-functional' is loose for a test-coverage gap but acceptable."
+    },
+    {
+      "id": "repo-insbackend-p1-132",
+      "holds": true,
+      "reason": "GlobalExceptionHandlerTest.java:41-274 asserts titles 'Validation Error' (both 400 handlers), 'Resource Not Found', 'Resource Conflict', 'Internal Server Error', with details, type URIs and traceId from MDC 'trace.id', and each handler has a null-trace test asserting no traceId key. Quote fragments verbatim at 58, 149, 187, 225. The 500 null-trace and the IllegalState/IllegalArgument tests assert status only, which the statement does not overstate."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-insbackend-p1-036-m1",
+      "statement": "When a result has no notifications (an empty store, or a reference that matches nothing), the response reports page 1 with totalPages 0, so a dashboard pager must not assume totalPages is at least 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java:41-44; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:21,25; src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationControllerTest.java:33",
+      "quote": ".orElseGet(() -> Page.empty(firstPage)); ... pageResult.getNumber() + 1, ... pageResult.getTotalPages()); ... new AggregatedNotificationPageResponse(Collections.emptyList(), 1, 25, 0, 0, 0)",
+      "confidence": "inferred",
+      "note": "Follows from Spring Data's Page.empty / PageImpl reporting totalPages 0 when totalElements is 0, while the response adds 1 to the 0-based page number. The controller unit test stubs exactly this shape (page 1, totalPages 0); no test asserts totalPages for an empty result against the real service."
+    },
+    {
+      "id": "repo-insbackend-p1-038-m1",
+      "statement": "A field a notification has never been given (for example arrivalDate on a draft with no arrival time, or commodity before any commodity is entered) is returned in the list as JSON null rather than left out, so the dashboard must handle null values for every displayed field.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java:6-11; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:86-90",
+      "quote": "{@link AggregatedNotification} is serialized directly ... if (arrivalDate != null) update.set(\"arrivalDate\", arrivalDate);",
+      "confidence": "inferred",
+      "note": "The upsert only sets fields the event carries, and src/main has no Jackson inclusion setting (no JsonInclude, NON_NULL or default-property-inclusion found by grep), so Jackson's default of writing nulls applies. No test asserts the null case."
+    },
+    {
+      "id": "repo-insbackend-p1-077-m1",
+      "statement": "The listener processes up to 10 messages at once by default: the same SQS_MAX_MESSAGES setting caps both messages per poll and concurrent messages in flight.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/configuration/AwsConfig.java:55-57; src/main/resources/application.yml:71",
+      "quote": ".maxConcurrentMessages(sqsConfig.maxMessages()) .maxMessagesPerPoll(sqsConfig.maxMessages())",
+      "confidence": "verbatim",
+      "note": "AwsConfig.java is outside the partition's read list but is where the listener settings are wired; the extract's structure records grepping it."
+    },
+    {
+      "id": "repo-insbackend-p1-079-m1",
+      "statement": "The event body's schema (the exchangedDocument / specifiedConsignment structure) is not defined in this repo; the service reads it by path without validating it against a schema.",
+      "kind": "integration",
+      "ref": "docs/repos/trade-imports-ins-backend.md:36; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:33-54",
+      "quote": "The message body uses an `exchangedDocument` / `specifiedConsignment` structure (fields such as `notificationStatusCode`, `issueDateTime`, `originCountry`); the schema itself is not defined in this repo.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-088-m1",
+      "statement": "An aggregateVersion of 0 is accepted: only a missing or negative version is rejected, so a notification's first event may carry version 0 and create the record.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java:29-31,92-96",
+      "quote": "if (incomingVersion < 0) {",
+      "confidence": "inferred",
+      "note": "Follows from the < 0 check and the upsert inserting when no record matches; no test uses version 0."
+    },
+    {
+      "id": "repo-insbackend-p1-102-m1",
+      "statement": "The service's own package logs at DEBUG by default, so each list request's page, sort and reference number, and each processed event type, are logged unless LOG_LEVEL is set.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:92; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java:40; src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java:68",
+      "quote": "uk.gov.defra.trade.imports.ins.backend: ${LOG_LEVEL:DEBUG} ... log.debug(\"GET /notifications?page={}&sort={}&referenceNumber={}\", page, sort, referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insbackend-p1-132-m1",
+      "statement": "The exception-handler unit tests prove the 400 problem response's 'errors' map lists each failing field by name with its message (two field errors give two entries), and that a constraint violation on the path 'findAll.page' is keyed by the last path segment, 'page'.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/exceptions/GlobalExceptionHandlerTest.java:64-68,111-114",
+      "quote": "assertThat(errors).hasSize(2); assertThat(errors.get(\"origin\")).isEqualTo(\"must not be null\"); ... assertThat(errors).hasSize(1); assertThat(errors.get(\"page\")).isEqualTo(\"must be greater than or equal to 1\");",
+      "confidence": "verbatim",
+      "note": "Claims 030 and 104 state the errors map from the handler side; no claim records that the unit tests prove its contents, including the 'findAll.page' to 'page' key trimming."
+    },
+    {
+      "id": "repo-insbackend-p1-122-m1",
+      "statement": "No upsert test asserts that commodity, arrivalDate or lastUpdated are written to the record: the unit test fixture carries no commonName and the version-guard test checks only referenceNumber, status and originCountry in the update.",
+      "kind": "non-functional",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertServiceTest.java:56-59,137-163",
+      "quote": "assertThat(setFields).containsEntry(\"referenceNumber\", \"GBN-AG-26-001\") .containsEntry(\"status\", \"DRAFT\") .containsEntry(\"originCountry\", \"GB\");",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any assertion on these $set keys in the unit test; commodity alone is asserted end to end in NotificationSqsListenerIT:39."
+    }
+  ]
+}

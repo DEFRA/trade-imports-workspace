@@ -1,0 +1,2768 @@
+{
+  "source": "repo:addressbook",
+  "structure": "repos/trade-imports-address-book is a small Java / Spring Boot service: the org-scoped address book API and system of record for address records (MongoDB). Paths below are from the repo root. Production code is about 1,900 lines under src/main/java/uk/gov/defra/trade/imports/addressbook/: address/ (10 files, about 1,065 lines: Address entity, AddressRequest create/update body with Bean Validation messages, AddressStatus, OperatorResponse, OperatorPageResponse, OperatorMapper, AddressExpiryIndex, OperatorRepository, OperatorService 222 lines, OperatorController 367 lines with five endpoints under /organisation/{orgId}/addresses: GET list (page, q, countryCode), POST create, GET /{operator-id}, PUT /{operator-id}, DELETE /{operator-id}), exceptions/ (5 files, about 245 lines: RFC 7807 problem and validation-problem responses), filter/ (3 files, about 260 lines; IdentityHeaderFilter enforces the caller organisation header), configuration/ (Mongo, address TTL, Jackson, OpenAPI, metrics, proxy, TLS), service/EmfMetricsPublisher. Config: src/main/resources/application.yml (120 lines) and compose/mongo/10-init.js. Contract: docs/openapi/operators.yml (491 lines) and docs/openapi/api-contract.locked.yaml (441 lines). Tests: 16 integration tests under src/test/java/.../integration/ and unit tests under src/test/java/.../address, exceptions, filter (about 3,800 lines on the address domain). README.md (274 lines) documents the API overview, security and trust boundary, soft delete (tombstones), non-prod address expiry and indexes. Rulings: there is no rulings ledger file in the repo; rulings appear inline in code comments and schema descriptions as cv-NNN references (for example cv-011 countryCode stored as given, cv-044 address book is untyped and unroled, cv-048 countryCode filter is resolved by the frontend), and each part claims the cv-NNN rulings in its own files. Scope leaves out: CI workflows (.github/), Dockerfile, docker/dev-run.sh, compose.yml and compose/floci, proxy, TLS, metrics, logging, tracing and health-check plumbing (configuration/ProxyConfig, tls/, MetricsConfig, OpenApiConfig, JacksonConfig, AwsConfig, filter/RequestTracingFilter, filter/HealthCheckFilter, service/EmfMetricsPublisher and their tests), and docs/review/ (EUDPA-58-review.md and items.trade-imports-address-book.json, a closed code-review ledger whose 190 items are all Fix/Done or Auto-Resolved, with no won't-fix judgement that departs from the code). Cut into 4 parts along the API's own seams: the address record and its validation, the single-address lifecycle (create, read, update, delete), listing and search, and organisation scoping and caller identity.\n\nExtracted in 4 parts:\nPart 1, The address record and its validation: Part 1, the address record and its validation. Read in full: address/Address.java (the persisted entity, 80 lines), address/AddressRequest.java (the create/update body with its Bean Validation constraints and messages, 108 lines), address/AddressStatus.java (ACTIVE, DELETED), address/OperatorResponse.java (the wire response with its null guards), address/OperatorMapper.java (entity to response and request to entity mapping), address/AddressExpiryIndex.java (the non-prod TTL index), configuration/AddressTtlConfig.java and configuration/MongoConfig.java, src/main/resources/application.yml (Mongo and address-book.ttl keys; CDP, AWS, logging, actuator and springdoc keys are out of this part's scope and only noted), compose/mongo/10-init.js (an empty template comment, no seed data), the README sections MongoDB, Soft delete (tombstones), Address expiry (non-prod only) and Indexes, and the AddressRequest and OperatorResponse schemas in docs/openapi/operators.yml. Tests read in full: AddressRequestValidationTest (the field-table validation matrix: 7 blank-field cases, 8 over-length cases, 1 malformed email, stray type and role, 8 at-max cases, countryCode presence-only and phone free-text), OperatorMapperTest (8 tests), OperatorResponseTest (11 guarded-null cases plus optional nulls), AddressExpiryIndexTest (6 tests), AddressTtlConfigTest (11 tests), AddressExpiryIT (3 tests) and OperatorIndexIT (1 test). Claims run in this order: the record's shape and rulings (cv-011, cv-016, cv-044), each request field's required flag, length limit and error message, the type and role rejection, server-assigned fields being ignored, the response shape and the deleted flag, update replace semantics, the status values, persistence (database, collection, the one compound index, auditing), then the non-prod expiry rule and its config keys, and what each test proves. The expireAt stamping on create is coded in OperatorService (part 2); it is claimed here from the README and AddressExpiryIT, which sit in this part's read.\nPart 2, Single-address lifecycle: create, read, update, delete: Part 2 of 4 (single-address lifecycle). Read in full: address/OperatorController.java (367 lines: five handlers under /organisation/{orgId}/addresses, of which create, get, update and delete are this part's; list is part 3's and the authoriseOrg path-versus-header guard is part 4's), address/OperatorService.java (222 lines: create, get, update, delete, stampExpiry; list is part 3's), address/OperatorRepository.java (49 lines: org-scoped finders and save only), exceptions/Problem.java, ValidationProblem.java, GlobalExceptionHandler.java (173 lines, seven handlers), BadRequestException.java and NotFoundException.java, docs/openapi/operators.yml (491 lines, springdoc-generated) and docs/openapi/api-contract.locked.yaml (441 lines, hand-authored lock), the README 'API overview' section plus its 'Soft delete (tombstones)' and 'OpenAPI contract' sections, and seven test classes in full: AddressCrudIT (8 tests), AddressGetIT (3), AddressUpdateIT (8), AddressDeleteIT (7), OperatorComplianceIT (6), OperatorServiceTest (single-address cases: 5 create, 3 get, 5 update, 3 delete; its 11 list cases are part 3's) and GlobalExceptionHandlerTest (10). Covered: POST create (201, Location header, organisationId and ACTIVE stamping, ignored read-only fields, non-prod expiry stamp, every 400 shape, 404, 500), GET one (200 live, 200 tombstone with deleted true, 404 unknown or other organisation), PUT full replace (cleared optionals, server-owned fields preserved, modifiedAt bump, 400, 404 for unknown, other-organisation or tombstone, 409 optimistic-lock conflict, tombstone resurrection blocked), DELETE soft delete (204, status flip, modifiedAt bump, idempotent repeat with no re-save, list exclusion, get-after-delete, 404), the RFC 9457 problem and validation-problem shapes with every exception mapping, the cv-001, cv-010, cv-011, cv-016 and cv-040 rulings these four operations cite, and the contract lock tests. Two contract discrepancies are recorded as claims: the Location header is described as absolute in the generated spec and relative in the locked contract, and countryCode carries maxLength 2 only in the locked contract.\nPart 3, Listing and searching addresses: Part 3, listing and searching addresses (repo at HEAD 83fd1dd). Read in full: address/OperatorController.java (367 lines; claimed only the list handler, lines 70-132), address/OperatorService.java (222 lines; claimed list, queryPage and toPartialMatchRegex, lines 37-117), address/OperatorRepository.java (49 lines; claimed the three search queries and the status finder), address/OperatorPageResponse.java (45 lines), docs/openapi/operators.yml (491 lines; the GET /organisation/{orgId}/addresses operation and the OperatorPageResponse schema), docs/openapi/api-contract.locked.yaml (441 lines; its description's Search and Pagination conventions and the list operation), README.md section API overview (lines 111-160; list row, list query parameters, wire conventions), and the tests OperatorListIT (9 tests), AddressSearchIT (10 tests), OperatorRepositoryIT (4 tests, 2 of them search) and OperatorServiceTest (list and search cases: 12 tests). Covered: the one list endpoint, its three query parameters (page, q, countryCode) with defaults, trimming and blank handling, its responses (200, 400 out-of-range or non-numeric page or missing header, 404, 500), the page size (server-configured, default 25, request parameters ignored), 1-based page numbering and the totals, every field of the page response, the search rules (fields matched, case-insensitive, partial, literal not regex, multi-word as one phrase), the OR combination of q and countryCode, the countryCode exact match, newest-first sort with an id tie-break, the ACTIVE-only and organisation-only listing, and the cv-025 and cv-048 rulings. The single-address operations, the address fields and validation, and the identity filter belong to other parts and are claimed only where the list operation depends on them.\nPart 4, Organisation scoping and caller identity: Part 4, organisation scoping and caller identity. Read in full: src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java (180 lines: the one identity header, its presence and format checks, the /organisation/ path test that decides which requests are checked, the path-orgId versus header comparison, the self-written problem+json rejections, the logging context and the trust-boundary Javadoc); src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java (368 lines, read for the class-level scoping, the authoriseOrg guard and the identity-header parameter on all five operations; per-endpoint behaviour left to parts 2 and 3); README.md section 'Security and trust boundary' (lines 83-109, plus the scoping sentence at the head of 'API overview', lines 113-115); src/test/java/.../filter/IdentityHeaderFilterTest.java (12 unit tests); src/test/java/.../integration/AddressScopingIT.java (7 integration tests). Covered: the single identity header the service reads (Trade-Imports-Organisation-Id) and every rejection when it is missing, blank or malformed; the exemption of every path outside /organisation/; the 404 for a path orgId that disagrees with the header, at both the filter and the controller guard; that the stored and queried organisation always comes from the header; cross-organisation isolation for list, read, create, update and delete; the no-existence-disclosure rule for 404s; the trust boundary in general terms; and what each of the 19 tests proves. Gaps recorded where the slice is silent: no user-level identity, no proof that a filter-level mismatch 404 matches an unknown-id 404 byte for byte, and no in-service enforcement of the upstream boundary.",
+  "scopeHash": "500c5aedabdbbd7cf23241f4fb642e3127e88c626dcefded9385654c44bbcabe",
+  "claims": [
+    {
+      "id": "repo-addressbook-p1-001",
+      "statement": "An address-book entry is untyped and owned by an organisation: it has no type or role, and no operator-type categorisation.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18",
+      "quote": "An untyped, organisation-owned address-book entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-002",
+      "statement": "An address is one flat set of fields (the Standard Address Block), with no nested address object.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18-19",
+      "quote": "The field set is flat — the Standard Address Block is one flat form, so there is no nested {@code Address} value object.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-003",
+      "statement": "The stored address holds these fields: id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, status, createdAt, modifiedAt, expireAt and version.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:44-79",
+      "quote": "private String id; private String name; private String addressLine1; private String addressLine2; private String townOrCity; private String county; private String postcode; private String countryCode; private String phone; private String email; private String organisationId; private AddressStatus status; @CreatedDate private Instant createdAt; @LastModifiedDate private Instant modifiedAt; private Instant expireAt; @Version private Long version;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-004",
+      "statement": "Ruling cv-011: countryCode is stored as an ISO 3166-1 alpha-2 code exactly as supplied; the service never converts it to or from a country display name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:21-22",
+      "quote": "{@code countryCode} is stored as an ISO 3166-1 alpha-2 code (cv-011), exactly as supplied — the service does not convert it to or from a display name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-005",
+      "statement": "createdAt is set automatically when an address is first saved, and modifiedAt is updated automatically on every write, including an update and a soft delete.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:24-25, 70-74; configuration/MongoConfig.java:31",
+      "quote": "{@code modifiedAt} is bumped by auditing on every write (PUT and soft delete)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-006",
+      "statement": "modifiedAt is for audit only: nothing in the service reads it to drive any other behaviour.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:24-25",
+      "quote": "but is <strong>audit only</strong>: nothing reads it to refresh anything.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-007",
+      "statement": "Each stored address carries a version number used for optimistic locking, which is never returned to callers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:78-79; address/OperatorMapper.java:22",
+      "quote": "@Version private Long version;",
+      "confidence": "inferred",
+      "note": "Optimistic locking is inferred from Spring Data's @Version annotation; the mapper ignores version when building the response. How a version conflict surfaces to a caller is not in this part."
+    },
+    {
+      "id": "repo-addressbook-p1-008",
+      "statement": "The stored entity is never sent to callers directly: a separate response object defines what the API returns.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:31",
+      "quote": "The entity is never serialised onto the wire — the response records own the wire contract.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-009",
+      "statement": "The same request body is used both to create an address and to replace one, and its JSON field names are camelCase.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:11-12, 34",
+      "quote": "Create/update request body. The wire is camelCase (global {@code JacksonConfig}), so every field serialises under its Java name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-010",
+      "statement": "name is required; a blank name is rejected with the message \"Enter a name\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:36",
+      "quote": "@NotBlank(message = \"Enter a name\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-011",
+      "statement": "name may be at most 255 characters; a longer one is rejected with the message \"Name must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:37",
+      "quote": "@Size(min = 1, max = 255, message = \"Name must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-012",
+      "statement": "name is described as the display name for the address, with the example \"Highland Livestock Ltd\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:38-43",
+      "quote": "description = \"Display name for the address\", ... example = \"Highland Livestock Ltd\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-013",
+      "statement": "addressLine1 is required; a blank one is rejected with the message \"Enter address line 1\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:45",
+      "quote": "@NotBlank(message = \"Enter address line 1\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-014",
+      "statement": "addressLine1 may be at most 255 characters; a longer one is rejected with the message \"Address line 1 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:46",
+      "quote": "@Size(min = 1, max = 255, message = \"Address line 1 must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-015",
+      "statement": "addressLine1 is described as the first line of the postal address, with the example \"14 Drover's Way\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:47-52",
+      "quote": "description = \"First line of the postal address\", ... example = \"14 Drover's Way\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-016",
+      "statement": "addressLine2 is optional and may be at most 255 characters; a longer one is rejected with the message \"Address line 2 must be 255 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:54-56",
+      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\") @Schema(description = \"Second line of the postal address\", maxLength = 255) String addressLine2,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-017",
+      "statement": "townOrCity is required; a blank one is rejected with the message \"Enter a town or city\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:57",
+      "quote": "@NotBlank(message = \"Enter a town or city\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-018",
+      "statement": "townOrCity may be at most 100 characters; a longer one is rejected with the message \"Town or city must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:58",
+      "quote": "@Size(min = 1, max = 100, message = \"Town or city must be 100 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-019",
+      "statement": "townOrCity is described as \"Town or city\", with the example \"Inverness\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:59-64",
+      "quote": "description = \"Town or city\", ... example = \"Inverness\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-020",
+      "statement": "county is optional, described as \"County or region\", and may be at most 100 characters; a longer one is rejected with the message \"County must be 100 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:66-68",
+      "quote": "@Size(max = 100, message = \"County must be 100 characters or less\") @Schema(description = \"County or region\", maxLength = 100) String county,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-021",
+      "statement": "postcode is required; a blank one is rejected with the message \"Enter a postcode\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:69",
+      "quote": "@NotBlank(message = \"Enter a postcode\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-022",
+      "statement": "postcode may be at most 12 characters; a longer one is rejected with the message \"Postcode must be 12 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:70",
+      "quote": "@Size(min = 1, max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-023",
+      "statement": "postcode is described as \"Postal or ZIP code\", with the example \"IV2 3JH\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:71-76",
+      "quote": "description = \"Postal or ZIP code\", ... example = \"IV2 3JH\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-024",
+      "statement": "postcode has no format check: any non-blank value of up to 12 characters is accepted, whatever the country.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:69-77",
+      "quote": "@NotBlank(message = \"Enter a postcode\") @Size(min = 1, max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "inferred",
+      "note": "Inferred from the field carrying only @NotBlank and @Size; no @Pattern or country-dependent rule exists."
+    },
+    {
+      "id": "repo-addressbook-p1-025",
+      "statement": "countryCode is required; a blank one is rejected with the message \"Enter a country\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:78",
+      "quote": "@NotBlank(message = \"Enter a country\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-026",
+      "statement": "Ruling cv-011: countryCode is checked for presence only, with no length limit, no list of allowed values and no ISO pattern check, and is stored exactly as given.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:30-31",
+      "quote": "{@code countryCode} is validated for presence only ({@code @NotBlank}, cv-011): it is stored exactly as given with no length, list, or ISO pattern check.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-027",
+      "statement": "In the request schema, countryCode is described as \"Country code (stored as-given, cv-011)\" with the example \"GB\"; in the response schema it is described as an ISO 3166-1 alpha-2 country code.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:79-82; address/OperatorResponse.java:38-42",
+      "quote": "description = \"Country code (stored as-given, cv-011)\" ... description = \"ISO 3166-1 alpha-2 country code (cv-011)\"",
+      "confidence": "verbatim",
+      "note": "The response describes the value as ISO alpha-2, but the request accepts any non-blank string, so a non-ISO value supplied on create would be returned as given. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p1-028",
+      "statement": "phone (the telephone number) is required; a blank one is rejected with the message \"Enter a telephone number\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:84",
+      "quote": "@NotBlank(message = \"Enter a telephone number\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-029",
+      "statement": "phone may be at most 20 characters; a longer one is rejected with the message \"Telephone number must be 20 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:85",
+      "quote": "@Size(min = 1, max = 20, message = \"Telephone number must be 20 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-030",
+      "statement": "phone is described as \"Contact telephone number\", with the example \"+44 1463 234567\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:86-91",
+      "quote": "description = \"Contact telephone number\", ... example = \"+44 1463 234567\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-031",
+      "statement": "Ruling cv-044 (as cited by the validation test): phone has no format check, so free text such as \"call the office\" is accepted.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:204-210",
+      "quote": "// cv-044: phone keeps @NotBlank/@Size only — no format check. AddressRequest request = validRequest().phone(\"call the office\").build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-032",
+      "statement": "email is required; a blank one is rejected with the message \"Enter an email address\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:93",
+      "quote": "@NotBlank(message = \"Enter an email address\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-033",
+      "statement": "email must be in a valid email format; a malformed one is rejected with the message \"Enter an email address in the correct format\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:94",
+      "quote": "@Email(message = \"Enter an email address in the correct format\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-034",
+      "statement": "email may be at most 254 characters; a longer one is rejected with the message \"Email address must be 254 characters or less\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:95",
+      "quote": "@Size(min = 1, max = 254, message = \"Email address must be 254 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-035",
+      "statement": "email is described as \"Contact email address\", with the example \"exports@highlandlivestock.example.com\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:96-101",
+      "quote": "description = \"Contact email address\", ... example = \"exports@highlandlivestock.example.com\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-036",
+      "statement": "Every field's validation error is collected into one errors map keyed by field name, rather than stopping at the first failing field.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:26-28",
+      "quote": "its non-null enforcement is Bean Validation's job, which must collect every field's error into the {@code errors} map rather than fail fast on the first null.",
+      "confidence": "verbatim",
+      "note": "The errors map's wire shape (the validation problem response) belongs to part 2."
+    },
+    {
+      "id": "repo-addressbook-p1-037",
+      "statement": "Ruling cv-044: the address book is untyped and unroled, so a request that supplies a type gets a per-field 400 error on type with the message \"type is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:19-25, 103-105",
+      "quote": "{@code type} and {@code role} are the one exception (cv-044): the address book is untyped and unroled ... A supplied value binds and fails {@code @Null}, landing in the same Bean-Validation {@code errors} map keyed {@code type} / {@code role} — a per-field 400, not a silent drop and not a deserialization failure. ... @Null(message = \"type is not a supported field\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-038",
+      "statement": "Ruling cv-044: a request that supplies a role gets a per-field 400 error on role with the message \"role is not a supported field\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:106-108",
+      "quote": "@Null(message = \"role is not a supported field\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-039",
+      "statement": "type and role are hidden from the published API request schema and are never saved onto the address.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:20-25, 104, 107; address/OperatorMapper.java:31, 45",
+      "quote": "present for Bean Validation and absent from the generated OpenAPI request schema. ... They are never mapped onto the entity.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-040",
+      "statement": "Server-assigned fields supplied in a create or update body (id, organisationId, deleted, status and the timestamps) are silently ignored, not rejected: a body that echoes a previous read is accepted.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:14-17",
+      "quote": "Server-assigned fields ({@code id}, {@code organisationId}, {@code deleted}, timestamps) are not components here, so they are ignored if supplied — Spring Boot leaves {@code fail-on-unknown-properties} off (Zalando default): a body echoing a read-only field from a prior GET is accepted and the field dropped, never a 400.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-041",
+      "statement": "Any other unknown field in a create or update body is also ignored rather than rejected.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:15-16",
+      "quote": "Spring Boot leaves {@code fail-on-unknown-properties} off",
+      "confidence": "inferred",
+      "note": "Follows from unknown-property failure being off globally; only type and role are modelled to be rejected."
+    },
+    {
+      "id": "repo-addressbook-p1-042",
+      "statement": "The service, not the caller, sets an address's id, organisationId, status and timestamps on create and update.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:26-39",
+      "quote": "Server-owned fields ({@code id}, {@code organisationId}, {@code status}, timestamps) are set by the service on create/update, not here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-043",
+      "statement": "An update is a full replace of the client-supplied fields: an optional field (addressLine2 or county) left out of the update body is cleared on the stored address.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:41-53; src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:207-256",
+      "quote": "Applies a full replace of client-supplied fields onto an existing entity. ... void updateEntity_replacesAllMutableFieldsAndClearsOmittedOptionals()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-044",
+      "statement": "An update keeps the address's id, organisationId, status, createdAt and version as they were.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:250-255",
+      "quote": "assertThat(existing.getId()).isEqualTo(\"665f1c2ab3e4d51a2c9d0e77\"); assertThat(existing.getOrganisationId()).isEqualTo(\"ORG-001\"); assertThat(existing.getStatus()).isEqualTo(AddressStatus.ACTIVE); assertThat(existing.getCreatedAt()).isEqualTo(Instant.parse(\"2026-07-01T09:00:00Z\"));",
+      "confidence": "verbatim",
+      "note": "The mapper test leaves modifiedAt unchanged; modifiedAt is then bumped by auditing on save (claim repo-addressbook-p1-005)."
+    },
+    {
+      "id": "repo-addressbook-p1-045",
+      "statement": "An address returned by the API has these fields: id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:22-64; docs/openapi/operators.yml:347-395",
+      "quote": "String id, ... String name, ... String addressLine1, ... String addressLine2, ... String townOrCity, ... String county, ... String postcode, ... String countryCode, ... String phone, ... String email, ... String organisationId, ... boolean deleted, ... Instant createdAt, ... Instant modifiedAt",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-046",
+      "statement": "Every returned field is always present except addressLine2 and county, which are optional.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:16-18; docs/openapi/operators.yml:396-408",
+      "quote": "{@code addressLine2} and {@code county} are genuinely optional and left unguarded.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-047",
+      "statement": "The response never returns status, version or expireAt.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapper.java:22",
+      "quote": "@BeanMapping(ignoreUnmappedSourceProperties = {\"status\", \"version\", \"expireAt\"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-048",
+      "statement": "Ruling cv-016: a soft-deleted address is shown to callers as a deleted boolean (true when its status is DELETED, false when ACTIVE), never as the internal status value.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:13-14, 51-54; address/OperatorMapper.java:23",
+      "quote": "The soft-delete tombstone is exposed as a derived {@code deleted} boolean (cv-016), never the internal status enum. ... @Mapping(target = \"deleted\", expression = \"java(address.getStatus() == AddressStatus.DELETED)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-049",
+      "statement": "If a stored address is missing a required field, building its response fails loudly with a server error rather than returning a partial record.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:16-17, 66-78",
+      "quote": "Server-constructed and always-present fields are null-guarded in the compact constructor (service-boundary rule): a null here is a server bug and fails loud, not a malformed wire value.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-050",
+      "statement": "The returned id is an opaque identifier, shown with the example \"665f1c2ab3e4d51a2c9d0e77\".",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:23-27",
+      "quote": "description = \"Opaque address identifier\", ... example = \"665f1c2ab3e4d51a2c9d0e77\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-051",
+      "statement": "organisationId in the response is the organisation that owns the address.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:47-50",
+      "quote": "description = \"Organisation that owns this address\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-052",
+      "statement": "createdAt and modifiedAt are returned as UTC ISO 8601 date-time strings, not epoch numbers.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:55-64; src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:154-163",
+      "quote": "description = \"Creation timestamp (UTC)\", ... format = \"date-time\" ... void response_serialisesInstantFieldsAsIso8601NotEpochMillis()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-053",
+      "statement": "The response is described as \"An address in the caller's organisation-scoped address book\", and the request as \"Create or replace an address in the caller's address book\".",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:21; address/AddressRequest.java:34",
+      "quote": "@Schema(description = \"An address in the caller's organisation-scoped address book\") ... @Schema(description = \"Create or replace an address in the caller's address book\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-054",
+      "statement": "The response carries no operator-type, transporter-category, approval-number or CRN field.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:148-151",
+      "quote": "assertThat(json.has(\"operatorType\")).isFalse(); assertThat(json.has(\"transporterCategory\")).isFalse(); assertThat(json.has(\"approvalNumber\")).isFalse(); assertThat(json.has(\"crn\")).isFalse();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-055",
+      "statement": "In the published API schema, the request's required fields are name, addressLine1, townOrCity, postcode, countryCode, phone and email; addressLine2 and county are optional.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:339-346",
+      "quote": "required: - addressLine1 - countryCode - email - name - phone - postcode - townOrCity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-056",
+      "statement": "The published API schema does not mark email with an email format; the email format check exists only in the service's validation.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:333-338",
+      "quote": "email: type: string description: Contact email address example: exports@highlandlivestock.example.com maxLength: 254 minLength: 1",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of `format: email` in the generated schema while AddressRequest.java:94 carries @Email."
+    },
+    {
+      "id": "repo-addressbook-p1-057",
+      "statement": "An address has one of two statuses: ACTIVE or DELETED.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java:8-11",
+      "quote": "public enum AddressStatus { ACTIVE, DELETED }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-058",
+      "statement": "Ruling cv-016: a DELETED address is a soft-delete tombstone; it is left out of lists but can still be read by id, so a caller can tell \"deleted\" (200 with deleted true) from \"unknown\" (404).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressStatus.java:3-6",
+      "quote": "Soft-delete tombstone status (cv-016). {@code DELETED} addresses are excluded from lists but remain readable by id so a consumer can distinguish \"deleted\" (200 + DELETED) from \"unknown\" (404).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-059",
+      "statement": "A soft delete keeps the record in the database, flips its status to DELETED and updates modifiedAt; only a 200 with deleted true means the user deleted the address.",
+      "kind": "behaviour",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "the document stays in MongoDB, its internal `status` flips to `DELETED`, and `modifiedAt` is bumped. The tombstone remains fetchable by id with `deleted: true` on the wire. ... Only a **200** response with `deleted: true` means the user deleted this address.",
+      "confidence": "verbatim",
+      "note": "The DELETE endpoint itself, its 204 and idempotency belong to part 2."
+    },
+    {
+      "id": "repo-addressbook-p1-060",
+      "statement": "In prod, addresses and their tombstones are kept indefinitely, at roughly 1 KB each.",
+      "kind": "non-functional",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "In prod, addresses and tombstones are retained indefinitely (~1 KB each).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-061",
+      "statement": "Addresses are stored in MongoDB, in the collection \"addresses\" of the database \"trade-imports-address-book\" (overridable with MONGO_DATABASE).",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:33; src/main/resources/application.yml:11; README.md: MongoDB",
+      "quote": "**Database:** `trade-imports-address-book` (override with `MONGO_DATABASE`) **Collection:** `addresses`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-062",
+      "statement": "The addresses collection has one compound index, org_status_created, on organisationId ascending, status ascending and createdAt descending, which serves every production read: organisation-scoped, active only, newest first.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:27-36",
+      "quote": "The single compound index {@code org_status_created} serves every production read: org-scoped, status-bounded (ACTIVE), newest-first. ... @CompoundIndex(name = \"org_status_created\", def = \"{'organisationId': 1, 'status': 1, 'createdAt': -1}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-063",
+      "statement": "Indexes are created automatically at service start-up, so the org_status_created index exists from when the collection is empty.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:12; address/Address.java:28-29",
+      "quote": "auto-index-creation: true ... It is built now while the collection is empty so it is never a later migration or index build on a populated collection.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-064",
+      "statement": "Address books are expected to be small (one user's book, tens to hundreds of rows), so a bounded scan is acceptable, and any further index must be justified against real collection size.",
+      "kind": "non-functional",
+      "ref": "README.md: Indexes",
+      "quote": "Datasets are one user's address book today (tens to hundreds of rows), so a bounded scan is acceptable. Reassess any future index against real collection size before adding it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-065",
+      "statement": "Mongo reads default to primaryPreferred and writes to majority write concern, both overridable by environment variable.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:13-14",
+      "quote": "read-preference: ${MONGO_READ_PREFERENCE:primaryPreferred} write-concern: ${MONGO_WRITE_CONCERN:majority}",
+      "confidence": "verbatim",
+      "note": "MongoConfig.java's class comment says the read preference is \"secondary (configurable)\", while application.yml defaults it to primaryPreferred. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p1-066",
+      "statement": "The service connects to Mongo with TLS enabled, using the CDP trust store, and authenticates in CDP with AWS IAM through the connection string.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MongoConfig.java:22-28, 66-70; src/main/resources/application.yml:20-21",
+      "quote": "Configures MongoDB connection with: - AWS IAM authentication (via connection string authMechanism=MONGODB-AWS) - Custom SSL/TLS certificates from TRUSTSTORE_* environment variables",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-067",
+      "statement": "The Mongo connection pool defaults to a minimum of 10 and maximum of 100 connections, a 2000 ms maximum wait and a 60000 ms maximum idle time, each overridable by environment variable.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:15-19",
+      "quote": "min-size: ${MONGO_POOL_MIN_SIZE:10} max-size: ${MONGO_POOL_MAX_SIZE:100} max-wait-time-ms: ${MONGO_POOL_MAX_WAIT_TIME_MS:2000} max-connection-idle-time-ms: ${MONGO_POOL_MAX_IDLE_TIME_MS:60000}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-068",
+      "statement": "The local Mongo init script seeds no address data: it holds only an example comment.",
+      "kind": "constraint",
+      "ref": "compose/mongo/10-init.js:1-6",
+      "quote": "// This can be used for inserting local test data when mongo starts up",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-069",
+      "statement": "Outside prod, addresses are removed automatically a set number of days after they are created, so test data does not build up.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only)",
+      "quote": "Outside prod, addresses are removed automatically a set number of days after they are created, so test data does not build up.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-070",
+      "statement": "ADDRESS_TTL_DAYS (config key address-book.ttl.days, unset by default) sets how many days after creation an address expires; when set, each new address gets an internal expireAt that is not returned to callers.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:29-31; README.md: Address expiry (non-prod only)",
+      "quote": "| `ADDRESS_TTL_DAYS` | unset | Days after creation an address expires. When set, each new address gets an internal `expireAt` (not returned on the wire). Updates and deletes keep the original `expireAt`. Must be positive. |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-071",
+      "statement": "Updating or deleting an address keeps its original expireAt, so an edit does not extend its life outside prod.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only); address/OperatorMapper.java:52",
+      "quote": "Updates and deletes keep the original `expireAt`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-072",
+      "statement": "ADDRESS_TTL_DAYS must be a positive number: zero or a negative value stops the service from starting.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:26-28, 35; src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java:107-131",
+      "quote": "Must be positive when set, so a misconfiguration fails at startup rather than stamping an already-elapsed {@code expireAt}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-073",
+      "statement": "ADDRESS_TTL_EXPIRY_ENABLED (config key address-book.ttl.expiry.enabled, false by default) creates the address_expire_at_ttl Mongo TTL index at start-up when true, after which Mongo removes addresses, active and tombstoned alike, once their expireAt has passed.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:33-34; address/AddressExpiryIndex.java:15-49; README.md: Address expiry (non-prod only)",
+      "quote": "| `ADDRESS_TTL_EXPIRY_ENABLED` | `false` | When `true`, the `address_expire_at_ttl` MongoDB TTL index is created at startup and MongoDB removes documents once `expireAt` has passed — active addresses and tombstones alike. |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-074",
+      "statement": "The TTL index is on expireAt ascending and expires each address at exactly its expireAt time (zero seconds after).",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:44-47",
+      "quote": "new Index().on(\"expireAt\", Sort.Direction.ASC).expire(Duration.ZERO).named(INDEX_NAME)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-075",
+      "statement": "Prod is protected from address expiry by two independent safeguards: expireAt is only set when ADDRESS_TTL_DAYS is configured and ENVIRONMENT is not prod, and the TTL index is only created when ADDRESS_TTL_EXPIRY_ENABLED is true and ENVIRONMENT is not prod.",
+      "kind": "rule",
+      "ref": "README.md: Address expiry (non-prod only); configuration/AddressTtlConfig.java:11-21",
+      "quote": "- `expireAt` is only set when `ADDRESS_TTL_DAYS` is configured **and** `ENVIRONMENT` is not `prod`. - The TTL index is only created when `ADDRESS_TTL_EXPIRY_ENABLED=true` **and** `ENVIRONMENT` is not `prod`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-076",
+      "statement": "If expiry is enabled in prod, the service logs a warning and refuses to create the TTL index.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:40-43",
+      "quote": "log.warn(\"Address expiry is enabled in prod; refusing to create the TTL index\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-077",
+      "statement": "The environment counts as prod when ENVIRONMENT (config key address-book.ttl.environment, default \"local\") is \"prod\" in any letter case, ignoring surrounding whitespace.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:29-31, 38-40; src/main/resources/application.yml:32",
+      "quote": "return environment != null && \"prod\".equalsIgnoreCase(environment.strip()); ... environment: ${ENVIRONMENT:local}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-078",
+      "statement": "ENVIRONMENT must not be blank: the service fails to start if it is missing or blank, rather than treating it as non-prod.",
+      "kind": "constraint",
+      "ref": "README.md: Address expiry (non-prod only); configuration/AddressTtlConfig.java:30-31; AddressTtlConfigTest.java:52-76",
+      "quote": "`ENVIRONMENT` must not be blank — the service fails to start if it is.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-079",
+      "statement": "The expiry defaults in configuration are the prod-safe values (no days, expiry disabled); non-prod environments opt in.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:26-28",
+      "quote": "Defaults here are the prod-safe values: days unset (no expireAt stamped) and expiry disabled (no TTL index). Non-prod environments opt in via ADDRESS_TTL_DAYS and ADDRESS_TTL_EXPIRY_ENABLED.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-080",
+      "statement": "Addresses created before expiry was switched on have no expireAt and are never removed by the TTL index.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:22-23",
+      "quote": "Mongo's TTL monitor skips documents with no date in {@code expireAt}, so addresses created before expiry was switched on are never removed by it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-081",
+      "statement": "Switching expiry off again does not drop a TTL index that already exists.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndex.java:25",
+      "quote": "Switching the flag back off does not drop an index that already exists.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-082",
+      "statement": "Outside prod, a 404 for an address can also mean it has expired, not only that it is unknown or belongs to another organisation.",
+      "kind": "behaviour",
+      "ref": "README.md: Soft delete (tombstones)",
+      "quote": "A **404** means unknown id or an id outside the caller's organisation — it is **not** a deletion signal. Outside prod it can also mean the address has expired (see below).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-083",
+      "statement": "The validation test proves every mandatory field (name, addressLine1, townOrCity, postcode, countryCode, phone, email) gives its declared error message when blank, and a fully populated request has no errors.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:72-102, 163-175",
+      "quote": "Pins the Bean Validation contract of the create/update body against the Standard Address Block field table: every mandatory field, every max-length, and the email format leg.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-084",
+      "statement": "The validation test proves every length limit at its boundary: each field is accepted at its maximum (255, 255, 255, 100, 100, 12, 20, 254) and rejected one character over with its declared message.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:103-143, 177-195",
+      "quote": "Arguments.of(\"postcode at max\", validRequest().postcode(repeat(12)).build()), ... Arguments.of(\"over-length postcode\", validRequest().postcode(repeat(13)).build(), \"postcode\", \"Postcode must be 12 characters or less\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-085",
+      "statement": "The validation test proves a malformed email (\"not-an-email\") is rejected, a stray type (\"IMPORTER\") or role (\"consignor\") is rejected on that field, a 50-character countryCode is accepted, and a free-text phone is accepted.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:145-160, 197-210",
+      "quote": "void countryCodeIsPresenceOnlyAndAcceptsAnyNonBlankValueRegardlessOfLength() ... void phoneIsNotFormatValidatedSoAFreeStringIsAccepted()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-086",
+      "statement": "The validation test cites ruling cv-001: request and response field names on the wire are camelCase, matching the Java property names.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:28-29; OperatorMapperTest.java:127-136",
+      "quote": "the wire keys are identical (camelCase, cv-001) and asserted end-to-end through the real handler in {@code OperatorCrudIT}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-087",
+      "statement": "The mapper test proves a response copies every stored field, derives deleted from status, returns no status field, leaves addressLine2 and county empty when absent, and fails loudly when a required field such as phone is missing.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:52-152",
+      "quote": "void toResponse_copiesEveryFieldFromTheEntityAndDerivesDeletedFalseForAnActiveRow() ... void toResponse_derivesDeletedTrueForATombstone() ... void toResponse_failsLoudWhenARequiredFieldIsNull()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-088",
+      "statement": "The mapper test proves a request body carrying id, organisationId, status, deleted, createdAt and modifiedAt is read with those fields dropped: none reach the new address.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorMapperTest.java:165-205",
+      "quote": "void request_deserialisesFromCamelCaseAndMapsOntoAnEntityIgnoringServerFields()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-089",
+      "statement": "The response test proves each of the 11 always-present response fields (id, name, addressLine1, townOrCity, postcode, countryCode, phone, email, organisationId, createdAt, modifiedAt) rejects a missing value, while addressLine2 and county may be empty.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponseTest.java:61-105",
+      "quote": "void compactConstructor_rejectsNullOnGuardedFields(String fieldName, Runnable buildResponse) ... void compactConstructor_allowsNullOptionalFields()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-090",
+      "statement": "The expiry index test proves the TTL index exists only when expiry is explicitly enabled, is named address_expire_at_ttl on expireAt with zero seconds' expiry outside prod, and is not created in prod even when enabled.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressExpiryIndexTest.java:36-118",
+      "quote": "void bean_isAbsentWhenExpiryIsNotConfigured() ... void createIndex_outsideProdCreatesATtlIndexThatExpiresAtExpireAt() ... void createIndex_inProdCreatesNothingEvenWhenExpiryIsEnabled()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-091",
+      "statement": "The TTL config test proves prod is recognised in any case and with surrounding whitespace, a missing or blank environment stops start-up, days is unset when not configured or empty, and zero or negative days stops start-up.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfigTest.java:24-131",
+      "quote": "void isProd_isTrueOnlyForTheProdEnvironmentInAnyCase() ... void binding_rejectsABlankEnvironment() ... void binding_rejectsZeroDaysSoNothingIsStampedAlreadyExpired()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-092",
+      "statement": "The expiry integration test proves, against a real Mongo, that with 7 days configured a newly created address gets an expireAt seven days ahead that is not in the create response.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java:71-105",
+      "quote": "void post_givesTheNewAddressAnExpireAtSevenDaysAhead() ... .andExpect(jsonPath(\"$.expireAt\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-093",
+      "statement": "The expiry integration test proves Mongo removes expired addresses, both active and tombstoned, while leaving undated and not-yet-expired ones in place.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressExpiryIT.java:107-130",
+      "quote": "void expiredAddresses_areRemovedByMongoWhileUndatedAndUnexpiredOnesStay()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-094",
+      "statement": "The index integration test proves the addresses collection has exactly two indexes (_id_ and org_status_created) with the expected key order, and that the production list query uses org_status_created with no collection scan.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorIndexIT.java:28-69",
+      "quote": "assertThat(indexNames).containsExactlyInAnyOrder(\"_id_\", \"org_status_created\"); ... assertThat(winningPlan.toJson()).doesNotContain(\"COLLSCAN\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-095",
+      "statement": "Addresses were previously keyed by CRN and type; that index has been replaced by the organisation-keyed one, so addresses are no longer owned per CRN.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorIndexIT.java:20-22",
+      "quote": "Re-keyed org-for-crn: the old {@code crn_status_type_created} index is gone and the org-scoped, status-bounded, newest-first {@code org_status_created} index serves every production read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p1-096",
+      "statement": "The address record has no field for a fax number, a contact name separate from the display name, or any per-usage marker (such as consignor, consignee, importer or place of destination); the slice shows no way to record what an address is used for.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:44-79; address/AddressRequest.java:35-108",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked at every field of Address, AddressRequest and OperatorResponse. cv-044 rules type and role out deliberately; whether Design Release 2.1 expects usages or extra contact fields is for the reconciler."
+    },
+    {
+      "id": "repo-addressbook-p1-097",
+      "statement": "The record holds no country display name and no list of valid country codes; turning countryCode into a country name is left entirely to the caller.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:21-22; address/AddressRequest.java:30-31",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Follows cv-011; the slice is silent on where the display name comes from (cv-048, in part 3, says the frontend resolves the country filter)."
+    },
+    {
+      "id": "repo-addressbook-p2-001",
+      "statement": "The service exposes four single-address operations under /organisation/{orgId}/addresses: POST to create, and GET, PUT and DELETE on /{operator-id} to fetch, fully replace and soft delete one address.",
+      "kind": "integration",
+      "ref": "README.md, API overview table (lines 117-123)",
+      "quote": "| `POST` | `/organisation/{orgId}/addresses` | Create an address |\n| `GET` | `/organisation/{orgId}/addresses/{operator-id}` | Fetch one address (tombstones included) |\n| `PUT` | `/organisation/{orgId}/addresses/{operator-id}` | Full replace of mutable fields |\n| `DELETE` | `/organisation/{orgId}/addresses/{operator-id}` | Soft delete (idempotent 204) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-002",
+      "statement": "The four single-address operations have the operationIds create-address, get-address, update-address and delete-address, and these are locked by the hand-authored contract.",
+      "kind": "integration",
+      "ref": "docs/openapi/api-contract.locked.yaml:44, 84, 145, 246",
+      "quote": "operationId: get-address ... operationId: update-address ... operationId: delete-address ... operationId: create-address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-003",
+      "statement": "Every single-address operation requires the Trade-Imports-Organisation-Id request header alongside the orgId path parameter.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:24-28 (and the same parameter on put, delete and post)",
+      "quote": "- name: Trade-Imports-Organisation-Id\n        in: header\n        required: true",
+      "confidence": "verbatim",
+      "note": "How the header is enforced, and the path-versus-header 404, are part 4's to claim in full."
+    },
+    {
+      "id": "repo-addressbook-p2-004",
+      "statement": "Create takes a JSON body (AddressRequest) and is required to have one.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:241-246",
+      "quote": "requestBody:\n        content:\n          application/json:\n            schema:\n              $ref: '#/components/schemas/AddressRequest'\n        required: true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-005",
+      "statement": "Create and update share one request body shape: the same AddressRequest schema, described as creating or replacing an address.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:285-286; OperatorController.java:190 and 312",
+      "quote": "AddressRequest:\n      description: Create or replace an address in the caller's address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-006",
+      "statement": "A successful create returns HTTP 201 Created with the created address in the body.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:149-160 and 200",
+      "quote": "return ResponseEntity.created(location).body(operatorMapper.toResponse(created));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-007",
+      "statement": "A successful create sets a Location header pointing at the new address: the request URI with the new address id appended.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:194-199",
+      "quote": "ServletUriComponentsBuilder.fromCurrentRequest()\n            .path(\"/{operator-id}\")\n            .buildAndExpand(created.getId())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-008",
+      "statement": "The generated spec describes the create Location header as an absolute URI, but the locked contract describes it as a relative URI.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:252; docs/openapi/api-contract.locked.yaml:269",
+      "quote": "description: Absolute URI of the created address ... description: Relative URI of the created address",
+      "confidence": "verbatim",
+      "note": "The compliance test compares paths, methods, operationIds, parameter names and property names only, so this wording difference is not caught. The code builds it from the current request (fromCurrentRequest), which produces an absolute URI."
+    },
+    {
+      "id": "repo-addressbook-p2-009",
+      "statement": "The id of a created address can be read from the end of its Location header, and that id fetches, updates and deletes the address.",
+      "kind": "behaviour",
+      "ref": "AddressCrudIT.java:320-412, crudRoundTrip_shouldCreateGetPutDeleteAndIdempotentRepeatDelete",
+      "quote": "String id = location.substring(location.lastIndexOf('/') + 1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-010",
+      "statement": "On create, the owning organisationId is stamped from the trusted identity header, never taken from the request body.",
+      "kind": "rule",
+      "ref": "OperatorController.java:135-137; OperatorService.java:25-27 and 129",
+      "quote": "{@code organisationId} is stamped from the\n   * identity header, never from the body",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-011",
+      "statement": "Ruling cv-010: the owning organisation on create comes from the trusted forwarded header.",
+      "kind": "rule",
+      "ref": "OperatorService.java:25-26",
+      "quote": "On create the owning {@code organisationId} is stamped from the trusted forwarded header\n * (cv-010), never taken from the body",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-012",
+      "statement": "A newly created address starts with status ACTIVE.",
+      "kind": "rule",
+      "ref": "OperatorService.java:26-27 and 130",
+      "quote": "address.setStatus(AddressStatus.ACTIVE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-013",
+      "statement": "The address id on create is assigned by the database, and createdAt and modifiedAt are filled in by auditing on save, not by the caller.",
+      "kind": "rule",
+      "ref": "OperatorService.java:26-27; OperatorServiceTest.java:94-110, create_neverSetsServerFieldsFromTheRequestAndLeavesIdForMongo",
+      "quote": "{@code id} is left for\n * Mongo and the timestamps for auditing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-014",
+      "statement": "Server-assigned fields sent in a create body (such as id, createdAt or deleted) are ignored rather than rejected: the address gets its own id, deleted is false and createdAt is the real creation time.",
+      "kind": "rule",
+      "ref": "OperatorController.java:136-137; AddressCrudIT.java:216-255, post_shouldIgnoreEchoedReadOnlyAndUnknownFields",
+      "quote": "server-assigned fields carried in the body are ignored,\n   * not rejected (Zalando default).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-015",
+      "statement": "Unknown fields in a create body (other than type and role) are ignored, and the address is still created with 201.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:216-255, post_shouldIgnoreEchoedReadOnlyAndUnknownFields",
+      "quote": "\"somethingUnknown\": \"ignored\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-016",
+      "statement": "A create body carrying a type or role field is rejected with a 400 validation problem with a per-field error for each of type and role.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:182-214, post_shouldRejectStrayTypeOrRoleFieldsWithPerFieldErrors",
+      "quote": ".andExpect(jsonPath(\"$.errors.type\").exists())\n        .andExpect(jsonPath(\"$.errors.role\").exists());",
+      "confidence": "verbatim",
+      "note": "The address book is untyped and unroled (cv-044, claimed in part 1); the error messages for type and role live in AddressRequest, part 1's file."
+    },
+    {
+      "id": "repo-addressbook-p2-017",
+      "statement": "A create response carries the address fields in camelCase: id, name, addressLine1, addressLine2, townOrCity, countryCode, phone, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "AddressCrudIT.java:46-98, post_shouldReturn201WithLocationAndStampedOrganisation",
+      "quote": ".andExpect(jsonPath(\"$.id\").exists())\n        .andExpect(jsonPath(\"$.name\").value(\"Highland Livestock Ltd\"))\n        .andExpect(jsonPath(\"$.addressLine1\").value(\"14 Drover's Way\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-018",
+      "statement": "A newly created address reads back with deleted false.",
+      "kind": "behaviour",
+      "ref": "AddressCrudIT.java:85",
+      "quote": ".andExpect(jsonPath(\"$.deleted\").value(false))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-019",
+      "statement": "Create accepts countryCode as given (for example FR) and stores it unchanged.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:257-287, post_shouldAcceptCountryCodeAsGivenAndFreeStringPhone",
+      "quote": ".andExpect(jsonPath(\"$.countryCode\").value(\"FR\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-020",
+      "statement": "Ruling cv-011: countryCode is stored as given, with presence-only validation, and is an ISO 3166-1 alpha-2 code whose display name the frontend resolves.",
+      "kind": "rule",
+      "ref": "docs/openapi/api-contract.locked.yaml:23-26; docs/openapi/operators.yml:324 and 374",
+      "quote": "**D1 — `countryCode` is ISO 3166-1 alpha-2** (e.g. \"GB\"), NOT an MDM display-name\n      string. Supersedes the earlier D1 ruling (display name such as \"United Kingdom\").\n      Stored as-given with presence-only validation (cv-011); consumers resolve alpha-2 to a\n      display name in the frontend.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-021",
+      "statement": "The locked contract gives countryCode a maxLength of 2, but the generated spec (and so the running service) gives it only a minLength of 1.",
+      "kind": "constraint",
+      "ref": "docs/openapi/api-contract.locked.yaml:331-334; docs/openapi/operators.yml:322-326",
+      "quote": "countryCode:\n          type: string\n          maxLength: 2\n          minLength: 1",
+      "confidence": "verbatim",
+      "note": "The compliance test checks property names, not constraints, so this difference is not caught. Field constraints themselves are part 1's to claim."
+    },
+    {
+      "id": "repo-addressbook-p2-022",
+      "statement": "Create accepts a free-text phone value such as 'ring the office'.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:257-287, post_shouldAcceptCountryCodeAsGivenAndFreeStringPhone",
+      "quote": ".andExpect(jsonPath(\"$.phone\").value(\"ring the office\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-023",
+      "statement": "Create with a blank countryCode is rejected with 400 and a countryCode entry in the errors map, and nothing is saved.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:289-317, post_shouldReturn400_whenCountryCodeIsBlank",
+      "quote": ".andExpect(jsonPath(\"$.errors.countryCode\").exists());\n\n    assertThat(activeAddressesFor(ORGANISATION_ID)).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-024",
+      "statement": "Create with an invalid body (for example an empty addressLine1 and an invalid email) returns a 400 validation problem whose errors map is keyed by the camelCase field names, and nothing is saved.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:100-133, post_shouldReturn400ValidationProblemKeyedByCamelCaseFieldNames",
+      "quote": ".andExpect(jsonPath(\"$.errors.addressLine1\").exists())\n        .andExpect(jsonPath(\"$.errors.email\").exists())\n        .andExpect(jsonPath(\"$.errors.address_line_1\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-025",
+      "statement": "Create with malformed JSON returns a 400 bad-request problem with no errors map, and nothing is saved.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:135-150, post_shouldReturn400BadRequestProblem_whenJsonBodyIsMalformed; GlobalExceptionHandler.java:89-103",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/bad-request\"))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-026",
+      "statement": "The documented create responses are 201, 400 (validation error or missing identity header), 404 (path orgId does not match the caller's organisation header) and 500.",
+      "kind": "integration",
+      "ref": "docs/openapi/operators.yml:247-280",
+      "quote": "'400':\n          description: Validation error, or a missing identity header ... '404':\n          description: Path orgId does not match the caller's organisation header ... '500':\n          description: Unexpected server error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-027",
+      "statement": "In a non-production environment with an address time-to-live in days configured, a new address is given an internal expiry time that many days from now.",
+      "kind": "rule",
+      "ref": "OperatorService.java:119-149; OperatorServiceTest.java:112-127",
+      "quote": "Sets {@code expireAt} on a new address, but only when both prod safeguards pass: a TTL duration\n   * is configured (non-prod config) and the running environment is not prod.",
+      "confidence": "verbatim",
+      "note": "The expiry index and its config are outside this part; only the create-time stamp is claimed here."
+    },
+    {
+      "id": "repo-addressbook-p2-028",
+      "statement": "A new address gets no expiry time when no time-to-live is configured, or when the environment is prod even if one is configured.",
+      "kind": "rule",
+      "ref": "OperatorService.java:143-149; OperatorServiceTest.java:129-154",
+      "quote": "if (days == null || ttlConfig.isProd()) {\n      return;\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-029",
+      "statement": "The expiry time set at creation is kept unchanged by later updates and soft deletes, and an update never adds an expiry time to an address created without one.",
+      "kind": "rule",
+      "ref": "OperatorService.java:120-121; OperatorServiceTest.java:265-298; README.md:254",
+      "quote": "In non-prod it is given an\n   * {@code expireAt} (see {@link #stampExpiry}), which a later update or soft delete leaves as is.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-030",
+      "statement": "The expiry time is internal and is not returned on the wire.",
+      "kind": "data",
+      "ref": "README.md:254",
+      "quote": "When set, each new address gets an internal `expireAt` (not returned on the wire).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-031",
+      "statement": "Fetching one address by id returns 200 with the address, including a soft-deleted one.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:203-212 and 214-251",
+      "quote": "Fetches one address by id within the caller's organisation scope, tombstones included.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-032",
+      "statement": "A live address fetched by id returns every mapped field (id, name, addressLine1, townOrCity, postcode, countryCode, phone, email, organisationId, createdAt, modifiedAt) with deleted false.",
+      "kind": "behaviour",
+      "ref": "AddressGetIT.java:40-63, get_shouldReturn200WithAllMappedFields_whenAddressIsLive",
+      "quote": ".andExpect(jsonPath(\"$.organisationId\").value(ORGANISATION_ID))\n        .andExpect(jsonPath(\"$.createdAt\").exists())\n        .andExpect(jsonPath(\"$.modifiedAt\").exists())\n        .andExpect(jsonPath(\"$.deleted\").value(false));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-033",
+      "statement": "A soft-deleted address fetched by id returns 200 with deleted true, so the caller can detect that it was deleted.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:204-205; AddressGetIT.java:65-78, get_shouldReturn200WithDeletedTrue_whenAddressIsTombstoned",
+      "quote": "A DELETED\n   * address is returned with 200 and {@code deleted: true} so the caller can detect a deletion",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-034",
+      "statement": "Fetching an unknown id returns 404 as a not-found problem (type .../not-found, title 'Resource Not Found', status 404) with no errors map.",
+      "kind": "behaviour",
+      "ref": "AddressGetIT.java:80-93, get_shouldReturn404NotFoundProblem_whenIdIsUnknown",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"))\n        .andExpect(jsonPath(\"$.title\").value(\"Resource Not Found\"))\n        .andExpect(jsonPath(\"$.status\").value(404))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-035",
+      "statement": "Fetching an id that belongs to another organisation returns the same 404 as an unknown id, so the existence of another organisation's address is never disclosed.",
+      "kind": "rule",
+      "ref": "OperatorService.java:151-163; OperatorServiceTest.java:187-198",
+      "quote": "An id outside the caller's\n   * organisation is indistinguishable from an unknown id: both are empty, so 404 leaks no existence\n   * across organisations (cv-010).",
+      "confidence": "verbatim",
+      "note": "The byte-identical cross-organisation 404 test (AddressScopingIT) is part 4's."
+    },
+    {
+      "id": "repo-addressbook-p2-036",
+      "statement": "A 404 from the service is not a deletion signal: only a 200 with deleted true means the user deleted the address.",
+      "kind": "rule",
+      "ref": "OperatorController.java:206-207; README.md:239-241; api-contract.locked.yaml:15-16",
+      "quote": "A 404 is therefore NOT a deletion signal: only the tombstone is.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-037",
+      "statement": "Outside prod, a 404 for an address id can also mean the address has expired and been removed.",
+      "kind": "behaviour",
+      "ref": "README.md:239-240",
+      "quote": "Outside prod it can also mean the address has expired (see below).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-038",
+      "statement": "The documented get-one responses are 200, 404 (unknown id or an id outside the caller's organisation) and 500; no 400 is documented for it.",
+      "kind": "integration",
+      "ref": "docs/openapi/operators.yml:34-52",
+      "quote": "'200':\n          description: The address (deleted false or true) ... '404':\n          description: Unknown id, or an id outside the caller's organisation scope",
+      "confidence": "verbatim",
+      "note": "Every other operation documents a 400 for a missing org header; GET by id does not, although the header filter applies to it too."
+    },
+    {
+      "id": "repo-addressbook-p2-039",
+      "statement": "Update is a full replace of the address's mutable fields, not a partial update: an optional field left out of the body (addressLine2, county) is cleared.",
+      "kind": "rule",
+      "ref": "AddressUpdateIT.java:22-25 and 62-95, put_shouldReplaceAllFieldsAndClearOmittedOptionals_whenBodyIsValid",
+      "quote": "Omitted optionals are\n * cleared (not PATCH semantics).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-040",
+      "statement": "A successful update returns 200 with the updated address.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:263 and 268-274",
+      "quote": "@return 200 with the updated address and its bumped {@code modifiedAt}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-041",
+      "statement": "Update applies every field in the request: name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email.",
+      "kind": "behaviour",
+      "ref": "OperatorServiceTest.java:229-263, update_appliesAllRequestFieldValuesAndPreservesTheServerOwnedFields",
+      "quote": "assertThat(updated.getAddressLine2()).isEqualTo(\"Suite 5\");\n    assertThat(updated.getTownOrCity()).isEqualTo(\"Perth\");\n    assertThat(updated.getCounty()).isEqualTo(\"Perth and Kinross\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-042",
+      "statement": "An update can never change the server-owned fields: id, organisationId, status and createdAt are kept from the stored address.",
+      "kind": "rule",
+      "ref": "OperatorService.java:166-171; OperatorServiceTest.java:229-263",
+      "quote": "The\n   * wire can never move the server-owned fields: {@code id}, {@code organisationId}, {@code status}\n   * and {@code createdAt} are all preserved from the stored entity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-043",
+      "statement": "A successful update bumps modifiedAt and leaves createdAt unchanged; modifiedAt is for audit only.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:254-255; AddressUpdateIT.java:181-205, put_shouldBumpModifiedAtAndPreserveCreatedAt_whenReplaceSucceeds",
+      "quote": "{@code modifiedAt} is bumped\n   * on success (audit only).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-044",
+      "statement": "Update runs the same validation as create: an invalid body returns a 400 validation problem with per-field errors and leaves the stored address untouched.",
+      "kind": "rule",
+      "ref": "AddressUpdateIT.java:23-24 and 97-135, put_shouldReturn400PerFieldErrorsAndLeaveRowUntouched_whenBodyIsInvalid",
+      "quote": "Same validation as create; tombstones and unknown/cross-org ids\n * return 404.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-045",
+      "statement": "Update with an empty request body returns a 400 bad-request problem with no errors map.",
+      "kind": "rule",
+      "ref": "AddressCrudIT.java:152-180, put_shouldReturn400BadRequestProblem_whenJsonBodyIsEmpty",
+      "quote": ".content(\"\"))\n        .andExpect(status().isBadRequest())\n        .andExpect(header().string(\"Content-Type\", MediaType.APPLICATION_PROBLEM_JSON_VALUE))\n        .andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/bad-request\"))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-046",
+      "statement": "Updating an unknown id returns a 404 not-found problem.",
+      "kind": "behaviour",
+      "ref": "AddressUpdateIT.java:137-148, put_shouldReturn404_whenIdIsUnknown",
+      "quote": ".andExpect(status().isNotFound())\n        .andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-047",
+      "statement": "Updating an id that belongs to another organisation returns 404, the same as an unknown id.",
+      "kind": "rule",
+      "ref": "OperatorService.java:170-171; OperatorServiceTest.java:312-321, update_ofACrossOrgIdIs404BecauseTheStoreReturnsEmpty",
+      "quote": "An unknown id, an id owned by another organisation, or a\n   * soft-deleted tombstone are all outside the caller's live set and yield a 404.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-048",
+      "statement": "Updating a soft-deleted address returns a 404 not-found problem with no errors map: a deleted address cannot be edited.",
+      "kind": "rule",
+      "ref": "OperatorService.java:183; AddressUpdateIT.java:150-179, put_shouldReturn404_whenTargetIsTombstone; AddressCrudIT.java:388-395",
+      "quote": ".filter(address -> address.getStatus() != AddressStatus.DELETED)\n            .orElseThrow(() -> new NotFoundException(\"Address not found\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-049",
+      "statement": "An update that collides with a concurrent change to the same address returns 409 as a conflict problem (type .../conflict, title 'Conflict').",
+      "kind": "behaviour",
+      "ref": "AddressUpdateIT.java:207-226, put_shouldReturn409ConflictProblem_whenOptimisticLockingFails; docs/openapi/operators.yml:104-109",
+      "quote": "'409':\n          description: Concurrent update conflict",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-050",
+      "statement": "Each address carries a version, so a write based on a stale copy of the address is rejected after another write has changed it.",
+      "kind": "rule",
+      "ref": "AddressUpdateIT.java:228-249, put_shouldRejectStaleVersion_whenRowWasUpdatedConcurrently",
+      "quote": "// Given — snapshot before another writer bumps @Version (same pattern as delete IT)",
+      "confidence": "verbatim",
+      "note": "The @Version field is on the Address entity, part 1's file; this test proves it from the store's side, not through the API."
+    },
+    {
+      "id": "repo-addressbook-p2-051",
+      "statement": "A deleted address cannot be brought back by a stale write made after the delete: the write is rejected and the address stays deleted.",
+      "kind": "rule",
+      "ref": "AddressUpdateIT.java:251-275 and AddressDeleteIT.java:187-211, put_/delete_shouldPreventTombstoneResurrection_whenStaleSaveFollowsDelete",
+      "quote": "stale.setName(\"Resurrected\");\n    stale.setStatus(AddressStatus.ACTIVE);\n\n    // Then\n    assertThatThrownBy(() -> repository.save(stale))\n        .isInstanceOf(OptimisticLockingFailureException.class);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-052",
+      "statement": "The documented update responses are 200, 400 (validation error or missing org header), 404 (unknown id, another organisation's id, or a tombstone), 409 (concurrent update conflict) and 500.",
+      "kind": "integration",
+      "ref": "docs/openapi/operators.yml:82-115",
+      "quote": "'404':\n          description: Unknown id, an id outside the caller's organisation scope, or a tombstone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-053",
+      "statement": "Delete is a soft delete: the address is not removed, its internal status flips to DELETED and modifiedAt is bumped.",
+      "kind": "rule",
+      "ref": "OperatorController.java:320-321; OperatorService.java:193-198; README.md:235-237",
+      "quote": "`DELETE /organisation/{orgId}/addresses/{operator-id}` is a **soft delete**: the document stays in MongoDB,\nits internal `status` flips to `DELETED`, and `modifiedAt` is bumped.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-054",
+      "statement": "A successful delete returns 204 No Content.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java:334 and 365; AddressDeleteIT.java:49-72",
+      "quote": "@ApiResponse(responseCode = \"204\", description = \"Soft-deleted (or already deleted — idempotent)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-055",
+      "statement": "Deleting keeps the address's createdAt unchanged and moves modifiedAt later.",
+      "kind": "behaviour",
+      "ref": "AddressDeleteIT.java:49-72, delete_shouldReturn204AndTombstoneRow_whenAddressIsLive",
+      "quote": "assertThat(address.getCreatedAt().toEpochMilli()).isEqualTo(createdAt.toEpochMilli());\n              assertThat(address.getModifiedAt()).isAfter(modifiedAtBeforeDelete);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-056",
+      "statement": "The service keeps deleted addresses as tombstones so a consumer can tell 'deleted' (200 with deleted true) from 'unknown or not yours' (404); a hard delete would make deletion undetectable.",
+      "kind": "rule",
+      "ref": "OperatorService.java:196-198",
+      "quote": "The tombstone stays fetchable by id so a consumer can tell \"deleted\" (200 +\n   * DELETED) from \"unknown or not yours\" (404); a hard delete would collapse both into a 404 and\n   * make deletion undetectable.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-057",
+      "statement": "After a delete, the address no longer appears in the list, but fetching it by id still returns 200 with deleted true.",
+      "kind": "behaviour",
+      "ref": "AddressDeleteIT.java:74-101, delete_shouldExcludeFromListAndFlagDeletedOnGet_whenAddressIsTombstoned; AddressCrudIT.java:379-386",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(0))\n        .andExpect(jsonPath(\"$.items\").isEmpty());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-058",
+      "statement": "Deleting an already-deleted address is idempotent: it returns 204, nothing is saved again and modifiedAt is not bumped a second time.",
+      "kind": "rule",
+      "ref": "OperatorService.java:200-202 and 214-216; AddressDeleteIT.java:103-134; AddressCrudIT.java:397-411; OperatorServiceTest.java:341-356",
+      "quote": "Idempotent: deleting an address that is already a tombstone is a no-op — no re-save, so\n   * {@code modifiedAt} is not bumped a second time and the state is unchanged.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-059",
+      "statement": "Deleting an unknown id returns a 404 not-found problem.",
+      "kind": "behaviour",
+      "ref": "AddressDeleteIT.java:136-147, delete_shouldReturn404NotFoundProblem_whenIdIsUnknown",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"))\n        .andExpect(jsonPath(\"$.status\").value(404));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-060",
+      "statement": "Deleting another organisation's address returns 404 and leaves that address active, whether the caller uses their own organisation in the path or mismatches the path and header.",
+      "kind": "rule",
+      "ref": "AddressDeleteIT.java:149-185, delete_shouldReturn404AndLeaveRowActive_whenCrossOrgPathUsed and _whenHeaderOrgMismatchesPath",
+      "quote": ".andExpect(status().isNotFound());\n\n    // Then\n    assertThat(repository.findByIdAndOrganisationId(saved.getId(), ORGANISATION_ID))\n        .get()\n        .extracting(Address::getStatus)\n        .isEqualTo(AddressStatus.ACTIVE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-061",
+      "statement": "In the user interface, delete is reached only through a delete-confirmation page.",
+      "kind": "rule",
+      "ref": "OperatorController.java:324-325",
+      "quote": "The\n   * UI reaches this only via the delete-confirmation page.",
+      "confidence": "verbatim",
+      "note": "Stated by the backend about its consumer; the confirmation page itself is in the frontend."
+    },
+    {
+      "id": "repo-addressbook-p2-062",
+      "statement": "The documented delete responses are 204, 400 (missing org header), 404 (unknown id or another organisation's id) and 500; no 409 is documented for delete.",
+      "kind": "integration",
+      "ref": "docs/openapi/operators.yml:139-159",
+      "quote": "'204':\n          description: Soft-deleted (or already deleted — idempotent)\n        '400':\n          description: Missing org header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-063",
+      "statement": "A delete that collides with a concurrent change would surface as a 409 conflict problem, because delete saves through the same versioned store and the conflict handler is global, but the contract does not document a 409 for delete.",
+      "kind": "behaviour",
+      "ref": "OperatorService.java:218-219; GlobalExceptionHandler.java:105-119; docs/openapi/operators.yml:139-159",
+      "quote": "existing.setStatus(AddressStatus.DELETED);\n    repository.save(existing);",
+      "confidence": "inferred",
+      "note": "Inferred from the code paths; no test exercises a concurrent delete through the API."
+    },
+    {
+      "id": "repo-addressbook-p2-064",
+      "statement": "The service has no operation to restore (undelete) a soft-deleted address, and update refuses a tombstone, so a deletion cannot be reversed through the API.",
+      "kind": "behaviour",
+      "ref": "OperatorController.java (five handlers only); docs/openapi/operators.yml paths",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the controller, service and both OpenAPI documents: no restore path exists. Recorded so the reconciler can weigh whether one is needed."
+    },
+    {
+      "id": "repo-addressbook-p2-065",
+      "statement": "The address's internal status is never on the wire; the response exposes a derived deleted boolean instead.",
+      "kind": "data",
+      "ref": "README.md:140; OperatorComplianceIT.java:82-84",
+      "quote": "Soft-deleted addresses expose `deleted: true` on read; the internal `status` enum is not on the wire.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-066",
+      "statement": "Ruling cv-016: deleted is a boolean that is true when the address has been soft-deleted.",
+      "kind": "rule",
+      "ref": "docs/openapi/operators.yml:385-387; OperatorComplianceIT.java:82",
+      "quote": "deleted:\n          type: boolean\n          description: True when the address has been soft-deleted (cv-016)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-067",
+      "statement": "The single-address response (OperatorResponse) has the fields id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:347-395",
+      "quote": "OperatorResponse:\n      description: An address in the caller's organisation-scoped address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-068",
+      "statement": "In the response, every field is required except addressLine2 and county.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:396-408",
+      "quote": "required:\n      - addressLine1\n      - countryCode\n      - createdAt\n      - deleted\n      - email\n      - id\n      - modifiedAt\n      - name\n      - organisationId\n      - phone\n      - postcode\n      - townOrCity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-069",
+      "statement": "The address id is an opaque identifier (for example 665f1c2ab3e4d51a2c9d0e77).",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:350-353",
+      "quote": "description: Opaque address identifier\n          example: 665f1c2ab3e4d51a2c9d0e77",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-070",
+      "statement": "createdAt and modifiedAt are UTC date-time timestamps.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:388-395",
+      "quote": "description: Creation timestamp (UTC) ... description: Last modification timestamp (UTC)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-071",
+      "statement": "The response carries no retired typed fields (operatorType, transporterCategory) and no snake_case forms of field names.",
+      "kind": "data",
+      "ref": "OperatorComplianceIT.java:85-87 and 161-171, createAndReadEmitCamelCasePropertiesAndADerivedDeletedBoolean",
+      "quote": ".andExpect(jsonPath(\"$.address_line_1\").doesNotExist())\n        .andExpect(jsonPath(\"$.operatorType\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-072",
+      "statement": "Ruling cv-001: the wire is camelCase, so a validation error-map key is the rejected field's name exactly as on the wire (for example addressLine1).",
+      "kind": "rule",
+      "ref": "GlobalExceptionHandler.java:34-35",
+      "quote": "The wire is camelCase (cv-001), so an error-map key is the rejected field's Java name\n * verbatim ({@code addressLine1}) — the same name the frontend error mapping expects.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-073",
+      "statement": "Every error response is an RFC 9457 problem with content type application/problem+json.",
+      "kind": "constraint",
+      "ref": "GlobalExceptionHandler.java:20-22 and 168-171",
+      "quote": "Global exception handler producing RFC 9457 {@code application/problem+json} responses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-074",
+      "statement": "A problem body has type, title and status (required), and detail and traceId (optional); empty fields are left out.",
+      "kind": "data",
+      "ref": "exceptions/Problem.java:10-17; docs/openapi/operators.yml:434-451",
+      "quote": "@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type,\n    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String title,\n    @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Integer status,\n    String detail,\n    String traceId) {}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-075",
+      "statement": "A validation problem body has the same fields as a problem plus a required errors map from field name to a list of messages.",
+      "kind": "data",
+      "ref": "exceptions/ValidationProblem.java:8-20; docs/openapi/operators.yml:409-433",
+      "quote": "RFC 9457 validation problem body with a per-field camelCase {@code errors} map.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-076",
+      "statement": "Problem types are URIs under https://api.cdp.defra.cloud/problems/ (the CDP problem family).",
+      "kind": "constraint",
+      "ref": "GlobalExceptionHandler.java:42",
+      "quote": "private static final String PROBLEM_BASE = \"https://api.cdp.defra.cloud/problems/\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-077",
+      "statement": "Ruling cv-040: problem bodies omit the instance field, because a request URI would leak path ids and break the rule that a cross-organisation 404 is indistinguishable from an unknown id.",
+      "kind": "rule",
+      "ref": "GlobalExceptionHandler.java:30-32",
+      "quote": "Responses use the {@link Problem} / {@link ValidationProblem} records rather than Spring's\n * {@code ProblemDetail} so the wire body omits {@code instance} — a request-scoped URI would leak\n * path ids and break the cross-org 404 indistinguishability contract (cv-040).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-078",
+      "statement": "Ruling cv-040 (with cv-010): a caller from another organisation gets 404, never 403, so the API does not disclose that another organisation's addresses exist.",
+      "kind": "rule",
+      "ref": "OperatorController.java:36-41 and 55-58",
+      "quote": "A\n   * mismatch throws {@link NotFoundException} &rarr; 404 (never 403): the API must not disclose that\n   * another organisation's addresses exist (cv-040).",
+      "confidence": "verbatim",
+      "note": "The guard itself is part 4's; claimed here because it is the 404 every single-address operation returns."
+    },
+    {
+      "id": "repo-addressbook-p2-079",
+      "statement": "A field-validation failure maps to 400 with type .../validation-error, title 'Validation Error', detail 'Validation failed for one or more fields' and an errors map.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:44-67",
+      "quote": "PROBLEM_BASE + \"validation-error\",\n            \"Validation Error\",\n            HttpStatus.BAD_REQUEST.value(),\n            \"Validation failed for one or more fields\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-080",
+      "statement": "When one field fails several validation rules, its entry in the errors map lists every message in order.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:51-56; GlobalExceptionHandlerTest.java:73-85, handleValidationException_shouldCollapseMultipleMessagesForOneFieldIntoAList",
+      "quote": "assertThat(response.getBody().errors().get(\"name\"))\n        .containsExactly(\"must not be blank\", \"size must be at most 255\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-081",
+      "statement": "Each errors-map message is the validation rule's own message text (for example 'Enter address line 1'), passed through unchanged.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:55; GlobalExceptionHandlerTest.java:40-71",
+      "quote": "assertThat(errors.get(\"addressLine1\")).containsExactly(\"Enter address line 1\");\n    assertThat(errors.get(\"email\")).containsExactly(\"Enter an email address\");",
+      "confidence": "verbatim",
+      "note": "The messages in this unit test are fixtures; the real per-field messages are in AddressRequest, part 1's file."
+    },
+    {
+      "id": "repo-addressbook-p2-082",
+      "statement": "Malformed JSON in a request body maps to 400 with type .../bad-request, title 'Bad Request', detail 'Malformed JSON request body' and no errors map.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:89-103; GlobalExceptionHandlerTest.java:191-209",
+      "quote": "\"bad-request\",\n            \"Bad Request\",\n            \"Malformed JSON request body\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-083",
+      "statement": "A request parameter of the wrong type maps to 400 bad-request with detail naming the parameter: Invalid value for parameter '<name>'.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:69-87; GlobalExceptionHandlerTest.java:171-189",
+      "quote": "\"Invalid value for parameter '\" + ex.getName() + \"'\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-084",
+      "statement": "A service-level bad request maps to 400 with type .../bad-request, title 'Bad Request', the exception's message as detail and no errors map.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:121-130; GlobalExceptionHandlerTest.java:87-109",
+      "quote": "problem(HttpStatus.BAD_REQUEST, \"bad-request\", \"Bad Request\", ex.getMessage(), traceId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-085",
+      "statement": "The two 400 shapes are deliberately distinct: a validation error carries an errors map and a bad request carries no errors key at all, which is why the contract declares the create and update 400 as anyOf(ValidationProblem, Problem), not oneOf.",
+      "kind": "constraint",
+      "ref": "GlobalExceptionHandler.java:24-28; GlobalExceptionHandlerTest.java:111-132; OperatorComplianceIT.java:186-188",
+      "quote": "The two 400 shapes are deliberately distinct and must not be conflated",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-086",
+      "statement": "A not-found maps to 404 with type .../not-found, title 'Resource Not Found' and the exception's message as detail.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:132-142; GlobalExceptionHandlerTest.java:134-153",
+      "quote": "HttpStatus.NOT_FOUND, \"not-found\", \"Resource Not Found\", ex.getMessage(), traceId));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-087",
+      "statement": "The detail of every 404 from the single-address operations is 'Address not found', whether the id is unknown, belongs to another organisation, is a tombstone being updated, or the path organisation mismatches the header.",
+      "kind": "copy",
+      "ref": "OperatorController.java:66 and 249; OperatorService.java:184 and 212",
+      "quote": "throw new NotFoundException(\"Address not found\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-088",
+      "statement": "A concurrent-update conflict maps to 409 with type .../conflict, title 'Conflict' and detail 'The resource was modified by another request'.",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:105-119; GlobalExceptionHandlerTest.java:211-226",
+      "quote": "\"conflict\",\n            \"Conflict\",\n            \"The resource was modified by another request\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-089",
+      "statement": "Any other unexpected error maps to 500 with type .../internal-error, title 'Internal Server Error' and detail 'An unexpected error occurred. Please try again later.'",
+      "kind": "copy",
+      "ref": "GlobalExceptionHandler.java:144-161; GlobalExceptionHandlerTest.java:155-169",
+      "quote": "\"internal-error\",\n            \"Internal Server Error\",\n            \"An unexpected error occurred. Please try again later.\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-090",
+      "statement": "A 500 problem never carries the underlying error message; the detail is always the fixed generic text.",
+      "kind": "non-functional",
+      "ref": "GlobalExceptionHandler.java:148-161",
+      "quote": "\"An unexpected error occurred. Please try again later.\",",
+      "confidence": "inferred",
+      "note": "Inferred because the handler logs ex.getMessage() but writes only the fixed detail to the body."
+    },
+    {
+      "id": "repo-addressbook-p2-091",
+      "statement": "Every problem carries the request's trace id as a camelCase traceId, taken from the x-cdp-request-id request header, and leaves traceId out when there is none.",
+      "kind": "non-functional",
+      "ref": "OperatorComplianceIT.java:112-146; GlobalExceptionHandlerTest.java:228-236",
+      "quote": ".header(\"x-cdp-request-id\", traceId))\n        .andExpect(status().isNotFound())\n        .andExpect(header().string(\"Content-Type\", MediaType.APPLICATION_PROBLEM_JSON_VALUE))\n        .andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/not-found\"))\n        .andExpect(jsonPath(\"$.traceId\").value(traceId))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-092",
+      "statement": "A request to a route that does not exist is answered by Spring's own 404, not the address-book not-found problem.",
+      "kind": "behaviour",
+      "ref": "GlobalExceptionHandler.java:144-147",
+      "quote": "Does not catch Spring framework exceptions (e.g. a 404\n   * for a missing route), which Spring maps itself.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-093",
+      "statement": "Address persistence offers only organisation-scoped lookups and save: there is no unscoped find-by-id or delete-by-id (ruling cv-010).",
+      "kind": "constraint",
+      "ref": "OperatorRepository.java:9-20",
+      "quote": "Organisation-scoped address persistence. Only declares org-scoped finders and {@code save} — no\n * unscoped {@code findById} / {@code deleteById} (cv-010).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-094",
+      "statement": "Get, update and delete all look an address up by id and organisation together, so an address is only ever found inside the caller's organisation.",
+      "kind": "rule",
+      "ref": "OperatorRepository.java:20; OperatorService.java:163, 182 and 211",
+      "quote": "Optional<Address> findByIdAndOrganisationId(String id, String organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-095",
+      "statement": "In production, addresses and their tombstones are kept indefinitely (about 1 KB each).",
+      "kind": "non-functional",
+      "ref": "README.md:245",
+      "quote": "In prod, addresses and tombstones are retained indefinitely (~1 KB each).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-096",
+      "statement": "The single-address operations are each timed as a metric (create, get, update and delete operator timers).",
+      "kind": "non-functional",
+      "ref": "OperatorController.java:186, 239, 307 and 357",
+      "quote": "@Timed(\"controller.createOperator.time\") ... @Timed(\"controller.getOperator.time\") ... @Timed(\"controller.updateOperator.time\") ... @Timed(\"controller.deleteOperator.time\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-097",
+      "statement": "The API is locked by a hand-authored contract (api-contract.locked.yaml) and a committed generated spec (operators.yml); a build fails if the generated spec is stale or if paths, methods, operationIds, parameter names or schema property names diverge from the lock.",
+      "kind": "constraint",
+      "ref": "README.md:209-227; OperatorComplianceIT.java:191-238, apiDocsMatchTheCommittedArtifactAndTheLockedContract",
+      "quote": "`OperatorComplianceIT` fails the build if `operators.yml` is stale against live `/v3/api-docs`, or\nif paths, HTTP methods, operationIds, or component schema property names diverge from the locked contract.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-098",
+      "statement": "The contract lock pins the request schema to exactly the locked property names, with no operatorType or transporterCategory, and the response schema to include deleted and exclude status.",
+      "kind": "constraint",
+      "ref": "OperatorComplianceIT.java:150-189, apiDocsCarryTheWholeCamelCaseAndAnyOfContractSurface",
+      "quote": "assertThat(requestProps).doesNotContainKeys(\"operatorType\", \"transporterCategory\");\n    Map<String, Object> responseProps =\n        (Map<String, Object>) nested(schemas, \"OperatorResponse\", \"properties\");\n    assertThat(responseProps).doesNotContainKey(\"status\");\n    assertThat(responseProps).containsKey(\"deleted\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-099",
+      "statement": "The contract lock checks only names, not field constraints or descriptions, so differences such as countryCode maxLength and the Location header wording are not caught by the build.",
+      "kind": "constraint",
+      "ref": "OperatorComplianceIT.java:206-237",
+      "quote": "// divergence gate: paths, methods, operationIds and schema property names",
+      "confidence": "inferred",
+      "note": "Inferred from what the divergence gate compares; see claims repo-addressbook-p2-008 and repo-addressbook-p2-021."
+    },
+    {
+      "id": "repo-addressbook-p2-100",
+      "statement": "The generated contract and Swagger UI are served only under the local profile and are disabled by default.",
+      "kind": "constraint",
+      "ref": "README.md:229-231",
+      "quote": "`/v3/api-docs` and Swagger UI are enabled only under the `local` profile\n(see [application-local.yml](src/main/resources/application-local.yml)); they are disabled in the\ndefault configuration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-101",
+      "statement": "Create, get, update and delete together round-trip one address: create gives 201, get shows it live, update changes it, delete gives 204, get then shows the tombstone, update on the tombstone gives 404 and a repeat delete gives 204 with no state change.",
+      "kind": "behaviour",
+      "ref": "AddressCrudIT.java:319-412, crudRoundTrip_shouldCreateGetPutDeleteAndIdempotentRepeatDelete",
+      "quote": "void crudRoundTrip_shouldCreateGetPutDeleteAndIdempotentRepeatDelete()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-102",
+      "statement": "Integration tests run against a real MongoDB in a container, with no mocks.",
+      "kind": "non-functional",
+      "ref": "README.md:200-207",
+      "quote": "Full build including integration tests (Testcontainers MongoDB — no mocks):",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p2-103",
+      "statement": "Nothing in the single-address operations records who created, changed or deleted an address: only createdAt and modifiedAt timestamps are kept.",
+      "kind": "data",
+      "ref": "docs/openapi/operators.yml:347-395 (OperatorResponse); OperatorService.java:127-221",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the response schema, the service and the controller: no user or actor field on create, update or delete. Recorded because the source's role covers what the real persistence can and cannot express."
+    },
+    {
+      "id": "repo-addressbook-p3-001",
+      "statement": "The address book lists an organisation's addresses with GET /organisation/{orgId}/addresses.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:44,84-87",
+      "quote": "@RequestMapping(\"/organisation/{orgId}/addresses\") ... @GetMapping\n  @Operation(\n      operationId = \"list-addresses\",\n      summary = \"List the caller's ACTIVE addresses (paginated, searchable)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-002",
+      "statement": "The list operation requires the Trade-Imports-Organisation-Id header, and the path orgId must match it before any listing happens.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:119-129",
+      "quote": "@RequestHeader(IdentityHeaderFilter.ORGANISATION_ID_HEADER) String sessionOrg, ... authoriseOrg(orgId, sessionOrg);",
+      "confidence": "verbatim",
+      "note": "How the header is enforced is part 4's; claimed here only as a precondition of the list."
+    },
+    {
+      "id": "repo-addressbook-p3-003",
+      "statement": "A list request whose path orgId does not match the caller's organisation header returns 404 as a problem response.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:103-109; docs/openapi/operators.yml:211-216",
+      "quote": "'404':\n          description: Path orgId does not match the caller's organisation header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-004",
+      "statement": "The list searches using the organisation id taken from the caller's header, so it only ever returns that organisation's addresses.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:131",
+      "quote": "return operatorService.list(sessionOrg, page, q, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-005",
+      "statement": "The list takes an optional page query parameter: a 1-based page number that defaults to 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:122-126; docs/openapi/operators.yml:179-187",
+      "quote": "description = \"1-based page number\",\n              schema = @Schema(type = \"integer\", format = \"int32\", minimum = \"1\", defaultValue = \"1\"))\n          @RequestParam(defaultValue = \"1\")\n          int page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-006",
+      "statement": "The list takes an optional q query parameter: a free-text search term.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:127; docs/openapi/operators.yml:188-192",
+      "quote": "@RequestParam(required = false) String q,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-007",
+      "statement": "The list takes an optional countryCode query parameter: an ISO 3166-1 alpha-2 country code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:81,128",
+      "quote": "@param countryCode optional ISO alpha-2 country code (FE-resolved, cv-048)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-008",
+      "statement": "Ruling cv-048: the countryCode filter value is resolved by the frontend, so the address book receives a country code rather than a country name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:81; OperatorService.java:64",
+      "quote": "cv-048: \"optional ISO alpha-2 country code (FE-resolved, cv-048)\"",
+      "confidence": "verbatim",
+      "note": "No ruling ledger file exists in the repo; this is the ruling's only wording, in Javadoc."
+    },
+    {
+      "id": "repo-addressbook-p3-009",
+      "statement": "The list takes no page-size parameter: the page size is set on the server, defaulting to 25.",
+      "kind": "rule",
+      "ref": "README.md: API overview, Wire conventions; docs/openapi/api-contract.locked.yaml:20",
+      "quote": "Page size is server-configured (default **25** via `address-book.list.page-size`), not a request parameter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-010",
+      "statement": "Ruling cv-025: the page size is a server-side configuration, not a request parameter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:73-74; OperatorPageResponse.java:27",
+      "quote": "cv-025: \"The page size is a server-side config (cv-025),\n   * not a request parameter.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-011",
+      "statement": "The page size is read from the address-book.list.page-size setting and is 25 when that setting is absent; application.yml does not set it, so the running service uses 25.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:44",
+      "quote": "@Value(\"${address-book.list.page-size:25}\") int pageSize",
+      "confidence": "inferred",
+      "note": "The absence from application.yml was checked with a grep for a list: key, which found none."
+    },
+    {
+      "id": "repo-addressbook-p3-012",
+      "statement": "A page number below 1 is rejected as a bad request with the detail \"page must be 1 or greater\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:69-71",
+      "quote": "if (page < 1) {\n      throw new BadRequestException(\"page must be 1 or greater\");\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-013",
+      "statement": "An out-of-range or non-numeric page returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:71-73,96-102",
+      "quote": "an out-of-range or non-numeric value is a 400\n   * bad-request problem with no {@code errors} map.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-014",
+      "statement": "The list's 400 response covers an out-of-range page, a non-numeric page, and a missing organisation header.",
+      "kind": "behaviour",
+      "ref": "docs/openapi/operators.yml:205-210",
+      "quote": "'400':\n          description: An out-of-range or non-numeric page, or a missing org header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-015",
+      "statement": "An unexpected failure while listing returns 500 as a problem response.",
+      "kind": "behaviour",
+      "ref": "docs/openapi/operators.yml:217-222",
+      "quote": "'500':\n          description: Unexpected server error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-016",
+      "statement": "Every list error response is served as application/problem+json.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:205-222",
+      "quote": "application/problem+json:\n              schema:\n                $ref: '#/components/schemas/Problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-017",
+      "statement": "A page number beyond the last page returns 200 with an empty items list, the requested page number and the real totals, not an error.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:227-243",
+      "quote": ".param(\"page\", \"3\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.items\").isEmpty())\n        .andExpect(jsonPath(\"$.page\").value(3))\n        .andExpect(jsonPath(\"$.totalItems\").value(30))\n        .andExpect(jsonPath(\"$.totalPages\").value(2));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-018",
+      "statement": "The list response is a top-level object with items and pagination metadata, never a bare array.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:7,15; README.md: Wire conventions",
+      "quote": "List responses are a top-level object (`items`, `page`, `pageSize`, `totalItems`, `totalPages`),\n  never a bare array.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-019",
+      "statement": "The page response field items holds the addresses on this page, each in the single-address response shape, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:17-20; docs/openapi/operators.yml:455-459",
+      "quote": "description = \"Addresses on this page\",\n            requiredMode = Schema.RequiredMode.REQUIRED)\n        List<OperatorResponse> items,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-020",
+      "statement": "The page response field page is the current 1-based page number, at least 1, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:21-25",
+      "quote": "description = \"Current 1-based page number\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"1\")\n        int page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-021",
+      "statement": "The page response field pageSize is the server-configured page size, at least 1, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:26-30",
+      "quote": "description = \"Server-configured page size (cv-025)\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"1\")\n        int pageSize,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-022",
+      "statement": "The page response field totalItems is the total number of matching addresses across all pages, at least 0, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:31-35",
+      "quote": "description = \"Total number of matching addresses\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"0\")\n        int totalItems,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-023",
+      "statement": "The page response field totalPages is the total number of pages, at least 0, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:36-40",
+      "quote": "description = \"Total number of pages\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"0\")\n        int totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-024",
+      "statement": "The page response echoes the page number the caller asked for, not one derived from the result.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:84-85",
+      "quote": "return new OperatorPageResponse(\n          items, page, pageSize, (int) result.getTotalElements(), result.getTotalPages());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-025",
+      "statement": "The page response fields are camelCase on the wire.",
+      "kind": "constraint",
+      "ref": "README.md: Wire conventions; OperatorPageResponse.java:7-9",
+      "quote": "JSON properties are **camelCase** (e.g. `addressLine1`, `countryCode`, `pageSize`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-026",
+      "statement": "The list returns only ACTIVE addresses: soft-deleted addresses (tombstones) never appear in it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:53-55",
+      "quote": "One page of the organisation's ACTIVE addresses, newest first. Scoped to {@code organisationId};\n   * DELETED tombstones are excluded because the query pins {@code status ACTIVE}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-027",
+      "statement": "Every list path, plain, q, countryCode or both, is pinned to the ACTIVE status and the caller's organisation.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:22-48; OperatorService.java:96-112",
+      "quote": "\"{ 'organisationId': ?0, 'status': ?1, ...\" ... AddressStatus.ACTIVE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-028",
+      "statement": "The list is sorted newest first by creation time.",
+      "kind": "behaviour",
+      "ref": "README.md: API overview table; OperatorService.java:56-57,77",
+      "quote": "| `GET` | `/organisation/{orgId}/addresses` | Paginated list of ACTIVE addresses (newest first) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-029",
+      "statement": "Addresses created at the same moment are ordered by id, descending, so the order is stable from page to page.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:77",
+      "quote": "Sort.by(Sort.Direction.DESC, \"createdAt\").and(Sort.by(Sort.Direction.DESC, \"id\"))",
+      "confidence": "verbatim",
+      "note": "That this makes paging stable is inferred from the tie-break; the code states only the sort."
+    },
+    {
+      "id": "repo-addressbook-p3-030",
+      "statement": "Search results use the same newest-first order as the plain list; the caller cannot choose a sort order.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:73-81",
+      "quote": "Pageable pageable =\n        PageRequest.of(\n            page - 1,\n            pageSize,\n            Sort.by(Sort.Direction.DESC, \"createdAt\")...",
+      "confidence": "inferred",
+      "note": "One pageable is built before the search path is chosen, and the endpoint has no sort parameter."
+    },
+    {
+      "id": "repo-addressbook-p3-031",
+      "statement": "The list read is served by the org_status_created index.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:56-57",
+      "quote": "the sort is {@code createdAt} descending, served by the\n   * {@code org_status_created} index.",
+      "confidence": "verbatim",
+      "note": "The index itself is part 1's (Address entity, README Indexes)."
+    },
+    {
+      "id": "repo-addressbook-p3-032",
+      "statement": "The q search matches the address's name, town or city, and postcode, and no other field.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:25-29; README.md: List query parameters",
+      "quote": "| `q` | Case-insensitive partial search over `name`, `townOrCity`, and `postcode` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-033",
+      "statement": "The q search does not match address line 1, address line 2, county, phone or email.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:25-29; AddressSearchIT.java:48-65",
+      "quote": "{ 'name': { '$regex': ?2, '$options': 'i' } }, { 'townOrCity': { '$regex': ?2, '$options': 'i' } }, { 'postcode': { '$regex': ?2, '$options': 'i' } }",
+      "confidence": "inferred",
+      "note": "Follows from the three fields the query names; AddressSearchIT proves it for addressLine1 only."
+    },
+    {
+      "id": "repo-addressbook-p3-034",
+      "statement": "The q search is case-insensitive.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:27-29",
+      "quote": "'$options': 'i'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-035",
+      "statement": "The q search is a partial match: the term can appear anywhere in a field, including inside a word.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:115-117",
+      "quote": "return \".*\" + Pattern.quote(q.trim()) + \".*\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-036",
+      "statement": "The q term is matched literally: characters with special meaning in a pattern are treated as plain text.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116",
+      "quote": "Pattern.quote(q.trim())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-037",
+      "statement": "A q term of several words is matched as one phrase, not as separate words.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116; AddressSearchIT.java:84-113",
+      "quote": ".param(\"q\", \"green valley\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "inferred",
+      "note": "The whole trimmed term is quoted as one literal; the test only proves a contiguous phrase matches, not that out-of-order words fail."
+    },
+    {
+      "id": "repo-addressbook-p3-038",
+      "statement": "Leading and trailing spaces are trimmed from q before searching.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116",
+      "quote": "Pattern.quote(q.trim())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-039",
+      "statement": "A blank or whitespace-only q is ignored, and the list is returned unfiltered by text.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:93,96-99",
+      "quote": "boolean hasQuery = q != null && !q.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-040",
+      "statement": "The countryCode filter matches the stored country code exactly.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:33-35",
+      "quote": "@Query(\"{ 'organisationId': ?0, 'status': ?1, 'countryCode': ?2 }\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-041",
+      "statement": "The countryCode filter is case-sensitive: a lower-case code does not match an upper-case stored code.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:33,42",
+      "quote": "'countryCode': ?2",
+      "confidence": "inferred",
+      "note": "An equality match with no case option; country codes are stored as given (cv-011, part 1). No test covers a lower-case filter."
+    },
+    {
+      "id": "repo-addressbook-p3-042",
+      "statement": "Leading and trailing spaces are trimmed from countryCode before filtering.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:103,112",
+      "quote": "countryCode.trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-043",
+      "statement": "A blank or whitespace-only countryCode is ignored, and the list is returned unfiltered by country.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:94,96-99",
+      "quote": "boolean hasCountryCode = countryCode != null && !countryCode.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-044",
+      "statement": "When q and countryCode are both given they combine with OR: an address is listed if the term matches its name, town or city, or postcode, or if its country code equals the filter.",
+      "kind": "rule",
+      "ref": "README.md: List query parameters; docs/openapi/api-contract.locked.yaml:18; OperatorRepository.java:37-42",
+      "quote": "| `countryCode` | When combined with `q`, matches addresses where **either** the search term appears in `name`/`townOrCity`/`postcode` **or** the stored `countryCode` equals this value (OR semantics, not AND) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-045",
+      "statement": "The locked contract fixes OR semantics for q with countryCode.",
+      "kind": "rule",
+      "ref": "docs/openapi/api-contract.locked.yaml:18",
+      "quote": "**Search:** `q` and `countryCode` combine with OR semantics when both are supplied.",
+      "confidence": "verbatim",
+      "note": "Because of the OR, adding a countryCode to a text search widens the results rather than narrowing them. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p3-046",
+      "statement": "There is no filter on address type or usage in the list: the only filters are q and countryCode.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:119-128; docs/openapi/operators.yml:168-197",
+      "quote": "int page,\n      @RequestParam(required = false) String q,\n      @RequestParam(required = false) String countryCode)",
+      "confidence": "inferred",
+      "note": "Consistent with cv-044 (the address book is untyped and unroled), which another part claims."
+    },
+    {
+      "id": "repo-addressbook-p3-047",
+      "statement": "The list totals and page count reflect the search: totalItems counts only the matching addresses.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:81-85; AddressSearchIT.java:60-62",
+      "quote": "Page<Address> result = queryPage(organisationId, q, countryCode, pageable);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-048",
+      "statement": "The list request is logged with the page, whether a search term was given (not the term itself), and the country code.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:130",
+      "quote": "log.info(\"GET addresses - page {}, q present {}, countryCode {}\", page, q != null, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-049",
+      "statement": "The list endpoint and its database query are each timed as metrics.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:118; OperatorService.java:79-88",
+      "quote": "@Timed(\"controller.listOperators.time\") ... meterRegistry.timer(\"controller.listOperators.query.time\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-050",
+      "statement": "The locked contract does not state a minimum for page, while the generated contract states minimum 1.",
+      "kind": "constraint",
+      "ref": "docs/openapi/api-contract.locked.yaml:200-206; docs/openapi/operators.yml:179-187",
+      "quote": "- name: page\n        in: query\n        required: false\n        schema:\n          type: integer\n          format: int32\n          default: 1",
+      "confidence": "verbatim",
+      "note": "Both contracts agree on the default; the server rejects page below 1 either way."
+    },
+    {
+      "id": "repo-addressbook-p3-051",
+      "statement": "Tested: with 30 addresses, page 1 returns 25 items, page 1, pageSize 25, totalItems 30, totalPages 2, and the newest address first.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:75-90 list_shouldReturn25ItemsAcross2Pages_when30AddressesSeeded",
+      "quote": ".andExpect(jsonPath(\"$.items.length()\").value(25))\n        .andExpect(jsonPath(\"$.page\").value(1))\n        .andExpect(jsonPath(\"$.pageSize\").value(25))\n        .andExpect(jsonPath(\"$.totalItems\").value(30))\n        .andExpect(jsonPath(\"$.totalPages\").value(2))\n        .andExpect(jsonPath(\"$.items[0].name\").value(\"Address 29\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-052",
+      "statement": "Tested: page 2 of 30 addresses returns the remaining 5, none of which appeared on page 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:92-128 list_shouldReturnRemaining5OnPage2WithDisjointIds_when30AddressesSeeded",
+      "quote": "page1Ids.retainAll(page2Ids);\n    org.assertj.core.api.Assertions.assertThat(page1Ids).isEmpty();\n    org.assertj.core.api.Assertions.assertThat(page2Ids).hasSize(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-053",
+      "statement": "Tested: soft-deleted addresses are left out of the list and its totals, and every listed item has deleted false.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:130-146 list_shouldExcludeDeletedTombstones_whenMixedStatusesSeeded",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(3))\n        .andExpect(jsonPath(\"$.items.length()\").value(3))\n        .andExpect(jsonPath(\"$.items[*].deleted\", everyItem(is(false))))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-054",
+      "statement": "Tested: another organisation's addresses never appear in the caller's list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:148-162 list_shouldReturnOnlyCallersOrganisation_whenOtherOrgHasAddresses",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(2))\n        .andExpect(jsonPath(\"$.items.length()\").value(2))\n        .andExpect(jsonPath(\"$.items[*].organisationId\", everyItem(is(ORGANISATION_ID))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-055",
+      "statement": "Tested: page 0 or -1 returns 400 with problem type https://api.cdp.defra.cloud/problems/bad-request, title \"Bad Request\" and no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:164-180 list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenPageIsOutOfRange",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/bad-request\"))\n        .andExpect(jsonPath(\"$.title\").value(\"Bad Request\"))\n        .andExpect(jsonPath(\"$.status\").value(400))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-056",
+      "statement": "Tested: page_size and pageSize request parameters are ignored, and the server's 25 applies.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:182-198 list_shouldIgnorePageSizeRequestParams_whenServerConfigSizeApplies",
+      "quote": ".param(\"page_size\", \"5\")\n                .param(\"pageSize\", \"5\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.items.length()\").value(25))\n        .andExpect(jsonPath(\"$.pageSize\").value(25))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-057",
+      "statement": "Tested: a non-numeric page such as abc returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:200-213 list_shouldReturn400BadRequestProblem_whenPageIsNonNumeric",
+      "quote": ".param(\"page\", \"abc\"))\n        .andExpect(status().isBadRequest())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-058",
+      "statement": "Tested: a list request with no organisation header returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:215-225 list_shouldReturn400BadRequestWithNoErrorsMap_whenOrgHeaderMissing",
+      "quote": ".perform(get(\"/organisation/{orgId}/addresses\", ORGANISATION_ID))\n        .andExpect(status().isBadRequest())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-059",
+      "statement": "Tested: a partial, lower-case term (gree) matches a name (Green Farm), and does not match an address whose only match is in address line 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:48-65 partialWordSearchMatchesNameCaseInsensitively",
+      "quote": ".param(\"q\", \"gree\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(match.getId()))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(addressLine1Only.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-060",
+      "statement": "Tested: a partial term (inver) matches the town or city (Inverness).",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:67-81 partialWordSearchMatchesTownOrCityCaseInsensitively",
+      "quote": ".param(\"q\", \"inver\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-061",
+      "statement": "Tested: a multi-word term (green valley) and an upper-case term (GREEN) both match the name Green Valley Livestock Farm.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:83-113 multiWordSearchMatchesNameCaseInsensitively",
+      "quote": ".param(\"q\", \"green valley\")) ... .param(\"q\", \"GREEN\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-062",
+      "statement": "Tested: a partial lower-case term (iv2) matches the postcode IV2 3JH.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:115-129 partialWordSearchMatchesPostcodeCaseInsensitively",
+      "quote": ".param(\"q\", \"iv2\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-063",
+      "statement": "Tested: the term .* is treated as literal text and matches nothing.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:131-143 searchTermIsTreatedAsLiteralNotRegex",
+      "quote": ".param(\"q\", \".*\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-064",
+      "statement": "Tested: countryCode FR returns only the caller's addresses stored with FR, not GB ones and not another organisation's FR ones.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:145-162 countryCodeParamMatchesStoredAlpha2CodeAndExcludesOtherOrgs",
+      "quote": ".param(\"countryCode\", \"FR\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(french.getId()))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(otherOrgFrench.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-065",
+      "statement": "Tested: the countryCode filter leaves out soft-deleted addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:164-178 countryCodeSearchExcludesSoftDeletedRows",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(deleted.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-066",
+      "statement": "Tested: q France with countryCode FR returns both an FR address that does not contain the text and a GB address whose name contains France.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:180-204 combinedQueryAndCountryCodeMatchesTextOrCountryCode",
+      "quote": ".param(\"q\", \"France\")\n                .param(\"countryCode\", \"FR\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(2))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-067",
+      "statement": "Tested: a q search leaves out soft-deleted addresses and other organisations' addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:206-223 searchIsOrgScopedAndExcludesSoftDeletedForQueryPath",
+      "quote": ".param(\"q\", \"green\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(live.getId()))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-068",
+      "statement": "Tested: 30 search matches paginate as 25 then 5, and the two pages together hold every match exactly once.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:225-273 searchResultsPaginateWithDisjointPages",
+      "quote": "assertThat(pageIds).containsExactlyInAnyOrderElementsOf(allIds);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-069",
+      "statement": "Tested at the database: the countryCode query is organisation-scoped and leaves out deleted addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java:40-51 searchByCountryCode_isOrgScopedAndExcludesDeleted",
+      "quote": "assertThat(page.getTotalElements()).isEqualTo(1);\n    assertThat(page.getContent()).singleElement().extracting(Address::getOrganisationId).isEqualTo(ORG_A);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-070",
+      "statement": "Tested at the database: the combined q and countryCode query is organisation-scoped.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java:53-64 searchByQueryAndCountryCode_isOrgScoped",
+      "quote": "operatorRepository.searchByQueryAndCountryCode(\n            ORG_A, AddressStatus.ACTIVE, \".*\\\\QParis\\\\E.*\", \"FR\", of(0, 10));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-071",
+      "statement": "Unit-tested: the service turns the 1-based page into the database's 0-based page, uses the configured size, and sorts by createdAt descending.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:412-429 list_scopesTheQueryToTheActiveOrgNewestFirstAndTranslatesToA0BasedPage",
+      "quote": "assertThat(pageable.getPageNumber()).isEqualTo(1);\n    assertThat(pageable.getPageSize()).isEqualTo(25);\n    assertThat(pageable.getSort().getOrderFor(\"createdAt\").getDirection())\n        .isEqualTo(Sort.Direction.DESC);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-072",
+      "statement": "Unit-tested: a configured page size (10) is used in the query and reported as pageSize.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:431-447 list_usesTheConfiguredPageSizeNotAValuePassedByTheCaller",
+      "quote": "assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);\n    assertThat(response.pageSize()).isEqualTo(10);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-073",
+      "statement": "Unit-tested: the service builds a 25-item first page and a 5-item second page from 30 matches, with totalPages 2, and rejects page 0 as a bad request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:377-410,449-454 list_returnsAFullFirstPageOf25WithTotalPages2For30ActiveAddresses, list_pageTwoReturnsTheRemaining5AddressesWithTotalPagesStill2, list_withAPageBelow1IsABadRequest",
+      "quote": "assertThatExceptionOfType(BadRequestException.class)\n        .isThrownBy(() -> service.list(ORG, 0, null, null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-074",
+      "statement": "Unit-tested: q alone uses the text search, countryCode alone uses the country filter, both use the combined search, and padded values are trimmed first.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:456-483,500-527,544-556 list_withQueryUsesTheSearchRepository, list_withWhitespacePaddedQueryTrimsBeforeSearching, list_withCountryCodeUsesTheCountrySearchRepository, list_withWhitespacePaddedCountryCodeTrimsBeforeSearching, list_withQueryAndCountryCodeUsesTheCombinedSearchRepository",
+      "quote": "service.list(ORG, 1, \"  farm  \", null);\n\n    // Then — trim is applied before regex construction",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-075",
+      "statement": "Unit-tested: a whitespace-only q or countryCode falls back to the unfiltered list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:485-498,529-542 list_withBlankQueryFallsBackToUnfilteredListing, list_withBlankCountryCodeFallsBackToUnfilteredListing",
+      "quote": "OperatorPageResponse response = service.list(ORG, 1, \"   \", null);\n\n    // Then\n    assertThat(response.totalItems()).isZero();\n    verify(repository).findByOrganisationIdAndStatus(eq(ORG), eq(AddressStatus.ACTIVE), any(Pageable.class));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-076",
+      "statement": "No test proves the list's 404 for a path orgId that does not match the header; the list tests cover only a missing header.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in OperatorListIT, AddressSearchIT and the list cases of OperatorServiceTest. A mismatch test may live in part 4's identity tests."
+    },
+    {
+      "id": "repo-addressbook-p3-077",
+      "statement": "No test proves that the countryCode filter is case-sensitive, nor what a lower-case code returns.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-addressbook-p3-078",
+      "statement": "No test proves that the q search does not match county, address line 2, phone or email; only address line 1 is proven excluded.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-addressbook-p3-079",
+      "statement": "The list sets no upper limit on the length of q or countryCode.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:127-128; docs/openapi/operators.yml:188-197",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Neither the handler nor either contract gives a maxLength or validation for these two parameters."
+    },
+    {
+      "id": "repo-addressbook-p4-001",
+      "statement": "The service identifies the calling organisation from one HTTP request header, Trade-Imports-Organisation-Id.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:65",
+      "quote": "public static final String ORGANISATION_ID_HEADER = \"Trade-Imports-Organisation-Id\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-002",
+      "statement": "Trade-Imports-Organisation-Id is the only tenant key for organisation-scoped reads and writes.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:26",
+      "quote": "{@code Trade-Imports-Organisation-Id} is the sole tenant key for org-scoped reads and writes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-003",
+      "statement": "The service reads no user-level identity (no user id, email or role header): scoping is by organisation only, so every caller from the same organisation sees and changes the same address book.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:121,189,242,310,360; IdentityHeaderFilter.java:92",
+      "quote": "@RequestHeader(IdentityHeaderFilter.ORGANISATION_ID_HEADER) String sessionOrg,",
+      "confidence": "inferred",
+      "note": "Inferred from a grep of src/main for getHeader and @RequestHeader: the only identity header read is the organisation header (RequestTracingFilter reads a trace header, which is not identity and belongs to another part)."
+    },
+    {
+      "id": "repo-addressbook-p4-004",
+      "statement": "The identity check applies to every request whose path starts with /organisation/.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:83-85,155-157",
+      "quote": "return !isOrganisationPath(organisationRequestPath(request));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-005",
+      "statement": "Every path outside /organisation/, such as the /health check, is exempt from the identity check and passes through without the header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:155-157; IdentityHeaderFilterTest.nonOrganisationPathsBypassTheFilterEntirely",
+      "quote": "return path != null && path.startsWith(\"/organisation/\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-006",
+      "statement": "A request to an /organisation/ path with no Trade-Imports-Organisation-Id header is rejected with HTTP 400 before any handler runs.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:92-96",
+      "quote": "reject(response, HttpStatus.BAD_REQUEST, BAD_REQUEST_TYPE, \"Bad Request\", \"Missing required header \" + ORGANISATION_ID_HEADER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-007",
+      "statement": "A Trade-Imports-Organisation-Id header that is present but blank or only whitespace is treated as missing and rejected with HTTP 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:93,176-178",
+      "quote": "return value == null || value.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-008",
+      "statement": "The missing-or-blank header rejection reads: title \"Bad Request\", detail \"Missing required header Trade-Imports-Organisation-Id\", type https://api.cdp.defra.cloud/problems/bad-request.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:69-70,94",
+      "quote": "\"Bad Request\", \"Missing required header \" + ORGANISATION_ID_HEADER",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-009",
+      "statement": "An organisation id is well formed only when it is 1 to 64 characters of letters, digits, underscore or hyphen.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:72-73",
+      "quote": "Pattern.compile(\"^[A-Za-z0-9_-]{1,64}$\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-010",
+      "statement": "A Trade-Imports-Organisation-Id header that is present but not well formed (for example, containing spaces) is rejected with HTTP 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:97-104",
+      "quote": "if (!ORGANISATION_ID_VALUE.matcher(organisationId).matches()) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-011",
+      "statement": "The malformed-header rejection reads: title \"Bad Request\", detail \"Invalid Trade-Imports-Organisation-Id\", type https://api.cdp.defra.cloud/problems/bad-request.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:101-103",
+      "quote": "\"Bad Request\",\n          \"Invalid \" + ORGANISATION_ID_HEADER);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-012",
+      "statement": "An identity-header rejection is an RFC 9457 problem with content type application/problem+json, carrying type, title, status and detail.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:169-173",
+      "quote": "Problem problem = new Problem(type, title, status.value(), detail, traceId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-013",
+      "statement": "An identity-header 400 carries no errors map: it is a platform rejection of the caller, not a field validation error a form could show against a field.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:33-34; IdentityHeaderFilterTest.java:78",
+      "quote": "a missing or blank identity header is a platform auth rejection — a 400 bad-request problem\n *       with NO {@code errors} map — not a body-field business validation error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-014",
+      "statement": "A missing identity header is a 400, never a 401 or 403.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:79",
+      "quote": "assertThat(response.getStatus()).isNotIn(401, 403);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-015",
+      "statement": "An identity-header rejection carries the request's trace id as traceId when one is present, and omits the field when there is none.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:79,166,169; IdentityHeaderFilterTest.badRequestBodyCarriesTraceIdFromMdc",
+      "quote": "objectMapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL).writer();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-016",
+      "statement": "Every address operation lives under /organisation/{orgId}/addresses, so every operation is scoped by the organisation in its path.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:44",
+      "quote": "@RequestMapping(\"/organisation/{orgId}/addresses\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-017",
+      "statement": "The path orgId is never trusted on its own: every operation authorises it against the caller's Trade-Imports-Organisation-Id header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:36-38",
+      "quote": "Every operation is path-scoped to an\n * {@code orgId} and authorised against the caller's trusted {@code Trade-Imports-Organisation-Id}\n * forwarded header (cv-010, cv-040): the path is never trusted alone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-018",
+      "statement": "A request whose path orgId differs from the Trade-Imports-Organisation-Id header is rejected with HTTP 404 by the identity filter, before any handler or store lookup runs.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:107-116",
+      "quote": "if (pathOrgId != null && !organisationId.equals(pathOrgId)) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-019",
+      "statement": "The path-versus-header comparison is an exact, case-sensitive match.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:108; OperatorController.java:65",
+      "quote": "!organisationId.equals(pathOrgId)",
+      "confidence": "inferred",
+      "note": "Inferred from String.equals: no test exercises a case-only difference."
+    },
+    {
+      "id": "repo-addressbook-p4-020",
+      "statement": "The path-mismatch rejection reads: title \"Resource Not Found\", detail \"Address not found\", type https://api.cdp.defra.cloud/problems/not-found.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:71,113-114",
+      "quote": "\"Resource Not Found\",\n          \"Address not found\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-021",
+      "statement": "A caller from another organisation always gets 404, never 403, so the API never discloses that another organisation's addresses exist.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:55-58",
+      "quote": "A\n   * mismatch throws {@link NotFoundException} &rarr; 404 (never 403): the API must not disclose that\n   * another organisation's addresses exist (cv-040).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-022",
+      "statement": "Each operation also checks the path orgId against the header inside the controller and answers a mismatch with 404 \"Address not found\", a second guard behind the filter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:64-68,129,191,244,313,362",
+      "quote": "if (!sessionOrg.equals(orgId)) {\n      throw new NotFoundException(\"Address not found\");",
+      "confidence": "verbatim",
+      "note": "Because the filter rejects a mismatch first, this guard is not reached on a normal request; it is defence in depth."
+    },
+    {
+      "id": "repo-addressbook-p4-023",
+      "statement": "The identity header is required on every operation: list, create, fetch, replace and soft delete.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:121,189,242,310,360; IdentityHeaderFilterTest.organisationIdIsRequiredOnEveryOperation",
+      "quote": "for (String method : new String[] {\"GET\", \"POST\", \"PUT\", \"DELETE\"}) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-024",
+      "statement": "Every operation reads and writes the store under the organisation from the identity header, not the path or body.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:131,193,248,315,364",
+      "quote": "return operatorService.list(sessionOrg, page, q, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-025",
+      "statement": "A created address's organisationId is stamped from the identity header, never taken from the request body.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:135-137; AddressScopingIT.organisationIdIsStampedOnCreateAndScopesReads",
+      "quote": "{@code organisationId} is stamped from the\n   * identity header, never from the body;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-026",
+      "statement": "An address id belonging to another organisation, used under the caller's own organisation path, is a 404 on fetch, replace and delete, because the organisation scope is applied in the store query.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:28-30,84-100",
+      "quote": "the scope is enforced in the query, so a cross-org id is a 404 byte-for-byte identical to an\n *       unknown id (no existence and no deletion leak);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-027",
+      "statement": "A 404 for another organisation's address is byte-for-byte identical to a 404 for an id that does not exist, and carries no instance field.",
+      "kind": "rule",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:207-234",
+      "quote": "// Identical problem — a 404 carries no existence and no deletion information.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-028",
+      "statement": "No test proves that the filter's path-mismatch 404 is identical to the 404 for an unknown id; the filter writes its own problem body while an in-scope miss goes through the shared exception handler.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:109-114; AddressScopingIT.java:207-234",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in IdentityHeaderFilterTest (checks only status and type for the mismatch) and AddressScopingIT (compares only an in-scope cross-org id with an unknown id)."
+    },
+    {
+      "id": "repo-addressbook-p4-029",
+      "statement": "The service has no authentication layer of its own: it does not validate JWTs or API keys, and treats the organisation header as already authenticated.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (line 85); IdentityHeaderFilter.java:33-35",
+      "quote": "This service has **no Spring Security layer** and does not validate JWTs or API keys.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-030",
+      "statement": "Separating one organisation's addresses from another's relies entirely on a trusted forwarded-header contract with the hop in front of the service.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (lines 85-86)",
+      "quote": "Tenant\nisolation relies entirely on a trusted-forwarded-header contract:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-031",
+      "statement": "Authenticating the caller through Defra ID (OIDC) is the job of the CDP ingress or the calling frontend (for example ins-frontend), not this service.",
+      "kind": "integration",
+      "ref": "README.md: Security and trust boundary, responsibility table row 1",
+      "quote": "| Authenticate the caller (Defra ID / OIDC) | CDP ingress or calling BFF (e.g. ins-frontend) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-032",
+      "statement": "The upstream hop must discard any organisation header the end user's client sends and set it from the verified session's organisation.",
+      "kind": "integration",
+      "ref": "README.md: Security and trust boundary, responsibility table rows 2-3",
+      "quote": "| Set `Trade-Imports-Organisation-Id` from the verified session | Same upstream hop |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-033",
+      "statement": "CDP network policy must stop callers reaching the service without going through the authenticated upstream hop.",
+      "kind": "non-functional",
+      "ref": "README.md: Security and trust boundary, responsibility table row 4 and line 105",
+      "quote": "**Production requirement:** callers must not reach this service without the upstream hop above.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-034",
+      "statement": "The organisation boundary depends on deployment controls outside the service; the service cannot enforce it alone if those controls are absent, and adding its own resource-server authentication was deferred.",
+      "kind": "constraint",
+      "ref": "README.md: Security and trust boundary (lines 105-109)",
+      "quote": "the service cannot defend itself against a trusted-network\nviolation without adding a resource server (deferred for this ticket).",
+      "confidence": "verbatim",
+      "note": "Security finding stated in general terms only, per the repo brief."
+    },
+    {
+      "id": "repo-addressbook-p4-035",
+      "statement": "Nothing in the repo proves the upstream boundary is in place: no test or config here shows header stripping or network policy, which the README places with other owners.",
+      "kind": "non-functional",
+      "ref": "README.md: Security and trust boundary; src/test (IdentityHeaderFilterTest, AddressScopingIT)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the part's tests and README; the upstream hop and network policy are owned elsewhere (ins-frontend, CDP)."
+    },
+    {
+      "id": "repo-addressbook-p4-036",
+      "statement": "While a request is processed, the caller's organisation id is added to the logging context as organisationId, and removed afterwards even if the request fails.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:118-123",
+      "quote": "MDC.put(MDC_ORGANISATION_ID, organisationId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-037",
+      "statement": "Each identity rejection is logged as a warning naming the reason and the trace id, with no address personal data.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:167; IdentityHeaderFilterTest.addsOnlyOrganisationIdToTheLoggingContext_noPiiFieldValues",
+      "quote": "log.warn(\"Rejected /organisation request: {} (trace: {})\", detail, traceId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-038",
+      "statement": "The identity filter runs near the very start of request handling, ahead of the application's own handlers.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:61",
+      "quote": "@Order(Ordered.HIGHEST_PRECEDENCE + 1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-039",
+      "statement": "The published API contract declares Trade-Imports-Organisation-Id as the security requirement for every address operation.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:46",
+      "quote": "@SecurityRequirement(name = \"Trade-Imports-Organisation-Id\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-040",
+      "statement": "The published API contract documents a 400 for a missing header and a 404 for a path orgId that does not match the caller's organisation header on the address operations.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:96-109,161-177,275-291,335-348",
+      "quote": "description = \"Path orgId does not match the caller's organisation header\",",
+      "confidence": "verbatim",
+      "note": "Fetch, replace and delete describe their 404 as 'Unknown id, or an id outside the caller's organisation scope'; fetch documents no 400 response at all, though the filter returns one."
+    },
+    {
+      "id": "repo-addressbook-p4-041",
+      "statement": "Test: a request with no organisation header gets a 400 bad-request problem with application/problem+json, a detail naming the header and no errors map, and is not passed on.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:57-80 missingOrganisationId_writesBadRequestProblemAndHaltsTheChain",
+      "quote": "void missingOrganisationId_writesBadRequestProblemAndHaltsTheChain() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-042",
+      "statement": "Test: the missing-header rejection works whether the path arrives as the servlet path or only as the request URI.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:82-96 missingOrganisationIdWithRequestUriOnly_writesBadRequestProblem",
+      "quote": "void missingOrganisationIdWithRequestUriOnly_writesBadRequestProblem() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-043",
+      "statement": "Test: a whitespace-only organisation header gets a 400 bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:98-114 blankOrganisationId_writesBadRequestProblem",
+      "quote": "request.addHeader(ORGANISATION_ID_HEADER, \"   \");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-044",
+      "statement": "Test: GET, POST, PUT and DELETE without the organisation header are each stopped with a 400 naming the header.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:116-136 organisationIdIsRequiredOnEveryOperation",
+      "quote": ".as(\"chain must halt for %s without the org-id header\", method)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-045",
+      "statement": "Test: a valid header matching the path lets the request through, with the organisation id in the logging context.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:138-153 validHeader_proceedsAndOrganisationIdLandsInMdcDuringTheChain",
+      "quote": "assertThat(chain.mdcDuringChain()).containsEntry(MDC_ORGANISATION_ID, \"org-42\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-046",
+      "statement": "Test: the 400 body carries the trace id of the request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:155-168 badRequestBodyCarriesTraceIdFromMdc",
+      "quote": "assertThat(parseBody(response)).containsEntry(\"traceId\", \"trace-abc-123\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-047",
+      "statement": "Test: /health is not checked for the identity header and gets no rejection body.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:170-183 nonOrganisationPathsBypassTheFilterEntirely",
+      "quote": "MockHttpServletRequest request = new MockHttpServletRequest(\"GET\", \"/health\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-048",
+      "statement": "Test: a header of org-b on an org-a path is stopped with a 404 not-found problem before the request is passed on.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:185-202 pathOrgMismatchReturns404BeforeTheChainRuns",
+      "quote": "void pathOrgMismatchReturns404BeforeTheChainRuns() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-049",
+      "statement": "Test: the organisation id is cleared from the logging context after a successful request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:204-217 mdcOrganisationIdIsRemovedAfterSuccessfulRequest",
+      "quote": "void mdcOrganisationIdIsRemovedAfterSuccessfulRequest() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-050",
+      "statement": "Test: the organisation id is cleared from the logging context when request handling throws.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:219-239 mdcOrganisationIdIsRemovedWhenTheChainThrows",
+      "quote": "void mdcOrganisationIdIsRemovedWhenTheChainThrows() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-051",
+      "statement": "Test: an organisation header containing spaces is rejected with 400.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:241-254 invalidOrganisationIdValueIsRejectedWith400",
+      "quote": "request.addHeader(ORGANISATION_ID_HEADER, \"not valid because of spaces\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-052",
+      "statement": "Test: rejection logging contains no address personal data such as a business name or email.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilterTest.java:256-283 addsOnlyOrganisationIdToTheLoggingContext_noPiiFieldValues",
+      "quote": "assertThat(event.getFormattedMessage()).doesNotContain(\"secret@example.com\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-053",
+      "statement": "Test: organisation B listing its own book does not see organisation A's address, gets 404 fetching, replacing or deleting A's id under its own path, and A's address stays live.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:73-108 orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsAddress",
+      "quote": "// org B gets 404 on GET / PUT / DELETE of A's id under B's own scope",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-054",
+      "statement": "Test: a caller whose header is organisation B is refused with 404 on list, fetch, replace, delete and create against organisation A's path; A's address stays ACTIVE and no new address is saved for A.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:110-149 forwardedOrgHeaderDisagreeingWithThePathOrgIdIs404",
+      "quote": "// a create against another org's path is rejected and persists nothing new",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-055",
+      "statement": "Test: listing with no organisation header is a 400 application/problem+json bad-request with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:151-159 missingOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap",
+      "quote": "void missingOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-056",
+      "statement": "Test: listing with a blank organisation header is a 400 application/problem+json bad-request with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:161-169 blankOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap",
+      "quote": "void blankOrgHeaderIsAPlatformAuthRejection400WithNoErrorsMap() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-057",
+      "statement": "Test: creating an address with no organisation header is a 400 with no errors map, and nothing is saved.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:171-184 missingOrgHeaderOnPostIsAPlatformAuthRejection400AndPersistsNothing",
+      "quote": "assertThat(activeAddressesFor(ORG_A)).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-058",
+      "statement": "Test: a created address is stored and returned with the caller's organisationId, and appears in that organisation's list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:186-205 organisationIdIsStampedOnCreateAndScopesReads",
+      "quote": "// organisationId is stamped from the trusted identity, never the body (cv-010)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-059",
+      "statement": "Test: organisation B's 404 for organisation A's live address equals its 404 for an unknown id, and neither has an instance field.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java:207-234 a404ForAnotherOrgsLiveAddressIsByteIdenticalToA404ForAnUnknownId",
+      "quote": "assertThat(problemBody(crossOrg)).isEqualTo(problemBody(unknown));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p4-060",
+      "statement": "The scoping rules trace to two earlier rulings, cv-010 (the trusted forwarded-header identity contract) and cv-040 (authorise the session organisation against the path, 404 never 403).",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:38,57; IdentityHeaderFilter.java:23-24",
+      "quote": "forwarded header (cv-010, cv-040): the path is never trusted alone.",
+      "confidence": "verbatim",
+      "note": "The ruling ids are cited in code comments; the ruling texts themselves are not in this part's files."
+    }
+  ]
+}

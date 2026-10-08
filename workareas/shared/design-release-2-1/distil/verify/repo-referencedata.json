@@ -1,0 +1,541 @@
+{
+  "source": "repo:referencedata",
+  "extractHash": "09920769963087f1fda47902d6e6fa23731e46e4152b77cbf61af93f614701d1",
+  "verdicts": [
+    {
+      "id": "repo-referencedata-p1-001",
+      "holds": true,
+      "reason": "CountriesController.java:18 has @RequestMapping(\"/countries\") with @GetMapping() at line 23."
+    },
+    {
+      "id": "repo-referencedata-p1-002",
+      "holds": true,
+      "reason": "CountriesController.java:26 declares @RequestParam(required = false, value = \"blocks\") String blocks; it is the only parameter."
+    },
+    {
+      "id": "repo-referencedata-p1-003",
+      "holds": true,
+      "reason": "CountriesController.java:33 returns ResponseEntity.ok(countries) where countries is a List<Country>."
+    },
+    {
+      "id": "repo-referencedata-p1-004",
+      "holds": true,
+      "reason": "CountriesController.java:30 sorts with Comparator.comparing(Country::getName); CountriesControllerTest and CountriesControllerIT prove the order."
+    },
+    {
+      "id": "repo-referencedata-p1-005",
+      "holds": true,
+      "reason": "Sound inference: Comparator.comparing on a String key uses String.compareTo (natural, case-sensitive, by UTF-16 code unit); no Collator anywhere in the controller."
+    },
+    {
+      "id": "repo-referencedata-p1-006",
+      "holds": true,
+      "reason": "MdmService.java:49 filters out effectiveAlpha2 GB unconditionally, before the block filter; MdmServiceTest.getCountries_filtersOutUk and CountriesControllerIT prove it."
+    },
+    {
+      "id": "repo-referencedata-p1-007",
+      "holds": true,
+      "reason": "MdmService.java:54-59 isIncludedInRequestedBlock: anyMatch on requestedBlock.equals(b.getName()) && Boolean.TRUE.equals(b.getIncludeCountry())."
+    },
+    {
+      "id": "repo-referencedata-p1-008",
+      "holds": true,
+      "reason": "MdmService.java:55 returns true when requestedBlock is null; GB is still removed by line 49. MdmServiceTest.getCountries_doesNotApplyBlockFilter_whenBlocksParamIsNull proves it."
+    },
+    {
+      "id": "repo-referencedata-p1-009",
+      "holds": true,
+      "reason": "MdmService.java:55 also returns true when country.getBlocks() == null, so a blocks-less country passes a requested filter. Untested, but the code is plain."
+    },
+    {
+      "id": "repo-referencedata-p1-010",
+      "holds": true,
+      "reason": "MdmService.java:40 passes blocks to mdmClient.getCountries; MdmClient.java:24 sends it as the blocks request param; the service then filters again at lines 48-51. MdmServiceTest verifies the pass-through."
+    },
+    {
+      "id": "repo-referencedata-p1-011",
+      "holds": true,
+      "reason": "Sound inference from MdmService.java:57 requestedBlock.equals(b.getName()); no split of the value anywhere in the service. What MDM does with a multi-value param is outside this repo."
+    },
+    {
+      "id": "repo-referencedata-p1-012",
+      "holds": true,
+      "reason": "CountriesControllerIT.java:107-108 uses GBNAG_SPS_EX and GBNAG_PHYTO_EX; MdmServiceTest.java:185 uses OMR. No validation of blocks in controller or service, so any string is accepted."
+    },
+    {
+      "id": "repo-referencedata-p1-013",
+      "holds": true,
+      "reason": "Country.java:22 this.code = mdmCountry.getEffectiveAlpha2(). 'ISO alpha-2' is a reasonable gloss of the field name, not stated in the repo."
+    },
+    {
+      "id": "repo-referencedata-p1-014",
+      "holds": true,
+      "reason": "Country.java:23 this.name = mdmCountry.getEffectiveAlias(); fixture mdm-countries-response.json:63 shows effectiveAlias \"United Kingdom\" against name \"United Kingdom of Great Britain and Northern Ireland (the)\"."
+    },
+    {
+      "id": "repo-referencedata-p1-015",
+      "holds": true,
+      "reason": "Country.java:19 field subDivisions; lines 28-29 return List.of() for a null or empty MDM list."
+    },
+    {
+      "id": "repo-referencedata-p1-016",
+      "holds": true,
+      "reason": "Country.java:35 .code(subDivision.getCode().getValue()); ES-CN appears in the fixture and tests."
+    },
+    {
+      "id": "repo-referencedata-p1-017",
+      "holds": true,
+      "reason": "Country.java:36 .name(subDivision.getName()); Canary Islands in fixture and tests."
+    },
+    {
+      "id": "repo-referencedata-p1-018",
+      "holds": true,
+      "reason": "Country.java:32-33 filters out subdivisions with a null code or null code value."
+    },
+    {
+      "id": "repo-referencedata-p1-019",
+      "holds": true,
+      "reason": "Country.java:31-38 streams, filters and maps with no sort; nothing else sorts subdivisions."
+    },
+    {
+      "id": "repo-referencedata-p1-020",
+      "holds": true,
+      "reason": "MdmCountry.java:15-29 lists exactly the fields named; Country.java:17-19 has only code, name, subDivisions, and the constructor reads only effectiveAlpha2, effectiveAlias and subDivisions."
+    },
+    {
+      "id": "repo-referencedata-p1-021",
+      "holds": true,
+      "reason": "MdmSubDivision.java:17 has List<String> blocs; SubDivision.java:14-15 has only code and name and Country.mapSubDivisions never reads blocs."
+    },
+    {
+      "id": "repo-referencedata-p1-022",
+      "holds": true,
+      "reason": "MdmBlock.java:15-17 has name, includeCountry, tags; MdmService only reads getName and getIncludeCountry."
+    },
+    {
+      "id": "repo-referencedata-p1-023",
+      "holds": true,
+      "reason": "MdmCodedValue.java:14 has a single value field; fixture line 13 \"code\": { \"value\": \"FR-MQ\" }."
+    },
+    {
+      "id": "repo-referencedata-p1-024",
+      "holds": false,
+      "reason": "Overreach. The quote is test-fixture data (mdm-countries-response.json:11-20), not a behaviour of the service: the service returns whatever MDM nests. The statement asserts as fact that overseas territories appear as subdivisions and 'not as countries', yet MdmServiceTest.java:182-183 models Martinique (MQ) as a country, as the claim's own note concedes. The repo does not fix how MDM shapes territories."
+    },
+    {
+      "id": "repo-referencedata-p1-025",
+      "holds": true,
+      "reason": "CountriesControllerTest.java:100-111 getCountries_returnsEmptyList_whenMdmReturnsNoCountries asserts 200 and an empty body."
+    },
+    {
+      "id": "repo-referencedata-p1-026",
+      "holds": true,
+      "reason": "MdmService.java:43-47 returns List.of() with a warning for a null body; MdmServiceTest.getCountries_returnsEmptyList_whenMdmBodyIsNull proves it."
+    },
+    {
+      "id": "repo-referencedata-p1-027",
+      "holds": true,
+      "reason": "Sound inference: Comparator.comparing with a null key throws NullPointerException (when two or more elements are compared), which the RuntimeException handler at GlobalExceptionHandler.java:116-121 maps to 500. Untested."
+    },
+    {
+      "id": "repo-referencedata-p1-028",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:17 @RequestMapping(\"/ports-of-entry\") with @GetMapping() at line 22."
+    },
+    {
+      "id": "repo-referencedata-p1-029",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:24 getPortsOfEntry() takes no parameters; line 30 returns ResponseEntity.ok(ports)."
+    },
+    {
+      "id": "repo-referencedata-p1-030",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:28 sorts by Comparator.comparing(PortOfEntry::getName); PortsOfEntryControllerIT proves Aberdeen < East Midlands Airport < Edinburgh."
+    },
+    {
+      "id": "repo-referencedata-p1-031",
+      "holds": true,
+      "reason": "PortOfEntry.java:19 this.code = mdm.getCode(); GBABE in fixture and IT."
+    },
+    {
+      "id": "repo-referencedata-p1-032",
+      "holds": true,
+      "reason": "PortOfEntry.java:20 this.name = mdm.getName(); Aberdeen in fixture and IT."
+    },
+    {
+      "id": "repo-referencedata-p1-033",
+      "holds": true,
+      "reason": "MdmPortOfEntry.java:14-16 has id, code, name; PortOfEntry.java has only code and name and never reads id."
+    },
+    {
+      "id": "repo-referencedata-p1-034",
+      "holds": true,
+      "reason": "MdmPortsResponse.java:15 List<MdmPortOfEntry> result; mdm-poe-response.json:2 \"result\": [...]."
+    },
+    {
+      "id": "repo-referencedata-p1-035",
+      "holds": true,
+      "reason": "MdmService.java:28-31 returns List.of() when body or result is null; MdmServiceTest proves both cases."
+    },
+    {
+      "id": "repo-referencedata-p1-036",
+      "holds": true,
+      "reason": "Sound inference: MdmService.getPortsOfEntry returns body.getResult() unfiltered and the controller only maps and sorts; PortOfEntry has no type field. Ref is the service method, fine."
+    },
+    {
+      "id": "repo-referencedata-p1-037",
+      "holds": true,
+      "reason": "MdmClient.java:27 @GetMapping(value = \"/mdm/trade/bcp/poes\"). 'Border control post points-of-entry' is a reading of the path, reasonable."
+    },
+    {
+      "id": "repo-referencedata-p1-038",
+      "holds": true,
+      "reason": "MdmClient.java:20 @GetMapping(value = \"/mdm/geo/countries\")."
+    },
+    {
+      "id": "repo-referencedata-p1-039",
+      "holds": true,
+      "reason": "MdmService.java:17 SYSTEM = \"GBNAG\", passed on both calls at lines 25 and 40; MdmServiceTest verifies both."
+    },
+    {
+      "id": "repo-referencedata-p1-040",
+      "holds": true,
+      "reason": "MdmClient.java:18 header Ocp-Apim-Subscription-Key on both calls; application.yml:116 reads TRADE_PLATFORM_SUBSCRIPTION_KEY. The quote's default is shown as [REDACTED]; the source's default is the placeholder 'test', so the quote is not character-exact, but the statement is right."
+    },
+    {
+      "id": "repo-referencedata-p1-041",
+      "holds": true,
+      "reason": "MdmClientInterceptor.java:34 adds the Authorization Bearer header on every MDM request; line 43 grant_type client_credentials; token fetched via TradeApiClient (trade-auth.api.url)."
+    },
+    {
+      "id": "repo-referencedata-p1-042",
+      "holds": true,
+      "reason": "MdmClientInterceptor.java:30-32 refreshes when Instant.now() is after expiryTime; lines 51-53 set expiry from expiresOn or 10 seconds in the past when it is null."
+    },
+    {
+      "id": "repo-referencedata-p1-043",
+      "holds": true,
+      "reason": "application.yml:115 url: ${MDM_SERVICE_URL:http://localhost:8087}; MdmClient url = ${mdm-service.url}. 'The local stub' is a reasonable gloss (trade-auth default also points at 8087)."
+    },
+    {
+      "id": "repo-referencedata-p1-044",
+      "holds": true,
+      "reason": "application.yml:110-111 and 117-118 set 3000 for both. The statement says only that they are configured, and the note flags that wiring is not shown. In fact nothing in src/main reads them (see missed claim repo-referencedata-p1-044-m1)."
+    },
+    {
+      "id": "repo-referencedata-p1-045",
+      "holds": true,
+      "reason": "MdmService.java:16 and 61-69: logs the first x-ms-middleware-request-id, warns 'No MDM trace id returned' when absent and returns normally; MdmServiceTest proves data still returns."
+    },
+    {
+      "id": "repo-referencedata-p1-046",
+      "holds": true,
+      "reason": "MdmService.java:35-36 @Cacheable MDM_COUNTRIES_CACHE on getCountries(String blocks), key defaulting to the blocks argument; CountriesControllerIT.getCountries_cachesResultsIndependently_perUniqueBlocksParam proves it."
+    },
+    {
+      "id": "repo-referencedata-p1-047",
+      "holds": true,
+      "reason": "MdmService.java:22 @Cacheable(value = \"MDM_POE_CACHE\", ...) on getPortsOfEntry."
+    },
+    {
+      "id": "repo-referencedata-p1-048",
+      "holds": true,
+      "reason": "MdmService.java:22 and 35 unless = \"#result == null || #result.isEmpty()\"; both ITs' doesNotCacheEmptyMdmResponse tests prove it."
+    },
+    {
+      "id": "repo-referencedata-p1-049",
+      "holds": true,
+      "reason": "Sound inference: the unless condition is evaluated on the method's return value, which is the GB- and block-filtered list at MdmService.java:48-51."
+    },
+    {
+      "id": "repo-referencedata-p1-050",
+      "holds": true,
+      "reason": "application.yml:5-7 ttl-minutes: ${CACHE_MDM_TTL_MINUTES:60}; CacheConfig.java:16-17 @Value with :60 default, and expireAfterWrite at lines 36 and 43 on both MDM caches."
+    },
+    {
+      "id": "repo-referencedata-p1-051",
+      "holds": true,
+      "reason": "CacheConfig.java:35 and 42 .maximumSize(20) on each MDM cache."
+    },
+    {
+      "id": "repo-referencedata-p1-052",
+      "holds": true,
+      "reason": "CacheConfig.java:30-31 comment, quoted verbatim."
+    },
+    {
+      "id": "repo-referencedata-p1-053",
+      "holds": true,
+      "reason": "CacheConfig.java:20-28: default Caffeine spec maximumSize(5), expireAfterWrite 30 minutes, applied to IDENTITY_TOKEN_CACHE. grep of src/main finds no other reference to IDENTITY_TOKEN_CACHE; the MDM token is held in the interceptor."
+    },
+    {
+      "id": "repo-referencedata-p1-054",
+      "holds": false,
+      "reason": "The quote is at application.yml:75, but the statement overreaches: Spring Boot Actuator's cache endpoint id is 'caches', not 'cache', and the repo defines no custom @Endpoint (grep of src/main finds none). So 'cache' in the include list exposes nothing; the default profile exposes health, metrics and info only."
+    },
+    {
+      "id": "repo-referencedata-p1-055",
+      "holds": true,
+      "reason": "application.yml:2 port: ${PORT:8086}."
+    },
+    {
+      "id": "repo-referencedata-p1-056",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:116-138 maps RuntimeException, IllegalStateException and IllegalArgumentException to 500 with that title, detail and type. That a Feign MDM failure lands here is a sound inference (FeignException is a RuntimeException; MdmService catches nothing), as the note says."
+    },
+    {
+      "id": "repo-referencedata-p1-057",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:66-84 maps NotFoundException to 404 'Resource Not Found', message as detail, type .../not-found. Neither controller nor MdmService throws it."
+    },
+    {
+      "id": "repo-referencedata-p1-058",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:89-107 maps ConflictException to 409 'Resource Conflict', message as detail, type .../conflict. Neither list path throws it."
+    },
+    {
+      "id": "repo-referencedata-p1-059",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:35-61 maps MethodArgumentNotValidException to 400 with that title, detail, type and errors map; neither endpoint takes a @Valid body."
+    },
+    {
+      "id": "repo-referencedata-p1-060",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:30 reads MDC 'trace.id'; every handler sets traceId only when non-null (lines 49-51, 79-81, 102-104, 133-135). GlobalExceptionHandlerTest proves both cases."
+    },
+    {
+      "id": "repo-referencedata-p1-061",
+      "holds": true,
+      "reason": "GlobalExceptionHandler.java:112-114 Javadoc says it does not catch NoResourceFoundException (404) and lets Spring handle its own exceptions. Quote matches, wrapped across lines 112-113."
+    },
+    {
+      "id": "repo-referencedata-p1-062",
+      "holds": true,
+      "reason": "TradeImportsReferenceDataException.java:5 says 'Will be mapped to 404 Not Found by GlobalExceptionHandler.' It extends RuntimeException (line 7), and the handler has no specific handler for it, so the RuntimeException handler (GlobalExceptionHandler.java:116-121) answers 500. Inference sound. Note: AwsConfig.java:52 (outside the part's read list) does throw it, on an STS connection error, so 'nothing in the read files throws it' holds only for the read list."
+    },
+    {
+      "id": "repo-referencedata-p1-063",
+      "holds": true,
+      "reason": "CountriesControllerTest.java:30-46: MDM returns Sweden, Austria, France; asserts .containsExactly(\"Austria\", \"France\", \"Sweden\") and 200 OK."
+    },
+    {
+      "id": "repo-referencedata-p1-064",
+      "holds": true,
+      "reason": "CountriesControllerTest.java:49-65: effectiveAlpha2 DE -> code, effectiveAlias Germany -> name, and getSubDivisions() isEmpty() when MDM sends no subdivisions (null)."
+    },
+    {
+      "id": "repo-referencedata-p1-065",
+      "holds": true,
+      "reason": "CountriesControllerTest.java:68-98: Spain's ES-CN Canary Islands maps to SubDivision code/name (quote at line 92), and Austria with List.of() subdivisions gives an empty list."
+    },
+    {
+      "id": "repo-referencedata-p1-066",
+      "holds": true,
+      "reason": "CountryTest.java:11-24 constructor_mapsAllFieldsFromMdmCountry asserts code DE (quote line 22) and name Germany."
+    },
+    {
+      "id": "repo-referencedata-p1-067",
+      "holds": true,
+      "reason": "MdmServiceTest.java:49-107: the five named ports tests exist and assert as stated; quote verbatim at line 106. These are MdmService unit tests rather than endpoint tests, which the statement's 'ports list' slightly glosses, but the behaviour stated follows."
+    },
+    {
+      "id": "repo-referencedata-p1-068",
+      "holds": true,
+      "reason": "MdmServiceTest.java:110-156: the three named countries tests exist; quote verbatim at line 155."
+    },
+    {
+      "id": "repo-referencedata-p1-069",
+      "holds": true,
+      "reason": "MdmServiceTest.java:159-175 getCountries_filtersOutUk: GB country with includeCountry true is filtered; comment and assertion at lines 173-174 match the quote."
+    },
+    {
+      "id": "repo-referencedata-p1-070",
+      "holds": true,
+      "reason": "MdmServiceTest.java:178-197: Martinique has OMR includeCountry true and GBNAG_SPS_EX includeCountry false; requesting GBNAG_SPS_EX gives an empty result. Quote at line 195."
+    },
+    {
+      "id": "repo-referencedata-p1-071",
+      "holds": true,
+      "reason": "MdmServiceTest.java:200-213: a 200 with a null body gives an empty list; quote at line 211. 'Empty body' means null body here, which is what the test uses."
+    },
+    {
+      "id": "repo-referencedata-p1-072",
+      "holds": true,
+      "reason": "MdmServiceTest.java:216-237: with blocks null, Germany (GBNAG_SPS_EX includeCountry false) and Martinique (OMR) are both returned; quote at line 235."
+    },
+    {
+      "id": "repo-referencedata-p1-073",
+      "holds": true,
+      "reason": "CountriesControllerIT.java:33-51: /countries?blocks=GBNAG_SPS_EX, 200, France index before Germany, doesNotContain \"GB\" and GB-NIR (quote line 46), contains subDivisions, Canary Islands and ES-CN. Fixture mdm-countries-response.json:67-71 confirms GB-NIR is Northern Ireland."
+    },
+    {
+      "id": "repo-referencedata-p1-074",
+      "holds": true,
+      "reason": "CountriesControllerIT.java:54-62 getCountries_mapsCountryFieldsCorrectly asserts \"code\":\"DE\" (quote line 60) and \"name\":\"Germany\" on GET /countries with no blocks."
+    },
+    {
+      "id": "repo-referencedata-p1-075",
+      "holds": true,
+      "reason": "CountriesControllerIT.java:65-129: cold cache -> MDM exactly once; repeat -> once; empty [] first response -> MDM called twice; GBNAG_SPS_EX, GBNAG_PHYTO_EX, GBNAG_SPS_EX -> MDM twice. Quote at line 111."
+    },
+    {
+      "id": "repo-referencedata-p1-076",
+      "holds": true,
+      "reason": "CountriesControllerCacheExpiryIT.java:41-51 with cache.mdm.ttl-minutes=0: two requests -> MDM called twice; quote at line 46."
+    },
+    {
+      "id": "repo-referencedata-p1-077",
+      "holds": true,
+      "reason": "PortsOfEntryControllerIT.java:33-53: 200, Aberdeen < East Midlands Airport < Edinburgh (comment line 41 is the quote), and \"code\":\"GBABE\", \"name\":\"Aberdeen\"."
+    },
+    {
+      "id": "repo-referencedata-p1-078",
+      "holds": true,
+      "reason": "PortsOfEntryControllerIT.java:56-98: cold cache -> once, repeat -> once, a {\"result\":[]} first response (quote line 88) -> MDM called twice."
+    },
+    {
+      "id": "repo-referencedata-p1-079",
+      "holds": true,
+      "reason": "Gap confirmed: only CountriesControllerCacheExpiryIT sets a zero TTL; PortsOfEntryControllerIT has no expiry test, and no other test file in src/test exercises MDM_POE_CACHE expiry."
+    },
+    {
+      "id": "repo-referencedata-p1-080",
+      "holds": true,
+      "reason": "CacheConfigTest.java:44-45 asserts 3 cache names and containsExactlyInAnyOrder the three named caches; quote verbatim at line 45."
+    },
+    {
+      "id": "repo-referencedata-p1-081",
+      "holds": true,
+      "reason": "GlobalExceptionHandlerTest.java has exactly 10 tests covering 400/404/409/500 status, title, detail and type, traceId present when MDC set and absent when not, plus IllegalStateException and IllegalArgumentException -> 500. Quote at line 177. Only the RuntimeException 500 test checks title, detail and type; the IllegalState/IllegalArgument tests check status only, which the statement does not contradict."
+    },
+    {
+      "id": "repo-referencedata-p1-082",
+      "holds": true,
+      "reason": "Gap holds as worded: no test asserts a 500 status after an MDM failure or timeout. Note: ExternalCallMetricsIT.java:79-92 (outside this part's read list) stubs an MDM 500 on /countries and asserts only that the response is not 200, so a failed MDM call is proven to reach the caller as an error, but not as a 500, and no timeout is stubbed anywhere."
+    },
+    {
+      "id": "repo-referencedata-p1-083",
+      "holds": true,
+      "reason": "ADR 0002 line 3 'Date: 2026-05-07', line 7 'Accepted', Decision line 17 quoted verbatim."
+    },
+    {
+      "id": "repo-referencedata-p1-084",
+      "holds": true,
+      "reason": "ADR 0002 lines 19-20: 'Currently managed domains: - **Countries** — data sourced from MDM'."
+    },
+    {
+      "id": "repo-referencedata-p1-085",
+      "holds": true,
+      "reason": "ADR 0002 lines 22-23 under 'Planned future domains' quoted verbatim. 'Added to this service first' paraphrases 'initially' (in this service before any extraction), which is a fair reading."
+    },
+    {
+      "id": "repo-referencedata-p1-086",
+      "holds": true,
+      "reason": "ADR 0002 line 24 quoted verbatim; PortsOfEntryController.java maps /ports-of-entry, so the ADR's 'planned' listing for BCPs/POEs is out of date. The inferred half is flagged in the note."
+    },
+    {
+      "id": "repo-referencedata-p1-087",
+      "holds": true,
+      "reason": "ADR 0002 line 26 quoted verbatim. The 'kept separate' half comes from Consequences line 38, which frames it as care that must be taken (a risk), not a decision; the statement is a fair summary."
+    },
+    {
+      "id": "repo-referencedata-p1-088",
+      "holds": true,
+      "reason": "README.md is the template README: title, 'Core delivery Java Spring Boot backend template.', local stack, MongoDB, testing, running, SonarCloud, Dependabot, licence. No endpoint, parameter or response shape documented. A gap with a quote and kind constraint; still holds."
+    },
+    {
+      "id": "repo-referencedata-p1-089",
+      "holds": true,
+      "reason": "Request mappings are only /countries and /ports-of-entry; grep for commodit|species across src/ and doc/ hits only GlobalExceptionHandlerTest's 'commodity' field and ADR 0002 lines 13 and 23, as the note says."
+    },
+    {
+      "id": "repo-referencedata-p1-090",
+      "holds": true,
+      "reason": "grep for identifier across src/ and doc/ returns nothing; no mapping, model or MDM call for commodity identifiers."
+    },
+    {
+      "id": "repo-referencedata-p1-091",
+      "holds": true,
+      "reason": "grep for transporter across src/ and doc/ returns nothing; only two request mappings exist."
+    },
+    {
+      "id": "repo-referencedata-p1-092",
+      "holds": true,
+      "reason": "grep for document.?type across src/ and doc/ returns nothing."
+    },
+    {
+      "id": "repo-referencedata-p1-093",
+      "holds": true,
+      "reason": "grep for certification returns nothing; 'purpose' hits only a CacheConfig.java:30 comment about caching, not a certification purposes list."
+    },
+    {
+      "id": "repo-referencedata-p1-094",
+      "holds": true,
+      "reason": "Country.java and PortOfEntry.java hold only code/name (and subDivisions); MdmClient.java sends only system and blocks, with no language parameter; grep for welsh|locale|language finds nothing."
+    },
+    {
+      "id": "repo-referencedata-p1-095",
+      "holds": true,
+      "reason": "CountriesController.java:24 @Timed(\"controller.getCountries.time\") and PortsOfEntryController.java:23 @Timed(\"controller.getPortsOfEntry.time\")."
+    },
+    {
+      "id": "repo-referencedata-p1-096",
+      "holds": true,
+      "reason": "PortsOfEntryController.java:28 sorts with Comparator.comparing(PortOfEntry::getName), a natural String (case-sensitive) comparison; a null name throws NullPointerException, which the RuntimeException handler (GlobalExceptionHandler.java:116-121) maps to 500. Inference sound."
+    },
+    {
+      "id": "repo-referencedata-p1-097",
+      "holds": true,
+      "reason": "application-local.yml:17 'include: health,info,metrics,env'; application.yml:75 'include: health,metrics,info,cache'. The local profile overrides the list, so cache is dropped and env added."
+    },
+    {
+      "id": "repo-referencedata-p1-098",
+      "holds": true,
+      "reason": "CountriesControllerIT.java:47 comment '// France carries nested subdivisions from MDM', lines 49-50 assert Canary Islands and ES-CN, which mdm-countries-response.json:48-53 gives to Spain; France's FR-MQ Martinique and FR-GP Guadeloupe (lines 11-20) are never asserted."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-referencedata-p1-044-m1",
+      "statement": "The 3000 ms connection and read timeouts are held in configuration only: no code in src/main reads MdmConfiguration's or TradeAuthConfig's timeout fields or sets Feign client options, so the MDM and token calls run under the Feign client's own default timeouts, not 3 seconds.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/configuration/MdmConfiguration.java:16-17; src/main/java/uk/gov/defra/trade/imports/client/MdmClient.java:11-15",
+      "quote": "public int connectionTimeout;\n  public int readTimeout;",
+      "confidence": "inferred",
+      "note": "grep -rn -i timeout over src/main finds the fields only in MdmConfiguration, TradeAuthConfig and application.yml (plus an unrelated RestClientConfig); there is no spring.cloud.openfeign.client.config block in application.yml."
+    },
+    {
+      "id": "repo-referencedata-p1-041-m1",
+      "statement": "The token request posts client_id, client_secret and scope from the trade-auth configuration (TRADE_PLATFORM_CLIENT_ID, TRADE_PLATFORM_CLIENT_SECRET, TRADE_PLATFORM_SCOPE) to the token URL set by TRADE_PLATFORM_AUTH_URL, which defaults to the local stub at http://localhost:8087/tenant/oauth2/v2.0/token.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/interceptor/MdmClientInterceptor.java:42-48; src/main/resources/application.yml:104-109",
+      "quote": "url: ${TRADE_PLATFORM_AUTH_URL:http://localhost:8087/tenant/oauth2/v2.0/token}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-065-m1",
+      "statement": "A unit test proves GET /countries with no blocks value returns 200 and an empty list when MDM returns no countries.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/countries/CountriesControllerTest.java getCountries_returnsEmptyList_whenMdmReturnsNoCountries (lines 100-111)",
+      "quote": "assertThat(response.getBody()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-referencedata-p1-082-m1",
+      "statement": "An integration test proves that when MDM answers the countries call with a 500, GET /countries does not answer 200; it does not pin the status code it does answer.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/ExternalCallMetricsIT.java getCountries_shouldRecordTheMdmCallAsFailed_whenMdmAnswers500 (lines 79-92)",
+      "quote": "assertThat(response.getStatusCode()).isNotEqualTo(HttpStatus.OK);",
+      "confidence": "verbatim",
+      "note": "ExternalCallMetricsIT is outside the partition's read list (the metrics work arrived with the repo's latest commit, EUDPA-675). It narrows gap p1-082: a failed MDM call is proven to surface as an error, just not as a 500."
+    },
+    {
+      "id": "repo-referencedata-p1-095-m1",
+      "statement": "Each outbound call behind the lists is measured as an external call with a success or failure flag: the trade token call (TRADE_TOKEN), the MDM countries call (MDM_GET_COUNTRIES) and the MDM ports call (MDM_GET_PORTS_OF_ENTRY); when the token call fails, MDM is not called at all.",
+      "kind": "non-functional",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/integration/ExternalCallMetricsIT.java:67-118; src/main/java/uk/gov/defra/trade/imports/metrics/ExternalCallFeignCapability.java:3-5",
+      "quote": ".recordCall(eq(ExternalCall.MDM_GET_COUNTRIES), any(Duration.class), eq(true));",
+      "confidence": "verbatim",
+      "note": "Outside the partition's read list (metrics/ package and ExternalCallMetricsIT, added by EUDPA-675). The metric names as published were not read; only the ExternalCall enum constants the test verifies."
+    }
+  ]
+}

@@ -1,0 +1,529 @@
+{
+  "source": "document:dr1-parity-backlog",
+  "structure": "Part 8 of 8, Transport and review. Read in full nine rows of backlog.json increments[] by their line ranges: inc-118 (transit countries type-ahead, done, EUDPA-545, one openQuestion), inc-122 (transporter list as a table with Type and Status, done, EUDPA-562, one openQuestion), inc-126 (duplicate port names, deferred, band disputed, decision ruling defer by Rhys 2026-09-04), inc-127 (malformed port names, blocked, band needs-backend, decision ruling block by Rhys 2026-09-07), inc-150 (incomplete-notification signal on Check your answers, done, EUDPA-580, two openQuestions), inc-146 (Change links per card not per row, done, EUDPA-581, one openQuestion), inc-147 (six numbered review sections, done, EUDPA-583, one openQuestion), inc-145 (arrival date label on review, deferred, band disputed, decision ruling defer by Rhys 2026-09-04) and inc-153 (what is still outstanding after submit, done, EUDPA-589, one openQuestion). Each row carries title, detail, finding {frontend, prototype, difference, correction, falsifiedBy, verification, relatedTo}, citations, controls, provenance, PRs, and either decision {ruling, note, ruledAt} (the three deferred or blocked rows) or openQuestions (the six done rows). Claims cover: for each done row, one or two claims recording what landed (so the reconciler knows the built baseline), then every decision, departure from DR1 and open question in its openQuestions, with the open decisions recorded as gap claims quoting the question; for each deferred or blocked row, the ruling, who made it and when, its reason, the condition for revisiting, and the substance the ruling holds open. Provenance notes on how runs A and C were matched, PR bookkeeping, evidence and screens were read for context and not claimed.",
+  "claims": [
+    {
+      "id": "document-dr1-parity-backlog-p8-001",
+      "statement": "The transit-countries page was rebuilt (done, EUDPA-545) to replace the checkbox list with a type-ahead over the country list plus a table of added countries with a Remove link per row, keeping the twelve-country cap.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-118, status done, finding.difference",
+      "quote": "Replace the checkbox list with a type-ahead over the same country list plus a table of what has been added, one row per country with a Remove link. Keep the cap at twelve",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-002",
+      "statement": "At the twelve-country cap the frontend removes the transit-country search box and the Add button from the page entirely, rather than leaving them on the page disabled.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-118, openQuestions[0]",
+      "quote": "At the twelve-country cap the implementation REMOVES the search box and the Add button from the DOM",
+      "confidence": "verbatim",
+      "note": "A departure from DR1 recorded on a done row."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-003",
+      "statement": "The EUDPA-545 acceptance criterion and DR1 both say the transit-country search box and its button are disabled, but left on the page, once the twelfth country is added.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-118, openQuestions[0]",
+      "quote": "The EUDPA-545 acceptance criterion and Design release 1 both say they are DISABLED once the twelfth country is added (DR1: app/assets/javascripts/transit-country-search.js:6,160-172 sets disabled on the input and the button and leaves both on the page).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-004",
+      "statement": "Disabling the transit-country control at the cap was deferred because the shared accessible-autocomplete component has no disabled option, and changing it would touch every autocomplete page in the service.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-118, openQuestions[0]",
+      "quote": "Deferred rather than fixed because disabling the control means changing the shared appAccessibleAutocomplete macro (src/server/common/components/accessible-autocomplete/macro.njk has no disabled param) and the shared client component (accessible-autocomplete replaces the native select with a generated input that would not inherit disabled), which touches every autocomplete page in the service — outside this increment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-005",
+      "statement": "Undecided: whether the transit-country control at the cap should be disabled-but-present as DR1 has it, or whether removing it is agreed as a deliberate improvement on DR1 and recorded so the parity finding closes against it.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-118, openQuestions[0]",
+      "quote": "DECISION NEEDED: either (a) implement disabled-but-present and change the fit assertions at arrival-transit.fit.spec.js:899-902 to toBeDisabled(), or (b) agree removal as a deliberate improvement on DR1 and record it so the parity finding dr1-transit-countries closes against the agreed behaviour instead of being re-raised on the next capture.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-006",
+      "statement": "Until the cap behaviour is decided, a parity capture at twelve countries shows a disabled search on the DR1 side against no control at all on the frontend side.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-118, openQuestions[0]",
+      "quote": "Until one is chosen, a parity re-capture at the cap will show a disabled-but-present search on the DR1 side against no control at all on the frontend side.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-007",
+      "statement": "Whether the frontend keeps its \"Select up to 12 countries\" hint on the transit-countries page is left as an open copy choice; DR1 does not state the cap up front.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-118, finding.difference",
+      "quote": "Whether the frontend keeps its \"Select up to 12 countries\" hint alongside that is a copy choice; the control change is the work.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-008",
+      "statement": "The transporter list was rebuilt (done, EUDPA-562) with a Status column, and both commercial transporter records were set to Approved.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-122, status done, openQuestions[0]",
+      "quote": "This increment added a Status column and set status: APPROVED on both commercial records — García Livestock Transport SL (src/server/app/services/transporters/records.js:66) and J & G Campbell LTD (records.js:79)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-009",
+      "statement": "Neither commercial transporter (García Livestock Transport SL, J & G Campbell LTD) appears in DR1's transporter list, so their Approved status was judged by the implementor rather than copied from DR1.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "but neither name appears in Design release 1's transporter list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-010",
+      "statement": "DR1's transporter list holds eight rows: Yusen Logistics (Romania) SRL, Roadtrain Ltd, Aberdeen Livestock Ltd, Danish Meat Export ApS, Portuguese Livestock Lda, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "DR1 holds eight rows and the captured DOM's per-row data-search-text (workareas/shared/dr21-parity/harness/capture/html/dr21-transporter.html) gives them as Yusen Logistics (Romania) SRL, Roadtrain Ltd, Aberdeen Livestock Ltd, Danish Meat Export ApS, Portuguese Livestock Lda, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-011",
+      "statement": "The frontend's four private transporter records match DR1 by name and status: Aberdeen approved, Romanian new, Slovak approved, Finnish new.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "The four PRIVATE records the frontend ships match DR1 exactly by name and status (Aberdeen approved, Romanian new, Slovak approved, Finnish new), so those four statuses are genuinely copied; the two commercial ones were judged here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-012",
+      "statement": "The transporter page shows a green Approved tag against both commercial transporters, telling a trader that a register has approved them when nothing has.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "The page now renders a green Approved tag against both, telling a trader choosing a transporter for a live-animal movement that a register has approved them when nothing has.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-013",
+      "statement": "Undecided: what approval status each of the two commercial transporter records may honestly carry; whoever owns the commercial transporter register must rule, and that ruling replaces the current values.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "ACTION FOR THE SERVICE TEAM: whoever owns the commercial transporter register must rule what status each of the two commercial fixtures may carry, and that ruling replaces the values at records.js:66 and records.js:79.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-014",
+      "statement": "The commercial transporter statuses were left open because code cannot settle them: there is no evidenced value and DR1 has no counterpart row to copy.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "Deferred rather than fixed in this increment because code cannot settle it — there is no evidenced value to substitute, and DR1 offers no counterpart row to copy.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-015",
+      "statement": "Changing the commercial transporter statuses after a ruling breaks nothing: the tests pick example transporters by status rather than by name, and only require every record to carry Approved or New with both appearing.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-122, openQuestions[0]",
+      "quote": "Nothing in the code breaks when the ruling lands: the fit spec derives its exemplars with transporterRecords.find((record) => record.status === APPROVED / NEW) rather than naming a record, and services/transporters/transporters.test.js only asserts that every record carries one of the two statuses and that both statuses appear on the list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-016",
+      "statement": "DR1's \"View details\" link on each transporter row is left out of the frontend until the address-book slice settles where it would go.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-122, finding.difference",
+      "quote": "Design release 1's \"View details\" link opens the transporter as an address-book record; whether the frontend has anywhere for that link to go is the address-book slice's question, not this one, so build the columns and leave the link out until that is settled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-017",
+      "statement": "The transporter Type column only carries meaning once the list holds both commercial and private transporters, so it is scheduled after the flow change that combines them (inc-123).",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-122, finding.difference and finding.relatedTo",
+      "quote": "Type only carries meaning once the list holds both commercial and private transporters, so schedule this after the flow change that combines them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-018",
+      "statement": "The frontend's port-of-entry list shows Pembroke Port twice (GB PED and GB PEM) and Port of Sheerness twice (GBSHS and GB SHS).",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-126, finding.frontend",
+      "quote": "Pembroke Port appears under GB PED and again under GB PEM; Port of Sheerness appears under GBSHS and again under GB SHS, the second of the pair differing only by a space in the code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-019",
+      "statement": "DR1's own port list repeats eight names under different codes (Aberdeen, Bristol, Cardiff, Dundee, Glasgow, Inverness, Manchester, Southampton), so one name under two codes is not by itself a parity defect.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-126, finding.prototype and finding.correction",
+      "quote": "DR1 is the oracle and DR1 behaves the same way, so the parity claim does not stand.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-020",
+      "statement": "The duplicate port names finding (inc-126) was deferred by Rhys on 2026-09-04, with every disputed-band increment held for a separate adjudication pass to be revisited as a group.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-126, decision (ruling defer, ruledAt 2026-09-04)",
+      "quote": "Deferred by Rhys, 2026-09-04: every disputed-band increment is held for a separate adjudication pass. Each turns on a requirement the two runs read oppositely, and none can be settled by an implementor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-021",
+      "statement": "Nothing is to be built for the duplicate port names until it is settled whether one name under two codes is a defect.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-126, finding.difference",
+      "quote": "Nothing to build until it is settled whether one name under two codes is a defect at all, because DR1 does the same thing eight times over and both services print the code beside the name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-022",
+      "statement": "Undecided: whether GB PED and GB PEM (both Pembroke Port) are two facilities or one duplicated record; the reference-data owner must say.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-126, finding.difference",
+      "quote": "What would settle it: the reference-data owner saying whether GB PED and GB PEM are two facilities or one record duplicated.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-023",
+      "statement": "GBSHS against \"GB SHS\" for Port of Sheerness is a data defect in its own right, but it belongs in a reference-data ticket rather than the parity backlog because DR1 gives no position on it.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-126, finding.difference",
+      "quote": "The other pair is worth raising whatever the answer — GBSHS and \"GB SHS\" are the same five characters with a space gained or lost, which is a data defect on its own terms — but it belongs in a reference-data ticket rather than in this backlog, because DR1 gives no position to compare it against.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-024",
+      "statement": "Three port names in the frontend's port-of-entry list are malformed: GB TEE is \"Teestort\", GB TIL is \"TILBURY\" in capitals, and GB PME is \"Portsmouth  Port\" with a doubled space.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-127, finding.frontend",
+      "quote": "GB TEE is named \"Teestort\", which is not a place — Teesport is (src/server/app/services/_capture/fixtures/ports-of-entry.json:302-305). GB TIL is named \"TILBURY\" in capitals, sitting on the same list as \"Tilbury Port\" and \"Tilbury 2 Ro-Ro Terminal\" in ordinary case (:294-297). GB PME is named \"Portsmouth  Port\" with two spaces between the words (:266-269).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-025",
+      "statement": "Correcting the malformed port names (inc-127) was blocked by Rhys on 2026-09-07 because the port list is master reference data that will come from MDM after the DR1 parity build, so fixing the frontend fixture now is work MDM replaces.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-127, decision (ruling block, ruledAt 2026-09-07)",
+      "quote": "Blocked by Rhys, 2026-09-07: the port list is master reference data and will come from MDM, which the service integrates with properly after the DR1 parity build. Correcting the three malformed names in the frontend fixture now is work MDM replaces; the corrections are better handed to MDM as a data-quality report. Same grounds as inc-081 and inc-071.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-026",
+      "statement": "The malformed port-name corrections are to be handed to MDM as a data-quality report.",
+      "kind": "integration",
+      "ref": "backlog.json increments[] inc-127, decision.note",
+      "quote": "the corrections are better handed to MDM as a data-quality report.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-027",
+      "statement": "Until MDM lands, typing \"Teesport\" in the port-of-entry search returns nothing, so that port looks absent from the service.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-127, decision.note and finding.frontend",
+      "quote": "Note that the Teesport misspelling makes that port unfindable by search today, so the defect is live until MDM lands. Revisit when MDM lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-028",
+      "statement": "DR1 spells Teesport and Tilbury correctly in ordinary case but has no Portsmouth entry, so the doubled space in Portsmouth Port is a defect in the frontend's own list rather than a parity difference.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-127, finding.prototype and finding.correction",
+      "quote": "So two of the three have a DR1 comparator and the third does not; the doubled space is still a defect in the frontend's own catalogue but it is not a parity difference, and whoever writes the ticket should say so.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-029",
+      "statement": "The port-name corrections change no port codes, so nothing already submitted is affected, and they land in the reference-data source upstream before the frontend's captured copy is refreshed.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-127, finding.difference",
+      "quote": "The codes do not change, so nothing already submitted is affected. The list reaches the frontend from the reference-data service and is only captured into the repo as a fixture, so the correction lands upstream and the fixture is recaptured after it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-030",
+      "statement": "Check your answers on an unfinished notification (done, EUDPA-580) shows an error summary with one \"Complete <card name>\" link per unfinished card, anchored to that card.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, status done, finding.difference",
+      "quote": "On render, work out which cards are unfinished and put an error summary above the heading listing one \"Complete <card name>\" link per unfinished card, anchored to that card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-031",
+      "statement": "On an unfinished notification, each unfinished card on Check your answers carries its own inline error message and its unanswered values are blank rather than filled with a placeholder.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, status done, finding.difference",
+      "quote": "mark each unfinished card with its own inline error message; blank the unanswered values rather than filling them",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-032",
+      "statement": "Pressing Continue on Check your answers when the notification is not ready re-renders the page instead of going on to the declaration.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, status done, finding.difference",
+      "quote": "make the POST re-render the page rather than continue to the declaration when the notification is not ready.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-033",
+      "statement": "When a saved address has been deleted, the Check your answers error summary names the same fix twice: \"Select an address for the consignor\" and \"Complete roles and addresses\", with the card also carrying the inline \"Complete roles and addresses\" message.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, openQuestions[0]",
+      "quote": "a trader picks a consignor, an admin deletes that address-book record, the trader opens Check your answers, and the summary carries both 'Select an address for the consignor' (linking to the consignor page) and 'Complete roles and addresses' (linking to #roles-and-addresses), while the card itself also carries the inline 'Complete roles and addresses' message above a row that already shows the specific deleted-address error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-034",
+      "statement": "DR1 shows one error entry per problem but has no deleted-address case, so the duplicate entry needs a design ruling rather than a code fix.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-150, openQuestions[0]",
+      "quote": "Design release 1 shows one entry per problem but has no deleted-address case, so this needs a design ruling rather than a code fix.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-035",
+      "statement": "Simply suppressing the roles-and-addresses card entry whenever a party error exists was rejected, because it would hide a genuinely unanswered second role in the same card.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-150, openQuestions[0]",
+      "quote": "DEFERRED rather than fixed because the obvious fix — suppress cardErrors.rolesAndAddresses whenever partyErrors is non-empty — would also hide a genuinely unanswered second role in the same card (e.g. consignor deleted AND importer never answered), trading a duplicate message for a missing one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-036",
+      "statement": "Undecided: whether a deleted-address party error suppresses the summary entry for its card, whether the card entry should be reworded, or whether both entries are acceptable; the chosen behaviour is then to be pinned by a test asserting the full error list.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, openQuestions[0]",
+      "quote": "ACTION: decide whether a party error suppresses the card entry for the card that contains it, whether the card entry should instead be reworded, or whether both entries are acceptable; then pin the chosen behaviour with a test on the sanitiser-wired describe in check-answers.test.js asserting the FULL errorList texts for a deleted consignor",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-037",
+      "statement": "An unfinished species or animal-identification state appears in the Check your answers error summary as \"Complete species details\", linking to the About the consignment heading, but no species card is ever marked, even when species cards exist.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, openQuestions[1]",
+      "quote": "a trader with two commodity lines, one missing its animal identifiers, sees 'Complete species details' in the summary, follows the link to the About the consignment heading, and finds no marked card — they must guess which species card is short.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-038",
+      "statement": "Leaving species cards unmarked sits against the increment's own acceptance criterion that every unfinished card carries its own inline error message.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-150, openQuestions[1]",
+      "quote": "This sits against the increment's own AC, 'mark each unfinished card with its own inline error message'.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-039",
+      "statement": "Undecided: which species card counts as unfinished, what to mark when no commodity line has been added, and whether the summary carries one entry per short line or a single entry anchored to the section heading; to be ruled with design.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, openQuestions[1]",
+      "quote": "DEFERRED rather than fixed because marking species needs decisions code cannot settle: which species card counts as unfinished when the `commodities` and `animalIdentification` rows are journey-wide rather than per-line, what to mark when no line has been added at all, and whether the summary should then carry one entry per short line or stay as a single entry anchored to the section heading. ACTION: rule on the above with design, then either give each species card a stable id (e.g. `species-<index>`) and anchor the entry to the first incomplete one, or record the section-anchor behaviour as deliberate.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-040",
+      "statement": "Pending that ruling, the species exception (summary entry anchored to the section heading, no card marked) is documented and pinned by a test so the choice is visible.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-150, openQuestions[1]",
+      "quote": "In the meantime inc-150 documents the exception in incomplete-cards.js and pins it with a test, so the choice is visible rather than forgotten.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-041",
+      "statement": "Check your answers (done, EUDPA-581) puts one Change link on each card instead of on every row, with the visually hidden text naming the card rather than the row.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, status done, finding.difference",
+      "quote": "Move the Change link from the row to the card. Give each card in the check-answers view-model one action, pointing at the page that collects that card's answers, and stop attaching a change action to individual rows",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-042",
+      "statement": "DR1 runs one review card per question page; its eleven card Change links go to /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /animal-identification-details, /additional-animal-details, /arrival-details, /transporter, /upload-documents, /roles-and-addresses and /contact-address-for-consignment, plus a conditional Transit countries card.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0]",
+      "quote": "the frontend groups more than one page's answers into a card while Design release 1 runs one card per page (its eleven card links point at /origin-of-the-import, /what-are-you-importing, /reason-for-import, /consignment-details, /animal-identification-details, /additional-animal-details, /arrival-details, /transporter, /upload-documents, /roles-and-addresses, /contact-address-for-consignment, plus a conditional Transit countries card)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-043",
+      "statement": "With one Change link per card, three of the frontend's eleven review cards show answers that their card link does not lead to, because the frontend groups several pages' answers into one card.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0]",
+      "quote": "That premise holds for eight of the eleven cards but not for three, because the frontend groups more than one page's answers into a card while Design release 1 runs one card per page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-044",
+      "statement": "The Roles and addresses card shows the CPH number but its only Change link goes to the addresses page; a trader who changes their CPH from the review is pushed onward through the journey instead of being returned to Check your answers.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0] item (1)",
+      "quote": "A trader who changes their CPH from the review is pushed onward through the journey rather than handed back to the review.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-045",
+      "statement": "The Additional animal details card shows destination country, exit date and port of exit, collected on the reason-for-import page, but these cannot be changed from the review at all, only from the hub's task row.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0] item (2)",
+      "quote": "(2) Additional animal details shows destination country, exit date and port of exit, which the reason-for-import page collects, while the card's only link goes to /additional-details?change=1 — those three answers are not changeable from the review at all, only from the hub's own task row.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-046",
+      "statement": "Departing from DR1's one link per card, the Arrival details card was given a second, conditional Change link for transit countries, so a trader with a missing transit-countries answer is not looped back to the same error by the port-of-entry link.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0] item (3)",
+      "quote": "(3) Arrival details shows the transited countries the transit-countries page collects; that one is patched in this increment by giving the card a second, conditional Change link, because incomplete-cards.js:43-47 also marks the card for a missing transit-countries answer and the single port-of-entry link left the trader looping back to the same unresolvable error.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-047",
+      "statement": "Undecided, with design: whether the review adopts DR1's one-card-per-page structure (superseding the second transit-countries link and overlapping inc-147's regrouping), or keeps the frontend's grouped cards and threads change context through the hub sub-routes.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0]",
+      "quote": "DEFERRED rather than fixed here because the coherent resolution is a product/design decision this increment cannot settle: either adopt Design release 1's one-card-per-page structure on the review (which would supersede the conditional second link added for transit countries, and overlaps the card-and-section regrouping inc-147 owns), or keep the frontend's grouped cards and thread change context through the hub sub-routes",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-048",
+      "statement": "If the change-context route is chosen, changing CPH from the review must return the trader via the addresses page to Check your answers, Additional animal details must gain a route to the reason-for-import page, and a test must follow check-answers to addresses to CPH and back and assert the trader lands on Check your answers.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-146, openQuestions[0], ACTION",
+      "quote": "if the change-context route is chosen, build the CPH row href as 'cph-number?return=addresses&change=1' when kit.changeContext(request) is true (note kit.withChangeContext appends '?change=1' blindly and would emit a second '?' on this slug), make hubEntryReturn in cph-number/controller.js return '/addresses?change=1' under the same flag, give Additional animal details a route to the reason-for-import page, and add a controller test that follows check-answers -> addresses -> cph-number -> addresses -> Continue and asserts the final redirect is the check-answers path.",
+      "confidence": "verbatim",
+      "note": "Conditional on the open decision in p8-047."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-049",
+      "statement": "Check your answers (done, EUDPA-583) is laid out in DR1's six numbered sections, \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Consignment parties\" and \"6. Contact address\", with a subsection heading above every card.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-147, status done, finding.difference and finding.prototype",
+      "quote": "Restructure the page into Design release 1's six sections in its order, and give every card a subsection heading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-050",
+      "statement": "Five review subsection headings repeat the card title directly beneath them (contact address, roles and addresses, arrival details, transit countries, transport details), so the page prints the same words twice in a row; under \"6. Contact address\" both read \"Contact address for this consignment\".",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-147, openQuestions[0]",
+      "quote": "Five subsection headings now repeat the card title immediately beneath them, so the page prints the same sentence twice in a row at h3 then h4 — most starkly under \"6. Contact address\", where copy.groups.contactAddress and copy.cards.contactAddress are both \"Contact address for this consignment\" (copy.en.js), and likewise for rolesAndAddresses, arrivalDetails, transitCountries and transportDetails.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-051",
+      "statement": "Undecided, page-wide design call: whether a card whose subsection heading already names it drops its own title, or the subsection heading takes a shorter phrasing; DR1 shows both a subheading and a card title per group.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-147, openQuestions[0]",
+      "quote": "Design release 1 shows both a subheading and a summary card per group, so removing either is a design call rather than a code one: decide page-wide whether a card whose subsection heading already names it should drop its own title, or whether the group heading should take a shorter phrasing.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-052",
+      "statement": "The repeated-heading fix was deferred because it has to be applied to all five pairs at once.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-147, openQuestions[0]",
+      "quote": "Deferred from inc-147 review (nit) because the remedy has to be applied to all five pairs at once and would widen this increment beyond the section restructure.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-053",
+      "statement": "On the frontend the arrival date is labelled \"Arrival date at port of entry\" on the question page, on the Check your answers row and in the missing-date validation message.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-145, finding.frontend",
+      "quote": "The Arrival details card on Check your answers labels the row \"Arrival date at port of entry\" (src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js:70), the same words the question page uses when it asks for the answer (src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:5) and the same words the validation message repeats when the date is missing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-054",
+      "statement": "DR1 contradicts itself on the arrival date: its question page asks for \"Arrival date at port of entry\" while its review page and dashboard cards print the same stored value as \"Arrival date at destination\".",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-145, finding.prototype",
+      "quote": "Its arrival-details question asks for \"Arrival date at port of entry\" (app/views/partials/arrival-date-picker.html:9), storing the answer as `arrivalDateAtPort`; its review page then prints that same stored value under the key \"Arrival date at destination\" (app/routes.js:4676-4679), and its dashboard cards use \"Arrival date at destination\" too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-055",
+      "statement": "The arrival date label finding (inc-145) was deferred by Rhys on 2026-09-04 with every disputed-band increment, held for a separate adjudication pass to be revisited as a group.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-145, decision (ruling defer, ruledAt 2026-09-04)",
+      "quote": "Deferred by Rhys, 2026-09-04: every disputed-band increment is held for a separate adjudication pass. Each turns on a requirement the two runs read oppositely, and none can be settled by an implementor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-056",
+      "statement": "Undecided: whether the arrival date collected is the arrival at the port of entry or the arrival at the place of destination; nothing changes until that ruling.",
+      "kind": "data",
+      "ref": "backlog.json increments[] inc-145, finding.difference",
+      "quote": "Nothing should change until somebody says which label Design release 1 means. This is banded disputed because Design release 1 contradicts itself between two of its own screens rather than because the frontend might be wrong. The observation that settles it is a ruling on whether the date being collected is the arrival at the port of entry or the arrival at the place of destination.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-057",
+      "statement": "If the date is the arrival at the port of entry, the frontend is already right; if it is the destination, the frontend must change three strings: the review row, the question page label and the validation message.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-145, finding.difference",
+      "quote": "If it is the port of entry, Design release 1's review and dashboard labels are the mistake and the frontend is already right. If it is the destination, then both sides' question pages are mislabelled as well as the frontend's review row, and on the frontend that is three strings rather than one — the review row, the question page label and the validation message that quotes it",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-058",
+      "statement": "The confirmation page (done, EUDPA-589) shows a \"Before the consignment is imported\" section with the line \"You still need to:\" and one bullet per outstanding item, only when at least one item is outstanding.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-153, status done, finding.difference",
+      "quote": "Add the same section to the confirmation page: a heading \"Before the consignment is imported\", the line \"You still need to:\", and one bullet per outstanding item, rendered only when there is at least one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-059",
+      "statement": "The confirmation page's outstanding list shows \"upload the health certificate and any other required documents\" whenever no document has been uploaded, because documents are optional for submission.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-153, finding.prototype and finding.difference",
+      "quote": "The documents bullet can be built today and nothing has to land first: documents are optional for submission, so the frontend can reach this page with an empty collection, and it already knows that at submit time.",
+      "confidence": "verbatim",
+      "note": "Bullet wording quoted from finding.prototype: \"upload the health certificate and any other required documents\", shown whenever no document has been uploaded."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-060",
+      "statement": "The identifier bullet \"complete the animal identifier information in the notification\" was not built on the frontend's confirmation page.",
+      "kind": "copy",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0]",
+      "quote": "Should the identifier bullet (\"complete the animal identifier information in the notification\") be added to the submitted page's outstanding-work section now, and on what condition?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-061",
+      "statement": "Since inc-100 landed, animal identifiers are optional unless multiple species are selected, so a consignment of one identified species can be submitted with no identifier saved.",
+      "kind": "rule",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0]",
+      "quote": "\"Animal identifiers are optional unless multiple species are selected ... a consignment carrying one identified species can be submitted with no identifier saved at all\" and \"it no longer gates the submission\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-062",
+      "statement": "A trader who declares 200 salmon on one commodity line, saves no identifier and submits reaches the submitted page with nothing listed as outstanding, where DR1 would list the identifier bullet.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0]",
+      "quote": "Concretely: a trader declares 200 salmon on one commodity line, saves no identifier record, submits, and lands on the submitted page — Design release 1 lists \"complete the animal identifier information in the notification\" and this page lists nothing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-063",
+      "statement": "The identifier bullet stays unbuilt until the identifier question (inc-103, whether an animal counts as identified once one identifier is filled or only when all are) is ruled by the design authority; inc-103 is deferred and disputed.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0]",
+      "quote": "the difference slot says the identifier bullet \"should not be built until the identifier question is settled\", and that question — inc-103, \"Frontend counts an animal as identified once one identifier is filled in; Design release 1 does not count it until every identifier for that commodity is filled in\" — is status \"deferred\", band \"disputed\", awaiting a design-authority ruling that code cannot settle.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-064",
+      "statement": "Undecided: once inc-103 is ruled, whether the unambiguous zero-record case (no identifier saved on a single-identified-species consignment) fires the identifier bullet immediately, or both cases land together.",
+      "kind": "behaviour",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0], ACTION",
+      "quote": "ACTION FOR THE SERVICE TEAM: rule on inc-103, then decide whether the zero-record case (no identifier saved at all on a single-identified-species consignment) should fire the bullet immediately — it is unambiguous under either answer to inc-103 — or whether both cases land together.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p8-065",
+      "statement": "Adding the identifier bullet later needs one English and Welsh copy string and one condition, since the confirmation page already lists whatever outstanding items it is given.",
+      "kind": "constraint",
+      "ref": "backlog.json increments[] inc-153, openQuestions[0]",
+      "quote": "The extension point is ready: outstandingItems (features/confirmation/outstanding.js) returns a list and template.njk:13-21 iterates it, so the work is one copy key in copy.en.js/copy.cy.js plus one condition.",
+      "confidence": "verbatim"
+    }
+  ]
+}

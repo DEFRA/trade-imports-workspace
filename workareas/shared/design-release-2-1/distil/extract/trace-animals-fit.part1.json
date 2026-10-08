@@ -1,0 +1,779 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 1, journey glue and shared page chrome: 18 traces from four spec files, all opened and mined (the bundled trace CLI refuses these Playwright 1.63 zips with TraceVersionError, so each zip's extracted context trace, test trace and network log were read with jq in part1/; folder sizes were checked against the zip listing). journey-smoke.fit.spec.js (4 tests, project journeys): s1 = :31 entry guards and opening spine (9db27), s2 = :92 opening run to the review page (1ca52), s3 = :131 notification opened from another session (1beec), s4 = :153 change context from check answers (5e933). page-title.fit.spec.js (2): pt1 = :36 title pattern (2cd26), pt2 = :44 error prefix (b40e3). section-caption.fit.spec.js (5): sc1 = :52 consignment question (6b1ad), sc2 = :67 hidden-legend page (d7b0b), sc3 = :85 dashboard (a5814), sc4 = :96 overview bare (9e37a), sc5 = :104 axe with caption (b78a7). service-navigation.fit.spec.js (7): sn1 = :29 four items (da70d), sn2 = :35 dashboard current (e1a1f), sn3 = :43 current inside a notification (1a793), sn4 = :53 dashboard reachable from a notification (a40ce), sn5 = :72 sign-out href (e6c19), sn6 = :80 no signed-in user shown (1d6b5), sn7 = :91 axe on dashboard (b71ef). Pages walked, in order of the opening run (s2): stub sign-in, / redirect, dashboard /live-animals, POST /notifications creates the notification, origin, commodities (What are you importing?), consignment-details (Commodity details), import-reason, commodities/identification, additional-details, port-of-entry (Arrival details), transit-countries, transporters, accompanying-documents (Upload documents), addresses (Consignment addresses) with five party select pages, cph-number, consignment/contact/select, notification-view (Review your notification). Also walked: the overview (hub) at /notifications/<ref>, the origin page in its error state, the identification and documents pages in change mode (?change=1). Conditional: run mode (save chains to the next page) holds only until the user reaches the overview; additional details follows import reason; transit countries and transporters follow arrival details; cph-number follows addresses. Claims cover the journey glue (redirects, run mode, change context), the shared chrome on every page (title, header, service navigation, phase banner, footer, notification strip, caption, back link, button group), and each walked page's URL, title, caption and heading; each feature page's own fields, options and validation copy are left to that feature's part.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p1-001",
+      "statement": "Every page title reads the page name, then the service name 'Import notification service', then 'GOV.UK', joined by ' - '.",
+      "kind": "copy",
+      "ref": "trace page-title.fit-page-title--2cd26 action call@3271 (toHaveTitle); snapshot of origin page",
+      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-002",
+      "statement": "When a page shows validation errors, the title gains the prefix 'Error: ' in front of the whole title.",
+      "kind": "copy",
+      "ref": "trace page-title.fit-page-title--b40e3 action call@3955 snapshot, <title>",
+      "quote": "Error: Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-003",
+      "statement": "The dashboard's page name is the service name itself, so its title repeats 'Import notification service' twice.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@11, <title>",
+      "quote": "Import notification service - Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "The H1 on the dashboard is 'Import notification service' under the caption 'Dashboard'."
+    },
+    {
+      "id": "trace-animals-fit-p1-004",
+      "statement": "A validation failure re-renders the page with HTTP 400 instead of redirecting.",
+      "kind": "behaviour",
+      "ref": "trace page-title.fit-page-title--b40e3 network: POST /live-animals/notifications/<ref>/origin",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-F2JSVQ/origin 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-005",
+      "statement": "The error summary sits at the top of the page content, above the section caption and heading, titled 'There is a problem', with each error as a link to its field.",
+      "kind": "copy",
+      "ref": "trace page-title.fit-page-title--b40e3 action call@3955 snapshot, main",
+      "quote": "There is a problem ... <a href=#regionOfOriginCodeSuffix>Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-006",
+      "statement": "The error summary is exposed as an alert, and its error link carries the same message as the field's inline error, which is read out with a visually hidden 'Error:' prefix.",
+      "kind": "behaviour",
+      "ref": "trace page-title.fit-page-title--b40e3 action call@3955 (getByRole('alert') link) and snapshot govuk-error-message regionOfOriginCodeSuffix-error",
+      "quote": "Error: Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-007",
+      "statement": "A section caption names the section immediately above the page heading of a consignment question, as a span.govuk-caption-l directly followed by h1.govuk-heading-l.",
+      "kind": "copy",
+      "ref": "trace section-caption.fit-sectio-6b1ad actions call@4013, call@4015; origin snapshot",
+      "quote": "About the consignment / Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-008",
+      "statement": "Each question page shows exactly one govuk caption (no other caption-s/m/l/xl element on the page).",
+      "kind": "rule",
+      "ref": "trace section-caption.fit-sectio-6b1ad action call@4015 (toHaveText on '.govuk-caption-s, .govuk-caption-m, .govuk-caption-l, .govuk-caption-xl')",
+      "quote": "names the section immediately above the heading of a consignment question",
+      "confidence": "inferred",
+      "note": "Inferred from toHaveText with a single expected string on the union caption locator, which passes only when one element matches."
+    },
+    {
+      "id": "trace-animals-fit-p1-009",
+      "statement": "On a page whose question is a visually hidden legend (import reason), the page heading is the page name, the caption sits directly above it, and the fieldset legend carries govuk-visually-hidden.",
+      "kind": "rule",
+      "ref": "trace section-caption.fit-sectio-d7b0b actions call@3709-call@3713; snapshot call@3705",
+      "quote": "<legend class=govuk-fieldset__legend govuk-visually-hidden> What is the main reason for importing the animals?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-010",
+      "statement": "The import reason page reads caption 'About the consignment' and heading 'Main reason for import'.",
+      "kind": "copy",
+      "ref": "trace section-caption.fit-sectio-d7b0b snapshot call@3705",
+      "quote": "About the consignment / Main reason for import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-011",
+      "statement": "The dashboard has the caption 'Dashboard' in govuk-caption-xl directly above an h1.govuk-heading-xl reading 'Import notification service'.",
+      "kind": "copy",
+      "ref": "trace section-caption.fit-sectio-a5814 actions call@3644, call@3646",
+      "quote": "Dashboard / Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-012",
+      "statement": "The notification overview (hub) carries no section caption at all, as Design release 1 does.",
+      "kind": "rule",
+      "ref": "trace section-caption.fit-sectio-9e37a action call@3319 (toHaveCount 0)",
+      "quote": "leaves the overview bare, as Design release 1 does",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-013",
+      "statement": "A captioned page (import reason) has no serious or critical axe violations for wcag2a/wcag2aa once one false positive is excluded.",
+      "kind": "non-functional",
+      "ref": "trace section-caption.fit-sectio-b78a7 axe result after call@3955",
+      "quote": "has no serious or critical axe violations with a caption on the page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-014",
+      "statement": "axe reports a critical aria-allowed-attr violation on the import reason radios that reveal conditional content, caused by govuk-frontend's conditional-reveal script putting aria-expanded on the radio; the test filters it as a false positive.",
+      "kind": "constraint",
+      "ref": "trace section-caption.fit-sectio-b78a7 axe result: violations[0]",
+      "quote": "{\"id\":\"aria-allowed-attr\",\"impact\":\"critical\",\"nodes\":[\"<input class=\\\"govuk-radios__input\\\" id=\\\"reasonForImport\\\" ...",
+      "confidence": "verbatim",
+      "note": "Nodes: reasonForImport, reasonForImport-2, -3 and -5 (the options with conditional reveals). The spec names the same filter as guarding the origin page's axe tests."
+    },
+    {
+      "id": "trace-animals-fit-p1-015",
+      "statement": "The service navigation, a nav labelled 'Menu', offers four items in this order: Dashboard, Address book, Manage account, Log out.",
+      "kind": "copy",
+      "ref": "trace service-navigation.fit-ser-da70d action call@4311; dashboard snapshot header",
+      "quote": "Dashboard Address book Manage account Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-016",
+      "statement": "The service navigation uses the govuk-frontend Service navigation component: a section labelled 'Service information' holding the service name link 'Import notification service' to /live-animals and the Menu nav.",
+      "kind": "constraint",
+      "ref": "trace service-navigation.fit-ser-e1a1f snapshot call@4035, SECTION.govuk-service-navigation",
+      "quote": "<section aria-label=\"Service information\" class=\"govuk-service-navigation\"> ... <span class=\"govuk-service-navigation__service-name\"><a href=\"/live-animals\">Import notification service</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-017",
+      "statement": "On the dashboard, the Dashboard navigation item is marked as the current section: aria-current='true', the --active item modifier and a bold active fallback.",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-e1a1f action call@4037; snapshot LI.govuk-service-navigation__item--active",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/live-animals\" aria-current=\"true\"><strong class=\"govuk-service-navigation__active-fallback\">Dashboard</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-018",
+      "statement": "Inside a notification (the overview), the Dashboard navigation item stays marked as the current section.",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-1a793 action call@4407; snapshot call@4403 nav items",
+      "quote": "keeps the dashboard marked on a page inside a notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-019",
+      "statement": "The Dashboard navigation link carries the set's prefix (href /live-animals) and following it from inside a notification lands on the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-a40ce actions call@3694-call@3698; network GET /live-animals 200",
+      "quote": "reaches the dashboard from inside a notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-020",
+      "statement": "The Address book navigation item links out to the INS frontend's address book on another origin.",
+      "kind": "integration",
+      "ref": "trace service-navigation.fit-ser-e1a1f snapshot call@4035, second nav item",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\">Address book",
+      "confidence": "verbatim",
+      "note": "localhost:3002 is the fit environment's address-book host; the link was not followed in any trace."
+    },
+    {
+      "id": "trace-animals-fit-p1-021",
+      "statement": "The Manage account navigation item is a placeholder link with href '#'.",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-e1a1f snapshot call@4035, third nav item",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"#\">Manage account",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-022",
+      "statement": "Manage account's destination is not shown anywhere: the link goes nowhere and no trace follows it.",
+      "kind": "integration",
+      "ref": "service-navigation.fit.spec.js (no test follows Manage account)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-023",
+      "statement": "The Log out navigation item points at /auth/sign-out, which hands off to the OIDC provider's sign-out endpoint.",
+      "kind": "integration",
+      "ref": "trace service-navigation.fit-ser-e6c19 action call@3979; spec comment at service-navigation.fit.spec.js:70",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\">Log out",
+      "confidence": "verbatim",
+      "note": "The OIDC hand-off is stated in the spec comment ('Clicking through would leave the service for the OIDC provider's sign-out endpoint'), not observed."
+    },
+    {
+      "id": "trace-animals-fit-p1-024",
+      "statement": "What the user sees after logging out (signed-out page, return route) is not shown: the trace pins the href and never follows it.",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-e6c19",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-025",
+      "statement": "The signed-in user's email is shown nowhere on the dashboard, and there is no separate 'Sign out' link, as Design release 1 does not show them.",
+      "kind": "rule",
+      "ref": "trace service-navigation.fit-ser-1d6b5 actions call@4333, call@4335",
+      "quote": "shows the signed-in user nowhere, as Design release 1 does not",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-026",
+      "statement": "The dashboard with its service navigation has no axe violations at all for wcag2a/wcag2aa.",
+      "kind": "non-functional",
+      "ref": "trace service-navigation.fit-ser-b71ef axe result",
+      "quote": "{\"url\":\"http://localhost:3000/live-animals\",\"violations\":[]}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-027",
+      "statement": "The service navigation has a 'Menu' toggle button for narrow screens, hidden at the desktop width the traces ran at (1280x720).",
+      "kind": "behaviour",
+      "ref": "trace service-navigation.fit-ser-e1a1f snapshot call@4035, NAV BUTTON",
+      "quote": "<button type=\"button\" class=\"govuk-service-navigation__toggle govuk-js-service-navigation-toggle\" aria-controls=\"navigation\" hidden aria-hidden=\"true\">Menu</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-028",
+      "statement": "How the navigation behaves on a narrow screen (the Menu toggle opening and closing the list) is not shown; every trace ran at desktop width.",
+      "kind": "behaviour",
+      "ref": "service-navigation.fit.spec.js (no mobile-width test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-029",
+      "statement": "The header is the GOV.UK header with only the GOV.UK logo linking to https://www.gov.uk/; it carries a custom modifier class app-header.",
+      "kind": "constraint",
+      "ref": "trace service-navigation.fit-ser-e1a1f snapshot call@4035, HEADER",
+      "quote": "<div class=\"govuk-header app-header\"> ... <a href=\"https://www.gov.uk/\" class=\"govuk-header__homepage-link\">",
+      "confidence": "verbatim",
+      "note": "app-header is outside the govuk-* toolbox; what it changes is not visible in the DOM."
+    },
+    {
+      "id": "trace-animals-fit-p1-030",
+      "statement": "Every page has a skip link 'Skip to main content' targeting #main-content.",
+      "kind": "non-functional",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@11 (and every page)",
+      "quote": "Skip to main content",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-031",
+      "statement": "An Alpha phase banner shows on every page with a feedback-by-email link to the APHA service desk.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@11, govuk-phase-banner",
+      "quote": "Alpha This is a new service. Help us improve it and give your feedback by email.",
+      "confidence": "verbatim",
+      "note": "The feedback link is mailto:APHAServiceDesk@apha.gov.uk."
+    },
+    {
+      "id": "trace-animals-fit-p1-032",
+      "statement": "The footer offers 'Support links' Privacy, Cookies and Accessibility statement, all pointing at gov.uk help pages, with the OGL v3.0 licence line and Crown copyright.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@11, FOOTER",
+      "quote": "Support links Privacy Cookies Accessibility statement All content is available under the Open Government Licence v3.0, except where otherwise stated © Crown copyright",
+      "confidence": "verbatim",
+      "note": "Hrefs: https://www.gov.uk/help/privacy-notice, https://www.gov.uk/help/cookies, https://www.gov.uk/help/accessibility-statement — generic gov.uk pages, not service-specific ones."
+    },
+    {
+      "id": "trace-animals-fit-p1-033",
+      "statement": "No cookie banner is rendered on any page walked.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@11 (no element with a cookie-banner class)",
+      "quote": "Cookies",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any govuk-cookie-banner element in the snapshots; the only cookie surface is the footer link."
+    },
+    {
+      "id": "trace-animals-fit-p1-034",
+      "statement": "In the fit environment the user signs in through a stub at /auth/stub-sign-in with an organisation id, which redirects to /, and / redirects to the live-animals dashboard.",
+      "kind": "integration",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 network, first two requests",
+      "quote": "GET http://localhost:3000/auth/stub-sign-in?organisationId=stub-org-1 302 -> / ; GET http://localhost:3000/ 302 -> /live-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-035",
+      "statement": "The live-animals dashboard is served at /live-animals, and the service root / redirects there.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 network",
+      "quote": "GET http://localhost:3000/ 302 -> /live-animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-036",
+      "statement": "'Start a new notification' on the dashboard submits a form to POST /live-animals/notifications, which creates the notification and redirects to its origin page.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 action call@15; network POST /live-animals/notifications",
+      "quote": "POST http://localhost:3000/live-animals/notifications 302 -> /live-animals/notifications/GBN-AG-26-Z3P16P/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-037",
+      "statement": "A new notification gets a reference of the form GBN-AG-26-XXXXXX (six upper-case letters and digits) at creation, and every notification URL is keyed by it: /live-animals/notifications/<reference>/<page>.",
+      "kind": "data",
+      "ref": "traces 9db27, 1ca52, 1beec, 5e933 network: created references",
+      "quote": "GBN-AG-26-R75XEQ, GBN-AG-26-Z3P16P, GBN-AG-26-1SGZW1, GBN-AG-26-2R0F6M",
+      "confidence": "inferred",
+      "note": "The pattern is inferred from the references seen; '26' plausibly encodes the year."
+    },
+    {
+      "id": "trace-animals-fit-p1-038",
+      "statement": "The backend calls that create and save a notification are not visible: the traces hold only the browser's traffic to the frontend, so which service mints the reference and stores answers is not shown.",
+      "kind": "integration",
+      "ref": "all part 1 network logs (browser to localhost:3000 only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-039",
+      "statement": "The first page of a new notification is 'Origin of the import' at /origin, with caption 'About the consignment'.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17",
+      "quote": "About the consignment / Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-040",
+      "statement": "The origin page is exempt from the entry guard: going to it directly on a fresh notification shows it again rather than redirecting in a loop.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 actions pw:api@43-expect@44 (test.trace); network GET /origin 200 twice",
+      "quote": "The entry page is exempt from the guard, so revisiting it is not a redirect loop.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-041",
+      "statement": "A notification holding no answers, opened at its overview URL, is sent to its entry page /origin.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1beec stranger context network",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-1SGZW1 302 -> /live-animals/notifications/GBN-AG-26-1SGZW1/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-042",
+      "statement": "An unauthenticated request to a notification URL redirects to /auth/sign-in with the original path as the redirect parameter, and after sign-in returns the user to that path.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1beec stranger context network (1-trace.network)",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-1SGZW1 302 -> /auth/sign-in?redirect=%2Flive-animals%2Fnotifications%2FGBN-AG-26-1SGZW1 ; GET http://localhost:3000/auth/sign-in?redirect=... 302 -> /live-animals/notifications/GBN-AG-26-1SGZW1",
+      "confidence": "verbatim",
+      "note": "In the fit environment /auth/sign-in signs the new context straight in with no visible page; the real sign-in screens are not in the trace."
+    },
+    {
+      "id": "trace-animals-fit-p1-043",
+      "statement": "The sign-in screens a real user meets (Defra ID or another identity provider) are not shown: fit sign-in is stubbed.",
+      "kind": "integration",
+      "ref": "traces 1beec and every sign-in in part 1",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-044",
+      "statement": "A notification created in one browser session can be opened from a second, separately signed-in session in the same stub organisation.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1beec stranger context snapshot call@29",
+      "quote": "a notification created in another session, holding no answers, is sent back to the entry page",
+      "confidence": "inferred",
+      "note": "Inferred: the second context lands on the origin page with the same reference instead of being refused. Whether access is scoped by organisation or open to anyone signed in is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p1-045",
+      "statement": "On a brand-new notification the origin page's Back link goes to the dashboard (/live-animals); once the notification has answers, the origin page's Back link goes to the overview.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshots call@17 (BACK /live-animals) and call@83 (BACK /live-animals/notifications/<ref>)",
+      "quote": "<a href=/live-animals class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-046",
+      "statement": "Every question page inside a notification other than the party pickers has a Back link to the overview.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshots call@41-call@191",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-Z3P16P class=govuk-back-link>Back",
+      "confidence": "verbatim",
+      "note": "Even the review page's Back link and pages opened with ?change=1 go to the overview, not to the previous page."
+    },
+    {
+      "id": "trace-animals-fit-p1-047",
+      "statement": "The party select pages (Consignor or exporter, Place of destination, Place of origin, Consignee, Importer) have a Back link to Consignment addresses.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshot call@145 consignors/select",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-Z3P16P/addresses class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-048",
+      "statement": "Every page inside a notification, the overview and review included, shows a strip above the caption with a blue 'Draft' status tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17, DIV.app-journey-strip",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\"><strong class=\"govuk-tag govuk-tag--blue\">Draft</strong><span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-R75XEQ</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-049",
+      "statement": "The status-and-reference strip is a custom component (app-journey-strip) built from a govuk tag and bold govuk-body text; no standard govuk-frontend component renders it.",
+      "kind": "constraint",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17",
+      "quote": "app-journey-strip",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-050",
+      "statement": "Question pages end with a govuk button group: primary 'Save and continue', secondary 'Save and return to overview' (submits exit=hub), and a 'Cancel and return to overview' link to the overview.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17, DIV.govuk-button-group",
+      "quote": "Save and continue / Save and return to overview / Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-051",
+      "statement": "The party select pages offer only 'Search' and 'Save and continue' (action=save); they have no 'Save and return to overview' and no cancel link.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshots call@145, call@151, call@157, call@163, call@169",
+      "quote": "BUTTONS: ' Search '(action=search), ' Save and continue '(action=save)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-052",
+      "statement": "The CPH number page offers only 'Save and continue': no 'Save and return to overview' and no cancel link.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshot call@177",
+      "quote": "BUTTONS: ' Save and continue '",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-053",
+      "statement": "Every form carries a hidden CSRF crumb and a hidden concurrencyToken, both posted back on submit.",
+      "kind": "constraint",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17 FORM; network POST bodies",
+      "quote": "<input type=hidden name=crumb ...> <input type=hidden name=concurrencyToken value=0>",
+      "confidence": "verbatim",
+      "note": "The party select pages post concurrencyToken empty ('concurrencyToken=&page=1&q=&party=astra-rosales&action=save'). The review page still carried concurrencyToken=0 after a full run of saves. Crumb values [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p1-054",
+      "statement": "A successful save is a POST to the page's own URL answered by a 302 redirect to the next page (post/redirect/get); in-page actions such as Search or Add country answer 200 and re-render the same page.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 network",
+      "quote": "POST .../commodities 200 BODY ...action=search ; POST .../commodities 302 -> .../consignment-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-055",
+      "statement": "The opening run goes page to page without visiting the overview: origin, What are you importing?, Commodity details, Main reason for import, Identification details, Additional details, Arrival details, transit countries, Transporter details, Upload documents, Consignment addresses, CPH number, contact address, then Review your notification.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 network 302 chain",
+      "quote": "origin -> commodities -> consignment-details -> import-reason -> commodities/identification -> additional-details -> port-of-entry -> transit-countries -> transporters -> accompanying-documents -> addresses -> cph-number -> consignment/contact/select -> notification-view",
+      "confidence": "verbatim",
+      "note": "The quote strings the observed redirect targets together."
+    },
+    {
+      "id": "trace-animals-fit-p1-056",
+      "statement": "The opening run ends on the review page /notification-view, headed 'Review your notification'; no question in the notification sent the user to the overview on the way.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 actions call@191, call@193",
+      "quote": "Review your notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-057",
+      "statement": "Documents are optional in the run: the Upload documents page can be passed with 'Save and continue' without adding a document, and the run moves on to Consignment addresses.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 action call@143; network POST /accompanying-documents 302 -> /addresses",
+      "quote": "Documents are optional, so the run passes through the page and the user continues without adding one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-058",
+      "statement": "Reaching the overview ends run mode: after the user visits the overview, saving a task page (origin) returns to the overview instead of chaining to the next page.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 network: POST /origin 302 -> /live-animals/notifications/<ref> after GET overview",
+      "quote": "The hub is somewhere the user chooses to go, and reaching it ends run mode, so later task saves return to the ordinary hub resting state.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-059",
+      "statement": "Outside run mode, a task that spans several pages still chains within itself before returning to the overview: What are you importing? goes on to Commodity details.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network: POST /commodities 302 -> /consignment-details; POST /consignment-details 302 -> overview",
+      "quote": "POST .../commodities 302 -> .../consignment-details ; POST .../consignment-details 302 -> /live-animals/notifications/GBN-AG-26-2R0F6M",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-060",
+      "statement": "Outside run mode, saving Main reason for import goes on to Additional details, and Additional details returns to the overview.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network: POST /import-reason 302 -> /additional-details",
+      "quote": "POST .../import-reason 302 -> .../additional-details ; POST .../additional-details 302 -> /live-animals/notifications/GBN-AG-26-2R0F6M",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-061",
+      "statement": "Outside run mode, saving Roles and addresses (Consignment addresses) goes on to the CPH number page, which then returns to the overview.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network: POST /addresses 302 -> /cph-number",
+      "quote": "POST .../addresses 302 -> .../cph-number ; POST .../cph-number 302 -> /live-animals/notifications/GBN-AG-26-2R0F6M",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-062",
+      "statement": "Outside run mode, Arrival details goes on to transit countries and then Transporter details before returning to the overview.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network",
+      "quote": "POST .../port-of-entry 302 -> .../transit-countries ; POST .../transit-countries 302 -> .../transporters ; POST .../transporters 302 -> /live-animals/notifications/GBN-AG-26-2R0F6M",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-063",
+      "statement": "Outside run mode, a single-page task (identification, contact address, origin) returns to the overview on save.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network",
+      "quote": "POST .../commodities/identification 302 -> /live-animals/notifications/GBN-AG-26-2R0F6M",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-064",
+      "statement": "Each party select page returns to Consignment addresses on save, where the user picks the next role with its 'Add' link.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 actions call@145-call@173; network POST /consignors/select 302 -> /addresses",
+      "quote": "POST .../consignors/select 302 -> .../addresses",
+      "confidence": "verbatim",
+      "note": "Roles walked in order: Consignor or exporter, Place of destination, Place of origin, Consignee, Importer."
+    },
+    {
+      "id": "trace-animals-fit-p1-065",
+      "statement": "The overview is headed 'Overview' (govuk-heading-xl) and lists tasks in six numbered sections: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@79",
+      "quote": "1. About the consignment / 2. Description of the goods / 3. Transport and arrival / 4. Documents / 5. Consignment parties / 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-066",
+      "statement": "The overview's task rows are: Where is this consignment coming from?, What are you importing?, Main reason for import; Commodity details, Identification details, Additional details; Arrival details, Transport details; Upload documents; Roles and addresses; Contact address for this consignment.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@79, govuk-task-list__link",
+      "quote": "Where is this consignment coming from? ... Roles and addresses Consignor or Exporter, Consignee, Importer and Place of Destination ... Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-067",
+      "statement": "After the opening spine, the overview shows the six answered tasks 'Complete' (green) and the five remaining tasks 'To do' (blue).",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@79, tags",
+      "quote": "govuk-tag--green ' Complete ' ... govuk-tag--blue ' To do '",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-068",
+      "statement": "The overview ends with a 'Review and submit' button linking to /notification-view and a secondary 'Return to dashboard' button linking to /live-animals; it has no Back link.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@79",
+      "quote": "<a href=.../notification-view class=govuk-button>Review and submit <a href=/live-animals class=govuk-button govuk-button--secondary>Return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-069",
+      "statement": "Section captions by page, as walked: origin, What are you importing?, Commodity details, Main reason for import and Identification details read 'About the consignment'; Additional details reads 'Commodity details'; Arrival details and Transporter details read 'Transport and arrival'; transit countries reads 'Movement'; Upload documents reads 'Documents'; Consignment addresses, the five party select pages and the CPH page read 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshots call@17-call@177 (CAPTION lines)",
+      "quote": "govuk-caption-l 'About the consignment' ... 'Commodity details' ... 'Transport and arrival' ... 'Movement' ... 'Documents' ... 'Consignment parties'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-070",
+      "statement": "Several page captions do not match the overview section that holds the task: Commodity details and Identification details sit under '2. Description of the goods' but are captioned 'About the consignment'; Additional details is captioned 'Commodity details'; transit countries sits under '3. Transport and arrival' but is captioned 'Movement'.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@79 compared with snapshots call@51, call@67, call@71; trace 1ca52 call@103",
+      "quote": "2. Description of the goods / About the consignment / Commodity details / Movement",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the overview's section headings with each page's caption."
+    },
+    {
+      "id": "trace-animals-fit-p1-071",
+      "statement": "The contact address page and the review page carry no section caption; the contact page's heading is the fieldset legend heading 'Contact address for consignment'.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshots call@187, call@191",
+      "quote": "H1: govuk-fieldset__heading 'Contact address for consignment '",
+      "confidence": "verbatim",
+      "note": "The overview's task row for the same page reads 'Contact address for this consignment'."
+    },
+    {
+      "id": "trace-animals-fit-p1-072",
+      "statement": "Page titles and headings of the walked pages: 'What are you importing?', 'Commodity details', 'Main reason for import', 'Identification details', 'Additional details', 'Arrival details', 'Which countries will the consignment travel through?', 'Transporter details', 'Upload documents', 'Consignment addresses', 'Consignor or exporter', 'Place of destination', 'Place of origin', 'Consignee', 'Importer', 'Add the county parish holding number (CPH)', 'Review your notification'.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 snapshots (TITLE and H1 lines)",
+      "quote": "Which countries will the consignment travel through? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-073",
+      "statement": "Page URLs walked: /origin, /commodities, /consignment-details, /import-reason, /commodities/identification, /additional-details, /port-of-entry, /transit-countries, /transporters, /accompanying-documents, /addresses, /consignors/select, /destinations/select, /place-of-origin/select, /consignees/select, /importers/select, /cph-number, /consignment/contact/select, /notification-view, all under /live-animals/notifications/<reference>.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 network",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-Z3P16P/consignment/contact/select 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-074",
+      "statement": "The review page ends with a single 'Continue' button in a form; it has a Back link to the overview and no caption.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@253",
+      "quote": "<button type=submit class=govuk-button>Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-075",
+      "statement": "The review page is grouped under the same six numbered sections as the overview, each answer set in a summary card with one 'Change' link per card.",
+      "kind": "copy",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@253",
+      "quote": "## H2 1. About the consignment ... ## H4 [govuk-summary-card__title] Import details <a href=.../origin?change=1>Change import details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-076",
+      "statement": "Each review card's Change link opens its page with ?change=1: origin, import-reason, consignment-details, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents, addresses, consignment/contact/select.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@253, Change hrefs",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-2R0F6M/accompanying-documents?change=1 class=govuk-link>Change uploaded documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-077",
+      "statement": "The review offers no Change link to the identification page: the Species card's Change goes to Commodity details (consignment-details?change=1), so the test opens identification?change=1 directly.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@253; spec journey-smoke.fit.spec.js:178-187",
+      "quote": "The review no longer offers a change-context route to the identification page, so this leg opens it with the flag directly",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-078",
+      "statement": "Party and contact address cards on the review page carry 'Edit details' links that open the address edit page with ?return=notification-view.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@253",
+      "quote": "<a href=/live-animals/notifications/GBN-AG-26-2R0F6M/consignors/edit?return=notification-view class=govuk-link>Edit details consignor",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-079",
+      "statement": "In change mode, an in-page action that redirects (removing an animal on identification) keeps the ?change=1 flag on the URL.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network POST identification?change=1 action=remove:0:0",
+      "quote": "POST .../commodities/identification?change=1 302 -> .../commodities/identification?change=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-080",
+      "statement": "In change mode, the explicit exit 'Save and continue' returns the user to the review page rather than the overview.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network POST identification?change=1 and accompanying-documents?change=1&attempt=1",
+      "quote": "POST .../commodities/identification?change=1 302 -> .../notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-081",
+      "statement": "In change mode on Upload documents, 'Save and add another' keeps ?change=1 through the upload and its scan check (the URL gains &attempt=<n>), and the new document's row shows 'Check completed'.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network and action call@273",
+      "quote": "GET .../accompanying-documents?change=1&attempt=1 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-082",
+      "statement": "After a document upload the page polls /accompanying-documents/status and then reloads with ?attempt=<n>.",
+      "kind": "integration",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 network",
+      "quote": "GET .../accompanying-documents/status 200 ; GET .../accompanying-documents?attempt=1 200",
+      "confidence": "verbatim",
+      "note": "The upload POST is multipart and its body is not in the log; the virus-scan/upload service behind the status endpoint is not visible."
+    },
+    {
+      "id": "trace-animals-fit-p1-083",
+      "statement": "In change mode the page keeps its ordinary chrome: Back still goes to the overview, and 'Save and return to overview' and 'Cancel and return to overview' are still offered.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshots call@239, call@257",
+      "quote": "BACK: /live-animals/notifications/GBN-AG-26-2R0F6M 'Back' ... ' Save and return to overview '(exit=hub) ... 'Cancel and return to overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-084",
+      "statement": "Where 'Save and return to overview', 'Cancel and return to overview' and Back lead from a page opened in change mode is not shown: the test leaves only through Save and continue.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-085",
+      "statement": "In change mode, links within the page carry the flag on: identification's commodity 'Change', 'Add another commodity' and 'Change number of animals' links all end in ?change=1.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 snapshot call@245",
+      "quote": "<a href=.../commodities?change=1 class=govuk-link>Add another commodity ... <a href=.../consignment-details?change=1>Change number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-086",
+      "statement": "When the line holds a single animal, the identification card offers no 'Save and add another' button; the page's 'Save and continue' captures the record.",
+      "kind": "rule",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 action call@249 (toHaveCount 0); trace 9db27 snapshot call@67 shows 'Save and add another'(action=add:0) with two animals",
+      "quote": "The line holds a single animal, so the card offers no button of its own",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-087",
+      "statement": "A value changed in change mode (ear tag UK000000000002, document INV-2026-0042) shows on the review page once the user returns.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 actions call@255, call@281",
+      "quote": "UK000000000002",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-088",
+      "statement": "Change mode is carried only on the URL query (?change=1); the review offers no change-context route for the identification page and the spec names the consignment-details count-drop error link as the nearest live route into it.",
+      "kind": "behaviour",
+      "ref": "spec journey-smoke.fit.spec.js:178-184",
+      "quote": "the closest live equivalent is the consignment-details count-drop error link",
+      "confidence": "inferred",
+      "note": "That the flag is carried only on the query is inferred from the URLs and form actions (forms post to their own URL, keeping the query); the count-drop route is not walked in this part."
+    },
+    {
+      "id": "trace-animals-fit-p1-089",
+      "statement": "Review and submit from the overview opens /notification-view.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-5e933 action call@237; network GET /notification-view",
+      "quote": "Review and submit",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-090",
+      "statement": "The service sends a strict Content-Security-Policy whose form-action allows the address-book origin as well as itself.",
+      "kind": "non-functional",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 network, response headers of /auth/stub-sign-in",
+      "quote": "form-action 'self' http://localhost:3002;frame-ancestors 'none'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-091",
+      "statement": "Question pages are laid out in a two-thirds grid column.",
+      "kind": "constraint",
+      "ref": "trace journey-smoke.fit-live-ani-9db27 snapshot call@17, MAIN",
+      "quote": "<div class=\"govuk-grid-row\"><div class=\"govuk-grid-column-two-thirds\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p1-092",
+      "statement": "Pages are reached only by the service's own links and redirects; what a user sees on a URL that matches no page (a 404) or on a server error is not shown.",
+      "kind": "behaviour",
+      "ref": "all part 1 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-093",
+      "statement": "What 'Continue' on the review page leads to (declaration, submission) is not reached in this part's traces.",
+      "kind": "behaviour",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 (stops on the review page)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p1-094",
+      "statement": "The opening run's sample answers: France with region code 75 and internal reference Imports456GB; Bos taurus (Cow) with 1 animal and 5 packages; Internal market, Breeding; ear tag UK123456789012; Slaughter, no unweaned animals; arrival 7/11/2026 at Aberdeen Harbour (GB ABD) by road vehicle FR-892-LK with CMR-2026-884721; transit France and Belgium; García Livestock Transport SL; CPH 12/345/6789; contact Animal and Plant Health Agency.",
+      "kind": "data",
+      "ref": "trace journey-smoke.fit-live-ani-1ca52 network POST bodies",
+      "quote": "countryOfOrigin=FR&regionOfOriginCodeRequirement=yes&regionOfOriginCodeSuffix=75&internalReferenceNumber=Imports456GB",
+      "confidence": "verbatim",
+      "note": "Test data only; recorded so the reconciler can match these traces to other sources' runs."
+    }
+  ]
+}

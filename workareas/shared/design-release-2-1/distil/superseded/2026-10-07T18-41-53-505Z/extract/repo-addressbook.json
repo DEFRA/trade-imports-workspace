@@ -1,0 +1,362 @@
+{
+  "source": "repo:addressbook",
+  "structure": "repos/trade-imports-address-book is a Java 25 / Spring Boot 3.5 / MongoDB service (EUDPA-58), org-scoped address book, port 8089. In scope (the address record: fields, types or usages, validation, organisation scoping, API): src/main/java/.../address (Address entity, AddressRequest validation record, OperatorResponse / OperatorPageResponse wire records, OperatorController routes, OperatorService rules, OperatorRepository queries, OperatorMapper), filter/IdentityHeaderFilter (org scoping), exceptions/GlobalExceptionHandler (error shapes), configuration/AddressTtlConfig + address/AddressExpiryIndex (non-prod expiry), README.md and docs/repos/trade-imports-address-book.md, plus integration tests (OperatorListIT, AddressSearchIT, AddressRequestValidationTest) read as evidence of ruled behaviour. Rulings are not held in a decisions ledger; they appear as 'cv-NNN' ids in Javadoc and test comments (cv-001 camelCase, cv-010 tenant scoping, cv-011 countryCode as-given, cv-016 deleted boolean, cv-025 server page size, cv-040 no existence disclosure, cv-044 untyped/unroled and phone free string, cv-048 FE-resolved countryCode); docs/review/EUDPA-58-review.md is a code-review log, not a rulings ledger. Left out: build, CI, Docker, logging, metrics, TLS truststore, OpenAPI generation plumbing, Mongo connection config. The repo has no UI, no type/usage/role field and no caller code; it never calls other services.",
+  "scopeHash": "500c5aedabdbbd7cf23241f4fb642e3127e88c626dcefded9385654c44bbcabe",
+  "claims": [
+    {
+      "id": "repo-addressbook-001",
+      "statement": "An address is a flat, untyped record owned by one organisation: name, addressLine1, optional addressLine2, townOrCity, optional county, postcode, countryCode, phone and email, with no nested address object.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:18-19",
+      "quote": "An untyped, organisation-owned address-book entry. The field set is flat — the Standard Address Block is one flat form, so there is no nested {@code Address} value object.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-002",
+      "statement": "The address response carries id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, a derived deleted boolean, createdAt and modifiedAt. The internal status, version and expireAt are not on the wire.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java:22-64; OperatorMapper.java:22",
+      "quote": "@BeanMapping(ignoreUnmappedSourceProperties = {\"status\", \"version\", \"expireAt\"})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-003",
+      "statement": "An address has no type, usage, role or default-address attribute. The address book is deliberately untyped and unroled.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:19-24",
+      "quote": "{@code type} and {@code role} are the one exception (cv-044): the address book is untyped and unroled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-004",
+      "statement": "A create or update body that supplies a type or role is rejected with a per-field 400 keyed type or role, not silently dropped. The validation message is 'type is not a supported field' / 'role is not a supported field'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:103-108",
+      "quote": "@Null(message = \"type is not a supported field\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-005",
+      "statement": "Name is mandatory and at most 255 characters. Messages: 'Enter a name' and 'Name must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:36-37",
+      "quote": "@NotBlank(message = \"Enter a name\")\n        @Size(min = 1, max = 255, message = \"Name must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-006",
+      "statement": "Address line 1 is mandatory and at most 255 characters. Messages: 'Enter address line 1' and 'Address line 1 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:45-46",
+      "quote": "@NotBlank(message = \"Enter address line 1\")\n        @Size(min = 1, max = 255, message = \"Address line 1 must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-007",
+      "statement": "Address line 2 is optional and at most 255 characters. Message: 'Address line 2 must be 255 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:54",
+      "quote": "@Size(max = 255, message = \"Address line 2 must be 255 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-008",
+      "statement": "Town or city is mandatory and at most 100 characters. Messages: 'Enter a town or city' and 'Town or city must be 100 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:57-58",
+      "quote": "@NotBlank(message = \"Enter a town or city\")\n        @Size(min = 1, max = 100, message = \"Town or city must be 100 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-009",
+      "statement": "County is optional and at most 100 characters. Message: 'County must be 100 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:66",
+      "quote": "@Size(max = 100, message = \"County must be 100 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-010",
+      "statement": "Postcode is mandatory and at most 12 characters, with no format check. Messages: 'Enter a postcode' and 'Postcode must be 12 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:69-70",
+      "quote": "@NotBlank(message = \"Enter a postcode\")\n        @Size(min = 1, max = 12, message = \"Postcode must be 12 characters or less\")",
+      "confidence": "verbatim",
+      "note": "No postcode pattern exists; format is not validated server-side."
+    },
+    {
+      "id": "repo-addressbook-011",
+      "statement": "Country code is validated for presence only ('Enter a country'). It is stored exactly as supplied, with no length, list or ISO check, and is not converted to or from a display name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:30-31,78",
+      "quote": "{@code countryCode} is validated for presence only ({@code @NotBlank}, cv-011): it is stored exactly as given with no length, list, or ISO pattern check.",
+      "confidence": "verbatim",
+      "note": "Entity and response Javadoc describe the value as an ISO 3166-1 alpha-2 code; the code does not enforce that. A review row (EUDPA-58-review.md #189) records an @Size(max=2) cap that was later reverted to presence-only (f21bf2b)."
+    },
+    {
+      "id": "repo-addressbook-012",
+      "statement": "The service stores and returns a 2-character country code only; display names are the caller's concern, taken from reference-data or the frontend.",
+      "kind": "constraint",
+      "ref": "README.md:136-137",
+      "quote": "`countryCode` is stored and returned as a **2-character ISO code**; display names come from\n  reference-data / the frontend.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-013",
+      "statement": "Phone is mandatory and at most 20 characters, with no format check (a free string is accepted). Messages: 'Enter a telephone number' and 'Telephone number must be 20 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:84-85; src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java:205-206",
+      "quote": "@NotBlank(message = \"Enter a telephone number\")\n        @Size(min = 1, max = 20, message = \"Telephone number must be 20 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-014",
+      "statement": "Email is mandatory, must be in a valid email format, and is at most 254 characters. Messages: 'Enter an email address', 'Enter an email address in the correct format' and 'Email address must be 254 characters or less'.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:93-95",
+      "quote": "@NotBlank(message = \"Enter an email address\")\n        @Email(message = \"Enter an email address in the correct format\")\n        @Size(min = 1, max = 254, message = \"Email address must be 254 characters or less\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-015",
+      "statement": "A field-validation failure returns 400 application/problem+json of type validation-error with an errors map from the wire field name (camelCase, such as addressLine1) to a list of messages, and every failing field is reported together, not only the first.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:44-67; AddressRequest.java:26-28",
+      "quote": "a field-validation\n * failure ({@link MethodArgumentNotValidException}) carries an {@code errors} map keyed by wire\n * field name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-016",
+      "statement": "A bad page parameter, malformed JSON body or missing identity header returns a 400 bad-request problem with no errors map, which is a different shape from the validation 400.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:24-28,74-103",
+      "quote": "The two 400 shapes are deliberately distinct and must not be conflated",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-017",
+      "statement": "Server-owned fields (id, organisationId, deleted, status, timestamps) supplied in a create or update body are ignored, not rejected. organisationId always comes from the identity header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java:14-18; OperatorController.java:135-137",
+      "quote": "a body echoing a read-only field from a\n * prior GET is accepted and the field dropped, never a 400.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-018",
+      "statement": "Every address belongs to one organisation and every address operation is scoped to the caller's organisation, taken from the trusted Trade-Imports-Organisation-Id header. The path orgId is never trusted alone.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:36-41; filter/IdentityHeaderFilter.java:26",
+      "quote": "{@code Trade-Imports-Organisation-Id} is the sole tenant key for org-scoped reads and writes.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-019",
+      "statement": "A missing, blank or malformed Trade-Imports-Organisation-Id header on any /organisation/** request returns 400 bad-request. A valid value is 1 to 64 letters, digits, underscores or hyphens.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/filter/IdentityHeaderFilter.java:72-105",
+      "quote": "Pattern.compile(\"^[A-Za-z0-9_-]{1,64}$\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-020",
+      "statement": "A header organisation id that differs from the path orgId returns 404 'Address not found'. The service never returns 403 and never discloses that another organisation's addresses exist.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:54-68",
+      "quote": "A\n   * mismatch throws {@link NotFoundException} &rarr; 404 (never 403): the API must not disclose that\n   * another organisation's addresses exist (cv-040).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-021",
+      "statement": "An address id that belongs to another organisation gives exactly the same 404 as an unknown id, and the problem body omits the request URI so it leaks no path ids.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:152-160; exceptions/GlobalExceptionHandler.java:30-32",
+      "quote": "An id outside the caller's\n   * organisation is indistinguishable from an unknown id: both are empty, so 404 leaks no existence\n   * across organisations (cv-010).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-022",
+      "statement": "The service has no authentication of its own: no Spring Security, no JWT or API key validation. The caller (CDP ingress or a BFF such as ins-frontend) must authenticate the user, strip any client-supplied organisation header and set it from the verified session, and network policy must block direct access. A client that can reach the service port directly can act as any organisation.",
+      "kind": "constraint",
+      "ref": "README.md:83-109",
+      "quote": "This service has **no Spring Security layer** and does not validate JWTs or API keys. Tenant\nisolation relies entirely on a trusted-forwarded-header contract",
+      "confidence": "verbatim",
+      "note": "Stated by the repo as a deliberate, deferred decision ('deferred for this ticket'). The statement describes the area in general terms only."
+    },
+    {
+      "id": "repo-addressbook-023",
+      "statement": "The API is five routes under /organisation/{orgId}/addresses: GET list, POST create, GET one, PUT replace, DELETE soft-delete.",
+      "kind": "integration",
+      "ref": "README.md:117-123; src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:44",
+      "quote": "| `GET` | `/organisation/{orgId}/addresses` | Paginated list of ACTIVE addresses (newest first) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-024",
+      "statement": "Create returns 201 with a Location header pointing at the new address and the created address as the body. The new address starts ACTIVE (deleted false).",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:141-142,193-200; OperatorService.java:127-131",
+      "quote": "@return 201 with the created address and a {@code Location} header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-025",
+      "statement": "The list returns only the caller's ACTIVE addresses, newest first (createdAt descending, then id descending). Soft-deleted addresses never appear in the list.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:52-57,73-77",
+      "quote": "Sort.by(Sort.Direction.DESC, \"createdAt\").and(Sort.by(Sort.Direction.DESC, \"id\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-026",
+      "statement": "The list is a top-level object with items, page, pageSize, totalItems and totalPages, never a bare array. Page is 1-based, defaults to 1, and the page size is fixed by server configuration (default 25) and is not a request parameter. A page_size query parameter is ignored.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:6-8; OperatorService.java:44; OperatorListIT.java:183",
+      "quote": "@Value(\"${address-book.list.page-size:25}\") int pageSize",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-027",
+      "statement": "A page below 1 or a non-numeric page returns 400 bad-request with no errors map. A page beyond the last returns 200 with empty items, the requested page echoed and the true totals.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:69-71; OperatorListIT.java:166,201,228",
+      "quote": "throw new BadRequestException(\"page must be 1 or greater\");",
+      "confidence": "verbatim",
+      "note": "The beyond-the-last behaviour is read from the test name list_shouldReturnEmptyItems_whenPageIsBeyondTheLast and the absence of a guard in the service."
+    },
+    {
+      "id": "repo-addressbook-028",
+      "statement": "The list accepts a q search term that matches, case-insensitively and as a literal substring (regex characters are escaped), against name, townOrCity or postcode. A multi-word term is matched as one phrase.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:115-117; OperatorRepository.java:25-31",
+      "quote": "return \".*\" + Pattern.quote(q.trim()) + \".*\";",
+      "confidence": "verbatim",
+      "note": "Phrase matching for multi-word terms is inferred from the single quoted regex and the test name multiWordSearchMatchesNameCaseInsensitively in AddressSearchIT; the search does not cover addressLine1, addressLine2, county, phone or email."
+    },
+    {
+      "id": "repo-addressbook-029",
+      "statement": "The list accepts a countryCode filter that matches the stored country code exactly (after trimming) among the caller's ACTIVE addresses.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:111-112; OperatorRepository.java:33-35",
+      "quote": "@Query(\"{ 'organisationId': ?0, 'status': ?1, 'countryCode': ?2 }\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-030",
+      "statement": "When q and countryCode are both supplied the list returns addresses matching either the text or the country code (OR, not AND). This is an existing behaviour a caller must account for.",
+      "kind": "rule",
+      "ref": "README.md:131; src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:37-42",
+      "quote": "OR semantics, not AND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-031",
+      "statement": "The countryCode filter is resolved by the frontend, so the caller supplies the code, not a country name.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:81",
+      "quote": "@param countryCode optional ISO alpha-2 country code (FE-resolved, cv-048)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-032",
+      "statement": "Fetch-by-id returns the address in the caller's organisation, including a soft-deleted one, which comes back 200 with deleted true. An unknown or other-organisation id is 404. A 404 is not a deletion signal.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:203-213; README.md:239-241",
+      "quote": "A 404 is therefore NOT a deletion signal: only the tombstone is.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-033",
+      "statement": "Update is a full replace of every client-supplied field. The id, organisationId, deleted state and createdAt are preserved, and modifiedAt is bumped. The response is 200 with the updated address.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:166-172; OperatorController.java:253-263",
+      "quote": "The\n   * wire can never move the server-owned fields: {@code id}, {@code organisationId}, {@code status}\n   * and {@code createdAt} are all preserved from the stored entity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-034",
+      "statement": "Updating a soft-deleted address returns 404, because a deleted address is outside the caller's live set.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:180-184",
+      "quote": ".filter(address -> address.getStatus() != AddressStatus.DELETED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-035",
+      "statement": "A concurrent update that loses an optimistic-lock race returns 409 conflict with detail 'The resource was modified by another request'.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:105-119; Address.java:78-79",
+      "quote": "\"The resource was modified by another request\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-036",
+      "statement": "Delete is a soft delete: the address stays stored, is marked deleted and drops out of the list, and stays fetchable by id with deleted true. The response is 204 and deleting an already-deleted address is a 204 with no change. An unknown or other-organisation id is 404. There is no restore or undelete route.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:193-221; README.md:233-245",
+      "quote": "Idempotent: deleting an address that is already a tombstone is a no-op",
+      "confidence": "verbatim",
+      "note": "The absence of a restore route is inferred from the controller's five mappings."
+    },
+    {
+      "id": "repo-addressbook-037",
+      "statement": "In prod, addresses and tombstones are kept indefinitely.",
+      "kind": "non-functional",
+      "ref": "README.md:245",
+      "quote": "In prod, addresses and tombstones are retained indefinitely (~1 KB each).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-038",
+      "statement": "Outside prod, addresses can be configured to expire and be removed automatically a set number of days after creation (ADDRESS_TTL_DAYS, with ADDRESS_TTL_EXPIRY_ENABLED creating the Mongo TTL index). Prod never stamps or removes, and the service refuses to start if ENVIRONMENT is blank.",
+      "kind": "non-functional",
+      "ref": "README.md:247-263; src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/AddressTtlConfig.java:35",
+      "quote": "Outside prod, addresses are removed automatically a set number of days after they are created, so\ntest data does not build up.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-039",
+      "statement": "All JSON property names, including error-map keys and traceId, are camelCase.",
+      "kind": "constraint",
+      "ref": "README.md:135; src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandler.java:34-35",
+      "quote": "JSON properties are **camelCase** (e.g. `addressLine1`, `countryCode`, `pageSize`).",
+      "confidence": "verbatim",
+      "note": "Ruled as cv-001. An older locked contract file (docs/openapi/api-contract.locked.yaml) was authored in snake_case; the review log records that the camelCase ruling superseded it."
+    },
+    {
+      "id": "repo-addressbook-040",
+      "statement": "The service names its address operations and records Operator rather than Address in the type names (OperatorController, OperatorResponse, OperatorService) while the wire resource is addresses. The locked contract fixes the operationIds list-addresses, create-address, get-address, update-address and delete-address.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:86,146,215,266,332",
+      "quote": "operationId = \"list-addresses\"",
+      "confidence": "inferred",
+      "note": "Inferred from the five operationId strings; naming of Java types is not user-observable but the operationIds are part of the locked API contract."
+    },
+    {
+      "id": "repo-addressbook-041",
+      "statement": "The service has no field for a default or preferred address, no address line 3, no per-address note, no 'used by' or usage link to notifications, and no address-by-purpose filter. The scope's mention of types or usages finds nothing to record. Searched src/main/java/.../address and README.md for type, usage, role, default and purpose.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java:42-80",
+      "quote": "",
+      "confidence": "gap",
+      "note": "docs/repos/trade-imports-address-book.md also says no consumption of addresses by notification journeys is referenced in this repo."
+    },
+    {
+      "id": "repo-addressbook-042",
+      "statement": "The service validates no country list, no postcode format and no phone format, and does no uniqueness or duplicate check. Two addresses with the same values in one organisation are both accepted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:127-136",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in AddressRequest, OperatorService and OperatorRepository; no existence query runs before save. Behaviour is read from the absence of any check."
+    },
+    {
+      "id": "repo-addressbook-043",
+      "statement": "The list offers no sort option and no filter other than q and countryCode: always newest first. The service also offers no total count of an organisation's addresses separate from the paged list and no bulk operation.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:119-128",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Searched the controller parameters; only page, q and countryCode exist."
+    }
+  ]
+}

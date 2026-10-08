@@ -1,0 +1,1680 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 7, COVERAGE.md. Read in full: COVERAGE.md (201 lines), plus README.md, e2e/support/fixtures.js and e2e/support/evidence.js for context. COVERAGE.md has an intro (prototype pulled from main on 7 October 2026, 103 tests all passing, the route table generated from the trace and evidence indexes, 'Visited by' counting redirect hops), then four sections. Routes: a generated table between routes:start and routes:end of 65 GET routes under /design-release-2.1 (not 67 as the partition expected), each with the view it renders (DR2.1 override, shared root view, or redirect), how many tests visit it with one example test name, and the evidence states captured; claimed one route per claim (p7-001 to p7-065), with the example test names that state a behaviour claimed separately (p7-176 to p7-208). DR2.1 override views: 36 rows, one per file in app/views/design-release-2.1/, with the routes that render each and whether it is visited; all are visited except permanent-address, which is unreachable; claimed p7-066 to p7-101. Not reached, and why: 5 items (permanent-address override, the virus-check JSON endpoint, the address-book usage page, dashboard pagination and filter results, POST /intro/sign-in), split into p7-109 to p7-118. Behaviour worth knowing: 15 numbered items, each split into one claim per fact (p7-119 to p7-175); the two facts in item 6 that COVERAGE.md marks observed in exploration but not asserted are inferred. README and the support plumbing add how traces record every main-frame request including redirect hops, and that each evidence state is owned by the first test to reach it (p7-205, p7-206); the README's arrival-date window is cited alongside item 11 (p7-161).",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p7-001",
+      "statement": "In Design Release 2.1, GET /design-release-2.1 renders the DR2.1 override view dashboard-home; the suite visits it in 6 test(s) and captures these states: dashboard.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:18 (Routes table, row /design-release-2.1)",
+      "quote": "| `/design-release-2.1` | dashboard-home | 6 test(s), e.g. `dashboard` › overall dashboard › /dashboard redirects to the overall dashboard, or to live animals with a query | dashboard |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-002",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/index renders the shared root view index (no DR2.1 override) inside the mount; the suite visits it in 1 test(s) and captures these states: index.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:19 (Routes table, row /design-release-2.1/index)",
+      "quote": "| `/design-release-2.1/index` | (shared index) | 1 test(s), e.g. `dashboard` › overall dashboard › the prototype index lists every design release | index |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-003",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/dashboard renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:20 (Routes table, row /design-release-2.1/dashboard)",
+      "quote": "| `/design-release-2.1/dashboard` | redirect | 1 test(s), e.g. `dashboard` › overall dashboard › /dashboard redirects to the overall dashboard, or to live animals with a query | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-004",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/live-animals renders the DR2.1 override view dashboard; the suite visits it in 6 test(s) and captures these states: live-animals--completed, live-animals--deleted, live-animals--drafts, live-animals--filters-open, live-animals--in-progress, live-animals--search.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:21 (Routes table, row /design-release-2.1/live-animals)",
+      "quote": "| `/design-release-2.1/live-animals` | dashboard | 6 test(s), e.g. `about-the-consignment` › notification type › starting from a category dashboard skips the type question | live-animals--completed, live-animals--deleted, live-animals--drafts, live-animals--filters-open, live-animals--in-progress, live-animals--search |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-005",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/germinal-products renders the DR2.1 override view dashboard; the suite visits it in 1 test(s) and captures these states: germinal-products--in-progress.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:22 (Routes table, row /design-release-2.1/germinal-products)",
+      "quote": "| `/design-release-2.1/germinal-products` | dashboard | 1 test(s), e.g. `dashboard` › category dashboards › germinal products: packages instead of animals | germinal-products--in-progress |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-006",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/actions renders the DR2.1 override view dashboard-actions; the suite visits it in 1 test(s) and captures these states: actions--live-animals, actions.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:23 (Routes table, row /design-release-2.1/actions)",
+      "quote": "| `/design-release-2.1/actions` | dashboard-actions | 1 test(s), e.g. `dashboard` › at a glance drill-downs › action needed lists notifications needing action | actions--live-animals, actions |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-007",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/changes renders the DR2.1 override view dashboard-changes; the suite visits it in 1 test(s) and captures these states: changes--germinal-products, changes.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:24 (Routes table, row /design-release-2.1/changes)",
+      "quote": "| `/design-release-2.1/changes` | dashboard-changes | 1 test(s), e.g. `dashboard` › at a glance drill-downs › status updated lists changes in the past 24 hours | changes--germinal-products, changes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-008",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/inspection renders the DR2.1 override view dashboard-inspection; the suite visits it in 1 test(s) and captures these states: inspection--guidance-open, inspection.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:25 (Routes table, row /design-release-2.1/inspection)",
+      "quote": "| `/design-release-2.1/inspection` | dashboard-inspection | 1 test(s), e.g. `dashboard` › at a glance drill-downs › inspection required lists consignments due at the BCP | inspection--guidance-open, inspection |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-009",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/create-notification renders no page of its own: it redirects, and the suite reaches that redirect in 67 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:26 (Routes table, row /design-release-2.1/create-notification)",
+      "quote": "| `/design-release-2.1/create-notification` | redirect | 67 test(s), e.g. `about-the-consignment` › germinal products: section 1 › category start, germinal search hint and the reduced list of reasons | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-010",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notification-type renders the DR2.1 override view notification-type; the suite visits it in 65 test(s) and captures these states: notification-type--error, notification-type.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:27 (Routes table, row /design-release-2.1/notification-type)",
+      "quote": "| `/design-release-2.1/notification-type` | notification-type | 65 test(s), e.g. `about-the-consignment` › main import reason › a reason is optional to proceed | notification-type--error, notification-type |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-011",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/origin-of-the-import renders the DR2.1 override view origin-of-the-import; the suite visits it in 72 test(s) and captures these states: origin-of-the-import--amend, origin-of-the-import--country-search-open, origin-of-the-import--error-region-code, origin-of-the-import--region-code-prefix, origin-of-the-import--region-code-reveal, origin-of-the-import--template-section-edit, origin-of-the-import.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:28 (Routes table, row /design-release-2.1/origin-of-the-import)",
+      "quote": "| `/design-release-2.1/origin-of-the-import` | origin-of-the-import | 72 test(s), e.g. `about-the-consignment` › germinal products: section 1 › category start, germinal search hint and the reduced list of reasons | origin-of-the-import--amend, origin-of-the-import--country-search-open, origin-of-the-import--error-region-code, origin-of-the-import--region-code-prefix, origin-of-the-import--region-code-reveal, origin-of-the-import--template-section-edit, origin-of-the-import |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-012",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/what-are-you-importing renders the DR2.1 override view what-are-you-importing; the suite visits it in 61 test(s) and captures these states: what-are-you-importing--error, what-are-you-importing--germinal-search-results, what-are-you-importing--help-open, what-are-you-importing--one-selected, what-are-you-importing--plants-no-results, what-are-you-importing--search-results, what-are-you-importing--two-selected, what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:29 (Routes table, row /design-release-2.1/what-are-you-importing)",
+      "quote": "| `/design-release-2.1/what-are-you-importing` | what-are-you-importing | 61 test(s), e.g. `about-the-consignment` › germinal products: section 1 › category start, germinal search hint and the reduced list of reasons | what-are-you-importing--error, what-are-you-importing--germinal-search-results, what-are-you-importing--help-open, what-are-you-importing--one-selected, what-are-you-importing--plants-no-results, what-are-you-importing--search-results, what-are-you-importing--two-selected, what-are-you-importing |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-013",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/prototype/reason-for-import renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:30 (Routes table, row /design-release-2.1/prototype/reason-for-import)",
+      "quote": "| `/design-release-2.1/prototype/reason-for-import` | redirect | 1 test(s), e.g. `about-the-consignment` › main import reason › the prototype seed route jumps straight to the reason page | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-014",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/reason-for-import renders the DR2.1 override view reason-for-import; the suite visits it in 52 test(s) and captures these states: reason-for-import--error-internal-market, reason-for-import--error-temporary-admission-real-date, reason-for-import--error-temporary-admission, reason-for-import--error-transhipment, reason-for-import--error-transit, reason-for-import--germinal, reason-for-import--internal-market-reveal, reason-for-import--temporary-admission-reveal, reason-for-import--transhipment-reveal, reason-for-import--transit-reveal, reason-for-import.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:31 (Routes table, row /design-release-2.1/reason-for-import)",
+      "quote": "| `/design-release-2.1/reason-for-import` | reason-for-import | 52 test(s), e.g. `about-the-consignment` › germinal products: section 1 › category start, germinal search hint and the reduced list of reasons | reason-for-import--error-internal-market, reason-for-import--error-temporary-admission-real-date, reason-for-import--error-temporary-admission, reason-for-import--error-transhipment, reason-for-import--error-transit, reason-for-import--germinal, reason-for-import--internal-market-reveal, reason-for-import--temporary-admission-reveal, reason-for-import--transhipment-reveal, reason-for-import--transit-reveal, reason-for-import |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-015",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/consignment-details renders the DR2.1 override view consignment-details; the suite visits it in 41 test(s) and captures these states: consignment-details--error-required, consignment-details--error-whole-number, consignment-details--germinal-error-invalid, consignment-details--germinal-error-required, consignment-details--germinal, consignment-details--two-commodities, consignment-details.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:32 (Routes table, row /design-release-2.1/consignment-details)",
+      "quote": "| `/design-release-2.1/consignment-details` | consignment-details | 41 test(s), e.g. `about-the-consignment` › main import reason › a reason is optional to proceed | consignment-details--error-required, consignment-details--error-whole-number, consignment-details--germinal-error-invalid, consignment-details--germinal-error-required, consignment-details--germinal, consignment-details--two-commodities, consignment-details |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-016",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/animal-identification-details renders the DR2.1 override view animal-identification-details; the suite visits it in 24 test(s) and captures these states: animal-identification-details--all-animals-saved, animal-identification-details--animal-1-of-2, animal-identification-details--animal-2-of-2, animal-identification-details--germinal-error, animal-identification-details--germinal.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:33 (Routes table, row /design-release-2.1/animal-identification-details)",
+      "quote": "| `/design-release-2.1/animal-identification-details` | animal-identification-details | 24 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | animal-identification-details--all-animals-saved, animal-identification-details--animal-1-of-2, animal-identification-details--animal-2-of-2, animal-identification-details--germinal-error, animal-identification-details--germinal |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-017",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/additional-animal-details renders the DR2.1 override view additional-animal-details; the suite visits it in 17 test(s) and captures these states: additional-animal-details--cattle, additional-animal-details--poultry.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:34 (Routes table, row /design-release-2.1/additional-animal-details)",
+      "quote": "| `/design-release-2.1/additional-animal-details` | additional-animal-details | 17 test(s), e.g. `description-of-the-goods` › additional details › cattle: certification purpose and unweaned animals | additional-animal-details--cattle, additional-animal-details--poultry |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-018",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/arrival-details renders the DR2.1 override view arrival-details; the suite visits it in 18 test(s) and captures these states: arrival-details--amend, arrival-details--error, arrival-details--port-search-open, arrival-details.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:35 (Routes table, row /design-release-2.1/arrival-details)",
+      "quote": "| `/design-release-2.1/arrival-details` | arrival-details | 18 test(s), e.g. `description-of-the-goods` › additional details › cattle: certification purpose and unweaned animals | arrival-details--amend, arrival-details--error, arrival-details--port-search-open, arrival-details |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-019",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transit-countries renders the DR2.1 override view transit-countries; the suite visits it in 5 test(s) and captures these states: transit-countries--two-countries, transit-countries.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:36 (Routes table, row /design-release-2.1/transit-countries)",
+      "quote": "| `/design-release-2.1/transit-countries` | transit-countries | 5 test(s), e.g. `journeys` › notification journeys end to end › germinal products: bovine semen with donor identification | transit-countries--two-countries, transit-countries |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-020",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transport-details renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:37 (Routes table, row /design-release-2.1/transport-details)",
+      "quote": "| `/design-release-2.1/transport-details` | redirect | 1 test(s), e.g. `transport-and-arrival` › transporter details › the legacy transport-details path redirects to the transporter page | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-021",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transporter renders the DR2.1 override view transporter; the suite visits it in 14 test(s) and captures these states: transporter--transporter-added, transporter.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:38 (Routes table, row /design-release-2.1/transporter)",
+      "quote": "| `/design-release-2.1/transporter` | transporter | 14 test(s), e.g. `journeys` › notification journeys end to end › cattle by air: identification, unweaned question, CPH number | transporter--transporter-added, transporter |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-022",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transporter/add renders the DR2.1 override view transporter-add; the suite visits it in 5 test(s) and captures these states: transporter-add--error, transporter-add.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:39 (Routes table, row /design-release-2.1/transporter/add)",
+      "quote": "| `/design-release-2.1/transporter/add` | transporter-add | 5 test(s), e.g. `address-book` › add an address to the address book › transporter: hands over to the add-a-transporter pages | transporter-add--error, transporter-add |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-023",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transporter/add/private renders the DR2.1 override view transporter-add-private; the suite visits it in 2 test(s) and captures these states: transporter-add-private--error, transporter-add-private.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:40 (Routes table, row /design-release-2.1/transporter/add/private)",
+      "quote": "| `/design-release-2.1/transporter/add/private` | transporter-add-private | 2 test(s), e.g. `transport-and-arrival` › add a transporter › private transporter: cancel leaves the journey for the dashboard | transporter-add-private--error, transporter-add-private |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-024",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/transporter/add/commercial renders the DR2.1 override view transporter-add-commercial; the suite visits it in 1 test(s) and captures these states: transporter-add-commercial--error, transporter-add-commercial--manual-address, transporter-add-commercial.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:41 (Routes table, row /design-release-2.1/transporter/add/commercial)",
+      "quote": "| `/design-release-2.1/transporter/add/commercial` | transporter-add-commercial | 1 test(s), e.g. `transport-and-arrival` › add a transporter › commercial transporter: authorisation number, address search or manual entry | transporter-add-commercial--error, transporter-add-commercial--manual-address, transporter-add-commercial |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-025",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/upload-documents renders the DR2.1 override view upload-documents; the suite visits it in 15 test(s) and captures these states: upload-documents--error-real-date, upload-documents--error, upload-documents--file-chosen, upload-documents--one-document, upload-documents.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:42 (Routes table, row /design-release-2.1/upload-documents)",
+      "quote": "| `/design-release-2.1/upload-documents` | upload-documents | 15 test(s), e.g. `documents` › upload documents › a complete document is listed with its virus check status, and can be removed | upload-documents--error-real-date, upload-documents--error, upload-documents--file-chosen, upload-documents--one-document, upload-documents |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-026",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/roles-and-addresses renders the DR2.1 override view roles-and-addresses; the suite visits it in 20 test(s) and captures these states: roles-and-addresses--cat-air-complete, roles-and-addresses--cat-empty, roles-and-addresses--cat-permanent-added, roles-and-addresses--cattle-air-complete, roles-and-addresses--cattle-empty, roles-and-addresses--complete, roles-and-addresses--germinal-semen-complete, roles-and-addresses--horse-sea-complete, roles-and-addresses--poultry-rail-complete, roles-and-addresses--same-as-applied, roles-and-addresses--same-as-shortcuts.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:43 (Routes table, row /design-release-2.1/roles-and-addresses)",
+      "quote": "| `/design-release-2.1/roles-and-addresses` | roles-and-addresses | 20 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | roles-and-addresses--cat-air-complete, roles-and-addresses--cat-empty, roles-and-addresses--cat-permanent-added, roles-and-addresses--cattle-air-complete, roles-and-addresses--cattle-empty, roles-and-addresses--complete, roles-and-addresses--germinal-semen-complete, roles-and-addresses--horse-sea-complete, roles-and-addresses--poultry-rail-complete, roles-and-addresses--same-as-applied, roles-and-addresses--same-as-shortcuts |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-027",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/place-of-origin renders the DR2.1 override view consignment-address-select; the suite visits it in 8 test(s) and captures these states: place-of-origin--address-added, place-of-origin.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:44 (Routes table, row /design-release-2.1/place-of-origin)",
+      "quote": "| `/design-release-2.1/place-of-origin` | consignment-address-select | 8 test(s), e.g. `consignment-parties` › add an address from the journey › place of origin: an international address entered by hand | place-of-origin--address-added, place-of-origin |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-028",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/consignor-or-exporter renders the DR2.1 override view consignment-address-select; the suite visits it in 8 test(s) and captures these states: consignor-or-exporter--search, consignor-or-exporter.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:45 (Routes table, row /design-release-2.1/consignor-or-exporter)",
+      "quote": "| `/design-release-2.1/consignor-or-exporter` | consignment-address-select | 8 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | consignor-or-exporter--search, consignor-or-exporter |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-029",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/consignee renders the DR2.1 override view consignment-address-select; the suite visits it in 8 test(s) and captures these states: consignee.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:46 (Routes table, row /design-release-2.1/consignee)",
+      "quote": "| `/design-release-2.1/consignee` | consignment-address-select | 8 test(s), e.g. `consignment-parties` › consignment addresses › picking an address for every role, then the CPH number | consignee |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-030",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/importer renders the DR2.1 override view consignment-address-select; the suite visits it in 8 test(s) and captures these states: importer.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:47 (Routes table, row /design-release-2.1/importer)",
+      "quote": "| `/design-release-2.1/importer` | consignment-address-select | 8 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | importer |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-031",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/place-of-destination renders the DR2.1 override view consignment-address-select; the suite visits it in 8 test(s) and captures these states: place-of-destination.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:48 (Routes table, row /design-release-2.1/place-of-destination)",
+      "quote": "| `/design-release-2.1/place-of-destination` | consignment-address-select | 8 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | place-of-destination |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-032",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/place-of-origin/add-address renders the DR2.1 override view consignment-add-address; the suite visits it in 1 test(s) and captures these states: place-of-origin-add-address--error, place-of-origin-add-address.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:49 (Routes table, row /design-release-2.1/place-of-origin/add-address)",
+      "quote": "| `/design-release-2.1/place-of-origin/add-address` | consignment-add-address | 1 test(s), e.g. `consignment-parties` › add an address from the journey › place of origin: an international address entered by hand | place-of-origin-add-address--error, place-of-origin-add-address |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-033",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/consignor-or-exporter/add-address renders the DR2.1 override view consignment-add-address; the suite visits it in 1 test(s) and captures these states: consignor-or-exporter-add-address.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:50 (Routes table, row /design-release-2.1/consignor-or-exporter/add-address)",
+      "quote": "| `/design-release-2.1/consignor-or-exporter/add-address` | consignment-add-address | 1 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | consignor-or-exporter-add-address |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-034",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/consignee/add-address renders the DR2.1 override view consignment-add-address; the suite visits it in 1 test(s) and captures these states: consignee-add-address--lookup-error, consignee-add-address--lookup-picked, consignee-add-address--lookup-results, consignee-add-address--lookup.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:51 (Routes table, row /design-release-2.1/consignee/add-address)",
+      "quote": "| `/design-release-2.1/consignee/add-address` | consignment-add-address | 1 test(s), e.g. `consignment-parties` › add an address from the journey › consignee: a UK address found by search, then completed | consignee-add-address--lookup-error, consignee-add-address--lookup-picked, consignee-add-address--lookup-results, consignee-add-address--lookup |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-035",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/importer/add-address renders the DR2.1 override view consignment-add-address; the suite visits it in 1 test(s) and captures these states: importer-add-address.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:52 (Routes table, row /design-release-2.1/importer/add-address)",
+      "quote": "| `/design-release-2.1/importer/add-address` | consignment-add-address | 1 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | importer-add-address |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-036",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/place-of-destination/add-address renders the DR2.1 override view consignment-add-address; the suite visits it in 1 test(s) and captures these states: place-of-destination-add-address.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:53 (Routes table, row /design-release-2.1/place-of-destination/add-address)",
+      "quote": "| `/design-release-2.1/place-of-destination/add-address` | consignment-add-address | 1 test(s), e.g. `consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses | place-of-destination-add-address |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-037",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/cph-number renders the DR2.1 override view cph-number; the suite visits it in 4 test(s) and captures these states: cph-number.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:54 (Routes table, row /design-release-2.1/cph-number)",
+      "quote": "| `/design-release-2.1/cph-number` | cph-number | 4 test(s), e.g. `consignment-parties` › consignment addresses › cat: permanent address replaces the CPH number | cph-number |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-038",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/permanent-address renders no page of its own: it redirects, and the suite reaches that redirect in 2 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:55 (Routes table, row /design-release-2.1/permanent-address)",
+      "quote": "| `/design-release-2.1/permanent-address` | redirect | 2 test(s), e.g. `consignment-parties` › permanent address › cat: one choice per animal, same as destination or a new address | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-039",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/permanent-address/select renders the DR2.1 override view permanent-address-animals; the suite visits it in 3 test(s) and captures these states: permanent-address-select--error-new-address, permanent-address-select--error-no-place-of-destination, permanent-address-select--new-address-reveal, permanent-address-select--select.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:56 (Routes table, row /design-release-2.1/permanent-address/select)",
+      "quote": "| `/design-release-2.1/permanent-address/select` | permanent-address-animals | 3 test(s), e.g. `consignment-parties` › permanent address › cat: one choice per animal, same as destination or a new address | permanent-address-select--error-new-address, permanent-address-select--error-no-place-of-destination, permanent-address-select--new-address-reveal, permanent-address-select--select |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-040",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/permanent-address/enter-address renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:57 (Routes table, row /design-release-2.1/permanent-address/enter-address)",
+      "quote": "| `/design-release-2.1/permanent-address/enter-address` | redirect | 1 test(s), e.g. `consignment-parties` › permanent address › the enter-address path is retired and lands on the per-animal page | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-041",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/contact-address-for-consignment renders the DR2.1 override view contact-address-for-consignment; the suite visits it in 8 test(s) and captures these states: contact-address-for-consignment--error, contact-address-for-consignment.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:58 (Routes table, row /design-release-2.1/contact-address-for-consignment)",
+      "quote": "| `/design-release-2.1/contact-address-for-consignment` | contact-address-for-consignment | 8 test(s), e.g. `consignment-parties` › consignment addresses › picking an address for every role, then the CPH number | contact-address-for-consignment--error, contact-address-for-consignment |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-042",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notification-hub renders the DR2.1 override view notification-hub; the suite visits it in 15 test(s) and captures these states: notification-hub--cat-air-complete, notification-hub--cattle-air-complete, notification-hub--copied, notification-hub--empty, notification-hub--from-template, notification-hub--germinal-semen-complete, notification-hub--horse-sea-complete, notification-hub--new-template, notification-hub--poultry-rail-complete, notification-hub--template.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:59 (Routes table, row /design-release-2.1/notification-hub)",
+      "quote": "| `/design-release-2.1/notification-hub` | notification-hub | 15 test(s), e.g. `about-the-consignment` › what are you importing › save and return to overview keeps the selection without validating | notification-hub--cat-air-complete, notification-hub--cattle-air-complete, notification-hub--copied, notification-hub--empty, notification-hub--from-template, notification-hub--germinal-semen-complete, notification-hub--horse-sea-complete, notification-hub--new-template, notification-hub--poultry-rail-complete, notification-hub--template |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-043",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/review-notification renders the DR2.1 override view review-notification; the suite visits it in 13 test(s) and captures these states: review-notification--action-required, review-notification--amend-modal, review-notification--amend, review-notification--cancel-amend-modal, review-notification--cat-air-complete, review-notification--cattle-air-complete, review-notification--completed, review-notification--draft, review-notification--germinal-semen-complete, review-notification--horse-sea-complete, review-notification--incomplete, review-notification--just-submitted, review-notification--poultry-rail-complete, review-notification--submitted, review-notification--template.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:60 (Routes table, row /design-release-2.1/review-notification)",
+      "quote": "| `/design-release-2.1/review-notification` | review-notification | 13 test(s), e.g. `consignment-parties` › contact address for consignment › choose the contact address | review-notification--action-required, review-notification--amend-modal, review-notification--amend, review-notification--cancel-amend-modal, review-notification--cat-air-complete, review-notification--cattle-air-complete, review-notification--completed, review-notification--draft, review-notification--germinal-semen-complete, review-notification--horse-sea-complete, review-notification--incomplete, review-notification--just-submitted, review-notification--poultry-rail-complete, review-notification--submitted, review-notification--template |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-044",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/declaration renders the DR2.1 override view declaration; the suite visits it in 8 test(s) and captures these states: declaration--error, declaration.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:61 (Routes table, row /design-release-2.1/declaration)",
+      "quote": "| `/design-release-2.1/declaration` | declaration | 8 test(s), e.g. `journeys` › notification journeys end to end › cattle by air: identification, unweaned question, CPH number | declaration--error, declaration |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-045",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notification-submitted renders the DR2.1 override view notification-submitted; the suite visits it in 7 test(s) and captures these states: notification-submitted--amended, notification-submitted--cat-air, notification-submitted--cattle-air, notification-submitted--germinal-semen, notification-submitted--horse-sea, notification-submitted--poultry-rail.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:62 (Routes table, row /design-release-2.1/notification-submitted)",
+      "quote": "| `/design-release-2.1/notification-submitted` | notification-submitted | 7 test(s), e.g. `journeys` › notification journeys end to end › cattle by air: identification, unweaned question, CPH number | notification-submitted--amended, notification-submitted--cat-air, notification-submitted--cattle-air, notification-submitted--germinal-semen, notification-submitted--horse-sea, notification-submitted--poultry-rail |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-046",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notifications/delete renders the DR2.1 override view delete-notification; the suite visits it in 1 test(s) and captures these states: notifications-delete.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:63 (Routes table, row /design-release-2.1/notifications/delete)",
+      "quote": "| `/design-release-2.1/notifications/delete` | delete-notification | 1 test(s), e.g. `manage-notifications` › delete a notification › confirm the deletion; the dashboard shows a success banner | notifications-delete |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-047",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notifications/amend renders no page of its own: it redirects, and the suite reaches that redirect in 3 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:64 (Routes table, row /design-release-2.1/notifications/amend)",
+      "quote": "| `/design-release-2.1/notifications/amend` | redirect | 3 test(s), e.g. `manage-notifications` › amend a submitted notification › cancel an amendment from the amend review | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-048",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notifications/cancel-amend renders no page of its own: it redirects, and the suite reaches that redirect in 2 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:65 (Routes table, row /design-release-2.1/notifications/cancel-amend)",
+      "quote": "| `/design-release-2.1/notifications/cancel-amend` | redirect | 2 test(s), e.g. `manage-notifications` › amend a submitted notification › cancel an amendment from the amend review | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-049",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/notifications/copy-as-new renders no page of its own: it redirects, and the suite reaches that redirect in 2 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:66 (Routes table, row /design-release-2.1/notifications/copy-as-new)",
+      "quote": "| `/design-release-2.1/notifications/copy-as-new` | redirect | 2 test(s), e.g. `manage-notifications` › amend and copy guards › cancel-amend with no amendment in progress, and unknown references, return to the dashboard | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-050",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates renders the DR2.1 override view dashboard-templates; the suite visits it in 9 test(s) and captures these states: templates--deleted, templates--saved, templates.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:67 (Routes table, row /design-release-2.1/templates)",
+      "quote": "| `/design-release-2.1/templates` | dashboard-templates | 9 test(s), e.g. `templates` › a saved template › delete: confirm, then the list says it was deleted | templates--deleted, templates--saved, templates |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-051",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/create renders the DR2.1 override view create-template; the suite visits it in 3 test(s) and captures these states: templates-create.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:68 (Routes table, row /design-release-2.1/templates/create)",
+      "quote": "| `/design-release-2.1/templates/create` | create-template | 3 test(s), e.g. `templates` › create a new template › a template with no name is saved as \"Untitled template\" | templates-create |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-052",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/save renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:69 (Routes table, row /design-release-2.1/templates/save)",
+      "quote": "| `/design-release-2.1/templates/save` | redirect | 1 test(s), e.g. `templates` › create a new template › a template with no name is saved as \"Untitled template\" | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-053",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/discard renders the DR2.1 override view delete-template; the suite visits it in 2 test(s) and captures these states: templates-discard.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:70 (Routes table, row /design-release-2.1/templates/discard)",
+      "quote": "| `/design-release-2.1/templates/discard` | delete-template | 2 test(s), e.g. `templates` › create a new template › discard a template being created | templates-discard |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-054",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/:templateId renders the DR2.1 override view view-template; the suite visits it in 4 test(s) and captures these states: templates-arena-aintree--updated, templates-arena-aintree.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:71 (Routes table, row /design-release-2.1/templates/:templateId)",
+      "quote": "| `/design-release-2.1/templates/:templateId` | view-template | 4 test(s), e.g. `templates` › a saved template › change one section: save and return goes back to the template | templates-arena-aintree--updated, templates-arena-aintree |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-055",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/:templateId/change/:section renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:72 (Routes table, row /design-release-2.1/templates/:templateId/change/:section)",
+      "quote": "| `/design-release-2.1/templates/:templateId/change/:section` | redirect | 1 test(s), e.g. `templates` › a saved template › change one section: save and return goes back to the template | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-056",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/:templateId/use renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:73 (Routes table, row /design-release-2.1/templates/:templateId/use)",
+      "quote": "| `/design-release-2.1/templates/:templateId/use` | redirect | 1 test(s), e.g. `templates` › a saved template › use: starts a new draft notification from the template | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-057",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/:templateId/edit renders no page of its own: it redirects, and the suite reaches that redirect in 1 test(s).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:74 (Routes table, row /design-release-2.1/templates/:templateId/edit)",
+      "quote": "| `/design-release-2.1/templates/:templateId/edit` | redirect | 1 test(s), e.g. `templates` › a saved template › edit: opens the template on its own task list | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-058",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/templates/:templateId/delete renders the DR2.1 override view delete-template; the suite visits it in 1 test(s) and captures these states: templates-arena-aintree-delete.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:75 (Routes table, row /design-release-2.1/templates/:templateId/delete)",
+      "quote": "| `/design-release-2.1/templates/:templateId/delete` | delete-template | 1 test(s), e.g. `templates` › a saved template › delete: confirm, then the list says it was deleted | templates-arena-aintree-delete |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-059",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book renders the shared root view address-book (no DR2.1 override) inside the mount; the suite visits it in 4 test(s) and captures these states: address-book--address-added, address-book--branch, address-book--deleted, address-book--destination-consignee-importer, address-book--origin-and-consignor, address-book--page-2, address-book--search, address-book--transporter, address-book--updated.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:76 (Routes table, row /design-release-2.1/address-book)",
+      "quote": "| `/design-release-2.1/address-book` | (shared address-book) | 4 test(s), e.g. `address-book` › add an address to the address book › origin or consignor: an address entered by hand with its uses | address-book--address-added, address-book--branch, address-book--deleted, address-book--destination-consignee-importer, address-book--origin-and-consignor, address-book--page-2, address-book--search, address-book--transporter, address-book--updated |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-060",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/add renders the shared root view address-book-add (no DR2.1 override) inside the mount; the suite visits it in 7 test(s) and captures these states: address-book-add--error, address-book-add.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:77 (Routes table, row /design-release-2.1/address-book/add)",
+      "quote": "| `/design-release-2.1/address-book/add` | (shared address-book-add) | 7 test(s), e.g. `address-book` › add an address to the address book › branch: the branch address use | address-book-add--error, address-book-add |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-061",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/add/lookup renders the shared root view address-book-lookup / consignment-add-address (no DR2.1 override) inside the mount; the suite visits it in 4 test(s) and captures these states: address-book-add-lookup--branch, address-book-add-lookup--destination-consignee-importer-error, address-book-add-lookup--destination-consignee-importer, address-book-add-lookup--destination-picked, address-book-add-lookup--from-contact, address-book-add-lookup--origin-and-consignor-error, address-book-add-lookup--origin-and-consignor.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:78 (Routes table, row /design-release-2.1/address-book/add/lookup)",
+      "quote": "| `/design-release-2.1/address-book/add/lookup` | (shared address-book-lookup / consignment-add-address) | 4 test(s), e.g. `address-book` › add an address to the address book › branch: the branch address use | address-book-add-lookup--branch, address-book-add-lookup--destination-consignee-importer-error, address-book-add-lookup--destination-consignee-importer, address-book-add-lookup--destination-picked, address-book-add-lookup--from-contact, address-book-add-lookup--origin-and-consignor-error, address-book-add-lookup--origin-and-consignor |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-062",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/add/usage renders the shared root view address-book-add-usage (no DR2.1 override) inside the mount; the suite visits it in 1 test(s) and captures no evidence state.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:79 (Routes table, row /design-release-2.1/address-book/add/usage)",
+      "quote": "| `/design-release-2.1/address-book/add/usage` | (shared address-book-add-usage) | 1 test(s), e.g. `address-book` › add an address to the address book › the usage step is only reachable with an address pending | — |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-063",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/:addressId renders the shared root view address-book-view (no DR2.1 override) inside the mount; the suite visits it in 1 test(s) and captures these states: address-book-green-valley-farm-sanpetru-0.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:80 (Routes table, row /design-release-2.1/address-book/:addressId)",
+      "quote": "| `/design-release-2.1/address-book/:addressId` | (shared address-book-view) | 1 test(s), e.g. `address-book` › an address book entry › view, edit and save | address-book-green-valley-farm-sanpetru-0 |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-064",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/:addressId/edit renders the shared root view address-book edit (no DR2.1 override) inside the mount; the suite visits it in 1 test(s) and captures these states: address-book-green-valley-farm-sanpetru-0-edit--error, address-book-green-valley-farm-sanpetru-0-edit.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:81 (Routes table, row /design-release-2.1/address-book/:addressId/edit)",
+      "quote": "| `/design-release-2.1/address-book/:addressId/edit` | (shared address-book edit) | 1 test(s), e.g. `address-book` › an address book entry › view, edit and save | address-book-green-valley-farm-sanpetru-0-edit--error, address-book-green-valley-farm-sanpetru-0-edit |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-065",
+      "statement": "In Design Release 2.1, GET /design-release-2.1/address-book/:addressId/delete renders the DR2.1 override view delete-address; the suite visits it in 1 test(s) and captures these states: address-book-green-valley-farm-sanpetru-0-delete.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:82 (Routes table, row /design-release-2.1/address-book/:addressId/delete)",
+      "quote": "| `/design-release-2.1/address-book/:addressId/delete` | delete-address | 1 test(s), e.g. `address-book` › an address book entry › delete: confirm, then the list says it was deleted | address-book-green-valley-farm-sanpetru-0-delete |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-066",
+      "statement": "Design Release 2.1 has its own override view dashboard-home, rendered by / (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:89 (DR2.1 override views table, row dashboard-home)",
+      "quote": "| dashboard-home | `/` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-067",
+      "statement": "Design Release 2.1 has its own override view dashboard, rendered by /live-animals, /germinal-products (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:90 (DR2.1 override views table, row dashboard)",
+      "quote": "| dashboard | `/live-animals`, `/germinal-products` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-068",
+      "statement": "Design Release 2.1 has its own override view dashboard-actions, rendered by /actions (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:91 (DR2.1 override views table, row dashboard-actions)",
+      "quote": "| dashboard-actions | `/actions` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-069",
+      "statement": "Design Release 2.1 has its own override view dashboard-changes, rendered by /changes (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:92 (DR2.1 override views table, row dashboard-changes)",
+      "quote": "| dashboard-changes | `/changes` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-070",
+      "statement": "Design Release 2.1 has its own override view dashboard-inspection, rendered by /inspection (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:93 (DR2.1 override views table, row dashboard-inspection)",
+      "quote": "| dashboard-inspection | `/inspection` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-071",
+      "statement": "Design Release 2.1 has its own override view dashboard-templates, rendered by /templates (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:94 (DR2.1 override views table, row dashboard-templates)",
+      "quote": "| dashboard-templates | `/templates` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-072",
+      "statement": "Design Release 2.1 has its own override view notification-type, rendered by /notification-type (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:95 (DR2.1 override views table, row notification-type)",
+      "quote": "| notification-type | `/notification-type` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-073",
+      "statement": "Design Release 2.1 has its own override view origin-of-the-import, rendered by /origin-of-the-import (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:96 (DR2.1 override views table, row origin-of-the-import)",
+      "quote": "| origin-of-the-import | `/origin-of-the-import` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-074",
+      "statement": "Design Release 2.1 has its own override view what-are-you-importing, rendered by /what-are-you-importing (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:97 (DR2.1 override views table, row what-are-you-importing)",
+      "quote": "| what-are-you-importing | `/what-are-you-importing` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-075",
+      "statement": "Design Release 2.1 has its own override view reason-for-import, rendered by /reason-for-import (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:98 (DR2.1 override views table, row reason-for-import)",
+      "quote": "| reason-for-import | `/reason-for-import` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-076",
+      "statement": "Design Release 2.1 has its own override view consignment-details, rendered by /consignment-details (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:99 (DR2.1 override views table, row consignment-details)",
+      "quote": "| consignment-details | `/consignment-details` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-077",
+      "statement": "Design Release 2.1 has its own override view animal-identification-details, rendered by /animal-identification-details (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:100 (DR2.1 override views table, row animal-identification-details)",
+      "quote": "| animal-identification-details | `/animal-identification-details` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-078",
+      "statement": "Design Release 2.1 has its own override view additional-animal-details, rendered by /additional-animal-details (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:101 (DR2.1 override views table, row additional-animal-details)",
+      "quote": "| additional-animal-details | `/additional-animal-details` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-079",
+      "statement": "Design Release 2.1 has its own override view arrival-details, rendered by /arrival-details (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:102 (DR2.1 override views table, row arrival-details)",
+      "quote": "| arrival-details | `/arrival-details` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-080",
+      "statement": "Design Release 2.1 has its own override view transit-countries, rendered by /transit-countries (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:103 (DR2.1 override views table, row transit-countries)",
+      "quote": "| transit-countries | `/transit-countries` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-081",
+      "statement": "Design Release 2.1 has its own override view transporter, rendered by /transporter (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:104 (DR2.1 override views table, row transporter)",
+      "quote": "| transporter | `/transporter` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-082",
+      "statement": "Design Release 2.1 has its own override view transporter-add, rendered by /transporter/add (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:105 (DR2.1 override views table, row transporter-add)",
+      "quote": "| transporter-add | `/transporter/add` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-083",
+      "statement": "Design Release 2.1 has its own override view transporter-add-private, rendered by /transporter/add/private (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:106 (DR2.1 override views table, row transporter-add-private)",
+      "quote": "| transporter-add-private | `/transporter/add/private` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-084",
+      "statement": "Design Release 2.1 has its own override view transporter-add-commercial, rendered by /transporter/add/commercial (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:107 (DR2.1 override views table, row transporter-add-commercial)",
+      "quote": "| transporter-add-commercial | `/transporter/add/commercial` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-085",
+      "statement": "Design Release 2.1 has its own override view upload-documents, rendered by /upload-documents (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:108 (DR2.1 override views table, row upload-documents)",
+      "quote": "| upload-documents | `/upload-documents` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-086",
+      "statement": "Design Release 2.1 has its own override view roles-and-addresses, rendered by /roles-and-addresses (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:109 (DR2.1 override views table, row roles-and-addresses)",
+      "quote": "| roles-and-addresses | `/roles-and-addresses` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-087",
+      "statement": "Design Release 2.1 has its own override view consignment-address-select, rendered by /place-of-origin, /consignor-or-exporter, /consignee, /importer, /place-of-destination (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:110 (DR2.1 override views table, row consignment-address-select)",
+      "quote": "| consignment-address-select | `/place-of-origin`, `/consignor-or-exporter`, `/consignee`, `/importer`, `/place-of-destination` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-088",
+      "statement": "Design Release 2.1 has its own override view consignment-add-address, rendered by /<role>/add-address (all five), /address-book/add/lookup (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:111 (DR2.1 override views table, row consignment-add-address)",
+      "quote": "| consignment-add-address | `/<role>/add-address` (all five), `/address-book/add/lookup` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-089",
+      "statement": "Design Release 2.1 has its own override view cph-number, rendered by /cph-number (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:112 (DR2.1 override views table, row cph-number)",
+      "quote": "| cph-number | `/cph-number` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-090",
+      "statement": "Design Release 2.1 has its own override view permanent-address-animals, rendered by /permanent-address/select (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:113 (DR2.1 override views table, row permanent-address-animals)",
+      "quote": "| permanent-address-animals | `/permanent-address/select` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-091",
+      "statement": "Design Release 2.1 has its own override view permanent-address, but no route renders it: it is unreachable, and the suite never visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:114 (DR2.1 override views table, row permanent-address)",
+      "quote": "| permanent-address | nothing (see below) | **no — unreachable** |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-092",
+      "statement": "Design Release 2.1 has its own override view contact-address-for-consignment, rendered by /contact-address-for-consignment (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:115 (DR2.1 override views table, row contact-address-for-consignment)",
+      "quote": "| contact-address-for-consignment | `/contact-address-for-consignment` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-093",
+      "statement": "Design Release 2.1 has its own override view notification-hub, rendered by /notification-hub (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:116 (DR2.1 override views table, row notification-hub)",
+      "quote": "| notification-hub | `/notification-hub` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-094",
+      "statement": "Design Release 2.1 has its own override view review-notification, rendered by /review-notification (journey, dashboard view, amend, template) (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:117 (DR2.1 override views table, row review-notification)",
+      "quote": "| review-notification | `/review-notification` (journey, dashboard view, amend, template) | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-095",
+      "statement": "Design Release 2.1 has its own override view declaration, rendered by /declaration (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:118 (DR2.1 override views table, row declaration)",
+      "quote": "| declaration | `/declaration` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-096",
+      "statement": "Design Release 2.1 has its own override view notification-submitted, rendered by /notification-submitted (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:119 (DR2.1 override views table, row notification-submitted)",
+      "quote": "| notification-submitted | `/notification-submitted` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-097",
+      "statement": "Design Release 2.1 has its own override view delete-notification, rendered by /notifications/delete (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:120 (DR2.1 override views table, row delete-notification)",
+      "quote": "| delete-notification | `/notifications/delete` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-098",
+      "statement": "Design Release 2.1 has its own override view create-template, rendered by /templates/create (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:121 (DR2.1 override views table, row create-template)",
+      "quote": "| create-template | `/templates/create` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-099",
+      "statement": "Design Release 2.1 has its own override view view-template, rendered by /templates/:templateId (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:122 (DR2.1 override views table, row view-template)",
+      "quote": "| view-template | `/templates/:templateId` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-100",
+      "statement": "Design Release 2.1 has its own override view delete-template, rendered by /templates/:templateId/delete, /templates/discard (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:123 (DR2.1 override views table, row delete-template)",
+      "quote": "| delete-template | `/templates/:templateId/delete`, `/templates/discard` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-101",
+      "statement": "Design Release 2.1 has its own override view delete-address, rendered by /address-book/:addressId/delete (paths relative to the /design-release-2.1 mount), and the suite visits it.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:124 (DR2.1 override views table, row delete-address)",
+      "quote": "| delete-address | `/address-book/:addressId/delete` | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-102",
+      "statement": "The Design Release 2.1 coverage was taken against the GB-notification-service prototype as pulled from main on 7 October 2026.",
+      "kind": "constraint",
+      "ref": "COVERAGE.md:3-4 (intro)",
+      "quote": "Prototype: `~/git/defra/defra-design/GB-notification-service` (main as pulled\non 7 October 2026).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-103",
+      "statement": "The Design Release 2.1 suite runs 103 tests, and all of them pass.",
+      "kind": "non-functional",
+      "ref": "COVERAGE.md:4 (intro)",
+      "quote": "Suite: 103 tests, all passing.",
+      "confidence": "verbatim",
+      "note": "The partition's structure counts 99 test() calls by grep against the 103 COVERAGE.md reports; the difference is not explained in COVERAGE.md."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-104",
+      "statement": "The route table lists every GET route the Design Release 2.1 mount copies from the prototype's app/routes.js that a user can land on; a route marked shared has no DR2.1 override and renders the root view inside the mount.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:11-13 (Routes)",
+      "quote": "Every GET route the DR2.1 mount copies from `app/routes.js` that a user can land\non. Views marked \"(shared …)\" have no DR2.1 override and render the root view\ninside the mount.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-105",
+      "statement": "The route table holds 65 rows, not the 67 routes the partition expected for this part; every row is claimed (p7-001 to p7-065).",
+      "kind": "data",
+      "ref": "COVERAGE.md:15-83 (routes:start to routes:end)",
+      "quote": "<!-- routes:start -->",
+      "confidence": "inferred",
+      "note": "Counted from the table itself: lines 18 to 82, one route per line. The 67 in the partition's covers is likely a miscount, or counts routes the generator dropped; COVERAGE.md does not say."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-106",
+      "statement": "The route table says /address-book/add/lookup renders the shared address-book-lookup or consignment-add-address view, while the override view table says the DR2.1 consignment-add-address override renders /address-book/add/lookup; COVERAGE.md is ambiguous about which view that route shows.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:78 and COVERAGE.md:111",
+      "quote": "| `/design-release-2.1/address-book/add/lookup` | (shared address-book-lookup / consignment-add-address) |",
+      "confidence": "inferred",
+      "note": "Recorded, not settled. The override table row reads: | consignment-add-address | `/<role>/add-address` (all five), `/address-book/add/lookup` | yes |"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-107",
+      "statement": "The /review-notification route serves four uses with one DR2.1 view: the journey's check answers, viewing a notification from the dashboard, amending a submitted notification, and a template.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:117 (DR2.1 override views table, review-notification)",
+      "quote": "| review-notification | `/review-notification` (journey, dashboard view, amend, template) | yes |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-108",
+      "statement": "The override views folder app/views/design-release-2.1/ holds 36 view files, and 35 of them are rendered by a route the suite visits.",
+      "kind": "data",
+      "ref": "COVERAGE.md:85-124 (DR2.1 override views)",
+      "quote": "## DR2.1 override views (36 files in `app/views/design-release-2.1/`)",
+      "confidence": "inferred",
+      "note": "35 follows from 36 rows with 'yes' on all but permanent-address."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-109",
+      "statement": "In Design Release 2.1 the single-address permanent-address page is never shown: its render function is never called.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:128-131 (Not reached, and why: permanent-address.html override)",
+      "quote": "**`permanent-address.html` override** — `renderPermanentAddressPage` is never\n  called.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-110",
+      "statement": "In Design Release 2.1, GET and POST /permanent-address both reset the permanent address answer and redirect to /permanent-address/select, the per-animal page.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:129-130 (Not reached, and why: permanent-address.html override)",
+      "quote": "`GET` and `POST /permanent-address` both reset the answer and redirect\n  to `/permanent-address/select` (the per-animal page)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-111",
+      "statement": "In Design Release 2.1, /permanent-address/enter-address is retired: it redirects to the per-animal /permanent-address/select page.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:131 (Not reached, and why: permanent-address.html override)",
+      "quote": "`/permanent-address/enter-address` redirects there too. Dead view in DR2.1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-112",
+      "statement": "The document virus check is a JSON endpoint, POST /upload-documents/virus-check/:documentId, not a page, so the route table does not list it.",
+      "kind": "integration",
+      "ref": "COVERAGE.md:132-133 (Not reached, and why: virus check)",
+      "quote": "**`POST /upload-documents/virus-check/:documentId`** — a JSON endpoint, not a\n  page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-113",
+      "statement": "Under Design Release 2.1 the upload page's client script posts the virus check to the unprefixed path, so it hits the root session and never marks the DR2.1 document as passed; the documents spec asserts this.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:133-135 (Not reached, and why: virus check); documents › \"a complete document is listed…\"",
+      "quote": "The client script posts to the *unprefixed* path, so under DR2.1 it hits\n  the root session and never marks the DR2.1 document as passed (asserted in\n  `documents` › \"a complete document is listed…\").",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-114",
+      "statement": "In Design Release 2.1 the address book's add-address usage page only renders with an address pending from a usage category, which never happens because the uses are chosen on the details page itself; so /address-book/add/usage only ever redirects to /address-book/add.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:136-139 (Not reached, and why: /address-book/add/usage)",
+      "quote": "only renders with an address\n  pending from a usage category; in DR2.1 the uses are chosen on the details\n  page itself, so the route only ever redirects (to `/address-book/add`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-115",
+      "statement": "The suite proves the /address-book/add/usage redirect but not the usage page's content.",
+      "kind": "constraint",
+      "ref": "COVERAGE.md:139 (Not reached, and why: /address-book/add/usage)",
+      "quote": "The\n  redirect is covered; the page is not.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-116",
+      "statement": "Dashboard notification pagination is not proven: the seeded data has at most a handful of notifications per tab, so no pagination renders.",
+      "kind": "constraint",
+      "ref": "COVERAGE.md:140-141 (Not reached, and why: dashboard pagination and filter results)",
+      "quote": "the seeded data has at most a\n  handful of notifications per tab, so no notification pagination renders.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-117",
+      "statement": "The dashboard's additional filters panel is opened and captured, but the effect of its date-range and status filters is not proven.",
+      "kind": "constraint",
+      "ref": "COVERAGE.md:142-143 (Not reached, and why: dashboard pagination and filter results)",
+      "quote": "The\n  additional filters panel is opened and captured, but the date-range and\n  status filters are not exercised for their effect.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-118",
+      "statement": "Sign-in (POST /intro/sign-in) sits under /intro and is out of scope for Design Release 2.1, so the suite does not reach it.",
+      "kind": "constraint",
+      "ref": "COVERAGE.md:144 (Not reached, and why: POST /intro/sign-in)",
+      "quote": "**`POST /intro/sign-in`** — under `/intro`, out of scope for DR2.1.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-119",
+      "statement": "Design Release 2.1 asks a new first question, \"What are you importing?\", for the notification type before the origin question.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:148-149 (Behaviour worth knowing, 1)",
+      "quote": "**New first question.** DR2.1 asks \"What are you importing?\" (notification\n   type: live animals, germinal products, plants for planting, potatoes, wood\n   products) before origin.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-120",
+      "statement": "The notification type question offers five options: live animals, germinal products, plants for planting, potatoes and wood products.",
+      "kind": "data",
+      "ref": "COVERAGE.md:148-150 (Behaviour worth knowing, 1)",
+      "quote": "(notification\n   type: live animals, germinal products, plants for planting, potatoes, wood\n   products)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-121",
+      "statement": "/notification-type only exists for a Design Release 2.1 session.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:150 (Behaviour worth knowing, 1)",
+      "quote": "`/notification-type` only exists for a DR2.1 session.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-122",
+      "statement": "Starting a notification from a category dashboard skips the notification type question.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:151 (Behaviour worth knowing, 1)",
+      "quote": "Starting from a category dashboard skips it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-123",
+      "statement": "Choosing plants for planting, potatoes or wood products reaches a commodity search that offers nothing.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:151-152 (Behaviour worth knowing, 1)",
+      "quote": "Plants/potatoes/wood reach a\n   commodity search that offers nothing.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-124",
+      "statement": "Every new Design Release 2.1 notification gets a reference starting GBN-AG-26-, germinal product notifications included.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:153-154 (Behaviour worth knowing, 2)",
+      "quote": "**References are always `GBN-AG-26-…`**, germinal notifications included",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-125",
+      "statement": "The seeded germinal product notifications have references starting GBN-GP-, unlike the GBN-AG-26- references new notifications get.",
+      "kind": "data",
+      "ref": "COVERAGE.md:154 (Behaviour worth knowing, 2)",
+      "quote": "(the seeded germinal ones are `GBN-GP-…`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-126",
+      "statement": "Country of origin is optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:155-157 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "Optional to proceed: country of\n   origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-127",
+      "statement": "The main reason for import is optional to proceed, but once a reason is chosen its follow-up questions are required.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:157 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "reason (but a chosen reason's follow-ups are required)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-128",
+      "statement": "Certification purpose and the unweaned animals question are optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:157-158 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "certification\n   purpose/unweaned",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-129",
+      "statement": "On the arrival page every field except means of transport is optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:158 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "arrival fields other than means of transport",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-130",
+      "statement": "Transit countries are optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:158-159 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "transit\n   countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-131",
+      "statement": "The transporter is optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:159 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-132",
+      "statement": "Documents are optional to proceed unless the user picks a document type.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:159 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "documents (unless a document type is picked)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-133",
+      "statement": "Every address role (place of origin, consignor or exporter, consignee, importer, place of destination) is optional to proceed.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:159-160 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "every\n   address role",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-134",
+      "statement": "The CPH number is optional to proceed, and a partial CPH number is silently dropped.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:160 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "CPH (a partial number is silently dropped)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-135",
+      "statement": "The permanent address is optional to proceed: choosing nothing is accepted.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:160-161 (Behaviour worth knowing, 3: soft validation)",
+      "quote": "permanent address\n   (nothing chosen is accepted)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-136",
+      "statement": "The notification type is a hard stop: the user cannot proceed without it.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:161 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "Hard stops: type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-137",
+      "statement": "The region code is a hard stop when the user answers \"Yes\" to having one.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:161 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "region code when \"Yes\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-138",
+      "statement": "The commodity is a hard stop.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:162 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-139",
+      "statement": "On the consignment details page the number of animals, number of packages, weight and temperature are hard stops.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:162 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "number of animals/packages/weight/temperature",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-140",
+      "statement": "The means of transport on the arrival page is a hard stop.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:162 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "means of transport",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-141",
+      "statement": "The contact address for the consignment is a hard stop.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:163 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-142",
+      "statement": "The declaration is a hard stop.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:163 (Behaviour worth knowing, 3: hard stops)",
+      "quote": "declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-143",
+      "statement": "Completeness is enforced only by the notification hub and the review page, which show \"Complete …\" errors.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:163-164 (Behaviour worth knowing, 3)",
+      "quote": "Completeness is enforced only by the hub and\n   review (\"Complete …\" errors).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-144",
+      "statement": "The origin of the import page has no \"Save and return to overview\" button.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:165 (Behaviour worth knowing, 4)",
+      "quote": "**Origin page has no \"Save and return to overview\" and no cancel link.**",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-145",
+      "statement": "The origin of the import page has no cancel link.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:165 (Behaviour worth knowing, 4)",
+      "quote": "**Origin page has no \"Save and return to overview\" and no cancel link.**",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-146",
+      "statement": "For germinal products the reason for import offers only Internal market and Transit, with four purposes between them.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:166 (Behaviour worth knowing, 5)",
+      "quote": "**Germinal products** offer only Internal market and Transit (four purposes)",
+      "confidence": "verbatim",
+      "note": "COVERAGE.md does not name the four purposes or how they split between the two reasons."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-147",
+      "statement": "Germinal products have no additional details page.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:167 (Behaviour worth knowing, 5)",
+      "quote": "have no additional-details page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-148",
+      "statement": "For germinal products the identification page takes donor ID, collection date, production date and identification mark once per species, not per animal.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:167-168 (Behaviour worth knowing, 5)",
+      "quote": "take donor ID / collection date / production\n   date / identification mark once per species",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-149",
+      "statement": "The germinal identification fields have date errors and a 58-character limit error.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:168 (Behaviour worth knowing, 5)",
+      "quote": "(date and 58-character errors)",
+      "confidence": "verbatim",
+      "note": "COVERAGE.md does not say which fields carry the 58-character limit or quote the error messages."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-150",
+      "statement": "For germinal products the notification hub totals packages and kilograms instead of animals.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:169 (Behaviour worth knowing, 5)",
+      "quote": "the hub totals packages and kilograms instead of animals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-151",
+      "statement": "On the identification page, a panel in a multi-animal list with a blank identifier is silently not saved on \"Save and finish\", with no error.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:170-171 (Behaviour worth knowing, 6)",
+      "quote": "**Identification:** a multi-animal panel with a blank identifier is silently\n   not saved on \"Save and finish\" (no error).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-152",
+      "statement": "A single cattle animal with only an ear tag stays \"To do\" on the hub, yet the notification can still be submitted. This was observed in exploration and is not asserted by a spec.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:171-173 (Behaviour worth knowing, 6: observed, not asserted)",
+      "quote": "Observed in exploration, not\n   asserted: a single cattle animal with only an ear tag stays \"To do\" on the hub\n   yet the notification can still be submitted",
+      "confidence": "inferred",
+      "note": "Inferred because COVERAGE.md marks it observed but not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-153",
+      "statement": "After submitting a notification whose single cattle animal has only an ear tag, the submitted page tells the user to complete the identifier information. This was observed in exploration and is not asserted by a spec.",
+      "kind": "copy",
+      "ref": "COVERAGE.md:173 (Behaviour worth knowing, 6: observed, not asserted)",
+      "quote": "the submitted page then says to\n   complete the identifier information.",
+      "confidence": "inferred",
+      "note": "Inferred because COVERAGE.md marks it observed but not asserted; the exact copy is not quoted there."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-154",
+      "statement": "Under the Design Release 2.1 mount, the transporter list's \"View details\" links go to the unprefixed /address-book/… path, leaving the mount.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:174-175 (Behaviour worth knowing, 7: mount leaks)",
+      "quote": "**Mount leaks:** the transporter list's \"View details\" links and the virus\n   check go to unprefixed `/address-book/…` and `/upload-documents/…` paths.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-155",
+      "statement": "Under the Design Release 2.1 mount, the document virus check goes to the unprefixed /upload-documents/… path, leaving the mount.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:174-175 (Behaviour worth knowing, 7: mount leaks)",
+      "quote": "**Mount leaks:** the transporter list's \"View details\" links and the virus\n   check go to unprefixed `/address-book/…` and `/upload-documents/…` paths.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-156",
+      "statement": "The place of origin picker's search box is labelled with the transit countries copy: \"Enter a country / Enter each country that the consignment will travel through\".",
+      "kind": "copy",
+      "ref": "COVERAGE.md:176-178 (Behaviour worth knowing, 8: copy slips)",
+      "quote": "the place-of-origin picker's search box is labelled \"Enter a\n   country / Enter each country that the consignment will travel through\"\n   (transit copy)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-157",
+      "statement": "On the add-address pages with a UK address lookup, the error summary lists errors that link to fields still hidden behind the search.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:178-179 (Behaviour worth knowing, 8: copy slips)",
+      "quote": "the UK-lookup add-address pages list errors that link to\n   fields still hidden behind the search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-158",
+      "statement": "On \"Add a private transporter\", the \"Cancel and return to dashboard\" link leaves the journey for the overall dashboard.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:180-181 (Behaviour worth knowing, 9)",
+      "quote": "**Cancel on \"Add a private transporter\"** (\"Cancel and return to dashboard\")\n   leaves the journey for the overall dashboard.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-159",
+      "statement": "Deleting a notification lands on the overall dashboard, which shows no banner.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:182 (Behaviour worth knowing, 10)",
+      "quote": "**Delete notification** lands on the overall dashboard, which shows no\n    banner;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-160",
+      "statement": "After a notification is deleted, the \"… has been deleted\" banner appears on the category dashboard.",
+      "kind": "copy",
+      "ref": "COVERAGE.md:183 (Behaviour worth knowing, 10)",
+      "quote": "the \"… has been deleted\" banner appears on the category dashboard.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-161",
+      "statement": "A notification's arrival date counts as complete only when it falls between 7 days in the past and 6 months ahead.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:184-185 (Behaviour worth knowing, 11); README.md:65-66 (Prototype gotchas)",
+      "quote": "its June 2026\n    arrival date is outside the 7-days-back to 6-months-ahead window",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-162",
+      "statement": "Amending a seeded notification is silently blocked: its June 2026 arrival date is outside the allowed window, so \"Continue\" on the amend review stays on the page with no error until the arrival details are re-entered.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:184-187 (Behaviour worth knowing, 11)",
+      "quote": "**Amending a seeded notification is silently blocked**: its June 2026\n    arrival date is outside the 7-days-back to 6-months-ahead window, so\n    \"Continue\" on the amend review just stays put with no error until the\n    arrival details are re-entered.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-163",
+      "statement": "\"Create new template\" asks the notification type, then the template name, then runs the journey in template mode.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:188-189 (Behaviour worth knowing, 12)",
+      "quote": "**Templates:** \"Create new template\" asks the type, then the name, then runs\n    the journey in template mode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-164",
+      "statement": "In template mode there is no documents section and no declaration, and their routes redirect.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:189-190 (Behaviour worth knowing, 12)",
+      "quote": "(no documents section, no declaration; those\n    routes redirect)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-165",
+      "statement": "A template saved with no name is saved as \"Untitled template\".",
+      "kind": "rule",
+      "ref": "COVERAGE.md:190 (Behaviour worth knowing, 12)",
+      "quote": "An unnamed template saves as \"Untitled template\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-166",
+      "statement": "Changing one section of a saved template offers only \"Save and return\".",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:190-191 (Behaviour worth knowing, 12)",
+      "quote": "Changing\n    one section of a saved template offers only \"Save and return\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-167",
+      "statement": "After a section of a saved template is changed, a banner says \"<name> has been updated\".",
+      "kind": "copy",
+      "ref": "COVERAGE.md:191-192 (Behaviour worth knowing, 12)",
+      "quote": "a banner\n    \"<name> has been updated\".",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-168",
+      "statement": "On the roles and addresses page, a \"Same as place of origin\" button for the consignor appears once the place of origin is filled.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:193-195 (Behaviour worth knowing, 13)",
+      "quote": "**Roles page shortcuts:** \"Same as place of origin\" (consignor) and \"Same as\n    consignee\" (importer, place of destination) buttons appear once the source\n    role is filled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-169",
+      "statement": "On the roles and addresses page, \"Same as consignee\" buttons for the importer and the place of destination appear once the consignee is filled.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:193-195 (Behaviour worth knowing, 13)",
+      "quote": "**Roles page shortcuts:** \"Same as place of origin\" (consignor) and \"Same as\n    consignee\" (importer, place of destination) buttons appear once the source\n    role is filled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-170",
+      "statement": "The address book is shared across design releases, held in the session keys addressBookAddedAddresses and submittedNotifications.",
+      "kind": "data",
+      "ref": "COVERAGE.md:196-197 (Behaviour worth knowing, 14)",
+      "quote": "**Address book** is shared across releases (session keys\n    `addressBookAddedAddresses`, `submittedNotifications`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-171",
+      "statement": "Address book success banners use sentence case, such as \"Green valley farm address deleted\".",
+      "kind": "copy",
+      "ref": "COVERAGE.md:197-198 (Behaviour worth knowing, 14)",
+      "quote": "success banners use\n    sentence case (\"Green valley farm address deleted\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-172",
+      "statement": "The seeded address book lists Ballymore Farm twice, once as a place of origin and once as a consignor.",
+      "kind": "data",
+      "ref": "COVERAGE.md:198-199 (Behaviour worth knowing, 14)",
+      "quote": "Ballymore Farm appears\n    twice (origin and consignor).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-173",
+      "statement": "On the overall dashboard, the plants card is a # placeholder link.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:200-201 (Behaviour worth knowing, 15)",
+      "quote": "**Overall dashboard** plants card, \"View requirements\" and \"Manage account\"\n    links are `#` placeholders.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-174",
+      "statement": "On the overall dashboard, the \"View requirements\" link is a # placeholder.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:200-201 (Behaviour worth knowing, 15)",
+      "quote": "**Overall dashboard** plants card, \"View requirements\" and \"Manage account\"\n    links are `#` placeholders.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-175",
+      "statement": "On the overall dashboard, the \"Manage account\" link is a # placeholder.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:200-201 (Behaviour worth knowing, 15)",
+      "quote": "**Overall dashboard** plants card, \"View requirements\" and \"Manage account\"\n    links are `#` placeholders.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-176",
+      "statement": "/design-release-2.1/dashboard redirects to the overall dashboard, or to the live animals dashboard when it carries a query.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:20 (Routes table, test name dashboard › overall dashboard)",
+      "quote": "`dashboard` › overall dashboard › /dashboard redirects to the overall dashboard, or to live animals with a query",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-177",
+      "statement": "The prototype index at /design-release-2.1/index lists every design release.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:19 (Routes table, test name dashboard › overall dashboard)",
+      "quote": "`dashboard` › overall dashboard › the prototype index lists every design release",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-178",
+      "statement": "/design-release-2.1/create-notification redirects to the notification type question.",
+      "kind": "behaviour",
+      "ref": "e2e/support/fixtures.js:21-23 (comment on redirect hops); COVERAGE.md:26",
+      "quote": "/create-notification → /notification-type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-179",
+      "statement": "The legacy /transport-details path redirects to the transporter page.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:37 (Routes table, test name)",
+      "quote": "`transport-and-arrival` › transporter details › the legacy transport-details path redirects to the transporter page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-180",
+      "statement": "The prototype seed route /prototype/reason-for-import jumps straight to the reason for import page.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:30 (Routes table, test name)",
+      "quote": "`about-the-consignment` › main import reason › the prototype seed route jumps straight to the reason page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-181",
+      "statement": "Using a saved template (/templates/:templateId/use) starts a new draft notification from the template.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:73 (Routes table, test name)",
+      "quote": "`templates` › a saved template › use: starts a new draft notification from the template",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-182",
+      "statement": "Editing a saved template (/templates/:templateId/edit) opens the template on its own task list.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:74 (Routes table, test name)",
+      "quote": "`templates` › a saved template › edit: opens the template on its own task list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-183",
+      "statement": "Changing one section of a saved template and choosing \"Save and return\" goes back to the template.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:71-72 (Routes table, test name)",
+      "quote": "`templates` › a saved template › change one section: save and return goes back to the template",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-184",
+      "statement": "Deleting a saved template asks for confirmation, then the templates list says it was deleted.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:67 and COVERAGE.md:75 (Routes table, test name)",
+      "quote": "`templates` › a saved template › delete: confirm, then the list says it was deleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-185",
+      "statement": "A template being created can be discarded.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:70 (Routes table, test name)",
+      "quote": "`templates` › create a new template › discard a template being created",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-186",
+      "statement": "Deleting a notification asks for confirmation, and the dashboard then shows a success banner.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:63 (Routes table, test name)",
+      "quote": "`manage-notifications` › delete a notification › confirm the deletion; the dashboard shows a success banner",
+      "confidence": "verbatim",
+      "note": "COVERAGE.md item 10 (p7-159, p7-160) says the banner is on the category dashboard, not the overall one the delete lands on."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-187",
+      "statement": "An amendment in progress can be cancelled from the amend review.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:64-65 (Routes table, test name)",
+      "quote": "`manage-notifications` › amend a submitted notification › cancel an amendment from the amend review",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-188",
+      "statement": "Cancel-amend with no amendment in progress, and amend or copy with an unknown reference, return the user to the dashboard.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:66 (Routes table, test name)",
+      "quote": "`manage-notifications` › amend and copy guards › cancel-amend with no amendment in progress, and unknown references, return to the dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-189",
+      "statement": "The address book's add-address usage step is only reachable with an address pending.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:79 (Routes table, test name)",
+      "quote": "`address-book` › add an address to the address book › the usage step is only reachable with an address pending",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-190",
+      "statement": "An address book entry can be viewed, edited and saved.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:80-81 (Routes table, test name)",
+      "quote": "`address-book` › an address book entry › view, edit and save",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-191",
+      "statement": "Deleting an address book entry asks for confirmation, then the list says it was deleted.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:82 (Routes table, test name)",
+      "quote": "`address-book` › an address book entry › delete: confirm, then the list says it was deleted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-192",
+      "statement": "From the journey, the consignor is entered by hand, while the importer and place of destination search UK addresses.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:45, 47-48, 50, 52-53 (Routes table, test name)",
+      "quote": "`consignment-parties` › add-address pages for the other roles › consignor is entered by hand; importer and place of destination search UK addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-193",
+      "statement": "From the journey, a place of origin is an international address entered by hand.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:44, 49 (Routes table, test name)",
+      "quote": "`consignment-parties` › add an address from the journey › place of origin: an international address entered by hand",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-194",
+      "statement": "From the journey, a consignee is a UK address found by search, then completed.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:51 (Routes table, test name)",
+      "quote": "`consignment-parties` › add an address from the journey › consignee: a UK address found by search, then completed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-195",
+      "statement": "For a cat, a permanent address replaces the CPH number.",
+      "kind": "rule",
+      "ref": "COVERAGE.md:54 (Routes table, test name)",
+      "quote": "`consignment-parties` › consignment addresses › cat: permanent address replaces the CPH number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-196",
+      "statement": "For a cat, the permanent address page takes one choice per animal: same as the place of destination, or a new address.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:55-56 (Routes table, test name)",
+      "quote": "`consignment-parties` › permanent address › cat: one choice per animal, same as destination or a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-197",
+      "statement": "A complete uploaded document is listed with its virus check status and can be removed.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:42 (Routes table, test name)",
+      "quote": "`documents` › upload documents › a complete document is listed with its virus check status, and can be removed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-198",
+      "statement": "A commercial transporter takes an authorisation number and an address found by search or entered by hand.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:41 (Routes table, test name)",
+      "quote": "`transport-and-arrival` › add a transporter › commercial transporter: authorisation number, address search or manual entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-199",
+      "statement": "From the address book, adding a transporter hands over to the add-a-transporter pages.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:39 (Routes table, test name)",
+      "quote": "`address-book` › add an address to the address book › transporter: hands over to the add-a-transporter pages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-200",
+      "statement": "The germinal products dashboard shows packages instead of animals.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:22 (Routes table, test name)",
+      "quote": "`dashboard` › category dashboards › germinal products: packages instead of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-201",
+      "statement": "The \"action needed\" at a glance drill-down (/actions) lists notifications needing action.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:23 (Routes table, test name)",
+      "quote": "`dashboard` › at a glance drill-downs › action needed lists notifications needing action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-202",
+      "statement": "On the what are you importing page, \"Save and return to overview\" keeps the selection without validating.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:59 (Routes table, test name)",
+      "quote": "`about-the-consignment` › what are you importing › save and return to overview keeps the selection without validating",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-203",
+      "statement": "Starting a germinal products notification from its category shows a germinal search hint and a reduced list of reasons.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:26, 28-29, 31 (Routes table, test name)",
+      "quote": "`about-the-consignment` › germinal products: section 1 › category start, germinal search hint and the reduced list of reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-204",
+      "statement": "End-to-end journeys proven include cattle by air (identification, the unweaned question and a CPH number) and germinal products (bovine semen with donor identification).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:36, 38 (Routes table, test names)",
+      "quote": "`journeys` › notification journeys end to end › cattle by air: identification, unweaned question, CPH number",
+      "confidence": "verbatim",
+      "note": "The germinal journey test name is 'germinal products: bovine semen with donor identification' (COVERAGE.md:36). Captured states also show cat by air, horse by sea and poultry by rail complete journeys (rows 43, 59, 60, 62)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-205",
+      "statement": "The suite records, for each test, every main-frame page request in order, POSTs and redirect hops included, so a route's visit count includes redirect hops.",
+      "kind": "non-functional",
+      "ref": "e2e/support/fixtures.js:15-30; COVERAGE.md:6-7",
+      "quote": "\"Visited by\" counts\nevery test whose trace requested the route (redirect hops included).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-206",
+      "statement": "Each captured evidence state is one full-page screenshot per page state per run, owned by the first test to reach it, so a route's captured states list does not say which other tests reached that state.",
+      "kind": "non-functional",
+      "ref": "e2e/support/evidence.js:40-44",
+      "quote": "// One screenshot per page state per run: the first test to reach a state owns it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-207",
+      "statement": "The \"status updated\" at a glance drill-down (/changes) lists changes in the past 24 hours.",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:24 (Routes table, test name)",
+      "quote": "`dashboard` › at a glance drill-downs › status updated lists changes in the past 24 hours",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p7-208",
+      "statement": "The \"inspection required\" at a glance drill-down (/inspection) lists consignments due at the border control post (BCP).",
+      "kind": "behaviour",
+      "ref": "COVERAGE.md:25 (Routes table, test name)",
+      "quote": "`dashboard` › at a glance drill-downs › inspection required lists consignments due at the BCP",
+      "confidence": "verbatim"
+    }
+  ]
+}

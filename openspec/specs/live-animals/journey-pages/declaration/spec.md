@@ -50,13 +50,19 @@ The system MUST redirect a request for the declaration page to the confirmation 
 
 ### Requirement: The declaration is reached only by continuing from check your answers
 **ID**: REQ-DECLARATION-005
-The system MUST show the declaration only when the user continues from check your answers, and MUST send a user who opens the declaration page any other way — a bookmark, a typed address — to check your answers instead.
+The system MUST show the declaration only when the user continues from a check your answers shown in their own browser, and MUST send a user who reaches the declaration any other way — a bookmark, a typed address, a form altered to post to it — to check your answers instead.
 
 #### Scenario: Opening the declaration page directly shows check your answers
 **ID**: SCN-DECLARATION-005-A
 - **GIVEN** a draft notification
 - **WHEN** the user opens its declaration page directly, without continuing from check your answers
 - **THEN** check your answers is shown instead
+
+#### Scenario: A form altered to continue to the declaration, without check your answers having been opened, shows check your answers
+**ID**: SCN-DECLARATION-005-B
+- **GIVEN** a ready draft notification whose check your answers has not been opened in this browser
+- **WHEN** another page's form is altered to continue to the declaration, and sent
+- **THEN** check your answers is shown, not the declaration
 
 ### Requirement: A notification is submitted only as check your answers showed it
 **ID**: REQ-DECLARATION-006

@@ -1,0 +1,280 @@
+<title>Design Release 2.1 work by theme</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: a theme index rail on the left, one theme page at a time on the right; the rail becomes a top strip on phones. */
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #566173;
+  --rule: #d9dee6;
+  --accent: #2f5d8a;
+  --accent-soft: #e4edf6;
+  --warn-ground: #fff7e0;
+  --warn-edge: #c99a1a;
+  --block: #a8452e;
+  --block-soft: #f9e6e1;
+  --done: #2f7a5a;
+  --done-soft: #e3f2ea;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+    --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+    --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+  --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+  --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); line-height: 1.55; padding-inline: 20px; padding-block: 0 48px; }
+.shell { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 36px; padding-top: 32px; }
+@media (max-width: 860px) { .shell { grid-template-columns: 1fr; gap: 20px; } }
+h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-size: 2.1rem; font-weight: 600; }
+h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+a:focus-visible { outline: 3px solid var(--warn-edge); outline-offset: 2px; }
+.mono, .id { font-family: var(--font-mono); font-size: 0.9em; }
+.eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+
+nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; display: grid; gap: 14px; max-height: calc(100vh - 32px); overflow-y: auto; }
+@media (max-width: 860px) { nav.rail { position: static; max-height: none; } }
+.rail .home { font-weight: 600; text-decoration: none; color: var(--ink); }
+.wave { display: grid; gap: 4px; }
+.wave .eyebrow { margin-bottom: 2px; }
+.rail a.t { display: grid; grid-template-columns: 1fr auto; gap: 8px; text-decoration: none; color: var(--ink); padding: 6px 10px; border-radius: 6px; font-size: 0.93rem; }
+.rail a.t:hover { background: var(--accent-soft); }
+.rail a.t[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.rail a.t .n { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+
+main { display: grid; gap: 32px; min-width: 0; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 66ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.fact { display: grid; gap: 2px; }
+.fact b { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact span { font-size: 0.8rem; color: var(--muted); }
+
+.waves { display: grid; gap: 18px; }
+.wave-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 560px) { .wave-row { grid-template-columns: 1fr; gap: 6px; } }
+.wave-row .label { font-family: var(--font-mono); color: var(--muted); padding-top: 12px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; text-decoration: none; color: var(--ink); }
+.card:hover { border-color: var(--accent); }
+.card .h { font-weight: 600; }
+.card .s { font-size: 0.9rem; color: var(--muted); }
+.card .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 500; white-space: nowrap; }
+.chip.block { background: var(--block-soft); color: var(--block); }
+.chip.warn { background: var(--warn-ground); color: var(--ink); }
+
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; display: grid; gap: 12px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.prose { max-width: 70ch; display: grid; gap: 10px; }
+.label { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+ul.plain { margin: 0; padding-left: 1.2rem; display: grid; gap: 6px; }
+
+.groups { display: grid; gap: 14px; }
+.group { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.group header { padding: 14px 18px; display: grid; gap: 4px; border-bottom: 1px solid var(--rule); }
+.group header .s { color: var(--muted); font-size: 0.95rem; }
+.group ol { list-style: none; margin: 0; padding: 0; }
+.group li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 12px; padding: 9px 18px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.group li:last-child { border-bottom: 0; }
+.group li .id { color: var(--muted); }
+.st { font-size: 0.75rem; padding: 1px 8px; border-radius: 4px; font-weight: 500; background: var(--accent-soft); color: var(--accent); }
+.st.blocked { background: var(--block-soft); color: var(--block); }
+.st.dropped { background: var(--rule); color: var(--muted); }
+.st.done { background: var(--done-soft); color: var(--done); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; }
+td.repo { font-family: var(--font-mono); white-space: nowrap; }
+
+.callout { background: var(--warn-ground); border-left: 4px solid var(--warn-edge); border-radius: 4px; padding: 14px 18px; display: grid; gap: 8px; }
+.callout.block { background: var(--block-soft); border-left-color: var(--block); }
+
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.screens figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; display: grid; }
+.screens .frame { max-height: 360px; overflow-y: auto; background: #fff; border-bottom: 1px solid var(--rule); }
+.screens img { display: block; width: 100%; height: auto; max-width: 100%; }
+.screens figcaption { padding: 8px 12px 10px; font-size: 0.85rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 18px; }
+.empty { color: var(--muted); }
+footer.end { color: var(--muted); font-size: 0.85rem; }
+</style>
+
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Themes"></nav>
+  <main id="main" tabindex="-1"><p class="empty">Loading the theme summaries…</p></main>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var WAVES = [
+    ['journey-foundation', 'reference-lists', 'origin-page'],
+    ['commodities-and-reason', 'arrival-and-transit', 'documents'],
+    ['transporters', 'identification-and-permanent-address'],
+    ['address-book', 'overview-and-review'],
+    ['consignment-parties', 'manage-notifications'],
+    ['ins-dashboard'],
+    ['type-question-and-templates']
+  ];
+  var TITLES = window.DR21_TITLES || {};
+  var data = (window.DR21 && window.DR21.summaries) || [];
+  var byId = {};
+  data.forEach(function (s) { byId[s.theme] = s; });
+  var order = WAVES.flat();
+  var waveOf = {};
+  WAVES.forEach(function (w, i) { w.forEach(function (id) { waveOf[id] = i + 1; }); });
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function title(id) { return TITLES[id] || id; }
+  function sum(field) { return data.reduce(function (a, s) { return a + ((s.counts && s.counts[field]) || 0); }, 0); }
+
+  function rail(current) {
+    var html = '<a class="home" href="#"' + (current ? '' : ' aria-current="page"') + '>Overview</a>';
+    WAVES.forEach(function (w, i) {
+      html += '<div class="wave"><p class="eyebrow">Wave ' + (i + 1) + '</p>';
+      w.forEach(function (id) {
+        var s = byId[id];
+        html += '<a class="t" href="#' + id + '"' + (current === id ? ' aria-current="page"' : '') + '><span>' + esc(title(id)) + '</span><span class="n">' + (s ? s.counts.rows : '–') + '</span></a>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('rail').innerHTML = html;
+  }
+
+  function chips(s) {
+    var c = '<span class="chip">' + s.counts.rows + ' rows</span>';
+    if (s.counts.blocked) c += '<span class="chip block">' + s.counts.blocked + ' blocked</span>';
+    if (s.openDecisions && s.openDecisions.length) c += '<span class="chip warn">' + s.openDecisions.length + ' open decision' + (s.openDecisions.length > 1 ? 's' : '') + '</span>';
+    return c;
+  }
+
+  function overview() {
+    var html = '<header class="prose"><p class="eyebrow">GB notification service · Design Release 2.1</p>' +
+      '<h1>The work, theme by theme</h1>' +
+      '<p class="lede">What it takes to bring the real services up to Design Release 2.1, split into themes that can be built in parallel on separate machines. Themes in the same wave do not wait for each other.</p></header>' +
+      '<div class="facts">' +
+      '<div class="fact"><b>' + data.length + '</b><span>themes</span></div>' +
+      '<div class="fact"><b>' + sum('rows') + '</b><span>increments</span></div>' +
+      '<div class="fact"><b>' + sum('criteria') + '</b><span>acceptance criteria</span></div>' +
+      '<div class="fact"><b>' + sum('blocked') + '</b><span>blocked on others</span></div>' +
+      '<div class="fact"><b>' + sum('reviewPoints') + '</b><span>review points</span></div>' +
+      '<div class="fact"><b>' + WAVES.length + '</b><span>landing waves</span></div></div>';
+    html += '<section class="waves" aria-label="Landing order">';
+    WAVES.forEach(function (w, i) {
+      html += '<div class="wave-row"><p class="label">Wave ' + (i + 1) + '</p><div class="cards">';
+      w.forEach(function (id) {
+        var s = byId[id];
+        if (!s) { html += '<div class="card"><p class="h">' + esc(title(id)) + '</p><p class="s">No summary was produced for this theme.</p></div>'; return; }
+        html += '<a class="card" href="#' + id + '"><p class="h">' + esc(title(id)) + '</p><p class="s">' + esc(s.headline) + '</p><div class="chips">' + chips(s) + '</div></a>';
+      });
+      html += '</div></div>';
+    });
+    html += '</section>';
+    html += '<footer class="end">Waves come from each theme\'s dependencies: a theme lands after every theme it depends on. Row-level dependencies across themes are also recorded, so a theme can often start before its whole previous wave has landed.</footer>';
+    return html;
+  }
+
+  function themePage(id) {
+    var s = byId[id];
+    if (!s) return '<p class="empty">No summary for this theme.</p>';
+    var html = '<header class="prose"><p class="eyebrow">Wave ' + waveOf[id] + ' · theme <span class="mono">' + esc(id) + '</span></p>' +
+      '<h1>' + esc(title(id)) + '</h1><p class="lede">' + esc(s.headline) + '</p><div class="chips">' + chips(s) + '</div></header>';
+
+    html += '<div class="two"><section class="panel"><p class="label">What changes</p><p>' + esc(s.whatChanges) + '</p></section>' +
+      '<section class="panel"><p class="label">Today</p><p>' + esc(s.today) + '</p></section></div>';
+
+    if (s.byRepo && s.byRepo.length) {
+      html += '<section class="panel"><p class="label">Where the work lands</p><div class="table-wrap"><table><thead><tr><th scope="col">Repo</th><th scope="col">What changes</th></tr></thead><tbody>';
+      s.byRepo.forEach(function (r) { html += '<tr><td class="repo">' + esc(r.repo) + '</td><td>' + esc(r.what) + '</td></tr>'; });
+      html += '</tbody></table></div></section>';
+    }
+
+    if (s.openDecisions && s.openDecisions.length) {
+      html += '<section class="callout"><p class="label">Open decisions this theme follows</p><ul class="plain">';
+      s.openDecisions.forEach(function (d) { html += '<li><strong>' + esc(d.about) + '</strong> Default: ' + esc(d.default) + '</li>'; });
+      html += '</ul></section>';
+    }
+
+    html += '<section class="groups" aria-label="Increments"><h2>The increments</h2>';
+    s.groups.forEach(function (g) {
+      html += '<article class="group"><header><h3>' + esc(g.title) + '</h3><p class="s">' + esc(g.summary) + '</p></header><ol>';
+      g.rows.forEach(function (r) {
+        var st = (r.status || 'todo').toLowerCase();
+        html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + '</span><span class="st ' + esc(st) + '">' + esc(st) + '</span></li>';
+      });
+      html += '</ol></article>';
+    });
+    html += '</section>';
+
+    var side = '';
+    if (s.dependsOn && s.dependsOn.length) {
+      side += '<section class="panel"><p class="label">Waits for</p><ul class="plain">';
+      s.dependsOn.forEach(function (d) { side += '<li><a href="#' + esc(d.theme) + '">' + esc(title(d.theme)) + '</a>: ' + esc(d.why) + '</li>'; });
+      side += '</ul></section>';
+    } else {
+      side += '<section class="panel"><p class="label">Waits for</p><p>Nothing. This theme can start straight away.</p></section>';
+    }
+    if (s.waitingOn && s.waitingOn.length) {
+      side += '<section class="callout block"><p class="label">Blocked on others</p><ul class="plain">';
+      s.waitingOn.forEach(function (w) { side += '<li><span class="id">' + esc(w.rows.join(', ')) + '</span>: ' + esc(w.what) + '</li>'; });
+      side += '</ul></section>';
+    }
+    html += '<div class="two">' + side + '</div>';
+
+    if (s.risks && s.risks.length) {
+      html += '<section class="panel"><p class="label">Watch for</p><ul class="plain">';
+      s.risks.forEach(function (r) { html += '<li>' + esc(r) + '</li>'; });
+      html += '</ul></section>';
+    }
+
+    if (s.screens && s.screens.length) {
+      html += '<section class="prose" style="max-width:none"><h2>How it looks in Design Release 2.1</h2><div class="screens">';
+      s.screens.forEach(function (sc) {
+        var src = 'img/' + sc.file;
+        html += '<figure><div class="frame" tabindex="0"><img src="' + esc(src) + '" alt="' + esc(sc.caption) + '" loading="lazy"></div><figcaption><span>' + esc(sc.caption) + '</span><a href="' + esc(src) + '" target="_blank" rel="noopener">Full size</a></figcaption></figure>';
+      });
+      html += '</div></section>';
+    }
+
+    var i = order.indexOf(id);
+    html += '<nav class="pager" aria-label="Next and previous theme">' +
+      (i > 0 ? '<a href="#' + order[i - 1] + '">← ' + esc(title(order[i - 1])) + '</a>' : '<a href="#">← Overview</a>') +
+      (i < order.length - 1 ? '<a href="#' + order[i + 1] + '">' + esc(title(order[i + 1])) + ' →</a>' : '<a href="#">Overview →</a>') + '</nav>';
+    return html;
+  }
+
+  function render() {
+    var id = decodeURIComponent((location.hash || '').slice(1));
+    var current = byId[id] || TITLES[id] ? id : '';
+    rail(current);
+    var main = document.getElementById('main');
+    main.innerHTML = current ? themePage(current) : overview();
+    if (current) main.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', render);
+  render();
+})();
+</script>

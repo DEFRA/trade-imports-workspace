@@ -89,6 +89,13 @@ The system MUST submit a notification only if it is unchanged since the check yo
 - **WHEN** the user submits the declaration again
 - **THEN** the notification is not submitted, and check your answers is shown under the updated message
 
+#### Scenario: A declaration shown again after a failed save is still held to the original check your answers
+**ID**: SCN-DECLARATION-006-F
+- **GIVEN** the declaration was shown again because saving it failed
+- **AND** the notification is then changed elsewhere
+- **WHEN** the user submits the declaration again
+- **THEN** the notification is not submitted, and check your answers is shown under the updated message
+
 #### Scenario: Refreshing the declaration after a change does not show it again
 **ID**: SCN-DECLARATION-006-D
 - **GIVEN** the declaration is shown

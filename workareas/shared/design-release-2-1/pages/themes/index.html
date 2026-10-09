@@ -37,7 +37,7 @@
   --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
 }
 * { box-sizing: border-box; }
-body { background: var(--ground); color: var(--ink); font-family: var(--font-body); line-height: 1.55; padding-inline: 20px; padding-block: 0 48px; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); line-height: 1.55; padding-inline: 16px; padding-block: 0 48px; }
 .shell { max-width: 1240px; margin-inline: auto; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 36px; padding-top: 32px; }
 @media (max-width: 860px) { .shell { grid-template-columns: 1fr; gap: 20px; } }
 h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; }
@@ -53,31 +53,33 @@ a:focus-visible { outline: 3px solid var(--warn-edge); outline-offset: 2px; }
 nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; display: grid; gap: 14px; max-height: calc(100vh - 32px); overflow-y: auto; }
 @media (max-width: 860px) { nav.rail { position: static; max-height: none; } }
 .rail .home { font-weight: 600; text-decoration: none; color: var(--ink); }
-.wave { display: grid; gap: 4px; }
-.wave .eyebrow { margin-bottom: 2px; }
+.rail-group { display: grid; gap: 4px; }
+.rail-group .eyebrow { margin-bottom: 2px; }
 .rail a.t { display: grid; grid-template-columns: 1fr auto; gap: 8px; text-decoration: none; color: var(--ink); padding: 6px 10px; border-radius: 6px; font-size: 0.93rem; }
 .rail a.t:hover { background: var(--accent-soft); }
 .rail a.t[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.rail a.t .n { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.rail a.t .n { font-family: var(--font-mono); color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 main { display: grid; gap: 32px; min-width: 0; }
 .lede { font-size: 1.15rem; color: var(--muted); max-width: 66ch; }
 .facts { display: flex; flex-wrap: wrap; gap: 12px 28px; }
 .fact { display: grid; gap: 2px; }
 .fact b { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact b.ready { color: var(--done); }
+.fact b.blocked { color: var(--block); }
 .fact span { font-size: 0.8rem; color: var(--muted); }
 
-.waves { display: grid; gap: 18px; }
-.wave-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (max-width: 560px) { .wave-row { grid-template-columns: 1fr; gap: 6px; } }
-.wave-row .label { font-family: var(--font-mono); color: var(--muted); padding-top: 12px; }
+.section { display: grid; gap: 14px; }
+.section > header { display: grid; gap: 4px; }
+.section > header .s { color: var(--muted); max-width: 70ch; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; text-decoration: none; color: var(--ink); }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; text-decoration: none; color: var(--ink); align-content: start; }
 .card:hover { border-color: var(--accent); }
 .card .h { font-weight: 600; }
 .card .s { font-size: 0.9rem; color: var(--muted); }
-.card .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.card .chips, .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 500; white-space: nowrap; }
+.chip.ready { background: var(--done-soft); color: var(--done); }
 .chip.block { background: var(--block-soft); color: var(--block); }
 .chip.warn { background: var(--warn-ground); color: var(--ink); }
 
@@ -90,16 +92,16 @@ ul.plain { margin: 0; padding-left: 1.2rem; display: grid; gap: 6px; }
 
 .groups { display: grid; gap: 14px; }
 .group { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.group.blocked { border-left: 4px solid var(--block); }
+.group.ready { border-left: 4px solid var(--done); }
 .group header { padding: 14px 18px; display: grid; gap: 4px; border-bottom: 1px solid var(--rule); }
 .group header .s { color: var(--muted); font-size: 0.95rem; }
 .group ol { list-style: none; margin: 0; padding: 0; }
-.group li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 12px; padding: 9px 18px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+.group li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 4px 12px; padding: 9px 18px; border-bottom: 1px solid var(--rule); align-items: baseline; }
 .group li:last-child { border-bottom: 0; }
 .group li .id { color: var(--muted); }
-.st { font-size: 0.75rem; padding: 1px 8px; border-radius: 4px; font-weight: 500; background: var(--accent-soft); color: var(--accent); }
-.st.blocked { background: var(--block-soft); color: var(--block); }
-.st.dropped { background: var(--rule); color: var(--muted); }
-.st.done { background: var(--done-soft); color: var(--done); }
+.group li .after { grid-column: 2; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 560px) { .group li { grid-template-columns: 1fr; } .group li .after { grid-column: 1; } }
 
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
@@ -109,6 +111,7 @@ td.repo { font-family: var(--font-mono); white-space: nowrap; }
 
 .callout { background: var(--warn-ground); border-left: 4px solid var(--warn-edge); border-radius: 4px; padding: 14px 18px; display: grid; gap: 8px; }
 .callout.block { background: var(--block-soft); border-left-color: var(--block); }
+.callout.ready { background: var(--done-soft); border-left-color: var(--done); }
 
 .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .screens figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; display: grid; }
@@ -118,141 +121,189 @@ td.repo { font-family: var(--font-mono); white-space: nowrap; }
 
 .pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--rule); padding-top: 18px; }
 .empty { color: var(--muted); }
+.note { color: var(--muted); font-size: 0.85rem; }
 footer.end { color: var(--muted); font-size: 0.85rem; }
 </style>
 
 <div class="shell">
   <nav class="rail" id="rail" aria-label="Themes"></nav>
-  <main id="main" tabindex="-1"><p class="empty">Loading the theme summaries…</p></main>
+  <main id="main" tabindex="-1"><p class="empty">Loading the themes…</p></main>
 </div>
 
 <script src="data.js"></script>
 <script>
 (function () {
-  var WAVES = [
-    ['journey-foundation', 'reference-lists'],
-    ['origin-page', 'commodities-and-reason', 'arrival-and-transit', 'documents'],
-    ['transporters', 'identification-and-permanent-address'],
-    ['address-book', 'overview-and-review'],
-    ['consignment-parties', 'manage-notifications'],
-    ['ins-dashboard'],
-    ['type-question-and-templates'],
-    ['germinal-products']
-  ];
-  var TITLES = window.DR21_TITLES || {};
-  var data = (window.DR21 && window.DR21.summaries) || [];
+  // Summaries written before the 9 October afternoon rulings reshaped these themes: their background prose is not shown.
+  var STALE_PROSE = ['ins-dashboard', 'transporters'];
+  var D = window.DR21 || { themes: [], blockers: [], questions: [] };
+  var themes = D.themes;
   var byId = {};
-  data.forEach(function (s) { byId[s.theme] = s; });
-  var order = WAVES.flat();
-  var waveOf = {};
-  WAVES.forEach(function (w, i) { w.forEach(function (id) { waveOf[id] = i + 1; }); });
+  themes.forEach(function (t) { byId[t.id] = t; });
+  var blockerOfRow = {};
+  D.blockers.forEach(function (b) { b.rows.forEach(function (r) { blockerOfRow[r.id] = b; }); });
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function title(id) { return TITLES[id] || id; }
-  function sum(field) { return data.reduce(function (a, s) { return a + ((s.counts && s.counts[field]) || 0); }, 0); }
+  function title(id) { return byId[id] ? byId[id].title : id; }
+  function canStartNow(t) { return t.ready.length && !t.dependsOn.length; }
+  function questionsFor(id) { return D.questions.filter(function (q) { return q.theme === id; }); }
+
+  // Themes with ready rows first, those that can start now at the top; themes with only blocked rows last.
+  var readyThemes = themes.filter(function (t) { return t.ready.length; })
+    .sort(function (a, b) { return (canStartNow(b) ? 1 : 0) - (canStartNow(a) ? 1 : 0); });
+  var blockedThemes = themes.filter(function (t) { return !t.ready.length; });
+  var order = readyThemes.concat(blockedThemes).map(function (t) { return t.id; });
+  var totalReady = themes.reduce(function (a, t) { return a + t.ready.length; }, 0);
+  var totalBlocked = themes.reduce(function (a, t) { return a + t.blocked.length; }, 0);
 
   function rail(current) {
     var html = '<a class="home" href="#"' + (current ? '' : ' aria-current="page"') + '>Overview</a>';
-    WAVES.forEach(function (w, i) {
-      html += '<div class="wave"><p class="eyebrow">Wave ' + (i + 1) + '</p>';
-      w.forEach(function (id) {
-        var s = byId[id];
-        html += '<a class="t" href="#' + id + '"' + (current === id ? ' aria-current="page"' : '') + '><span>' + esc(title(id)) + '</span><span class="n">' + (s ? s.counts.rows : '–') + '</span></a>';
+    function group(label, list, count) {
+      html += '<div class="rail-group"><p class="eyebrow">' + label + '</p>';
+      list.forEach(function (t) {
+        html += '<a class="t" href="#' + t.id + '"' + (current === t.id ? ' aria-current="page"' : '') + '><span>' + esc(t.title) + '</span><span class="n">' + count(t) + '</span></a>';
       });
       html += '</div>';
-    });
+    }
+    group('Ready to go', readyThemes, function (t) { return t.ready.length + (t.blocked.length ? ' · ' + t.blocked.length + ' blocked' : ''); });
+    group('Blocked', blockedThemes, function (t) { return t.blocked.length; });
     document.getElementById('rail').innerHTML = html;
   }
 
-  function chips(s) {
-    var c = '<span class="chip">' + s.counts.rows + ' rows</span>';
-    if (s.counts.blocked) c += '<span class="chip block">' + s.counts.blocked + ' blocked</span>';
-    if (s.openDecisions && s.openDecisions.length) c += '<span class="chip warn">' + s.openDecisions.length + ' to confirm' + '</span>';
+  function chips(t) {
+    var c = '';
+    if (t.splitOff) c += '<span class="chip">split off</span>';
+    if (t.ready.length) c += '<span class="chip ready">' + t.ready.length + ' ready</span>';
+    if (t.blocked.length) c += '<span class="chip block">' + t.blocked.length + ' blocked</span>';
+    var q = questionsFor(t.id).length;
+    if (q) c += '<span class="chip warn">' + q + ' to confirm</span>';
     return c;
+  }
+
+  function landsAfterText(t) {
+    if (!t.dependsOn.length) return 'Can start now.';
+    return 'Lands after ' + t.dependsOn.map(title).join('; ') + '.';
+  }
+
+  function rowLandsAfter(r) {
+    if (!r.landsAfter.length) return '';
+    return '<span class="after">Lands after ' + r.landsAfter.map(function (d) {
+      var other = d.theme && byId[d.theme] && d.theme !== r.theme ? ' (<a href="#' + esc(d.theme) + '">' + esc(title(d.theme)) + '</a>)' : '';
+      return '<span class="id">' + esc(d.id) + '</span>' + other;
+    }).join(', ') + '</span>';
   }
 
   function overview() {
     var html = '<header class="prose"><p class="eyebrow">GB notification service · Design Release 2.1</p>' +
-      '<h1>The work, theme by theme</h1>' +
-      '<p class="lede">What it takes to bring the real services up to Design Release 2.1, split into themes that can be built in parallel on separate machines. Themes in the same wave do not wait for each other.</p></header>' +
+      '<h1>What is ready to go, and what is blocked</h1>' +
+      '<p class="lede">The work to bring the real services up to Design Release 2.1, split into themes that build on separate machines. A ready row builds once the rows it lands after have landed. A blocked row waits on someone outside the build.</p></header>' +
       '<div class="facts">' +
-      '<div class="fact"><b>' + data.length + '</b><span>themes</span></div>' +
-      '<div class="fact"><b>' + sum('rows') + '</b><span>increments</span></div>' +
-      '<div class="fact"><b>' + sum('criteria') + '</b><span>acceptance criteria</span></div>' +
-      '<div class="fact"><b>' + sum('blocked') + '</b><span>blocked on others</span></div>' +
-      '<div class="fact"><b>' + sum('reviewPoints') + '</b><span>review points</span></div>' +
-      '<div class="fact"><b>' + WAVES.length + '</b><span>landing waves</span></div></div>';
-    html += '<section class="waves" aria-label="Landing order">';
-    WAVES.forEach(function (w, i) {
-      html += '<div class="wave-row"><p class="label">Wave ' + (i + 1) + '</p><div class="cards">';
-      w.forEach(function (id) {
-        var s = byId[id];
-        if (!s) { html += '<div class="card"><p class="h">' + esc(title(id)) + '</p><p class="s">No summary was produced for this theme.</p></div>'; return; }
-        html += '<a class="card" href="#' + id + '"><p class="h">' + esc(title(id)) + '</p><p class="s">' + esc(s.headline) + '</p><div class="chips">' + chips(s) + '</div></a>';
-      });
-      html += '</div></div>';
+      '<div class="fact"><b class="ready">' + totalReady + '</b><span>ready to go</span></div>' +
+      '<div class="fact"><b class="blocked">' + totalBlocked + '</b><span>blocked</span></div>' +
+      '<div class="fact"><b>' + themes.length + '</b><span>themes</span></div>' +
+      '<div class="fact"><b>' + themes.filter(function (t) { return t.splitOff; }).length + '</b><span>split off to its own branch</span></div>' +
+      '<div class="fact"><b>' + D.questions.length + '</b><span>to confirm</span></div></div>';
+
+    html += '<section class="section" aria-labelledby="ready-h"><header><h2 id="ready-h">Ready to go</h2><p class="s">' + totalReady + ' rows in ' + readyThemes.length + ' themes. Themes that can start now come first.</p></header><div class="cards">';
+    readyThemes.forEach(function (t) {
+      html += '<a class="card" href="#' + t.id + '"><p class="h">' + esc(t.title) + '</p>' +
+        (t.splitOff ? '<p class="s">Split off to <span class="mono">' + esc(t.splitOff.branch) + '</span></p>' : '') +
+        '<p class="s">' + esc(landsAfterText(t)) + '</p><div class="chips">' + chips(t) + '</div></a>';
     });
-    html += '</section>';
-    html += '<footer class="end">Waves come from each theme\'s dependencies: a theme lands after every theme it depends on. Row-level dependencies across themes are also recorded, so a theme can often start before its whole previous wave has landed.</footer>';
-    return html;
-  }
+    html += '</div></section>';
 
-  function themePage(id) {
-    var s = byId[id];
-    if (!s) return '<p class="empty">No summary for this theme.</p>';
-    var html = '<header class="prose"><p class="eyebrow">Wave ' + waveOf[id] + ' · theme <span class="mono">' + esc(id) + '</span></p>' +
-      '<h1>' + esc(title(id)) + '</h1><p class="lede">' + esc(s.headline) + '</p><div class="chips">' + chips(s) + '</div></header>';
-
-    html += '<div class="two"><section class="panel"><p class="label">What changes</p><p>' + esc(s.whatChanges) + '</p></section>' +
-      '<section class="panel"><p class="label">Today</p><p>' + esc(s.today) + '</p></section></div>';
-
-    if (s.byRepo && s.byRepo.length) {
-      html += '<section class="panel"><p class="label">Where the work lands</p><div class="table-wrap"><table><thead><tr><th scope="col">Repo</th><th scope="col">What changes</th></tr></thead><tbody>';
-      s.byRepo.forEach(function (r) { html += '<tr><td class="repo">' + esc(r.repo) + '</td><td>' + esc(r.what) + '</td></tr>'; });
-      html += '</tbody></table></div></section>';
-    }
-
-    if (s.openDecisions && s.openDecisions.length) {
-      html += '<section class="callout"><p class="label">Still to confirm in this theme</p><ul class="plain">';
-      s.openDecisions.forEach(function (d) { html += '<li><strong>' + esc(d.about) + '</strong> As built: ' + esc(d.default) + '</li>'; });
-      html += '</ul></section>';
-    }
-
-    html += '<section class="groups" aria-label="Increments"><h2>The increments</h2>';
-    s.groups.forEach(function (g) {
-      html += '<article class="group"><header><h3>' + esc(g.title) + '</h3><p class="s">' + esc(g.summary) + '</p></header><ol>';
-      g.rows.forEach(function (r) {
-        var st = (r.status || 'todo').toLowerCase();
-        html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + '</span><span class="st ' + esc(st) + '">' + esc(st) + '</span></li>';
+    html += '<section class="section" aria-labelledby="blocked-h"><header><h2 id="blocked-h">Blocked</h2><p class="s">' + totalBlocked + ' rows, grouped by what they wait on. They stay in the backlog and are re-distilled once unblocked.</p></header><div class="groups">';
+    D.blockers.forEach(function (b) {
+      html += '<article class="group blocked"><header><h3>' + esc(b.title) + ' <span class="chip block">' + b.rows.length + '</span></h3><p class="s">' + esc(b.what) + '</p></header><ol>';
+      b.rows.forEach(function (r) {
+        html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + ' · <a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></span></li>';
       });
       html += '</ol></article>';
     });
-    html += '</section>';
+    html += '</div></section>';
 
-    var side = '';
-    if (s.dependsOn && s.dependsOn.length) {
-      side += '<section class="panel"><p class="label">Waits for</p><ul class="plain">';
-      s.dependsOn.forEach(function (d) { side += '<li><a href="#' + esc(d.theme) + '">' + esc(title(d.theme)) + '</a>: ' + esc(d.why) + '</li>'; });
-      side += '</ul></section>';
-    } else {
-      side += '<section class="panel"><p class="label">Waits for</p><p>Nothing. This theme can start straight away.</p></section>';
+    if (D.questions.length) {
+      html += '<section class="callout"><p class="label">Still to confirm</p><ul class="plain">';
+      D.questions.forEach(function (q) { html += '<li><strong>' + esc(q.question) + '</strong> (<a href="#' + esc(q.theme) + '">' + esc(title(q.theme)) + '</a>) As built: ' + esc(q.default) + '</li>'; });
+      html += '</ul></section>';
     }
-    if (s.waitingOn && s.waitingOn.length) {
-      side += '<section class="callout block"><p class="label">Blocked on others</p><ul class="plain">';
-      s.waitingOn.forEach(function (w) { side += '<li><span class="id">' + esc(w.rows.join(', ')) + '</span>: ' + esc(w.what) + '</li>'; });
-      side += '</ul></section>';
-    }
-    html += '<div class="two">' + side + '</div>';
+    html += '<footer class="end">There are no waves. The only order is row to row: each ready row names the rows it lands after.</footer>';
+    return html;
+  }
 
-    if (s.risks && s.risks.length) {
-      html += '<section class="panel"><p class="label">Watch for</p><ul class="plain">';
-      s.risks.forEach(function (r) { html += '<li>' + esc(r) + '</li>'; });
+  function rowList(rows, withAfter) {
+    var html = '<ol>';
+    rows.forEach(function (r) {
+      html += '<li><span class="id">' + esc(r.id) + '</span><span>' + esc(r.title) + (r.reviewPoint ? ' <span class="chip warn">review point</span>' : '') + '</span>' + (withAfter ? rowLandsAfter(r) : '') + '</li>';
+    });
+    return html + '</ol>';
+  }
+
+  function themePage(id) {
+    var t = byId[id];
+    var html = '<header class="prose"><p class="eyebrow">Theme <span class="mono">' + esc(id) + '</span></p>' +
+      '<h1>' + esc(t.title) + '</h1><p class="lede">' + esc(t.why) + '</p><div class="chips">' + chips(t) + '</div></header>';
+
+    if (t.splitOff) {
+      html += '<section class="callout ready"><p class="label">Split off to its own branch</p><p>Builds on <span class="mono">' + esc(t.splitOff.branch) + '</span>, from the workarea <span class="mono">' + esc(t.splitOff.workarea) + '</span>. Its rows no longer live in the main backlog.</p></section>';
+    }
+
+    var qs = questionsFor(id);
+    if (qs.length) {
+      html += '<section class="callout"><p class="label">Still to confirm in this theme</p><ul class="plain">';
+      qs.forEach(function (q) { html += '<li><strong>' + esc(q.question) + '</strong> As built: ' + esc(q.default) + '</li>'; });
       html += '</ul></section>';
     }
 
-    if (s.screens && s.screens.length) {
+    html += '<section class="panel"><p class="label">Lands after</p>';
+    if (t.dependsOn.length) {
+      html += '<ul class="plain">';
+      t.dependsOn.forEach(function (d) { html += '<li><a href="#' + esc(d) + '">' + esc(title(d)) + '</a></li>'; });
+      html += '</ul><p class="note">Each ready row below names the exact rows it waits for. Rows with none can start now.</p>';
+    } else {
+      html += '<p>Nothing. This theme can start straight away.</p>';
+    }
+    html += '</section>';
+
+    html += '<section class="groups" aria-label="Increments">';
+    if (t.ready.length) {
+      html += '<article class="group ready"><header><h2>Ready to go</h2><p class="s">' + t.ready.length + ' rows, in build order.</p></header>' + rowList(t.ready, true) + '</article>';
+    }
+    if (t.blocked.length) {
+      var groups = {};
+      var keys = [];
+      t.blocked.forEach(function (r) {
+        var b = blockerOfRow[r.id] || { key: 'other', title: 'Waiting on something else', what: '' };
+        if (!groups[b.key]) { groups[b.key] = { b: b, rows: [] }; keys.push(b.key); }
+        groups[b.key].rows.push(r);
+      });
+      keys.forEach(function (k) {
+        var g = groups[k];
+        html += '<article class="group blocked"><header><h2>' + esc(g.b.title) + '</h2><p class="s">' + esc(g.b.what) + '</p></header>' + rowList(g.rows, false) + '</article>';
+      });
+    }
+    html += '</section>';
+
+    var p = t.prose;
+    if (p && STALE_PROSE.indexOf(id) === -1) {
+      html += '<section class="section"><header><h2>Background</h2><p class="note">From the summary written on the morning of 9 October. The rows above are current.</p></header>';
+      html += '<div class="two"><section class="panel"><p class="label">What changes</p><p>' + esc(p.whatChanges) + '</p></section>' +
+        '<section class="panel"><p class="label">Today</p><p>' + esc(p.today) + '</p></section></div>';
+      if (p.byRepo && p.byRepo.length) {
+        html += '<section class="panel"><p class="label">Where the work lands</p><div class="table-wrap"><table><thead><tr><th scope="col">Repo</th><th scope="col">What changes</th></tr></thead><tbody>';
+        p.byRepo.forEach(function (r) { html += '<tr><td class="repo">' + esc(r.repo) + '</td><td>' + esc(r.what) + '</td></tr>'; });
+        html += '</tbody></table></div></section>';
+      }
+      if (p.risks && p.risks.length) {
+        html += '<section class="panel"><p class="label">Watch for</p><ul class="plain">';
+        p.risks.forEach(function (r) { html += '<li>' + esc(r) + '</li>'; });
+        html += '</ul></section>';
+      }
+      html += '</section>';
+    }
+
+    if (p && p.screens && p.screens.length) {
       html += '<section class="prose" style="max-width:none"><h2>How it looks in Design Release 2.1</h2><div class="screens">';
-      s.screens.forEach(function (sc) {
+      p.screens.forEach(function (sc) {
         var src = 'img/' + sc.file;
         html += '<figure><div class="frame" tabindex="0"><img src="' + esc(src) + '" alt="' + esc(sc.caption) + '" loading="lazy"></div><figcaption><span>' + esc(sc.caption) + '</span><a href="' + esc(src) + '" target="_blank" rel="noopener">Full size</a></figcaption></figure>';
       });
@@ -268,7 +319,7 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
 
   function render() {
     var id = decodeURIComponent((location.hash || '').slice(1));
-    var current = byId[id] || TITLES[id] ? id : '';
+    var current = byId[id] ? id : '';
     rail(current);
     var main = document.getElementById('main');
     main.innerHTML = current ? themePage(current) : overview();

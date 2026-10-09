@@ -82,7 +82,13 @@ describe('distilCoverage', () => {
         { id: 'confluence:6608160092', claims: 6, cited: 6 }
       ],
       unavailable: [],
-      backlog: { path: workspace.layout.backlog, increments: 2, covered: 4 }
+      backlog: {
+        path: workspace.layout.backlog,
+        increments: 2,
+        covered: 4,
+        coveredBySplitOff: 0,
+        splitOff: []
+      }
     })
   })
 
@@ -615,6 +621,141 @@ describe('distilCoverage', () => {
     expect(problemsOf()).toEqual([
       'distil/requirements.json does not exist yet.',
       'distil/conflicts.json conflicts[c-001].resolution is "vote". Use one of: precedence, question.'
+    ])
+  })
+})
+
+describe('distilCoverage over a theme split off early', () => {
+  const POINTER = {
+    theme: 'smoke-gate',
+    title: 'The smoke run gates pull requests',
+    touches: ['tests:k6/smoke'],
+    dependsOn: [],
+    branch: 'feat/NO_JIRA-ins-performance-testing-smoke-gate',
+    workarea: `${DEMO_WORKAREA}/themes/smoke-gate`,
+    backlog: 'themes/smoke-gate/backlog.json',
+    increments: ['inc-002'],
+    requirements: ['req-002', 'req-004'],
+    at: '2026-10-09T12:00:00.000Z'
+  }
+
+  const splitOffInc002 = (pointer = {}) =>
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [{ ...POINTER, ...pointer }],
+      increments: backlog.increments.filter(
+        (increment) => increment.id !== 'inc-002'
+      )
+    }))
+
+  test('counts a requirement the split-off theme holds as covered, and says by which branch', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002()
+
+    expect(coverage().backlog).toEqual({
+      path: workspace.layout.backlog,
+      increments: 1,
+      covered: 2,
+      coveredBySplitOff: 1,
+      splitOff: [
+        {
+          theme: 'smoke-gate',
+          branch: POINTER.branch,
+          workarea: POINTER.workarea,
+          backlog: POINTER.backlog,
+          requirements: ['req-002', 'req-004'],
+          pickUp: [],
+          changed: [],
+          noLongerToBuild: ['req-004'],
+          nowInPlace: [],
+          fingerprintsNow: {}
+        }
+      ]
+    })
+  })
+
+  test('names a requirement that changed since the split', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({
+      fingerprints: { 'req-002': 'a fingerprint from before a ruling' }
+    })
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: ['req-002'],
+      fingerprintsNow: { 'req-002': expect.stringMatching(/^[0-9a-f]{64}$/) }
+    })
+  })
+
+  test('stops naming a changed requirement once the pointer takes its fingerprint now', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    const now = coverage().backlog.splitOff[0].fingerprintsNow
+    splitOffInc002({ fingerprints: now })
+
+    expect(coverage().backlog.splitOff[0].changed).toEqual([])
+  })
+
+  test('names a held requirement now in place only as in place, not as changed or no longer to build', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    editRequirement('req-002', (requirement) => ({
+      ...requirement,
+      delta: 'exists',
+      deltaNote: 'The split branch built and merged it.'
+    }))
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: [],
+      noLongerToBuild: ['req-004'],
+      nowInPlace: ['req-002'],
+      fingerprintsNow: {}
+    })
+  })
+
+  test('names a held requirement now out of scope only as no longer to build, not as changed', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    editRequirement('req-002', (requirement) => ({
+      ...requirement,
+      status: 'out-of-scope'
+    }))
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: [],
+      noLongerToBuild: ['req-002', 'req-004'],
+      nowInPlace: []
+    })
+  })
+
+  test('counts a requirement handed to the split-off theme to pick up as covered', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-006'] })
+    editIncrement('inc-001', (increment) => ({
+      ...increment,
+      requirements: ['req-001']
+    }))
+
+    expect([
+      coverage().backlog.coveredBySplitOff,
+      coverage().backlog.splitOff[0].pickUp
+    ]).toEqual([2, ['req-006']])
+  })
+
+  test('refuses a row that covers a requirement the split-off theme holds', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-006'] })
+
+    expect(problemsOf()).toEqual([
+      'inc-001 covers req-006, which theme "smoke-gate" holds: it was split off to feat/NO_JIRA-ins-performance-testing-smoke-gate. Take req-006 out of the row. The split branch builds it.'
+    ])
+  })
+
+  test('refuses a requirement to pick up that is not adopted to build', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-003'] })
+
+    expect(problemsOf()).toEqual([
+      'Theme "smoke-gate" picks up req-003, which is not an adopted requirement to build in distil/requirements.json. Take it out of the theme\'s pickUp.'
     ])
   })
 })

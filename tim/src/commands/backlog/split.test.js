@@ -295,9 +295,231 @@ describe('tim backlog next over split backlogs', () => {
   })
 })
 
+describe('tim backlog split --theme', () => {
+  const requirementsPath = () =>
+    join(workspace, 'workareas', WORKAREA, 'distil', 'requirements.json')
+
+  test('a dry run says what would move, and writes nothing', async () => {
+    const before = readFileSync(pathOf(WORKAREA), 'utf8')
+
+    const run = await runTim(['split', WORKAREA, '--theme', 'origin'])
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).result.splitOff.map((theme) => [
+        theme.theme,
+        theme.increments,
+        theme.changed
+      ]),
+      readFileSync(pathOf(WORKAREA), 'utf8'),
+      existsSync(pathOf(themeWorkarea('origin')))
+    ]).toEqual([0, [['origin', ['inc-001', 'inc-002'], true]], before, false])
+  })
+
+  test('moves the theme and its rows out of the main backlog, leaving a pointer', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+
+    const main = readJson(pathOf(WORKAREA))
+    expect([
+      main.themes.map((theme) => theme.id),
+      main.increments.map((row) => row.id),
+      main.splitOff.map(({ at, ...pointer }) => pointer)
+    ]).toEqual([
+      ['commodity', 'documents'],
+      ['inc-003', 'inc-004', 'inc-005', 'inc-006'],
+      [
+        {
+          theme: 'origin',
+          title: 'Country of origin',
+          why: readJson(fixturePath).themes[0].why,
+          touches: readJson(fixturePath).themes[0].touches,
+          dependsOn: [],
+          branch: 'feat/NO_JIRA-hrp-origin-and-commodity-origin',
+          workarea: themeWorkarea('origin'),
+          backlog: 'themes/origin/backlog.json',
+          increments: ['inc-001', 'inc-002'],
+          requirements: ['req-001', 'req-002', 'req-003']
+        }
+      ]
+    ])
+  })
+
+  test('stamps the pointer with when the theme was split off', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+
+    expect(readJson(pathOf(WORKAREA)).splitOff[0].at).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+    )
+  })
+
+  test('leaves a main backlog and a split backlog that both pass tim backlog check', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+
+    const checks = await Promise.all([
+      runTim(['check', WORKAREA]),
+      runTim(['check', themeWorkarea('origin')])
+    ])
+
+    expect(checks.map((check) => check.exitCode)).toEqual([0, 0])
+  })
+
+  test('names, in plain words, the rows left behind that now wait on the split backlog', async () => {
+    const run = execa(
+      'node',
+      [
+        cliPath,
+        'backlog',
+        'split',
+        WORKAREA,
+        '--theme',
+        'origin',
+        '--workspace',
+        workspace,
+        '--no-ui'
+      ],
+      { reject: false }
+    )
+
+    expect((await run).stdout).toContain(
+      'Rows left in the main backlog that now wait for a row in a split backlog:\n  inc-003 waits for inc-002 in shared/hrp/themes/origin'
+    )
+  })
+
+  test('names the moved rows that wait on a row still in the main backlog', async () => {
+    const run = await runTim(['split', WORKAREA, '--theme', 'documents'])
+
+    expect(envelopeOf(run).result.rewired).toEqual({
+      left: [],
+      moved: [{ id: 'inc-005', dependsOn: 'inc-006', workarea: WORKAREA }]
+    })
+  })
+
+  test('keeps each requirement fingerprint when the workarea has requirements', async () => {
+    writeJson(requirementsPath(), {
+      requirements: [
+        {
+          id: 'req-001',
+          statement: 'An importer gives the country of origin.',
+          why: 'The rules depend on it.',
+          claims: ['confluence-6518997274-001'],
+          status: 'adopted',
+          delta: 'new'
+        }
+      ]
+    })
+
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+
+    expect(
+      Object.keys(readJson(pathOf(WORKAREA)).splitOff[0].fingerprints)
+    ).toEqual(['req-001'])
+  })
+
+  test('merges the theme into themes.json, keeping every other entry', async () => {
+    await runTim(['split', WORKAREA, '--write'])
+
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+
+    expect(
+      readJson(indexPath()).themes.map((theme) => [theme.id, theme.splitOff])
+    ).toEqual([
+      ['commodity', undefined],
+      ['documents', undefined],
+      ['origin', true]
+    ])
+  })
+
+  test('refuses, writing nothing, a theme already split off', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+    const before = readFileSync(pathOf(WORKAREA), 'utf8')
+
+    const run = await runTim([
+      'split',
+      WORKAREA,
+      '--theme',
+      'origin',
+      '--write'
+    ])
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).errors[0].message,
+      readFileSync(pathOf(WORKAREA), 'utf8')
+    ]).toEqual([
+      2,
+      'Theme "origin" is already split off, to feat/NO_JIRA-hrp-origin-and-commodity-origin. Its rows live in shared/hrp/themes/origin: build it there.',
+      before
+    ])
+  })
+
+  test('the full split later leaves the theme split off untouched', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+    setRow(themeWorkarea('origin'), 'inc-002', { status: 'done' })
+    const before = readFileSync(pathOf(themeWorkarea('origin')), 'utf8')
+
+    const run = await runTim(['split', WORKAREA, '--write'])
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).result.themes.map((theme) => theme.id),
+      envelopeOf(run).result.splitOff.map((theme) => theme.id),
+      readFileSync(pathOf(themeWorkarea('origin')), 'utf8')
+    ]).toEqual([0, ['commodity', 'documents'], ['origin'], before])
+  })
+
+  test('the main backlog waits for the moved row to be done in the split backlog', async () => {
+    await runTim(['split', WORKAREA, '--theme', 'origin', '--write'])
+    setRow(WORKAREA, 'inc-005', { status: 'deferred' })
+
+    const before = await runTim(['next', WORKAREA])
+    setRow(themeWorkarea('origin'), 'inc-002', { status: 'done' })
+    const after = await runTim(['next', WORKAREA])
+
+    expect([
+      envelopeOf(before).result.next,
+      envelopeOf(after).result.next
+    ]).toEqual([null, 'inc-003'])
+  })
+
+  test("a theme split off waits for a row its main backlog still holds, in that row's own theme split once there is one", async () => {
+    await runTim(['split', WORKAREA, '--theme', 'commodity', '--write'])
+    const waiting = await runTim(['next', themeWorkarea('commodity')])
+    await runTim(['split', WORKAREA, '--write'])
+    setRow(themeWorkarea('origin'), 'inc-002', { status: 'done' })
+
+    const ready = await runTim(['next', themeWorkarea('commodity')])
+
+    expect([
+      envelopeOf(waiting).result.next,
+      envelopeOf(ready).result.next
+    ]).toEqual([null, 'inc-003'])
+  })
+
+  test('refuses a theme the backlog does not have', async () => {
+    const run = await runTim(['split', WORKAREA, '--theme', 'payments'])
+
+    expect([run.exitCode, envelopeOf(run).errors[0].message]).toEqual([
+      2,
+      'The backlog has no theme "payments". Its themes are origin, commodity, documents.'
+    ])
+  })
+})
+
 describe('parseSplitOpts', () => {
+  test('takes --theme more than once, each once', () => {
+    expect(
+      parseSplitOpts({ theme: ['origin', 'documents', 'origin'] }).theme
+    ).toEqual(['origin', 'documents'])
+  })
+
+  test('refuses a theme that is not a theme id', () => {
+    expect(() => parseSplitOpts({ theme: ['Origin Pages'] })).toThrow(
+      '--theme must be a theme id: lower-case words joined by hyphens, such as origin-pages.'
+    )
+  })
+
   test('is a dry run unless told to write', () => {
-    expect(parseSplitOpts({})).toEqual({ write: false })
+    expect(parseSplitOpts({})).toEqual({ write: false, theme: [] })
   })
 
   test('refuses a branch prefix with a space', () => {

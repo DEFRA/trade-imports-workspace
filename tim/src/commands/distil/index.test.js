@@ -506,8 +506,39 @@ describe('tim distil coverage', () => {
     expect(envelopeOf(run).result.backlog).toEqual({
       path: workspace.layout.backlog,
       increments: 2,
-      covered: 4
+      covered: 4,
+      coveredBySplitOff: 0,
+      splitOff: []
     })
+  })
+
+  test('says which requirements a theme split off early covers, and what its branch has to pick up', async () => {
+    workspace = makeDistilWorkspace()
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [
+        {
+          theme: 'smoke-gate',
+          title: 'The smoke run gates pull requests',
+          touches: ['tests:k6/smoke'],
+          dependsOn: [],
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: `${DEMO_WORKAREA}/themes/smoke-gate`,
+          backlog: 'themes/smoke-gate/backlog.json',
+          increments: ['inc-002'],
+          requirements: ['req-002'],
+          pickUp: ['req-006'],
+          at: '2026-10-09T12:00:00.000Z'
+        }
+      ],
+      increments: [{ ...backlog.increments[0], requirements: ['req-001'] }]
+    }))
+
+    const run = await runTim(['coverage', DEMO_WORKAREA], { json: false })
+
+    expect(run.stdout).toContain(
+      '1 increments cover 1 requirements.\n2 more requirements are covered by 1 theme split off early, each built on its own branch:\n  smoke-gate on feat/NO_JIRA-demo-smoke-gate. For that branch: to pick up, adopted since the split: req-006'
+    )
   })
 })
 
@@ -612,7 +643,8 @@ describe('tim distil backlog-snapshot', () => {
     expect(envelopeOf(run).result.compared).toEqual({
       tag: 'before',
       removed: ['inc-002'],
-      changed: []
+      changed: [],
+      splitOffChanged: []
     })
   })
 

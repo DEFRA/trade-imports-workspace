@@ -119,6 +119,35 @@ export const canonicalJsonOf = (value) => JSON.stringify(sortedKeys(value))
 export const claimsHashOf = (claims) =>
   createHash('sha256').update(canonicalJsonOf(claims)).digest('hex')
 
+/** The fields of a requirement that say what is to be built. */
+const FINGERPRINTED_FIELDS = [
+  'statement',
+  'status',
+  'delta',
+  'deltaNote',
+  'blockedBy',
+  'conflicts'
+]
+
+/**
+ * The sha256, in hex, of what a requirement asks for: its statement, status,
+ * delta and delta note, blocker and conflicts. Its `why` and the claims it
+ * cites are left out, because a re-distil rewords and re-cites them without
+ * changing what is built. A theme split off early keeps each of its
+ * requirements' fingerprints, so a later re-distil can tell which changed.
+ *
+ * @param {object} requirement - One entry of distil/requirements.json
+ * @returns {string}
+ */
+export const requirementFingerprintOf = (requirement) =>
+  claimsHashOf(
+    Object.fromEntries(
+      FINGERPRINTED_FIELDS.filter(
+        (field) => requirement[field] !== undefined
+      ).map((field) => [field, requirement[field]])
+    )
+  )
+
 /**
  * Every DISTIL file's path inside one workarea folder.
  *

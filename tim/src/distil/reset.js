@@ -11,6 +11,7 @@ import {
   verifyPathOf
 } from './files.js'
 import { readSources } from './checks.js'
+import { splitOffOf } from '../backlog/split-off.js'
 
 /**
  * The folder name a reset at `now` moves files into: the time in UTC, with
@@ -129,6 +130,30 @@ const builtRowsOf = (layout) => {
     : []
 }
 
+const splitOffPointersOf = (layout) =>
+  splitOffOf(readJsonLenient(layout.backlog).value)
+
+const refuseBuiltRows = (layout) => {
+  const built = builtRowsOf(layout)
+  if (!built.length) return
+  throw new TimError(
+    'USAGE',
+    `backlog.json has rows with build work on them: ${built.join(', ')}. A reconcile reset starts the backlog again and would lose their ids. Re-distil without a reset instead: it keeps every id and never changes a built row.`
+  )
+}
+
+const refuseSplitOffThemes = (layout) => {
+  const pointers = splitOffPointersOf(layout)
+  if (!pointers.length) return
+  const named = pointers
+    .map((pointer) => `"${pointer.theme}" on ${pointer.branch}`)
+    .join(', ')
+  throw new TimError(
+    'USAGE',
+    `backlog.json has themes split off to their own branches: ${named}. A reconcile reset starts the backlog again: it would lose these pointers, and the next distil would draft rows for these themes again. Re-distil without a reset instead: it keeps every pointer.`
+  )
+}
+
 const reconcileFilesOf = (layout) => {
   const distilDir = join(layout.dir, 'distil')
   const snapshots = existsSync(distilDir)
@@ -159,22 +184,19 @@ const reconcileFilesOf = (layout) => {
  *
  * For after a change to the reconcile or consolidate method. A normal
  * re-distil keeps every id and needs no reset. Refuses when the backlog has
- * a built row, because a fresh backlog would lose its ids.
+ * a built row, because a fresh backlog would lose its ids, or a theme split
+ * off, because a fresh backlog would lose its pointer and draft its rows
+ * again.
  *
  * @param {object} args
  * @param {object} args.layout - From `distilLayout`
  * @param {Date} [args.now] - When the reset happens, which names its folder
  * @returns {{superseded: string|null, moved: {from: string, to: string}[]}}
- * @throws {TimError} USAGE when the backlog has built rows or the folder for this time already exists
+ * @throws {TimError} USAGE when the backlog has built rows or split-off themes, or the folder for this time already exists
  */
 export const resetReconcile = ({ layout, now = new Date() }) => {
-  const built = builtRowsOf(layout)
-  if (built.length) {
-    throw new TimError(
-      'USAGE',
-      `backlog.json has rows with build work on them: ${built.join(', ')}. A reconcile reset starts the backlog again and would lose their ids. Re-distil without a reset instead: it keeps every id and never changes a built row.`
-    )
-  }
+  refuseBuiltRows(layout)
+  refuseSplitOffThemes(layout)
   const superseded = join(layout.supersededDir, supersededStampOf(now))
   if (existsSync(superseded)) {
     throw new TimError(

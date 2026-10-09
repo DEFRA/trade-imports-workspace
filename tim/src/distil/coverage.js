@@ -1,7 +1,13 @@
 import {
+  COVERING_STATUSES,
+  requirementsOfPointer,
+  splitOffOf
+} from '../backlog/split-off.js'
+import {
   DISTIL_SCHEMA_FILES,
   isEditableRow,
   readJsonLenient,
+  requirementFingerprintOf,
   rowStatusOf
 } from './files.js'
 import { inspectSources, readSources } from './checks.js'
@@ -327,10 +333,6 @@ const NEVER_IN_AN_INCREMENT = {
   'out-of-scope': 'is out of scope'
 }
 
-// A row built, being built or still to build covers its requirements. A
-// dropped, rejected or merged-into row carries no work, so it covers nothing.
-const COVERING_STATUSES = new Set(['todo', 'blocked', 'done', 'deferred'])
-
 const escapeForPattern = (text) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -368,20 +370,51 @@ const blockedInTodoProblems = (editable, requirementsById) =>
         )
     )
 
-const backlogProblems = (increments, requirements, overruledBy) => {
+const isToBuild = (requirement) =>
+  requirement.status === 'adopted' && requirement.delta !== 'exists'
+
+// A requirement a theme split off early holds is the split branch's to build.
+// A row here never covers it, and the split branch picks up only what is
+// still to build.
+const splitOffHoldingProblems = ({ citing, pointers, requirementsById }) => [
+  ...pointers.flatMap((pointer) =>
+    requirementsOfPointer(pointer)
+      .filter((requirementId) => citing.has(requirementId))
+      .map(
+        (requirementId) =>
+          `${citing.get(requirementId).join(', ')} covers ${requirementId}, which theme "${pointer.theme}" holds: it was split off to ${pointer.branch}. Take ${requirementId} out of the row. The split branch builds it.`
+      )
+  ),
+  ...pointers.flatMap((pointer) =>
+    textsIn(pointer.pickUp)
+      .filter((requirementId) => {
+        const requirement = requirementsById.get(requirementId)
+        return !requirement || !isToBuild(requirement)
+      })
+      .map(
+        (requirementId) =>
+          `Theme "${pointer.theme}" picks up ${requirementId}, which is not an adopted requirement to build in distil/requirements.json. Take it out of the theme's pickUp.`
+      )
+  )
+]
+
+const backlogProblems = ({
+  increments,
+  requirements,
+  overruledBy,
+  pointers
+}) => {
   const covering = increments.filter((increment) =>
     COVERING_STATUSES.has(rowStatusOf(increment))
   )
   const citing = incrementsCiting(covering)
+  const heldBySplitOff = new Set(pointers.flatMap(requirementsOfPointer))
   const editable = covering.filter(isEditableRow)
   const citingToBuild = incrementsCiting(editable)
   const requirementsById = new Map(
     requirements.map((requirement) => [requirement.id, requirement])
   )
-  const mustBeBuilt = requirements.filter(
-    (requirement) =>
-      requirement.status === 'adopted' && requirement.delta !== 'exists'
-  )
+  const mustBeBuilt = requirements.filter(isToBuild)
   const reasonNeverIn = (requirement) =>
     NEVER_IN_AN_INCREMENT[requirement.status] ??
     (requirement.status === 'adopted'
@@ -390,10 +423,12 @@ const backlogProblems = (increments, requirements, overruledBy) => {
   return [
     ...mustBeBuilt
       .filter((requirement) => !citing.has(requirement.id))
+      .filter((requirement) => !heldBySplitOff.has(requirement.id))
       .map(
         (requirement) =>
           `${requirement.id} is adopted as ${requirement.delta} but sits in no increment.`
       ),
+    ...splitOffHoldingProblems({ citing, pointers, requirementsById }),
     ...[...citing]
       .filter(([, incrementIds]) => incrementIds.length > 1)
       .map(
@@ -430,7 +465,72 @@ const readBacklog = (path) => {
   return {
     exists: true,
     increments: objectsIn(read.value?.increments),
+    pointers: splitOffOf(read.value),
     problems: []
+  }
+}
+
+const fingerprintChanged = (pointer, requirementsById) => (requirementId) => {
+  const kept = pointer.fingerprints?.[requirementId]
+  const requirement = requirementsById.get(requirementId)
+  return (
+    isText(kept) &&
+    Boolean(requirement) &&
+    requirementFingerprintOf(requirement) !== kept
+  )
+}
+
+const isInPlace = (requirement) =>
+  requirement?.status === 'adopted' && requirement.delta === 'exists'
+
+/**
+ * What each theme split off early holds, and what has happened to it since.
+ * Each requirement it held lands in at most one list: `nowInPlace` when it
+ * is now adopted as already in place, which is what a branch that built and
+ * merged its rows leads to; `noLongerToBuild` when it is gone, a question or
+ * out of scope; `changed` when it is still to build and its fingerprint
+ * changed. `pickUp` lists the ones a re-distil handed it. The report hands
+ * `pickUp`, `changed` and `noLongerToBuild` to the split branch; the main
+ * report already lists what is in place. `fingerprintsNow` gives the current
+ * fingerprint of each changed or picked-up requirement, which the pointer
+ * takes once the branch has its rows, so the report stops listing it.
+ */
+const splitOffStandingOf = (pointer, requirementsById) => {
+  const requirements = textsIn(pointer.requirements)
+  const requirementOf = (requirementId) => requirementsById.get(requirementId)
+  const isStillToBuild = (requirementId) => {
+    const requirement = requirementOf(requirementId)
+    return Boolean(requirement) && isToBuild(requirement)
+  }
+  const nowInPlace = requirements.filter((requirementId) =>
+    isInPlace(requirementOf(requirementId))
+  )
+  const noLongerToBuild = requirements.filter(
+    (requirementId) =>
+      !isStillToBuild(requirementId) && !nowInPlace.includes(requirementId)
+  )
+  const pickUp = textsIn(pointer.pickUp)
+  const changed = requirements
+    .filter(isStillToBuild)
+    .filter(fingerprintChanged(pointer, requirementsById))
+  return {
+    theme: pointer.theme,
+    branch: pointer.branch,
+    workarea: pointer.workarea,
+    backlog: pointer.backlog,
+    requirements,
+    pickUp,
+    changed,
+    noLongerToBuild,
+    nowInPlace,
+    fingerprintsNow: Object.fromEntries(
+      [...changed, ...pickUp]
+        .filter((requirementId) => requirementsById.has(requirementId))
+        .map((requirementId) => [
+          requirementId,
+          requirementFingerprintOf(requirementsById.get(requirementId))
+        ])
+    )
   }
 }
 
@@ -611,7 +711,12 @@ export const distilCoverage = ({ layout, schemas, workarea }) => {
   const backlogFileProblems = [
     ...backlog.problems,
     ...(backlog.increments && requirementsFile.value
-      ? backlogProblems(backlog.increments, requirements, overruledBy)
+      ? backlogProblems({
+          increments: backlog.increments,
+          requirements,
+          overruledBy,
+          pointers: backlog.pointers
+        })
       : [])
   ]
   const problems = [
@@ -648,17 +753,35 @@ export const distilCoverage = ({ layout, schemas, workarea }) => {
       .filter((entry) => entry.report.state !== 'verified')
       .map(({ report }) => ({ id: report.id, state: report.state })),
     backlog: backlog.exists
-      ? {
-          path: layout.backlog,
-          increments: backlog.increments.length,
-          covered: [
-            ...incrementsCiting(
-              backlog.increments.filter((increment) =>
-                COVERING_STATUSES.has(rowStatusOf(increment))
-              )
-            ).keys()
-          ].length
-        }
+      ? backlogSummaryOf(layout, backlog, requirements)
       : null
+  }
+}
+
+const backlogSummaryOf = (layout, backlog, requirements) => {
+  const requirementsById = new Map(
+    requirements.map((requirement) => [requirement.id, requirement])
+  )
+  const splitOff = backlog.pointers.map((pointer) =>
+    splitOffStandingOf(pointer, requirementsById)
+  )
+  const heldBySplitOff = new Set(
+    backlog.pointers.flatMap(requirementsOfPointer).filter((requirementId) => {
+      const requirement = requirementsById.get(requirementId)
+      return Boolean(requirement) && isToBuild(requirement)
+    })
+  )
+  return {
+    path: layout.backlog,
+    increments: backlog.increments.length,
+    covered: [
+      ...incrementsCiting(
+        backlog.increments.filter((increment) =>
+          COVERING_STATUSES.has(rowStatusOf(increment))
+        )
+      ).keys()
+    ].length,
+    coveredBySplitOff: heldBySplitOff.size,
+    splitOff
   }
 }

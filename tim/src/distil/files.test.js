@@ -7,6 +7,7 @@ import {
   loadDistilSchemas,
   orphanFilesOf,
   readJsonLenient,
+  requirementFingerprintOf,
   scopeHashOf,
   slugOf,
   verifyPartsOf
@@ -192,5 +193,36 @@ describe('loadDistilSchemas', () => {
     expect(withoutDescriptions(verify.$defs.claim)).toEqual(
       withoutDescriptions(extract.$defs.claim)
     )
+  })
+})
+
+describe('requirementFingerprintOf', () => {
+  const REQUIREMENT = {
+    id: 'req-002',
+    statement: 'The smoke run fails a pull request on a breached threshold.',
+    why: 'So a slower change fails its check.',
+    claims: ['confluence-6608160092-004'],
+    status: 'adopted',
+    delta: 'new'
+  }
+
+  test('stays the same when a re-distil rewords the why or cites other claims', () => {
+    expect(
+      requirementFingerprintOf({
+        ...REQUIREMENT,
+        why: 'Reworded.',
+        claims: ['repo-tests-002']
+      })
+    ).toBe(requirementFingerprintOf(REQUIREMENT))
+  })
+
+  test('changes when what is to be built changes', () => {
+    expect(
+      [
+        { ...REQUIREMENT, statement: 'The smoke run warns on a breach.' },
+        { ...REQUIREMENT, status: 'question' },
+        { ...REQUIREMENT, blockedBy: 'CDP must open the port.' }
+      ].map(requirementFingerprintOf)
+    ).not.toContain(requirementFingerprintOf(REQUIREMENT))
   })
 })

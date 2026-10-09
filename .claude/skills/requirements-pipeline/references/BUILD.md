@@ -664,7 +664,32 @@ conflict.
 - **Keep the plan inside the theme.** The split envelope's `touches` names the code the theme owns. A plan that
   must change code outside it would conflict with another theme: stop and re-distil instead.
 - **Re-distil the parent, then split again.** Never edit a split backlog's rows by hand. A re-split keeps every row
-  the loop has built or set aside, and the ticket, branch, commit and pull requests it wrote on the rest.
+  the loop has built or set aside, and the ticket, branch, commit and pull requests it wrote on the rest. A theme
+  split off early is the exception: see below.
+
+### Splitting a theme off early
+
+When one theme is ready while the rest of the backlog is still being ruled on, split just that theme off and build
+it on a second machine. Run a dry run, then the same with `--write`, in the parent workarea:
+
+```bash
+tim backlog split <workarea> --theme <theme id> --json
+tim backlog split <workarea> --theme <theme id> --write --json
+```
+
+The theme's backlog lands at `<workarea>/themes/<theme id>/backlog.json`, as the full split writes it, and its rows
+leave the parent `backlog.json` altogether. The parent keeps a pointer in `splitOff`, so re-distils do not draft
+them again. The command lists each dependency it rewired: a parent row that waited on a moved row now waits on it in
+the split backlog, and a moved row that waited on a parent row waits on it in the parent.
+
+- **Build it like any split theme.** Commit and push the workspace changes, pull them on the second machine, and
+  launch the loop with `workarea` set to `<workarea>/themes/<theme id>` and `repos` from that backlog's envelope. To
+  build onto one branch, use the split backlog's `branch`, as above.
+- **Its backlog is the only copy.** A re-distil of the parent never rewrites it, and a later full split skips it.
+- **Later rulings reach it through the report.** The report's "For the split branches" section names the branch and
+  every requirement it must pick up, every one that changed and every one no longer to build. Add or rewrite rows
+  in the split backlog for them, then update the parent's pointer as
+  [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
 
 ## Branch lifecycle
 

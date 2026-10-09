@@ -6,8 +6,8 @@ field has a `description` there. Read it for the fields; this file keeps only th
 
 `tim backlog check <workarea>` validates a backlog against that schema, then checks what a schema cannot: every
 `dependsOn` id is in the backlog, no row depends on itself, there is no cycle, no id appears twice, every repo a
-row's `merge` names is in the row's `repos` and in the envelope's, the theme rules below hold, and every
-`externalDependsOn` names a row that its workarea's backlog has.
+row's `merge` names is in the row's `repos` and in the envelope's, the theme rules below hold, the rules for a theme
+split off early hold, and every `externalDependsOn` names a row that its workarea's backlog has.
 
 ## Themes
 
@@ -42,7 +42,33 @@ backlog per theme.
 A split backlog, at `workareas/<workarea>/themes/<theme id>/backlog.json`, has `theme`, `branch`, `parent` and
 `touches` in its envelope instead of `themes`, and only its theme's rows. A `dependsOn` on another theme's row
 becomes an `externalDependsOn` on that theme's split workarea; one on a row in no theme points at the parent. Never
-edit a split backlog's rows by hand: re-distil the parent and split again.
+edit a split backlog's rows by hand: re-distil the parent and split again. A theme split off early is the
+exception: its parent no longer has its rows, so its own backlog is where they change.
+
+## A theme split off early
+
+`tim backlog split <workarea> --theme <id> --write` moves one ready theme out of a backlog that is still being ruled
+on (see [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early)). Its split backlog is the only copy of its rows. The
+parent keeps one pointer per such theme in `splitOff`, and `tim backlog check` holds it to these rules:
+
+- **A theme split off is never also in `themes`,** and is split off once.
+- **No row in the parent is in a split-off theme,** and none reuses the id of a row that moved.
+- **No theme left in `themes` touches a split-off theme's code.** Its `touches` still count for overlap.
+- **A theme left may depend on a split-off theme,** and lands after it.
+- **Every theme a pointer's `dependsOn` names is still in `themes` or `splitOff`,** under the same id. A theme it
+  depends on is never renamed or removed, built or not.
+- **`increments` lists every row that moved,** dropped, rejected and merged rows too, so no row reuses their ids.
+  `requirements` lists only what the covering rows (`todo`, `blocked`, `done`, `deferred`) covered.
+- **No requirement is held by two split-off themes.**
+- **A row left that waited on a moved row waits through `externalDependsOn`** on the split workarea, never
+  `dependsOn`. A moved row that waited on a row left in the parent has an `externalDependsOn` on the parent's
+  workarea; `tim backlog next` follows it into that row's own theme split once there is one.
+- **The pointer is fixed once written, except `pickUp`.** A re-distil carries it over and may only add to
+  `pickUp` the requirements adopted later that fall in the theme's `touches`. Never draft a row for a requirement
+  a pointer holds.
+
+`tim distil coverage` counts every requirement a pointer holds, in `requirements` or `pickUp`, as covered by the
+split backlog, and refuses a row in the parent that covers one.
 
 ## Rows for the branch lifecycle
 

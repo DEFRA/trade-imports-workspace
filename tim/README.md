@@ -172,6 +172,8 @@ tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --jso
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
 tim backlog split shared/my-programme --json     # a dry run: one backlog per theme, and the landing order
 tim backlog split shared/my-programme --write --branch-prefix feat/EUDPA-123-plants --json
+tim backlog split shared/my-programme --theme origin-pages --json          # a dry run: split one ready theme off early
+tim backlog split shared/my-programme --theme origin-pages --write --json  # its rows leave backlog.json, which keeps a splitOff pointer
 ```
 
 `split` takes a backlog with `themes` and writes one backlog per theme at

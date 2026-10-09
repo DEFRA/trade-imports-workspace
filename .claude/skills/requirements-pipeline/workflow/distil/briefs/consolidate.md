@@ -92,7 +92,8 @@ You draft the rows for one area. Your prompt's `tim distil areas --area <id>` li
          "existingRow": null
        }
      ],
-     "unobservable": []
+     "unobservable": [],
+     "splitOff": []
    }
    ```
 
@@ -100,7 +101,9 @@ You draft the rows for one area. Your prompt's `tim distil areas --area <id>` li
    shared copy, a shared component). `existingRow`, on a re-distil, names the row in `backlog.json` that already
    covers these requirements, so the combiner keeps its id; otherwise `null`. A draft row has no `id`: the combiner
    gives ids.
-5. Cover every requirement in `toBuild` once. An area with nothing to build writes `"rows": []`.
+5. Cover every requirement in `toBuild` once, in a row or, when its code falls in a theme split off early, in
+   `splitOff` (see [Themes split off early](#themes-split-off-early)). An area with nothing to build writes
+   `"rows": []`.
 
 ## The envelope
 
@@ -136,6 +139,34 @@ are in `SHAPE.md`, "Themes". The aim is **several themes that genuinely build in
 - `tim backlog check` names every overlap, missing theme and missing theme dependency. Fix each one.
 - **On a re-distil, keep each row's theme**, unless the requirements behind it moved to another theme's code. Never
   rename a theme whose rows are built: its split's workarea and branch are named by it.
+
+## Themes split off early
+
+A theme split off early (`tim backlog split --theme`) has left `backlog.json`: its rows live only in its own backlog,
+on its own branch. The backlog keeps one pointer per such theme in `splitOff`. Your prompt lists them when there are
+any.
+
+- **Carry `splitOff` over unchanged.** Never remove a pointer, and never change any of its fields but `pickUp`. The
+  workflow compares every pointer before and after the combiner.
+- **Never draft a row for a requirement a pointer holds**, in its `requirements` or its `pickUp`. `tim distil areas
+  --area` already leaves them out of `toBuild` and lists them under the area's `splitOff`. `tim distil coverage`
+  refuses a row that covers one.
+- **Never put a split-off theme back in `themes`**, give a row its id as `theme`, or reuse the id of a row that moved
+  with it. No theme left may touch its code.
+- **Never rename or remove a theme a pointer's `dependsOn` names**, even one with no built row. The pointer is fixed,
+  so the split-off theme would lose its place in the landing order. `tim backlog check` refuses it.
+- **A requirement whose code falls in a split-off theme's `touches` is that branch's to build.** This is a new or
+  changed requirement that a ruling brought in after the split. The drafter writes no row for it and lists it in its
+  draft's `splitOff`:
+
+  ```json
+  "splitOff": [{ "requirement": "req-031", "theme": "origin-pages", "why": "It changes the origin page, which theme origin-pages owns." }]
+  ```
+
+  The combiner adds each such id to that pointer's `pickUp` instead of drafting a row. The report hands it to the
+  branch.
+- A row left here may depend on a row that moved. It does so through `externalDependsOn` on the split workarea,
+  never `dependsOn`. Keep every one as it is.
 
 ## Re-distilling over an existing backlog
 

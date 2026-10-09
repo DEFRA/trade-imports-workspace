@@ -2,7 +2,12 @@ import { describe, test, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defaultBranchPrefix, planSplit, themeWorkareaOf } from './split.js'
+import {
+  defaultBranchPrefix,
+  planSplit,
+  planSplitOff,
+  themeWorkareaOf
+} from './split.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -290,6 +295,222 @@ describe('planSplit', () => {
         [],
         ['inc-002']
       ])
+    })
+  })
+})
+
+describe('planSplitOff', () => {
+  const AT = '2026-10-09T12:00:00.000Z'
+
+  const splitOff = ({
+    backlog = themedBacklog(),
+    themeIds = ['origin'],
+    onDisk = {},
+    previousIndex = null,
+    fingerprints = null
+  } = {}) =>
+    planSplitOff({
+      backlog,
+      workarea: WORKAREA,
+      themeIds,
+      branchPrefix: PREFIX,
+      readWorkareaBacklog: (workarea) => onDisk[workarea] ?? nothingOnDisk(),
+      previousIndex,
+      fingerprints,
+      at: AT
+    })
+
+  const idsOf = (list) => list.map((entry) => entry.id)
+
+  test("writes the theme's backlog exactly as the full split would", () => {
+    expect(splitOff().splits[0].backlog).toEqual(
+      splitFor(plan(), 'origin').backlog
+    )
+  })
+
+  test('takes the theme and its rows out of the main backlog', () => {
+    const { backlog } = splitOff()
+
+    expect([idsOf(backlog.themes), idsOf(backlog.increments)]).toEqual([
+      ['commodity', 'documents'],
+      ['inc-003', 'inc-004', 'inc-005', 'inc-006']
+    ])
+  })
+
+  test('leaves one pointer naming the theme, its branch and backlog, its rows and their requirements', () => {
+    const origin = themedBacklog().themes[0]
+
+    expect(
+      splitOff({ fingerprints: { 'req-001': 'f1', 'req-009': 'f9' } }).backlog
+        .splitOff
+    ).toEqual([
+      {
+        theme: 'origin',
+        title: origin.title,
+        why: origin.why,
+        touches: origin.touches,
+        dependsOn: [],
+        branch: `${PREFIX}-origin`,
+        workarea: 'shared/hrp/themes/origin',
+        backlog: 'themes/origin/backlog.json',
+        increments: ['inc-001', 'inc-002'],
+        requirements: ['req-001', 'req-002', 'req-003'],
+        fingerprints: { 'req-001': 'f1' },
+        at: AT
+      }
+    ])
+  })
+
+  test('lists a dropped row among the rows that moved, but not its requirements', () => {
+    const backlog = editRow(themedBacklog(), 'inc-002', (row) => ({
+      ...row,
+      status: 'dropped'
+    }))
+
+    const [pointer] = splitOff({ backlog }).backlog.splitOff
+
+    expect([pointer.increments, pointer.requirements]).toEqual([
+      ['inc-001', 'inc-002'],
+      ['req-001']
+    ])
+  })
+
+  test('turns a dependency on a moved row into an externalDependsOn on its split backlog', () => {
+    const result = splitOff()
+
+    expect([rowOf(result.backlog, 'inc-003'), result.rewired.left]).toEqual([
+      {
+        ...rowOf(themedBacklog(), 'inc-003'),
+        dependsOn: [],
+        externalDependsOn: [
+          { workarea: 'shared/hrp/themes/origin', id: 'inc-002' }
+        ]
+      },
+      [
+        {
+          id: 'inc-003',
+          dependsOn: 'inc-002',
+          workarea: 'shared/hrp/themes/origin'
+        }
+      ]
+    ])
+  })
+
+  test('points a moved row that waits on a row still in the main backlog at the main backlog', () => {
+    const result = splitOff({ themeIds: ['commodity'] })
+
+    expect([
+      rowOf(result.splits[0].backlog, 'inc-003').externalDependsOn,
+      result.rewired.moved
+    ]).toEqual([
+      [{ workarea: WORKAREA, id: 'inc-002' }],
+      [{ id: 'inc-003', dependsOn: 'inc-002', workarea: WORKAREA }]
+    ])
+  })
+
+  test('splits two themes off at once, pointing their rows at each other', () => {
+    const result = splitOff({ themeIds: ['origin', 'commodity'] })
+
+    expect([
+      idsOf(result.backlog.themes),
+      rowOf(result.splits[1].backlog, 'inc-003').externalDependsOn,
+      result.rewired
+    ]).toEqual([
+      ['documents'],
+      [{ workarea: 'shared/hrp/themes/origin', id: 'inc-002' }],
+      {
+        left: [],
+        moved: [
+          {
+            id: 'inc-003',
+            dependsOn: 'inc-002',
+            workarea: 'shared/hrp/themes/origin'
+          }
+        ]
+      }
+    ])
+  })
+
+  test('keeps every other theme in the index, and marks the one split off', () => {
+    const result = splitOff({ previousIndex: plan().index })
+
+    expect(
+      result.index.themes.map(({ id, splitOff: early }) => [id, early])
+    ).toEqual([
+      ['commodity', undefined],
+      ['documents', undefined],
+      ['origin', true]
+    ])
+  })
+
+  test('refuses a theme already split off, naming its branch', () => {
+    const { backlog } = splitOff()
+
+    expect(() => splitOff({ backlog })).toThrow(
+      'Theme "origin" is already split off, to feat/NO_JIRA-hrp-origin-and-commodity-origin. Its rows live in shared/hrp/themes/origin: build it there.'
+    )
+  })
+
+  test('refuses a theme the backlog does not have', () => {
+    expect(() => splitOff({ themeIds: ['payments'] })).toThrow(
+      'The backlog has no theme "payments". Its themes are origin, commodity, documents.'
+    )
+  })
+
+  describe('then the full split', () => {
+    test('skips the theme already split off', () => {
+      const { backlog } = splitOff()
+
+      expect(plan({ backlog }).splits.map((split) => split.theme)).toEqual([
+        'commodity',
+        'documents'
+      ])
+    })
+
+    test('keeps the theme split off in the index and the landing order', () => {
+      const { backlog } = splitOff()
+
+      const { index } = plan({ backlog })
+
+      expect([
+        index.landingOrder,
+        index.themes.find((theme) => theme.id === 'origin')
+      ]).toEqual([
+        [
+          { wave: 1, themes: ['documents', 'origin'] },
+          { wave: 2, themes: ['commodity'] }
+        ],
+        {
+          id: 'origin',
+          title: 'Country of origin',
+          workarea: 'shared/hrp/themes/origin',
+          branch: `${PREFIX}-origin`,
+          wave: 1,
+          rows: 2,
+          dependsOn: [],
+          touches: themedBacklog().themes[0].touches,
+          splitOff: true
+        }
+      ])
+    })
+
+    test('finds no problem with built rows in the theme split off', () => {
+      const result = splitOff()
+      const built = {
+        ...result.splits[0].backlog,
+        increments: result.splits[0].backlog.increments.map((row) => ({
+          ...row,
+          status: 'done'
+        }))
+      }
+
+      expect(
+        plan({
+          backlog: result.backlog,
+          onDisk: { 'shared/hrp/themes/origin': built },
+          previousIndex: result.index
+        }).problems
+      ).toEqual([])
     })
   })
 })

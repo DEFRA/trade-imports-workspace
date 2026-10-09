@@ -125,6 +125,28 @@ retries it, and skips every source already verified.
 `--compare-to before`, which names every row removed and every such row changed. Each is sent
 back to the consolidator as a problem.
 
+### Splitting a theme off early
+
+`tim backlog split <workarea> --theme <id>` (a dry run, then the same with `--write`) moves one ready theme out of
+`backlog.json` while the rest is still being ruled on: its backlog goes to `themes/<id>/backlog.json` and its rows
+leave the main backlog, which keeps one pointer per theme in `splitOff`. The second machine builds it with the
+increment build loop on `<workarea>/themes/<id>`, like any split theme. Detail:
+[`../references/DISTIL.md`](../references/DISTIL.md#8-splitting-a-theme-off-early).
+
+A re-distil respects the pointers, all through tim:
+
+- `tim distil areas --area` leaves every requirement a pointer holds out of `toBuild`, and lists it under the
+  area's `splitOff`, so no drafter drafts a row for it.
+- The snapshot saved before consolidate keeps each pointer (`result.splitOff`), and the workflow tells every drafter
+  and the combiner about them. A new requirement whose code falls in a split-off theme's touches gets no row: the
+  drafter lists it in its draft's `splitOff`, and the combiner adds it to that pointer's `pickUp`.
+- The compare after consolidate names every pointer gone or changed in a field other than `pickUp`
+  (`result.compared.splitOffChanged`), and the workflow sends it back to the combiner.
+- `tim distil coverage` counts every requirement a pointer holds as covered by the split backlog, refuses a row that
+  covers one, and names, per theme, what it picks up, what changed since the split and what is no longer to build.
+  The report lists them under "For the split branches", naming the branch, and the result carries them as
+  `splitOff`.
+
 ### What it returns
 
 ```js
@@ -137,7 +159,8 @@ back to the consolidator as a problem.
   challenge,             // { challenged, settled, blocked, survived }: conflict ids
   areas,                 // the area plan: { id, title, claims }
   sourceUsage,           // per source: { id, claims, cited }
-  backlog,               // { path, total, byStatus, covered, themes }
+  backlog,               // { path, total, byStatus, covered, coveredBySplitOff, themes }
+  splitOff,              // per theme split off early: { theme, branch, workarea, backlog, requirements, pickUp, changed, noLongerToBuild, nowInPlace, fingerprintsNow }
   decisions,             // the area plan's, every reconciler's and the challenge's, and every drafter's and the combiner's
   goalConflicts,         // rulings that contradict sources.json's goal: the main session corrects the goal
   report, reportPath,    // the report text, and where the main session saves it

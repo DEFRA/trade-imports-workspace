@@ -22,6 +22,7 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 | 10. Save the report | The main session | [Section 5](#5-save-the-report) |
 | 11. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
 | 12. Split a themed backlog, one backlog per theme, once the questions are answered and the re-distil has landed | The main session | [Section 7](#7-split-into-themes) |
+| Any time: split one ready theme off early, so a second machine builds it while the rest is still ruled on | The main session | [Section 8](#8-splitting-a-theme-off-early) |
 
 Steps 1 to 9 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
@@ -149,7 +150,9 @@ It moves `requirements.json`, `conflicts.json`, the working sets, `areas.json` a
 verdicts, the backlog snapshots, `backlog.json` and `report.md` to `distil/superseded/<time>/reconcile/`. Every
 source stays `verified`, so the next launch goes straight to the area plan, and every id starts again from `001`. It
 refuses while any backlog row has build work on it (`done`, `deferred`, a commit, a branch or a pull request): a
-fresh backlog would lose those ids, so re-distil without a reset instead.
+fresh backlog would lose those ids, so re-distil without a reset instead. It also refuses while the backlog has a
+theme split off ([section 8](#8-splitting-a-theme-off-early)): a fresh backlog would lose the pointer, and the next
+run would draft that theme's rows again on the main branch.
 
 ## 1. Launch the workflow
 
@@ -407,6 +410,66 @@ Split again after every re-distil. It is safe to run any number of times:
 
 Never edit a split backlog's rows by hand: re-distil the parent and split again.
 
+A theme already split off early (section 8) is left out: its backlog lives on its own branch. The full split keeps
+its entry in `themes.json` and its place in the landing order, and never touches its backlog.
+
+## 8. Splitting a theme off early
+
+**When.** One theme is ready while the rest of the backlog is still being ruled on and re-distilled, and a second
+machine is free to build it. Ready means its rows are settled: no open question touches them, and `tim backlog
+check` and `tim distil coverage` pass. Repeat for each theme as it becomes ready.
+
+**The command.** A dry run first, then the same with `--write`:
+
+```bash
+tim backlog split <workarea> --theme <theme id> --json           # what moves, what waits on what
+tim backlog split <workarea> --theme <theme id> --write --json   # move it
+```
+
+`--theme` can be given more than once. `--branch-prefix` works as for the full split. Without `--theme` the command
+does the full split, as in section 7.
+
+**What moves.** The theme's backlog is written to `workareas/<workarea>/themes/<theme id>/backlog.json`, exactly as
+the full split would write it, and its entry is merged into `themes/themes.json`, keeping every other entry. Then
+the theme and every one of its rows leave the main `backlog.json` altogether. There is no lock: the split backlog is
+the only copy.
+
+**What stays.** One pointer per theme in the main backlog's `splitOff`: its id, title, touches and theme
+dependencies, its branch, workarea and backlog path, the ids of the rows that moved, the requirements they covered
+with each one's fingerprint, and when it was split off. `tim backlog check` holds the main backlog to it: no theme
+left may touch its code, no row may be in it or reuse a moved row's id. The command lists the dependencies it
+rewired, in plain words:
+
+- a row left in the main backlog that depended on a moved row now has an `externalDependsOn` on the split backlog;
+- a moved row that depended on a row still in the main backlog has an `externalDependsOn` on the main backlog.
+  `tim backlog next` follows it to that row's own theme split once that theme is split too.
+
+It refuses, writing nothing, a theme already split off, a theme the backlog does not have, or a result that fails
+`tim backlog check`.
+
+**Building it.** The second machine pulls the workspace repo and runs the build loop on the split backlog, exactly as
+for any split theme ([`BUILD.md`](BUILD.md#building-one-theme)): `workarea` is `<workarea>/themes/<theme id>`,
+`repos` is that backlog's `repos`, and the branch is its `branch`.
+
+**Later rulings.** Re-distil the main workarea as usual. `tim distil coverage` counts every requirement a pointer
+holds as covered by the split backlog. `tim distil areas` leaves them out of every drafter's work, and the combiner
+carries `splitOff` over unchanged: the workflow compares every pointer before and after it. A new requirement whose
+code falls in the theme's touches gets no row in the main backlog; the combiner adds it to the pointer's `pickUp`.
+`tim distil coverage` names every requirement the theme holds that is still to build and has changed since the split,
+by fingerprint, and every one no longer to build. It names one now already in place, usually because the branch built
+and merged it, as `nowInPlace`; the report lists that with every other `exists` requirement, not as work for the
+branch. The report lists the other three under "For the split branches", naming the branch. Whoever
+builds that branch adds or rewrites rows in its own backlog for them. Never split the theme off again.
+
+The report lists a change at every re-distil until the pointer takes it in. Once the branch has its rows, edit the
+main backlog's pointer between runs: move each picked-up id from `pickUp` to `requirements`, and copy each id's
+fingerprint from `fingerprintsNow` in `tim distil coverage <workarea> --json` (under `result.backlog.splitOff`) into
+the pointer's `fingerprints`. Once the branch has dropped or rewritten the row for a requirement no longer to build,
+take that id out of the pointer's `requirements` and `fingerprints`; do the same for an id now in place, whenever you
+like. Change nothing else in it. Never reset reconcile while the backlog has a pointer
+([Reconciling again from nothing](#reconciling-again-from-nothing)): `tim distil reset` refuses, because a fresh backlog
+would lose the pointer and draft the theme's rows again.
+
 ## Done means
 
 - `tim backlog check` and `tim distil coverage` both pass.
@@ -415,7 +478,8 @@ Never edit a split backlog's rows by hand: re-distil the parent and split again.
 - The backlog envelope carries `repos`.
 - When `sources.json` has `themes`: the backlog carries `themes`. After the questions are answered and the
   re-distil has landed, `tim backlog split <workarea> --write` has written every theme's backlog and
-  `themes/themes.json`.
+  `themes/themes.json`. A theme split off early keeps its pointer in `splitOff`, and the report's "For the split
+  branches" section names what its branch must pick up.
 - Tell the user: the counts, the questions and their defaults, and how to build it:
   `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a themed backlog, give the
   landing order and each theme's workarea and branch: each theme builds from its own workarea. For a dry run of one

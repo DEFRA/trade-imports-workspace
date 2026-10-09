@@ -252,4 +252,20 @@ describe('resetReconcile', () => {
     )
     expect(existsSync(workspace.layout.requirements)).toBe(true)
   })
+
+  test('refuses while the backlog has a theme split off, naming each one and its branch, and moves nothing', () => {
+    workspace = makeDistilWorkspace()
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [
+        { theme: 'origin', branch: 'feat/NO_JIRA-demo-origin' },
+        { theme: 'commodity', branch: 'feat/NO_JIRA-demo-commodity' }
+      ]
+    }))
+
+    expect(() => resetLater()).toThrow(
+      'backlog.json has themes split off to their own branches: "origin" on feat/NO_JIRA-demo-origin, "commodity" on feat/NO_JIRA-demo-commodity. A reconcile reset starts the backlog again: it would lose these pointers, and the next distil would draft rows for these themes again. Re-distil without a reset instead: it keeps every pointer.'
+    )
+    expect(existsSync(workspace.layout.requirements)).toBe(true)
+  })
 })

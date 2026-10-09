@@ -1,4 +1,5 @@
 import { findCycle } from './graph.js'
+import { splitOffOf, splitOffProblems, splitOffThemeIds } from './split-off.js'
 
 /**
  * The statuses whose rows are still to build. Once a backlog has themes,
@@ -136,7 +137,7 @@ export const landingWaves = (themes) => {
   }))
 }
 
-const themeListProblems = (themes) => {
+const themeListProblems = (themes, splitOffIds) => {
   const ids = new Set(themes.map((theme) => theme.id))
   const duplicates = duplicatesIn(themes.map((theme) => theme.id)).map(
     (id) => `Theme "${id}" appears more than once.`
@@ -144,7 +145,7 @@ const themeListProblems = (themes) => {
   const dependencies = themes.flatMap((theme) =>
     themeDependenciesOf(theme).flatMap((target) => {
       if (target === theme.id) return [`Theme "${theme.id}" depends on itself.`]
-      if (ids.has(target)) return []
+      if (ids.has(target) || splitOffIds.has(target)) return []
       return [
         `Theme "${theme.id}" depends on theme "${target}", which "themes" does not name.`
       ]
@@ -153,7 +154,9 @@ const themeListProblems = (themes) => {
   const withoutSelf = new Map(
     themes.map((theme) => [
       theme.id,
-      themeDependenciesOf(theme).filter((target) => target !== theme.id)
+      themeDependenciesOf(theme).filter(
+        (target) => target !== theme.id && ids.has(target)
+      )
     ])
   )
   const cycle = findCycle(withoutSelf)
@@ -176,9 +179,9 @@ const touchRepoProblems = (themes, repoKeys) =>
       )
     : []
 
-const overlapProblems = (themes) =>
+const overlapProblems = (themes, splitOff) =>
   themes.flatMap((theme, at) =>
-    themes.slice(at + 1).flatMap((other) =>
+    [...themes.slice(at + 1), ...splitOff].flatMap((other) =>
       touchesOf(theme).flatMap((mine) =>
         touchesOf(other)
           .filter((theirs) => touchesOverlap(mine.parsed, theirs.parsed))
@@ -190,7 +193,7 @@ const overlapProblems = (themes) =>
     )
   )
 
-const rowThemeProblems = (rows, themeIds) =>
+const rowThemeProblems = (rows, themeIds, splitOffIds) =>
   rows.flatMap((row) => {
     if (!isText(row.id)) return []
     if (row.theme === undefined) {
@@ -201,6 +204,7 @@ const rowThemeProblems = (rows, themeIds) =>
         : []
     }
     if (!isText(row.theme) || themeIds.has(row.theme)) return []
+    if (splitOffIds.has(row.theme)) return []
     return [
       `${row.id} is in theme "${row.theme}", which "themes" does not name.`
     ]
@@ -284,12 +288,19 @@ const themedBacklogProblems = (backlog, repoKeys) => {
   const themes = themesOf(backlog)
   const rows = rowsOf(backlog)
   const themesById = new Map(themes.map((theme) => [theme.id, theme]))
+  const themeIds = new Set(themesById.keys())
+  const splitOffIds = splitOffThemeIds(backlog)
+  const splitOff = splitOffOf(backlog).map((pointer) => ({
+    id: pointer.theme,
+    touches: pointer.touches
+  }))
   return [
-    ...themeListProblems(themes),
+    ...themeListProblems(themes, splitOffIds),
     ...touchRepoProblems(themes, repoKeys),
-    ...overlapProblems(themes),
+    ...overlapProblems(themes, splitOff),
     ...emptyThemeProblems(themes, rows),
-    ...rowThemeProblems(rows, new Set(themesById.keys())),
+    ...rowThemeProblems(rows, themeIds, splitOffIds),
+    ...splitOffProblems(backlog, themeIds),
     ...rowRepoProblems(rows, themesById),
     ...crossThemeProblems(rows, themes)
   ]
@@ -309,6 +320,11 @@ const splitBacklogProblems = (backlog) => {
       : [
           `The backlog is theme "${backlog.theme}"'s split, so it cannot have "themes" of its own.`
         ]),
+    ...(backlog.splitOff === undefined
+      ? []
+      : [
+          `The backlog is theme "${backlog.theme}"'s split, so it cannot have "splitOff" of its own.`
+        ]),
     ...rowsOf(backlog)
       .filter(
         (row) =>
@@ -321,13 +337,19 @@ const splitBacklogProblems = (backlog) => {
   ]
 }
 
-const unthemedBacklogProblems = (backlog) =>
-  rowsOf(backlog)
+const unthemedBacklogProblems = (backlog) => [
+  ...(backlog.splitOff === undefined
+    ? []
+    : [
+        'The backlog has "splitOff" but no "themes". Only a themed backlog splits a theme off.'
+      ]),
+  ...rowsOf(backlog)
     .filter((row) => isText(row.id) && isText(row.theme))
     .map(
       (row) =>
         `${row.id} is in theme "${row.theme}", but the backlog has no "themes".`
     )
+]
 
 /**
  * The theme rules a schema cannot check (requirements-pipeline SHAPE.md,
@@ -336,8 +358,10 @@ const unthemedBacklogProblems = (backlog) =>
  * touched repo is one the envelope names; every theme has rows; every todo or
  * blocked row names a theme, and builds only in repos its theme touches; and
  * a row that depends on a row in another theme has its theme depend on that
- * theme, directly or through another. In a split backlog (with `theme`): it
- * has its `branch` and `parent`, no `themes`, and no row of another theme.
+ * theme, directly or through another. A theme split off early (`splitOff`)
+ * may be depended on, keeps its code to itself, and has no row left here. In
+ * a split backlog (with `theme`): it has its `branch` and `parent`, no
+ * `themes` or `splitOff`, and no row of another theme.
  *
  * @param {object} backlog - A parsed backlog with an increments list
  * @returns {string[]}
@@ -389,16 +413,50 @@ export const externalDependencyProblems = (backlog, readWorkareaBacklog) =>
       })
     )
 
+/** The folder, inside a workarea, that holds one split workarea per theme. */
+export const THEMES_FOLDER = 'themes'
+
 /**
- * Whether every row a row depends on in another workarea is `done` there.
+ * The workarea a theme's split backlog lives in.
+ *
+ * @param {string} workarea - The parent workarea, such as `shared/hrp`
+ * @param {string} themeId
+ * @returns {string} Such as `shared/hrp/themes/origin-pages`
+ */
+export const themeWorkareaOf = (workarea, themeId) =>
+  `${workarea}/${THEMES_FOLDER}/${themeId}`
+
+const findRow = (backlog, id) =>
+  rowsOf(backlog).find((candidate) => candidate.id === id)
+
+/**
+ * A row's status where it is built. A row of a themed parent is built in its
+ * theme's split, once there is one, so its status there wins: a theme split
+ * off early waits on a row its parent still holds, and that row lands in its
+ * own theme's split later.
+ */
+const builtStatusOf = (readWorkareaBacklog, workarea, id) => {
+  const backlog = readWorkareaBacklog(workarea)
+  const row = findRow(backlog, id)
+  if (!row || !isText(row.theme) || isText(backlog.theme)) return row?.status
+  const copy = findRow(
+    readWorkareaBacklog(themeWorkareaOf(workarea, row.theme)),
+    id
+  )
+  return copy ? copy.status : row.status
+}
+
+/**
+ * Whether every row a row depends on in another workarea is `done` where it
+ * is built: in that workarea's backlog, or, for a row of a themed parent
+ * whose theme has been split, in that theme's split.
  *
  * @param {object} row
  * @param {(workarea: string) => object|null} readWorkareaBacklog
  * @returns {boolean}
  */
 export const externalDependenciesDone = (row, readWorkareaBacklog) =>
-  externalDependenciesOf(row).every(({ workarea, id }) =>
-    rowsOf(readWorkareaBacklog(workarea)).some(
-      (candidate) => candidate.id === id && candidate.status === 'done'
-    )
+  externalDependenciesOf(row).every(
+    ({ workarea, id }) =>
+      builtStatusOf(readWorkareaBacklog, workarea, id) === 'done'
   )

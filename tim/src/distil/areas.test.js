@@ -236,7 +236,34 @@ describe('areaRequirements', () => {
     expect(result.areas[0]).toMatchObject({
       id: 'suite',
       reconciled: ['req-001', 'req-003'],
-      toBuild: ['req-001']
+      toBuild: ['req-001'],
+      splitOff: []
+    })
+  })
+
+  test('leaves out of toBuild a requirement a theme split off early holds, naming the theme', () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+    writeAreaWorkingSets(context())
+    workspace.writeJson(
+      join(workspace.layout.areasDir, 'suite', 'reconciled.json'),
+      reconciledFor(workspace, 'suite')
+    )
+    workspace.writeJson(
+      join(workspace.layout.areasDir, 'tiers', 'reconciled.json'),
+      reconciledFor(workspace, 'tiers')
+    )
+    mergeReconcile(context())
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [{ theme: 'smoke', requirements: ['req-001'] }]
+    }))
+
+    const result = areaRequirements({ ...context(), areaId: 'suite' })
+
+    expect(result.areas[0]).toMatchObject({
+      toBuild: [],
+      splitOff: [{ id: 'req-001', theme: 'smoke' }]
     })
   })
 

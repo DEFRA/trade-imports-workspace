@@ -78,6 +78,24 @@ The DISTIL workflow's agents are the default workflow agent. Their guard rails
 tell them not to spawn subagents or forks, and to finish their own task if a
 user message is relayed to them mid-run.
 
+## Splitting a theme off early
+
+When one theme is ready while the rest of a themed backlog is still being ruled on and re-distilled, split just
+that theme off so a second machine builds it on its own branch. Repeat as more themes become ready.
+
+```bash
+tim backlog split <workarea> --theme <theme id> --json           # dry run: what moves, what now waits on what
+tim backlog split <workarea> --theme <theme id> --write --json   # move it
+```
+
+The theme's backlog is written to `themes/<theme id>/backlog.json` as the full split would write it, and merged
+into `themes/themes.json`. The theme and its rows then leave `backlog.json` altogether; there is no lock. The main
+backlog keeps one pointer in `splitOff` (the theme, its branch and backlog, the rows that moved and the requirements
+they covered), so a re-distil never drafts them again. The second machine pulls and runs the build loop on
+`<workarea>/themes/<theme id>`, as for any split theme. A later ruling that touches the theme reaches it through
+the report's "For the split branches" section, which names the branch. Detail:
+[`references/DISTIL.md`](references/DISTIL.md#8-splitting-a-theme-off-early).
+
 Launch either workflow by `scriptPath`, never by `name` (a name runs a stale snapshot):
 
 ```
@@ -102,12 +120,13 @@ tim distil working-set <workarea> [--write] --json        # every claim that hel
 tim distil areas <workarea> [--write | --area <id> | --requirements] --json   # check distil/areas.json (no claim in no area); --write each area's working set; --area one area's reconciled and to-build requirements
 tim distil merge-reconcile <workarea> [--area <id>] --json   # join every area's reconciled.json into requirements.json and conflicts.json, numbering new ids; --area checks one area and writes nothing
 tim distil challenge <workarea> [--conflict <id> | --clear] --json   # the question conflicts to challenge; --conflict checks one verdict; --clear removes them
-tim distil coverage <workarea> --json    # requirements and conflicts against the working set, every source backing something, every challenge verdict applied, and every adopted requirement in one increment (a blocked one never in a todo row); problems scoped reconcile or backlog
-tim distil backlog-snapshot <workarea> [--save <tag>] [--compare-to <tag>] --json   # rows removed, and rows built or set aside that changed, since a snapshot
+tim distil coverage <workarea> --json    # requirements and conflicts against the working set, every source backing something, every challenge verdict applied, and every adopted requirement in one increment or a theme split off early (a blocked one never in a todo row); problems scoped reconcile or backlog
+tim distil backlog-snapshot <workarea> [--save <tag>] [--compare-to <tag>] --json   # rows removed, rows built or set aside that changed, and split-off pointers changed, since a snapshot
 tim distil trace <workarea> --source <id> [--folder <name>] [--out <file>] --json -- <subcommand>     # the playwright trace CLI, in the source's own folder or a sub-folder of it, with a Playwright at least as new as the one that recorded the trace
 tim backlog check <workarea> --json      # the shape, dependencies, cycles, recipe fields, themes and externalDependsOn; exits 1 when out of shape
 tim backlog next <workarea> --json       # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
-tim backlog split <workarea> [--write] [--branch-prefix <prefix>] --json   # a themed backlog into one backlog per theme, plus themes/themes.json with the landing order
+tim backlog split <workarea> [--write] [--branch-prefix <prefix>] --json   # a themed backlog into one backlog per theme, plus themes/themes.json with the landing order; skips themes split off early
+tim backlog split <workarea> --theme <id> [--theme <id>] [--write] --json  # split one ready theme off early: its rows leave backlog.json, which keeps a pointer in splitOff
 tim backlog set <workarea> <id> --status done --commit abc1234   # the loop's only way to write back
 tim backlog standards --files <repoKey>:<path> --json            # the standards the planner and implementor apply to a file
 ```
@@ -128,7 +147,8 @@ nothing else lists the fields. Change one and check the others in the same chang
 | `tim/src/distil/` (`tim distil`) | Validates every DISTIL file against those schemas at runtime, plus what a schema cannot say: unique ids, partitions and their part prefixes, every part present and the extract its parts merged, verdicts matching claims, missed ids, scope hashes, extract hashes, cited claims and conflicts, every claim in an area, every source backing a requirement, every challenge verdict applied, and every adopted requirement in exactly one increment (a blocked one never in a todo row). Merges extract parts, verify parts and the areas' reconciled files, resets sources for a fresh extract or the later stages for a fresh reconcile, builds the working set and each area's, snapshots the backlog's rows and runs the trace CLI with a new enough Playwright |
 | The distil workflow ([`workflow/distil.js`](workflow/distil.js)) and its briefs ([`workflow/distil/briefs/`](workflow/distil/briefs/)) | Runs `tim distil` for its work list and every check, and gives each agent the schema it writes to. Checks every relayed count against another before it acts on it. Its combine step writes the backlog to its schema and runs `tim backlog check` and `tim distil coverage` until both pass |
 | `tim/src/backlog/shape.js` | Validates it against the schema at runtime (`check`), plus what a schema cannot say: dependencies exist, no cycle, no duplicate id, and every `merge` key is in the row's `repos` and the envelope's. Names the withheld statuses, held to the schema's enum by a test, and derives the next id (`next`), following `externalDependsOn` into other workareas |
-| `tim/src/backlog/themes.js` and `split.js` (`tim backlog split`) | The theme rules in SHAPE.md: unique ids, no theme cycle, no two themes touching the same code, every todo or blocked row in one theme, cross-theme dependencies matched by theme dependencies, and a split backlog's own envelope. `split.js` writes one backlog per theme, turning a cross-theme `dependsOn` into `externalDependsOn`, and the landing order |
+| `tim/src/backlog/themes.js` and `split.js` (`tim backlog split`) | The theme rules in SHAPE.md: unique ids, no theme cycle, no two themes touching the same code, every todo or blocked row in one theme, cross-theme dependencies matched by theme dependencies, and a split backlog's own envelope. `split.js` writes one backlog per theme, turning a cross-theme `dependsOn` into `externalDependsOn`, and the landing order; with `--theme` it splits one theme off early and leaves a `splitOff` pointer |
+| `tim/src/backlog/split-off.js` | Reads the `splitOff` pointers and holds the rules a schema cannot check: a theme split off is never in `themes`, no row is in it or reuses a moved row's id, and no requirement is held twice. `tim distil coverage`, `tim distil areas` and `tim distil backlog-snapshot` read the pointers through it |
 | The loop's `readIncrement` and plan stage ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row and envelope into every stage's prompt; the planner turns the row into `plans/<id>.md` |
 | The loop's branch stage, under `lifecycle: 'branch'` ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | Reads the row's `repos`, `merge`, `gatePhases` and `awaitCi`, and the envelope's `repos` keys. The script checks what it copied (`rowFieldProblems`) and drives the merge, gate and CI stages from it. A new lifecycle field starts in the schema and lands here, in its check and in [`references/BUILD.md`](references/BUILD.md#branch-lifecycle) |
 | The loop's theme spec check ([`workflow/increment-build-loop.js`](workflow/increment-build-loop.js)) | After each landing, reads the row's `theme` (or a split backlog's envelope `theme`) as a jq summary of its rows' `status`, `id` and `repos`. Once none is `todo`, it runs `tim spec lint` and `tim spec gaps --none` for the prefixes the theme touched; see [`workflow/README.md`](workflow/README.md#the-behaviour-spec). A renamed theme or status field lands here too |

@@ -27,6 +27,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/theme" }
     },
+    "splitOff": {
+      "description": "The themes split off this backlog early by `tim backlog split <workarea> --theme <id> --write`, one pointer each. A theme split off is no longer in `themes`, and none of its rows is in `increments`: they live only in its own backlog, built on its own branch. A re-distil carries this list over unchanged, except that it may add to a pointer's `pickUp`, and never drafts a row for a requirement a pointer holds. `tim distil coverage` counts each such requirement as covered by the split backlog. The rules a schema cannot check are in SHAPE.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/splitOffTheme" }
+    },
     "theme": {
       "description": "Split backlogs only: the id of the theme this backlog builds, written by `tim backlog split`. Every row here belongs to it. A split backlog also carries `branch` and `parent`, and never `themes`.",
       "$ref": "#/$defs/text"
@@ -101,9 +106,83 @@
           "items": { "$ref": "#/$defs/touch" }
         },
         "dependsOn": {
-          "description": "Theme ids that must land first, because one of this theme's rows depends on one of theirs. [] when it waits for none.",
+          "description": "Theme ids that must land first, because one of this theme's rows depends on one of theirs, in `themes` or in `splitOff`. [] when it waits for none.",
           "type": "array",
           "items": { "$ref": "#/$defs/themeId" }
+        }
+      }
+    },
+    "splitOffTheme": {
+      "description": "A pointer to a theme split off early, written by `tim backlog split --theme`. Everything but `pickUp` is fixed once written.",
+      "type": "object",
+      "required": [
+        "theme",
+        "title",
+        "touches",
+        "dependsOn",
+        "branch",
+        "workarea",
+        "backlog",
+        "increments",
+        "requirements",
+        "at"
+      ],
+      "properties": {
+        "theme": {
+          "description": "The theme's id, as it was in `themes`.",
+          "$ref": "#/$defs/themeId"
+        },
+        "title": {
+          "description": "The theme's title, as it was in `themes`.",
+          "$ref": "#/$defs/text"
+        },
+        "why": {
+          "description": "The theme's why, as it was in `themes`.",
+          "$ref": "#/$defs/text"
+        },
+        "touches": {
+          "description": "The code areas the theme owns, as they were in `themes`. No theme left in `themes` may touch them, and a re-distil hands a new requirement that changes them to this theme's `pickUp`.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/touch" }
+        },
+        "dependsOn": {
+          "description": "The theme ids it lands after, as they were in `themes`. Each must stay named in `themes` or `splitOff` under that id: `tim backlog check` refuses one that is not. A theme left in `themes` may depend on this one.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/themeId" }
+        },
+        "branch": {
+          "description": "The branch the theme builds on, the same as its split backlog's `branch`, such as \"feat/NO_JIRA-hrp-origin-pages\".",
+          "$ref": "#/$defs/text"
+        },
+        "workarea": {
+          "description": "The split backlog's workarea, such as \"shared/hrp/themes/origin-pages\": what an `externalDependsOn` on one of its rows names.",
+          "$ref": "#/$defs/text"
+        },
+        "backlog": {
+          "description": "The split backlog's path, relative to this backlog's folder, such as \"themes/origin-pages/backlog.json\".",
+          "$ref": "#/$defs/text"
+        },
+        "increments": {
+          "description": "The ids of every row that moved, dropped, rejected and merged rows included. No row here may reuse one.",
+          "$ref": "#/$defs/textList"
+        },
+        "requirements": {
+          "description": "The requirement ids the moved rows that cover (todo, blocked, done, deferred) covered, from their `requirements`. `tim distil coverage` counts each as covered by the split backlog.",
+          "$ref": "#/$defs/textList"
+        },
+        "fingerprints": {
+          "description": "Each of those requirements' fingerprint in distil/requirements.json when the theme was split off: a sha256 of its statement, status, delta, delta note, blocker and conflicts. `tim distil coverage` names a requirement whose fingerprint has since changed, so the report can hand the change to the split branch. Left out when the workarea had no requirements.json.",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/text" }
+        },
+        "pickUp": {
+          "description": "Requirement ids a later re-distil adopted that fall in this theme's `touches`. The consolidator writes them here instead of drafting a row, and the report hands them to the split branch, which adds rows for them in its own backlog. `tim distil coverage` counts each as covered by the split backlog.",
+          "$ref": "#/$defs/textList"
+        },
+        "at": {
+          "description": "When the theme was split off, as an ISO 8601 time, such as \"2026-10-09T14:30:00.000Z\".",
+          "$ref": "#/$defs/text"
         }
       }
     },

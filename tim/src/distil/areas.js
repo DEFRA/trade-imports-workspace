@@ -2,6 +2,7 @@ import { existsSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { writeJsonAtomic } from '../backlog/io.js'
+import { splitOffRequirements } from '../backlog/split-off.js'
 import {
   DISTIL_SCHEMA_FILES,
   areaFilesOf,
@@ -482,7 +483,10 @@ const isToBuild = (requirement) =>
  * One area as the consolidate step needs it: its counts, and the
  * requirements now in requirements.json that came from it, those still to
  * build named apart. Requirements no area holds, such as one the cross-area
- * pass wrote, are listed under `unassigned` when no area is named.
+ * pass wrote, are listed under `unassigned` when no area is named. A
+ * requirement a theme split off early holds (backlog.json's `splitOff`) is
+ * the split branch's to build: it is listed under the area's `splitOff`,
+ * never under `toBuild` or `unassigned`.
  *
  * @param {object} args
  * @param {object} args.layout - From `distilLayout`
@@ -507,6 +511,10 @@ export const areaRequirements = ({ layout, schemas, workarea, areaId }) => {
   ).filter((requirement) => isText(requirement.id))
   const ofArea = (id) =>
     requirements.filter((requirement) => areaOf.get(requirement.id) === id)
+  const heldBySplitOff = splitOffRequirements(
+    readJsonLenient(layout.backlog).value
+  )
+  const isHeld = (requirement) => heldBySplitOff.has(requirement.id)
   const chosen = checked.areas.filter((area) => !areaId || area.id === areaId)
   return {
     areas: chosen.map((area) => ({
@@ -514,13 +522,21 @@ export const areaRequirements = ({ layout, schemas, workarea, areaId }) => {
       reconciled: ofArea(area.id).map((requirement) => requirement.id),
       toBuild: ofArea(area.id)
         .filter(isToBuild)
-        .map((requirement) => requirement.id)
+        .filter((requirement) => !isHeld(requirement))
+        .map((requirement) => requirement.id),
+      splitOff: ofArea(area.id)
+        .filter(isHeld)
+        .map((requirement) => ({
+          id: requirement.id,
+          theme: heldBySplitOff.get(requirement.id).theme
+        }))
     })),
     ...(areaId
       ? {}
       : {
           unassigned: requirements
             .filter((requirement) => !areaOf.has(requirement.id))
+            .filter((requirement) => !isHeld(requirement))
             .map((requirement) => requirement.id)
         })
   }

@@ -33,6 +33,7 @@ About five bullet lines. Each one is a fact the reader acts on:
   challenge: say how many were challenged and how many precedence, a ruling or a blocker settled
 - any step that must happen before building
 - anything that waits on someone outside the build loop
+- any theme split off early that has work to pick up, naming its branch
 
 ### 2. `## Before you build: step 0`
 
@@ -100,9 +101,32 @@ One line first: each theme builds on its own branch and machine, and no two touc
 
 Wave is the theme's place in the landing order: wave 1 lands first, and themes in one wave build in parallel. Work it out from each theme's `dependsOn`: a theme's wave is one more than the latest wave it depends on. Rows lists the theme's row ids. Touches lists its code areas as written. List any row in no theme under the table.
 
-Then **Cross-theme dependencies:** a bullet each for every row that depends on a row in another theme, or in no theme: the two ids, the two themes, and why the order is real. Say "None" when there are none.
+A theme split off early (the backlog's `splitOff`) is in the table too, in its wave. Its Rows cell says "split off to `<branch>`", because its rows live only in its own backlog.
 
-### 10. `## Where the requirements came from`
+Then **Cross-theme dependencies:** a bullet each for every row that depends on a row in another theme, or in no theme: the two ids, the two themes, and why the order is real. A row's `externalDependsOn` on a split-off theme's workarea counts. Say "None" when there are none.
+
+### 10. `## For the split branches`
+
+Only when a theme split off early has something to pick up. The workflow passes the list in. Leave the section out otherwise.
+
+A split-off theme's rows live only in its own backlog, on its own branch, so a re-distil never rewrites them. This section is how a later ruling reaches them. One line first: the people building each branch add or change rows in that branch's own backlog, citing the requirement ids below.
+
+Then one `###` heading per theme, named by its id, with its branch and workarea in the first line, and a table:
+
+| Requirement | What happened | What it now says |
+|---|---|---|
+
+What happened is one of:
+
+- **New since the split.** A requirement adopted after the split whose code falls in the theme's touches (its pointer's `pickUp`). The branch adds a row for it.
+- **Changed since the split.** A requirement the theme held, still to build, whose statement, status, delta or blocker has changed. The branch rewrites the row that covers it.
+- **No longer to build.** A requirement the theme held that is now out of scope, a question or gone. The branch drops or rewrites the row that covers it.
+
+Each requirement sits under one of these, never two. A requirement the theme held that is now already in place (`nowInPlace` in the coverage result) is usually one the branch built and merged: leave it out of this section. It appears with every other `exists` requirement.
+
+What it now says is the requirement's statement as `distil/requirements.json` has it, or its new status.
+
+### 11. `## Where the requirements came from`
 
 The coverage proof:
 
@@ -115,11 +139,11 @@ The coverage proof:
 - the weakest: those that rest on one source, and any that rest only on inferred claims
 - anything to confirm before passing the report on
 
-### 11. `## Out of scope`
+### 12. `## Out of scope`
 
 Every `out-of-scope` requirement, grouped under a `###` heading per reason, such as problems for the owning teams, platform work outside the loop, and exclusions a source or ruling made. A table or bullets per group, each with its requirement id.
 
-### 12. `## Terms used`
+### 13. `## Terms used`
 
 A table of every abbreviation and term of art the report uses, alphabetical.
 
@@ -185,6 +209,17 @@ Each theme builds on its own branch and machine. No two themes touch the same co
 
 **Cross-theme dependencies:**
 
+## For the split branches
+
+Each branch below adds or changes rows in its own backlog for these requirements.
+
+### <theme id>
+
+Branch `<branch>`, backlog `<workarea>/backlog.json`.
+
+| Requirement | What happened | What it now says |
+|---|---|---|
+
 ## Where the requirements came from
 
 ## Out of scope
@@ -200,5 +235,6 @@ Each theme builds on its own branch and machine. No two themes touch the same co
 - Every source appears in the per-source table with its cited count.
 - Every `precedence` conflict, every `exists` requirement, every increment and every `out-of-scope` requirement appears once.
 - When the backlog has themes, every theme appears once in the Themes table, and every row in exactly one theme or listed as in none.
+- Every requirement the workflow lists for a split branch appears once under For the split branches, under its theme, and the summary says a split branch has work to pick up.
 - Every figure matches the files.
 - No sentence runs to 25 words. No security weakness is described in detail.

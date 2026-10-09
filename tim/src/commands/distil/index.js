@@ -317,10 +317,38 @@ const renderCoverage = (result) =>
       (question) =>
         `${question.id}: ${question.question} Default: ${question.default}`
     ),
-    result.backlog
-      ? `${result.backlog.increments} increments cover ${result.backlog.covered} requirements.`
-      : 'No backlog.json yet.'
+    ...(result.backlog
+      ? [
+          `${result.backlog.increments} increments cover ${result.backlog.covered} requirements.`,
+          ...describeSplitOff(result.backlog)
+        ]
+      : ['No backlog.json yet.'])
   ].join('\n')
+
+const splitOffChanges = (theme) =>
+  [
+    theme.pickUp.length
+      ? `to pick up, adopted since the split: ${theme.pickUp.join(', ')}`
+      : null,
+    theme.changed.length
+      ? `changed since the split: ${theme.changed.join(', ')}`
+      : null,
+    theme.noLongerToBuild.length
+      ? `no longer to build: ${theme.noLongerToBuild.join(', ')}`
+      : null
+  ].filter(Boolean)
+
+const describeSplitOff = (backlog) => {
+  const themes = backlog.splitOff ?? []
+  if (!themes.length) return []
+  return [
+    `${countOf(backlog.coveredBySplitOff, 'more requirement')} ${backlog.coveredBySplitOff === 1 ? 'is' : 'are'} covered by ${countOf(themes.length, 'theme')} split off early, each built on its own branch:`,
+    ...themes.map((theme) => {
+      const changes = splitOffChanges(theme)
+      return `  ${theme.theme} on ${theme.branch}${changes.length ? `. For that branch: ${changes.join('; ')}` : ''}`
+    })
+  ]
+}
 
 const renderStamp = (result) =>
   result.changed
@@ -346,9 +374,14 @@ const renderSnapshot = (result) =>
   [
     `${countOf(result.rows, 'row')}, ${result.frozen.length} built or set aside: ${result.frozen.join(', ') || 'none'}.`,
     ...(result.saved ? [`Saved to ${result.saved}.`] : []),
+    ...(result.splitOff.length
+      ? [
+          `${countOf(result.splitOff.length, 'theme')} split off early: ${result.splitOff.map((theme) => `${theme.theme} (${theme.branch})`).join(', ')}.`
+        ]
+      : []),
     ...(result.compared
       ? [
-          `Since ${result.compared.tag}: removed ${result.compared.removed.join(', ') || 'none'}; changed ${result.compared.changed.join(', ') || 'none'}.`
+          `Since ${result.compared.tag}: removed ${result.compared.removed.join(', ') || 'none'}; changed ${result.compared.changed.join(', ') || 'none'}; split-off pointers changed ${result.compared.splitOffChanged.join(', ') || 'none'}.`
         ]
       : [])
   ].join('\n')
@@ -677,7 +710,7 @@ export const register = (program, { timVersion }) => {
   distil
     .command('coverage <workarea>')
     .description(
-      'Check requirements.json and conflicts.json against their schemas, the working set and each other, and, once backlog.json exists, that every adopted requirement to build sits in exactly one increment'
+      "Check requirements.json and conflicts.json against their schemas, the working set and each other, and, once backlog.json exists, that every adopted requirement to build sits in exactly one increment, or in a theme split off early (the backlog's splitOff)"
     )
     .addHelpText(
       'after',

@@ -5881,6 +5881,121 @@ describe('distil', () => {
         expect(labelsOf(run)).not.toContain('combine rows')
       })
 
+      describe('with a theme split off early', () => {
+        const SPLIT_OFF_BEFORE = {
+          theme: 'smoke-gate',
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: 'shared/demo/themes/smoke-gate',
+          touches: ['tests:k6/smoke'],
+          requirements: ['req-002'],
+          pickUp: []
+        }
+        const STANDING = {
+          theme: 'smoke-gate',
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: 'shared/demo/themes/smoke-gate',
+          backlog: 'themes/smoke-gate/backlog.json',
+          requirements: ['req-002'],
+          pickUp: ['req-007'],
+          changed: ['req-002'],
+          noLongerToBuild: [],
+          nowInPlace: []
+        }
+        const runSplitOff = (answerOverrides = {}) =>
+          runRedistil({
+            'coverage after reconcile across areas': {
+              ...BEFORE,
+              splitOffBefore: [SPLIT_OFF_BEFORE]
+            },
+            'check backlog': afterWith({
+              splitOffChanged: [],
+              backlogCoveredBySplitOff: 2,
+              splitOff: [STANDING]
+            }),
+            ...answerOverrides
+          })
+
+        test('has tim save the split-off pointers with the rows, and compare them after', async () => {
+          const run = await runSplitOff()
+
+          expect([
+            promptOf(run, 'coverage after reconcile across areas'),
+            promptOf(run, 'check backlog')
+          ]).toEqual([
+            expect.stringContaining(
+              'every entry of result.splitOff into splitOffBefore, exactly'
+            ),
+            expect.stringContaining(
+              'result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
+            )
+          ])
+        })
+
+        test('tells every drafter to draft no row for what a split-off theme holds or touches', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'draft rows suite')).toContain(
+            'THEMES SPLIT OFF EARLY. These left backlog.json and build on their own branches:\n- smoke-gate, on feat/NO_JIRA-demo-smoke-gate: touches tests:k6/smoke; holds req-002\nDraft no row for a requirement one of them holds'
+          )
+        })
+
+        test('tells the combiner to carry the pointers over and hand new work to pickUp', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'combine rows')).toContain(
+            'Carry backlog.json\'s "splitOff" over unchanged: never remove a pointer or change any of its fields but "pickUp".'
+          )
+        })
+
+        test('sends the combiner back when a pointer changed', async () => {
+          const run = await runSplitOff({
+            'check backlog': afterWith({ splitOffChanged: ['smoke-gate'] }),
+            'combine rows send-back 1': CONSOLIDATED,
+            'check backlog 2': afterWith({ splitOffChanged: [] })
+          })
+
+          expect(promptOf(run, 'combine rows send-back 1')).toContain(
+            '- smoke-gate: a theme split off early lost its pointer in "splitOff", or the pointer changed in a field other than "pickUp".'
+          )
+        })
+
+        test('sends the combiner back when the check relays no pointer comparison', async () => {
+          const run = await runSplitOff({
+            'check backlog': afterWith({}),
+            'combine rows send-back 1': CONSOLIDATED,
+            'check backlog 2': afterWith({ splitOffChanged: [] })
+          })
+
+          expect(labelsOf(run)).toContain('combine rows send-back 1')
+        })
+
+        test('has the report hand each split branch what falls to it, naming the branch', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'report')).toContain(
+            'Write the "For the split branches" section, as REPORT.md says, with\none part per theme below, naming its branch, and say in the summary that a split branch has work to pick up:\n- smoke-gate, on feat/NO_JIRA-demo-smoke-gate (shared/demo/themes/smoke-gate):\n  to pick up, adopted since the split: req-007\n  changed since the split: req-002\n  no longer to build: none'
+          )
+        })
+
+        test('returns what each split-off theme holds and has to pick up', async () => {
+          const run = await runSplitOff()
+
+          expect([
+            run.result.splitOff,
+            run.result.backlog.coveredBySplitOff
+          ]).toEqual([[STANDING], 2])
+        })
+
+        test('says nothing of split-off themes when the backlog has none', async () => {
+          const run = await runRedistil({})
+
+          const mentions = run.agents
+            .filter(({ prompt }) => prompt.includes('THEMES SPLIT OFF EARLY'))
+            .map(({ options }) => options.label)
+          expect([mentions, run.result.splitOff]).toEqual([[], []])
+        })
+      })
+
       test('stops with consolidate-failed when a row stays removed after two send-backs', async () => {
         const removed = afterWith({ removed: ['inc-001'] })
         const run = await runRedistil({

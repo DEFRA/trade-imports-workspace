@@ -1498,6 +1498,46 @@ const COVERAGE_SCHEMA = {
     rowCount: { type: 'integer', description: 'result.rows from the snapshot' },
     removed: { ...STRINGS, description: 'result.compared.removed from the snapshot, exactly' },
     changed: { ...STRINGS, description: 'result.compared.changed from the snapshot, exactly' },
+    splitOffBefore: {
+      type: 'array',
+      description: 'Every entry of result.splitOff from the snapshot, exactly: the themes split off early',
+      items: {
+        type: 'object',
+        required: ['theme', 'branch', 'requirements'],
+        properties: {
+          theme: { type: 'string' },
+          branch: { type: 'string' },
+          workarea: { type: 'string' },
+          touches: STRINGS,
+          requirements: STRINGS,
+          pickUp: STRINGS
+        },
+        additionalProperties: false
+      }
+    },
+    splitOffChanged: { ...STRINGS, description: 'result.compared.splitOffChanged from the snapshot, exactly' },
+    backlogCoveredBySplitOff: { type: 'integer' },
+    splitOff: {
+      type: 'array',
+      description: 'Every entry of result.backlog.splitOff from tim distil coverage, exactly. [] on failure or with none',
+      items: {
+        type: 'object',
+        required: ['theme', 'branch', 'pickUp', 'changed', 'noLongerToBuild'],
+        properties: {
+          theme: { type: 'string' },
+          branch: { type: 'string' },
+          workarea: { type: 'string' },
+          backlog: { type: 'string' },
+          requirements: STRINGS,
+          pickUp: STRINGS,
+          changed: STRINGS,
+          noLongerToBuild: STRINGS,
+          nowInPlace: STRINGS,
+          fingerprintsNow: { type: 'object', additionalProperties: { type: 'string' } }
+        },
+        additionalProperties: false
+      }
+    },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -1511,8 +1551,8 @@ const snapshotStep = (step, mode) => {
   const flag = mode === 'save' ? `--save ${SNAPSHOT_TAG}` : `--compare-to ${SNAPSHOT_TAG}`
   const copy =
     mode === 'save'
-      ? 'copy result.rows into rowCount'
-      : 'copy result.rows into rowCount, and result.compared.removed and result.compared.changed into removed and changed, exactly'
+      ? 'copy result.rows into rowCount, and every entry of result.splitOff into splitOffBefore, exactly'
+      : 'copy result.rows into rowCount, and result.compared.removed, result.compared.changed and\n   result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
   return `${step}. \`${timCommand('distil backlog-snapshot', flag)}\`
    On success: snapshotOk is true; ${copy}.
    On failure: snapshotOk is false, and snapshotProblems holds every problem line.`
@@ -1535,7 +1575,8 @@ ${ENVELOPE_RULE}
    question and out-of-scope, the last as outOfScope; byDelta new, change and exists), result.conflicts (total,
    precedence, question), every entry of result.questions (id, about, question, default, requirements), every entry of
    result.blocked into blocked, every entry of result.sources into sourceUsage (id, claims, cited), and, when
-   result.backlog is not null, its increments and covered as backlogIncrements and backlogCovered.
+   result.backlog is not null, its increments, covered and coveredBySplitOff as backlogIncrements, backlogCovered and
+   backlogCoveredBySplitOff, and every entry of its splitOff into splitOff.
    On failure: ok is false and questions is []. errors[0].problems lists every problem with its scope. Copy the message
    of each one whose scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems,
    exactly.${backlogStep}${snapshotLine}${relayRetryNote(relayProblems)}
@@ -1818,6 +1859,11 @@ if (HAD_BACKLOG && roundOutcome.snapshotCheck.snapshotOk !== true) {
   )
 }
 
+// The themes split off early, as the snapshot saved them before consolidate.
+// Each lives only on its own branch: the consolidator carries its pointer over
+// and drafts no row for anything it holds or that falls in its code.
+const SPLIT_OFF = HAD_BACKLOG ? (roundOutcome.snapshotCheck.splitOffBefore ?? []) : []
+
 // ---------------------------------------------------------------------------
 // Consolidate: one think-tier agent per area drafts that area's rows, then
 // one combiner orders and combines them into backlog.json and assigns themes,
@@ -1845,6 +1891,21 @@ const DRAFT_SCHEMA = {
   additionalProperties: false
 }
 
+const splitOffList = SPLIT_OFF.map(
+  (theme) =>
+    `- ${theme.theme}, on ${theme.branch}: touches ${(theme.touches ?? []).join(', ') || 'the code its pointer names'}; holds ${[...(theme.requirements ?? []), ...(theme.pickUp ?? [])].join(', ') || 'no requirement'}`
+).join('\n')
+
+const draftSplitOffNote = SPLIT_OFF.length
+  ? `
+THEMES SPLIT OFF EARLY. These left backlog.json and build on their own branches:
+${splitOffList}
+Draft no row for a requirement one of them holds: result.areas[0].splitOff lists yours, and toBuild leaves them out.
+A requirement in toBuild whose code falls in one of their touches is that branch's to build too: draft no row for it,
+and list it in rows.json's "splitOff" as { "requirement", "theme", "why" }, as the brief's "Themes split off early"
+section says.`
+  : ''
+
 const draftPrompt = (area) => `You are a ROW DRAFT step of the DISTIL workflow for the workarea ${WORKAREA}: area ${area.id}, ${area.title}.
 You draft the backlog rows for this area's requirements, and the code each one touches. One combiner joins every
 area's drafts into backlog.json after you.
@@ -1856,7 +1917,7 @@ still to build that came from your area, and result.areas[0].reconciled, all of 
 ${WORKAREA_ABS}/distil/requirements.json, with its conflicts in conflicts.json.
 READ: ${SOURCES_ABS}; this area's working set at ${areaDirAbs(area.id)}/working-set.json, for the claims that show
 which repo files and feature folders each requirement touches.${HAD_BACKLOG ? `
-${BACKLOG_ABS} already exists: name the existing row each requirement already sits in, as the brief says.` : ''}
+${BACKLOG_ABS} already exists: name the existing row each requirement already sits in, as the brief says.` : ''}${draftSplitOffNote}
 THE FILE YOU WRITE: ${areaDirAbs(area.id)}/rows.json (in Bash: ${areaDirTilde(area.id)}/rows.json). Nothing else.
 ${DRAFT_OBSERVABLE_RULE}
 Return the structured output only.`
@@ -1894,6 +1955,18 @@ row comes back to you as a problem to put right, and the run stops if it is stil
   return round === 1 ? `${BACKLOG_ABS} does not exist yet.` : `${BACKLOG_ABS} is the first pass from this run. Rewrite any row in it.`
 }
 
+const combineSplitOffNote = SPLIT_OFF.length
+  ? `
+THEMES SPLIT OFF EARLY. These left backlog.json and build on their own branches:
+${splitOffList}
+Carry backlog.json's "splitOff" over unchanged: never remove a pointer or change any of its fields but "pickUp". Never
+put a split-off theme back in "themes", give a row its theme, or reuse the id of a row that moved with it. Draft no row
+for a requirement a pointer holds in "requirements" or "pickUp". A new or changed requirement whose code falls in a
+split-off theme's touches (each draft's "splitOff" lists the ones its drafter found) gets no row here: add its id to
+that pointer's "pickUp", and the report hands it to that branch. The workflow compares every pointer before and after
+you.`
+  : ''
+
 const reconcilerAnswered = (answered) =>
   answered.length
     ? `
@@ -1917,7 +1990,7 @@ READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json and ${WORKAREA_AB
 draft, ${AREAS.map((area) => `${areaDirAbs(area.id)}/rows.json`).join(', ')}; and
 \`${timCommand('distil areas', '--requirements')}\`, whose result.unassigned lists the requirements no area drafted (the
 cross-area pass wrote them): draft their rows yourself.
-${existingBacklogNote(round)}
+${existingBacklogNote(round)}${combineSplitOffNote}
 THE FILE YOU WRITE: ${BACKLOG_ABS}. Nothing else.
 REPOS: ${repoKeysNote}
 THEMES: when ${SOURCES_ABS} has a "themes" rule, give every row a theme and write the envelope's "themes", as the
@@ -1932,9 +2005,21 @@ CHECKS, both until both pass:
 Return the structured output only.`
 }
 
+const splitOffPointerProblems = (checked) =>
+  (checked.splitOffChanged ?? []).length
+    ? [
+        `${checked.splitOffChanged.join(', ')}: a theme split off early lost its pointer in "splitOff", or the pointer changed in a field other than "pickUp". Put each back exactly as it is in ${WORKAREA_ABS}/distil/backlog-snapshot.${SNAPSHOT_TAG}.json, adding only to "pickUp".`
+      ]
+    : []
+
 const frozenProblems = (checked) => {
   if (!HAD_BACKLOG) return []
-  if (checked.snapshotOk !== true || !checked.removed || !checked.changed) {
+  if (
+    checked.snapshotOk !== true ||
+    !checked.removed ||
+    !checked.changed ||
+    (SPLIT_OFF.length > 0 && !checked.splitOffChanged)
+  ) {
     return [
       `tim distil backlog-snapshot could not compare backlog.json with its rows before you, so nothing shows the rows built or set aside are unchanged: ${(checked.snapshotProblems ?? []).join(' ') || 'it reported nothing'}`
     ]
@@ -1945,7 +2030,8 @@ const frozenProblems = (checked) => {
       ? [
           `${checked.changed.join(', ')}: a row built or set aside (not todo or blocked) changed. Put each back exactly as it is in ${WORKAREA_ABS}/distil/backlog-snapshot.${SNAPSHOT_TAG}.json.`
         ]
-      : [])
+      : []),
+    ...splitOffPointerProblems(checked)
   ]
 }
 
@@ -2045,8 +2131,17 @@ const BACKLOG = {
   total: finalCheck.backlogTotal ?? finalCheck.backlogIncrements ?? null,
   byStatus: finalCheck.backlogByStatus ?? null,
   covered: finalCheck.backlogCovered ?? null,
+  coveredBySplitOff: finalCheck.backlogCoveredBySplitOff ?? null,
   themes: consolidated?.themes ?? null
 }
+
+// What a re-distil hands each theme split off early, from tim distil coverage:
+// requirements to pick up, ones changed since the split, and ones no longer to
+// build. The report lists them for each split branch.
+const SPLIT_OFF_STANDING = finalCheck.splitOff ?? []
+const hasHandover = (theme) =>
+  [theme.pickUp, theme.changed, theme.noLongerToBuild].some((list) => (list ?? []).length > 0)
+const SPLIT_OFF_HANDOVER = SPLIT_OFF_STANDING.filter(hasHandover)
 
 // ---------------------------------------------------------------------------
 // Report: drafted to REPORT.md from the files on disk, and returned as text.
@@ -2084,6 +2179,26 @@ ${problemList(OPEN_RECONCILE_PROBLEMS)}
 Each one must be settled before building. Put each in the step-0 section and say so in the summary.`
   : ''
 
+const describeHandover = (theme) =>
+  [
+    `- ${theme.theme}, on ${theme.branch} (${theme.workarea ?? 'its split workarea'}):`,
+    `  to pick up, adopted since the split: ${(theme.pickUp ?? []).join(', ') || 'none'}`,
+    `  changed since the split: ${(theme.changed ?? []).join(', ') || 'none'}`,
+    `  no longer to build: ${(theme.noLongerToBuild ?? []).join(', ') || 'none'}`
+  ].join('\n')
+
+const splitOffReportNote = SPLIT_OFF_STANDING.length
+  ? `
+THEMES SPLIT OFF EARLY: ${SPLIT_OFF_STANDING.map((theme) => `${theme.theme} (${theme.branch})`).join(', ')}. Their rows live only on
+their own branches, so none of this run's changes reached them.${
+      SPLIT_OFF_HANDOVER.length
+        ? ` Write the "For the split branches" section, as REPORT.md says, with
+one part per theme below, naming its branch, and say in the summary that a split branch has work to pick up:
+${SPLIT_OFF_HANDOVER.map(describeHandover).join('\n')}`
+        : ' Nothing this run adopted or changed falls to them: leave the "For the split branches" section out.'
+    }`
+  : ''
+
 const usageById = Object.fromEntries(SOURCE_USAGE.map((usage) => [usage.id, usage]))
 const sourceCountsTable = SOURCE_COUNTS.map((source) => {
   const usage = usageById[source.id]
@@ -2105,7 +2220,7 @@ READ FIRST, in full: ${REFERENCES_ABS}/REPORT.md, which gives the report's struc
 rules. Follow it section by section, then run its checks before you return.
 READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json, ${WORKAREA_ABS}/distil/conflicts.json and ${BACKLOG_ABS}.
 The report is for the programme's readers, never for whoever maintains this pipeline. Anything wrong with a file
-or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}
+or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}${splitOffReportNote}
 THE COUNTS PER SOURCE, from tim distil working-set and tim distil coverage (claims = held + refuted; missed claims
 were added; cited = the working-set claims a requirement or conflict cites):
 ${sourceCountsTable}
@@ -2147,6 +2262,7 @@ return {
   areas: AREAS.map((area) => ({ ...area, claims: claimsInArea[area.id] ?? null })),
   sourceUsage: SOURCE_USAGE,
   backlog: BACKLOG,
+  splitOff: SPLIT_OFF_STANDING,
   decisions: {
     areas: AREA_PLAN.decisions,
     reconcile: RECONCILE_DECISIONS,

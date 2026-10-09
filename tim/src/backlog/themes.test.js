@@ -359,4 +359,165 @@ describe('externalDependsOn', () => {
       externalDependenciesDone(row, () => null)
     ]).toEqual([false, true, false])
   })
+
+  test("follows a row of a themed parent to its theme's split, once there is one", () => {
+    const row = {
+      id: 'inc-003',
+      externalDependsOn: [{ workarea: 'shared/hrp', id: 'inc-002' }]
+    }
+    const splitWith = (status) => ({
+      theme: 'origin',
+      increments: [{ id: 'inc-002', theme: 'origin', status }]
+    })
+    const reader = (splitCopy) => (workarea) =>
+      ({
+        'shared/hrp': themedBacklog(),
+        'shared/hrp/themes/origin': splitCopy
+      })[workarea] ?? null
+
+    expect([
+      externalDependenciesDone(row, reader(null)),
+      externalDependenciesDone(row, reader(splitWith('todo'))),
+      externalDependenciesDone(row, reader(splitWith('done')))
+    ]).toEqual([false, false, true])
+  })
+})
+
+describe('themeProblems over a theme split off early', () => {
+  const splitOffOrigin = (pointer = {}) => {
+    const backlog = themedBacklog()
+    const origin = backlog.themes[0]
+    return {
+      ...backlog,
+      themes: backlog.themes.slice(1),
+      splitOff: [
+        {
+          theme: 'origin',
+          title: origin.title,
+          touches: origin.touches,
+          dependsOn: [],
+          branch: 'feat/NO_JIRA-hrp-origin',
+          workarea: 'shared/hrp/themes/origin',
+          backlog: 'themes/origin/backlog.json',
+          increments: ['inc-001', 'inc-002'],
+          requirements: ['req-001', 'req-002', 'req-003'],
+          at: '2026-10-09T12:00:00.000Z',
+          ...pointer
+        }
+      ],
+      increments: backlog.increments
+        .filter((row) => row.theme !== 'origin')
+        .map((row) =>
+          row.id === 'inc-003'
+            ? {
+                ...row,
+                dependsOn: [],
+                externalDependsOn: [
+                  { workarea: 'shared/hrp/themes/origin', id: 'inc-002' }
+                ]
+              }
+            : row
+        )
+    }
+  }
+
+  test('passes, letting a theme left in the backlog depend on the theme split off', () => {
+    expect(themeProblems(splitOffOrigin())).toEqual([])
+  })
+
+  test('refuses a row in the theme split off, or one that reuses the id of a row that moved', () => {
+    const backlog = splitOffOrigin()
+    backlog.increments.push({
+      ...themedBacklog().increments[1],
+      id: 'inc-007'
+    })
+    backlog.increments.push({
+      ...themedBacklog().increments[4],
+      id: 'inc-001'
+    })
+
+    expect(themeProblems(backlog)).toEqual([
+      'inc-007 is in theme "origin", which was split off to feat/NO_JIRA-hrp-origin. Its rows live in shared/hrp/themes/origin: give this row another theme, or add it there.',
+      'inc-001 moved to shared/hrp/themes/origin when theme "origin" was split off. Give this row a new id.'
+    ])
+  })
+
+  test('refuses a theme left in the backlog that touches the code of the theme split off', () => {
+    const backlog = editTheme(splitOffOrigin(), 'documents', (theme) => ({
+      ...theme,
+      touches: [...theme.touches, 'frontend:src/server/origin/upload']
+    }))
+
+    expect(themeProblems(backlog)).toEqual([
+      'Themes "documents" and "origin" overlap: frontend:src/server/origin/upload (documents) and frontend:src/server/origin (origin). Two themes that touch the same code raise conflicting pull requests.'
+    ])
+  })
+
+  test('refuses a theme in both "themes" and "splitOff"', () => {
+    const backlog = splitOffOrigin()
+    backlog.themes.unshift(themedBacklog().themes[0])
+    backlog.increments.unshift(themedBacklog().increments[1])
+
+    expect(themeProblems(backlog)).toContain(
+      'Theme "origin" is in both "themes" and "splitOff". A theme split off lives only on its branch, feat/NO_JIRA-hrp-origin: take it out of "themes".'
+    )
+  })
+
+  test('refuses a theme split off that depends on a theme no longer named, and passes one named in "themes" or "splitOff"', () => {
+    const backlog = splitOffOrigin({
+      dependsOn: ['commodity', 'payments', 'packaging']
+    })
+    backlog.splitOff.push({
+      ...backlog.splitOff[0],
+      theme: 'payments',
+      touches: ['frontend:src/server/payments'],
+      dependsOn: [],
+      increments: [],
+      requirements: []
+    })
+
+    expect(themeProblems(backlog)).toEqual([
+      'Theme "origin", split off to feat/NO_JIRA-hrp-origin, depends on theme "packaging", which neither "themes" nor "splitOff" names. Keep that theme\'s id: put it back in "themes" as "packaging".'
+    ])
+  })
+
+  test('refuses a requirement held by two themes split off', () => {
+    const backlog = splitOffOrigin()
+    backlog.splitOff.push({
+      ...backlog.splitOff[0],
+      theme: 'payments',
+      touches: ['frontend:src/server/payments'],
+      increments: [],
+      requirements: ['req-003']
+    })
+
+    expect(themeProblems(backlog)).toEqual([
+      'req-003 is held by more than one split-off theme: origin, payments. Each requirement sits in one.'
+    ])
+  })
+
+  test('refuses "splitOff" in a backlog with no themes, or in a split backlog', () => {
+    const { themes, ...unthemed } = splitOffOrigin()
+
+    expect([
+      themeProblems({
+        ...unthemed,
+        increments: unthemed.increments.map(({ theme, ...row }) => row)
+      }),
+      themeProblems({
+        theme: 'origin',
+        branch: 'feat/NO_JIRA-hrp-origin',
+        parent: { workarea: 'shared/hrp', wave: 1, landsAfter: [] },
+        splitOff: [],
+        increments: []
+      })
+    ]).toEqual([
+      [
+        'The backlog has "splitOff" but no "themes". Only a themed backlog splits a theme off.'
+      ],
+      [
+        'The backlog is theme "origin"\'s split, so it cannot have "splitOff" of its own.'
+      ]
+    ])
+  })
 })

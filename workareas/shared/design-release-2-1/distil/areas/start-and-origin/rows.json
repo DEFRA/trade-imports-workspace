@@ -2,181 +2,24 @@
   "area": "start-and-origin",
   "rows": [
     {
-      "title": "Ask 'What are you importing?' before a notification is created",
-      "detail": "Starting a new notification from the all-types dashboard in the INS front door (today's INS home) asks the Design Release 2.1 notification type question first, before any draft exists. Live animals carries on to the animals frontend's live-animals start, which creates the GBN-AG draft and lands on origin. Germinal products, offered second under the 9 October ruling, carries on to the start of the germinal products set, the live-animals set's sibling in the animals frontend; the ruling lets this link land before the set itself is built. Plants for planting, Potatoes (seed and ware) and Wood products carry on to the start of the high-risk plants journey in trade-imports-plants-frontend, which creates a plants draft and lands on plants' own first page. Abandoning the question leaves no empty draft behind.",
-      "acceptanceCriteria": [
-        "Starting a new notification from the INS home shows the question 'What are you importing?' instead of going straight to an origin page, and no draft notification is created at that point: the dashboard's notification list gains no new entry while the question is open or after the user leaves it with Back (prototype:dr2-1-source app/routes.js:11112-11114; trace:prototype-dr2-1 T1; trace:e2e T01 call@286; ruling:sam-2026-10-09-pm p3-063; conflicts:c-007)",
-        "The notification type page has the browser title 'What are you importing? - Import notification service - GOV.UK' and the heading 'What are you importing?' as the radios' fieldset legend (h1), with the caption 'About the consignment' inside the heading (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:7,39; trace:prototype-dr2-1 T1 action 16)",
-        "The question offers radios in this order, with no hint text on the group or any option and none pre-selected: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products (prototype:dr2-1-source app/routes.js:125-131; trace:prototype-dr2-1 T1 action 16; ruling:sam-2026-10-09 p1-048, p1-052; conflicts:c-007)",
-        "Choosing Live animals and pressing Continue creates a new live-animals draft and lands on its 'Origin of the import' page, which shows the Draft tag and a new GBN-AG reference (prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:65; trace:prototype-dr2-1 T1 action 44; conflicts:c-007)",
-        "Choosing Germinal products (semen, ova, embryos) and pressing Continue sends the user from the INS front door to the germinal products set's start under /germinal-products in the animals frontend, and no live-animals notification is created: the dashboard's notification list gains no live-animals entry (ruling:sam-2026-10-09 p1-006, p1-048, p1-053; ruling:sam-2026-10-09-pm p3-091; conflicts:c-007)",
-        "Choosing Plants for planting, Potatoes (seed and ware) or Wood products and pressing Continue lands on the first page of the high-risk plants journey in the plants service, with a new plants draft, and no live-animals notification is created (ruling:sam-2026-10-09-templates p1-039; conflicts:c-007)",
-        "Pressing Continue with nothing chosen re-shows the page with an error summary titled 'There is a problem' listing 'Select what you are importing', linked to the first radio, the same message shown inline on the radio group, and the browser title prefixed 'Error: ' (prototype:dr2-1-source app/routes.js:151-160; trace:prototype-dr2-1 T1 action 30; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:53-57; ruling:sam-2026-10-09 p1-106; conflicts:c-006)",
-        "The page ends with a single 'Continue' button: there is no 'Save and return to overview' button and no cancel link (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:48-53; trace:prototype-dr2-1 T1 action 16)",
-        "The page's Back link goes to the INS home, and the service navigation highlights Dashboard (prototype:dr2-1-source app/routes.js:10606-10608; trace:prototype-dr2-1 T1 action 15; ruling:sam-2026-10-09-pm p3-085)",
-        "The page shows no Draft strip and no notification reference; the origin page reached after choosing Live animals shows both (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:23-57; trace:prototype-dr2-1 T1 action 16 against action 44; conflicts:c-007)",
-        "With Welsh chosen, every string on the notification type page (title, caption, heading, the five options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)"
-      ],
-      "requirements": ["req-001", "req-002", "req-003", "req-004", "req-005", "req-006", "req-007"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:125-160, 10606-10625, 11112-11114; app/views/design-release-2.1/notification-type.html" },
-        { "source": "trace:prototype-dr2-1", "ref": "T1 actions 15-44" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/about-the-consignment.fit.spec.js:36-74" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-006, p1-048, p1-052, p1-053, p1-106" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "p1-008, p1-009, p1-011, p1-013, p1-039" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-063, p3-085, p3-091" },
-        { "source": "trace:e2e", "ref": "T01 call@286-288" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-001, trace-animals-fit-p6-041" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p4-070, repo-frontend-p4-072" }
-      ],
-      "repos": ["frontend", "insfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern.",
-      "openQuestions": [],
-      "notes": [
-        "Kept as inc-148, rewritten to the templates ruling and the 9 October afternoon ruling: only the INS dashboard's summary information is blocked, and 'a row that needs only the INS home's controls (Create new, Use template, the type question) goes ahead on today's INS home' (ruling-sam-2026-10-09-pm-p3-063). So this row no longer waits on the overall dashboard row (inc-128): it repoints today's INS home start control at the type question. The combiner should drop the old dependsOn inc-128.",
-        "The plants types now land on plants' own first page with a new plants draft (templates ruling p1-039), so the plants criterion observes the plants draft, not only the landing. The INS germinal list's 'Create new' leaves this programme (p3-091); the type question's Germinal option stays the way into a germinal notification.",
-        "Merge order frontend, insfrontend, tests: the animals frontend's start entry must accept a start from the INS page before the INS page sends users to it. The plants frontend's start already exists and is reached as today, so plantsfrontend carries no change here. The Welsh criterion carries req-057's duty for the strings this row adds; req-057 itself sits in the origin page row that finishes the page.",
-        "Theme: type-question-and-templates, as before. The INS home's start control (insfrontend dashboard) and the animals frontend's live-animals start entry are listed as shared: the ins-dashboard theme owns those folders."
-      ],
-      "touches": [
-        "insfrontend:src/server/app/features/notification-type",
-        "tests:tests/ins/e2e/features/notification-type"
-      ],
-      "shared": [
-        "insfrontend:src/server/app/features/dashboard",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js"
-      ],
-      "existingRow": "inc-148"
-    },
-    {
-      "title": "Origin's Back link follows where the notification started, and the type question picks the notification back up",
-      "detail": "The live-animals origin page's Back link follows where the user came from: the type question for a notification started from it, the set's own live animals notifications list for one started there, the overview when opened from the overview, and the template review while a live-animals template is being edited. Going back to the type question shows the notification's own type already chosen. Keeping that type returns to the same notification with no new draft. Choosing a different type starts a new notification of that type in its own set or service, and nothing is changed or cleared on the notification left behind (9 October ruling, c-219).",
-      "acceptanceCriteria": [
-        "On a live-animals notification started from the type question, the origin page's Back link goes to the 'What are you importing?' question, which shows Live animals already selected (prototype:dr2-1-source app/routes.js:10586-10600, 10609; trace:prototype-dr2-1 T3 action 10; conflicts:c-011, c-219)",
-        "On a live-animals notification started from the live animals notifications list's own create button, the origin page's Back link goes to that list (prototype:dr2-1-source app/routes.js:10586-10600; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:105; ruling:sam-2026-10-09-pm p3-051, p3-081; conflicts:c-011)",
-        "Opened from the notification overview, the origin page's Back link goes to the overview (prototype:dr2-1-source app/routes.js:488-498; trace:prototype-dr2-1 T6 action 20; conflicts:c-011)",
-        "Opened from the template review while a saved live-animals template is being edited, the origin page's Back link goes to that template's review (prototype:dr2-1-source app/routes.js:10636, 488-498; ruling:sam-2026-10-09-templates p1-041, p1-043; conflicts:c-011)",
-        "Pressing Continue on the type question with Live animals still chosen returns to that same notification's origin page with the same reference, and the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11163-11168; conflicts:c-219)",
-        "Choosing Plants for planting instead and pressing Continue lands on the first page of the high-risk plants journey; the live-animals notification, reopened from the dashboard, still has the same reference, Draft status and every answer it had, commodities and species included (ruling:sam-2026-10-09 p1-054, p1-055, p1-056; conflicts:c-007, c-219)",
-        "Choosing Germinal products (semen, ova, embryos) instead and pressing Continue sends the user to the germinal products set's start under /germinal-products, and the live-animals notification left behind keeps every answer it had (ruling:sam-2026-10-09 p1-053, p1-054, p1-056; conflicts:c-219)",
-        "Starting afresh from the INS home still shows the type question with nothing pre-selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)"
-      ],
-      "requirements": ["req-008", "req-013"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:457-461, 488-498, 10586-10609, 10636, 11163-11168" },
-        { "source": "trace:prototype-dr2-1", "ref": "T3 action 10; T6 action 20" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/about-the-consignment.fit.spec.js:74, 105" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-029, p1-053, p1-054, p1-055, p1-056, p1-057" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "p1-041, p1-043" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-051, p3-081" },
-        { "source": "repo:frontend", "ref": "features/origin/controller.js:41-47 (repo-frontend-p4-107)" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-037, p5-038, p5-039, p5-079" }
-      ],
-      "repos": ["frontend", "insfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "Kept as inc-150; requirements unchanged. Combines req-013 (the live-animals origin Back link; the germinal half is req-1740) with req-008: returning to the type question can only be observed through the origin Back link, and both are reviewed on the same two pages.",
-        "Depends on inc-148 (the type question) and on inc-171, the row that makes Back links follow a template review (req-1616), so the template-edit branch of req-013 is observable when this lands.",
-        "The type pre-selected is the notification's stored category, absent meaning live animals (ruling p1-029), so a live-animals notification needs no backend change. Merge order frontend, insfrontend, tests: the origin Back link must carry the notification to the INS page before the INS page relies on it. Theme: type-question-and-templates, as before; the origin controller is the origin-page theme's folder, so it is listed as shared."
-      ],
-      "touches": [
-        "insfrontend:src/server/app/features/notification-type",
-        "tests:tests/ins/e2e/features/notification-type"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
-        "tests:tests/animals/e2e/pages/origin.spec.ts"
-      ],
-      "existingRow": "inc-150"
-    },
-    {
-      "title": "Template creation's type question goes back to the templates list and on to the template name",
-      "detail": "Template creation starts from the same notification type question. In template mode its Back link goes to the templates list with Templates highlighted in the service navigation, and choosing a type stores it on the template as a draft and goes on to the template name page instead of an origin page. Templates carry their type (9 October ruling). This is this area's part of the template-start row.",
-      "acceptanceCriteria": [
-        "In template creation the type question's Back link goes to the templates list, and the service navigation highlights Templates (prototype:dr2-1-source prototype-dr2-1-source-p2-023; ruling:sam-2026-10-09-templates p1-010, p1-017; conflicts:c-007)",
-        "Choosing a type in template creation and pressing Continue goes to the template name page, not an origin page, and no draft notification is created: the dashboard's notification list gains no new entry (prototype:dr2-1-source prototype-dr2-1-source-p2-023; ruling:sam-2026-10-09-templates p1-019; conflicts:c-220)",
-        "Going back from the template name page to the type question shows the type chosen for that template already selected, so the chosen type is held on the template in progress (ruling:sam-2026-10-09 p1-051, p1-103; ruling:sam-2026-10-09-templates p1-044)"
-      ],
-      "requirements": ["req-010"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-023" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-051, p1-103" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "p1-010, p1-017, p1-019, p1-044" }
-      ],
-      "repos": ["backend", "frontend", "insfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "req-010 already sits in inc-154, which also holds the templates area's req-1293, req-1313, req-1314 and req-1316 to req-1325. Drafted here as this area's part of that row; the combiner merges it back into inc-154 and keeps that id and its gate. The options offered in template mode (only Live animals and Germinal products, c-220) are the templates area's req-1314 and are not restated here.",
-        "Repos in merge order: backend (the template store holds the type), frontend (the template name page), insfrontend (the type page's template mode), tests: the name page must exist before the INS page hands over to it. Theme: type-question-and-templates, as before."
-      ],
-      "touches": [
-        "insfrontend:src/server/app/features/notification-type",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
-        "tests:tests/animals/e2e/features/templates"
-      ],
-      "shared": [],
-      "existingRow": "inc-154"
-    },
-    {
-      "title": "Germinal products origin page's Back link follows where the notification started",
-      "detail": "In the germinal products set, the origin page's Back link goes to the notification type question when the notification was started from it, to the germinal products set's own notifications list when started from that list, to the notification overview when opened from the overview, and to the template review when a germinal products template is being edited. This is the germinal half of the origin Back link (the 9 October ruling split req-013 by set).",
-      "acceptanceCriteria": [
-        "On a germinal products notification started from the type question, the germinal origin page's Back link goes to the 'What are you importing?' question, which shows Germinal products (semen, ova, embryos) already selected (prototype:dr2-1-source prototype-dr2-1-source-p2-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; ruling:sam-2026-10-09 p1-057; conflicts:c-007)",
-        "On a germinal products notification started from the germinal products notifications list's own create button, the origin page's Back link goes to that list (ruling:sam-2026-10-09 p1-057; ruling:sam-2026-10-09-pm germinal list at the set's root)",
-        "Opened from the germinal notification's overview, the origin page's Back link goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p2-028; conflicts:c-011)",
-        "Opened from the template review while a saved germinal products template is being edited, the origin page's Back link goes to that template's review (prototype:dr2-1-source prototype-dr2-1-source-p2-028; ruling:sam-2026-10-09 p1-014, p1-057)"
-      ],
-      "requirements": ["req-1740"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-028" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-005" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-014, p1-057" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "req-1740 already sits in inc-186 (germinal theme), with the germinal area's req-1875 and req-1876; its template-review clause needs germinal template mode. Drafted here as this area's part; the combiner merges it back into inc-186 and keeps that id and its dependencies (the germinal set's origin page, germinal template mode and inc-150, whose category-based pre-selection this reuses).",
-        "The Germinal products pre-selection on the type question is the germinal half of req-008, which inc-150 notes is proved here once the germinal set exists."
-      ],
-      "touches": [
-        "frontend:src/server/app/sets/germinal-products",
-        "tests:tests/animals/e2e/germinal-products"
-      ],
-      "shared": [],
-      "existingRow": "inc-186"
-    },
-    {
       "title": "Country of origin: no hint and a 'Search for a country' placeholder, in animals and plants",
-      "detail": "The 9 October afternoon ruling builds the built-now half of the country of origin control: the hint 'Start typing to search for a country.' goes (it also misleads users without JavaScript, who get a plain select) and the type-ahead box shows the placeholder 'Search for a country' while empty. It changes the live-animals origin page and, in the same increment, the high-risk plants frontend's origin page. The control stays the real frontend's accessible-autocomplete over a native select: opening on focus, matching, the arrow and its own announcements stay as the component is configured. The germinal products set copies the live-animals origin page and so takes this when it is built.",
+      "detail": "The 9 October afternoon ruling builds the built-now half of the country of origin control. The hint 'Start typing to search for a country.' goes (it also misleads users without JavaScript, who get a plain select), and the type-ahead box shows the placeholder 'Search for a country' while empty. It changes the live-animals origin page and, in the same increment, the high-risk plants frontend's origin page. The control stays the real frontend's accessible autocomplete over a native select: opening on focus, matching, the arrow and its own announcements stay as the component is configured. Plants keeps its own country list, guidance and errors. The germinal products set copies the live-animals origin page and so takes this when it is built.",
       "acceptanceCriteria": [
-        "On the live-animals origin page, the 'Country of origin' question shows no hint text, with or without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p2-034; ruling:sam-2026-10-09-pm p1-026, p1-029; repo:frontend repo-frontend-p4-075; conflicts:c-009)",
-        "On the live-animals origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (prototype:dr2-1-source prototype-dr2-1-source-p2-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-031; ruling:sam-2026-10-09-pm p1-030; repo:frontend repo-frontend-p4-076; conflicts:c-009)",
-        "On the high-risk plants origin page, the 'Country of origin' question shows no hint text, with or without JavaScript, and keeps its own list, guidance and errors (ruling:sam-2026-10-09-pm p3-020; repo:plantsfrontend repo-plantsfrontend-p5-006; conflicts:c-009)",
-        "On the high-risk plants origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (ruling:sam-2026-10-09-pm p3-020; repo:plantsfrontend repo-plantsfrontend-p5-010; conflicts:c-009)",
-        "On both pages the control is still labelled 'Country of origin', choosing a country still saves it and shows it again when the page is reopened, and without JavaScript the native select still saves the chosen country (conflicts:c-006; repo:frontend repo-frontend-p4-082; repo:plantsfrontend repo-plantsfrontend-p5-029)",
-        "With Welsh chosen, the placeholder shows its Welsh counterpart on both pages, and the removed country hint is no longer shown in Welsh either (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-042)"
+        "On the live-animals origin page, the 'Country of origin' question shows no hint text, with or without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p2-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-010, p1-013; repo:frontend repo-frontend-p4-075; conflicts:c-009)",
+        "On the live-animals origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (prototype:dr2-1-source prototype-dr2-1-source-p2-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-013; repo:frontend repo-frontend-p4-076; conflicts:c-006, c-009)",
+        "On the high-risk plants origin page, the 'Country of origin' question shows no hint text, with or without JavaScript, and keeps its own list, guidance and errors (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-031, p3-033; repo:plantsfrontend repo-plantsfrontend-p5-005, p5-006; conflicts:c-009)",
+        "On the high-risk plants origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-031; repo:plantsfrontend repo-plantsfrontend-p5-007, p5-008; conflicts:c-009)",
+        "On both pages the control is still labelled 'Country of origin', choosing a country still saves it and shows it again when the page is reopened, and without JavaScript the native select still saves the chosen country (conflicts:c-006; repo:frontend repo-frontend-p4-082; repo:plantsfrontend repo-plantsfrontend-p5-010)",
+        "With Welsh chosen, the placeholder shows its Welsh counterpart on both pages, and the removed country hint is no longer shown in Welsh either (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-028, p5-029, p5-030)"
       ],
       "requirements": ["req-015", "req-016"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-032, p2-034" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-031" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-026, p1-029, p1-030, p3-020" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-010, p1-013, p3-031, p3-033" },
         { "source": "repo:frontend", "ref": "repo-frontend-p4-075, p4-076, p4-082, p4-117" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-006, p5-010, p5-029, p5-042" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p4-009, trace-e2e-p4-061" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-005 to p5-010, p5-028 to p5-030" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-009, p4-061" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-010, p5-014, p6-003, p6-037" }
       ],
       "repos": ["frontend", "plantsfrontend", "tests"],
@@ -185,9 +28,9 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Kept as inc-009, rewritten to the 9 October afternoon ruling (c-009's new outcome). req-017 and req-019 are now out of scope (prototype mechanics the component replaces) and leave this row; the separate Search button (req-018, design question 1) and the custom announcement wording (req-020, design question 13) are blocked and move to their own waiting-on-design rows. The component's own announcements are req-1909 (exists). The old criteria for opening on focus, contains-matching with bold, the search icon and the custom announcements are withdrawn.",
-        "Combines the hint and the placeholder, in animals and plants: one control, the same review, and the ruling says plants changes in the same increment. The germinal set's origin page is a copy of the live-animals page built in the germinal theme, so the germinal half of 'both animals sets' is observed there, not here: this row's criteria hold before the germinal set exists.",
-        "The placeholder may need a new option on the shared accessible-autocomplete component in each frontend (today it reads its config from the select's data attributes), so the component is listed as shared. The plants frontend's origin folder joins the origin-page theme's touches: no theme touches plantsfrontend today.",
+        "Keeps inc-009. Requirements unchanged; provenance re-cited to the afternoon ruling's current claim ids (p1-010, p1-013, p3-031, p3-033) and plants' Welsh claims (p5-028 to p5-030).",
+        "Combines the hint and the placeholder, in animals and plants: one control, one review, and the ruling says plants changes in the same increment. The germinal set's origin page is a copy of the live-animals page built in the germinal theme, so the germinal half of 'both animals sets' is observed there: this row's criteria hold before the germinal set exists.",
+        "The placeholder may need a new option on the shared accessible-autocomplete component in each frontend (today it reads its config from the select's data attributes), so the component is listed as shared.",
         "The page changes visually; the origin page's full-page baseline (req-058) is refreshed in the region code row that finishes the page."
       ],
       "touches": [
@@ -199,8 +42,11 @@
         "tests:page-objects/plants/origin-page.ts"
       ],
       "shared": [
+        "frontend:src/server/common/components/accessible-autocomplete",
         "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js"
+        "plantsfrontend:src/server/common/components/accessible-autocomplete",
+        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js",
+        "tests:page-objects/animals/origin-of-import-page.ts"
       ],
       "existingRow": "inc-009"
     },
@@ -208,21 +54,23 @@
       "title": "Region of origin code, internal reference hint and the finished origin page",
       "detail": "The region of origin code question takes Design Release 2.1's hint and caps the box at 5 characters in the browser, with autocomplete and spellcheck off. Answering No clears a saved code. A code typed under Yes with no country chosen is kept on the page but not saved until a country gives it its prefix. The origin task is complete only when the country and the region question are answered and, under Yes, a code is held. The internal reference hint drops its 58-character sentence (the server still enforces the limit). Every new or changed string on the origin page has Welsh, and the origin page's stored visual baseline is updated to the finished page. The prefix stays server-side as DR1 shipped it; the live prefix waits on design.",
       "acceptanceCriteria": [
-        "The region of origin code question's hint reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' (prototype:dr2-1-source prototype-dr2-1-source-p2-042; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-042; conflicts:c-010)",
+        "The region of origin code question's hint reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' (prototype:dr2-1-source prototype-dr2-1-source-p2-042; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-042; prototype:dr2-1-specs prototype-dr2-1-specs-p1-021; conflicts:c-010)",
         "The region code box stops typing at 5 characters and has autocomplete and spellcheck turned off; a longer code submitted without the browser's cap still gets the server's existing error (prototype:dr2-1-source prototype-dr2-1-source-p2-046; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-047; trace:animals-fit trace-animals-fit-p5-023; conflicts:c-010)",
-        "Changing a saved Yes answer with code FR-75 to No and saving clears the code: the review page shows 'Not applicable' for the region of origin code, and choosing Yes again shows an empty code box (prototype:dr2-1-source prototype-dr2-1-source-p2-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-014; trace:animals-fit trace-animals-fit-p5-048; conflicts:c-010)",
-        "Answering Yes and typing a region code with no country chosen keeps the typed code on the page, but saves no region of origin code until a country is chosen to give it its prefix (prototype:dr2-1-source prototype-dr2-1-source-p2-056; trace:e2e trace-e2e-p4-034; ruling:sam-2026-10-09-pm p1-064)",
-        "The overview's origin task reads 'Complete' only when a country is chosen and the region of origin code question is answered: a country saved with the region question unanswered does not read 'Complete', a country with No reads 'Complete', and a country with Yes and a code reads 'Complete' (prototype:dr2-1-source prototype-dr2-1-source-p2-069; trace:animals-fit trace-animals-fit-p5-053, p5-054, p5-055)",
-        "The internal reference hint reads 'Enter any internal reference you want to use to identify this consignment, or leave blank.', with no 'It can be up to 58 characters.' sentence; a reference over 58 characters still gets the server's error naming the limit (prototype:dr2-1-source prototype-dr2-1-source-p2-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-063; conflicts:c-011)",
+        "Changing a saved Yes answer with code FR-75 to No and saving clears the code: the review page shows 'Not applicable' for the region of origin code, and choosing Yes again shows an empty code box (prototype:dr2-1-source prototype-dr2-1-source-p2-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-014, p13-017; trace:animals-fit trace-animals-fit-p5-047, p5-048, p5-049; conflicts:c-010)",
+        "Answering Yes and typing a region code with no country chosen keeps the typed code on the page, but saves no region of origin code until a country is chosen to give it its prefix (prototype:dr2-1-source prototype-dr2-1-source-p2-056; trace:e2e trace-e2e-p4-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-056)",
+        "The overview's origin task reads 'Complete' only when a country is chosen and the region of origin code question is answered: a country saved with the region question unanswered does not read 'Complete', a country with No reads 'Complete', and a country with Yes and a code reads 'Complete' (prototype:dr2-1-source prototype-dr2-1-source-p2-069; trace:animals-fit trace-animals-fit-p5-053, p5-054, p5-055; repo:frontend repo-frontend-p4-114)",
+        "The internal reference hint reads 'Enter any internal reference you want to use to identify this consignment, or leave blank.', with no 'It can be up to 58 characters.' sentence; a reference over 58 characters still gets the server's error naming the limit (prototype:dr2-1-source prototype-dr2-1-source-p2-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-063; prototype:dr2-1-specs prototype-dr2-1-specs-p1-023; conflicts:c-011)",
         "With Welsh chosen, the region hint and the internal reference hint show their Welsh counterparts, and no removed text (the country hint, the 58-character sentence) is left in the origin page's Welsh copy (repo:frontend repo-frontend-p4-117)",
-        "The end-to-end suite's full-page visual baseline of the origin page shows the changed page (no country hint, the country box with its placeholder, the new region hint and the shorter internal reference hint), and the visual check passes against it (trace:e2e trace-e2e-p4-060, trace-e2e-p4-061, trace-e2e-p4-133)"
+        "The end-to-end suite's full-page visual baseline of the origin page shows the changed page (no country hint, the country box with its placeholder, the new region hint and the shorter internal reference hint), and the visual check passes against it (trace:e2e trace-e2e-p4-060, p4-061, p4-133)"
       ],
       "requirements": ["req-034", "req-036", "req-038", "req-046", "req-049", "req-057", "req-058", "req-1743"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-042, p2-046, p2-055, p2-056, p2-062, p2-069" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-021, p1-023" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-042, p2-047, p2-063, p12-014, p13-015, p13-017" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-064" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-056" },
         { "source": "repo:frontend", "ref": "repo-frontend-p4-089, p4-093, p4-097, p4-098, p4-100, p4-114, p4-117" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-028, p5-029, p5-030" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-019, p5-023, p5-028, p5-047 to p5-049, p5-053 to p5-055" },
         { "source": "trace:e2e", "ref": "trace-e2e-p4-026, p4-034, p4-043, p4-053, p4-060, p4-061, p4-127, p4-133" }
       ],
@@ -232,10 +80,10 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Kept as inc-010, rewritten to the 9 October afternoon ruling (c-008's new outcome): the origin page is built now with the server-side prefix DR1 shipped, and the live prefix (req-040) and the empty prefix slot (req-041) leave this row for their own waiting-on-design row (design question 2). Their criteria, and the 'search icon' in the baseline criterion, are withdrawn.",
-        "Combines the region code slices (hint, maxlength, No clears the code, a code with no country), the origin task's completeness rule, the internal reference hint, the Welsh sweep and the visual baseline: all change the same origin page and its one baseline. Depends on inc-009 so the baseline shows the finished page. If the combiner orders the subdivision label row (req-030) before this one, the baseline also shows it; otherwise that row refreshes the baseline itself.",
+        "Keeps inc-010. Requirements unchanged; provenance re-cited to the afternoon ruling's current claim id for req-1743 (p1-056). The live prefix (req-040) and the empty prefix slot (req-041) stay in their own waiting-on-design row (design question 2).",
+        "Combines the region code slices (hint, maxlength, No clears the code, a code with no country), the origin task's completeness rule, the internal reference hint, the Welsh sweep and the visual baseline: all change the same origin page and its one baseline. Depends on the hint-and-placeholder row (inc-009) so the baseline shows the finished page. If the combiner orders the subdivision label row (req-030) before this one, the baseline also shows it; otherwise that row refreshes the baseline itself.",
         "Completeness: Yes without a code cannot be saved through the page (the page holds the trader with 'Enter the region of origin code'), so the criterion observes the reachable cases; the builder still adds the rule to the origin obligation so a stored Yes with no code is never Complete.",
-        "req-057 covers the type and origin pages in animals and the country hint and placeholder in plants. The type page's Welsh is a criterion of the type question row and the placeholder's Welsh in both frontends a criterion of inc-009; req-057 sits here, where the last origin strings land. Theme: origin-page, as before."
+        "req-057 covers the type and origin pages in animals and the country hint and placeholder in plants. The type page lives in the INS frontend's notification-type folder, which the split-off type-question-and-templates theme owns, so the type page's Welsh is built there with req-001 to req-007; the placeholder's and removed hint's Welsh in both frontends is a criterion of inc-009. req-057 sits here, where the last origin strings land, rather than in splitOff, because its remaining work is all on the origin page."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
@@ -243,65 +91,31 @@
         "tests:tests/animals/e2e/pages/origin.spec.ts",
         "tests:tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots"
       ],
-      "shared": [],
+      "shared": [
+        "tests:page-objects/animals/origin-of-import-page.ts"
+      ],
       "existingRow": "inc-010"
     },
     {
-      "title": "Country of origin list labels subdivisions with their parent country",
-      "detail": "Places in the country of origin list that are subdivisions of a country show as '<territory> (<parent>)', for example 'Canary Islands (Spain)', and the list is sorted by the label shown. Which places appear, their names and the stored code stay what MDM serves through the reference data service. c-221 settles it: the label is look and feel, where the prototype wins, and it matches what the 9 October ruling does for the destination select and transit country search.",
+      "title": "The stub's countries match real MDM, and every captured country fixture is recaptured from it",
+      "detail": "The 9 October ruling's stub tidy-up, countries half. trade-imports-stub's MDM countries fixture is regenerated from MDM's raw responses: all 250 countries in MDM's order with their full real records, served whole, and filtered by the blocks parameter as MDM does. The animals frontend, the high-risk plants frontend, the INS frontend and the tests repo then recapture or derive their country data from what reference data now serves, so every later list row is built and tested against what MDM really serves. The afternoon ruling makes the tidy-up change plants in the same increment.",
       "acceptanceCriteria": [
-        "In the live-animals country of origin list, every place the reference data service serves as a subdivision of a country shows as '<subdivision name> (<parent country name>)', for example 'Canary Islands (Spain)', with or without JavaScript, and typing 'spain' in the search box lists Canary Islands (Spain) as well as Spain (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; ruling:sam-2026-10-09 p1-136, p1-139; conflicts:c-221)",
-        "The country of origin list is sorted alphabetically by the label shown, so 'Canary Islands (Spain)' sits among the C entries (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; conflicts:c-221)",
-        "Choosing a subdivision still saves its code (ES-CN for the Canary Islands), and reopening the origin page shows 'Canary Islands (Spain)' in the box with the region code prefix ES (repo:frontend features/origin/validate.js:148-152; conflicts:c-221)",
-        "The list holds the same places as the reference data service serves for the GBNAG_SPS_EX block, no more and no fewer (repo:referencedata GET /countries; conflicts:c-001)"
-      ],
-      "requirements": ["req-030"],
-      "sources": [
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-040-m1" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-136, p1-139" },
-        { "source": "repo:frontend", "ref": "services/countries; features/origin/validate.js:148-152" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p4-021" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p6-004" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "Kept as inc-175; requirement unchanged. c-221 is now settled by precedence, so the old open question with its default is removed: the row builds the settled outcome.",
-        "Depends on the stub countries tidy-up (inc-173), which changes the places the list holds and so the names and counts its checks assert. Labels are presentation built in the frontend from the parent and subdivision names reference data already serves; the list's content stays MDM's (c-001), so no reference-data or stub change. Observable on every stack: the tidied stub serves MDM's subdivisions locally and in CDP dev, and real MDM serves its own in CDP test.",
-        "The germinal set's origin page copies this behaviour when it copies the page. The destination select and transit country search labels are other areas' rows; if the combiner finds they share one label builder, that builder belongs in the foundation or reference-lists theme. Theme: origin-page, as before."
-      ],
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
-        "tests:tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/services/countries"
-      ],
-      "existingRow": "inc-175"
-    },
-    {
-      "title": "The stub's countries match real MDM, and every captured countries fixture is recaptured from it",
-      "detail": "The 9 October ruling's stub tidy-up, countries half: trade-imports-stub's MDM countries fixture is regenerated from MDM's raw responses, all 250 countries in MDM's order with their full real records, served whole, and filtered by the blocks parameter as MDM does. The animals frontend, the high-risk plants frontend, the INS frontend and the tests repo then recapture or derive their country data from what reference data now serves, so every later list row is built and tested against what MDM really serves.",
-      "acceptanceCriteria": [
-        "Locally and in CDP dev, the stub's MDM countries call without a blocks filter answers all 250 countries in MDM's order with their full real records, in place of today's 31 hand-kept records, and no value MDM masks is filled in (ruling:sam-2026-10-09 p1-147, p1-150, p1-152, p1-153; repo:stub repo-stub-p2-011, repo-stub-p2-047)",
-        "Locally and in CDP dev, the stub's countries call for the GBNAG_SPS_EX block answers the 32 countries in that block, as MDM does (ruling:sam-2026-10-09 p1-155; repo:stub repo-stub-p2-005, repo-stub-p2-043, repo-stub-p2-079)",
-        "Locally and in CDP dev, the stub serves each country record whole, including fields its own models do not name (ruling:sam-2026-10-09 p1-154; repo:stub repo-stub-p2-008, repo-stub-p2-046)",
-        "The stub's own tests check the regenerated countries fixture, and check that the blocks filter answers 32 countries for GBNAG_SPS_EX and 250 without it (ruling:sam-2026-10-09 p1-156; repo:stub repo-stub-p2-069, repo-stub-p2-070, repo-stub-p2-074)",
-        "In the animals frontend's stub mode, the country of origin list offers the same countries, names and order as reference data serves from the tidied stub, and no country check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 p1-157, p1-158; repo:frontend repo-frontend-p4-077; trace:animals-fit trace-animals-fit-p5-016)",
-        "In the high-risk plants frontend's stub mode, the origin page's country list offers the same countries, names and order as reference data serves from the tidied stub for the GBNAG_SPS_EX block, and the plants frontend's own checks pass against it (ruling:sam-2026-10-09-pm p3-020; repo:plantsfrontend repo-plantsfrontend-p9-110-m1)",
-        "In the INS frontend's stub mode, the address book's Country select offers the countries captured from the reference data service's unfiltered list, not the four hand-typed ones (United Kingdom, France, Germany, Ireland) (ruling:sam-2026-10-09 p1-143, p1-144, p1-159; conflicts:c-177)",
-        "The end-to-end specs take their country names from the recaptured countries fixture, the tests repo keeps no unused hand-kept list of country rows, and every spec that counts the unfiltered country list expects the count served, 249 places on the local stack rather than 31 (ruling:sam-2026-10-09 p1-160, p1-161, p1-162)"
+        "Locally and in CDP dev, the stub's MDM countries call without a blocks filter answers all 250 countries in MDM's order with their full real records, in place of today's 31 hand-kept records, and no value MDM masks is filled in (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-147, p1-150, p1-152, p1-153; repo:stub repo-stub-p2-011, p2-047)",
+        "Locally and in CDP dev, the stub's countries call for the GBNAG_SPS_EX block answers the 32 countries in that block, as MDM does (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-155; repo:stub repo-stub-p2-005, p2-043, p2-079)",
+        "Locally and in CDP dev, the stub serves each country record whole, including fields its own models do not name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-154; repo:stub repo-stub-p2-008, p2-046)",
+        "The stub's own tests check the regenerated countries fixture, and check that the blocks filter answers 32 countries for GBNAG_SPS_EX and 250 without it (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-156; repo:stub repo-stub-p2-069, p2-070, p2-074)",
+        "In the animals frontend's stub mode, the country of origin list offers the same countries, names and order as reference data serves from the tidied stub, and no country check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-157, p1-158; repo:frontend repo-frontend-p4-077; trace:animals-fit trace-animals-fit-p5-016)",
+        "In the high-risk plants frontend's stub mode, the origin page's country list offers the same countries, names and order as reference data serves from the tidied stub for the GBNAG_SPS_EX block, and every plants check that pinned an old country name or count passes against the recaptured list (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-030; repo:plantsfrontend repo-plantsfrontend-p9-102, p5-033)",
+        "In the INS frontend's stub mode, the address book's Country select offers the countries captured from the reference data service's unfiltered list, not the four hand-typed ones (United Kingdom, France, Germany, Ireland) (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-143, p1-144, p1-159; conflicts:c-177)",
+        "The end-to-end specs take their country names from the recaptured countries fixture, the tests repo keeps no unused hand-kept list of country rows, and every spec that counts the unfiltered country list expects the count served, 249 places on the local stack rather than 31 (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-160, p1-161, p1-162)"
       ],
       "requirements": ["req-1744", "req-1745", "req-1746", "req-1747", "req-1750", "req-1751", "req-1752"],
       "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "claim 30: p1-143, p1-144, p1-147, p1-148, p1-150, p1-152 to p1-162, p1-164" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-020" },
-        { "source": "repo:stub", "ref": "repo-stub-p2-005 to p2-050, p2-067 to p2-080" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-143, p1-144, p1-147, p1-148, p1-150, p1-152 to p1-162, p1-164" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-030" },
+        { "source": "repo:stub", "ref": "repo-stub-p2-005 to p2-050, p2-069 to p2-080, p2-083" },
         { "source": "repo:frontend", "ref": "repo-frontend-p4-077" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p9-110-m1" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-033, p9-102" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-016" }
       ],
       "repos": ["stub", "frontend", "plantsfrontend", "insfrontend", "tests"],
@@ -310,40 +124,116 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "The countries half of inc-173. The 9 October ruling makes the stub tidy-up one row at the head of the reference-lists theme (p1-148); the combiner merges this draft with the arrival-and-transit area's ports half (req-1811, req-1812, req-1814) back into inc-173 and keeps that id. mdm/stub-tidy-up-spec.md is the accepted spec (p1-164).",
-        "Change from the existing row: the afternoon ruling makes the stub tidy-up change plants in the same increment (req-1750), so plantsfrontend joins the repos and its captured countries fixtures are recaptured; the reference-lists theme's touches gain plantsfrontend:src/server/app/services/countries and plantsfrontend:src/server/app/services/_capture. Merge order: the stub first, then each frontend that recaptures from it, then the tests repo.",
-        "Combines the regenerated fixture, the blocks filter, serving records whole, the stub's own tests and every recapture: the recaptures can only be observed once the stub serves the new fixture, and building them apart would repeat the same stub-and-capture set-up. inc-175 and the other country list rows depend on this row, because it changes the names and counts their checks assert."
+        "Keeps inc-173: this is its countries half. The arrival-and-transit area drafts the ports half (req-1811, req-1812, req-1814, req-1933); the combiner merges the two back into inc-173 and keeps its id, theme (reference-lists) and criteria. mdm/stub-tidy-up-spec.md is the accepted spec (ruling-sam-2026-10-09-p1-164).",
+        "Combines the regenerated fixture, the blocks filter, serving records whole, the stub's own tests and every recapture: the recaptures can only be observed once the stub serves the new fixture, and building them apart would repeat the same stub-and-capture set-up.",
+        "Merge order: the stub first, then each frontend that recaptures from it, then the tests repo. The subdivision label row (inc-175) and the other country list rows depend on this row, because it changes the names and counts their checks assert.",
+        "The INS frontend's Country select is the address book's (insfrontend:src/server/app/services/countries/stub.js holds the four hand-typed countries); that folder is in reference-lists' touches, not the split-off type-question theme's."
       ],
       "touches": [
-        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/mdm",
-        "stub:src/main/resources/responses",
+        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/mdm/countries",
+        "stub:src/main/resources/responses/countriesResponse.json",
         "stub:src/test/java/uk/gov/defra/trade/imports/utils",
         "frontend:src/server/app/services/countries",
         "frontend:src/server/app/services/_capture",
         "plantsfrontend:src/server/app/services/countries",
         "plantsfrontend:src/server/app/services/_capture",
         "insfrontend:src/server/app/services/countries",
-        "tests:domain/animals/constants/country-codes.ts",
-        "tests:tests/animals/e2e/features/reference-lists"
+        "tests:domain/animals/constants/country-codes.ts"
       ],
-      "shared": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin",
+        "tests:tests/animals/e2e/pages/transited-countries.spec.ts",
+        "tests:tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts"
+      ],
       "existingRow": "inc-173"
     },
     {
-      "title": "Country of origin 'Search' button, if design asks for it",
+      "title": "Country of origin list labels subdivisions with their parent country",
+      "detail": "Places in the country of origin list that are subdivisions of a country show as '<territory> (<parent>)', for example 'Canary Islands (Spain)', and the list is sorted by the label shown. Which places appear, their names and the stored code stay what MDM serves through the reference data service. c-221 settles it: the label is look and feel, where the prototype wins, and it matches what the 9 October ruling does for the destination select and transit country search.",
+      "acceptanceCriteria": [
+        "In the live-animals country of origin list, every place the reference data service serves as a subdivision of a country shows as '<subdivision name> (<parent country name>)', for example 'Canary Islands (Spain)', with or without JavaScript (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-136, p1-139; conflicts:c-221)",
+        "The country of origin list is sorted alphabetically by the label shown, so 'Canary Islands (Spain)' sits among the C entries (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; conflicts:c-221)",
+        "Choosing a subdivision still saves its code (ES-CN for the Canary Islands), and reopening the origin page shows 'Canary Islands (Spain)' in the box with the region code prefix ES (trace:e2e trace-e2e-p4-021; conflicts:c-221)",
+        "The list holds the same places as the reference data service serves for the GBNAG_SPS_EX block, no more and no fewer (repo:referencedata GET /countries; trace:animals-fit trace-animals-fit-p6-004; conflicts:c-001)"
+      ],
+      "requirements": ["req-030"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-040-m1" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-136, p1-139" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-021" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p6-004" },
+        { "source": "repo:referencedata", "ref": "GET /countries" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Keeps inc-175; requirement unchanged. c-221 is settled by precedence, so the row builds the settled outcome. The old criterion's 'typing spain lists Canary Islands (Spain)' clause is dropped: how typed text matches follows the component as configured (c-009), and req-019's mid-name matching is out of scope.",
+        "Depends on the stub countries tidy-up (inc-173), which changes the places the list holds and so the names and counts its checks assert. Labels are presentation built in the frontend from the parent and subdivision names reference data already serves; the list's content stays MDM's (c-001), so no reference-data or stub change. Observable on every stack: the tidied stub serves MDM's subdivisions locally and in CDP dev, and real MDM serves its own in CDP test.",
+        "The germinal set's origin page copies this behaviour when it copies the page. The destination select and transit country search labels are other areas' rows; if the combiner finds they share one label builder, that builder belongs in the reference-lists theme."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "tests:tests/animals/e2e/pages/origin.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/countries"
+      ],
+      "existingRow": "inc-175"
+    },
+    {
+      "title": "The germinal origin page's Back link follows where the notification started",
+      "detail": "In the germinal products set, the origin page's Back link goes to the notification type question when the notification was started from it, to the germinal products set's own notifications list when started from that list, to the notification overview when opened from the overview, and to the template review when a germinal products template is being edited. This is the germinal half of the origin Back link: the 9 October ruling splits req-013 by set, and the live-animals half went with the split-off type-question-and-templates theme.",
+      "acceptanceCriteria": [
+        "On a germinal products notification started from the type question, the germinal origin page's Back link goes to the 'What are you importing?' question, which shows Germinal products (semen, ova, embryos) already selected (prototype:dr2-1-source prototype-dr2-1-source-p2-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-005; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; conflicts:c-007)",
+        "On a germinal products notification started from the germinal products notifications list's own 'Create new', the origin page's Back link goes to that list (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-104)",
+        "Opened from the germinal notification's overview, the origin page's Back link goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p2-028-m1; conflicts:c-011)",
+        "Opened from the template review while a saved germinal products template is being edited, the origin page's Back link goes to that template's review (prototype:dr2-1-source prototype-dr2-1-source-p2-028; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-049)"
+      ],
+      "requirements": ["req-1740"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-028, p2-028-m1" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-005" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-014, p1-057" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-049" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-104" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "req-1740 already sits in inc-186 (germinal-products theme), with the templates area's req-1875 and req-1876; its template-review clause needs germinal template mode. Drafted here as this area's part only: the combiner merges it back into inc-186 and keeps that id, its repos (backend joins from req-1875/1876), its dependsOn (inc-182) and its externalDependsOn on the split-off type-question-and-templates workarea (inc-150, inc-151, inc-154 to inc-161, inc-164, inc-165).",
+        "Not split off: its code is the germinal set's own origin page (frontend:src/server/app/sets/germinal-products), which the germinal-products theme owns; the split-off theme touches only the live-animals templates and check-answers folders and the INS type page. The Back link to the type question needs the INS type question (split-off), reached through externalDependsOn, never dependsOn."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/origin",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [
+        "tests:page-objects/germinal-products"
+      ],
+      "existingRow": "inc-186"
+    },
+    {
+      "title": "Waiting on design: a Search button beside the country of origin search",
       "detail": "Design Release 2.1 presents the country of origin control as a search box with its own button. The 9 October afternoon ruling makes this a JavaScript-era mechanic beyond the component's own options, so it waits on design question 1, as one waiting-on-design increment shared with the port of entry and transit country boxes. If design asks for it, the box gains a separate 'Search' button on the origin page of both animals sets and of plants; if design drops it, this row is dropped.",
       "acceptanceCriteria": [
-        "With JavaScript, the live-animals and plants origin pages' country boxes each have a separate button at their right, showing a search icon with the visually hidden text 'Search' (prototype:dr2-1-source prototype-dr2-1-source-p2-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-031; ruling:sam-2026-10-09-pm p1-063, p3-021; conflicts:c-009)",
-        "Without JavaScript, both pages still show the plain labelled 'Country of origin' select and save the chosen country, with no Search button (conflicts:c-006; ruling:sam-2026-10-09-pm p1-046)",
-        "With Welsh chosen, the button's hidden text shows its Welsh counterpart on both pages (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-042)"
+        "With JavaScript, the live-animals and plants origin pages' country boxes each have a separate button at their right, showing a search icon with the visually hidden text 'Search' (prototype:dr2-1-source prototype-dr2-1-source-p2-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-014, p1-055, p3-032; conflicts:c-009)",
+        "Without JavaScript, both pages still show the plain labelled 'Country of origin' select and save the chosen country, with no Search button (conflicts:c-006; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-011)",
+        "With Welsh chosen, the button's hidden text shows its Welsh counterpart on both pages (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-028)"
       ],
       "requirements": ["req-018"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-032" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-031" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-027, p1-031, p1-063, p3-021" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p4-083" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-039" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-011, p1-014, p1-015, p1-055, p3-032" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p4-083, p4-117" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-028, p5-045" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p6-009, p6-028" }
       ],
       "repos": ["frontend", "plantsfrontend", "tests"],
@@ -354,68 +244,80 @@
         "Design question 1 (search buttons): design must say whether the separate 'Search' button beside the country of origin, port of entry and transit country boxes is needed. Built as design says, or dropped if design drops it. No safe default: the ruling puts it to design."
       ],
       "notes": [
-        "New row: req-018 leaves inc-009 because it is now blocked on design question 1 (ruling-sam-2026-10-09-pm-p1-063). The ruling makes one waiting-on-design increment for the Search button on the country of origin, port of entry and transit country boxes: the combiner should merge this draft with the arrival-and-transit area's port of entry and transit Search button requirements into that one blocked row, in the waiting-on-design theme if there is one.",
+        "Keeps inc-188: this is its country of origin half. The arrival-and-transit area drafts the port of entry, transit country and place of landing half (req-296); the combiner merges the two back into inc-188, one increment for design question 1 (ruling-sam-2026-10-09-pm-p1-055), and keeps its id, theme (waiting-on-design) and dependsOn (inc-009, inc-027).",
         "Depends on inc-009 (the hint and placeholder on the same control). The button is a change to the shared accessible-autocomplete component in each frontend."
       ],
       "touches": [
+        "frontend:src/client/javascripts/enhancements",
+        "plantsfrontend:src/client/javascripts/enhancements",
+        "tests:tests/animals/e2e/enhancements",
+        "tests:tests/plants/e2e/enhancements"
+      ],
+      "shared": [
+        "frontend:src/server/common/components/accessible-autocomplete",
+        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
+        "plantsfrontend:src/server/common/components/accessible-autocomplete",
+        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin"
       ],
-      "shared": [
-        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js"
-      ],
-      "existingRow": null
+      "existingRow": "inc-188"
     },
     {
       "title": "Country of origin results take the prototype's screen-reader wording, if design says the component's own cannot stand",
       "detail": "Design Release 2.1 labels the country results 'Country search results' and announces 'Selected <country>' on a choice. The 9 October afternoon ruling builds the accessible autocomplete's own announcements now (req-1909) and puts this custom wording to design as question 13. If design says the component's own announcements cannot stand, the origin page of both animals sets and of plants takes the custom wording; otherwise this row is dropped.",
       "acceptanceCriteria": [
-        "With JavaScript, on the live-animals and plants origin pages, the country results are labelled 'Country search results' for screen readers, and choosing one announces 'Selected <country>', for example 'Selected France' (prototype:dr2-1-source prototype-dr2-1-source-p2-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-036, trace-prototype-dr2-1-p2-037; ruling:sam-2026-10-09-pm p1-066, p3-021; conflicts:c-009)",
-        "With Welsh chosen, the results label and the selection announcement show their Welsh counterparts on both pages (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-042)"
+        "With JavaScript, on the live-animals and plants origin pages, the country results are labelled 'Country search results' for screen readers, and choosing one announces 'Selected <country>', for example 'Selected France' (prototype:dr2-1-source prototype-dr2-1-source-p2-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-036, p2-037; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-015, p1-058, p3-032; conflicts:c-009)",
+        "With Welsh chosen, the results label and the selection announcement show their Welsh counterparts on both pages (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-028)"
       ],
       "requirements": ["req-020"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-033" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-036, p2-037, p12-009" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-031, p1-066, p3-021" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-013, p6-048" }
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-014, p1-015, p1-058, p3-032" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-013, p6-048" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p4-023" }
       ],
       "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
       "openQuestions": [
-        "Design question 13: design must say whether the accessible autocomplete's own result and selection announcements can stand. The custom wording is built only if design says they cannot; otherwise this row is dropped."
+        "Design question 13: design must say whether the accessible autocomplete's own result and selection announcements can stand. The custom wording is built only if design says they cannot; otherwise this row is dropped. No safe default: the ruling puts it to design."
       ],
       "notes": [
-        "New row: req-020 leaves inc-009 because it is now blocked on design question 13 (ruling-sam-2026-10-09-pm-p1-066). Kept apart from the Search button row because it waits on a different design question. If the arrival-and-transit area drafts the same question for the port and transit boxes, the combiner may merge them into one waiting-on-design row.",
+        "Keeps inc-189. Kept apart from the Search button row because it waits on a different design question. If the arrival-and-transit area drafts the same question for the port and transit boxes, the combiner may merge them into one waiting-on-design row.",
         "Depends on inc-009. The wording is a change to the shared accessible-autocomplete component's messages in each frontend."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin"
+        "frontend:src/client/javascripts/enhancements",
+        "plantsfrontend:src/client/javascripts/enhancements",
+        "tests:tests/animals/e2e/enhancements",
+        "tests:tests/plants/e2e/enhancements"
       ],
       "shared": [
         "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js"
+        "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin"
       ],
-      "existingRow": null
+      "existingRow": "inc-189"
     },
     {
       "title": "Region code prefix follows the picked country in the browser, if design asks for it",
       "detail": "Design Release 2.1 writes the region code prefix the moment the user picks a country, and shows an empty prefix slot before any country is chosen. The 9 October afternoon ruling builds the origin page now with the server-side prefix DR1 shipped and puts the live prefix and the empty slot to design as question 2. If design asks for them, with JavaScript the prefix follows the picked country with no submission; if design drops them, this row is dropped.",
       "acceptanceCriteria": [
-        "With JavaScript, picking France in the country box makes the region code prefix 'FR', and then picking Netherlands makes it 'NL', with no form submission (prototype:dr2-1-source prototype-dr2-1-source-p2-047, p2-048; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-049, p2-050; conflicts:c-008)",
-        "With JavaScript, before any country is chosen, the revealed region code box shows an empty prefix in front of it, which fills in once a country is picked (prototype:dr2-1-source prototype-dr2-1-source-p2-052; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-048; conflicts:c-008)",
-        "Without JavaScript, the prefix still shows the saved or submitted country's code once the page is re-shown, as DR1 shipped it (document:dr1-parity-backlog document-dr1-parity-backlog-p4-008; trace:animals-fit trace-animals-fit-p5-026; conflicts:c-008)"
+        "With JavaScript, picking France in the country box makes the region code prefix 'FR', and then picking Netherlands makes it 'NL', with no form submission (prototype:dr2-1-source prototype-dr2-1-source-p2-047, p2-048; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-049, p2-050; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-057; conflicts:c-008)",
+        "With JavaScript, before any country is chosen, the revealed region code box shows an empty prefix in front of it, which fills in once a country is picked (prototype:dr2-1-source prototype-dr2-1-source-p2-052; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-048; trace:e2e trace-e2e-p4-034; conflicts:c-008)",
+        "Without JavaScript, the prefix still shows the saved or submitted country's code once the page is re-shown, as DR1 shipped it (document:dr1-parity-backlog document-dr1-parity-backlog-p4-002; trace:animals-fit trace-animals-fit-p5-026; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-056; conflicts:c-008)"
       ],
       "requirements": ["req-040", "req-041"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p2-047, p2-048, p2-052" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p1-032" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p2-048, p2-049, p2-050, p2-054-m1" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p4-002, p4-005 to p4-010" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-064, p1-065" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p4-002, p4-005 to p4-007, p4-009, p4-010" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-056, p1-057" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p5-024, p5-025, p5-026" },
         { "source": "trace:e2e", "ref": "trace-e2e-p4-032, p4-034" }
       ],
@@ -424,17 +326,20 @@
       "status": "blocked",
       "gate": null,
       "openQuestions": [
-        "Design question 2 (region code): design must say whether the region code prefix should follow the picked country live in the browser, with an empty prefix slot before a country is chosen. Built as design says, or dropped if design drops it."
+        "Design question 2 (region code): design must say whether the region code prefix should follow the picked country live in the browser, with an empty prefix slot before a country is chosen. Built as design says, or dropped if design drops it. No safe default: the ruling puts it to design."
       ],
       "notes": [
-        "New row: req-040 and req-041 leave inc-010 because the afternoon ruling (c-008's new outcome, p1-064, p1-065) makes them one waiting-on-design increment on design question 2. Combined because both answer the same question on the same box. Depends on inc-010 (the finished origin page and its baseline, which this row refreshes if built). Live animals only in this programme's built pages; the germinal set's copy of the origin page takes it when built. Plants has no region code question."
+        "Keeps inc-190. Combined because req-040 and req-041 answer the same design question on the same box. Depends on inc-010 (the finished origin page and its baseline, which this row refreshes if built). Live animals only among this programme's built pages; the germinal set's copy of the origin page takes it when built. Plants has no region code question.",
+        "The old no-JavaScript criterion cited document-dr1-parity-backlog-p4-008, which is outside this area's slices; it is re-cited to p4-002 and the ruling's p1-056."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
-        "tests:tests/animals/e2e/pages/origin.spec.ts"
+        "frontend:src/client/javascripts/enhancements",
+        "tests:tests/animals/e2e/enhancements"
       ],
-      "shared": [],
-      "existingRow": null
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin"
+      ],
+      "existingRow": "inc-190"
     }
   ],
   "unobservable": [],

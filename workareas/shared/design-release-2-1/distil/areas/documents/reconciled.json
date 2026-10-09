@@ -92,10 +92,11 @@
     {
       "id": "req-481",
       "statement": "When the trader came to the page from the review page, or is amending a submitted notification, the 'Back' link goes to the review page instead of the overview.",
-      "why": "Design Release 2.1 sends the trader back where they came from; the real page always goes to the overview.",
+      "why": "Design Release 2.1 sends the trader back where they came from, and Sam's templates ruling confirms Back links follow the context a page was opened in; the real page always goes to the overview.",
       "claims": [
         "prototype-dr2-1-source-p10-010",
-        "repo-frontend-p8-005"
+        "repo-frontend-p8-005",
+        "ruling-sam-2026-10-09-templates-p1-049"
       ],
       "status": "adopted",
       "delta": "change",
@@ -532,7 +533,7 @@
     {
       "id": "req-504",
       "statement": "The third field is a single text input labelled 'Date of issue', typed as day/month/year and enhanced by the MOJ date picker: a 'Choose date' button opens a calendar dialog with Select and Close.",
-      "why": "The design and the real page agree, and the MoJ date picker is one of the accepted components (Sam's 9 October afternoon ruling). That ruling sends the germinal dates' calendar to design because MoJ advises against its picker for dates read from a document, but it scopes design question 12 to the germinal dates and accepts the documents page as distilled, so this existing picker, which enhances a typed text input that works without JavaScript, stays.",
+      "why": "The design and the real page agree, and the MoJ date picker is one of the accepted components (Sam's 9 October afternoon ruling, claim on accepted components). That ruling sends the calendar on the germinal dates to design (design question 12, req-253) because MoJ advises against its picker for dates read from a document, but it names only those germinal dates and says the documents theme stands as distilled, so this existing picker, which enhances a typed text input that works without JavaScript, stays.",
       "claims": [
         "prototype-dr2-1-source-p10-032",
         "prototype-dr2-1-source-p10-033",
@@ -542,10 +543,9 @@
         "repo-perftests-p1-038",
         "repo-perftests-p1-039",
         "repo-tests-p3-007",
-        "ruling-sam-2026-10-09-pm-p1-048",
-        "ruling-sam-2026-10-09-pm-p1-096",
+        "ruling-sam-2026-10-09-pm-p1-037",
+        "ruling-sam-2026-10-09-pm-p1-092",
         "ruling-sam-2026-10-09-pm-p2-051",
-        "ruling-sam-2026-10-09-pm-p2-052",
         "trace-animals-fit-p22-020",
         "trace-animals-fit-p22-022",
         "trace-animals-fit-p22-023",
@@ -682,8 +682,8 @@
         "repo-tests-p3-036",
         "repo-tests-p3-037",
         "repo-tests-p3-038",
+        "ruling-sam-2026-10-09-pm-p2-052",
         "ruling-sam-2026-10-09-pm-p2-053",
-        "ruling-sam-2026-10-09-pm-p2-054",
         "trace-animals-fit-p22-007",
         "trace-animals-fit-p23-069",
         "trace-animals-fit-p23-071",
@@ -865,12 +865,13 @@
     {
       "id": "req-516",
       "statement": "Without JavaScript the Attachment field is a plain visible file input, and a trader can attach and save a document end to end.",
-      "why": "A trader whose JavaScript does not run must still be able to attach a document; the end-to-end suite now proves it.",
+      "why": "A trader whose JavaScript does not run must still be able to attach a document, and Sam's 9 October afternoon ruling makes every page work fully without JavaScript; the end-to-end suite already proves it here.",
       "claims": [
         "document-dr1-parity-backlog-p5-025",
         "document-dr1-parity-backlog-p5-027",
         "repo-frontend-p8-096",
         "repo-tests-p3-028",
+        "ruling-sam-2026-10-09-pm-p1-033",
         "trace-animals-fit-p24-039",
         "trace-animals-fit-p24-062",
         "trace-e2e-p12-051"
@@ -1271,7 +1272,7 @@
     {
       "id": "req-533",
       "statement": "While a document is scanning, the page updates its status without the trader acting: with JavaScript it polls a JSON status endpoint every 3 seconds up to 10 times, updates settled rows in place, announces 'Document scan complete: the file is safe to use' or 'Document scan failed: a virus was found. Remove the file and try again.' in a polite live region, and redraws from the server once every scan settles; without JavaScript a 'Refresh virus scan status' link re-reads the status; after 10 attempts the hint 'Still checking some documents. Refresh again in a moment.' shows.",
-      "why": "A real scan takes time; the trader needs to see it finish. Design Release 2.1 fakes this with a timed call, which the real scan replaces.",
+      "why": "A real scan takes time; the trader needs to see it finish. Design Release 2.1 fakes this with a timed call, which the real scan replaces. The polling is the real service's own enhancement, not script written to copy the prototype, and the refresh link means nothing the trader needs is shown only by script, as Sam's 9 October afternoon ruling requires.",
       "claims": [
         "repo-frontend-p8-071",
         "repo-frontend-p8-072",
@@ -1289,6 +1290,8 @@
         "repo-tests-p3-025",
         "repo-tests-p3-026",
         "repo-tests-p3-027",
+        "ruling-sam-2026-10-09-pm-p1-033",
+        "ruling-sam-2026-10-09-pm-p1-036",
         "trace-animals-fit-p22-047",
         "trace-animals-fit-p22-048",
         "trace-animals-fit-p22-050",
@@ -1555,7 +1558,8 @@
         "ruling-sam-2026-10-09-p1-066",
         "ruling-sam-2026-10-09-p1-089",
         "ruling-sam-2026-10-09-p1-196",
-        "ruling-sam-2026-10-09-p1-198"
+        "ruling-sam-2026-10-09-p1-198",
+        "ruling-sam-2026-10-09-templates-p1-049"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1566,12 +1570,16 @@
     },
     {
       "id": "req-543",
-      "statement": "While a trader is creating a template, Upload documents is not offered: the template journey skips the page and its overview has no Documents task to follow. No guard on the page's own address is required.",
-      "why": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment, and Sam's 9 October ruling confirms a template never offers documents. The same ruling says the prototype's template URL guards are not required (claim 21; c-238).",
+      "statement": "While a trader is creating a template, Upload documents is not offered: the one journey's template mode skips the page and its overview has no Documents task to follow. The skip lives in the shared journey flow, not in a copied or forked template journey. No guard on the page's own address is required.",
+      "why": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment, and Sam's 9 October ruling confirms a template never offers documents and that the prototype's template URL guards are not required (c-238). His templates ruling makes template mode a way of walking the same pages, never copied or forked, and animals only; it says nothing to bring documents into a template, so the earlier, specific exclusion stands and is built inside that one journey.",
       "claims": [
         "prototype-dr2-1-source-p10-003",
         "ruling-sam-2026-10-09-p1-104",
-        "ruling-sam-2026-10-09-p1-105"
+        "ruling-sam-2026-10-09-p1-105",
+        "ruling-sam-2026-10-09-templates-p1-032",
+        "ruling-sam-2026-10-09-templates-p1-037",
+        "ruling-sam-2026-10-09-templates-p1-038",
+        "ruling-sam-2026-10-09-templates-p1-052"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1875,7 +1883,7 @@
     {
       "id": "req-1822",
       "statement": "The documents page keeps its address at the accompanying-documents slug within the notification's journey, with its JSON scan-status route and its file download beside it; acceptance criteria assert the page by its heading and destinations, not by a literal path.",
-      "why": "Sam's 9 October ruling overrules the move to upload-documents (claim 20): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes, and with the move dropped no documents row needs trade-imports-performance-tests.",
+      "why": "Sam's 9 October ruling overrules the move to upload-documents (claim 20): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes for the documents page (c-225).",
       "claims": [
         "repo-frontend-p8-001",
         "repo-perftests-p1-034",
@@ -1936,7 +1944,7 @@
     {
       "id": "req-1825",
       "statement": "The germinal-products set has its own documents page: a copy of the live-animals documents feature folder, taken after this programme's documents changes have landed in live-animals, served at the same slug within the germinal set's journey and behaving as every adopted documents requirement here says. It is one of the germinal set's pages, since only Additional details, CPH number and permanent address are left out of it; its end-to-end, accessibility and security specs sit under tests/animals/{e2e,a11y,security}/germinal-products/.",
-      "why": "Sam's 9 October ruling makes germinal products a sibling set whose pages are copies of their live-animals feature folders, taken after the live twin is built, with journey pages at the live-animals slugs (claims 1 to 3 and 15). Duplication is the app's architecture and is never weighed as a cost.",
+      "why": "Sam's 9 October ruling makes germinal products a sibling set whose pages are copies of their live-animals feature folders, taken after the live twin is built, with journey pages at the live-animals slugs (claims 1 to 3 and 15). Duplication is the app's architecture and is never weighed as a cost. The copy keeps the documents page's Date of issue picker: the afternoon ruling's design question 12 names only the germinal details dates (req-253), and it lets the documents theme stand as distilled.",
       "claims": [
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-011",
@@ -1946,7 +1954,9 @@
         "ruling-sam-2026-10-09-p1-016",
         "ruling-sam-2026-10-09-p1-017",
         "ruling-sam-2026-10-09-p1-018",
-        "ruling-sam-2026-10-09-p1-062"
+        "ruling-sam-2026-10-09-p1-062",
+        "ruling-sam-2026-10-09-pm-p1-092",
+        "ruling-sam-2026-10-09-pm-p2-051"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1954,17 +1964,21 @@
       "conflicts": []
     },
     {
-      "id": "req-documents-001",
+      "id": "req-1950",
       "statement": "The documents rows change the animals frontend (and the animals backend) only: the high-risk plants frontend takes no part of them, because it has no Upload documents page, no Documents task on its overview, no virus scan and no document-upload service.",
-      "why": "Sam's 9 October afternoon ruling has plants take a change in the same increment only where plants has the same page or behaviour, and a row with no plants equivalent leaves plants alone; the ITAHC and the animal document types are animals-only data that is never mirrored.",
+      "why": "Sam's 9 October afternoon ruling, and his templates ruling, have plants take a change in the same increment only where plants has the same page or behaviour, and a row with no plants equivalent leaves plants alone; the ITAHC and the animal document types are animals-only data that is never mirrored.",
       "claims": [
-        "ruling-sam-2026-10-09-pm-p3-001",
-        "ruling-sam-2026-10-09-pm-p3-003",
-        "ruling-sam-2026-10-09-pm-p3-011"
+        "ruling-sam-2026-10-09-pm-p3-013",
+        "ruling-sam-2026-10-09-pm-p3-015",
+        "ruling-sam-2026-10-09-pm-p3-017",
+        "ruling-sam-2026-10-09-pm-p3-022",
+        "ruling-sam-2026-10-09-templates-p1-044",
+        "ruling-sam-2026-10-09-templates-p1-046",
+        "repo-plantsfrontend-p9-087"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "The plants frontend on origin/main has no documents feature folder under sets/high-risk-plants, and its services doc puts file attachment out of scope (plants-common-mapping-2026-10-09.json, documents theme: all six rows animals only).",
+      "deltaNote": "repo-plantsfrontend-p9-087: the plants frontend's decisions ledger parks document uploads (d-046), with no documents collection, upload page, uploader route, virus-scan polling or document reference.",
       "conflicts": []
     }
   ],

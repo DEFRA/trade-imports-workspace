@@ -2,104 +2,159 @@
   "area": "layout-and-sign-in",
   "rows": [
     {
-      "title": "INS page titles follow the GOV.UK title pattern",
-      "detail": "Design Release 2.1 uses one browser title pattern on every page. The INS frontend's titles change from '<page title> | Import notification service' to '<page title> - Import notification service - GOV.UK', as the animals frontend's already read. The pattern lives in the INS frontend's shared layout, so one change gives every INS page the new title at once. Sam's 9 October afternoon ruling says this is not the blocked dashboard summary information and goes ahead now, on today's pages.",
+      "title": "Page titles on the INS front door and in plants follow the GOV.UK title pattern",
+      "detail": "Design Release 2.1 uses one browser title pattern on every page: the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', as the animals frontend's titles already read. The INS frontend and the high-risk plants frontend still read '<page title> | Import notification service'. The pattern lives in each frontend's shared layout, so one line in each gives every page there the new title at once. Sam's 9 October afternoon ruling says the INS titles are not the blocked dashboard summary information and go ahead now, on today's pages, and that a change to something plants also has changes plants in the same increment.",
       "acceptanceCriteria": [
-        "On the INS frontend, every page's browser title reads the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', such as 'Address book - Import notification service - GOV.UK' (repo:insfrontend repo-insfrontend-p4-001; prototype:dr2-1-source prototype-dr2-1-source-p1-086; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064; conflicts:c-146)",
+        "On the INS frontend, every page's browser title reads the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', such as 'Address book - Import notification service - GOV.UK' (repo:insfrontend repo-insfrontend-p4-001; trace:e2e trace-e2e-p15-004; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-083; conflicts:c-146)",
         "On an INS frontend page shown with validation errors, the browser title reads 'Error: ' followed by the same pattern, such as 'Error: Add address details - Import notification service - GOV.UK' (repo:insfrontend repo-insfrontend-p4-001)",
         "The INS frontend's error pages follow the same pattern, such as 'Page not found - Import notification service - GOV.UK' (trace:e2e trace-e2e-p15-004; repo:insfrontend repo-insfrontend-p4-001)",
-        "No INS frontend page's browser title contains ' | Import notification service' any more (trace:e2e trace-e2e-p15-004; repo:insfrontend repo-insfrontend-p4-001)"
+        "No INS frontend page's browser title contains ' | Import notification service' any more (trace:e2e trace-e2e-p15-004; repo:insfrontend repo-insfrontend-p4-001)",
+        "On the high-risk plants frontend, every page's browser title reads the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', such as the origin page's '<origin page title> - Import notification service - GOV.UK' (repo:plantsfrontend repo-plantsfrontend-p1-001; repo:frontend repo-frontend-p1-001; trace:animals-fit trace-animals-fit-p1-001; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-013, ruling-sam-2026-10-09-pm-p3-019)",
+        "On a high-risk plants page shown with validation errors, the browser title reads 'Error: ' followed by the same pattern, and plants' error pages read such as 'Page not found - Import notification service - GOV.UK' (repo:plantsfrontend repo-plantsfrontend-p1-001)",
+        "No high-risk plants page's browser title contains ' | Import notification service' any more (repo:plantsfrontend repo-plantsfrontend-p1-001; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-044)"
       ],
-      "requirements": ["req-1686"],
+      "requirements": ["req-1686", "req-2088"],
       "sources": [
         { "source": "repo:insfrontend", "ref": "repo-insfrontend-p4-001 (src/server/app/shared/layout.njk:18)" },
         { "source": "trace:e2e", "ref": "trace-e2e-p15-004" },
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-086" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-064" }
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-013, p3-017, p3-019, p3-083" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-044" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p1-001 (src/server/app/shared/layout.njk:24)" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p1-001" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p1-001" }
       ],
-      "repos": ["insfrontend", "tests"],
+      "repos": ["plantsfrontend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": [
-        "One thin slice: req-1686 is this area's only buildable change that stands on its own; every other adopted requirement here is already met (exists) and goes to the report. The pattern is one line of the INS frontend's shared layout, so the INS dashboard and address book rows assert it on their own pages rather than change it.",
-        "c-146 settles the home's own title as 'Dashboard - Import notification service - GOV.UK', which this pattern produces from today's 'Dashboard' page title; the ruling (claim 53) calls inc-127 the one ready row left in the ins-dashboard theme. The home's title (req-953) sits in inc-128 today, whose other requirements are blocked; the combiner may move req-953 here so the home's title lands now with the pattern.",
-        "The 'Error: ' prefix is kept from today's layout. The tests repo has no INS title assertion today, so the end-to-end proof of the pattern is new."
+      "notes": "Pass 2 combines the INS title pattern (req-1686) and the plants title pattern (req-2088): the ruling builds them in the same increment, and each is one line of a shared layout with the same proof. existingRow inc-127, which also holds req-953 (the INS home's own 'Dashboard - Import notification service - GOV.UK' title, from the dashboard-home area); the combiner keeps that criterion there. The 'Error: ' prefix is kept from today's layouts. The unit tests that assert the pipe pattern change with it (insfrontend shared/layout.test.js, common/helpers/errors.test.js, features/address-book/add/add.controller.test.js, features/reference-data-outage.test.js; plantsfrontend common/helpers/errors.test.js). The tests repo has no INS or plants title assertion today, so the end-to-end proof is new; the home's title is proved from the tests repo or the INS layout test, not from insfrontend features/dashboard/dashboard.fit.spec.js, which the split-off type-question-and-templates theme owns. Each shared layout is shared: that theme's navigation item (inc-152) also edits it.",
+      "touches": [
+        "insfrontend:src/server/app/shared/layout.test.js",
+        "insfrontend:src/server/common/helpers/errors.test.js",
+        "plantsfrontend:src/server/app/shared/layout.test.js",
+        "plantsfrontend:src/server/common/helpers/errors.test.js",
+        "tests:tests/ins/e2e/features/page-title.spec.ts",
+        "tests:tests/plants/e2e/features/page-title.spec.ts"
       ],
-      "touches": ["insfrontend:src/server/app/shared/layout.njk"],
-      "shared": ["insfrontend:src/server/app/shared/layout.njk", "insfrontend:src/server/app/shared/copy.en.js"],
+      "shared": [
+        "insfrontend:src/server/app/shared/layout.njk",
+        "plantsfrontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/app/features/address-book/add/add.controller.test.js",
+        "insfrontend:src/server/app/features/reference-data-outage.test.js"
+      ],
       "existingRow": "inc-127"
     },
     {
-      "title": "Every germinal products page carries the shared service chrome, pointed at the germinal set",
-      "detail": "Germinal products is its own sibling set beside live animals in the animals frontend, mounted at /germinal-products. Its pages carry the same chrome as live animals: the 'Import notification service' service navigation, the Alpha phase banner, the footer, the GOV.UK title pattern, section captions, back links, error summary and banners. The set-scoped parts resolve inside the germinal set: the service name and the Dashboard item go to the germinal set's own home, which is the set's own notification list (not a hand-off to the INS frontend), Dashboard stays current inside a germinal notification, and an error under /germinal-products is shown in the germinal set's chrome. The shared layout already resolves these per set, so this is mostly proof that the germinal set picks them up.",
+      "title": "The shared status strip reads 'Amend' for a notification being amended, in every set",
+      "detail": "Sam's 9 October afternoon ruling changes the shared status strip's tag for an AMEND notification from 'Amending' to 'Amend' in every set at once, live animals, germinal products and plants, in the same increment as the Amend bar with Cancel amend, because every set that amends needs it. The label lives once in each frontend's shared copy (the animals frontend's shared strip serves live animals and germinal products; plants keeps its own copy of the shared strip), so no plants-specific page work is needed. The notification list card's 'Amending' tag is not named by the ruling and stays as it is.",
       "acceptanceCriteria": [
-        "Every germinal products page shows the 'Import notification service' service navigation with the same items, in the same order, as a live-animals page shown at the same time (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-012; repo:frontend repo-frontend-p1-006, repo-frontend-p1-010)",
+        "While a live-animals notification is being amended, the status strip's yellow tag reads 'Amend', not 'Amending' (repo:frontend repo-frontend-p1-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-064, ruling-sam-2026-10-09-pm-p2-066; conflicts:c-311)",
+        "While a high-risk plants notification is being amended, its status strip's yellow tag reads 'Amend', not 'Amending' (repo:plantsfrontend repo-plantsfrontend-p1-030; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p3-060; conflicts:c-311)",
+        "With the service in Welsh, the strip's tag for a notification being amended reads 'Diwygio' in place of 'Wrthi’n diwygio', in animals and in plants (repo:plantsfrontend repo-plantsfrontend-p1-112; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066)",
+        "The notification list's card for a notification being amended still shows its 'Amending' tag (conflicts:c-311)",
+        "The end-to-end and security specs that read 'Amending' in the strip, including the security scan's amend walk, read 'Amend' and pass (repo:tests repo-tests-p6-116; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066)"
+      ],
+      "requirements": ["req-2061"],
+      "sources": [
+        { "source": "repo:frontend", "ref": "repo-frontend-p1-029 (src/server/app/shared/kit.js:42-45; copy.en.js:71)" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p1-030, repo-plantsfrontend-p1-112" },
+        { "source": "repo:tests", "ref": "repo-tests-p6-116" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-064, p2-066, p3-060" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "One slice. existingRow inc-122 (the Amend bar with Cancel amend), which already holds req-2061: the requirement itself says the label changes in the same increment as the bar, so the combiner merges these criteria into inc-122 rather than making a separate row. Decision: no source gives the Welsh for 'Amend'; the draft uses 'Diwygio' (the verb stem today's 'Wrthi’n diwygio' already uses), for the Welsh translation review to confirm. Decision: the germinal products set takes the label from the animals frontend's shared copy, so it needs no criterion of its own here; inc-122's germinal criterion holds once the germinal set amends. The list cards' 'Amending' comes from each dashboard feature's own copy, not the shared strip, so the dashboard controller tests and list specs that read 'Amending' stay. Specs to change: tests/animals/security/frontend-lifecycle.spec.ts, and the strip assertions in tests/animals/e2e/features/amend-resubmit.spec.ts, cancel-amend-ui.spec.ts, promoted-lifecycle.spec.ts, address-book/addresses-submit-freeze.spec.ts and tests/plants/e2e/features/review.spec.ts, where they read the strip and not a list card.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
+        "tests:tests/animals/security/frontend-lifecycle.spec.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts",
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
+        "tests:tests/animals/e2e/features/promoted-lifecycle.spec.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts",
+        "tests:tests/plants/e2e/features/review.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/shared/kit.js",
+        "plantsfrontend:src/server/app/shared/copy.en.js",
+        "plantsfrontend:src/server/app/shared/copy.cy.js",
+        "plantsfrontend:src/server/app/shared/kit.js"
+      ],
+      "existingRow": "inc-122"
+    },
+    {
+      "title": "The germinal products set carries the shared page chrome, resolved inside its own set",
+      "detail": "Sam's 9 October ruling makes germinal products its own sibling set beside live animals in the animals frontend, mounted at /germinal-products. Every germinal page carries the same chrome as live animals: the 'Import notification service' service navigation with the same items in the same order, the Alpha phase banner, the footer, the GOV.UK title pattern, section captions, back links, error summary and banners. The set-scoped parts resolve inside the germinal set: the service name and the Dashboard item go to /germinal-products, which renders the set's own notification list, Dashboard stays current inside a germinal notification, and an error under /germinal-products shows in the germinal set's chrome. The shared layout already resolves these by the request's mount prefix, so this is proof that the germinal set picks them up, not a shared change.",
+      "acceptanceCriteria": [
+        "Every germinal products page shows the 'Import notification service' service navigation with the same items, in the same order, as a live-animals page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-009; repo:frontend repo-frontend-p1-006, repo-frontend-p1-010)",
         "Every germinal products page shows the Alpha phase banner with its feedback link, and the footer, as live-animals pages do (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006; repo:frontend repo-frontend-p1-006)",
-        "Every germinal products page's browser title reads '<page title> - Import notification service - GOV.UK', with 'Error: ' in front when the page shows validation errors (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006; repo:frontend repo-frontend-p1-006)",
-        "Germinal products journey pages show the same section captions, back links, error summary and banners as the live-animals page they are copied from (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-009, ruling-sam-2026-10-09-p1-011)",
-        "On every germinal products page, the service name and the Dashboard item lead to the germinal set's own home, never to the live-animals home or the INS frontend (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-086; repo:frontend repo-frontend-p1-006, repo-frontend-p1-010; conflicts:c-314)",
-        "Dashboard is the current navigation item on the germinal set's home and on every page inside a germinal products notification (repo:frontend repo-frontend-p1-011; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011)",
-        "Opening an address under /germinal-products that does not exist shows 'Page not found' in the germinal set's chrome, with the service name leading to the germinal set's home (repo:frontend repo-frontend-p1-048-m1; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008)"
+        "Every germinal products page's browser title reads '<page title> - Import notification service - GOV.UK', with 'Error: ' in front when the page shows validation errors (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006; repo:frontend repo-frontend-p1-001)",
+        "Germinal products journey pages show the same section captions, back links, error summary and banners as the live-animals page each is copied from (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-009, ruling-sam-2026-10-09-p1-011)",
+        "On every germinal products page, the service name and the Dashboard item link to /germinal-products, never to /live-animals or the INS frontend (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-103; repo:frontend repo-frontend-p1-006, repo-frontend-p1-010; conflicts:c-314)",
+        "Dashboard is the current navigation item at /germinal-products and on every page under /germinal-products/notifications/ (repo:frontend repo-frontend-p1-011; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011)",
+        "Opening an address under /germinal-products that does not exist shows 'Page not found' in the germinal set's chrome, with the service name linking to /germinal-products (repo:frontend repo-frontend-p1-048-m1; repo:plantsfrontend repo-plantsfrontend-p1-098; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-008)"
       ],
       "requirements": ["req-1907"],
       "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006 to -p1-011" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-086, -p3-087" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-012" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p1-006, -p1-010, -p1-011, -p1-048-m1 (src/server/app/shared/layout.njk, paths.js; src/server/common/helpers/errors.js)" }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006 to p1-011" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-103, p3-104" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p1-001, p1-006, p1-010, p1-011, p1-048-m1" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p1-098" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": [
-        "Not a slice that stands apart: the chrome cannot be observed until the germinal set is mounted, and it needs the same set, gateway and mount as the set's skeleton row. It already sits in inc-176; the combiner should keep req-1907 there, merging these criteria with the germinal-products area's draft of inc-176 rather than making a separate row.",
-        "c-314 overrules ruling-sam-2026-10-09-p1-034: the germinal set's root renders its own list (ruling-sam-2026-10-09-pm-p3-086, -p3-087), so inc-176's criterion 'Visiting /germinal-products shows no notification list and sends the trader to the INS germinal products list' and its chrome wording 'the germinal set's home' as a hand-off must go. The list itself is inc-141's to build; these criteria hold only that the home links and current item resolve inside the set.",
-        "The shared layout, paths and error chrome already resolve per set (setBase, inDashboardSection, setIdForPath), so no shared file should need to change; if the plan finds one does, it is a journey-foundation change.",
-        "The Templates navigation item (ruling-sam-2026-10-09-templates-p1-012) comes from the shared layout, so 'same items in the same order as live animals' holds whether or not the templates row has landed."
-      ],
+      "notes": "Not a slice that stands apart: the chrome cannot be observed until the germinal set is mounted, and it needs the same set, gateway and mount as the set's first row. existingRow inc-176 already holds req-1907; the combiner keeps it there and merges these criteria with inc-176's, which already say the same. c-314 overrules the morning ruling's redirect of the set root to an INS list (ruling-sam-2026-10-09-p1-034), so no criterion here hands the trader on to the INS frontend; the list at the set root is inc-141's to build. The criterion 'the service name and Dashboard link to /germinal-products' is observable before inc-141 lands, from the link's href. The shared layout, paths and error chrome already resolve per set (setBase, inDashboardSection, setIdForPath), so no shared file should change; if the plan finds one does, it is a journey-foundation change. The germinal set's own service-navigation spec is a copy inside its set folder: live-animals' features/service-navigation.fit.spec.js belongs to the split-off type-question-and-templates theme and is not edited here.",
       "touches": [
         "frontend:src/server/app/sets/germinal-products",
-        "tests:tests/animals/e2e/germinal-products",
-        "tests:page-objects/germinal-products"
+        "frontend:src/server/app/routes-germinal-products.js",
+        "tests:tests/animals/e2e/features/germinal-products"
       ],
       "shared": [
+        "frontend:src/server/app/routes.js",
         "frontend:src/server/app/shared/layout.njk",
         "frontend:src/server/app/shared/paths.js",
-        "frontend:src/server/common/helpers/errors.js",
-        "frontend:src/config/nunjucks/context/context.js",
-        "tests:page-objects/shared/sets.ts"
+        "frontend:src/server/app/shared/set-context.js",
+        "frontend:src/server/common/helpers/errors.js"
       ],
       "existingRow": "inc-176"
     },
     {
-      "title": "The performance suite's readiness probe expects the INS home's new heading",
-      "detail": "The performance suite only starts a run once the stack is ready, and one of its six readiness probes signs in to the INS home and matches its main heading exactly. Design Release 2.1 changes that heading from 'Dashboard' to 'Import notification service' (c-146). Without this change every performance run would fail readiness after 300 seconds once the heading changes; with it too early, every run fails now. So the probe must change in the same increment that changes the home's heading, which waits with the rest of the overall home.",
+      "title": "The performance suite's INS readiness probe follows the INS home's new heading",
+      "detail": "The performance suite counts the INS frontend as ready only when '/' answers 200 signed in with the heading 'Dashboard'. When the INS home's main heading changes to 'Import notification service' with the overall home, the probe must change in the same increment, or every performance run's readiness fails after 300 seconds. The heading change names the overall home, which Sam's 9 October afternoon ruling blocks as summary information (c-146), so the probe waits with it.",
       "acceptanceCriteria": [
-        "The 'INS signed-in page' readiness probe passes when the INS home answers 200 to a signed-in trader with the main heading 'Import notification service' (repo:perftests repo-perftests-p2-040; conflicts:c-146)",
+        "The 'INS signed-in page' readiness probe passes when the INS home answers 200 to a signed-in trader with the main heading 'Import notification service' (repo:perftests repo-perftests-p2-040; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-075, ruling-sam-2026-10-09-pm-p3-076; conflicts:c-146)",
         "The 'address book read' readiness probe still passes only when the INS address book answers 200 with the heading 'Address book' (repo:perftests repo-perftests-p2-041)",
         "The stack still counts as ready only when one pass succeeds for all six probes; otherwise readiness fails after 300 seconds naming the probes that failed (repo:perftests repo-perftests-p2-042)"
       ],
       "requirements": ["req-1905"],
       "sources": [
-        { "source": "repo:perftests", "ref": "repo-perftests-p2-040, -p2-041, -p2-042 (src/k6/readiness.js)" }
+        { "source": "repo:perftests", "ref": "repo-perftests-p2-040, p2-041, p2-042 (src/k6/readiness.js)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-075, p3-076" }
       ],
-      "repos": ["perftests"],
+      "repos": ["insfrontend", "tests", "perftests"],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
       "openQuestions": [
-        "Waits on the INS home's heading change: Sam's 9 October rulings block the overall home's summary information, and c-146 holds the caption and h1 with it, so today's home keeps its 'Dashboard' h1. The probe changes only when Sam firms up and agrees the overall home's requirements and that area is re-distilled; nobody is named to do it or by when."
+        "Blocked: the INS home's 'Import notification service' heading names the overall home, which Sam's 9 October afternoon ruling blocks as summary information (c-146, inc-128). Who: whoever owns the INS dashboard's requirements must firm them up and agree them with Sam, then the dashboard area is re-distilled; until then the probe keeps 'Dashboard'."
       ],
-      "notes": [
-        "Not a slice that stands apart: on its own it is a layer split, since the probe's new heading can only pass once the INS home shows it, and changing the probe first breaks every performance run on main. It already sits in inc-128 with the heading change (req-954) and the k6 home check (req-1848); the combiner should keep req-1905 there, with perftests after tests in that row's repos.",
-        "req-1905 carries no blockedBy of its own, but the heading change it must land with does (req-954, req-1848), so this draft is blocked. inc-128 is still 'todo' in backlog.json while most of its requirements now carry blockedBy; that row should become blocked, keeping its title and pattern-only parts (req-953) for a ready row such as inc-127."
-      ],
+      "notes": "Not a slice that stands apart: changing the probe before the heading breaks every performance run on main, and the heading change alone breaks readiness, so it lands in the same increment. existingRow inc-128, which already holds req-1905 with the heading change; the combiner keeps it there, with perftests after tests in that row's repos. This draft's own code is perftests src/k6/readiness.js, which no split-off theme touches, so it is not split off. For the combiner: the heading change itself sits in insfrontend features/dashboard/template.njk and copy, which the split-off type-question-and-templates theme now touches; inc-128 will need that theme's code, which is the dashboard area's and the combiner's to settle when inc-128 is re-distilled.",
       "touches": ["perftests:src/k6/readiness.js"],
-      "shared": [],
+      "shared": [
+        "insfrontend:src/server/app/features/dashboard/template.njk",
+        "insfrontend:src/server/app/features/dashboard/copy"
+      ],
       "existingRow": "inc-128"
     }
   ],

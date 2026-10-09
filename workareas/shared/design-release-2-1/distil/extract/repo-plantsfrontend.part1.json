@@ -1,10 +1,10 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 1, shared layout, kit, save actions and copy. Read in full at repos/trade-imports-plants-frontend main (634849a1): src/server/app/shared/layout.njk (130 lines: head, title pattern, GOV.UK header, service navigation, phase banner, back link, recoverable-error and stale-action banners, journey strip, content column, footer), kit.js (316 lines: route auth, content surfaces, journey strip statuses, error summary and field error builders, exit/change/run next-target resolution, server-wide and per-set chrome, recoverable save, stale-action redirect, page GET/POST routes, date field), save-actions.njk (the three ending controls and when they show), section-caption.njk, error-summary.njk, error.njk, set-context.js (set mounts, path-to-set resolution, per-request set context, required seams), paths.js (route shapes and prefixed links), copy.js (locale resolution, English only), copy-leaves.js (copy leaf rule), copy.en.js and copy.cy.js (every shared string, with Welsh counterparts carried in each copy claim's note), sets/high-risk-plants/set.js (set id and base), journeys/linear/config.js (templates folder, layout, session cookie names) and routes-high-risk-plants.js (how the set mounts, configures its seams, guards entry and refuses to start incomplete). Covered: the layout and its blocks, every kit helper (the kit has date-field, error-summary and field-error helpers only; radios, summary rows and buttons come straight from GOV.UK macros in each page's own template, which is another part's), the save actions, the caption, error summary and error page templates, every shared copy string in both locales, and the set's id, base path, layout, cookies, mount and entry guard. No language toggle exists in the layout: recorded as a gap.",
+  "structure": "Part 1 read, in full, the 15 files of the shared chrome and the set's mount: src/server/app/shared/layout.njk (130 lines: GOV.UK template with head, pageTitle, header, service navigation, phase banner, back link, notification banners, journey strip, journeyContent block and footer), kit.js (316 lines: shared copy resolution, surfaces, journey strip, error summary and field error builders, exit/change/run navigation targets, base and server-wide view-model chrome, recoverable save, stale-action redirect, page route pair, date reading and date field builder), save-actions.njk (the save-and-continue / save-and-return / cancel controls), section-caption.njk, error-summary.njk, error.njk, set-context.js (219 lines: set mounts, path-to-set resolution, request set context, required seams), paths.js (route shapes and prefixed links), copy.js and copy-leaves.js (locale resolution and the copy-leaf convention), copy.en.js and copy.cy.js (every shared string and validator default, English and machine-draft Welsh), sets/high-risk-plants/set.js (set id and base), journeys/linear/config.js (templates folder, layout, session cookie names) and routes-high-risk-plants.js (113 lines: the set's plugin registration, set-context hooks, journey flow configuration, entry guard and route mount). It covered: the page chrome (title pattern, header, service navigation and its four signed-in items, alpha phase banner, back link, notification banners for recoverable errors and stale actions, journey strip, footer links), the absence of a language toggle and breadcrumbs, the kit's behaviours every page shares (error summary, inline errors, save-and-return to the overview, change-from-check-answers return, opening-run navigation, session auth on every page route, stale-action redirect, recoverable save, date field format), the save actions macro and its rule for which pages show the return controls, the section caption, error summary and error page templates, every shared copy string in English and its Welsh counterpart, the validator default messages, and the set's id, mount, URL shapes, layout, session cookie names, entry guard and boot-time configuration checks. Unit tests (*.test.js) were not read, as the partition excludes them. One lookup outside the read list (src/config/nunjucks/context/context.js, by grep) confirmed where the layout's addressBookUrl, activeNavigationItem and staleActionRejected values come from; claims resting on it are inferred and say so.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p1-001",
-      "statement": "Every page's browser title is the page title, a pipe, then the service name: '<page title> | Import notification service'.",
+      "statement": "Every page's browser title is the page title followed by ' | ' and the service name.",
       "kind": "copy",
       "ref": "src/server/app/shared/layout.njk:24",
       "quote": "{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} | {{ sharedCopy.layout.serviceName }}{% endblock %}",
@@ -13,259 +13,269 @@
     {
       "id": "repo-plantsfrontend-p1-002",
       "statement": "When a page shows an error summary, its browser title is prefixed with 'Error: '.",
-      "kind": "rule",
+      "kind": "copy",
       "ref": "src/server/app/shared/layout.njk:24; src/server/app/shared/copy.en.js:4",
-      "quote": "errorTitlePrefix: 'Error: '",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:5): 'Gwall: '"
+      "quote": "errorTitlePrefix: 'Error: ',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-003",
-      "statement": "The service name shown in the service navigation and the title is 'Import notification service'.",
+      "statement": "The service name shown in the chrome is 'Import notification service'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:3; src/server/app/shared/layout.njk:58",
-      "quote": "serviceName: 'Import notification service'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:4): 'Gwasanaeth hysbysu mewnforio'"
+      "ref": "src/server/app/shared/copy.en.js:3",
+      "quote": "serviceName: 'Import notification service',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-004",
       "statement": "The GOV.UK header's crown logo links to https://www.gov.uk/.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:27-31",
-      "quote": "homepageUrl: \"https://www.gov.uk/\"",
+      "ref": "src/server/app/shared/layout.njk:26-32",
+      "quote": "homepageUrl: \"https://www.gov.uk/\",",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-005",
-      "statement": "The service name in the service navigation links to the set's own dashboard (/high-risk-plants for this set), not the site root.",
+      "statement": "The page uses the GOV.UK service navigation component, showing the service name linked to the set's own dashboard (the home URL resolved inside the request's set, not '/').",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:57-59; src/server/app/shared/kit.js:215",
-      "quote": "serviceUrl: homeUrl",
-      "confidence": "verbatim",
-      "note": "kit.js base() sets homeUrl: dashboardPath(); layout comment says a hardcoded '/' had sent every set's users to the default set's dashboard."
+      "ref": "src/server/app/shared/layout.njk:57-62; src/server/app/shared/kit.js:212-215",
+      "quote": "serviceName: sharedCopy.layout.serviceName,\n    serviceUrl: homeUrl,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-006",
-      "statement": "The service navigation items appear only when the user is signed in; a signed-out user sees the service name alone.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/layout.njk:35-36",
-      "quote": "{% if userSession and userSession.isAuthenticated %}",
+      "statement": "A signed-in user sees four service navigation items, in this order: Dashboard, Address book, Manage account, Log out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:36-55; src/server/app/shared/copy.en.js:11-17",
+      "quote": "dashboard: 'Dashboard',\n      addressBook: 'Address book',\n      manageAccount: 'Manage account',\n      logOut: 'Log out'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-007",
-      "statement": "The first service navigation item is 'Dashboard', linking to the set's dashboard and marked active when the page is the dashboard.",
+      "statement": "A user who is not signed in sees no service navigation items, only the service name.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:38-42; src/server/app/shared/copy.en.js:13",
-      "quote": "text: sharedCopy.layout.serviceNavigation.dashboard,\n        href: homeUrl,\n        active: activeNavigationItem == \"dashboard\"",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:14): 'Dangosfwrdd'"
+      "ref": "src/server/app/shared/layout.njk:35-36",
+      "quote": "{% set navigationItems = [] %}\n  {% if userSession and userSession.isAuthenticated %}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-008",
-      "statement": "The second service navigation item is 'Address book', linking to an address book URL the page supplies.",
+      "statement": "The Dashboard navigation item links to the set's dashboard and is marked active when the page is in the dashboard section.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:43-46; src/server/app/shared/copy.en.js:14",
-      "quote": "text: sharedCopy.layout.serviceNavigation.addressBook,\n        href: addressBookUrl",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:15): 'Llyfr cyfeiriadau'. addressBookUrl is not set by kit.js base(); where it comes from is outside this part."
+      "ref": "src/server/app/shared/layout.njk:38-42",
+      "quote": "href: homeUrl,\n        active: activeNavigationItem == \"dashboard\"",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-009",
-      "statement": "The third service navigation item, 'Manage account', is a placeholder that links to '#' and goes nowhere: account management is not built.",
+      "statement": "The dashboard section, for the active navigation item, is the dashboard itself, the create-notification path and every path under /notifications/, so Dashboard stays highlighted on every notification page as well as the dashboard. Inferred because the layout's activeNavigationItem is computed outside this part (src/config/nunjucks/context/context.js) and is assumed to use inDashboardSection.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:17,47-50; src/server/app/shared/copy.en.js:15",
-      "quote": "{% set manageAccountUrl = \"#\" %}",
-      "confidence": "inferred",
-      "note": "Inferred from the '#' href. Welsh (copy.cy.js:16): 'Rheoli cyfrif'"
+      "ref": "src/server/app/shared/paths.js:21-24",
+      "quote": "export const inDashboardSection = (path) =>\n  path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
+      "confidence": "inferred"
     },
     {
       "id": "repo-plantsfrontend-p1-010",
-      "statement": "The fourth service navigation item, 'Log out', links to /auth/sign-out.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:16,51-54; src/server/app/shared/copy.en.js:16",
-      "quote": "{% set signOutUrl = \"/auth/sign-out\" %}",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:17): 'Allgofnodi'"
+      "statement": "The Address book navigation item links to the Import Notification Service's address book. Inferred: the layout reads addressBookUrl, which the nunjucks context fills from insAddressBookUrl() outside this part.",
+      "kind": "integration",
+      "ref": "src/server/app/shared/layout.njk:43-46",
+      "quote": "text: sharedCopy.layout.serviceNavigation.addressBook,\n        href: addressBookUrl",
+      "confidence": "inferred"
     },
     {
       "id": "repo-plantsfrontend-p1-011",
-      "statement": "On narrow screens the service navigation collapses behind a 'Menu' button.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/layout.njk:60; src/server/app/shared/copy.en.js:12",
-      "quote": "menuButton: 'Menu'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:13): 'Dewislen'"
+      "statement": "The Manage account navigation item is a placeholder: it links to '#' and goes nowhere. Inferred as not yet built from the '#' destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:17,47-50",
+      "quote": "{% set manageAccountUrl = \"#\" %}",
+      "confidence": "inferred"
     },
     {
       "id": "repo-plantsfrontend-p1-012",
-      "statement": "Every page shows a phase banner with a grey 'Alpha' tag, grey to match Design release 1 rather than the GDS default blue.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/layout.njk:67-70; src/server/app/shared/copy.en.js:7",
-      "quote": "{# Grey tag to match Design release 1; the GDS phase-banner example leaves the tag blue. #}",
-      "confidence": "verbatim",
-      "note": "Welsh tag (copy.cy.js:8): 'Alffa'"
+      "statement": "The Log out navigation item links to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:16,51-54",
+      "quote": "{% set signOutUrl = \"/auth/sign-out\" %}",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-013",
-      "statement": "The phase banner reads 'This is a new service. Help us improve it and give your feedback by email.', where 'give your feedback by email' is a link.",
+      "statement": "On narrow screens the service navigation's menu button reads 'Menu'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/layout.njk:66; src/server/app/shared/copy.en.js:8-9",
-      "quote": "bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:9-10): \"Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —\" and 'rhowch eich adborth drwy e-bost'"
+      "ref": "src/server/app/shared/layout.njk:60; src/server/app/shared/copy.en.js:12",
+      "quote": "menuButton: 'Menu',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-014",
-      "statement": "The phase banner's feedback link opens an email to APHAServiceDesk@apha.gov.uk, the same in both languages.",
+      "statement": "Every page shows a phase banner with an 'Alpha' tag styled grey (to match Design release 1), not the GDS default blue.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:67-71; src/server/app/shared/copy.en.js:7",
+      "quote": "{# Grey tag to match Design release 1; the GDS phase-banner example leaves the tag blue. #}\n  {{ govukPhaseBanner({\n    tag: { text: sharedCopy.layout.phaseBanner.tag, classes: \"govuk-tag--grey\" },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-015",
+      "statement": "The phase banner reads 'This is a new service. Help us improve it and give your feedback by email.', with 'give your feedback by email' as a link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:66; src/server/app/shared/copy.en.js:8-9",
+      "quote": "bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-016",
+      "statement": "The phase banner's feedback link is a mailto link to the APHA service desk, the same in both languages.",
       "kind": "integration",
       "ref": "src/server/app/shared/layout.njk:12-15",
       "quote": "{% set feedbackUrl = \"mailto:APHAServiceDesk@apha.gov.uk\" %}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-015",
-      "statement": "Pages have no breadcrumbs: a page offers one route back, the back link, and one route up, the service navigation, as Design release 1 does.",
+      "id": "repo-plantsfrontend-p1-017",
+      "statement": "Pages show no breadcrumbs: a page has one route backwards (the back link) and one route up (the service navigation), by Design release 1.",
       "kind": "rule",
       "ref": "src/server/app/shared/layout.njk:72-73",
       "quote": "{# No breadcrumbs: Design release 1 gives a page one route backwards — the\n     back link — and one route up, the service navigation. #}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-016",
-      "statement": "A 'Back' link shows above the content only when the page supplies a back link destination.",
+      "id": "repo-plantsfrontend-p1-018",
+      "statement": "A back link reading 'Back' appears above the content only when the page supplies a back link destination.",
       "kind": "behaviour",
       "ref": "src/server/app/shared/layout.njk:74-76; src/server/app/shared/copy.en.js:5",
-      "quote": "{% if backLink %}\n    {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:6): 'Yn ôl'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-017",
-      "statement": "Page content sits in a two-thirds-width column by default (the form surface); a page can choose the full-width display surface instead.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:81; src/server/app/shared/kit.js:26-29,221",
-      "quote": "form: 'govuk-grid-column-two-thirds',\n  display: 'govuk-grid-column-full'",
+      "quote": "{% if backLink %}\n    {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}\n  {% endif %}",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-018",
-      "statement": "When a save fails with a recoverable backend error, the page shows an alert banner titled 'There is a problem' saying 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
-      "kind": "copy",
-      "ref": "src/server/app/shared/layout.njk:82-88; src/server/app/shared/copy.en.js:33-36",
-      "quote": "title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:35-36): 'Mae problem' and \"Mae'n ddrwg gennym, mae problem gyda'r gwasanaeth. Mae eich atebion ar y dudalen hon wedi'u cadw. Rhowch gynnig arall arni ymhen ychydig funudau.\" The banner says answers 'have been saved' although it shows when a save failed; whether they are kept in the session is decided outside this part."
-    },
-    {
       "id": "repo-plantsfrontend-p1-019",
-      "statement": "A save that fails with a recoverable backend error is handed to the page's own failure handling instead of crashing; any other error, including a stale concurrency token, is passed on.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:225-237",
-      "quote": "if (isRecoverableBackendError(error)) {\n      return { failure: await onRecoverableFailure() }\n    }",
+      "statement": "Page content sits in a two-thirds column by default (the 'form' surface); a page can use the full-width 'display' surface instead.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:81; src/server/app/shared/kit.js:26-29",
+      "quote": "export const SURFACES = Object.freeze({\n  form: 'govuk-grid-column-two-thirds',\n  display: 'govuk-grid-column-full'\n})",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-020",
-      "statement": "When a page is submitted against a notification that has changed since the page was opened (a stale concurrency token), the user is redirected back to the same page with staleAction=1 added to the query.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:239-250,263",
-      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "statement": "When a save hits a recoverable backend failure, the page shows a notification banner titled 'There is a problem' with role alert, saying 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:82-88; src/server/app/shared/copy.en.js:33-36",
+      "quote": "recoverableError: {\n    title: 'There is a problem',\n    body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'\n  },",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-021",
-      "statement": "A rejected stale action shows an alert banner titled 'The notification has been updated' saying 'This notification was updated since you opened it. Review the details and try again.'",
-      "kind": "copy",
-      "ref": "src/server/app/shared/layout.njk:89-95; src/server/app/shared/copy.en.js:44-47",
-      "quote": "title: 'The notification has been updated',\n    body: 'This notification was updated since you opened it. Review the details and try again.'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:46-47): 'Mae’r hysbysiad wedi cael ei ddiweddaru' and 'Cafodd yr hysbysiad hwn ei ddiweddaru ers i chi ei agor. Adolygwch y manylion a rhowch gynnig arall arni.'"
+      "statement": "The recoverable-error banner says the answers on the page have been saved, although the banner is raised because the save to the backend failed. Recorded as an ambiguity: which store holds the answers when the backend save fails is not shown in this part.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:225-237; src/server/app/shared/copy.en.js:35",
+      "quote": "if (isRecoverableBackendError(error)) {\n      return { failure: await onRecoverableFailure() }\n    }",
+      "confidence": "inferred"
     },
     {
       "id": "repo-plantsfrontend-p1-022",
-      "statement": "Every journey page carries the notification's concurrency token, so the backend can refuse a save made against an out-of-date copy.",
-      "kind": "constraint",
-      "ref": "src/server/app/shared/kit.js:218",
-      "quote": "concurrencyToken: journey?.concurrencyToken ?? null,",
-      "confidence": "inferred",
-      "note": "Inferred from the token being put in every journey view model alongside the stale-token redirect in kit.js:239-250."
+      "statement": "A recoverable backend error during a save is handed to the page's own failure handler instead of failing the request; a stale concurrency token or any other error is not treated as recoverable.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:225-237",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      throw error\n    }\n    if (isRecoverableBackendError(error)) {",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-023",
-      "statement": "A journey page shows a strip above its content with the notification's status as a tag and its reference in bold.",
+      "statement": "When a form is submitted with a stale concurrency token (the notification changed since the page was opened), the user is redirected back to the same page with staleAction=1 added to its query string.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:96-101; src/server/app/shared/kit.js:59-65",
-      "quote": "{{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}\n          <span class=\"govuk-body govuk-!-font-weight-bold\">{{ journeyStrip.reference }}</span>",
-      "confidence": "verbatim",
-      "note": "The reference shown is the journey id (kit.js:62 reference: journey.journeyId)."
+      "ref": "src/server/app/shared/kit.js:239-250",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      const query = request.url.searchParams\n      query.set('staleAction', '1')\n      return h.redirect(`${request.path}?${query.toString()}`)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-024",
-      "statement": "A draft notification's strip shows a blue 'Draft' tag.",
+      "statement": "A page reached with the stale-action flag shows a notification banner (role alert) titled 'The notification has been updated' saying 'This notification was updated since you opened it. Review the details and try again.'",
       "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:41-44; src/server/app/shared/copy.en.js:66",
-      "quote": "text: sharedCopy.journeyStrip.draft,\n    classes: 'govuk-tag--blue'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:67): 'Drafft'"
+      "ref": "src/server/app/shared/layout.njk:89-95; src/server/app/shared/copy.en.js:44-47",
+      "quote": "staleActionRejected: {\n    title: 'The notification has been updated',\n    body: 'This notification was updated since you opened it. Review the details and try again.'\n  },",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-025",
-      "statement": "A submitted notification's strip shows a green 'Submitted' tag.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:45-48; src/server/app/shared/copy.en.js:67",
-      "quote": "text: sharedCopy.journeyStrip.submitted,\n    classes: 'govuk-tag--green'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:68): \"Wedi'i gyflwyno\""
+      "statement": "Every journey page carries the notification's concurrency token in its view model, so a submit can be checked against the version the user saw.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:218",
+      "quote": "concurrencyToken: journey?.concurrencyToken ?? null,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-026",
-      "statement": "A notification being amended shows a yellow 'Amending' tag in its strip.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:49-52; src/server/app/shared/copy.en.js:68",
-      "quote": "text: sharedCopy.journeyStrip.amend,\n    classes: 'govuk-tag--yellow'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:69): 'Wrthi’n diwygio'"
+      "statement": "A page that belongs to a notification shows a journey strip above its content: a status tag and the notification reference in bold.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:96-101; src/server/app/shared/kit.js:59-65",
+      "quote": "{{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}\n          <span class=\"govuk-body govuk-!-font-weight-bold\">{{ journeyStrip.reference }}</span>",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-027",
-      "statement": "A deleted notification's strip shows a grey 'Deleted' tag.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/kit.js:53-56; src/server/app/shared/copy.en.js:69",
-      "quote": "text: sharedCopy.journeyStrip.deleted,\n    classes: 'govuk-tag--grey'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:70): \"Wedi'i ddileu\""
+      "statement": "The reference shown in the journey strip is the notification's journey id.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:62",
+      "quote": "reference: journey.journeyId,",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-028",
-      "statement": "The footer's first meta link is 'Privacy', linking to https://www.gov.uk/help/privacy-notice.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:111-114; src/server/app/shared/copy.en.js:19",
-      "quote": "href: \"https://www.gov.uk/help/privacy-notice\",\n          text: sharedCopy.layout.footer.privacy",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:20): 'Preifatrwydd'. Links to the generic GOV.UK page, not a service-specific notice."
+      "statement": "The journey strip's status tag reads 'Draft' in blue for a draft notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:41-44; src/server/app/shared/copy.en.js:66",
+      "quote": "[DRAFT]: {\n    text: sharedCopy.journeyStrip.draft,\n    classes: 'govuk-tag--blue'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-029",
-      "statement": "The footer's second meta link is 'Cookies', linking to https://www.gov.uk/help/cookies.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:115-118; src/server/app/shared/copy.en.js:20",
-      "quote": "href: \"https://www.gov.uk/help/cookies\",\n          text: sharedCopy.layout.footer.cookies",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:21): 'Cwcis'"
+      "statement": "The journey strip's status tag reads 'Submitted' in green for a submitted notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:45-48; src/server/app/shared/copy.en.js:67",
+      "quote": "[SUBMITTED]: {\n    text: sharedCopy.journeyStrip.submitted,\n    classes: 'govuk-tag--green'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-030",
-      "statement": "The footer's third meta link is 'Accessibility statement', linking to https://www.gov.uk/help/accessibility-statement.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk:119-122; src/server/app/shared/copy.en.js:21",
-      "quote": "href: \"https://www.gov.uk/help/accessibility-statement\",\n          text: sharedCopy.layout.footer.accessibility",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:22): 'Datganiad hygyrchedd'"
+      "statement": "The journey strip's status tag reads 'Amending' in yellow for a notification being amended.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:49-52; src/server/app/shared/copy.en.js:68",
+      "quote": "[AMEND]: {\n    text: sharedCopy.journeyStrip.amend,\n    classes: 'govuk-tag--yellow'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-031",
+      "statement": "The journey strip's status tag reads 'Deleted' in grey for a deleted notification.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:53-56; src/server/app/shared/copy.en.js:69",
+      "quote": "[DELETED]: {\n    text: sharedCopy.journeyStrip.deleted,\n    classes: 'govuk-tag--grey'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-032",
+      "statement": "The footer shows a 'Privacy' link to https://www.gov.uk/help/privacy-notice.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:111-114; src/server/app/shared/copy.en.js:19",
+      "quote": "href: \"https://www.gov.uk/help/privacy-notice\",\n          text: sharedCopy.layout.footer.privacy",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-033",
+      "statement": "The footer shows a 'Cookies' link to https://www.gov.uk/help/cookies, the generic GOV.UK page rather than a service cookies page.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:115-118; src/server/app/shared/copy.en.js:20",
+      "quote": "href: \"https://www.gov.uk/help/cookies\",\n          text: sharedCopy.layout.footer.cookies",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-034",
+      "statement": "The footer shows an 'Accessibility statement' link to https://www.gov.uk/help/accessibility-statement, the generic GOV.UK page rather than a service accessibility statement.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:119-122; src/server/app/shared/copy.en.js:21",
+      "quote": "href: \"https://www.gov.uk/help/accessibility-statement\",\n          text: sharedCopy.layout.footer.accessibility",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-035",
       "statement": "Every page carries a CSRF token in a meta tag in its head.",
       "kind": "non-functional",
       "ref": "src/server/app/shared/layout.njk:20",
@@ -273,55 +283,151 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-032",
-      "statement": "Every page loads the service's own stylesheet and its client-side script as an ES module.",
-      "kind": "non-functional",
-      "ref": "src/server/app/shared/layout.njk:21,129",
-      "quote": "<script type=\"module\" src=\"{{ getAssetPath('application.js') }}\"></script>",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-033",
-      "statement": "The service always renders in English: there is no language toggle in the layout, and every copy lookup resolves 'en' because no locale selection is wired yet.",
+      "id": "repo-plantsfrontend-p1-036",
+      "statement": "There is no language toggle: the layout renders none, and every call site resolves English copy because no locale selection (cookie or toggle) is wired yet. Looked in layout.njk and copy.js.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/copy.js:9-11,17-18; src/server/app/shared/layout.njk (no toggle)",
+      "ref": "src/server/app/shared/copy.js:9-11; src/server/app/shared/layout.njk",
       "quote": "Every call site resolves `en` because no locale toggle is wired yet — locale\n * selection (cookie, language toggle) plugs in via the `locale` argument.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-034",
-      "statement": "The layout has no language toggle for switching between English and Welsh; the partition's cover list expects one, and the layout file is silent on it.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/layout.njk (whole file, 130 lines)",
-      "quote": "",
-      "confidence": "gap"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-035",
-      "statement": "Every Welsh shared string is a machine draft not reviewed by a translator, and must not be shown to users without Welsh Language Standards sign-off.",
-      "kind": "constraint",
-      "ref": "src/server/app/shared/copy.cy.js:1",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-036",
-      "statement": "English and Welsh copy bundles are kept structure-identical, and an unknown locale falls back to English.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/copy.js:7-9,17-18",
-      "quote": "Both locale bundles\n * exist and `copy-parity.test.js` keeps them structure-identical",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-plantsfrontend-p1-037",
-      "statement": "Every copy string must be non-empty (or a function that builds the string from parameters); an empty or blank copy value is not allowed.",
+      "statement": "Copy for an unknown locale falls back to English.",
       "kind": "rule",
-      "ref": "src/server/app/shared/copy-leaves.js:16-19",
-      "quote": "typeof value === 'function' ||\n  (typeof value === 'string' && value.trim().length > 0)",
+      "ref": "src/server/app/shared/copy.js:17-18",
+      "quote": "export const copyFor = (locales, locale = DEFAULT_LOCALE) =>\n  locales[locale] ?? locales[DEFAULT_LOCALE]",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-038",
+      "statement": "Every copy module has an English and a Welsh bundle with identical structure; all Welsh copy is a machine draft not reviewed by a translator and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy.cy.js:1; src/server/app/shared/copy.js:6-9",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-039",
+      "statement": "A copy value must be either a non-blank string or a function that builds a string from parameters; an empty or blank string is not valid copy.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/copy-leaves.js:16-19",
+      "quote": "export const isCopyLeaf = (value) =>\n  typeof value === 'function' ||\n  (typeof value === 'string' && value.trim().length > 0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-040",
+      "statement": "A page with validation errors shows a GOV.UK error summary titled 'There is a problem', with one entry per field error.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:85-98; src/server/app/shared/error-summary.njk; src/server/app/shared/copy.en.js:30-32",
+      "quote": "errorSummary: {\n    title: 'There is a problem'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-041",
+      "statement": "Each error summary entry links to its field on the same page (#field) by default; a page may make entries link somewhere else, such as another page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:69,76-78,96",
+      "quote": "errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-042",
+      "statement": "The error summary takes focus when it appears, unless the page renders it without the user having just been refused, in which case focus stays where it is.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:79-81,95",
+      "quote": "@param {boolean} [options.disableAutoFocus] - keep the caret where it is\n * instead of moving it to the summary. Set it on a page that renders the\n * summary without the user having just been refused.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-043",
+      "statement": "No error summary is shown when there are no field errors.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:89-92; src/server/app/shared/error-summary.njk:3-5",
+      "quote": "if (entries.length === 0) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-044",
+      "statement": "A field with an error shows that error's message inline as the field's GOV.UK error message, the same text as its error summary entry.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:100-101",
+      "quote": "export const fieldError = (fieldErrors, field) =>\n  fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-045",
+      "statement": "A page that the overview (hub) links to directly ends with three controls in a button group: the primary button, a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:5-24",
+      "quote": "The rule: a page the hub links to directly ends with all three controls —\n   the primary, \"Save and return to overview\" and \"Cancel and return to\n   overview\" — so a trader can stop and leave from where the hub sent them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-046",
+      "statement": "A page reached from another page (not directly from the overview) ends with the primary button alone, and the trader leaves the way they came in.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/save-actions.njk:9-12",
+      "quote": "A page reached\n   from another page ends with the primary alone, and the trader leaves the way\n   they came in. Pass `showReturnControls = false` on those.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-047",
+      "statement": "The primary button reads 'Save and continue' unless the page supplies its own primary button.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/save-actions.njk:14; src/server/app/shared/copy.en.js:61",
+      "quote": "{{ govukButton(primary or { text: copy.saveAndContinue }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-048",
+      "statement": "'Save and return to overview' is a secondary button that submits the form with exit=hub; after saving, the user goes to the notification's overview (hub) page instead of the next page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:16-21; src/server/app/shared/kit.js:103-104,111-115",
+      "quote": "export const hubExitTarget = (request) =>\n  request.payload?.exit === 'hub' ? hubPath(request.params.journeyId) : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-049",
+      "statement": "'Cancel and return to overview' is a plain link to the notification's overview (hub) page that leaves without saving.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/save-actions.njk:22; src/server/app/shared/kit.js:216",
+      "quote": "<a class=\"govuk-link\" href=\"{{ hubHref }}\">{{ copy.cancelAndReturnToHub }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-050",
+      "statement": "The task list page is headed 'Overview' on screen; 'hub' is its internal name and never appears on screen.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/save-actions.njk:7-9",
+      "quote": "The\n   two return controls name the page they lead to, which is headed \"Overview\";\n   \"hub\" is the internal name for it and never appears on screen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-051",
+      "statement": "A page opened with ?change=1 (a change link from check your answers) returns the user to the check your answers page (slug notification-view) after saving, unless they chose to return to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:67,106-115",
+      "quote": "export const exitTarget = (request, fallback) =>\n  hubExitTarget(request) ??\n  (changeContext(request)\n    ? pagePath(request.params.journeyId, CYA_SLUG)\n    : fallback)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-052",
+      "statement": "While in a change context, links a page builds keep the ?change=1 flag so the user stays in the change-from-check-answers path.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:108-109",
+      "quote": "export const withChangeContext = (request, href) =>\n  changeContext(request) ? `${href}?change=1` : href",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-053",
+      "statement": "After 'Save and continue', a user in the opening run of a notification goes to the run's next target; otherwise they go to the next page in the current section.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:117-127",
+      "quote": "export const nextTarget = async (request, page, scope) =>\n  exitTarget(\n    request,\n    (await runTarget(request, page.id, scope)) ??\n      nextInSection(page.id, scope, request.params.journeyId)\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-054",
       "statement": "Every journey page route requires a signed-in session.",
       "kind": "constraint",
       "ref": "src/server/app/shared/kit.js:16,252-265",
@@ -329,505 +435,503 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-039",
-      "statement": "Each journey page answers GET (show) and POST (submit) at /notifications/{journeyId}/{slug} under the set's mount, for example /high-risk-plants/notifications/{journeyId}/{slug}.",
+      "id": "repo-plantsfrontend-p1-055",
+      "statement": "Each journey question page answers GET and POST at /notifications/{journeyId}/{slug} under the set's mount.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:252-265; src/server/app/shared/paths.js:7,15-16",
+      "ref": "src/server/app/shared/kit.js:252-265; src/server/app/shared/paths.js:7",
       "quote": "export const pageRoutePath = (slug) => `/notifications/{journeyId}/${slug}`",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-040",
-      "statement": "A notification's overview (hub) is at /notifications/{journeyId} under the set's mount.",
+      "id": "repo-plantsfrontend-p1-056",
+      "statement": "A notification's overview (hub) page is at /notifications/{journeyId} under the set's mount.",
       "kind": "behaviour",
       "ref": "src/server/app/shared/paths.js:8,17",
-      "quote": "export const hubPath = (journeyId) => `${setBase()}/notifications/${journeyId}`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-041",
-      "statement": "A new notification is created at /notifications under the set's mount.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:9,18",
-      "quote": "export const createPath = () => `${setBase()}/notifications`",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-042",
-      "statement": "The dashboard is the set's base path itself (/high-risk-plants).",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/paths.js:10,19; src/server/app/sets/high-risk-plants/set.js:7",
-      "quote": "export const dashboardPath = () => setBase()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-043",
-      "statement": "The dashboard section counts the dashboard path, the create path and every path beneath /notifications, so every notification page also counts as in the dashboard section.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/paths.js:21-24",
-      "quote": "path === dashboardPath() ||\n  path === createPath() ||\n  path.startsWith(`${createPath()}/`)",
-      "confidence": "verbatim",
-      "note": "What the dashboard section is used for (navigation highlight, guard) is outside this part."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-044",
-      "statement": "When a page has errors, an error summary titled 'There is a problem' lists each error, and each entry links by default to the field on the same page (#field).",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:69,85-98; src/server/app/shared/error-summary.njk:3-5; src/server/app/shared/copy.en.js:31",
-      "quote": "titleText: sharedCopy.errorSummary.title,\n    disableAutoFocus,\n    errorList: entries.map(([field, text]) => ({ text, href: href(field) }))",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:32): 'Mae problem'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-045",
-      "statement": "An error summary's entries can link to another page instead of a field on the same page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:76-78",
-      "quote": "Defaults to the in-page anchor `#key`; pass a builder when the entries link\n * somewhere else, such as another page.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-046",
-      "statement": "Focus moves to the error summary when it shows, except on a page that shows the summary without the user having just been refused, where focus stays put.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:79-81",
-      "quote": "keep the caret where it is\n * instead of moving it to the summary. Set it on a page that renders the\n * summary without the user having just been refused.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-047",
-      "statement": "No error summary shows when a page has no errors.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/kit.js:89-92; src/server/app/shared/error-summary.njk:3",
-      "quote": "if (entries.length === 0) {\n    return null\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-048",
-      "statement": "A field with an error shows that error message on the field itself.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:100-101",
-      "quote": "fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-049",
-      "statement": "Submitting a page with 'Save and return to overview' (exit=hub) sends the user to the notification's overview after saving.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:103-104,111-115",
-      "quote": "request.payload?.exit === 'hub' ? hubPath(request.params.journeyId) : null",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-050",
-      "statement": "A page opened from check your answers carries ?change=1, and saving it returns the user to the check answers page (slug notification-view) instead of the next page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:67,106-115",
-      "quote": "(changeContext(request)\n    ? pagePath(request.params.journeyId, CYA_SLUG)\n    : fallback)",
-      "confidence": "verbatim",
-      "note": "CYA_SLUG = 'notification-view' (kit.js:67)."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-051",
-      "statement": "Links followed while changing an answer keep ?change=1, so a chain of pages opened from check your answers still returns there.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:108-109",
-      "quote": "changeContext(request) ? `${href}?change=1` : href",
-      "confidence": "inferred",
-      "note": "Inferred from the helper appending ?change=1 to an href only when the request already carries it."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-052",
-      "statement": "After saving a page, the next destination is decided in this order: the overview if the user chose to return there; check your answers if they came from it; the next page of the opening run while the notification is still in its first run through; otherwise the next page in the same section.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/kit.js:111-127",
-      "quote": "exitTarget(\n    request,\n    (await runTarget(request, page.id, scope)) ??\n      nextInSection(page.id, scope, request.params.journeyId)\n  )",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-053",
-      "statement": "A journey page shows a caption naming the section of the journey it belongs to; a page the journey deliberately leaves uncaptioned has none.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:190-193,210",
-      "quote": "Supply it and the view\n * gains the `caption` naming the section of the journey the page belongs to;\n * omit it on a page the journey deliberately leaves uncaptioned.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-054",
-      "statement": "The section caption shows above the page heading in the large caption style, and is left out entirely when there is no caption text.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/section-caption.njk:1-3",
-      "quote": "{%- if text %}<span class=\"{{ classes }}\">{{ text }}</span>{% endif -%}",
-      "confidence": "verbatim",
-      "note": "Default class govuk-caption-l; a page may pass another."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-055",
-      "statement": "Every journey page within a notification knows the link to that notification's overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:216",
-      "quote": "hubHref: hasJourney ? hubPath(journeyId) : undefined,",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-056",
-      "statement": "A page outside every set, such as the sign-in error page, uses the shared layout with no journey strip, and its service name links to the site root, which redirects to the default set's dashboard.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:136-162",
-      "quote": "// The chrome's home link. A server-wide page belongs to no set, so it points\n  // at the root, which redirects to the default set.\n  homeUrl: '/',",
+      "quote": "export const hubRoutePath = () => '/notifications/{journeyId}'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-057",
-      "statement": "The error page takes the chrome of the set whose path the request was under, and the server-wide chrome when the path is under no set.",
+      "statement": "A new notification is created at /notifications under the set's mount.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:164-184",
-      "quote": "return setId\n    ? withSetContext(setId, () => base(title))\n    : serverWideBase(title)",
+      "ref": "src/server/app/shared/paths.js:9,18",
+      "quote": "export const createRoutePath = () => '/notifications'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-058",
-      "statement": "The error page shows a large heading and one paragraph of message inside the shared layout.",
+      "statement": "The set's dashboard is at the root of the set's mount.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:10,19",
+      "quote": "export const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-059",
+      "statement": "A page given its page identity shows a caption naming the section of the journey it belongs to; a page the journey deliberately leaves uncaptioned shows none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:190-193,210",
+      "quote": "@param {object} [options.page] - the page identity. Supply it and the view\n * gains the `caption` naming the section of the journey the page belongs to;\n * omit it on a page the journey deliberately leaves uncaptioned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-060",
+      "statement": "The section caption renders in the large caption style (govuk-caption-l) by default, and nothing renders when there is no caption text.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/section-caption.njk:1-3",
+      "quote": "{% macro sectionCaption(text, classes = \"govuk-caption-l\") %}\n  {%- if text %}<span class=\"{{ classes }}\">{{ text }}</span>{% endif -%}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-061",
+      "statement": "The shared error page shows a large heading and one paragraph of message, inside the service layout.",
       "kind": "behaviour",
       "ref": "src/server/app/shared/error.njk:1-7",
       "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n\n  <p class=\"govuk-body\">{{ message }}</p>",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-059",
-      "statement": "A page that does not exist shows the error page titled 'Page not found'.",
+      "id": "repo-plantsfrontend-p1-062",
+      "statement": "The error page text for a page that does not exist is 'Page not found'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:38",
       "quote": "notFound: 'Page not found',",
-      "confidence": "inferred",
-      "note": "Mapping to a 404 inferred from the key; the handler choosing it is outside this part. Welsh (copy.cy.js:39): 'Heb ddod o hyd i’r dudalen'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-060",
-      "statement": "A forbidden request shows the error page titled 'Forbidden'.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:39",
-      "quote": "forbidden: 'Forbidden',",
-      "confidence": "inferred",
-      "note": "Mapping to a 403 inferred from the key. Welsh (copy.cy.js:40): 'Gwaharddedig'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-061",
-      "statement": "An unauthenticated request for a protected page shows the error page titled 'You need to sign in to view this page'.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:40",
-      "quote": "unauthorized: 'You need to sign in to view this page',",
-      "confidence": "inferred",
-      "note": "Mapping to a 401 inferred from the key. Welsh (copy.cy.js:41): 'Mae angen i chi fewngofnodi i weld y dudalen hon'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-062",
-      "statement": "A bad request shows the error page titled 'There is a problem with your request'.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:41",
-      "quote": "badRequest: 'There is a problem with your request',",
-      "confidence": "inferred",
-      "note": "Mapping to a 400 inferred from the key. Welsh (copy.cy.js:42): 'Mae problem gyda’ch cais'"
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-063",
-      "statement": "Any other unexpected failure shows the error page titled 'Something went wrong'.",
+      "statement": "The error page text for a forbidden request is 'Forbidden'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:42",
-      "quote": "unexpected: 'Something went wrong'",
-      "confidence": "inferred",
-      "note": "Mapping to a 500 inferred from the key. Welsh (copy.cy.js:43): 'Aeth rhywbeth o’i le'"
+      "ref": "src/server/app/shared/copy.en.js:39",
+      "quote": "forbidden: 'Forbidden',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-064",
-      "statement": "When sign-in fails, the page is titled 'Sorry, we are unable to sign you in', headed 'Sorry, we are unable to sign you in.' and says 'Please try again', with 'try again' as a link.",
+      "statement": "The error page text for an unauthorised request is 'You need to sign in to view this page'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:24-29",
-      "quote": "title: 'Sorry, we are unable to sign you in',\n    heading: 'Sorry, we are unable to sign you in.',\n    bodyPrefix: 'Please',\n    signInLinkText: 'try again'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:26-29): \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi\", \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi.\", 'Rhowch', 'gynnig arall arni'. Where the link goes is set in the auth controller, outside this part."
+      "ref": "src/server/app/shared/copy.en.js:40",
+      "quote": "unauthorized: 'You need to sign in to view this page',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-065",
-      "statement": "A notification row action 'Copy as new' creates a new draft and confirms with 'Notification copied' and 'A new draft notification has been created.'",
+      "statement": "The error page text for a bad request is 'There is a problem with your request'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:49-53",
-      "quote": "text: 'Copy as new',\n      successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:51-53): 'Copïo fel un newydd', \"Hysbysiad wedi'i gopïo\", 'Mae hysbysiad drafft newydd wedi cael ei greu.' Where the action is offered is the dashboard part's."
+      "ref": "src/server/app/shared/copy.en.js:41",
+      "quote": "badRequest: 'There is a problem with your request',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-066",
-      "statement": "A notification row action 'Delete' confirms with 'Notification deleted' and 'The notification has been deleted.'",
+      "statement": "The error page text for an unexpected error is 'Something went wrong'.",
       "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:54-58",
-      "quote": "text: 'Delete',\n      successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:56-58): 'Dileu', \"Hysbysiad wedi'i ddileu\", \"Mae'r hysbysiad wedi cael ei ddileu.\""
+      "ref": "src/server/app/shared/copy.en.js:42",
+      "quote": "unexpected: 'Something went wrong'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-067",
-      "statement": "A question page the overview links to directly ends with three controls: the primary button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link, so the user can stop and leave from where the overview sent them.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/save-actions.njk:3-24; src/server/app/shared/copy.en.js:60-64",
-      "quote": "The rule: a page the hub links to directly ends with all three controls —\n   the primary, \"Save and return to overview\" and \"Cancel and return to\n   overview\" — so a trader can stop and leave from where the hub sent them.",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:63-64): \"Cadw a dychwelyd i'r trosolwg\", \"Canslo a dychwelyd i'r trosolwg\""
+      "statement": "The error page takes the chrome of the set whose mount its URL falls under (so its home link goes to that set's dashboard), or the server-wide chrome where the URL is under no set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:164-184",
+      "quote": "@returns {object} the chrome of the set whose mount the path falls under, or\n * the server-wide chrome where it falls under none.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-068",
-      "statement": "A page reached from another page, rather than straight from the overview, ends with the primary button alone, and the user leaves the way they came in.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/save-actions.njk:9-12,15",
-      "quote": "A page reached\n   from another page ends with the primary alone, and the trader leaves the way\n   they came in. Pass `showReturnControls = false` on those.",
+      "statement": "A page outside every set (such as the sign-in error page) has a home link to '/', which redirects to the default set, and shows no journey strip and no back link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:136-162",
+      "quote": "// The chrome's home link. A server-wide page belongs to no set, so it points\n  // at the root, which redirects to the default set.\n  homeUrl: '/',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-069",
-      "statement": "The primary button reads 'Save and continue' unless the page names its own primary button.",
+      "statement": "The sign-in failure page's title is 'Sorry, we are unable to sign you in' and its heading 'Sorry, we are unable to sign you in.' (with a full stop).",
       "kind": "copy",
-      "ref": "src/server/app/shared/save-actions.njk:14; src/server/app/shared/copy.en.js:61",
-      "quote": "{{ govukButton(primary or { text: copy.saveAndContinue }) }}",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:62): 'Cadw a pharhau'"
+      "ref": "src/server/app/shared/copy.en.js:24-26",
+      "quote": "title: 'Sorry, we are unable to sign you in',\n    heading: 'Sorry, we are unable to sign you in.',",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-070",
-      "statement": "'Save and return to overview' is a secondary button that submits the page's form with exit=hub, so the answers are saved before the user goes to the overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/save-actions.njk:16-21",
-      "quote": "text: copy.saveAndReturnToHub,\n        classes: \"govuk-button--secondary\",\n        name: \"exit\",\n        value: \"hub\"",
+      "statement": "The sign-in failure page's body reads 'Please try again', with 'try again' as the sign-in link.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:27-28",
+      "quote": "bodyPrefix: 'Please',\n    signInLinkText: 'try again'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-071",
-      "statement": "'Cancel and return to overview' is a plain link to the notification's overview, so following it leaves without saving the page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/save-actions.njk:22",
-      "quote": "<a class=\"govuk-link\" href=\"{{ hubHref }}\">{{ copy.cancelAndReturnToHub }}</a>",
-      "confidence": "inferred",
-      "note": "Not saving is inferred from it being a link, not a form submit."
+      "statement": "The shared copy names a 'Copy as new' notification action; once done it confirms 'Notification copied' with 'A new draft notification has been created.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:49-53",
+      "quote": "copy: {\n      text: 'Copy as new',\n      successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'\n    },",
+      "confidence": "verbatim",
+      "note": "Where the action is offered (the dashboard's row actions) is another part's slice."
     },
     {
       "id": "repo-plantsfrontend-p1-072",
-      "statement": "The notification's hub page is headed 'Overview' on screen; 'hub' is an internal name that never appears to users.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/save-actions.njk:8-9",
-      "quote": "The\n   two return controls name the page they lead to, which is headed \"Overview\";\n   \"hub\" is the internal name for it and never appears on screen.",
-      "confidence": "verbatim"
+      "statement": "The shared copy names a 'Delete' notification action; once done it confirms 'Notification deleted' with 'The notification has been deleted.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:54-58",
+      "quote": "delete: {\n      text: 'Delete',\n      successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'\n    }",
+      "confidence": "verbatim",
+      "note": "Where the action is offered (the dashboard's row actions) is another part's slice."
     },
     {
       "id": "repo-plantsfrontend-p1-073",
-      "statement": "A date is entered as one text input of about ten characters wide, in day/month/year form (d/m/yyyy), with a small bold label and an optional hint.",
-      "kind": "data",
-      "ref": "src/server/app/shared/kit.js:267-278,300-316",
-      "quote": "const match = /^(?<day>\\d{1,2})\\/(?<month>\\d{1,2})\\/(?<year>\\d{4})$/.exec(raw)",
+      "statement": "The default error for a choice that is not one of the allowed options is 'Select a valid option'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:81",
+      "quote": "oneOf: 'Select a valid option',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-074",
-      "statement": "A date that does not match d/m/yyyy is kept exactly as typed and shown back in the field; a blank date is treated as empty day, month and year.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:267-286",
-      "quote": "if (!match) {\n    return raw\n  }",
+      "statement": "The default error for an invalid postcode is 'Enter a valid postcode'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:82",
+      "quote": "postcode: 'Enter a valid postcode',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-075",
-      "statement": "A date field can use the MoJ date picker, limited to an earliest and latest date given as d/m/yyyy text.",
-      "kind": "behaviour",
-      "ref": "src/server/app/shared/kit.js:288-299,312-314",
-      "quote": "@param {string} [options.minDate] - `d/m/yyyy` TEXT, not a Date: it goes\n * verbatim into `data-min-date`, and the MoJ picker parses nothing else.",
-      "confidence": "verbatim",
-      "note": "The doc comment names arrivalWindow().minText as the source of the minimum."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-076",
-      "statement": "When no page-specific message is given, a choice that is not one of the options is refused with 'Select a valid option'.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:81",
-      "quote": "oneOf: 'Select a valid option',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:75): 'Dewiswch opsiwn dilys'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-077",
-      "statement": "When no page-specific message is given, an invalid postcode is refused with 'Enter a valid postcode'.",
-      "kind": "copy",
-      "ref": "src/server/app/shared/copy.en.js:82",
-      "quote": "postcode: 'Enter a valid postcode',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:76): 'Rhowch god post dilys'"
-    },
-    {
-      "id": "repo-plantsfrontend-p1-078",
-      "statement": "When no page-specific message is given, an invalid vehicle registration is refused with 'Enter a valid registration number'.",
+      "statement": "The default error for an invalid vehicle registration is 'Enter a valid registration number'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:83",
       "quote": "vehicleReg: 'Enter a valid registration number',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:77): 'Rhowch rif cofrestru dilys'"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-079",
-      "statement": "When no page-specific message is given, an invalid UK telephone number is refused with 'Enter a valid UK telephone number'.",
+      "id": "repo-plantsfrontend-p1-076",
+      "statement": "The default error for an invalid UK telephone number is 'Enter a valid UK telephone number'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:84",
       "quote": "ukPhone: 'Enter a valid UK telephone number',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:78): 'Rhowch rif ffôn dilys yn y DU'"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-080",
-      "statement": "When no page-specific message is given, an invalid date is refused with 'Enter a valid date'.",
+      "id": "repo-plantsfrontend-p1-077",
+      "statement": "The default error for an invalid date is 'Enter a valid date'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:85",
       "quote": "date: 'Enter a valid date',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:79): 'Rhowch ddyddiad dilys'"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-081",
-      "statement": "When no page-specific message is given, an invalid time is refused with 'Enter a real time, like 14:30'.",
+      "id": "repo-plantsfrontend-p1-078",
+      "statement": "The default error for an invalid time is 'Enter a real time, like 14:30'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:86",
       "quote": "time: 'Enter a real time, like 14:30',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:80): 'Rhowch amser go iawn, fel 14:30'"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-082",
-      "statement": "When no page-specific message is given, a value that is not a whole number is refused with 'Enter a whole number'.",
+      "id": "repo-plantsfrontend-p1-079",
+      "statement": "The default error for a value that is not a whole number is 'Enter a whole number'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:87",
       "quote": "wholeNumber: 'Enter a whole number',",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:81): 'Rhowch rif cyfan'"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-083",
-      "statement": "When no page-specific message is given, text over the maximum length is refused with 'Enter <max> characters or fewer'.",
+      "id": "repo-plantsfrontend-p1-080",
+      "statement": "The default error for text over a maximum length is 'Enter {max} characters or fewer'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:88",
       "quote": "maxLength: (max) => `Enter ${max} characters or fewer`,",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:82): `Rhowch ${max} nod neu lai`"
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-084",
-      "statement": "When no page-specific message is given, a number out of range is refused with 'Enter a number between <min> and <max>'.",
+      "id": "repo-plantsfrontend-p1-081",
+      "statement": "The default error for a number out of range is 'Enter a number between {min} and {max}'.",
       "kind": "copy",
       "ref": "src/server/app/shared/copy.en.js:89",
       "quote": "numberBetween: (min, max) => `Enter a number between ${min} and ${max}`",
-      "confidence": "verbatim",
-      "note": "Welsh (copy.cy.js:83): `Rhowch rif rhwng ${min} a ${max}`"
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-082",
+      "statement": "The validator default messages are only fallbacks: a page's own message, when it passes one, is shown instead.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/copy.en.js:73-79",
+      "quote": "Default validator messages — the fallbacks `lib/validate` composers use\n * when a call site passes no feature message.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-083",
+      "statement": "A date field is a single text input of width 10 with a small bold label, holding the date as day/month/year text (d/m/yyyy).",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/kit.js:280-316",
+      "quote": "classes: 'govuk-input--width-10',\n    label: { text: label, classes: 'govuk-label--s' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-084",
+      "statement": "A date field can carry an earliest and latest allowed date for the MoJ date picker, given as d/m/yyyy text.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/kit.js:288-294,312-313",
+      "quote": "@param {string} [options.minDate] - `d/m/yyyy` TEXT, not a Date: it goes\n * verbatim into `data-min-date`, and the MoJ picker parses nothing else.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-085",
-      "statement": "The high-risk plants set's id is 'high-risk-plants' and it is mounted at /high-risk-plants.",
+      "statement": "A submitted date is read as day, month and year when it matches d/m/yyyy (one or two digit day and month, four digit year); a blank answer is read as empty parts; any other text is kept as the user typed it so it can be shown back.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/kit.js:267-278",
+      "quote": "const match = /^(?<day>\\d{1,2})\\/(?<month>\\d{1,2})\\/(?<year>\\d{4})$/.exec(raw)\n  if (!match) {\n    return raw\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-086",
+      "statement": "The set's id is 'high-risk-plants' and it is mounted at /high-risk-plants, so every plants URL starts with /high-risk-plants.",
       "kind": "data",
       "ref": "src/server/app/sets/high-risk-plants/set.js:6-7; src/server/app/routes-high-risk-plants.js:55",
       "quote": "export const SET_ID = 'high-risk-plants'\nexport const SET_BASE = `/${SET_ID}`",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-086",
-      "statement": "The high-risk plants set renders its pages in the shared layout (shared/layout.njk), with its page templates under high-risk-plants/journeys/linear.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:1-2; src/server/app/routes-high-risk-plants.js:79",
-      "quote": "export const TEMPLATES = 'high-risk-plants/journeys/linear'\nexport const LAYOUT = 'shared/layout.njk'",
-      "confidence": "verbatim"
-    },
-    {
       "id": "repo-plantsfrontend-p1-087",
-      "statement": "The set keeps the notifications a user knows about in a session cookie named highRiskPlantsKnownJourneys.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:5",
-      "quote": "knownJourneys: 'highRiskPlantsKnownJourneys',",
+      "statement": "Links in plants pages carry the /high-risk-plants prefix, resolved inside the request's own set.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/paths.js:12-19",
+      "quote": "export const pagePath = (journeyId, slug) =>\n  `${setBase()}/notifications/${journeyId}/${slug}`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-088",
-      "statement": "The set records whether a notification is still in its opening run through the pages in a session cookie named highRiskPlantsOpeningRun.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:6",
-      "quote": "openingRun: 'highRiskPlantsOpeningRun',",
+      "statement": "The plants set renders its pages in the shared layout, shared/layout.njk.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:2; src/server/app/routes-high-risk-plants.js:79",
+      "quote": "export const LAYOUT = 'shared/layout.njk'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-089",
-      "statement": "The set keeps answers that steer the flow but are not saved to the notification in a session cookie named highRiskPlantsFlowOnlyAnswers.",
+      "statement": "The plants set keeps three session values under its own names: the notifications the user knows (highRiskPlantsKnownJourneys), the opening run (highRiskPlantsOpeningRun) and answers kept only for the flow (highRiskPlantsFlowOnlyAnswers).",
       "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:7; src/server/app/routes-high-risk-plants.js:76",
-      "quote": "flowOnlyAnswers: 'highRiskPlantsFlowOnlyAnswers'",
-      "confidence": "inferred",
-      "note": "That these answers are not saved to the notification is inferred from the name and the flowOnlyKeys passed to the journey flow (routes-high-risk-plants.js:76)."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-090",
-      "statement": "Before any page handler runs, every high-risk plants route passes an entry guard that may redirect the user elsewhere instead of showing the page.",
-      "kind": "behaviour",
-      "ref": "src/server/app/routes-high-risk-plants.js:89-102",
-      "quote": "const target = await withSetContext(SET_ID, () =>\n              journeyEntryGuardTarget(request, h)\n            )\n            return target ? h.redirect(target).takeover() : h.continue",
-      "confidence": "verbatim",
-      "note": "Where the guard sends the user is set in flow/entry-guard.js, outside this part."
-    },
-    {
-      "id": "repo-plantsfrontend-p1-091",
-      "statement": "The set's guards and context apply only to its own routes, so another set mounted on the same server never runs this set's guards.",
-      "kind": "constraint",
-      "ref": "src/server/app/routes-high-risk-plants.js:57-68",
-      "quote": "Without\n        // `{ sandbox: 'plugin' }` Hapi registers it server-wide, so a second\n        // set's routes would run this set's guards and the last registration\n        // would win.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:4-8; src/server/app/routes-high-risk-plants.js:87",
+      "quote": "knownJourneys: 'highRiskPlantsKnownJourneys',\n  openingRun: 'highRiskPlantsOpeningRun',\n  flowOnlyAnswers: 'highRiskPlantsFlowOnlyAnswers'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p1-092",
-      "statement": "The service refuses to start if the set leaves any required configuration unset, instead of falling back silently at request time.",
+      "id": "repo-plantsfrontend-p1-090",
+      "statement": "Before any plants page handler runs, the journey entry guard is checked; when it names a target, the user is redirected there instead of seeing the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:89-102",
+      "quote": "const target = await withSetContext(SET_ID, () =>\n              journeyEntryGuardTarget(request, h)\n            )\n            return target ? h.redirect(target).takeover() : h.continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-091",
+      "statement": "The plants journey flow is configured with its sections, task rows, row status, opening-run next target, flow-only keys, entry guard and section captions.",
       "kind": "constraint",
-      "ref": "src/server/app/routes-high-risk-plants.js:106-109; src/server/app/shared/set-context.js:164-219",
-      "quote": "// Last act of the registration: a seam this set never configured would\n        // otherwise answer with its fallback at request time, and three of\n        // those fallbacks are silent. Refusing here stops the server instead.",
+      "ref": "src/server/app/routes-high-risk-plants.js:71-80",
+      "quote": "configureJourneyFlow(SET_ID, {\n          sections,\n          taskRows,\n          rowStatus,\n          nextRunTarget,\n          flowOnlyKeys: FLOW_ONLY_KEYS,\n          entryGuardTarget,\n          sectionCaption: sectionCaptionOf,\n          layout: LAYOUT\n        })",
+      "confidence": "verbatim",
+      "note": "What each of these says is the flow and hub part's slice."
+    },
+    {
+      "id": "repo-plantsfrontend-p1-092",
+      "statement": "When plants answers are read back, references to parties that no longer resolve are left out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:25,82",
+      "quote": "configureAnswersForRead(SET_ID, withoutUnresolvedPartyRefs)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-093",
-      "statement": "At start-up the service checks that the set's obligations are pure and that every obligation has a fulfilment binding, and will not start otherwise.",
-      "kind": "constraint",
-      "ref": "src/server/app/routes-high-risk-plants.js:83-84",
-      "quote": "assertObligationPurity()\n        assertFulfilmentBindingCoverage()",
-      "confidence": "inferred",
-      "note": "That a failed assertion stops start-up is inferred from the assert naming; the checks live outside this part."
+      "statement": "Whether a plants notification is ready for check your answers is decided by the set's own section-status rule.",
+      "kind": "rule",
+      "ref": "src/server/app/routes-high-risk-plants.js:6,81",
+      "quote": "configureReadyForCheckYourAnswers(SET_ID, readyForCheckYourAnswers)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-094",
-      "statement": "When answers are read back for display, party references that no longer resolve are dropped.",
-      "kind": "behaviour",
-      "ref": "src/server/app/routes-high-risk-plants.js:25,82",
-      "quote": "configureAnswersForRead(SET_ID, withoutUnresolvedPartyRefs)",
-      "confidence": "inferred",
-      "note": "Inferred from the function name; its body is in parties/, another part's."
+      "statement": "The plants set saves notifications through the persistence records service and keeps its session through the persistence session service.",
+      "kind": "integration",
+      "ref": "src/server/app/routes-high-risk-plants.js:38-41,86-87",
+      "quote": "configureRecords(SET_ID, records)\n        configureSession(SET_ID, session, SESSION_COOKIE_NAMES)",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-095",
-      "statement": "The set mounts the journey flow (sections, task rows, row status, opening run, entry guard, section captions), its obligation set, its records and session persistence and a journey cookie as one plugin named 'high-risk-plants'.",
-      "kind": "integration",
-      "ref": "src/server/app/routes-high-risk-plants.js:51-105",
-      "quote": "configureJourneyFlow(SET_ID, {\n          sections,\n          taskRows,\n          rowStatus,\n          nextRunTarget,\n          flowOnlyKeys: FLOW_ONLY_KEYS,\n          entryGuardTarget,\n          sectionCaption: sectionCaptionOf,\n          layout: LAYOUT\n        })",
+      "statement": "The server refuses to start if the plants set has left a required configuration seam unconfigured, naming each missing seam and the call that would configure it.",
+      "kind": "non-functional",
+      "ref": "src/server/app/routes-high-risk-plants.js:106-109; src/server/app/shared/set-context.js:208-219",
+      "quote": "// Last act of the registration: a seam this set never configured would\n        // otherwise answer with its fallback at request time, and three of\n        // those fallbacks are silent. Refusing here stops the server instead.\n        assertSetConfigured(server, SET_ID)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p1-096",
-      "statement": "A request path belongs to the set whose mount it falls under, the longest mount winning; paths such as /health and /auth/* belong to no set.",
-      "kind": "rule",
-      "ref": "src/server/app/shared/set-context.js:15-41",
-      "quote": "@returns {string|undefined} the set id, or undefined where the path is\n * outside every mount — `/health`, `/auth/*`, or a genuinely unrouted URL.",
-      "confidence": "verbatim"
+      "statement": "At start-up the plants set checks that its obligations are pure and that every obligation has a fulfilment binding, and stops the server if not.",
+      "kind": "non-functional",
+      "ref": "src/server/app/routes-high-risk-plants.js:69-70,83-84",
+      "quote": "assertObligationPurity()\n        assertFulfilmentBindingCoverage()",
+      "confidence": "inferred",
+      "note": "That a failed assertion stops start-up is inferred from the assert naming and its place in plugin registration; the assert bodies are outside this part."
     },
     {
       "id": "repo-plantsfrontend-p1-097",
-      "statement": "An unrouted URL under the set's mount still gets that set's error page chrome, because the set is resolved from the path before routing.",
+      "statement": "The plants set's request guards are sandboxed to its own routes, so another set mounted on the same server does not run plants' guards.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:57-68",
+      "quote": "// Every extension below is sandboxed to this plugin's realm. Without\n        // `{ sandbox: 'plugin' }` Hapi registers it server-wide, so a second\n        // set's routes would run this set's guards and the last registration\n        // would win.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-098",
+      "statement": "Which set a request belongs to is read from its URL path against the registered mounts, the longest matching mount prefix winning; /health, /auth/* and unrouted URLs outside every mount belong to no set.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/set-context.js:15-41",
+      "quote": "Longest match wins, so a set mounted at `/high-risk-plants/extra` would beat\n * one at `/high-risk-plants` rather than depending on registration order.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-099",
+      "statement": "A set must be mounted at a prefix beginning with '/'; the server refuses to register one without it.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/set-context.js:6-11",
+      "quote": "if (!prefix?.startsWith('/')) {\n    throw new Error(`Set \"${setId}\" needs a mount prefix`)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-100",
+      "statement": "Every plants route, with its handler, pre-handlers and route extensions, runs inside the plants set's context.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:103-105; src/server/app/shared/set-context.js:147-162",
+      "quote": "server.route(\n          allRoutes.map((route) => routeWithSetContext(SET_ID, route))\n        )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-101",
+      "statement": "The plants page templates live under high-risk-plants/journeys/linear.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/config.js:1",
+      "quote": "export const TEMPLATES = 'high-risk-plants/journeys/linear'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-102",
+      "statement": "Welsh layout chrome: service name 'Gwasanaeth hysbysu mewnforio', error title prefix 'Gwall: ', back link 'Yn ôl'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:4-6",
+      "quote": "serviceName: 'Gwasanaeth hysbysu mewnforio',\n    errorTitlePrefix: 'Gwall: ',\n    back: 'Yn ôl',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-103",
+      "statement": "Welsh phase banner: tag 'Alffa', text 'Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —' and link 'rhowch eich adborth drwy e-bost'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:7-11",
+      "quote": "tag: 'Alffa',\n      bodyPrefix: \"Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —\",\n      feedbackLinkText: 'rhowch eich adborth drwy e-bost'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-104",
+      "statement": "Welsh service navigation: 'Dewislen' (menu), 'Dangosfwrdd' (dashboard), 'Llyfr cyfeiriadau' (address book), 'Rheoli cyfrif' (manage account), 'Allgofnodi' (log out).",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:12-18",
+      "quote": "menuButton: 'Dewislen',\n      dashboard: 'Dangosfwrdd',\n      addressBook: 'Llyfr cyfeiriadau',\n      manageAccount: 'Rheoli cyfrif',\n      logOut: 'Allgofnodi'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-105",
+      "statement": "Welsh footer links: 'Preifatrwydd' (privacy), 'Cwcis' (cookies), 'Datganiad hygyrchedd' (accessibility statement).",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:19-23",
+      "quote": "privacy: 'Preifatrwydd',\n      cookies: 'Cwcis',\n      accessibility: 'Datganiad hygyrchedd'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-106",
+      "statement": "Welsh sign-in failure copy: title \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi\", heading with a full stop, body 'Rhowch' with link 'gynnig arall arni'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:25-30",
+      "quote": "title: \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi\",\n    heading: \"Mae'n ddrwg gennym, ni allwn eich mewngofnodi.\",\n    bodyPrefix: 'Rhowch',\n    signInLinkText: 'gynnig arall arni'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-107",
+      "statement": "Welsh error summary title 'Mae problem', and the Welsh recoverable-error banner titled 'Mae problem' with its body.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:31-37",
+      "quote": "title: 'Mae problem'\n  },\n  recoverableError: {\n    title: 'Mae problem',\n    body: \"Mae'n ddrwg gennym, mae problem gyda'r gwasanaeth. Mae eich atebion ar y dudalen hon wedi'u cadw. Rhowch gynnig arall arni ymhen ychydig funudau.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-108",
+      "statement": "Welsh error page texts for not found, forbidden, unauthorised, bad request and unexpected errors.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:38-44",
+      "quote": "notFound: 'Heb ddod o hyd i’r dudalen',\n    forbidden: 'Gwaharddedig',\n    unauthorized: 'Mae angen i chi fewngofnodi i weld y dudalen hon',\n    badRequest: 'Mae problem gyda’ch cais',\n    unexpected: 'Aeth rhywbeth o’i le'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-109",
+      "statement": "Welsh stale-action banner title and body.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:45-48",
+      "quote": "title: 'Mae’r hysbysiad wedi cael ei ddiweddaru',\n    body: 'Cafodd yr hysbysiad hwn ei ddiweddaru ers i chi ei agor. Adolygwch y manylion a rhowch gynnig arall arni.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-110",
+      "statement": "Welsh notification action copy for copy-as-new and delete, with their success titles and bodies.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:49-60",
+      "quote": "text: 'Copïo fel un newydd',\n      successTitle: \"Hysbysiad wedi'i gopïo\",\n      successBody: 'Mae hysbysiad drafft newydd wedi cael ei greu.'\n    },\n    delete: {\n      text: 'Dileu',\n      successTitle: \"Hysbysiad wedi'i ddileu\",\n      successBody: \"Mae'r hysbysiad wedi cael ei ddileu.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-111",
+      "statement": "Welsh save actions: 'Cadw a pharhau' (save and continue), \"Cadw a dychwelyd i'r trosolwg\" (save and return to overview), \"Canslo a dychwelyd i'r trosolwg\" (cancel and return to overview).",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:61-65",
+      "quote": "saveAndContinue: 'Cadw a pharhau',\n    saveAndReturnToHub: \"Cadw a dychwelyd i'r trosolwg\",\n    cancelAndReturnToHub: \"Canslo a dychwelyd i'r trosolwg\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-112",
+      "statement": "Welsh journey strip statuses: 'Drafft', \"Wedi'i gyflwyno\", 'Wrthi’n diwygio', \"Wedi'i ddileu\".",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:66-71",
+      "quote": "draft: 'Drafft',\n    submitted: \"Wedi'i gyflwyno\",\n    amend: 'Wrthi’n diwygio',\n    deleted: \"Wedi'i ddileu\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-113",
+      "statement": "Welsh validator default messages for option, postcode, registration, UK phone, date, time, whole number, maximum length and number range.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:74-84",
+      "quote": "oneOf: 'Dewiswch opsiwn dilys',\n  postcode: 'Rhowch god post dilys',\n  vehicleReg: 'Rhowch rif cofrestru dilys',\n  ukPhone: 'Rhowch rif ffôn dilys yn y DU',\n  date: 'Rhowch ddyddiad dilys',\n  time: 'Rhowch amser go iawn, fel 14:30',\n  wholeNumber: 'Rhowch rif cyfan',\n  maxLength: (max) => `Rhowch ${max} nod neu lai`,\n  numberBetween: (min, max) => `Rhowch rif rhwng ${min} a ${max}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-114",
+      "statement": "The 'Save and return to overview' and 'Cancel and return to overview' labels come from the shared copy.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:60-64",
+      "quote": "saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-115",
+      "statement": "The layout gives no 'Skip to main content' override, cookie banner or service-specific cookies page; it relies on the GOV.UK template defaults. Looked in layout.njk: no cookie banner block is filled.",
       "kind": "behaviour",
-      "ref": "src/server/app/shared/set-context.js:83-102",
-      "quote": "the shared error page on an unrouted path under a set's mount, and the view\n * marshal step, which runs after the handler's context has gone. Resolving the\n * set from the path before routing covers both",
+      "ref": "src/server/app/shared/layout.njk",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-plantsfrontend-p1-116",
+      "statement": "The page loads the service stylesheet application.scss in its head and the application.js module script at the end of the body.",
+      "kind": "constraint",
+      "ref": "src/server/app/shared/layout.njk:21,129",
+      "quote": "<link href=\"{{ getAssetPath('stylesheets/application.scss') }}\" rel=\"stylesheet\">",
       "confidence": "verbatim"
     }
   ]

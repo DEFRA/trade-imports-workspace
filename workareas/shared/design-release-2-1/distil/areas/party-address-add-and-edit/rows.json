@@ -5,14 +5,14 @@
       "title": "The INS add page reached from a journey shows Design Release 2.1's 'Add address and contact details' page",
       "detail": "When a trader follows 'Add a new address' from a role picker, the INS front door's add page (reached through today's handshake, which stays: c-106) shows Design Release 2.1's page instead of today's 'Add address details' form. It is headed 'Add address and contact details' under the caption 'Add new address', keeps the trader oriented with the notification's status block, groups its fields under 'Address' and 'Contact details', relabels the name field, drops County, and gives every personal-data field its autocomplete hint (GOV.UK pattern and WCAG 1.3.5, c-109). Observable in the INS frontend's own fit suite (with the handshake query), on the compose stack and in CDP; in the animals frontend's stub mode there is no INS frontend and the pickers show no add link (c-106), so that environment is not named.",
       "acceptanceCriteria": [
-        "Following 'Add a new address' from any role picker opens a page headed 'Add address and contact details' whose browser title is 'Add address and contact details - Import notification service - GOV.UK' (prototype:dr2-1-source p8-079; trace:prototype-dr2-1 p7-002, p7-003; prototype:dr2-1-specs p3-058-m1; trace:e2e p9-055)",
+        "Following 'Add a new address' from any role picker opens a page headed 'Add address and contact details' whose browser title is 'Add address and contact details - Import notification service - GOV.UK' (prototype:dr2-1-source p8-079; trace:prototype-dr2-1 p7-002, p7-003; prototype:dr2-1-specs p3-058-m1; trace:e2e p9-055; repo:tests p5-027)",
         "The page shows the caption 'Add new address' above its heading (prototype:dr2-1-source p8-079; trace:prototype-dr2-1 p7-003; prototype:dr2-1-specs p3-059)",
         "The page shows the notification's status block: a 'Draft' tag and the notification's reference, as the journey's own pages do (trace:prototype-dr2-1 p7-004; trace:e2e p9-055-m1, p8-090)",
-        "The first section heading reads 'Address' (trace:prototype-dr2-1 p7-005; prototype:dr2-1-source p8-083)",
-        "The second section heading reads 'Contact details' (trace:prototype-dr2-1 p7-005; prototype:dr2-1-source p8-085)",
-        "The name field is labelled 'Name or organisation' (prototype:dr2-1-source p8-083; trace:prototype-dr2-1 p7-006; prototype:dr2-1-specs p3-060)",
+        "The first section heading reads 'Address' (trace:prototype-dr2-1 p7-005; prototype:dr2-1-source p8-083; trace:e2e p9-057)",
+        "The second section heading reads 'Contact details' (trace:prototype-dr2-1 p7-005; prototype:dr2-1-source p8-085; trace:e2e p9-057)",
+        "The name field is labelled 'Name or organisation' (prototype:dr2-1-source p8-083; trace:prototype-dr2-1 p7-006; prototype:dr2-1-specs p3-060; trace:e2e p9-058)",
         "The page has no County field (prototype:dr2-1-source p8-083; prototype:dr2-1-specs p3-060; trace:e2e p9-062)",
-        "The fields carry the browser autocomplete hints organization (name), address-line1, address-line2, address-level2 (town or city), postal-code, email and tel (repo:frontend p9-103-m1; trace:e2e p9-065; conflicts:c-109)"
+        "The fields carry the browser autocomplete hints organization (name), address-line1, address-line2, address-level2 (town or city), postal-code, email and tel (repo:frontend p9-103-m1; trace:e2e p9-065; trace:animals-fit p15-049 to p15-057; conflicts:c-109)"
       ],
       "requirements": ["req-634", "req-635", "req-636", "req-638", "req-639", "req-640", "req-642", "req-670"],
       "sources": [
@@ -20,6 +20,7 @@
         { "source": "trace:prototype-dr2-1", "ref": "p7-002 to p7-006" },
         { "source": "prototype:dr2-1-specs", "ref": "p3-058-m1, p3-059, p3-060" },
         { "source": "trace:e2e", "ref": "p8-090, p9-055, p9-055-m1, p9-057, p9-058, p9-062, p9-065" },
+        { "source": "trace:animals-fit", "ref": "p15-049 to p15-057" },
         { "source": "repo:frontend", "ref": "p9-103-m1" },
         { "source": "repo:tests", "ref": "p5-027" }
       ],
@@ -28,26 +29,26 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Unchanged from the last distil: none of its requirements changed. Combines the page-frame slice (heading, title, caption, status block) with the field-copy slice (section headings, name label, no county, autocomplete): both change the same INS add-details template in journey mode, so building them apart would repeat the same set-up and ladder. The page is the INS add-details step the address-book-add-and-edit area restructures: combiner, keep it depending on that area's add-details rows (inc-061, inc-062); only the status block is journey-specific. The address book record keeps its optional county, left empty (req-642 deltaNote).",
+      "notes": "Unchanged in substance from the last distil: none of its requirements changed. Combines the page-frame slice (heading, title, caption, status block) with the field-copy slice (section headings, name label, no county, autocomplete): both change the same INS add-details template in journey mode, so building them apart would repeat the same set-up and ladder. The page is the INS add-details step the address-book-add-and-edit area restructures: combiner, keep it depending on that area's add-details rows (inc-061, inc-062); only the status block is journey-specific, and it needs the notification's reference to reach the INS page through the handshake context. The address book record keeps its optional county, left empty (req-642 deltaNote).",
       "touches": [
         "insfrontend:src/server/app/features/address-book/add",
-        "tests:page-objects/ins/address-book",
-        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
+        "tests:page-objects/ins/address-book/add-page.ts"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/address-book/fields.js",
         "insfrontend:src/server/app/features/address-book/copy",
-        "insfrontend:src/server/app/features/address-book/handshake-context.js"
+        "insfrontend:src/server/app/features/address-book/fields.js",
+        "insfrontend:src/server/app/features/address-book/handshake-context.js",
+        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
       ],
       "existingRow": "inc-077"
     },
     {
       "title": "The journey add page splits origin-side and destination-side roles, with Design Release 2.1's country placeholder and messages",
-      "detail": "Design Release 2.1 lets place of origin and consignor addresses be anywhere, entered by hand with every field shown at once, while consignee, importer and place of destination addresses are UK addresses. Today the INS add page is the same for every role, with the full country list. This row makes the page reached from a role picker follow that split, gives the origin-side Country select the 'Select one' placeholder, and changes the required-field messages to Design Release 2.1's wording. Today's length and email-format checks stay alongside (c-108). Until the address lookup is a real feature the destination-side pages open on manual entry, with every field shown and no search (c-106, c-217, req-1830). Observable in the INS frontend's fit suite with the handshake query, on the compose stack and in CDP.",
+      "detail": "Design Release 2.1 lets place of origin and consignor addresses be anywhere, entered by hand with every field shown at once, while consignee, importer and place of destination addresses are UK addresses. Today the INS add page is the same for every role, with the full country list. This row makes the page reached from a role picker follow that split, gives the origin-side Country select the 'Select one' placeholder, and changes the required-field messages to Design Release 2.1's wording. Today's length and email-format checks stay alongside (c-108). Until the address lookup is a real feature the destination-side pages open on manual entry, with every field shown and no search (c-106, c-217, c-287, req-1830). Observable in the INS frontend's fit suite with the handshake query, on the compose stack and in CDP.",
       "acceptanceCriteria": [
         "Reached from the place of origin or consignor picker, the page shows every address and contact field at once and lets the trader choose any country the Country select offers (prototype:dr2-1-source p8-081, p8-090; trace:prototype-dr2-1 p7-027; prototype:dr2-1-specs p3-077)",
-        "Reached from the consignee, importer or place of destination picker, the page still opens with every address and contact field shown and no address search (conflicts:c-106; conflicts:c-217; ruling:sam-2026-10-09 p1-182)",
-        "Reached from the consignee, importer or place of destination picker, the Country select holds only 'United Kingdom', preselected, and the saved address's country is United Kingdom whatever is posted (prototype:dr2-1-source p8-082; trace:prototype-dr2-1 p7-044; prototype:dr2-1-specs p3-072, p3-078, p3-079, p3-080)",
+        "Reached from the consignee, importer or place of destination picker, the page still opens with every address and contact field shown and no address search (conflicts:c-106; conflicts:c-217; conflicts:c-287; ruling:sam-2026-10-09 p1-182)",
+        "Reached from the consignee, importer or place of destination picker, the Country select holds only 'United Kingdom', preselected, and the saved address's country is United Kingdom whatever is posted (prototype:dr2-1-source p8-082; trace:prototype-dr2-1 p7-044; prototype:dr2-1-specs p3-072, p3-078, p3-079, p3-080; ruling:sam-2026-10-09 p1-064)",
         "On the place of origin and consignor pages the Country select's first option reads 'Select one' (prototype:dr2-1-source p8-084; trace:e2e p9-064; conflicts:c-107)",
         "Saving with a blank name shows 'Enter a name or organisation name', in the error summary and against the name field, the summary link reaching it (prototype:dr2-1-source p8-100; trace:prototype-dr2-1 p7-030; prototype:dr2-1-specs p3-066)",
         "Saving with a blank postcode shows 'Enter a postcode or Zip code' (prototype:dr2-1-source p8-103; trace:prototype-dr2-1 p7-033)",
@@ -62,43 +63,43 @@
         { "source": "prototype:dr2-1-specs", "ref": "p3-066, p3-072, p3-077 to p3-080" },
         { "source": "trace:e2e", "ref": "p9-064, p9-069" },
         { "source": "repo:frontend", "ref": "p9-105, p9-106, p9-114 to p9-117, p9-120" },
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-182" }
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-064, p1-182" }
       ],
       "repos": ["insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the role-split slice with the country placeholder and the four required-field message changes: the same page, the same validation set-up and the same per-role fixtures. The destination-side manual-entry criterion is req-1830, adopted as exists (no search exists today); it stays as a 'still' criterion because this row reshapes exactly those pages, but req-1830 is not listed in requirements. The country list's content is its own row (req-644). The address-book-add-and-edit area changes the same messages and the same type split in the address book API: combiner, keep the dependency on inc-060 rather than building the messages twice. Today's length and email-format checks are kept by ruling (c-108; req-668, req-669 exist).",
+      "notes": "Combines the role-split slice with the country placeholder and the four required-field message changes: the same page, the same validation set-up and the same per-role fixtures. The destination-side manual-entry criterion is req-1830, adopted as exists (no search exists today); it stays as a 'still' criterion because this row reshapes exactly those pages, but req-1830 is not listed in requirements. req-646's search-page half (UK-only country on the search pages) is met by the blocked search row, whose pick fills United Kingdom. The country list's content is its own row (req-644). The address-book-add-and-edit area changes the same messages and the same type split in the address book API: combiner, keep the dependency on inc-060 rather than building the messages twice, and on inc-077. Today's length and email-format checks are kept by ruling (c-108; req-668, req-669 exist).",
       "touches": [
-        "insfrontend:src/server/app/features/address-book/add",
-        "tests:page-objects/ins/address-book",
-        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
+        "insfrontend:src/server/app/features/address-book/add"
       ],
       "shared": [
         "insfrontend:src/server/app/features/address-book/fields.js",
+        "insfrontend:src/server/app/features/address-book/address-countries.js",
         "insfrontend:src/server/app/features/address-book/copy",
-        "insfrontend:src/server/app/features/address-book/address-countries.js"
+        "tests:page-objects/ins/address-book/add-page.ts"
       ],
       "existingRow": "inc-078"
     },
     {
       "title": "A new address added from the journey can also be saved for the other roles on its side",
-      "detail": "Design Release 2.1 lets one new address be saved for more roles than the one it was added from. The add page reached from a role picker asks 'What else should this address be used for?', offering only the other roles on the same side, and the saved address book record carries the role it was added for plus every use ticked. Today the record has no field for roles; the address book's uses field is built in inc-059. Observable in the INS frontend's fit suite with the handshake query (the stubbed address book receives the uses), on the compose stack and in CDP.",
+      "detail": "Design Release 2.1 lets one new address be saved for more roles than the one it was added from. The add page reached from a role picker asks 'What else should this address be used for?', offering only the other roles on the same side, and the saved address book record carries the role it was added for plus every use ticked. Today the record has no field for roles; the address book's uses field is built in the address-book-add-and-edit area (inc-059). Observable in the INS frontend's fit suite with the handshake query (the stubbed address book receives the uses), on the compose stack and in CDP.",
       "acceptanceCriteria": [
-        "The page asks 'What else should this address be used for?' as a group of checkboxes (prototype:dr2-1-source p8-092; trace:prototype-dr2-1 p7-015; prototype:dr2-1-specs p3-062)",
+        "The page asks 'What else should this address be used for?' as a group of checkboxes (prototype:dr2-1-source p8-092; trace:prototype-dr2-1 p7-015; prototype:dr2-1-specs p3-062; ruling:sam-2026-10-09 p1-115)",
         "The question's hint reads 'This address is being added as a <Role> address. Select any other roles or addresses this address should be used for.', naming Place of origin, Consignor, Consignee, Importer or Place of destination, with 'an' before Importer (prototype:dr2-1-source p8-092, p8-093; trace:prototype-dr2-1 p7-016; prototype:dr2-1-specs p3-062, p3-077 to p3-079)",
-        "The checkboxes offer only the other roles on the same side, each labelled with the role name alone: place of origin offers 'Consignor'; consignor offers 'Place of origin'; consignee offers 'Importer' and 'Place of destination'; importer offers 'Consignee' and 'Place of destination'; place of destination offers 'Consignee' and 'Importer' (prototype:dr2-1-source p8-094 to p8-096; trace:prototype-dr2-1 p7-017 to p7-022; prototype:dr2-1-specs p3-063, p3-075)",
+        "The checkboxes offer only the other roles on the same side, each labelled with the role name alone: place of origin offers 'Consignor'; consignor offers 'Place of origin'; consignee offers 'Importer' and 'Place of destination'; importer offers 'Consignee' and 'Place of destination'; place of destination offers 'Consignee' and 'Importer' (prototype:dr2-1-source p8-094 to p8-096, p8-095-m1; trace:prototype-dr2-1 p7-017 to p7-022; prototype:dr2-1-specs p3-063, p3-075)",
         "No checkbox is preselected and saving with none ticked raises no error (prototype:dr2-1-source p8-097, p8-098)",
         "A posted use not offered for the role is discarded, and the ticked uses stay ticked when the page is shown again with errors (prototype:dr2-1-source p8-108; trace:prototype-dr2-1 p7-038)",
-        "Saving an address added from the consignee picker with 'Importer' ticked stores a record whose uses, as the address book's read-one API returns them to the services that read it, are consignee and importer (prototype:dr2-1-source p8-110, p8-114; trace:prototype-dr2-1 p7-061; prototype:dr2-1-specs p3-113; trace:e2e p8-012)"
+        "Saving an address added from the consignee picker with 'Importer' ticked stores a record whose uses, as the address book's read-one API returns them to the services that read it, are consignee and importer (prototype:dr2-1-source p8-110, p8-114; trace:prototype-dr2-1 p7-061; prototype:dr2-1-specs p3-113; trace:e2e p8-012; ruling:sam-2026-10-09 p1-115, p1-116)"
       ],
       "requirements": ["req-655", "req-656", "req-657", "req-658", "req-659"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p8-092 to p8-098, p8-108, p8-110, p8-114" },
+        { "source": "prototype:dr2-1-source", "ref": "p8-092 to p8-098, p8-095-m1, p8-108, p8-110, p8-114" },
         { "source": "trace:prototype-dr2-1", "ref": "p7-015 to p7-022, p7-038, p7-061" },
         { "source": "prototype:dr2-1-specs", "ref": "p3-062, p3-063, p3-075, p3-077 to p3-079, p3-113" },
-        { "source": "trace:e2e", "ref": "p8-012" }
+        { "source": "trace:e2e", "ref": "p8-012" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-115, p1-116" }
       ],
       "repos": ["insfrontend", "tests"],
       "kind": "feat",
@@ -107,67 +108,67 @@
       "openQuestions": [],
       "notes": "Unchanged from the last distil. Combines the uses question (legend, hint, options, no preselection, discard) with saving the uses: the question has no observable effect until the save carries it. The address book record's uses field and its API contract are the address-book-add-and-edit area's, built in inc-059, so this row depends on it (and on inc-077) rather than adding addressbook to its repos. The address book's own add uses a different legend and hint; the journey page keeps Design Release 2.1's journey wording.",
       "touches": [
-        "insfrontend:src/server/app/features/address-book/add",
-        "tests:page-objects/ins/address-book",
-        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
+        "insfrontend:src/server/app/features/address-book/add"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/address-book/fields.js",
-        "insfrontend:src/server/app/features/address-book/copy",
-        "insfrontend:src/server/app/services/address-book"
+        "insfrontend:src/server/app/features/address-book/stored-address.js",
+        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/features/address-book/copy"
       ],
       "existingRow": "inc-079"
     },
     {
       "title": "A notification journey's add opens Design Release 2.1's add page in journey mode, and saving or cancelling lands where Design Release 2.1 says",
-      "detail": "A trader adding an address from a notification's party picker keeps today's handshake to the INS address book, sees Design Release 2.1's add page in journey mode, and on saving or cancelling lands back on the journey page Design Release 2.1 names, with its success banner. Observable on the compose stack and in CDP, where both frontends run; in the animals frontend's stub mode the pickers show no add link (c-106).",
+      "detail": "A trader adding an address from a notification's party picker keeps today's handshake to the INS address book (c-106), because which service serves the add page and writes the address book is cross-service behaviour the prototype cannot express. Reached that way, the INS add page skips 'Choose an address type', opens 'Add address and contact details' for the type the role implies with the role counted as the address's use, and offers Design Release 2.1's Back link and three actions. 'Save and select' saves the address and commits its copy for the role, landing on the Consignment addresses page; 'Save and return to address page' saves it and lands on the role's picker with the new address listed first; 'Cancel and return to hub' saves nothing. After either save the landing page shows a success banner that stays until the trader leaves or reloads (the INS script that hides it on a timer goes: WCAG 2.2.1). The round trip is proven from all five pickers. Observable on the compose stack and in CDP, where both frontends run; in the animals frontend's stub mode the pickers show no add link (c-106), so that environment is not named.",
       "acceptanceCriteria": [
+        "Reached from a notification journey, the INS add page does not ask 'Choose an address type' and opens 'Add address and contact details' for the type the role implies, with that role already counted as the address's use (document:dr1-parity-backlog p7-007; prototype:dr2-1-source p8-092; trace:e2e p9-055; repo:tests p5-027; ruling:sam-2026-10-09 p1-090; conflicts:c-106)",
         "The add page has a 'Back' link that returns to the picker of the role the address is being added for (prototype:dr2-1-source p8-080; trace:prototype-dr2-1 p7-025; prototype:dr2-1-specs p3-065)",
         "The primary button reads 'Save and select' (prototype:dr2-1-source p8-109; trace:prototype-dr2-1 p7-023; prototype:dr2-1-specs p3-064)",
-        "'Save and select' saves the address to the address book, puts a copy on the notification for the role, and lands on the Consignment addresses page, where that role shows the address with a 'Change' link (prototype:dr2-1-source p8-110; trace:prototype-dr2-1 p7-054, p7-055, p7-059; prototype:dr2-1-specs p3-076)",
-        "A secondary 'Save and return to address page' button saves the address to the address book without selecting it and lands on the role's picker, where the new address is listed first and no address is selected for the role (prototype:dr2-1-source p8-111; trace:prototype-dr2-1 p7-039, p7-041, p7-060; prototype:dr2-1-specs p3-068)",
-        "After either save the landing page shows a success banner titled 'Success' reading '<Name> address added to your address book', which stays until the trader leaves or reloads the page (trace:prototype-dr2-1 p7-040, p7-055)",
-        "The page offers a 'Cancel and return to hub' link that lands on the notification's hub and saves nothing to the address book or the notification (prototype:dr2-1-source p8-109; trace:prototype-dr2-1 p7-024, p7-064)",
-        "The end-to-end suite drives 'Save and select', 'Save and return to address page' and 'Cancel and return to hub' from each of the five role pickers (place of origin, consignor, consignee, importer, place of destination), on the compose stack and in CDP (repo:tests p5-032, p5-033; trace:e2e p9-077)",
+        "'Save and select' saves the address to the address book, puts a copy on the notification for the role, and lands on the Consignment addresses page, where that role shows the address with a 'Change' link (prototype:dr2-1-source p8-110; trace:prototype-dr2-1 p7-054, p7-055, p7-059; prototype:dr2-1-specs p3-076; trace:e2e p9-070 to p9-073)",
+        "A secondary 'Save and return to address page' button saves the address to the address book without selecting it and lands on the role's picker, where the new address is listed first and no address is selected for the role (prototype:dr2-1-source p8-111; trace:prototype-dr2-1 p7-039, p7-041, p7-060; prototype:dr2-1-specs p3-068; trace:e2e p8-093, p8-094, p9-074)",
+        "After either save the landing page shows a GOV.UK notification banner titled 'Success' reading '<Name> address added to your address book', which is still on screen however long the trader stays and goes only when they leave or reload the page (trace:prototype-dr2-1 p7-040, p7-055; document:dr1-parity-backlog p7-008; ruling:sam-2026-10-09-pm p1-096, p1-097)",
+        "The page offers a 'Cancel and return to hub' link that lands on the notification's hub and saves nothing to the address book or the notification (prototype:dr2-1-source p8-109; trace:prototype-dr2-1 p7-024, p7-064; trace:e2e p9-075, p9-076)",
+        "The end-to-end suite drives 'Save and select', 'Save and return to address page' and 'Cancel and return to hub' from each of the five role pickers (place of origin, consignor, consignee, importer, place of destination), on the compose stack and in CDP (repo:tests p5-032, p5-033; trace:e2e p9-077; repo:frontend p9-195)",
         "The journey's address-return still refuses an unknown fulfilment or a stale handshake token, for each of the new landings (repo:frontend p9-139, p9-141; conflicts:c-106)"
       ],
-      "requirements": ["req-637", "req-671", "req-672", "req-673", "req-674", "req-675", "req-678"],
+      "requirements": ["req-637", "req-671", "req-672", "req-673", "req-674", "req-675", "req-678", "req-1958"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p8-080, p8-109 to p8-111" },
+        { "source": "prototype:dr2-1-source", "ref": "p8-080, p8-092, p8-109 to p8-111" },
         { "source": "trace:prototype-dr2-1", "ref": "p7-023 to p7-025, p7-039 to p7-041, p7-054, p7-055, p7-059, p7-060, p7-064" },
         { "source": "prototype:dr2-1-specs", "ref": "p3-064, p3-065, p3-068, p3-076" },
-        { "source": "trace:e2e", "ref": "p8-093, p8-094, p9-067, p9-070 to p9-077" },
+        { "source": "trace:e2e", "ref": "p8-093, p8-094, p9-055, p9-067, p9-070 to p9-077" },
         { "source": "repo:frontend", "ref": "p9-139, p9-141, p9-147, p9-149, p9-149-m1, p9-195" },
-        { "source": "repo:tests", "ref": "p5-028 to p5-033" }
+        { "source": "repo:tests", "ref": "p5-027 to p5-033" },
+        { "source": "document:dr1-parity-backlog", "ref": "p7-007, p7-008" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-090" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-073, p1-096, p1-097" }
       ],
       "repos": ["frontend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": "Look at the changed handshake return before anything builds on it: each of the three actions and the Back link lands on the right journey page from all five pickers, and the address-return still refuses an unknown fulfilment or a stale token.",
       "openQuestions": [],
-      "notes": "Combines the buttons-and-copy slice (Save and select, Save and return to address page, Cancel and return to hub, Back) with the landing and banner slice and the every-picker proof: all three change the one return contract between the INS add page and the journey's address-return, and the proof is of the same round trip. repos is in merge order: frontend before insfrontend, because the journey's address-return must accept each new landing before the INS page sends it. Combiner: the existing row also covers req-1284 (journey mode of the INS add page, skipping 'Choose an address type'), which belongs to the address-book-add-and-edit area; this draft lists only this area's requirements and leaves out req-1284's three criteria (journey-mode type skip, the INS banner not shown on landing, the registered live-animals handshake). Merge the two drafts back into inc-080 as before, keeping its id and gate. Depends on inc-077.",
+      "notes": "Combines the journey-mode type skip (req-1958, now this area's), the buttons-and-copy slice (Save and select, Save and return to address page, Cancel and return to hub, Back), the landing and banner slice and the every-picker proof: all change the one return contract between the INS add page and the journey's address-return, and the proof is of the same round trip. Combiner: the existing inc-080 also covers req-1284 (journey mode of the INS add page), which belongs to the address-book-add-and-edit area; this draft lists only this area's requirements and leaves out req-1284's criteria (the INS banner not shown on landing, the registered live-animals handshake). Merge the two drafts back into inc-080 as before, keeping its id and gate. repos is in merge order: frontend before insfrontend, because the journey's address-return must accept each new landing before the INS page sends it. The banner that stays (req-674) removes the INS script that hides it on a timer. The picker the second save lands on is the role-filtered picker the party picker area builds (inc-087, req-673 deltaNote); the address book already lists newest first, so 'listed first' is observable on today's picker and this row does not depend on inc-087, avoiding a dependency from the address-book theme back to consignment-parties. Depends on inc-077 (and through it the type-step and add-details rows). A germinal products notification uses the same handshake with its own INS return entry (req-1831), built in its own row.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/ins-handshake.js",
-        "insfrontend:src/server/app/features/address-book/add",
-        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-        "tests:page-objects/ins/address-book"
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/client/javascripts/address-book-success-banner.js",
+        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
       ],
       "shared": [
+        "insfrontend:src/server/app/features/address-book/add",
         "insfrontend:src/server/app/features/address-book/handshake-context.js",
-        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/server/app/features/address-book/journey-registry.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
         "frontend:src/server/app/shared/copy.en.js",
-        "tests:page-objects/animals/party-picker-page.ts",
-        "tests:page-objects/animals/addresses-page.ts"
+        "tests:page-objects/ins/address-book/add-page.ts"
       ],
       "existingRow": "inc-080"
     },
     {
       "title": "Destination-side journey add pages find UK addresses by a search that works without JavaScript",
-      "detail": "Design Release 2.1's consignee, importer and place of destination add pages, reached from the journey through the INS frontend's address book (c-106), start with a UK address search, as the address book's own 'Destination, Consignee or Importer' and 'Branch' step does. The 9 October afternoon ruling (c-287) has the version that works without JavaScript built: a search form submitted to the server by its Search button, results on the returned page, and a pick that fills the fields from the INS backend's address lookup (c-178). Sam's 9 October ruling blocks all of it in every environment until the address lookup becomes a real feature; until then the pages open on manual entry (inc-078), and the area is re-distilled once the lookup lands (c-217).",
+      "detail": "Design Release 2.1's consignee, importer and place of destination add pages, reached from the journey through the INS frontend's address book (c-106), start with a UK address search, as the address book's own 'Destination, Consignee or Importer' and 'Branch' step does. The 9 October afternoon ruling (c-287) has the version that works without JavaScript built: a search form submitted to the server by its Search button, results on the returned page, and a pick that fills the fields from the INS backend's address lookup (c-178). Sam's 9 October ruling blocks all of it in every environment until the address lookup becomes a real feature; until then the pages open on manual entry, and the area is re-distilled once the lookup lands (c-217).",
       "acceptanceCriteria": [
         "The consignee, importer and place of destination add pages and the address book's 'Destination, Consignee or Importer' and 'Branch' add-details step start with a text field labelled 'Search for an address', placeholder 'Start typing...', browser autocomplete turned off, and a search button whose accessible name is 'Search' (prototype:dr2-1-source p8-086; trace:prototype-dr2-1 p7-042, p7-043; prototype:dr2-1-specs p3-069)",
         "With JavaScript turned off, pressing 'Search' submits the search to the server and the returned page lists the matching UK addresses (ruling:sam-2026-10-09-pm p1-046, p1-047; conflicts:c-287)",
@@ -178,7 +179,7 @@
       "requirements": ["req-647", "req-648", "req-650", "req-651"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "p8-086, p8-087, p8-089" },
-        { "source": "trace:prototype-dr2-1", "ref": "p7-042, p7-043, p7-048 to p7-050, p7-052, p7-053, p7-063" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-042, p7-043, p7-048 to p7-050, p7-048-m1, p7-048-m2, p7-052, p7-053, p7-063" },
         { "source": "prototype:dr2-1-specs", "ref": "p3-069, p3-073, p3-074" },
         { "source": "ruling:sam-2026-10-09", "ref": "p1-178 to p1-182" },
         { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-046, p1-047" }
@@ -190,66 +191,32 @@
       "openQuestions": [
         "Blocked (req-647, req-648, req-650, req-651 blockedBy; c-217): the INS backend's address lookup must become a real feature. Today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Who: the team building the INS address lookup. Once it lands this area is re-distilled, which settles which environments the search runs in and what else it needs (ruling 2026-10-09 p1-178, p1-180)."
       ],
-      "notes": "Rewritten for the 9 October afternoon ruling (c-287): the search is a server-submitted form that works without JavaScript, so 'typing lists results' became 'submitting the search lists results', and the bold match text is gone (it is req-1957, filtering as the trader types, not this area's). The JavaScript-only and design-dependent parts that were in this row (the live-region result count req-649, 'Enter address manually' req-652, the search-only layout req-653 and its errors req-654) move to their own waiting-on-design row, so this row no longer waits on design question 10. Still blocked on the lookup. Built on the address book's own search row (inc-072, also blocked) and the manual-entry page of inc-078.",
+      "notes": "Unchanged from the last distil. The search is a server-submitted form that works without JavaScript (c-287). The JavaScript-only and design-dependent parts (req-649, req-652, req-653, req-654, req-1957) sit in their own waiting-on-design row. Built on the address book's own search row (inc-072, also blocked) and the manual-entry page of inc-078.",
       "touches": [
-        "insfrontend:src/server/app/features/address-book/add",
-        "insfrontend:src/server/app/services/address-lookup",
-        "tests:page-objects/ins/address-book",
-        "tests:tests/ins/e2e/features/address-book"
+        "insfrontend:src/server/app/features/address-book/add"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/address-book/fields.js",
+        "insfrontend:src/server/app/services/address-lookup",
+        "insfrontend:src/server/app/features/address-lookup-spike",
         "insfrontend:src/server/app/features/address-book/copy"
       ],
       "existingRow": "inc-081"
     },
     {
-      "title": "Address search hides the fields until a result is picked or manual entry is chosen, and announces its result count",
-      "detail": "Design Release 2.1's search pages show only the search at first: the address fields and the uses checkboxes appear once a result is picked or the trader chooses 'Enter address manually', the search hides after a pick, and screen readers hear how many results there are. The 9 October afternoon ruling (c-287) holds these back as one waiting-on-design increment: design question 10 asks whether address search keeps this search-only layout or uses the GOV.UK address pattern with the fields always visible, and the custom announcement is beyond the component's own options. They also wait on the address lookup, like the rest of address search (c-217). Built on the server-submitted search (the row before), as an enhancement of a page that already works.",
-      "acceptanceCriteria": [
-        "Below the address search, an 'Enter address manually' link-styled button reveals the address and contact fields without picking a result (prototype:dr2-1-source p8-088; trace:prototype-dr2-1 p7-045)",
-        "On the search pages the address fields and the 'What else should this address be used for?' checkboxes stay hidden until the trader picks a result or chooses to enter the address manually, the search box hides once a result is picked, and the fields show again after a failed submit when anything was entered or picked (prototype:dr2-1-source p8-091; trace:prototype-dr2-1 p7-042-m1, p7-049; prototype:dr2-1-specs p3-070)",
-        "Submitting a search page before picking or entering anything shows, in order, 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number', with no country error and no error of the search's own, and reveals the fields so each error summary link reaches a visible field (prototype:dr2-1-source p8-099; trace:prototype-dr2-1 p7-051; prototype:dr2-1-specs p3-071; conflicts:c-109)",
-        "Screen readers hear the result count through a polite live region, such as '1 result available' (trace:prototype-dr2-1 p7-047)"
-      ],
-      "requirements": ["req-649", "req-652", "req-653", "req-654"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p8-088, p8-091, p8-099" },
-        { "source": "trace:prototype-dr2-1", "ref": "p7-042-m1, p7-045, p7-047, p7-049, p7-051" },
-        { "source": "prototype:dr2-1-specs", "ref": "p3-070, p3-071" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-027, p1-046, p1-090 to p1-092" }
-      ],
-      "repos": ["insfrontend", "tests"],
-      "kind": "feat",
-      "status": "blocked",
-      "gate": null,
-      "openQuestions": [
-        "Blocked on design question 10 (ruling 2026-10-09 pm p1-090, p1-092; c-287): design must say whether address search keeps the search-only layout that hides the address fields, with 'Enter address manually', or uses the GOV.UK address pattern with the fields always visible; and whether the custom result-count announcement stays. Who: the design team. Design may keep or drop each behaviour.",
-        "Also blocked on the INS backend's address lookup becoming a real feature (req-649, req-652 to req-654 blockedBy; c-217; ruling 2026-10-09 pm p1-091). Who: the team building the INS address lookup. The area is re-distilled once it lands."
-      ],
-      "notes": "New row, split out of inc-081 by the 9 October afternoon ruling (c-287): these four requirements are the JavaScript-only, design-dependent parts of address search and wait on design question 10 as well as the lookup, so they are kept apart from the search that works without JavaScript. Combiner: this is the waiting-on-design increment the ruling names; if the address-book-add-and-edit area drafts the same search-only layout for the address book's own add (its waiting-on-design requirements, such as req-1863 or req-1864, and req-1957 type-ahead), merge them into one row, since the ruling calls it one increment. Depends on inc-081.",
-      "touches": [
-        "insfrontend:src/client/javascripts/address-search.js",
-        "insfrontend:src/server/app/features/address-book/add",
-        "tests:tests/ins/e2e/features/address-book",
-        "tests:page-objects/ins/address-book"
-      ],
-      "shared": [
-        "insfrontend:src/server/app/features/address-book/copy"
-      ],
-      "existingRow": null
-    },
-    {
       "title": "The journey add page's Country select offers the countries reference-data serves from MDM",
-      "detail": "On the place of origin and consignor add pages the trader picks the address's country by hand. Sam's 9 October ruling takes the MDM block off this row (c-107): the select offers reference-data's unfiltered country list, which is what MDM serves, and no list is typed or edited in code. Where MDM's content differs from Design Release 2.1's 42 entries, such as the EU outermost regions and the Crown Dependencies, that is MDM's content to change. The stub tidy-up regenerates the local country fixture from MDM, so the names and counts the page's checks expect move to the recaptured fixture. The select stays a plain select, not the accessible autocomplete. Observable in the INS frontend's fit suite, on the compose stack and in CDP.",
+      "detail": "On the place of origin and consignor add pages the trader picks the address's country by hand. Sam's 9 October ruling takes the MDM block off this row (c-107): the select offers reference-data's unfiltered country list, which is what MDM serves, and no list is typed or edited in code. Where MDM's content differs from Design Release 2.1's 42 entries, such as the EU outermost regions and the Crown Dependencies, that is MDM's content to change. The stub tidy-up regenerates the local country fixture from MDM, so the names and counts the page's checks expect move to the recaptured fixture. The select stays a plain select, not the accessible autocomplete, because the prototype shows it as one; the INS address book's country autocomplete is a follow-on recorded in deferred.md (ruling 2026-10-09 pm). Observable in the INS frontend's fit suite, on the compose stack and in CDP.",
       "acceptanceCriteria": [
-        "On the place of origin and consignor add pages the Country select offers every country in reference-data's unfiltered /countries response for that environment, with the names it serves, and no country it does not serve (ruling:sam-2026-10-09 p1-129, p1-132, p1-143; conflicts:c-107)",
-        "On the compose stack the select holds as many countries, with the same names, as the stub's regenerated MDM country fixture serves unfiltered, not today's 32 sovereign states (ruling:sam-2026-10-09 p1-150, p1-155, p1-162; trace:e2e p9-064)",
-        "The end-to-end and fit checks of the select take their country names and counts from the captured reference-data fixture, and no country list is typed by hand in them (ruling:sam-2026-10-09 p1-144, p1-159, p1-160)"
+        "On the place of origin and consignor add pages the Country select offers every country in reference-data's unfiltered country list for that environment, with the names it serves, and no country it does not serve (ruling:sam-2026-10-09 p1-129, p1-132, p1-143; conflicts:c-107)",
+        "On the compose stack the select holds as many countries, with the same names, as the stub's regenerated MDM country fixture serves unfiltered, not today's 32 sovereign states (ruling:sam-2026-10-09 p1-149, p1-162; trace:e2e p9-064)",
+        "The Country select is still a plain drop-down select, not a type-ahead autocomplete (ruling:sam-2026-10-09-pm p1-023 to p1-025, p1-040, p1-041; prototype:dr2-1-specs p3-061)",
+        "The end-to-end and fit checks of the select take their country names and counts from the captured reference-data fixture, and no country list is typed by hand in them (ruling:sam-2026-10-09 p1-140, p1-141, p1-144)"
       ],
       "requirements": ["req-644"],
       "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "p1-129, p1-132, p1-143, p1-144, p1-149, p1-150, p1-155, p1-159, p1-160, p1-162" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-129 to p1-132, p1-140, p1-141, p1-143, p1-144, p1-149, p1-162" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-023 to p1-025, p1-040, p1-041" },
+        { "source": "document:dr1-parity-notes", "ref": "p1-037" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-061" },
         { "source": "trace:e2e", "ref": "p9-064" }
       ],
       "repos": ["insfrontend", "tests"],
@@ -257,55 +224,77 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Unchanged from the last distil. Depends on inc-078 (the origin-side page) and on the stub tidy-up row at the head of the reference-lists theme (inc-173), because ruling p1-149 has that row change the names and counts these checks assert. The stub tidy-up owns regenerating the stub and capture fixtures; this row only aligns the add page and its checks. Today the INS select pins United Kingdom first and drops GB from the list; that ordering is not list content and is kept.",
+      "notes": "Adds one criterion over the last distil: req-644 now says the select stays a plain select and the INS address book's country autocomplete is a deferred follow-on (ruling 2026-10-09 pm), so that is checked. Kept apart from inc-078: it depends on the stub tidy-up row at the head of the reference-lists theme (inc-173), because ruling p1-149 has that row change the names and counts these checks assert, and on inc-078 (the origin-side page). The stub tidy-up owns regenerating the stub and capture fixtures; this row only aligns the add page and its checks. Today the INS select pins United Kingdom first and drops GB from the list; that ordering is not list content and is kept.",
       "touches": [
-        "insfrontend:src/server/app/features/address-book/address-countries.js",
-        "insfrontend:src/server/app/features/address-book/add",
-        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
+        "insfrontend:src/server/app/features/address-book/address-countries.js"
       ],
       "shared": [
-        "insfrontend:src/server/app/services/countries",
-        "tests:domain/animals/constants/country-codes.ts"
+        "insfrontend:src/server/app/features/address-book/add",
+        "tests:page-objects/ins/address-book/add-page.ts"
       ],
       "existingRow": "inc-082"
     },
     {
-      "title": "The review page reads each party's copied address back as name, address lines and country, in live animals and plants",
-      "detail": "The trader checks the address copy the notification holds before submitting. Design Release 2.1 reads each consignment party and the contact address back as the name followed by the address lines and the country, each on its own line, with no telephone number or email address. Today the animals review shows each copy as a block with the name in bold and every non-empty field, telephone and email included; plants' check-answers party cards (place of destination, consignor and contact) have Name, Address, Telephone number and Email address rows, with the address joined by commas on one line. The 9 October afternoon ruling (c-293) makes plants change the same way in the same increment. Observable in each frontend's fit suite, on the compose stack and in CDP.",
+      "title": "Picker 'View' link to the INS address book and back",
+      "detail": "DR1 asked for a way to correct a wrong saved address from the picker. Each live-animals picker row links to that saved address's own record in the INS address book, carrying the picker as its return, so the trader can correct or delete the record and come back to the picker they left. The INS frontend is the address book's only writer (c-106), so the record and its edit live there. Plants is not wired to the INS address book and takes none of it (ruling 2026-10-09 pm). Observable on the compose stack and in CDP; in stub mode the fit suite sees only the link.",
       "acceptanceCriteria": [
-        "On the live-animals review page each consignment party with an address reads back as its name, then each non-empty address line, town or city and postcode, then the country, each on its own line (prototype:dr2-1-source p11-065, p11-114; trace:prototype-dr2-1 p12-160, p12-161, p13-151, p13-155; trace:e2e p8-004, p8-005)",
-        "A country of GB reads back as 'United Kingdom' (prototype:dr2-1-source p11-114; trace:prototype-dr2-1 p13-155)",
-        "No party's telephone number or email address appears in the live-animals review page's read-back (trace:prototype-dr2-1 p12-160, p13-151; repo:tests p5-040, p5-041)",
-        "The contact address for the consignment reads back the same way: name, address lines, country, with no telephone number or email address (prototype:dr2-1-source p11-114; trace:prototype-dr2-1 p13-151; trace:e2e p8-018)",
-        "On the plants check-answers page the place of destination, consignor and contact cards have no 'Telephone number' or 'Email address' row (ruling:sam-2026-10-09-pm p3-031; repo:plantsfrontend p8-024; conflicts:c-293)",
-        "On the plants check-answers page each of those cards reads the address back one address line per line, followed by the country on its own line, instead of joined by commas on one line (ruling:sam-2026-10-09-pm p3-031; repo:plantsfrontend p8-025)"
+        "Each party picker row offers a link to that saved address's own record in the INS address book which carries the picker as its return, so after correcting or deleting the record the trader comes back to the picker they left; if the row keeps an in-place 'View details', it no longer repeats the name, address lines and country the row's columns already show (document:dr1-parity-backlog p7-036, p7-042; ruling:sam-2026-10-09-pm p3-048, p3-064; conflicts:c-106)"
+      ],
+      "requirements": ["req-1960"],
+      "sources": [
+        { "source": "document:dr1-parity-backlog", "ref": "p7-036 to p7-047" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-048, p3-064" }
+      ],
+      "repos": ["insfrontend", "frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "Combiner: req-1960 is the same change as the party picker area's inc-090 'View' link (req-601), so merge this draft into inc-090 as the backlog already does, keeping its id. Whether the in-place 'View details' disclosure stays is the party picker area's call (req-601 drops it in favour of 'View'). Animals only.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/view",
+        "insfrontend:src/server/app/features/address-book/journey-registry.js"
+      ],
+      "existingRow": "inc-090"
+    },
+    {
+      "title": "The review page reads each party's copied address back as name, address lines and country, in live animals and plants",
+      "detail": "The trader checks the address copy the notification holds before submitting. Design Release 2.1 reads each consignment party and the contact address back as the name followed by the address lines and the country, each on its own line, with no telephone number or email address. Today the animals review shows each copy as a block with the name in bold and every non-empty field, telephone and email included; plants' check-answers party cards (place of destination, consignor and contact) have Name, Address, Telephone number and Email address rows, with the address joined by commas on one line. The 9 October afternoon ruling (c-293) makes plants change the same way in the same increment. The address-book record still carries both. Observable in each frontend's fit suite, on the compose stack and in CDP.",
+      "acceptanceCriteria": [
+        "On the live-animals review page each consignment party with an address reads back as its name, then each non-empty address line, town or city and postcode, then the country, each on its own line (trace:e2e p8-004, p8-005; ruling:sam-2026-10-09-pm p3-001)",
+        "A country of GB reads back as 'United Kingdom' (trace:e2e p8-004; ruling:sam-2026-10-09-pm p3-001)",
+        "No party's telephone number or email address appears in the live-animals review page's read-back (repo:tests p5-040, p5-041; ruling:sam-2026-10-09-pm p3-001)",
+        "The contact address for the consignment reads back the same way: name, address lines, country, with no telephone number or email address (trace:e2e p8-018)",
+        "On the plants check-answers page the place of destination, consignor and contact cards have no 'Telephone number' or 'Email address' row (ruling:sam-2026-10-09-pm p3-031, p3-045; conflicts:c-293)",
+        "On the plants check-answers page each of those cards reads the address back one address line per line, followed by the country on its own line, instead of joined by commas on one line (ruling:sam-2026-10-09-pm p3-031, p3-045)"
       ],
       "requirements": ["req-680"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "p11-065, p11-114" },
-        { "source": "trace:prototype-dr2-1", "ref": "p12-160, p12-161, p13-151, p13-155" },
         { "source": "trace:e2e", "ref": "p8-004, p8-005, p8-018" },
         { "source": "repo:tests", "ref": "p5-040, p5-041" },
-        { "source": "repo:plantsfrontend", "ref": "p8-024, p8-025, p8-059" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-001, p3-031" }
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p3-001, p3-031, p3-045" }
       ],
       "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Rewritten for the 9 October afternoon ruling (c-293, req-680 now includes plants): plantsfrontend joins repos, and two plants criteria are added. repo-plantsfrontend-p9-043 (plants' d-013 contact telephone and email rows) is overruled by c-293 and not cited. The address-book record still carries telephone and email, so plants' single pick still collects them (req-1970, not this area's). Plants' check-answers fit test expects the contact email twice (repo-plantsfrontend p8-059); it changes with the cards. The end-to-end specs that read every copied field back from the review page (copied addresses, submit freeze, address edit) need their review assertions updated to the new read-back. Combiner: the review page and its party cards are the overview-and-review theme's code; plants' check-answers is in no theme yet, so the theme this row keeps must also touch the plants check-answers view-model, or this row moves to a theme that does. Merge with the review-and-submit area's review-card row if one changes the same 'Roles and addresses' or contact cards. Depends on inc-101.",
+      "notes": "Unchanged in substance from the last distil. This draft cites only this area's claims; the existing inc-109 also cites the prototype and plants repo claims (prototype:dr2-1-source p11-065, p11-114; trace:prototype-dr2-1 p12-160, p13-151, p13-155; repo:plantsfrontend p8-024, p8-059) from other areas' working sets: combiner, keep them, but never cite repo-plantsfrontend-p8-025, which c-293 overrules. Plants' d-013 contact telephone and email rows are overruled by c-293. The end-to-end specs that read every copied field back from the review page (copied addresses, submit freeze, address edit) change with the read-back. The review page's party cards are the overview-and-review theme's code; plants' check-answers view-model must be in that theme's touches too. Does not touch the split-off templates theme's template-review view-model. Depends on inc-101.",
       "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows/party-row.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/contact-address.js",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/view-model",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js",
-        "tests:tests/animals/e2e/features/address-book/addresses-copied.spec.ts",
-        "tests:tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts",
-        "tests:tests/animals/e2e/features/address-book/addresses-edit.spec.ts"
+        "tests:tests/animals/e2e/features/address-book/addresses-copied.spec.ts"
       ],
       "shared": [
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections/consignment-parties.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+        "tests:tests/animals/e2e/features/address-book/addresses-submit-freeze.spec.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-edit.spec.ts"
       ],
       "existingRow": "inc-109"
     },
@@ -313,15 +302,13 @@
       "title": "The INS address book takes adds from germinal products notifications and returns to them",
       "detail": "A trader adding an address from a germinal products notification's party picker crosses to the INS address book by the same handshake and the same add page as from live animals, with the same address record and rules. The INS address book accepts the germinal products set as well as live animals and, on save or cancel, returns to the germinal set's own address-return page for that notification, built on the server from a registered entry in the INS service's conventions. INS-side germinal work stays in the INS themes and is proven in the ins Playwright project (ruling 2026-10-09 claim 61). Observable in the INS frontend's fit suite, on the compose stack and in CDP, as the redirect the INS frontend sends.",
       "acceptanceCriteria": [
-        "The INS address book's add page accepts a handshake from the germinal products set, as it accepts one from live animals, and shows the same add page (repo:insfrontend p3-095, p3-097; ruling:sam-2026-10-09 p1-006)",
-        "Saving or cancelling an add begun from a germinal products notification sends the trader to the germinal set's address-return page for that notification, under /germinal-products/notifications/{notification id}, and never to a live-animals notification (repo:insfrontend p3-102, p3-112; repo:frontend p9-134, p9-139; trace:e2e p9-014, p9-070)",
-        "The return address is built on the server from the registered germinal products entry, and a handshake that names any other return address is refused (repo:insfrontend p3-112)",
-        "An address saved from a germinal products notification is the same address record, with the same fields and checks, as one saved from a live-animals notification (confluence:6497338582 p1-069)"
+        "The INS address book's add page accepts a handshake from the germinal products set, as it accepts one from live animals, and shows the same add page (repo:frontend p9-134; ruling:sam-2026-10-09 p1-006, p1-061)",
+        "Saving or cancelling an add begun from a germinal products notification sends the trader to the germinal set's address-return page for that notification, under /germinal-products/notifications/{notification id}, and never to a live-animals notification (repo:frontend p9-134, p9-139; trace:e2e p9-014, p9-070; ruling:sam-2026-10-09 p1-009, p1-011)",
+        "The return address is built on the server from the registered germinal products entry, and a handshake that names any other return address is refused (repo:frontend p9-139; ruling:sam-2026-10-09 p1-014, p1-027)",
+        "An address saved from a germinal products notification is the same address record, with the same fields and checks, as one saved from a live-animals notification (ruling:sam-2026-10-09 p1-006)"
       ],
       "requirements": ["req-1831"],
       "sources": [
-        { "source": "confluence:6497338582", "ref": "confluence-6497338582-p1-069" },
-        { "source": "repo:insfrontend", "ref": "p3-095, p3-097, p3-102, p3-112" },
         { "source": "repo:frontend", "ref": "p9-134, p9-139" },
         { "source": "trace:e2e", "ref": "p9-014, p9-070" },
         { "source": "ruling:sam-2026-10-09", "ref": "p1-006, p1-009, p1-011, p1-014, p1-027, p1-061" }
@@ -331,7 +318,7 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Was drafted by the combiner last time; req-1831 is now this area's, so this draft keeps the existing row. Ruling 2026-10-09 claim 61 keeps INS-side germinal work in the INS themes, proven in the ins Playwright project, so it sits with the journey registry in consignment-parties and the germinal addresses page depends on it. Claim 11 lets it land on main before the germinal page it points at. Depends on inc-080 (the return contract) and inc-090.",
+      "notes": "Unchanged in substance. This draft cites only this area's claims; the existing inc-180 also cites repo:insfrontend p3-095, p3-097, p3-102, p3-112 and confluence:6497338582 p1-069 from other working sets: combiner, keep them. Ruling 2026-10-09 claim 61 keeps INS-side germinal work in the INS themes, proven in the ins Playwright project, so it sits with the journey registry in consignment-parties and the germinal addresses page depends on it. Claim 11 lets it land on main before the germinal page it points at. Depends on inc-080 (the return contract) and inc-090.",
       "touches": [
         "insfrontend:src/server/app/features/address-book/journey-registry.js",
         "tests:tests/ins/e2e/features/address-book"
@@ -340,6 +327,43 @@
         "insfrontend:src/server/app/features/address-book/handshake-context.js"
       ],
       "existingRow": "inc-180"
+    },
+    {
+      "title": "Waiting on design: address search's search-only layout, results as the trader types, reveal on a pick and its announcements",
+      "detail": "Design Release 2.1's search pages show only the search at first: the address fields and the uses checkboxes appear once a result is picked or the trader chooses 'Enter address manually', the search hides after a pick, results appear as the trader types with the match in bold, and screen readers hear how many results there are. The 9 October afternoon ruling (c-287) holds these back as one waiting-on-design increment: design question 10 asks whether address search keeps this search-only layout or uses the GOV.UK address pattern with the fields always visible, and question 5 asks about filtering as the trader types. They also wait on the address lookup, like the rest of address search (c-217). If design keeps them, they are built on top of the no-JavaScript search, which keeps working without JavaScript.",
+      "acceptanceCriteria": [
+        "Below the address search, an 'Enter address manually' link-styled button reveals the address and contact fields without picking a result (prototype:dr2-1-source p8-088; trace:prototype-dr2-1 p7-045)",
+        "On the search pages the address fields and the 'What else should this address be used for?' checkboxes stay hidden until the trader picks a result or chooses to enter the address manually, the search box hides once a result is picked, and the fields show again after a failed submit when anything was entered or picked (prototype:dr2-1-source p8-089, p8-091; trace:prototype-dr2-1 p7-042-m1, p7-048; prototype:dr2-1-specs p3-070)",
+        "Submitting a search page before picking or entering anything shows, in order, 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number', with no country error and no error of the search's own, and reveals the fields so each error summary link reaches a visible field (prototype:dr2-1-source p8-099; trace:prototype-dr2-1 p7-051; prototype:dr2-1-specs p3-071; conflicts:c-109)",
+        "Screen readers hear the result count through a polite live region, such as '1 result available' (trace:prototype-dr2-1 p7-047; ruling:sam-2026-10-09-pm p1-027)",
+        "With JavaScript, address search results appear as the trader types, with the typed text in bold in each result (prototype:dr2-1-source p8-086; trace:prototype-dr2-1 p7-046; ruling:sam-2026-10-09-pm p1-017, p1-061)",
+        "With JavaScript off, the page behaves as the no-JavaScript search does: the fields are shown and the Search button searches on the server (ruling:sam-2026-10-09-pm p1-090; conflicts:c-287)"
+      ],
+      "requirements": ["req-649", "req-652", "req-653", "req-654", "req-1957"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "p8-086, p8-088, p8-089, p8-091, p8-099" },
+        { "source": "trace:prototype-dr2-1", "ref": "p7-042-m1, p7-045 to p7-048, p7-051" },
+        { "source": "prototype:dr2-1-specs", "ref": "p3-070, p3-071" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-178 to p1-181" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "p1-017, p1-027, p1-046, p1-061, p1-086 to p1-092" }
+      ],
+      "repos": ["insfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked on design questions 10 and 5 (ruling 2026-10-09 pm p1-090, p1-092; c-287): design must say whether address search keeps the search-only layout that hides the address fields, with 'Enter address manually', or uses the GOV.UK address pattern with the fields always visible; whether results appear as the trader types; and whether the custom result-count announcement stays. Who: the design team. Design may keep or drop each behaviour.",
+        "Also blocked on the INS backend's address lookup becoming a real feature (req-649, req-652 to req-654, req-1957 blockedBy; c-217; ruling 2026-10-09 pm p1-091). Who: the team building the INS address lookup. The area is re-distilled once it lands."
+      ],
+      "notes": "Combiner: merge into inc-194 with the address-book-add-and-edit area's draft (its waiting-on-design requirements, such as req-1214, req-1216, req-1285, req-1864, req-2044) as the backlog already does: ruling 2026-10-09 pm claim 20 calls design question 10 one increment. This draft keeps only this area's five requirements. req-1957 (results as the trader types) is now this area's. Depends on inc-081 and the address book's own search rows (inc-072).",
+      "touches": [
+        "insfrontend:src/client/javascripts"
+      ],
+      "shared": [
+        "insfrontend:src/server/app/features/address-book/add",
+        "insfrontend:src/server/app/features/address-book/copy"
+      ],
+      "existingRow": "inc-194"
     }
   ],
   "unobservable": [],

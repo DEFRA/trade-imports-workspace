@@ -1,74 +1,66 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 7 read the rest of the parties section and the contact section of the high-risk plants linear journey in repos/trade-imports-plants-frontend. Identification numbers feature (src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/): page.js (id and slug), evaluation.js (four scalar bindings), fields.js (four field names and the 58-character cap), controller.js (scope-filtered fields, Joi validation, recoverable save, next target), template.njk (govukInput per in-scope field, section caption, save actions), copy.en.js and copy.cy.js (title, labels, hints, error messages), identification-numbers.fit.spec.js (per commodity type branch: render and save, every validation rule, save-and-return and cancel, axe; plus two standalone tests). Consignment contact feature (features/consignment-contact-select/): page.js (slug consignment/contact/select), evaluation.js, fields.js (contactAddress), controller.js (search submit, blank save allowed, refusal of an id the book does not hold, commit of a copy of the record), template.njk (search box, inset of the selected address, results table with radios and View details disclosure, govukPagination, no-matches text, save actions), copy.en.js and copy.cy.js, view-model/index.js and view-model/pagination.js (binding the shared picker helpers to this page's slug and field), consignment-contact-select.fit.spec.js (render, reach from overview, first page and count, save controls, back link, search, no matches, selection kept through search and paging, saving, replacing, save-and-return, cancel, blank save for both submits, refusal and recovery, axe). Shared: journeys/linear/parties/index.js (dropping dangling address-book references on read), obligations/sections/parties.js (consignor, supplier, producer, crop and consignment number obligations) and obligations/sections/contact.js (contactAddress). The address-book-picker helpers (render.js, view-model.js, pagination.js, address-lines.js) were read for context only; part 6 claims their shared behaviour, and this part claims only what they make the contact page show. Hub status and row copy, the section caption copy and the address book PAGE_SIZE were looked up only to read the fit specs' assertions.",
+  "structure": "Part 7, Identification numbers and consignment contact. Read in full: the identification-numbers feature folder (page.js, evaluation.js, fields.js, controller.js, template.njk, copy.en.js, copy.cy.js and identification-numbers.fit.spec.js, 336 lines with 3 commodity-type branches x 5-6 tests plus 2 standalone tests); the consignment-contact-select feature folder (page.js, evaluation.js, fields.js, controller.js, template.njk, copy.en.js, copy.cy.js, view-model/index.js, view-model/pagination.js and consignment-contact-select.fit.spec.js, 514 lines, 20 tests in 5 describe blocks); journeys/linear/parties/index.js (the unresolved address-book reference sanitiser); obligations/sections/parties.js (consignor, supplierIdentificationNumber, producerIdentificationNumber, cropIdentificationNumber, consignmentNumber) and obligations/sections/contact.js (contactAddress); and the address-book-picker folder (address-lines.js, render.js, pagination.js, view-model.js) for context only, claimed here only as it shows on the contact page. Unit tests (*.test.js) are out of scope per the partition. Shared copy strings (Save and continue, Back, hub statuses, section caption) were looked up by key to quote what the fit specs assert. Pages covered: /notifications/{ref}/identification-numbers (Consignment parties section) and /notifications/{ref}/consignment/contact/select (Contact section).",
   "claims": [
     {
       "id": "repo-plantsfrontend-p7-001",
-      "statement": "The identification numbers page is served at the notification path with the slug identification-numbers.",
+      "statement": "The identification numbers page is served at /notifications/{reference}/identification-numbers.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/page.js:2-3",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/page.js:1-4",
       "quote": "id: 'identification-numbers',\n  slug: 'identification-numbers'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-002",
-      "statement": "The identification numbers page heading (h1) is 'Identification numbers'.",
+      "statement": "The identification numbers page heading is 'Identification numbers'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:3; template.njk:8",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:3",
       "quote": "title: 'Identification numbers',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-003",
-      "statement": "The identification numbers page shows the section caption 'Consignment parties' above its heading.",
+      "statement": "The identification numbers page shows the 'Consignment parties' section caption above its heading.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/template.njk:7; identification-numbers.fit.spec.js:179-183",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:179-183; template.njk:7",
       "quote": "page.getByText(captionsCopy.sections.consignmentParties, {",
       "confidence": "verbatim",
-      "note": "The caption text 'Consignment parties' is in flow/section-captions/copy/copy.en.js, outside this part; the spec asserts it shows here."
+      "note": "captionsCopy.sections.consignmentParties is 'Consignment parties' in flow/section-captions/copy/copy.en.js:12."
     },
     {
       "id": "repo-plantsfrontend-p7-004",
-      "statement": "The identification numbers page collects four fields: supplierIdentificationNumber, producerIdentificationNumber, cropIdentificationNumber and consignmentNumber.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/fields.js:1-6",
-      "quote": "export const IDENTIFICATION_FIELDS = [\n  'supplierIdentificationNumber',\n  'producerIdentificationNumber',\n  'cropIdentificationNumber',\n  'consignmentNumber'\n]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-005",
-      "statement": "The identification numbers page renders only the fields that are in scope for the notification, so which inputs show depends on the commodity type.",
+      "statement": "The identification numbers page renders only the fields in scope for the notification, in a fixed order: supplier identification number, producer identification number, crop identification number, consignment number.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:24-25,58",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:24-25; fields.js:1-6",
       "quote": "const visibleFields = (scope) =>\n  IDENTIFICATION_FIELDS.filter((name) => scope.has(name))",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-006",
-      "statement": "For wood and cut trees the identification numbers page shows only the consignment number.",
+      "id": "repo-plantsfrontend-p7-005",
+      "statement": "For wood and cut trees the identification numbers page shows only the consignment number field.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:146",
       "quote": "['wood-and-cut-trees', ['consignmentNumber']],",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-007",
-      "statement": "For plants for planting the identification numbers page shows the supplier identification number and the consignment number.",
+      "id": "repo-plantsfrontend-p7-006",
+      "statement": "For plants for planting the identification numbers page shows the supplier identification number and the consignment number fields.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:147",
       "quote": "[PLANTS_FOR_PLANTING, ['supplierIdentificationNumber', 'consignmentNumber']],",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-008",
-      "statement": "For potatoes the identification numbers page shows the producer identification number, the crop identification number and the consignment number.",
+      "id": "repo-plantsfrontend-p7-007",
+      "statement": "For potatoes the identification numbers page shows the producer identification number, the crop identification number and the consignment number fields.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:148-155",
       "quote": "'potatoes',\n    [\n      'producerIdentificationNumber',\n      'cropIdentificationNumber',\n      'consignmentNumber'\n    ]",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-009",
+      "id": "repo-plantsfrontend-p7-008",
       "statement": "The supplier identification number field is labelled 'Identification number of the supplier of the plants'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:6",
@@ -76,15 +68,15 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-010",
-      "statement": "The supplier identification number hint reads \"The supplier's plant passport registration number. For example, GB-12345.\"",
+      "id": "repo-plantsfrontend-p7-009",
+      "statement": "The supplier identification number field has the hint \"The supplier's plant passport registration number. For example, GB-12345.\"",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:7",
       "quote": "hint: \"The supplier's plant passport registration number. For example, GB-12345.\"",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-011",
+      "id": "repo-plantsfrontend-p7-010",
       "statement": "The producer identification number field is labelled 'Identification number of the producer of the potatoes'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:10",
@@ -92,15 +84,15 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-012",
-      "statement": "The producer identification number hint reads \"The producer's registration number. For example, from the Seed Potato Classification Scheme or the national register.\"",
+      "id": "repo-plantsfrontend-p7-011",
+      "statement": "The producer identification number field has the hint \"The producer's registration number. For example, from the Seed Potato Classification Scheme or the national register.\"",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:11",
       "quote": "hint: \"The producer's registration number. For example, from the Seed Potato Classification Scheme or the national register.\"",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-013",
+      "id": "repo-plantsfrontend-p7-012",
       "statement": "The crop identification number field is labelled 'Crop identification number'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:14",
@@ -108,15 +100,15 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-014",
-      "statement": "The crop identification number hint reads 'The number that identifies the crop the potatoes came from.'",
+      "id": "repo-plantsfrontend-p7-013",
+      "statement": "The crop identification number field has the hint 'The number that identifies the crop the potatoes came from.'",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:15",
       "quote": "hint: 'The number that identifies the crop the potatoes came from.'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-015",
+      "id": "repo-plantsfrontend-p7-014",
       "statement": "The consignment number field is labelled 'Consignment number (optional)'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:18",
@@ -124,72 +116,56 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-016",
-      "statement": "The consignment number hint reads 'Any reference you use to identify this consignment, or leave blank.'",
+      "id": "repo-plantsfrontend-p7-015",
+      "statement": "The consignment number field has the hint 'Any reference you use to identify this consignment, or leave blank.'",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:19",
       "quote": "hint: 'Any reference you use to identify this consignment, or leave blank.'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-017",
-      "statement": "The identification numbers copy is marked as provisional, taken from journey-spec.json.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:1",
-      "quote": "// Provisional copy from journey-spec.json.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-018",
-      "statement": "Each identification number is a single GOV.UK text input with a medium label and its hint; the consignment number input is three-quarters width and the others are one-half width.",
+      "id": "repo-plantsfrontend-p7-016",
+      "statement": "Each identification number field is a GOV.UK text input with a medium label; the consignment number input is three-quarters width and the other inputs are half width.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/template.njk:13-19",
       "quote": "classes: \"govuk-!-width-three-quarters\" if name == \"consignmentNumber\" else \"govuk-!-width-one-half\",\n        label: { text: copy.fields[name].label, classes: \"govuk-label--m\" },",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-019",
-      "statement": "Every identification number is capped at 58 characters.",
+      "id": "repo-plantsfrontend-p7-017",
+      "statement": "Every identification number field, and the consignment number, accepts at most 58 characters.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/fields.js:7",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/fields.js:7; controller.js:30-44",
       "quote": "export const MAX_IDENTIFICATION_LENGTH = 58",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-020",
-      "statement": "The supplier, producer and crop identification numbers are required when shown and are checked for blank and for length on save; the consignment number is optional and checked only for length and character pattern.",
+      "id": "repo-plantsfrontend-p7-018",
+      "statement": "The supplier, producer and crop identification numbers are required on this page whenever they are shown; the consignment number is never required.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:30-44",
-      "quote": "name === 'consignmentNumber'\n        ? [\n            maxText(\n              name,\n              MAX_IDENTIFICATION_LENGTH,\n              copy.errors[name].maxLength\n            ),\n            pattern(name, /^\\w*$/, copy.errors[name].pattern)\n          ]\n        : [requiredMaxText(name, MAX_IDENTIFICATION_LENGTH, copy.errors[name])]",
+      "quote": "name === 'consignmentNumber'\n        ? [\n            maxText(\n ...\n        : [requiredMaxText(name, MAX_IDENTIFICATION_LENGTH, copy.errors[name])]",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-021",
-      "statement": "The consignment number may contain only letters, numbers and underscores (no spaces, hyphens or other punctuation); a blank value passes.",
+      "id": "repo-plantsfrontend-p7-019",
+      "statement": "The consignment number may contain only letters, numbers and underscores (pattern ^\\w*$); a hyphen, space or other character is refused.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:40; src/server/app/lib/validate/validators.js:108-116",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:40",
       "quote": "pattern(name, /^\\w*$/, copy.errors[name].pattern)",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The supplier, producer and crop numbers have no character pattern, although the supplier hint gives the example GB-12345 with a hyphen."
     },
     {
-      "id": "repo-plantsfrontend-p7-022",
-      "statement": "Identification number values are trimmed of leading and trailing spaces before they are checked and saved, so ' ID_123 ' saves as 'ID_123'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:190,212; src/server/app/lib/validate/validators.js:81-82",
-      "quote": "await input(page, name).fill(' ID_123 ')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-023",
+      "id": "repo-plantsfrontend-p7-020",
       "statement": "A blank supplier identification number shows the error 'Enter the identification number of the supplier'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:24",
       "quote": "required: 'Enter the identification number of the supplier',",
-      "confidence": "verbatim",
-      "note": "The error says 'of the supplier' while the label says 'of the supplier of the plants'; the Welsh error follows the label wording."
+      "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-024",
+      "id": "repo-plantsfrontend-p7-021",
       "statement": "A supplier identification number over 58 characters shows the error 'Supplier identification number must be 58 characters or less'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:25",
@@ -197,7 +173,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-025",
+      "id": "repo-plantsfrontend-p7-022",
       "statement": "A blank producer identification number shows the error 'Enter the identification number of the producer'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:28",
@@ -205,7 +181,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-026",
+      "id": "repo-plantsfrontend-p7-023",
       "statement": "A producer identification number over 58 characters shows the error 'Producer identification number must be 58 characters or less'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:29",
@@ -213,7 +189,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-027",
+      "id": "repo-plantsfrontend-p7-024",
       "statement": "A blank crop identification number shows the error 'Enter the crop identification number'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:32",
@@ -221,7 +197,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-028",
+      "id": "repo-plantsfrontend-p7-025",
       "statement": "A crop identification number over 58 characters shows the error 'Crop identification number must be 58 characters or less'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:33",
@@ -229,7 +205,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-029",
+      "id": "repo-plantsfrontend-p7-026",
       "statement": "A consignment number over 58 characters shows the error 'Consignment number must be 58 characters or less'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:36",
@@ -237,139 +213,166 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-030",
+      "id": "repo-plantsfrontend-p7-027",
       "statement": "A consignment number with characters other than letters, numbers and underscores shows the error 'Consignment number must only contain letters, numbers and underscores'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:37-38",
-      "quote": "'Consignment number must only contain letters, numbers and underscores'",
+      "quote": "pattern:\n        'Consignment number must only contain letters, numbers and underscores'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-031",
-      "statement": "When the identification numbers fail validation the page re-renders with HTTP 400, an error summary, an inline error on each failing field and the values the trader typed kept in the inputs.",
+      "id": "repo-plantsfrontend-p7-028",
+      "statement": "When validation fails the identification numbers page re-renders with HTTP 400, an error summary, an error message on each failing field, and every value the user entered kept, including the invalid one.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:67-71; template.njk:6,18",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:68-71; identification-numbers.fit.spec.js:227-245",
       "quote": "return render(h, current, values, { errors }).code(HTTP_STATUS_BAD_REQUEST)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-032",
-      "statement": "Each identification numbers error summary link moves focus to its field, and the other fields keep their typed values (proved for every rule on every field in every commodity type branch).",
+      "id": "repo-plantsfrontend-p7-029",
+      "statement": "Each error summary link on the identification numbers page moves focus to the field in error.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:215-247 'rejects ${name} ${rule} and focuses its error link'",
-      "quote": "await link.click()\n          await expect(input(page, name)).toBeFocused()",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:227-239",
+      "quote": "test(`rejects ${name} ${rule} and focuses its error link`, async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-030",
+      "statement": "Identification numbers are saved with surrounding spaces trimmed: ' ID_123 ' is saved and shown again as 'ID_123'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:190, 211-213",
+      "quote": "await input(page, name).fill(' ID_123 ')\n...\n        await expect(input(page, name)).toHaveValue('ID_123')",
+      "confidence": "inferred",
+      "note": "The trimming happens in the shared validate helpers (out of this part's scope); the fit spec proves the observable result."
+    },
+    {
+      "id": "repo-plantsfrontend-p7-031",
+      "statement": "The identification numbers page saves only the fields in scope for the notification, as supplierIdentificationNumber, producerIdentificationNumber, cropIdentificationNumber and consignmentNumber; a blank optional consignment number is saved as an empty string.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:26-29, 75-79",
+      "quote": "Object.fromEntries(\n    visibleFields(scope).map((name) => [name, source[name] ?? ''])\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-032",
+      "statement": "The identification numbers page shows the saved answers when the user returns to it, including after a reload.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:61-64; identification-numbers.fit.spec.js:206-213",
+      "quote": "return render(h, current, valuesFrom(current.answers, current.scope))",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-033",
-      "statement": "The identification numbers page saves only the in-scope fields, and on success sends the trader to the next page in the journey.",
+      "statement": "Save and continue on the identification numbers page leads to the consignment contact page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:72-89",
-      "quote": "committed = await state.commit(\n        request,\n        h,\n        valuesFrom(value, current.scope)\n      )",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:195-196",
+      "quote": "await saveAndContinue(page).click()\n      await expect(page).toHaveURL(/\\/consignment\\/contact\\/select$/)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-034",
-      "statement": "If saving the identification numbers fails, the page re-renders with HTTP 500 and a recoverable-error state, keeping the typed values.",
+      "statement": "Once the shown identification numbers are filled and saved, the overview's 'Identification numbers' task row reads 'Completed', and its link opens the identification numbers page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:81-85",
-      "quote": "render(h, current, values, { recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
-      "confidence": "verbatim"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:198-209",
+      "quote": "name: hubCopy.rows.identificationNumbers.title\n          })\n        })\n      ).toContainText(hubCopy.statuses.completed)",
+      "confidence": "verbatim",
+      "note": "Row title 'Identification numbers' and status 'Completed' are from features/hub/copy/copy.en.js."
     },
     {
       "id": "repo-plantsfrontend-p7-035",
-      "statement": "Save and continue on the identification numbers page goes to the consignment contact page for every commodity type tested (wood, plants for planting and potatoes).",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:195-196",
-      "quote": "await expect(page).toHaveURL(/\\/consignment\\/contact\\/select$/)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-036",
-      "statement": "The identification numbers page's Back link goes to the notification overview (hub).",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:49; identification-numbers.fit.spec.js:275-276",
-      "quote": "backLink: hubPath(current.journey.journeyId),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-037",
-      "statement": "The identification numbers page uses the shared save actions: Save and continue, Save and return to overview, and Cancel and return to overview.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/template.njk:21; identification-numbers.fit.spec.js:248-277",
-      "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-038",
-      "statement": "Save and return to overview on the identification numbers page saves the values and goes to the overview; Cancel and return to overview goes to the overview without saving later changes.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:248 'saves to overview and cancels without saving subsequent changes'",
-      "quote": "test('saves to overview and cancels without saving subsequent changes', async ({",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-039",
-      "statement": "Save and return to overview on the identification numbers page runs the same validation as Save and continue, so a required identification number left blank blocks that save too.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:65-71",
-      "quote": "const { errors, value } = validate(fields(current.scope), values)\n  if (errors) {",
-      "confidence": "inferred",
-      "note": "The POST handler does not branch on which save button was pressed before validating, so blank-save is not allowed on this page. No fit spec proves the save-and-return case with a blank required field."
-    },
-    {
-      "id": "repo-plantsfrontend-p7-040",
-      "statement": "Once the in-scope identification numbers are saved the overview's 'Identification numbers' task row shows 'Completed', and its link reopens the page with the saved values.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:172-214",
-      "quote": "test('renders only applicable fields, saves and reloads them and completes the hub row', async ({",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-041",
-      "statement": "For wood and cut trees, leaving the only (optional) consignment number blank is allowed and the overview's identification numbers row is labelled 'Optional'.",
+      "statement": "For wood and cut trees, saving the page with the optional consignment number blank is allowed, and the overview's 'Identification numbers' task row then reads 'Optional'.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:296-311",
       "quote": "test('wood can leave the optional reference blank and the overview labels it Optional', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-042",
-      "statement": "Changing the commodity type away from plants for planting clears the saved supplier identification number, while the consignment number is kept across commodity type changes.",
+      "id": "repo-plantsfrontend-p7-036",
+      "statement": "The identification numbers page offers 'Save and return to overview', which saves the answers and returns to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:248-260; template.njk:21",
+      "quote": "name: sharedCopy.saveActions.saveAndReturnToHub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-037",
+      "statement": "The identification numbers page offers a 'Cancel and return to overview' link that returns to the overview without saving changes made on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:261-274",
+      "quote": "test('saves to overview and cancels without saving subsequent changes', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-038",
+      "statement": "The identification numbers page's Back link goes to the notification overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:49; identification-numbers.fit.spec.js:275-276",
+      "quote": "backLink: hubPath(current.journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-039",
+      "statement": "If saving the identification numbers fails, the page re-renders with HTTP 500, the entered values kept and a recoverable-error message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.js:73-88",
+      "quote": "render(h, current, values, { recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim",
+      "note": "The message text itself lives in the shared layout (part 1)."
+    },
+    {
+      "id": "repo-plantsfrontend-p7-040",
+      "statement": "Changing the commodity type from plants for planting to potatoes removes the saved supplier identification number and keeps the consignment number; changing back shows the supplier number empty.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:313-336",
       "quote": "test('changing commodity type purges the supplier number and preserves the common reference', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-043",
-      "statement": "The identification numbers page has no serious or critical axe (WCAG 2.2 AA) violations on first render or after errors, in every commodity type branch.",
+      "id": "repo-plantsfrontend-p7-041",
+      "statement": "The identification numbers page has no serious or critical axe accessibility violations (WCAG 2.0, 2.1 and 2.2 A/AA tags) on first render or with errors shown, for each commodity type.",
       "kind": "non-functional",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/identification-numbers.fit.spec.js:278-292",
       "quote": "test('has no serious or critical accessibility violations initially or after errors', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-044",
-      "statement": "The identification numbers page has Welsh copy, marked as a machine draft awaiting translation review; its title is 'Rhifau adnabod'.",
+      "id": "repo-plantsfrontend-p7-042",
+      "statement": "The identification numbers English copy is marked as provisional, taken from journey-spec.json.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.en.js:1",
+      "quote": "// Provisional copy from journey-spec.json.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-043",
+      "statement": "The identification numbers page has Welsh copy, marked as a machine draft awaiting translation review; its heading is 'Rhifau adnabod'.",
       "kind": "copy",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.cy.js:1-3",
       "quote": "// MACHINE-DRAFT Welsh — awaiting translation review.\nexport const copy = {\n  title: 'Rhifau adnabod',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-045",
-      "statement": "The identification numbers form posts with a CSRF crumb and a concurrency token, and has browser validation turned off (novalidate).",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/template.njk:9-11",
-      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "id": "repo-plantsfrontend-p7-044",
+      "statement": "The Welsh labels are 'Rhif adnabod cyflenwr y planhigion', 'Rhif adnabod cynhyrchydd y tatws', 'Rhif adnabod y cnwd' and 'Rhif y llwyth (dewisol)'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.cy.js:6, 10, 14, 18",
+      "quote": "label: 'Rhif adnabod cyflenwr y planhigion',\n...\n      label: 'Rhif adnabod cynhyrchydd y tatws',\n...\n      label: 'Rhif adnabod y cnwd',\n...\n      label: 'Rhif y llwyth (dewisol)',",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-plantsfrontend-p7-045",
+      "statement": "The Welsh error messages are worded on the labels rather than the shorter English error wording; for example the Welsh supplier required error is 'Nodwch rhif adnabod cyflenwr y planhigion' (enter the identification number of the plant supplier).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/copy/copy.cy.js:23-41",
+      "quote": "required: 'Nodwch rhif adnabod cyflenwr y planhigion'",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the Welsh errors with the English ones; the Welsh copy is a machine draft."
+    },
+    {
       "id": "repo-plantsfrontend-p7-046",
-      "statement": "The consignment contact page is served at the notification path with the slug consignment/contact/select.",
+      "statement": "The consignment contact page is served at /notifications/{reference}/consignment/contact/select.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/page.js:2-3",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/page.js:1-4",
       "quote": "id: 'consignment-contact-select',\n  slug: 'consignment/contact/select'",
       "confidence": "verbatim"
     },
@@ -379,13 +382,14 @@
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:207-216",
       "quote": "test('is reachable from the overview contact task row', async ({ page }) => {",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "hubCopy.rows.contact.title is 'Contact address for consignment'."
     },
     {
       "id": "repo-plantsfrontend-p7-048",
-      "statement": "The consignment contact page heading (h1) is 'Contact address for consignment'.",
+      "statement": "The consignment contact page heading is 'Contact address for consignment'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:2; controller.js:64",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:2",
       "quote": "title: 'Contact address for consignment',",
       "confidence": "verbatim"
     },
@@ -393,78 +397,78 @@
       "id": "repo-plantsfrontend-p7-049",
       "statement": "Under the heading the consignment contact page says 'Selecting a contact copies their name and address into this notification.'",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:3-4; template.njk:16",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:3-4",
       "quote": "'Selecting a contact copies their name and address into this notification.',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-050",
-      "statement": "The consignment contact page shows no section caption (it does not show 'Consignment parties').",
-      "kind": "copy",
+      "statement": "The consignment contact page does not show the 'Consignment parties' section caption.",
+      "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:193-195",
       "quote": "page.getByText(captionCopy.sections.consignmentParties, { exact: true })\n    ).toHaveCount(0)",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "The template does call sectionCaption(caption); which caption, if any, the contact section gets is set in the flow (part 2)."
     },
     {
       "id": "repo-plantsfrontend-p7-051",
-      "statement": "The consignment contact page uses the wider display content column rather than the standard form column.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:67",
-      "quote": "contentColumnClass: kit.surfaceClass('display'),",
-      "confidence": "verbatim",
-      "note": "Shared picker behaviour, claimed here only as what the contact page shows; part 6 owns the helper."
+      "statement": "The consignment contact page lists the organisation's own address book; the contact is picked from it.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:53-54; consignment-contact-select/controller.js:17-18",
+      "quote": "* The contact for the consignment, picked from the organisation's address book.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-052",
-      "statement": "The consignment contact page has a search box labelled 'Search' with the hint 'Name, address or country'.",
+      "statement": "The consignment contact page has a search box labelled 'Search' with the hint 'Name, address or country', and a secondary 'Search' button.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:5-9; template.njk:26-33",
-      "quote": "label: 'Search',\n    hint: 'Name, address or country',",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:5-9; template.njk:26-40",
+      "quote": "label: 'Search',\n    hint: 'Name, address or country',\n    button: 'Search'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-053",
-      "statement": "The search box is followed by a secondary 'Search' button that submits the same form with action=search.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:35-40",
-      "quote": "text: copy.search.button,\n      classes: \"govuk-button--secondary\",\n      name: \"action\",\n      value: \"search\"",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-054",
-      "statement": "A search narrows the organisation's address book results to the search term (for example 'Denmark' shows Copenhagen Exports and hides Tech Imports).",
+      "statement": "Searching narrows the address list to records matching the search term, for example a country name.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:259-267",
       "quote": "test('narrows the results to the search term', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-055",
-      "statement": "A new search always starts at the first page of results, whichever page it was run from, and keeps the ticked row.",
+      "id": "repo-plantsfrontend-p7-054",
+      "statement": "A new search always shows the first page of results, whichever page it was run from.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:83-90",
       "quote": "// A new search starts at the first page, whichever page it was run from.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-056",
-      "statement": "The contact choices come from the signed-in user's organisation address book.",
-      "kind": "integration",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:53-54; consignment-contact-select/controller.js:18",
-      "quote": "The contact for the consignment, picked from the organisation's address book.",
+      "id": "repo-plantsfrontend-p7-055",
+      "statement": "When no address matches the search, the page says 'No addresses match your search.' instead of showing an empty table.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:12; template.njk:108-110",
+      "quote": "noMatches: 'No addresses match your search.',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-057",
-      "statement": "The consignment contact results show as a table captioned 'Showing N of TOTAL addresses' with columns Name, Address and Country, plus a visually hidden 'Select' column for the radio and a visually hidden 'Actions' column for the View details disclosure.",
+      "id": "repo-plantsfrontend-p7-056",
+      "statement": "The address list is a table with the caption 'Showing {shown} of {total} addresses'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:13,18-24; template.njk:92-103",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:13",
       "quote": "resultsCaption: (shown, total) => `Showing ${shown} of ${total} addresses`,",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-plantsfrontend-p7-057",
+      "statement": "The address table has the columns Name, Address and Country, plus a first column with a visually hidden 'Select' heading and a last column with a visually hidden 'Actions' heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:18-24; template.njk:95-101",
+      "quote": "selectHidden: 'Select',\n    name: 'Name',\n    address: 'Address',\n    country: 'Country',\n    actionsHidden: 'Actions'",
+      "confidence": "verbatim"
+    },
+    {
       "id": "repo-plantsfrontend-p7-058",
-      "statement": "Each results row has a small radio whose accessible name is 'Select <name>', all radios sharing the field name contactAddress.",
+      "statement": "Each address row has a small radio button whose accessible name is 'Select {name}'; only one address can be chosen.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:55-67; copy.en.js:25",
       "quote": "<span class=\"govuk-visually-hidden\">{{ copy.selectRowPrefix }} {{ row.name }}</span>",
@@ -472,145 +476,166 @@
     },
     {
       "id": "repo-plantsfrontend-p7-059",
-      "statement": "The Address column shows the address lines, town or city, county and postal or zip code on one line separated by commas, with the country in its own column.",
+      "statement": "The Address column shows address line 1, address line 2, town or city, county and postal or zip code joined by commas, with blank parts left out and the country in its own column.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:12-17",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:4-17",
       "quote": "/** The address as one line for the results table. The country has its own\n * column, so it is left out here. */",
-      "confidence": "verbatim",
-      "note": "Shared picker helper read for context; claimed only as what the contact page shows."
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-060",
-      "statement": "Each results row has a 'View details' disclosure (with visually hidden 'for <name>') listing the name, address lines, country, telephone number and email address, one per line.",
+      "statement": "Each address row has a 'View details' disclosure listing the name, every address line, the country, the telephone number and the email address, one per line.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:69-82; copy.en.js:26-27; address-book-picker/address-lines.js:21-30",
-      "quote": "viewDetails: 'View details',\n  viewDetailsFor: 'for',",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:19-30; consignment-contact-select/template.njk:69-82",
+      "quote": "/** Everything the record holds, one line each, for the row's View details\n * disclosure — including the contact details the table has no column for. */",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-061",
-      "statement": "The consignment contact page shows five address book records per page; with the 13-record stub it shows 'Showing 5 of 13 addresses', five radios and a 'Page 2' link.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:218-234; src/server/app/services/address-book/index.js:10",
-      "quote": "export const PAGE_SIZE = 5",
+      "statement": "The 'View details' disclosure has a visually hidden suffix 'for {name}' so each one is told apart by screen readers.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:72; copy.en.js:26-27",
+      "quote": "viewDetails: 'View details',\n  viewDetailsFor: 'for',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-062",
-      "statement": "When results run to two or more pages the consignment contact page shows GOV.UK pagination with 'Previous' and 'Next' links and numbered page links (first, last and either side of the current page, with ellipses); a single page shows no pagination.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/pagination.js:9; copy.en.js:14-17; address-book-picker/pagination.js:30-37,70-91",
-      "quote": "export const pagination = paginationFor(consignmentContactSelectPage.slug)",
+      "statement": "The address list shows 5 records a page.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/index.js:10; consignment-contact-select.fit.spec.js:218-234",
+      "quote": "export const PAGE_SIZE = 5",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-063",
-      "statement": "Paging is a GET link that carries the search term, the page number and the ticked address id in the query string (q, page, selected) on the consignment/contact/select path.",
+      "statement": "When the results run to more than one page the page shows GOV.UK pagination with 'Previous' and 'Next' links and numbered page links for the first page, the last page and the pages either side of the current one, with an ellipsis for any gap.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/view-model/pagination.js:7; controller.js:68-75",
-      "quote": "export const resultsHref = resultsHrefFor(consignmentContactSelectPage.slug)",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:30-91; consignment-contact-select/copy/copy.en.js:14-17",
+      "quote": "/** First, last, and the page either side of the current one — anything the gap\n * skips over becomes an ellipsis. */",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-064",
-      "statement": "When a contact is ticked or already saved, the page shows an inset 'Selected address: <name>', even on a page of results where that record is not listed.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:42-44; copy.en.js:10; consignment-contact-select.fit.spec.js:344-364",
-      "quote": "selectedAddressPrefix: 'Selected address:',",
+      "statement": "No pagination is shown when all results fit on one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:3, 74-76",
+      "quote": "if (totalPages < MINIMUM_PAGES_TO_PAGINATE) {\n      return null\n    }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-065",
-      "statement": "A row ticked before searching stays selected while the search narrows the results, shown in the Selected address inset.",
+      "statement": "Paging links are plain GET links carrying the search term (q), the page number and the address already ticked (selected) in the query string, so a ticked address survives paging.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:282-292",
-      "quote": "test('keeps a ticked row while the search narrows the results', async ({",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:5-28; consignment-contact-select/controller.js:68-74",
+      "quote": "Paging is a link, not a submit, so everything the next page needs travels\n * in the query string: the search term, the page and the row the trader has\n * already ticked.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-066",
-      "statement": "A saved contact and a newly ticked (not yet saved) contact are both carried through the paging links and shown in the Selected address inset on the next page.",
+      "statement": "With JavaScript on, a row ticked but not yet saved is added to the paging links before the browser follows them, so the new selection is kept on the next page.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:294-320",
-      "quote": "test('carries a newly ticked address through the paging links', async ({",
-      "confidence": "verbatim",
-      "note": "Carrying a newly ticked row into the paging links relies on a small progressive enhancement (data-module app-address-book-picker); without JavaScript only the saved or previously submitted selection travels. Controller comment: 'a small progressive enhancement adds a newly ticked row to those links before the browser follows them.'"
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:20-23; template.njk:18; consignment-contact-select.fit.spec.js:308-320",
+      "quote": "Paging is a GET link; a small\n * progressive enhancement adds a newly ticked row to those links before the\n * browser follows them.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-067",
-      "statement": "When a search matches nothing the consignment contact page shows 'No addresses match your search.' instead of an empty table.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:12; template.njk:108-110; consignment-contact-select.fit.spec.js:269-280",
-      "quote": "noMatches: 'No addresses match your search.',",
+      "statement": "When an address is selected, the page shows an inset 'Selected address: {name}', even when that record is not on the page of results shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:42-44; copy.en.js:10; consignment-contact-select.fit.spec.js:359-363",
+      "quote": "selectedAddressPrefix: 'Selected address:',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-068",
-      "statement": "Saving a contact stores a copy of the address book record (its id, name and address) on the notification, not just a reference to it, so the notification keeps the contact details as they were when chosen.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:49-53,108-113",
-      "quote": "const copyOf = (record) => ({\n  addressId: record.id,\n  name: record.name,\n  address: { ...record.address }\n})",
+      "statement": "A ticked address is kept while a search narrows the results, and is shown in the 'Selected address' inset.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:282-292; template.njk:22-24",
+      "quote": "test('keeps a ticked row while the search narrows the results', async ({",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-069",
-      "statement": "A blank save is allowed on the consignment contact page: Save and continue or Save and return to overview with nothing ticked saves nothing, moves on, and leaves the task row 'Not yet started'.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:26-29,92-94; consignment-contact-select.fit.spec.js:417-445",
-      "quote": "a blank save is allowed: Save and continue with nothing ticked commits\n * nothing and moves on, leaving the task row not yet started.",
+      "statement": "On return to the consignment contact page the saved contact is pre-selected (its radio ticked when on the page shown, and in the Selected address inset).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:47, 73; consignment-contact-select.fit.spec.js:339-341",
+      "quote": "selectedId: request.query.selected ?? committedId(current.answers)",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-070",
-      "statement": "Saving a contact with Save and continue returns to the overview with the 'Contact address for consignment' row showing 'Completed', and re-opening the page shows that record ticked and in the Selected address inset.",
+      "statement": "Re-entering the consignment contact page always opens on page one of the whole address book, not on the page that holds the saved contact.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:328-342",
-      "quote": "test('saves the chosen address, returns to the overview with the row complete and shows it again on return', async ({",
-      "confidence": "verbatim",
-      "note": "Save and continue from the contact page lands on the overview (hub) in these tests: the contact page is the last page of the journey run."
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:359-363",
+      "quote": "// Re-entering opens on page one of the whole book, where the chosen record\n    // is not rendered — the picker still knows it, and says so in the inset.",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-071",
-      "statement": "A contact ticked on the second page of results saves, and re-entering the page (which opens on page one) shows it in the Selected address inset though its row is not listed.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:344-364",
-      "quote": "test('a row ticked on the second page saves, and re-entering shows it as the selected address', async ({",
+      "statement": "The consignment contact saved is a copy of the chosen address-book record: its id, name and address (including the country and contact details), not a reference to it.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:49-53, 111-113",
+      "quote": "const copyOf = (record) => ({\n  addressId: record.id,\n  name: record.name,\n  address: { ...record.address }\n})",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p7-072",
-      "statement": "Choosing a different contact replaces the one already saved rather than keeping both.",
+      "statement": "Because the contact is a copy, the notification keeps the contact details as they were when chosen; a later correction or deletion of the address-book record does not change or clear the notification's contact.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:15-19; consignment-contact-select/controller.js:25-28",
+      "quote": "`contactAddress` is that answer in\n * this journey: the contact page commits `{ addressId, name, address }`, so it\n * stays off this list.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-073",
+      "statement": "Choosing a new contact replaces the one already saved; only one contact is kept.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:366-380",
       "quote": "test('replaces the address already saved rather than keeping both', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-073",
-      "statement": "The consignment contact page offers the three shared save controls: Save and continue, Save and return to overview, and Cancel and return to overview.",
+      "id": "repo-plantsfrontend-p7-074",
+      "statement": "Saving a contact with Save and continue returns to the overview, where the 'Contact address for consignment' task row reads 'Completed'.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:112-116; consignment-contact-select.fit.spec.js:236-246",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:328-342",
+      "quote": "test('saves the chosen address, returns to the overview with the row complete and shows it again on return', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-075",
+      "statement": "A contact ticked on the second page of results can be saved.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:344-364",
+      "quote": "test('a row ticked on the second page saves, and re-entering shows it as the selected address', async ({",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-076",
+      "statement": "The consignment contact page offers 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:236-246; template.njk:112-116",
       "quote": "test('offers the three save controls', async ({ page }) => {",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-074",
-      "statement": "Save and return to overview on the consignment contact page saves the ticked address and reaches the overview with the row 'Completed'.",
+      "id": "repo-plantsfrontend-p7-077",
+      "statement": "'Save and return to overview' on the consignment contact page saves the ticked contact and returns to the overview with the task row 'Completed'.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:382-395",
       "quote": "test('Save and return to overview saves the address and reaches the overview', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-075",
-      "statement": "Cancel and return to overview on the consignment contact page reaches the overview without saving, leaving the row 'Not yet started'.",
+      "id": "repo-plantsfrontend-p7-078",
+      "statement": "'Cancel and return to overview' on the consignment contact page returns to the overview without saving the ticked contact, leaving the task row 'Not yet started'.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:397-414",
       "quote": "test('Cancel and return to overview reaches the overview without saving', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-076",
+      "id": "repo-plantsfrontend-p7-079",
       "statement": "The consignment contact page's Back link goes to the notification overview.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:248-257; address-book-picker/render.js:62",
@@ -618,151 +643,160 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-077",
-      "statement": "Submitting an id the address book does not hold (or a soft-deleted record) is refused with HTTP 400 and the error 'Select a contact address from the list', with no row ticked and the search term kept.",
+      "id": "repo-plantsfrontend-p7-080",
+      "statement": "Saving the consignment contact page with no address ticked is allowed: nothing is saved, the user moves on, and the overview's contact task row stays 'Not yet started'. This holds for both Save and continue and Save and return to overview.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:96-106; copy.en.js:28-30; address-book-picker/render.js:11-17",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:27-29, 92-94; consignment-contact-select.fit.spec.js:417-445",
+      "quote": "a blank save is allowed: Save and continue with nothing ticked commits\n * nothing and moves on, leaving the task row not yet started.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-081",
+      "statement": "The consignment contact page has no 'nothing selected' error: its only error is for a selected address the address book no longer holds (missing or deleted), which shows 'Select a contact address from the list'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.en.js:28-30; controller.js:96-106",
       "quote": "contactAddress: 'Select a contact address from the list'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-078",
-      "statement": "The refusal shows in an error summary and as an inline error above the results table (with a visually hidden 'Error:' prefix), and each radio is described by that error.",
+      "id": "repo-plantsfrontend-p7-082",
+      "statement": "When the chosen address is refused, the page re-renders with HTTP 400, the search term and page kept, no address ticked, an error summary and the error message 'Error: Select a contact address from the list' above the table.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:46-50,65; copy.en.js:11",
-      "quote": "<span class=\"govuk-visually-hidden\">{{ copy.errorPrefix }}</span> {{ picker.error }}",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:97-106; template.njk:46-50; consignment-contact-select.fit.spec.js:452-468",
+      "quote": "test('rejects an id the address book does not hold, focuses the first row and preserves the search', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-079",
-      "statement": "The error summary link moves focus to the first results radio, or to the search box when there are no results.",
+      "id": "repo-plantsfrontend-p7-083",
+      "statement": "The error summary link moves focus to the first radio in the results, or to the search box when there are no results.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:71-73; consignment-contact-select.fit.spec.js:452-472",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:71-73; address-book-picker/view-model.js:3-12; consignment-contact-select.fit.spec.js:470-471",
       "quote": "href: () => (found.results.length > 0 ? `#${fieldName}` : '#q')",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-080",
-      "statement": "After the refusal error, ticking a real contact and saving clears the error and completes the task row.",
+      "id": "repo-plantsfrontend-p7-084",
+      "statement": "After a refusal, ticking an address from the list and saving succeeds and the contact task row reads 'Completed'.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:474-486",
       "quote": "test('recovers from the error once an address is chosen', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-081",
-      "statement": "If saving the contact fails, the consignment contact page re-renders with HTTP 500 and a recoverable-error state, keeping the chosen record ticked.",
-      "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:115-124",
-      "quote": "selectedId: chosen.id,\n          recoverableError: true",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-082",
-      "statement": "If the address book is unavailable the error propagates rather than the contact being treated as deleted or unselected.",
+      "id": "repo-plantsfrontend-p7-085",
+      "statement": "A soft-deleted or missing address-book record is treated as no selection on the picker: it is not shown as the Selected address and is not carried in paging links.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:6-10",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:6-17, 55-58",
+      "quote": "// A reference that no longer resolves must not travel as \"Selected address\"\n  // or in the paging links, so it counts as no selection here too.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-086",
+      "statement": "An address book outage is not treated as a deleted address: the error propagates rather than the page acting as if nothing was selected.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:6-10; parties/index.js:26-30",
       "quote": "An outage is not that — the\n * address book throws and the throw propagates, because an unavailable service\n * must never be indistinguishable from a deletion.",
+      "confidence": "verbatim",
+      "note": "What the user then sees (an error page) is decided by the shared error handling, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p7-087",
+      "statement": "If saving the consignment contact fails, the page re-renders with HTTP 500, the chosen address still ticked and a recoverable-error message.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:108-127",
+      "quote": "recoverableError: true\n        })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-083",
-      "statement": "The whole consignment contact page is one form, so search, selection and save all work without JavaScript; JavaScript only adds a newly ticked row to the paging links.",
-      "kind": "non-functional",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.js:20-23; template.njk:18",
-      "quote": "The whole page is one form. The search button and the primary are both\n * submits, told apart by their `action` value. Paging is a GET link; a small\n * progressive enhancement adds a newly ticked row to those links before the\n * browser follows them.",
+      "id": "repo-plantsfrontend-p7-088",
+      "statement": "After the consignment contact page, Save and continue leads to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:333-336; identification-numbers.fit.spec.js:196-198",
+      "quote": "await saveAndContinue(page).click()\n\n    await expect(page).toHaveURL(HUB_URL)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-084",
-      "statement": "The consignment contact page has no serious or critical axe (WCAG 2.2 AA) violations on first render or in the error state.",
+      "id": "repo-plantsfrontend-p7-089",
+      "statement": "The consignment contact page uses the wider 'display' content column rather than the standard form column.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:67",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-090",
+      "statement": "The consignment contact page has no serious or critical axe accessibility violations on first render or in the error state.",
       "kind": "non-functional",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js:489-514",
       "quote": "test('has no serious or critical axe violations in the error state', async ({",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-085",
-      "statement": "The consignment contact page has Welsh copy, marked as a machine draft not reviewed by a translator; its title is 'Cyfeiriad cyswllt ar gyfer y llwyth'.",
+      "id": "repo-plantsfrontend-p7-091",
+      "statement": "The consignment contact page has Welsh copy marked as a machine draft not to be shipped without Welsh Language Standards sign-off; its heading is 'Cyfeiriad cyswllt ar gyfer y llwyth' and its error is 'Dewiswch gyfeiriad cyswllt o’r rhestr'.",
       "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js:1-3",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.\nexport const copy = {\n  title: 'Cyfeiriad cyswllt ar gyfer y llwyth',",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js:1-3, 30",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-086",
-      "statement": "When a notification is read, a saved place of destination or consignor that points at an address book record which is now missing or soft-deleted is treated as never entered, so display, fulfilment and evaluation agree it is unanswered.",
+      "id": "repo-plantsfrontend-p7-092",
+      "statement": "The pagination 'Previous' and 'Next' labels follow the page language ('Blaenorol' and 'Nesaf' in Welsh) rather than the component's built-in English.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/copy/copy.cy.js:15-18; address-book-picker/pagination.js:63-65",
+      "quote": "previous: 'Blaenorol',\n    next: 'Nesaf'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p7-093",
+      "statement": "Saved place-of-destination and consignor answers are references to address-book records, resolved from the book on every read, so a record the trader later corrects is corrected on the notification too.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:21-24,36-75",
-      "quote": "export const REFERENCE_PARTIES = Object.freeze([\n  PLACE_OF_DESTINATION,\n  CONSIGNOR\n])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-087",
-      "statement": "Treating a deleted address as if it were never entered is a recorded UCD decision.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:26-30",
-      "quote": "A soft-deleted\n * record comes back with `deleted: true` and counts as gone — the UCD decision\n * to treat a deleted address as if it were never entered.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-088",
-      "statement": "Place of destination and consignor are stored as address book references and resolved from the book on every read, so a record the trader later corrects is corrected on the notification too.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:6-13",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:6-24",
       "quote": "A reference is an `{ addressId }` and nothing more: the details are resolved\n * from the book on every read, so a record the trader later corrects is\n * corrected on the notification too.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-089",
-      "statement": "The consignment contact address is a copy, not a reference, so deleting the address book record it came from does not clear it from the notification.",
+      "id": "repo-plantsfrontend-p7-094",
+      "statement": "When the address-book record behind a saved place of destination or consignor has been deleted (including soft-deleted), the answer is treated as never entered for display, completion and evaluation.",
       "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:15-19",
-      "quote": "`contactAddress` is that answer in\n * this journey: the contact page commits `{ addressId, name, address }`, so it\n * stays off this list.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:26-52",
+      "quote": "A soft-deleted\n * record comes back with `deleted: true` and counts as gone — the UCD decision\n * to treat a deleted address as if it were never entered.",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-090",
-      "statement": "Dropping a dangling reference happens only for the current request; the stored answer is left until the next save rebuilds from the current answers, and the stored answers are kept so a page can tell 'answered, then deleted' from 'never answered'.",
+      "id": "repo-plantsfrontend-p7-095",
+      "statement": "A dangling party reference is dropped only for the current request; the stored answer is cleared only when a later save rebuilds the answers, and the stored answer is kept beside the sanitised one so a page can tell 'answered, then deleted' from 'never answered'.",
       "kind": "behaviour",
       "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:45-48",
       "quote": "Request-local. What was saved is left alone in the store — the next commit\n * that rebuilds from the current answers is what persists the clear — and the\n * engine keeps the stored answers beside the sanitised ones so a page can still\n * tell \"answered, then deleted\" from \"never answered\".",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-091",
-      "statement": "If the address book is unavailable while resolving a party reference, the error propagates rather than the reference being dropped as deleted.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:28-34",
-      "quote": "An outage is NOT\n * that: the address book throws and the throw propagates, because an\n * unavailable service must never be indistinguishable from a deletion.",
+      "id": "repo-plantsfrontend-p7-096",
+      "statement": "Party references are resolved against the signed-in user's organisation's address book.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/parties/index.js:61-64",
+      "quote": "const orgId = organisationIdOf(request)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-092",
-      "statement": "The consignor obligation is mandatory and applies only when the commodity type is plants for planting or wood and cut trees (not potatoes).",
+      "id": "repo-plantsfrontend-p7-097",
+      "statement": "The consignor obligation is mandatory and applies only when the commodity type is plants for planting or wood and cut trees; it is out of scope for potatoes.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:7-27",
-      "quote": "applyTo: includesGate(\n    commodityType,\n    ['plants-for-planting', 'wood-and-cut-trees'],",
+      "quote": "explanation:\n            'consignor applies to plants for planting and wood and cut trees'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-093",
-      "statement": "The consignor obligation records the reason 'consignor applies to plants for planting and wood and cut trees' when it is in scope.",
-      "kind": "copy",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:17-23",
-      "quote": "code: 'obligation.consignor.applicable.becauseCommodityType',\n          explanation:\n            'consignor applies to plants for planting and wood and cut trees'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-094",
+      "id": "repo-plantsfrontend-p7-098",
       "statement": "The supplier identification number obligation is mandatory and applies only when the commodity type is plants for planting.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:29-39",
-      "quote": "applyTo: equalsGate(\n    commodityType,\n    'plants-for-planting',\n    { inScope: true, status: 'mandatory' },",
+      "quote": "applyTo: equalsGate(\n    commodityType,\n    'plants-for-planting',\n    { inScope: true, status: 'mandatory' },\n    { inScope: false }\n  )",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-095",
+      "id": "repo-plantsfrontend-p7-099",
       "statement": "The producer identification number obligation is mandatory and applies only when the commodity type is potatoes.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:41-51",
@@ -770,7 +804,7 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-096",
+      "id": "repo-plantsfrontend-p7-100",
       "statement": "The crop identification number obligation is mandatory and applies only when the commodity type is potatoes.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:53-63",
@@ -778,70 +812,49 @@
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p7-097",
-      "statement": "The consignment number obligation is optional and has no gate, so it applies to every commodity type.",
+      "id": "repo-plantsfrontend-p7-101",
+      "statement": "The consignment number obligation is optional and applies to every commodity type.",
       "kind": "rule",
       "ref": "src/server/app/sets/high-risk-plants/obligations/sections/parties.js:65-69",
       "quote": "name: 'consignmentNumber',\n  status: 'optional'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-098",
-      "statement": "The contact address obligation is mandatory and ungated, so it applies to every commodity type.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/contact.js:1-5",
-      "quote": "name: 'contactAddress',\n  status: 'mandatory'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-099",
-      "statement": "The contact address is mandatory to submit but not to save: the page lets a trader move on with nothing chosen, so the requirement is enforced at submission (the task row stays 'Not yet started') rather than on the page.",
-      "kind": "rule",
-      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/contact.js:4; consignment-contact-select/controller.js:92-94",
-      "quote": "if (!selectedId) {\n    return h.redirect(await kit.nextTarget(request, page, current.scope))\n  }",
-      "confidence": "inferred",
-      "note": "Follows from the obligation being mandatory while the controller redirects on a blank save without an error. Submission-time enforcement itself is in check-answers/declaration, outside this part. The required supplier, producer and crop identification numbers, by contrast, block every save on their page."
-    },
-    {
-      "id": "repo-plantsfrontend-p7-100",
-      "statement": "The identification numbers page saves the supplier, producer, crop and consignment numbers as four scalar answers, each bound to its own obligation.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/evaluation.js:11-25",
-      "quote": "scalar({\n    field: 'supplierIdentificationNumber',\n    obligation: supplierIdentificationNumber\n  }),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p7-101",
-      "statement": "The consignment contact page saves one answer, contactAddress, bound to the contactAddress obligation.",
-      "kind": "data",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/evaluation.js:7-9; fields.js:1",
-      "quote": "scalar({ field: 'contactAddress', obligation: contactAddress })",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "No applyTo gate, so it is always in scope; the fit spec shows it on all three commodity types."
     },
     {
       "id": "repo-plantsfrontend-p7-102",
-      "statement": "The consignment contact form posts with a CSRF crumb, a concurrency token, the current page number and the previously selected id as hidden fields, with browser validation turned off.",
-      "kind": "constraint",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:18-24",
-      "quote": "<input type=\"hidden\" name=\"page\" value=\"{{ picker.page }}\" />\n    {% if picker.selected %}\n      <input type=\"hidden\" name=\"selected\" value=\"{{ picker.selected.id }}\" />",
-      "confidence": "verbatim"
+      "statement": "The contact address obligation is mandatory and applies to every notification, yet the contact page allows a blank save; the mandatory status therefore bites at submission rather than on the page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/contact.js:1-5; consignment-contact-select/controller.js:92-94",
+      "quote": "name: 'contactAddress',\n  status: 'mandatory'",
+      "confidence": "inferred",
+      "note": "Inferred from a mandatory obligation with no applyTo gate beside a page that commits nothing on a blank save. What check answers or submit then does with a missing contact is in another part."
     },
     {
       "id": "repo-plantsfrontend-p7-103",
-      "statement": "The consignment contact page offers no way to add a new contact address from the page; it has no 'add a new address' link, so a contact not already in the address book cannot be chosen.",
+      "statement": "The four identification answers feed the supplierIdentificationNumber, producerIdentificationNumber, cropIdentificationNumber and consignmentNumber obligations, and the contact answer feeds the contactAddress obligation, which together drive the task rows' statuses.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk (whole file); copy/copy.en.js (whole file)",
-      "quote": "",
-      "confidence": "gap",
-      "note": "Looked for an add or manual-entry link in the template and both copy files; there is none."
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/evaluation.js:11-25; consignment-contact-select/evaluation.js:7-9",
+      "quote": "scalar({ field: 'contactAddress', obligation: contactAddress })",
+      "confidence": "inferred",
+      "note": "That the bindings drive the task row statuses is inferred from the fit specs' Completed, Optional and Not yet started statuses."
     },
     {
       "id": "repo-plantsfrontend-p7-104",
-      "statement": "No fit spec proves the Welsh copy on either the identification numbers page or the consignment contact page.",
-      "kind": "constraint",
-      "ref": "identification-numbers.fit.spec.js; consignment-contact-select.fit.spec.js (both import only copy.en.js)",
+      "statement": "The consignment contact page uses only the organisation's address book: there is no option to enter a contact by hand or to add a new address from the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/template.njk:1-118",
       "quote": "",
-      "confidence": "gap"
+      "confidence": "gap",
+      "note": "Looked through the template, controller and copy: no manual-entry route, no 'add a new address' link and no link to the address book service. Whether one is wanted is not said here."
+    },
+    {
+      "id": "repo-plantsfrontend-p7-105",
+      "statement": "Nothing in this slice says how the saved consignment contact (a copy) is shown on check answers or what a contact whose source record was later deleted looks like there.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/; parties/index.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Check answers is part 8's slice."
     }
   ]
 }

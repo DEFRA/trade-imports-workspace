@@ -1,821 +1,1119 @@
 {
   "source": "repo:plantsfrontend",
-  "structure": "Part 5 of repos/trade-imports-plants-frontend: Origin, arrival status and arrival details. Read in full the three feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features/ — origin/ (page.js, evaluation.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, origin.fit.spec.js), arrival-status/ (page.js, evaluation.js, statuses.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, arrival-status.fit.spec.js) and arrival-details/ (page.js, evaluation.js, fields.js, arrival-bounds.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, arrival-details.fit.spec.js) — plus features/timing-windows.js and obligations/sections/origin.js and arrival.js. To state which countries the origin narrowing allows, ORIGIN_CONSTRAINTS in services/commodities/index.js (outside the slice) was read, and validatorDefaults in src/server/app/shared/copy.en.js was read for the time-format error the arrival-details page shows. Covered: the origin page (route /notifications/{id}/origin, heading, country autocomplete, placeholder, errors including the stale-country and three commodity-category narrowing errors, ware-potato guidance, back link, save controls, where Continue leads); the arrival-status page (route, legend-as-heading, two options with hints quoting the 4-day window, error, gate to plants-for-planting and wood-and-cut-trees only, potatoes skipping it); the arrival-details page (route, heading, a date picker whose label and hint change across three states, the potato-only time and place-of-landing fields, every error, the today cap for already-arrived consignments, no lower bound, Continue to the place of destination); the two timing windows; the five obligations (countryOfOrigin, arrivalStatus, arrivalDate, arrivalTime, proposedPlaceOfLanding); the Welsh machine-draft status of each copy bundle; and every test in the three fit specs (12+2+4+3 origin, 13+3 arrival-status, 7+5+6+2+2 arrival-details). Gaps recorded: no transport or point-of-entry fields for plants and wood on arrival details, and no lateness flag visible in the slice despite the timing-windows comment naming lateness rules. It stops at the place of destination.",
+  "structure": "Part 5 (Origin, arrival status and arrival details) read in full the three feature folders under src/server/app/sets/high-risk-plants/journeys/linear/features: origin/ (page.js, evaluation.js, controller.js 191 lines, template.njk, copy/copy.en.js, copy/copy.cy.js, origin.fit.spec.js 556 lines), arrival-status/ (page.js, evaluation.js, statuses.js, controller.js, template.njk, copy en/cy, arrival-status.fit.spec.js 415 lines) and arrival-details/ (page.js, evaluation.js, fields.js, arrival-bounds.js, controller.js 219 lines, template.njk, copy en/cy, arrival-details.fit.spec.js 586 lines), plus features/timing-windows.js and obligations/sections/origin.js and arrival.js. It covers three pages in the order origin -> arrival status (plants for planting and wood only) -> arrival details -> place of destination: the origin page (/notifications/{id}/origin, type-ahead country picker over the SPS origin list, narrowed per commodity category with inset guidance and narrowing errors), the arrival status page (/notifications/{id}/arrival-status, two radios with timing hints), and the arrival details page (/notifications/{id}/arrival-details, one MoJ date picker whose label and hint change in three states, plus a 24-hour time and a proposed place of landing for potatoes only). It claims the four obligations (countryOfOrigin, arrivalStatus, arrivalDate, arrivalTime, proposedPlaceOfLanding) with their gates, the two timing-window constants, the arrival-date upper bound for an already-arrived consignment, stale-answer handling, the provisional and machine-draft Welsh copy markers, and every test in the three fit specs. Unit tests (*.test.js) are out of scope. The origin-constraint definitions themselves live in the commodities service (another part); this part claims only what the origin page shows of them.",
   "claims": [
     {
       "id": "repo-plantsfrontend-p5-001",
       "statement": "The origin page is served at /notifications/{notification id}/origin.",
       "kind": "behaviour",
-      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/page.js:1; origin.fit.spec.js:27",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/page.js:1; origin.fit.spec.js:27,55",
       "quote": "export const originPage = { id: 'origin', slug: 'origin' }",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-002",
-      "statement": "The origin page is reached from the origin task row on the notification overview.",
-      "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:149 'is reachable from the overview origin task row'",
-      "quote": "await page.getByRole('link', { name: hubCopy.rows.origin.title }).click()\n\n    await expect(page).toHaveURL(ORIGIN_URL)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-003",
-      "statement": "The origin page shows the 'about the consignment' section caption above its heading.",
+      "statement": "The origin page's heading (h1) is 'Origin of the import'.",
       "kind": "copy",
-      "ref": "origin/template.njk:10; origin/origin.fit.spec.js:135",
-      "quote": "page.getByText(captionsCopy.sections.aboutTheConsignment, { exact: true })",
-      "confidence": "verbatim",
-      "note": "The caption's wording lives in flow/section-captions copy, outside this part."
-    },
-    {
-      "id": "repo-plantsfrontend-p5-004",
-      "statement": "The origin page heading is 'Origin of the import', shown as a large (govuk-heading-l) h1.",
-      "kind": "copy",
-      "ref": "origin/copy/copy.en.js:13; origin/template.njk:11",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:13; template.njk:11",
       "quote": "title: 'Origin of the import',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-005",
-      "statement": "The origin page asks one question, the country of origin, labelled 'Country of origin' at medium label size.",
+      "id": "repo-plantsfrontend-p5-003",
+      "statement": "The origin page shows the section caption for 'about the consignment' above the heading.",
       "kind": "copy",
-      "ref": "origin/copy/copy.en.js:15; origin/template.njk:24",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk:10; origin.fit.spec.js:130-147",
+      "quote": "page.getByText(captionsCopy.sections.aboutTheConsignment, { exact: true })",
+      "confidence": "verbatim",
+      "note": "The caption wording itself lives in flow/section-captions copy, another part."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-004",
+      "statement": "The origin page has one field, the country of origin, labelled 'Country of origin' at medium label size.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:15; template.njk:21-30",
       "quote": "label: 'Country of origin',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-006",
+      "id": "repo-plantsfrontend-p5-005",
       "statement": "The country of origin field has the hint 'Start typing to search for a country.'",
       "kind": "copy",
-      "ref": "origin/copy/copy.en.js:16",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:16",
       "quote": "hint: 'Start typing to search for a country.',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-007",
-      "statement": "The country of origin is a native select enhanced into an accessible-autocomplete type-ahead; the visible combobox keeps the field's id and the hidden select submits the value.",
+      "id": "repo-plantsfrontend-p5-006",
+      "statement": "The country of origin is a native select enhanced into an accessible-autocomplete type-ahead that shows every value on focus.",
       "kind": "behaviour",
-      "ref": "origin/template.njk:21-30; origin/origin.fit.spec.js:32-35",
-      "quote": "{{ appAccessibleAutocomplete({\n      id: \"countryOfOrigin\",",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-008",
-      "statement": "The country type-ahead shows the whole country list on focus without typing (showAllValues).",
-      "kind": "behaviour",
-      "ref": "origin/template.njk:29; origin/origin.fit.spec.js:311 'offers the whole country list on focus, without typing'",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk:21-30",
       "quote": "autocomplete: { showAllValues: true, noResults: copy.country.noResults }",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-009",
-      "statement": "When nothing matches what the user typed, the country type-ahead says 'No countries found'.",
+      "id": "repo-plantsfrontend-p5-007",
+      "statement": "The country list starts with an empty placeholder option 'Select a country' followed by the real countries.",
       "kind": "copy",
-      "ref": "origin/copy/copy.en.js:18; origin/origin.fit.spec.js:324",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:46-49; copy/copy.en.js:17",
+      "quote": "{ value: '', text: copy.country.placeholder },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-008",
+      "statement": "The country list offered is the whole SPS origin country list from the countries service, with no divider under the placeholder because the list is searchable.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:26-27,40-49",
+      "quote": "The country list is the whole SPS origin block",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-009",
+      "statement": "When typed text matches no country, the type-ahead shows 'No countries found'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:18; origin.fit.spec.js:324-330",
       "quote": "noResults: 'No countries found'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-010",
-      "statement": "The country list opens with an empty-valued placeholder option 'Select a country', followed by every origin country the countries service supplies, with no divider.",
-      "kind": "data",
-      "ref": "origin/controller.js:43-49; origin/copy/copy.en.js:17; origin/origin.fit.spec.js:158",
-      "quote": "const countryItems = async () => [\n  { value: '', text: copy.country.placeholder },\n  ...(await countries.originCountries())\n]",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-011",
-      "statement": "The countries offered on the origin page are the whole SPS origin block from the shared countries service, not a list written in the feature.",
-      "kind": "integration",
-      "ref": "origin/controller.js:26",
-      "quote": "The country list is the whole SPS origin block",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-012",
-      "statement": "Country of origin is required and must be one of the listed countries; a blank or unlisted value gives 'Select the country where the consignment originates from'.",
+      "statement": "The country of origin is required: continuing with nothing chosen, or with a value not in the country list, shows 'Select the country where the consignment originates from'.",
       "kind": "rule",
-      "ref": "origin/controller.js:70-77; origin/copy/copy.en.js:25",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:70-77; copy/copy.en.js:25",
       "quote": "countryRequired: 'Select the country where the consignment originates from',",
       "confidence": "verbatim"
     },
     {
+      "id": "repo-plantsfrontend-p5-011",
+      "statement": "Which countries a consignment may name is narrowed by the categories of its saved commodity lines, checked on the page against origin constraints held by the commodities service, not by an obligation gate.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:26-30,51-63; obligations/sections/origin.js:5-9",
+      "quote": "which of those countries this consignment may name is decided by the categories of its commodity lines. That narrowing cannot be an obligation gate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-012",
+      "statement": "When a consignment breaks more than one origin constraint, the error names the narrowest constraint (constraints are checked narrowest first).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:56-63,79-84",
+      "quote": "Narrowest first, so a consignment that breaks more than one constraint is told about the narrowest.",
+      "confidence": "verbatim"
+    },
+    {
       "id": "repo-plantsfrontend-p5-013",
-      "statement": "Continuing with no country chosen keeps the user on the origin page with the error in the error summary, and the summary link moves focus to the country input.",
-      "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:247 'continuing with nothing chosen shows the error and focuses the field'",
-      "quote": "await summaryLink.click()\n    await expect(page.locator(COUNTRY_INPUT)).toBeFocused()",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-014",
-      "statement": "If a saved country is no longer in the offered list, the origin page clears it and shows 'The saved country is no longer available. Select a country from the list.' when the page opens.",
+      "statement": "A ware-potato consignment must originate in Poland, Portugal, Romania or Spain; another country shows 'Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified'.",
       "kind": "rule",
-      "ref": "origin/controller.js:132-155; origin/copy/copy.en.js:26-27",
-      "quote": "countryNoLongerAvailable:\n      'The saved country is no longer available. Select a country from the list.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-015",
-      "statement": "Which countries a consignment may name is narrowed by the categories of its saved commodity lines; the narrowing is validated on the origin page, not by an obligation gate.",
-      "kind": "rule",
-      "ref": "origin/controller.js:26-30; obligations/sections/origin.js:5-9",
-      "quote": "which of those countries\n * this consignment may name is decided by the categories of its commodity\n * lines. That narrowing cannot be an obligation gate",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-016",
-      "statement": "A consignment with a ware-potatoes line may only originate from Poland, Portugal, Romania or Spain.",
-      "kind": "rule",
-      "ref": "services/commodities/index.js:93-97 (outside the slice; read to state what the origin page enforces)",
-      "quote": "id: WARE_POTATOES,\n    categories: Object.freeze([WARE_POTATOES]),\n    countries: Object.freeze(['PL', 'PT', 'RO', 'ES'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-017",
-      "statement": "A ware-potato consignment naming another country is refused with 'Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified'.",
-      "kind": "copy",
-      "ref": "origin/copy/copy.en.js:29-30; origin/origin.fit.spec.js:486",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:29-30; origin.fit.spec.js:486-527",
       "quote": "'Select Poland, Portugal, Romania or Spain – ware potatoes from other countries do not need to be notified',",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-018",
-      "statement": "A consignment with a conifer-wood-without-bark line may only originate from Italy, France, Portugal or Spain.",
+      "id": "repo-plantsfrontend-p5-014",
+      "statement": "Conifer wood without bark must originate in Italy, France, Portugal or Spain; another country shows 'Select Italy, France, Portugal or Spain – conifer wood without bark from other countries does not need to be notified'.",
       "kind": "rule",
-      "ref": "services/commodities/index.js:98-102 (outside the slice)",
-      "quote": "id: CONIFER_WOOD_WITHOUT_BARK,\n    categories: Object.freeze([CONIFER_WOOD_WITHOUT_BARK]),\n    countries: Object.freeze(['IT', 'FR', 'PT', 'ES'])",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-019",
-      "statement": "A conifer-wood-without-bark consignment naming another country is refused with 'Select Italy, France, Portugal or Spain – conifer wood without bark from other countries does not need to be notified'.",
-      "kind": "copy",
-      "ref": "origin/copy/copy.en.js:31-32",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:31-32",
       "quote": "'Select Italy, France, Portugal or Spain – conifer wood without bark from other countries does not need to be notified',",
-      "confidence": "verbatim"
+      "confidence": "verbatim",
+      "note": "No fit spec in this part proves the conifer-wood-without-bark narrowing."
     },
     {
-      "id": "repo-plantsfrontend-p5-020",
-      "statement": "A consignment with a plants-for-planting, trees-for-planting, conifer-wood-with-bark, cut-coniferous-trees, hardwood-round-surface or hardwood-chips line may only originate from an EU member state.",
+      "id": "repo-plantsfrontend-p5-015",
+      "statement": "Other plants and wood categories must originate in an EU member state; another country shows 'Select an EU member state – plants and wood from other countries do not need to be notified'.",
       "kind": "rule",
-      "ref": "services/commodities/index.js:103-114 (outside the slice); obligations/sections/origin.js:5-7",
-      "quote": "id: 'eu-member-states',\n    categories: Object.freeze([\n      PLANTS_FOR_PLANTING,\n      TREES_FOR_PLANTING,\n      CONIFER_WOOD_WITH_BARK,\n      CUT_CONIFEROUS_TREES,\n      HARDWOOD_ROUND_SURFACE,\n      HARDWOOD_CHIPS\n    ]),",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-021",
-      "statement": "A consignment held to EU member states that names another country (for example Norway for cut coniferous trees) is refused with 'Select an EU member state – plants and wood from other countries do not need to be notified'.",
-      "kind": "copy",
-      "ref": "origin/copy/copy.en.js:33-34; origin/origin.fit.spec.js:529 'refuses a country outside the EU for a wood consignment'",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:33-34; origin.fit.spec.js:529-555; obligations/sections/origin.js:5-7",
       "quote": "'Select an EU member state – plants and wood from other countries do not need to be notified'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-022",
-      "statement": "When a consignment breaks more than one origin constraint, only the narrowest constraint's error is shown, in the order ware potatoes, conifer wood without bark, EU member states.",
-      "kind": "rule",
-      "ref": "origin/controller.js:56-63, 79-84",
-      "quote": "// Narrowest first, so a consignment that breaks more than one constraint is\n// told about the narrowest.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-023",
-      "statement": "Seed-potato lines put no narrowing on the country of origin, because no origin constraint lists the seed-potatoes category.",
-      "kind": "rule",
-      "ref": "services/commodities/index.js:92-115 (outside the slice)",
-      "quote": "categories: Object.freeze([WARE_POTATOES]),",
-      "confidence": "inferred",
-      "note": "Inferred from the three constraints, none of which names SEED_POTATOES."
-    },
-    {
-      "id": "repo-plantsfrontend-p5-024",
-      "statement": "A narrowing error is checked only once the country is a listed country; the required/membership error comes first.",
-      "kind": "rule",
-      "ref": "origin/controller.js:95-102",
-      "quote": "const { errors, value } = validate(await membershipRule(), payload)\n  if (errors) {\n    return errors\n  }",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-025",
-      "statement": "When the consignment holds a ware-potatoes line, the origin page shows inset text: 'Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.'",
+      "id": "repo-plantsfrontend-p5-016",
+      "statement": "When the consignment has a ware-potato line, the origin page shows inset guidance: 'Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.'",
       "kind": "copy",
-      "ref": "origin/copy/copy.en.js:20-23; origin/template.njk:17-19; origin/origin.fit.spec.js:498",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:20-23; template.njk:17-19; controller.js:65-68",
       "quote": "'Notify ware potatoes grown, or suspected to have been grown, in Poland, Portugal, Romania or Spain. Spain does not include the Balearic Islands.'",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-026",
-      "statement": "Only the ware-potato constraint has scope guidance; the conifer-wood-without-bark and EU-member-states constraints show no inset text, and a wood consignment does not see the ware-potato guidance.",
-      "kind": "behaviour",
-      "ref": "origin/copy/copy.en.js:20-23; origin/controller.js:65-68; origin/origin.fit.spec.js:542-544",
-      "quote": "page.getByText(copy.guidance[WARE_POTATOES], { exact: true })\n    ).toHaveCount(0)",
+      "id": "repo-plantsfrontend-p5-017",
+      "statement": "Only the ware-potato constraint has inset guidance; the conifer-wood-without-bark and EU-member-state constraints show none, so a wood consignment sees no guidance on the origin page.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:20-23; controller.js:65-68; origin.fit.spec.js:542-544",
+      "quote": "guidance: {\n    'ware-potatoes':",
       "confidence": "inferred",
-      "note": "Inferred from guidance having only a 'ware-potatoes' key and guidanceOn filtering out undefined text."
+      "note": "Inferred from the guidance map holding one key and guidanceOn filtering out undefined entries."
     },
     {
-      "id": "repo-plantsfrontend-p5-027",
-      "statement": "The origin page's guidance and narrowing error sentences are provisional invented copy awaiting the copy pass (decisions.json d-054).",
+      "id": "repo-plantsfrontend-p5-018",
+      "statement": "The origin guidance and every narrowing error sentence are provisional copy with no service source, awaiting the copy pass (decision d-054).",
       "kind": "constraint",
-      "ref": "origin/copy/copy.en.js:1-3",
-      "quote": "// AWAITING THE COPY PASS — `guidance` and every `errors.narrowing` sentence\n// are invented copy with no service source behind them\n// (journey-spec.json pages[origin].provisionalCopy, decisions.json d-054).",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.en.js:1-3",
+      "quote": "AWAITING THE COPY PASS — `guidance` and every `errors.narrowing` sentence are invented copy with no service source behind them (journey-spec.json pages[origin].provisionalCopy, decisions.json d-054).",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-028",
-      "statement": "The origin page saves the chosen country code, trimmed, as the notification-level answer countryOfOrigin.",
+      "id": "repo-plantsfrontend-p5-019",
+      "statement": "If the saved country is no longer in the offered list, the origin page clears the field and shows 'The saved country is no longer available. Select a country from the list.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:132-155; copy/copy.en.js:26-27",
+      "quote": "'The saved country is no longer available. Select a country from the list.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-020",
+      "statement": "The origin page saves one notification-level answer, countryOfOrigin (the country code, trimmed).",
       "kind": "data",
-      "ref": "origin/controller.js:172-174",
-      "quote": "committed = await state.commit(request, h, {\n        [COUNTRY_FIELD]: values[COUNTRY_FIELD].trim()\n      })",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:32,172-174",
+      "quote": "[COUNTRY_FIELD]: values[COUNTRY_FIELD].trim()",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-029",
-      "statement": "The saved country is shown again in the type-ahead when the user returns to the origin page.",
+      "id": "repo-plantsfrontend-p5-021",
+      "statement": "The origin page's Back link goes to the notification overview once the notification has a committed answer, otherwise to the dashboard.",
       "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:197 'saves a country, reaches the arrival details and shows it again on return'",
-      "quote": "await page.goto(originPathOf(reference))\n    await expect(page.locator(COUNTRY_INPUT)).toHaveValue(FRANCE)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-030",
-      "statement": "The origin page's Back link goes to the notification overview once the notification has any saved answer, and to the dashboard when nothing has been saved yet.",
-      "kind": "behaviour",
-      "ref": "origin/controller.js:104-112; origin/origin.fit.spec.js:186",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:104-112; origin.fit.spec.js:186-195",
       "quote": "hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-031",
-      "statement": "The origin page offers the three shared save controls: a Save and continue button, a Save and return to overview button and a Cancel and return to overview link.",
+      "id": "repo-plantsfrontend-p5-022",
+      "statement": "The origin page offers the three shared save controls: Save and continue, Save and return to overview, and Cancel and return to overview.",
       "kind": "behaviour",
-      "ref": "origin/template.njk:32; origin/origin.fit.spec.js:170 'offers the three save controls'",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk:32; origin.fit.spec.js:170-184",
       "quote": "{{ saveActions(hubHref, copy = sharedCopy.saveActions) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-023",
+      "statement": "After a valid save on the origin page the user goes to the next page the flow names for the notification's scope (arrival status for plants and wood, arrival details for potatoes).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:188; origin.fit.spec.js:28-30,197-209; arrival-status.fit.spec.js:120-129",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, committed.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-024",
+      "statement": "If saving the origin answer fails, the page re-renders with the recoverable-error message and the entered value, with HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:169-186",
+      "quote": "recoverableError: true\n        })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-025",
+      "statement": "A refused origin answer re-renders the page with HTTP status 400, the error summary and the value the user chose.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.js:157-167",
+      "quote": "return (await render(h, current, values, { constraints, errors })).code(\n      HTTP_STATUS_BAD_REQUEST\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-026",
+      "statement": "The origin page form posts with a crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/template.njk:13-15",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
       "confidence": "verbatim",
-      "note": "Button wording lives in shared/copy saveActions, outside this part."
+      "note": "The same hidden fields appear on the arrival-status and arrival-details templates."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-027",
+      "statement": "countryOfOrigin is a mandatory obligation for every commodity type, one notification-level origin for potatoes, plants and wood alike.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/origin.js:1-14",
+      "quote": "One notification-level answer for potatoes, plants and wood alike: the statute names a different scope for each, but a notification carries one origin.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-028",
+      "statement": "The origin Welsh copy is machine-draft, not reviewed by a translator, and must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js:1",
+      "quote": "MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim",
+      "note": "The same marker heads the arrival-status and arrival-details Welsh copy."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-029",
+      "statement": "The origin Welsh title and country strings reuse the live-animals Welsh for identical English; the required error diverges because its subject is the consignment, not the animal.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js:5-12,24",
+      "quote": "`errors.countryRequired` diverges from animals because the English does: the subject is the consignment, not the animal (journey-spec.json c-027)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-030",
+      "statement": "The origin page's Welsh heading is 'Tarddiad y mewnforyn' and its field label 'Gwlad tarddiad'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/copy/copy.cy.js:12-14",
+      "quote": "title: 'Tarddiad y mewnforyn',\n  country: {\n    label: 'Gwlad tarddiad',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-031",
+      "statement": "Fit spec: the origin page renders the caption, the heading, the label and the hint.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:130 'renders the caption, the heading, the label and the hint'",
+      "quote": "test('renders the caption, the heading, the label and the hint'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-032",
-      "statement": "Save and return to overview on the origin page saves the country and goes to the overview.",
+      "statement": "Fit spec: the origin page is reachable from the overview's origin task row.",
       "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:211",
-      "quote": "Save and return to overview saves the country and reaches the overview",
+      "ref": "origin/origin.fit.spec.js:149 'is reachable from the overview origin task row'",
+      "quote": "test('is reachable from the overview origin task row'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-033",
-      "statement": "Cancel and return to overview on the origin page goes to the overview without saving the country.",
+      "statement": "Fit spec: the select offers a placeholder ahead of every country the stub service primes, in that order.",
       "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:229",
-      "quote": "Cancel and return to overview reaches the overview without saving",
+      "ref": "origin/origin.fit.spec.js:158 'offers a placeholder ahead of every country the service primes'",
+      "quote": "expect(rendered).toEqual(['', ...Object.keys(COUNTRY_LABELS)])",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-034",
-      "statement": "Save and continue from origin goes to the arrival-status question for plants and wood notifications, and straight to arrival details for potato notifications.",
+      "statement": "Fit spec: the origin page offers the three save controls.",
       "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:28-30, 197; arrival-status/arrival-status.fit.spec.js:122-128, 373",
-      "quote": "// A potato notification is never asked the arrival question, so Continue from\n// origin lands on the arrival details.",
+      "ref": "origin/origin.fit.spec.js:170 'offers the three save controls'",
+      "quote": "test('offers the three save controls'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-035",
-      "statement": "After an origin error, choosing a country and continuing moves on as normal.",
+      "statement": "Fit spec: once the notification has an answer, Back on the origin page goes to the overview.",
       "kind": "behaviour",
-      "ref": "origin/origin.fit.spec.js:264 'recovers from the error once a country is chosen'",
-      "quote": "recovers from the error once a country is chosen",
+      "ref": "origin/origin.fit.spec.js:186 'sends Back to the overview once the notification has an answer'",
+      "quote": "test('sends Back to the overview once the notification has an answer'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-036",
-      "statement": "If saving fails on origin, arrival-status or arrival-details, the page is shown again with a recoverable-error message and HTTP 500, keeping what the user entered.",
+      "statement": "Fit spec: saving a country on a potato notification reaches the arrival details page, and the country shows again on return.",
       "kind": "behaviour",
-      "ref": "origin/controller.js:170-186; arrival-status/controller.js:94-107; arrival-details/controller.js:199-214",
-      "quote": "recoverableError: true\n        })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
-      "confidence": "inferred",
-      "note": "The recoverable-error message wording lives in shared kit and layout, outside this part."
+      "ref": "origin/origin.fit.spec.js:197 'saves a country, reaches the arrival details and shows it again on return'",
+      "quote": "test('saves a country, reaches the arrival details and shows it again on return'",
+      "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-037",
-      "statement": "The origin page has no serious or critical axe (WCAG 2.2 AA tag set) violations on first render or in its error state.",
-      "kind": "non-functional",
-      "ref": "origin/origin.fit.spec.js:279, 290",
-      "quote": ".withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
+      "statement": "Fit spec: Save and return to overview on the origin page saves the country and reaches the overview.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:211 'Save and return to overview saves the country and reaches the overview'",
+      "quote": "test('Save and return to overview saves the country and reaches the overview'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-038",
-      "statement": "The enhanced country input and its options use GOV.UK typography (GDS Transport at the govuk-input size).",
+      "statement": "Fit spec: Cancel and return to overview on the origin page reaches the overview without saving the country.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:229 'Cancel and return to overview reaches the overview without saving'",
+      "quote": "test('Cancel and return to overview reaches the overview without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-039",
+      "statement": "Fit spec: continuing with no country shows the required error in the error summary, and its link focuses the country input.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:247 'continuing with nothing chosen shows the error and focuses the field'",
+      "quote": "test('continuing with nothing chosen shows the error and focuses the field'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-040",
+      "statement": "Fit spec: the origin page recovers from the error once a country is chosen.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:264 'recovers from the error once a country is chosen'",
+      "quote": "test('recovers from the error once a country is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-041",
+      "statement": "Fit spec: the origin page has no serious or critical axe violations (WCAG 2.0/2.1/2.2 A and AA tags) on the initial render or in the error state.",
+      "kind": "non-functional",
+      "ref": "origin/origin.fit.spec.js:279,290",
+      "quote": "test('has no serious or critical axe violations on the initial render'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-042",
+      "statement": "Fit spec: the country type-ahead offers the whole country list on focus without typing.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:311 'offers the whole country list on focus, without typing'",
+      "quote": "test('offers the whole country list on focus, without typing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-043",
+      "statement": "Fit spec: the country type-ahead tells the user when nothing matches what they typed.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:324 'tells the user when nothing matches what they typed'",
+      "quote": "test('tells the user when nothing matches what they typed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-044",
+      "statement": "Fit spec: the enhanced country input and its options use GOV.UK typography (GDS Transport, the govuk-input font size).",
       "kind": "non-functional",
       "ref": "origin/origin.fit.spec.js:338 'uses GOV.UK typography for the enhanced input and its options'",
       "quote": "expect(typography.inputFamily).toMatch(/^\"?GDS Transport/)",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-039",
-      "statement": "The type-ahead's dropdown arrow is painted behind the interactive input, which has 35px right padding.",
+      "id": "repo-plantsfrontend-p5-045",
+      "statement": "Fit spec: the type-ahead's dropdown arrow is painted behind the interactive input (input is the top hit, 35px right padding, wrapper z-index 0).",
       "kind": "non-functional",
       "ref": "origin/origin.fit.spec.js:380 'paints the dropdown arrow behind the interactive input'",
-      "quote": "inputPaddingRight: '35px',\n      wrapperZIndex: '0'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-040",
-      "statement": "The enhanced country input keeps the GOV.UK focus indicator: a 3px outline in the focus colour with an inset box shadow.",
-      "kind": "non-functional",
-      "ref": "origin/origin.fit.spec.js:412 'keeps the upstream focus indicator on the enhanced input'",
-      "quote": "expect(indicator.outlineWidth).toBe('3px')\n    expect(indicator.boxShadow).toContain('inset')",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-041",
-      "statement": "In the error state the enhanced country input has the standard GOV.UK error border, matching govuk-input--error in colour and width.",
-      "kind": "non-functional",
-      "ref": "origin/origin.fit.spec.js:440 'gives the enhanced input the standard GOV.UK error border'",
-      "quote": "expect(borders.inputColour).toBe(borders.referenceColour)\n    expect(borders.inputWidth).toBe(borders.referenceWidth)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-042",
-      "statement": "The origin page has Welsh copy (title 'Tarddiad y mewnforyn'), all machine-draft and not reviewed by a translator; title and country strings reuse the live-animals Welsh.",
-      "kind": "constraint",
-      "ref": "origin/copy/copy.cy.js:1-12",
-      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-043",
-      "statement": "The origin required error says 'the consignment' rather than 'the animal', differing on purpose from the animals service wording (journey-spec c-027).",
-      "kind": "copy",
-      "ref": "origin/copy/copy.cy.js:7-9",
-      "quote": "`errors.countryRequired`\n// diverges from animals because the English does: the subject is the\n// consignment, not the animal (journey-spec.json c-027)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-044",
-      "statement": "countryOfOrigin is one mandatory notification-level obligation for potatoes, plants and wood alike, with no gate.",
-      "kind": "rule",
-      "ref": "obligations/sections/origin.js:1-14",
-      "quote": "export const countryOfOrigin = {\n  id: '5e18b2b2-06d3-49af-a55c-b78013d284c0',\n  name: 'countryOfOrigin',\n  status: 'mandatory'\n}",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-045",
-      "statement": "The arrival-status page is served at /notifications/{notification id}/arrival-status.",
-      "kind": "behaviour",
-      "ref": "arrival-status/page.js:1-4; arrival-status.fit.spec.js:29",
-      "quote": "id: 'arrival-status',\n  slug: 'arrival-status'",
+      "quote": "test('paints the dropdown arrow behind the interactive input'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-046",
-      "statement": "The arrival-status question applies only to plants-for-planting and wood-and-cut-trees notifications, as a mandatory obligation; for any other commodity type it is out of scope.",
-      "kind": "rule",
-      "ref": "obligations/sections/arrival.js:15-54",
-      "quote": "const POST_ARRIVAL_COMMODITY_TYPES = Object.freeze([\n  'plants-for-planting',\n  'wood-and-cut-trees'\n])",
+      "statement": "Fit spec: the enhanced country input keeps the GOV.UK focus indicator (3px outline in the focus colour, inset box shadow).",
+      "kind": "non-functional",
+      "ref": "origin/origin.fit.spec.js:412 'keeps the upstream focus indicator on the enhanced input'",
+      "quote": "expect(indicator.outlineWidth).toBe('3px')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-047",
-      "statement": "A commodity type the service starts offering in future stays out of the arrival-status question until someone rules it in; the pair is listed, not derived.",
-      "kind": "rule",
-      "ref": "obligations/sections/arrival.js:10-14",
-      "quote": "Listed rather than\n// derived: journey-spec.json rules arrivalStatus.activatedBy.includes as this\n// exact pair, so a commodity type the service starts offering stays out of the\n// gate until someone rules it in.",
+      "statement": "Fit spec: in the error state the enhanced country input has the standard GOV.UK error border colour and width.",
+      "kind": "non-functional",
+      "ref": "origin/origin.fit.spec.js:440 'gives the enhanced input the standard GOV.UK error border'",
+      "quote": "test('gives the enhanced input the standard GOV.UK error border'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-048",
-      "statement": "A potato notification is never asked whether the consignment has arrived: the journey skips the page, and the overview's arrival row links straight to arrival details.",
+      "statement": "Fit spec: a ware-potato consignment sees the ware-potato guidance on the origin page and is refused France with the ware-potato narrowing error.",
       "kind": "behaviour",
-      "ref": "arrival-status/controller.js:29-31; arrival-status.fit.spec.js:368-401",
-      "quote": "A potato notification never\n * reaches the page: `arrivalStatus` is out of scope for potatoes, which makes\n * the derived page gate fail and the opening run skip the step.",
+      "ref": "origin/origin.fit.spec.js:486 'shows the ware-potato scope guidance and refuses a country outside the four'",
+      "quote": "test('shows the ware-potato scope guidance and refuses a country outside the four'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-049",
-      "statement": "For a wood (or plants) notification, the overview's arrival row links to the arrival-status page, and the page is reachable from that row.",
+      "statement": "Fit spec: a ware-potato consignment from Spain is accepted and goes on to the arrival details.",
       "kind": "behaviour",
-      "ref": "arrival-status.fit.spec.js:229, 403",
-      "quote": "opens the arrival row on the overview for a wood notification",
+      "ref": "origin/origin.fit.spec.js:513 'accepts one of the four ware-potato countries'",
+      "quote": "test('accepts one of the four ware-potato countries'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-050",
-      "statement": "The notifier states whether the consignment has arrived rather than the service deriving it from the arrival date, because reg 26(2)(a) and (b) branch on arrival in the country and at the destination.",
-      "kind": "rule",
-      "ref": "obligations/sections/arrival.js:28-35",
-      "quote": "The notifier says so rather than the service deriving it from the arrival\n * date: reg 26(2)(a) branches on arrival in the country and reg 26(2)(b) on\n * arrival at the intended destination",
+      "statement": "Fit spec: a wood consignment with a cut coniferous trees line sees no ware-potato guidance and is refused Norway with the EU-member-state narrowing error.",
+      "kind": "behaviour",
+      "ref": "origin/origin.fit.spec.js:529 'refuses a country outside the EU for a wood consignment'",
+      "quote": "test('refuses a country outside the EU for a wood consignment'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-051",
-      "statement": "The arrival-status page shows the arrival section caption, and its radio legend 'Has the consignment arrived in Great Britain?' is the page heading at large size; the page title is the same text.",
-      "kind": "copy",
-      "ref": "arrival-status/copy/copy.en.js:15-16; arrival-status/template.njk:9-22; arrival-status.fit.spec.js:150",
-      "quote": "legend: 'Has the consignment arrived in Great Britain?',",
+      "statement": "The arrival status page is served at /notifications/{notification id}/arrival-status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/page.js:1-4; arrival-status.fit.spec.js:29",
+      "quote": "id: 'arrival-status',\n  slug: 'arrival-status'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-052",
-      "statement": "The arrival-status question names Great Britain, never England.",
-      "kind": "rule",
-      "ref": "arrival-status.fit.spec.js:163 'asks about Great Britain rather than England'",
-      "quote": "await expect(heading).toContainText('Great Britain')\n    await expect(heading).not.toContainText('England')",
+      "statement": "The arrival status page asks 'Has the consignment arrived in Great Britain?' as a radios legend that is also the page heading (large legend, isPageHeading).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:15-16; template.njk:14-25",
+      "quote": "legend: 'Has the consignment arrived in Great Britain?',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-053",
-      "statement": "The arrival-status page offers two radios, in this order: 'Yes, it has already arrived' then 'No, it has not arrived yet'.",
+      "statement": "The arrival status page shows the arrival section caption.",
       "kind": "copy",
-      "ref": "arrival-status/statuses.js:10-22; arrival-status/copy/copy.en.js:17-20; arrival-status.fit.spec.js:171",
-      "quote": "'already-arrived': 'Yes, it has already arrived',\n    'not-yet-arrived': 'No, it has not arrived yet'",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/template.njk:9; arrival-status.fit.spec.js:150-161",
+      "quote": "page.getByText(captionsCopy.sections.arrival, { exact: true })",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-054",
-      "statement": "The 'already arrived' option has the hint 'You are making a post-arrival notification. It must be made no later than 4 days after the date of arrival. You will give the date it arrived and where it is now.', with the day count taken from the timing-windows constant.",
+      "statement": "The arrival status question names Great Britain, not England.",
       "kind": "copy",
-      "ref": "arrival-status/copy/copy.en.js:22-23; arrival-status/controller.js:44-50",
-      "quote": "`You are making a post-arrival notification. It must be made no later than ${days} days after the date of arrival. You will give the date it arrived and where it is now.`",
+      "ref": "arrival-status/arrival-status.fit.spec.js:163 'asks about Great Britain rather than England'",
+      "quote": "await expect(heading).not.toContainText('England')",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-055",
-      "statement": "The 'not arrived yet' option has the hint 'You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.'",
+      "statement": "The first arrival status option is 'Yes, it has already arrived' (value already-arrived).",
       "kind": "copy",
-      "ref": "arrival-status/copy/copy.en.js:24-25",
-      "quote": "'You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.'",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:18; statuses.js:10-22",
+      "quote": "'already-arrived': 'Yes, it has already arrived',",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-056",
-      "statement": "Arrival status is required and must be one of the two offered values; a blank or any other value gives 'Select whether the consignment has arrived' and leaves no radio checked.",
-      "kind": "rule",
-      "ref": "arrival-status/controller.js:39-42; arrival-status/copy/copy.en.js:28; arrival-status.fit.spec.js:297 'rejects a status the page does not offer and checks nothing'",
-      "quote": "arrivalStatus: 'Select whether the consignment has arrived'",
+      "statement": "The second arrival status option is 'No, it has not arrived yet' (value not-yet-arrived).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:19; statuses.js:17-22",
+      "quote": "'not-yet-arrived': 'No, it has not arrived yet'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-057",
-      "statement": "On an arrival-status error, the message shows inside the radio group and in the error summary, whose link focuses the first radio.",
-      "kind": "behaviour",
-      "ref": "arrival-status.fit.spec.js:276 'continuing with nothing chosen shows the error and focuses the first radio'",
-      "quote": "await summaryLink.click()\n    await expect(page.locator(STATUS_INPUT_SELECTOR).first()).toBeFocused()",
+      "statement": "The already-arrived option's hint reads 'You are making a post-arrival notification. It must be made no later than 4 days after the date of arrival. You will give the date it arrived and where it is now.', with the day count taken from the plants-and-wood timing window.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:22-23; controller.js:44-50; timing-windows.js:12",
+      "quote": "`You are making a post-arrival notification. It must be made no later than ${days} days after the date of arrival. You will give the date it arrived and where it is now.`",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-058",
-      "statement": "The arrival-status page saves the choice as arrivalStatus ('already-arrived' or 'not-yet-arrived') and shows it checked on return.",
-      "kind": "data",
-      "ref": "arrival-status/statuses.js:13-17; arrival-status/controller.js:96-98; arrival-status.fit.spec.js:215",
-      "quote": "export const ALREADY_ARRIVED = 'already-arrived'\n\nexport const NOT_YET_ARRIVED = 'not-yet-arrived'",
+      "statement": "The not-yet-arrived option's hint reads 'You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:24-25",
+      "quote": "'You are making a pre-arrival notification. You will give the expected date of landing and the intended destination.'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-059",
-      "statement": "Save and continue from arrival-status goes to the arrival details page whichever answer is given.",
-      "kind": "behaviour",
-      "ref": "arrival-status.fit.spec.js:215, 321",
-      "quote": "await radioFor(page, ALREADY_ARRIVED).check()\n    await saveAndContinue(page).click()\n\n    await expect(page).toHaveURL(ARRIVAL_DETAILS_URL)",
+      "statement": "Arrival status is required and must be one of the two offered values; otherwise the page shows 'Select whether the consignment has arrived'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js:39-42; copy/copy.en.js:27-28",
+      "quote": "arrivalStatus: 'Select whether the consignment has arrived'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-060",
-      "statement": "The arrival-status page's Back link always goes to the notification overview, and it offers the three shared save controls; Save and return saves the choice, Cancel and return saves nothing.",
-      "kind": "behaviour",
-      "ref": "arrival-status/controller.js:64; arrival-status.fit.spec.js:193, 238, 256",
-      "quote": "backLink: hubPath(current.journey.journeyId),",
+      "statement": "The arrival status page saves the notification-level answer arrivalStatus as already-arrived or not-yet-arrived.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js:33,96-98; statuses.js:13-22",
+      "quote": "export const ARRIVAL_STATUS = 'arrivalStatus'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-061",
-      "statement": "Changing a notification's commodity type to potatoes clears any saved arrival-status answer, so switching back to wood shows neither radio checked.",
+      "statement": "The arrival status page's Back link always goes to the notification overview.",
       "kind": "behaviour",
-      "ref": "obligations/sections/arrival.js:36-38; arrival-details.fit.spec.js:543 'changing to potatoes clears the arrival-status answer'",
-      "quote": "the engine purges the\n * answer when a change of commodity type takes it out of scope.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-062",
-      "statement": "The arrival-status page has no serious or critical axe violations on first render or in its error state.",
-      "kind": "non-functional",
-      "ref": "arrival-status.fit.spec.js:336, 350",
-      "quote": "has no serious or critical axe violations in the error state",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-063",
-      "statement": "The arrival-status English copy is the journey spec's verbatim wording, not yet content-reviewed (decisions.json d-001), and its Welsh is entirely machine-draft.",
-      "kind": "constraint",
-      "ref": "arrival-status/copy/copy.en.js:1-3; arrival-status/copy/copy.cy.js:1-6",
-      "quote": "// AWAITING THE COPY PASS — the strings below are the journey spec's verbatim\n// wording and have not been through a content review\n// (journey-spec.json pages[arrival-status].provisionalCopy, decisions.json d-001).",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-064",
-      "statement": "Potatoes must be notified ahead of arrival, with a timing window of 2 days before arrival (reg 24A(1)).",
-      "kind": "rule",
-      "ref": "features/timing-windows.js:4, 10",
-      "quote": "export const POTATO_DAYS_BEFORE_ARRIVAL = 2",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-065",
-      "statement": "Plants for planting and wood may be notified up to 4 days after arrival (reg 26(1)).",
-      "kind": "rule",
-      "ref": "features/timing-windows.js:4-5, 12",
-      "quote": "export const PLANTS_WOOD_DAYS_AFTER_ARRIVAL = 4",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-066",
-      "statement": "The arrival details page does not enforce either timing window: a late notification is accepted and flagged rather than refused, so no arrival date has a lower bound.",
-      "kind": "rule",
-      "ref": "arrival-details/arrival-bounds.js:14-18; arrival-details.fit.spec.js:363 'accepts a past date, because a late notification is recorded not refused'",
-      "quote": "A late\n * notification is accepted and flagged rather than refused, so there is no\n * lower bound in any state.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-067",
-      "statement": "No lateness flag or late-notification indicator is visible in this slice, although timing-windows.js says 'the lateness rules' read the windows; where a late notification is flagged is not shown here.",
-      "kind": "behaviour",
-      "ref": "features/timing-windows.js:6-8; looked in origin/, arrival-status/, arrival-details/ and obligations/sections/arrival.js",
-      "quote": "",
-      "confidence": "gap",
-      "note": "May live in another part (check-answers, declaration or the obligations engine)."
-    },
-    {
-      "id": "repo-plantsfrontend-p5-068",
-      "statement": "The arrival details page is served at /notifications/{notification id}/arrival-details and every commodity type is asked it.",
-      "kind": "behaviour",
-      "ref": "arrival-details/page.js:1-4; arrival-details/controller.js:37",
-      "quote": "Every notification owes the date, so every commodity type is asked this page.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-069",
-      "statement": "The arrival details page heading is 'Arrival details' (large h1), under the arrival section caption; the title is carried over from the animals port-of-entry page.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:1-2, 17; arrival-details/template.njk:11-12; arrival-details.fit.spec.js:191",
-      "quote": "title: 'Arrival details',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-070",
-      "statement": "The arrival date is one text box with the Ministry of Justice date picker, typed as d/m/yyyy, and is stored as the date-parts object every other date in the service uses.",
-      "kind": "data",
-      "ref": "arrival-details/template.njk:18; arrival-details/controller.js:176-181",
-      "quote": "// The picker is one text box, so the answer arrives as `d/m/yyyy` text and is\n// stored as the parts object every other date in the service uses.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-071",
-      "statement": "For a potato notification the date is labelled 'Expected date of arrival' with the hint 'For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.'",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:19, 24-25",
-      "quote": "potatoes: 'Expected date of arrival',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-072",
-      "statement": "For a plants or wood consignment not yet arrived the date is labelled 'Expected date of landing in Great Britain' with the hint 'For example, 27/3/2026'.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:20, 26; arrival-details.fit.spec.js:316",
-      "quote": "'not-yet-arrived': 'Expected date of landing in Great Britain',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-073",
-      "statement": "For a plants or wood consignment that has already arrived the date is labelled 'Date the consignment first arrived in Great Britain' with the hint 'For example, 27/3/2026'.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:21, 27; arrival-details.fit.spec.js:326",
-      "quote": "'already-arrived': 'Date the consignment first arrived in Great Britain'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-074",
-      "statement": "Which date wording is shown is decided by the commodity type for potatoes and by the arrival-status answer for plants and wood; a plants or wood notifier who has not answered arrival status sees the pre-arrival wording.",
-      "kind": "rule",
-      "ref": "arrival-details/controller.js:55-71; arrival-details/fields.js:18-31",
-      "quote": "a notifier who reaches this page without having\n * answered that question is asked the pre-arrival sentence, which is the one\n * the journey opens on.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-075",
-      "statement": "The arrival date is required: a blank date gives 'Enter the arrival date'.",
-      "kind": "rule",
-      "ref": "arrival-details/copy/copy.en.js:41; arrival-details/controller.js:83-91",
-      "quote": "required: 'Enter the arrival date',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-076",
-      "statement": "A date that is not a real day (for example 31/2/2026) gives 'Enter a real arrival date', and the page keeps everything the user typed.",
-      "kind": "rule",
-      "ref": "arrival-details/copy/copy.en.js:42; arrival-details.fit.spec.js:409 'refuses a date that is not a real day and keeps what was typed'",
-      "quote": "invalid: 'Enter a real arrival date',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-077",
-      "statement": "When the consignment has already arrived, the arrival date cannot be after today: a future date gives 'The date the consignment arrived cannot be in the future'.",
-      "kind": "rule",
-      "ref": "arrival-details/arrival-bounds.js:14-16; arrival-details/copy/copy.en.js:43; arrival-details.fit.spec.js:429",
-      "quote": "inFuture: 'The date the consignment arrived cannot be in the future'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-078",
-      "statement": "'Today' for the already-arrived cap is the calendar day in Europe/London, not UTC, and the same cap is passed to the date picker as its maximum date.",
-      "kind": "rule",
-      "ref": "arrival-details/arrival-bounds.js:6-9, 30-36; arrival-details/controller.js:145",
-      "quote": "const SERVICE_TIME_ZONE = 'Europe/London'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-079",
-      "statement": "Potatoes and not-yet-arrived plants or wood have no upper or lower bound on the arrival date.",
-      "kind": "rule",
-      "ref": "arrival-details/arrival-bounds.js:14-18, 30-33",
-      "quote": "Nothing bounds the other two states.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-080",
-      "statement": "The expected time of arrival and the proposed place of landing are asked only of potato notifications; plants and wood notifiers see neither field.",
-      "kind": "rule",
-      "ref": "arrival-details/controller.js:34-43; arrival-details/template.njk:20; arrival-details.fit.spec.js:336 'asks for no time and no place of landing'",
-      "quote": "The time and the place of landing are potato matters — reg 24A(2)(a) and\n * (aa), which reg 26(2) has no counterpart to",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-081",
-      "statement": "The time field is labelled 'Expected time of arrival' (small label) with the hint 'Use the 24-hour clock. For example, 14:30.', in a 5-character-wide input that uses the full keyboard so a colon can be typed.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:29-32; arrival-details/template.njk:21-32",
-      "quote": "label: 'Expected time of arrival',\n    hint: 'Use the 24-hour clock. For example, 14:30.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-082",
-      "statement": "For potatoes the time is required: a blank time gives 'Enter the expected time of arrival'.",
-      "kind": "rule",
-      "ref": "arrival-details/copy/copy.en.js:45; arrival-details/controller.js:94",
-      "quote": "arrivalTime: 'Enter the expected time of arrival',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-083",
-      "statement": "A time not on the 24-hour clock (for example '2.30pm') gives the shared message 'Enter a real time, like 14:30', and the summary link focuses the time field.",
-      "kind": "rule",
-      "ref": "arrival-details.fit.spec.js:444 'refuses a time that is not on the 24-hour clock'; src/server/app/shared/copy.en.js:86",
-      "quote": "time: 'Enter a real time, like 14:30',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-084",
-      "statement": "The place of landing is an accessible-autocomplete type-ahead over a select, labelled 'Proposed place of landing' (small label) with the hint 'Where the potatoes will enter Great Britain. Start typing to search by port name or code.', showing all ports on focus.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:33-37; arrival-details/template.njk:34-43",
-      "quote": "label: 'Proposed place of landing',\n    hint: 'Where the potatoes will enter Great Britain. Start typing to search by port name or code.',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-085",
-      "statement": "The port list opens with an empty-valued placeholder 'Select a place of landing', and the type-ahead says 'No ports found' when nothing matches.",
-      "kind": "copy",
-      "ref": "arrival-details/copy/copy.en.js:36-37; arrival-details/controller.js:73-76",
-      "quote": "placeholder: 'Select a place of landing',\n    noResults: 'No ports found'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-086",
-      "statement": "The ports offered come from the shared ports service backed by reference data, shown as name and code, for example 'Port of Dover (GB DVR)'.",
-      "kind": "integration",
-      "ref": "arrival-details/controller.js:73-81; arrival-details.fit.spec.js:53, 239 'offers the ports the reference-data service holds'",
-      "quote": "const DOVER = 'Port of Dover (GB DVR)'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-087",
-      "statement": "For potatoes the place of landing is required and must be a port the ports service holds; a blank or unlisted port gives 'Select the proposed place of landing'.",
-      "kind": "rule",
-      "ref": "arrival-details/controller.js:95-99; arrival-details/copy/copy.en.js:46; arrival-details.fit.spec.js:461",
-      "quote": "proposedPlaceOfLanding: 'Select the proposed place of landing',",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-088",
-      "statement": "If a saved place of landing is no longer offered, the page clears it and shows 'The saved port of landing is no longer available. Select a port from the list.' when it opens.",
-      "kind": "rule",
-      "ref": "arrival-details/controller.js:150-174; arrival-details/copy/copy.en.js:47-48",
-      "quote": "proposedPlaceOfLandingNoLongerAvailable:\n      'The saved port of landing is no longer available. Select a port from the list.'",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-089",
-      "statement": "Continuing with nothing entered on a potato notification shows all three errors (date, time, place of landing) in the error summary, and the date link focuses the date input.",
-      "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:382 'continuing with nothing entered shows every error and focuses the date'",
-      "quote": "continuing with nothing entered shows every error and focuses the date",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-090",
-      "statement": "The arrival details page saves arrivalDate for every notification and, for potatoes only, arrivalTime and proposedPlaceOfLanding (the port code); fields not shown are never read from the submission or saved.",
-      "kind": "data",
-      "ref": "arrival-details/controller.js:44-47, 108-118; arrival-details/fields.js:12-16",
-      "quote": "/** The fields the page shows, and only those — a hidden field is never read\n * back from the payload and never committed. */",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-091",
-      "statement": "Saved arrival details (date, time and port) are shown again on return to the page.",
-      "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:249 'saves all three answers, reaches the destination and shows them again on return'",
-      "quote": "await expect(page.locator(DATE_INPUT)).toHaveValue(A_DATE)\n    await expect(page.locator(TIME_INPUT)).toHaveValue(A_TIME)\n    await expect(page.locator(PORT_INPUT)).toHaveValue(DOVER)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-092",
-      "statement": "Save and continue from arrival details goes to the place of destination (/notifications/{id}/destinations/select), the last step of the opening run, not back to the overview.",
-      "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:30-32, 249, 363",
-      "quote": "// Continue from here goes on to the place of destination, the last step of the\n// opening run, rather than straight back to the overview.",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-093",
-      "statement": "Completing arrival details for a potato notification marks the overview's arrival row as completed.",
-      "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:267 'completes the arrival row on the overview'",
-      "quote": "await expect(arrivalRow).toContainText(hubCopy.statuses.completed)",
-      "confidence": "verbatim"
-    },
-    {
-      "id": "repo-plantsfrontend-p5-094",
-      "statement": "The arrival details page's Back link goes to the notification overview, and it offers the three shared save controls; Cancel and return to overview saves nothing.",
-      "kind": "behaviour",
-      "ref": "arrival-details/controller.js:129; arrival-details.fit.spec.js:191, 292",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js:64",
       "quote": "backLink: hubPath(current.journey.journeyId),",
       "confidence": "verbatim"
     },
     {
-      "id": "repo-plantsfrontend-p5-095",
-      "statement": "The saved arrival date is kept when the arrival-status answer is switched, because the date is asked in every state.",
+      "id": "repo-plantsfrontend-p5-062",
+      "statement": "The arrival status page offers the three shared save controls and, after a valid save, goes to the next page in the flow (the arrival details).",
       "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:343 'keeps the date when the status switches, because the date is always asked'",
-      "quote": "keeps the date when the status switches, because the date is always asked",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/template.njk:27; controller.js:109; arrival-status.fit.spec.js:215-227",
+      "quote": "return h.redirect(await kit.nextTarget(request, page, committed.scope))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-063",
+      "statement": "A refused arrival status answer re-renders with HTTP 400; a failed save re-renders with the recoverable-error message and HTTP 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/controller.js:89-107",
+      "quote": "render(h, current, values, { recoverableError: true }).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-064",
+      "statement": "Only plants-for-planting and wood-and-cut-trees notifications are asked the arrival status question; potato notifications skip it, because the obligation is out of scope for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:10-54; arrival-status/controller.js:28-31",
+      "quote": "const POST_ARRIVAL_COMMODITY_TYPES = Object.freeze([\n  'plants-for-planting',\n  'wood-and-cut-trees'\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-065",
+      "statement": "The arrival status gate lists its two commodity types explicitly, so a commodity type the service starts offering stays out of the question until someone rules it in.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:10-14",
+      "quote": "Listed rather than derived: journey-spec.json rules arrivalStatus.activatedBy.includes as this exact pair, so a commodity type the service starts offering stays out of the gate until someone rules it in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-066",
+      "statement": "arrivalStatus is mandatory when in scope, with the applicability reason 'arrivalStatus applies to notifications for plants for planting and for wood and cut trees'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:20-26,40-54",
+      "quote": "'arrivalStatus applies to notifications for plants for planting and for wood and cut trees'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-067",
+      "statement": "The notifier states the arrival status rather than the service deriving it from the date, because reg 26(2)(a) and (b) branch on arrival in the country and at the destination and a date alone cannot say which applies.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:28-34",
+      "quote": "The notifier says so rather than the service deriving it from the arrival date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-068",
+      "statement": "When a change of commodity type takes arrival status out of scope (changing to potatoes), the saved arrival status answer is purged.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:36-38; arrival-details.fit.spec.js:543-565",
+      "quote": "the engine purges the answer when a change of commodity type takes it out of scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-069",
+      "statement": "The arrival status copy is the journey spec's provisional wording, awaiting a content review (decision d-001).",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.en.js:1-3",
+      "quote": "AWAITING THE COPY PASS — the strings below are the journey spec's verbatim wording and have not been through a content review (journey-spec.json pages[arrival-status].provisionalCopy, decisions.json d-001).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-070",
+      "statement": "The arrival status Welsh heading is 'Ydy’r llwyth wedi cyrraedd Prydain Fawr?', all machine-draft with no Welsh source.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-status/copy/copy.cy.js:1-9",
+      "quote": "title: 'Ydy’r llwyth wedi cyrraedd Prydain Fawr?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-071",
+      "statement": "Fit spec: the arrival status page renders the arrival caption and the legend as the h1.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:150 'renders the caption and the legend as the page heading'",
+      "quote": "test('renders the caption and the legend as the page heading'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-072",
+      "statement": "Fit spec: the arrival status page offers both statuses, already arrived first, each with its timing hint.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:171 'offers both statuses, already arrived first, each with its timing hint'",
+      "quote": "expect(renderedValues).toEqual([ALREADY_ARRIVED, NOT_YET_ARRIVED])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-073",
+      "statement": "Fit spec: the arrival status page offers the three save controls and Back goes to the overview.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:193 'offers the three save controls and sends Back to the overview'",
+      "quote": "test('offers the three save controls and sends Back to the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-074",
+      "statement": "Fit spec: choosing a status and continuing reaches the arrival details, and the choice is checked again on return.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:215 'saves a choice, reaches the arrival details and shows it again on return'",
+      "quote": "test('saves a choice, reaches the arrival details and shows it again on return'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-075",
+      "statement": "Fit spec: for a wood notification the overview's arrival task row opens the arrival status page.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:229 'is reachable from the overview arrival task row'; :403 'opens the arrival row on the overview for a wood notification'",
+      "quote": "test('opens the arrival row on the overview for a wood notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-076",
+      "statement": "Fit spec: Save and return to overview on the arrival status page saves the choice and reaches the overview.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:238 'Save and return to overview saves the choice and reaches the overview'",
+      "quote": "test('Save and return to overview saves the choice and reaches the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-077",
+      "statement": "Fit spec: Cancel and return to overview on the arrival status page reaches the overview without saving.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:256 'Cancel and return to overview reaches the overview without saving'",
+      "quote": "test('Cancel and return to overview reaches the overview without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-078",
+      "statement": "Fit spec: continuing with no status shows the error in the group and the summary, and the summary link focuses the first radio.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:276 'continuing with nothing chosen shows the error and focuses the first radio'",
+      "quote": "test('continuing with nothing chosen shows the error and focuses the first radio'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-079",
+      "statement": "Fit spec: a submitted status the page does not offer is refused with the required error and no radio is left checked.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:297 'rejects a status the page does not offer and checks nothing'",
+      "quote": "test('rejects a status the page does not offer and checks nothing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-080",
+      "statement": "Fit spec: the arrival status page recovers once a choice is made and goes on to the arrival details.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:321 'recovers from the error once a choice is made'",
+      "quote": "test('recovers from the error once a choice is made'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-081",
+      "statement": "Fit spec: the arrival status page has no serious or critical axe violations on the initial render or in the error state.",
+      "kind": "non-functional",
+      "ref": "arrival-status/arrival-status.fit.spec.js:336,350",
+      "quote": "test('has no serious or critical axe violations in the error state'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-082",
+      "statement": "Fit spec: a potato notification goes from origin past the arrival status question straight to the arrival details.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:373 'sends a potato notification from origin past the question to the details'",
+      "quote": "test('sends a potato notification from origin past the question to the details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-083",
+      "statement": "Fit spec: for a potato notification the overview's arrival task row links to the arrival details page.",
+      "kind": "behaviour",
+      "ref": "arrival-status/arrival-status.fit.spec.js:384 'opens the arrival row on the overview at the details page for a potato notification'",
+      "quote": "test('opens the arrival row on the overview at the details page for a potato notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-084",
+      "statement": "The arrival details page is served at /notifications/{notification id}/arrival-details and is asked of every commodity type.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/page.js:1-4; controller.js:34-43",
+      "quote": "Every notification owes the date, so every commodity type is asked this page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-085",
+      "statement": "The arrival details page heading (h1) is 'Arrival details', under the arrival section caption.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:17; template.njk:11-12",
+      "quote": "title: 'Arrival details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-086",
+      "statement": "The arrival date is one MoJ date picker text box taking d/m/yyyy, saved as the day/month/year parts object used for every date in the service.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk:18; controller.js:176-181",
+      "quote": "The picker is one text box, so the answer arrives as `d/m/yyyy` text and is stored as the parts object every other date in the service uses.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-087",
+      "statement": "The date question is asked in one of three states: potatoes (from the commodity type), already-arrived or not-yet-arrived (from the arrival status answer for plants and wood).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/fields.js:18-31; controller.js:55-71",
+      "quote": "Potatoes have no arrival status (reg 24A has no post-arrival branch), so the commodity type decides the state for them; plants and wood take theirs from the answer given on arrival-status.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-088",
+      "statement": "A plants or wood notifier who reaches arrival details without answering arrival status is asked the pre-arrival (not-yet-arrived) date question.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:59-71",
+      "quote": "a notifier who reaches this page without having answered that question is asked the pre-arrival sentence, which is the one the journey opens on.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-089",
+      "statement": "For potatoes the date label is 'Expected date of arrival' with hint 'For example, 27/3/2026. If the potatoes have already arrived, enter the date they arrived.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:19,24-25",
+      "quote": "potatoes: 'Expected date of arrival',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-090",
+      "statement": "For a not-yet-arrived consignment the date label is 'Expected date of landing in Great Britain' with hint 'For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:20,26",
+      "quote": "'not-yet-arrived': 'Expected date of landing in Great Britain',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-091",
+      "statement": "For an already-arrived consignment the date label is 'Date the consignment first arrived in Great Britain' with hint 'For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:21,27",
+      "quote": "'already-arrived': 'Date the consignment first arrived in Great Britain'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-092",
+      "statement": "The arrival date is required: an empty date shows 'Enter the arrival date'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:83-91; copy/copy.en.js:41",
+      "quote": "required: 'Enter the arrival date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-093",
+      "statement": "A date that is not a real day (such as 31/2/2026) shows 'Enter a real arrival date', and the page keeps what was typed in every field.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:42; arrival-details.fit.spec.js:409-427",
+      "quote": "invalid: 'Enter a real arrival date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-094",
+      "statement": "For an already-arrived consignment the arrival date cannot be after today; a future date shows 'The date the consignment arrived cannot be in the future'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js:11-36; copy/copy.en.js:43",
+      "quote": "inFuture: 'The date the consignment arrived cannot be in the future'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-095",
+      "statement": "'Today' for the arrival-date cap is the calendar day in Europe/London, not UTC.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js:6-9,34",
+      "quote": "const SERVICE_TIME_ZONE = 'Europe/London'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-096",
-      "statement": "Changing a notification away from potatoes clears its saved time and place of landing.",
+      "statement": "The date picker is given the same maximum date (d/m/yyyy) as the validator, read from one clock read, when the consignment has already arrived.",
       "kind": "behaviour",
-      "ref": "obligations/sections/arrival.js:82-85; arrival-details.fit.spec.js:567 'changing away from potatoes clears the time and place of landing'",
-      "quote": "so the time is\n * a potato matter and the engine purges it when a notification changes to\n * another commodity type.",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js:20-35; controller.js:140-146",
+      "quote": "maxDate: bounds.maxText",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-097",
-      "statement": "arrivalDate is one mandatory obligation for every commodity type; arrivalTime and proposedPlaceOfLanding are mandatory only for potatoes and out of scope otherwise.",
+      "statement": "The arrival date has no lower bound in any state and no upper bound for potatoes or not-yet-arrived consignments: a late notification is accepted and flagged rather than refused.",
       "kind": "rule",
-      "ref": "obligations/sections/arrival.js:56-131",
-      "quote": "export const arrivalDate = {\n  id: '63e22d64-b9a0-40b4-aec6-0f5f48bdd556',\n  name: 'arrivalDate',\n  status: 'mandatory'\n}",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js:14-18,31-33",
+      "quote": "Nothing bounds the other two states. A late notification is accepted and flagged rather than refused, so there is no lower bound in any state.",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-098",
-      "statement": "The arrival details page has no serious or critical axe violations on first render or in its error state.",
-      "kind": "non-functional",
-      "ref": "arrival-details.fit.spec.js:506, 520",
-      "quote": "has no serious or critical axe violations on the initial render",
-      "confidence": "verbatim"
+      "statement": "The two-day potato pre-arrival window is not enforced on the arrival details page: no validation refuses a potato arrival date fewer than two days ahead.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-bounds.js:30-36; controller.js:83-91; timing-windows.js:10",
+      "quote": "export const POTATO_DAYS_BEFORE_ARRIVAL = 2",
+      "confidence": "inferred",
+      "note": "Inferred: the bounds return nothing unless already-arrived and the date rule takes only max. timing-windows.js says the lateness rules read the constant, which sit outside this part."
     },
     {
       "id": "repo-plantsfrontend-p5-099",
-      "statement": "After arrival-details errors, giving every answer and continuing moves on to the place of destination.",
-      "kind": "behaviour",
-      "ref": "arrival-details.fit.spec.js:487 'recovers once every answer is given'",
-      "quote": "recovers once every answer is given",
+      "statement": "Potatoes must be notified 2 days before arrival (reg 24A(1)); plants for planting and wood may be notified up to 4 days after arrival (reg 26(1)), and these constants are written once for the commodity-type hints, arrival-details validation and lateness rules.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/timing-windows.js:1-12",
+      "quote": "Potatoes are notified ahead of arrival (reg 24A(1)); plants for planting and wood may be notified up to four days after it (reg 26(1)).",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-100",
-      "statement": "The arrival details date labels are the journey spec's verbatim wording and every hint is invented provisional copy (decisions.json d-049); the Welsh is machine-draft except the title 'Manylion cyrraedd' and 'Dim porthladdoedd wedi’u darganfod'.",
-      "kind": "constraint",
-      "ref": "arrival-details/copy/copy.en.js:1-5; arrival-details/copy/copy.cy.js:1-10",
-      "quote": "// AWAITING THE COPY PASS — only the title is a service string carried over\n// from the animals port-of-entry page. The date labels are the journey spec's\n// verbatim wording and every hint below is invented",
+      "statement": "For potatoes only, the arrival details page asks 'Expected time of arrival' with hint 'Use the 24-hour clock. For example, 14:30.' in a width-5 text input using the full keyboard.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:29-32; template.njk:20-32",
+      "quote": "label: 'Expected time of arrival',\n    hint: 'Use the 24-hour clock. For example, 14:30.'",
       "confidence": "verbatim"
     },
     {
       "id": "repo-plantsfrontend-p5-101",
-      "statement": "The arrival details page asks plants and wood notifications for no transport details, means of transport or point of entry; only a date. Whether these belong on the page is not stated in the slice.",
+      "statement": "The potato arrival time is required: empty shows 'Enter the expected time of arrival'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:93-94; copy/copy.en.js:45",
+      "quote": "arrivalTime: 'Enter the expected time of arrival',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-102",
+      "statement": "A potato arrival time not on the 24-hour clock (such as 2.30pm) is refused with the shared validator's default time message, and its summary link focuses the time input.",
+      "kind": "rule",
+      "ref": "arrival-details/arrival-details.fit.spec.js:444-459",
+      "quote": ".getByRole('link', { name: validatorDefaults.time })",
+      "confidence": "verbatim",
+      "note": "The wording of validatorDefaults.time lives in shared/copy.en.js, another part."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-103",
+      "statement": "For potatoes only, the arrival details page asks 'Proposed place of landing' with hint 'Where the potatoes will enter Great Britain. Start typing to search by port name or code.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:33-35; template.njk:34-43",
+      "quote": "hint: 'Where the potatoes will enter Great Britain. Start typing to search by port name or code.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-104",
+      "statement": "The place of landing is a type-ahead over the ports the ports reference-data service holds (for example 'Port of Dover (GB DVR)'), with placeholder 'Select a place of landing' and no-match text 'No ports found'.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:73-81; copy/copy.en.js:36-37; arrival-details.fit.spec.js:53,239-247",
+      "quote": "placeholder: 'Select a place of landing',\n    noResults: 'No ports found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-105",
+      "statement": "The potato place of landing is required and must be a port code the ports service holds; otherwise 'Select the proposed place of landing'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:95-99; copy/copy.en.js:46",
+      "quote": "proposedPlaceOfLanding: 'Select the proposed place of landing',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-106",
+      "statement": "If the saved place of landing is no longer offered, the page clears it and shows 'The saved port of landing is no longer available. Select a port from the list.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:150-174; copy/copy.en.js:47-48",
+      "quote": "'The saved port of landing is no longer available. Select a port from the list.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-107",
+      "statement": "Plants and wood notifications are never shown the time or the place of landing, and hidden fields are never read from the submission or saved.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:38-43,108-118",
+      "quote": "a hidden field is never read back from the payload and never committed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-108",
+      "statement": "The arrival details page saves arrivalDate for every notification and, for potatoes, arrivalTime and proposedPlaceOfLanding.",
       "kind": "data",
-      "ref": "arrival-details/template.njk, arrival-details/controller.js, obligations/sections/arrival.js (looked for transport, port or point-of-entry fields outside the potato branch)",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:44-47; fields.js:12-16",
+      "quote": "collects: [ARRIVAL_DATE, ARRIVAL_TIME, PROPOSED_PLACE_OF_LANDING]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-109",
+      "statement": "The arrival details page's Back link goes to the overview; after a valid save Save and continue goes to the place of destination (/destinations/select).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:129,216; arrival-details.fit.spec.js:30-32",
+      "quote": "const DESTINATION_URL = setUrl('/notifications/[^/]+/destinations/select$')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-110",
+      "statement": "A refused arrival details submission re-renders with HTTP 400; a failed save re-renders with the recoverable-error message and HTTP 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.js:192-214",
+      "quote": "await render(h, current, values, { bounds, recoverableError: true })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-111",
+      "statement": "arrivalDate is one mandatory obligation for every commodity type (reg 24A(2)(a) for potatoes, reg 26(2)(a) for plants and wood).",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:56-70",
+      "quote": "One obligation for every commodity type, because every notification owes a date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-112",
+      "statement": "arrivalTime is mandatory only for potatoes (reason 'arrivalTime applies to notifications for potatoes') and is purged when the notification changes to another commodity type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:72-101",
+      "quote": "the time is a potato matter and the engine purges it when a notification changes to another commodity type.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-113",
+      "statement": "proposedPlaceOfLanding is mandatory only for potatoes (reg 24A(2)(aa); reason 'proposedPlaceOfLanding applies to notifications for potatoes') and plants and wood are never asked.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/arrival.js:103-131",
+      "quote": "Reg 24A(2)(aa) is the only landing element in the statute; reg 26(2) has none, so plants and wood are never asked.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-114",
+      "statement": "Only the arrival details title is a service string (from the animals port-of-entry page); the date labels are the journey spec's provisional wording and every hint is invented, awaiting the copy pass (decision d-049).",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.en.js:1-5",
+      "quote": "AWAITING THE COPY PASS — only the title is a service string carried over from the animals port-of-entry page. The date labels are the journey spec's verbatim wording and every hint below is invented",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-115",
+      "statement": "The arrival details Welsh title is 'Manylion cyrraedd'; only it and the ports no-results text have a Welsh source, the rest is machine-draft.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/copy/copy.cy.js:1-10",
+      "quote": "title: 'Manylion cyrraedd',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-116",
+      "statement": "Fit spec: for potatoes the arrival details page renders the caption, heading, three save controls and a Back link to the overview.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:191 'renders the caption, the heading and the three save controls'",
+      "quote": "test('renders the caption, the heading and the three save controls'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-117",
+      "statement": "Fit spec: a potato notification is asked the expected date of arrival, the time and the place of landing, each with its hint.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:219 'asks for the expected date of arrival, the time and the place of landing'",
+      "quote": "test('asks for the expected date of arrival, the time and the place of landing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-118",
+      "statement": "Fit spec: the place of landing offers the ports the reference-data service holds (Port of Dover can be chosen).",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:239 'offers the ports the reference-data service holds'",
+      "quote": "test('offers the ports the reference-data service holds'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-119",
+      "statement": "Fit spec: saving the potato date, time and port reaches the place of destination and the three answers show again on return.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:249 'saves all three answers, reaches the destination and shows them again on return'",
+      "quote": "test('saves all three answers, reaches the destination and shows them again on return'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-120",
+      "statement": "Fit spec: completing the potato arrival details marks the overview's arrival row as completed.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:267 'completes the arrival row on the overview'",
+      "quote": "test('completes the arrival row on the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-121",
+      "statement": "Fit spec: for a potato notification the arrival details page is reachable from the overview's arrival task row.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:283 'is reachable from the overview arrival task row'",
+      "quote": "test('is reachable from the overview arrival task row'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-122",
+      "statement": "Fit spec: Cancel and return to overview on arrival details reaches the overview without saving the date.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:292 'Cancel and return to overview reaches the overview without saving'",
+      "quote": "test('Cancel and return to overview reaches the overview without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-123",
+      "statement": "Fit spec: a not-yet-arrived wood notification is asked for the expected date of landing.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:316 'asks for the expected date of landing while the consignment is on its way'",
+      "quote": "test('asks for the expected date of landing while the consignment is on its way'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-124",
+      "statement": "Fit spec: an already-arrived wood notification is asked when the consignment first arrived.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:326 'asks when the consignment first arrived once it is here'",
+      "quote": "test('asks when the consignment first arrived once it is here'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-125",
+      "statement": "Fit spec: a wood notification is asked for no time and no place of landing.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:336 'asks for no time and no place of landing'",
+      "quote": "test('asks for no time and no place of landing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-126",
+      "statement": "Fit spec: the saved arrival date is kept when the arrival status switches, because the date is always asked.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:343 'keeps the date when the status switches, because the date is always asked'",
+      "quote": "test('keeps the date when the status switches, because the date is always asked'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-127",
+      "statement": "Fit spec: an already-arrived consignment can give a past date (1/1/2020), because a late notification is recorded, not refused.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:363 'accepts a past date, because a late notification is recorded not refused'",
+      "quote": "test('accepts a past date, because a late notification is recorded not refused'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-128",
+      "statement": "Fit spec: continuing a potato arrival details page with nothing entered shows the date, time and place-of-landing errors, and the date error link focuses the date input.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:382 'continuing with nothing entered shows every error and focuses the date'",
+      "quote": "test('continuing with nothing entered shows every error and focuses the date'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-129",
+      "statement": "Fit spec: a date that is not a real day is refused and every typed value is kept.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:409 'refuses a date that is not a real day and keeps what was typed'",
+      "quote": "test('refuses a date that is not a real day and keeps what was typed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-130",
+      "statement": "Fit spec: a future date (1/1/2099) is refused once the consignment has arrived.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:429 'refuses a future date once the consignment has arrived'",
+      "quote": "test('refuses a future date once the consignment has arrived'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-131",
+      "statement": "Fit spec: a time not on the 24-hour clock is refused.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:444 'refuses a time that is not on the 24-hour clock'",
+      "quote": "test('refuses a time that is not on the 24-hour clock'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-132",
+      "statement": "Fit spec: a place of landing the ports service does not hold (GB ZZZ) is refused.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:461 'refuses a place of landing the ports service does not hold'",
+      "quote": "test('refuses a place of landing the ports service does not hold'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-133",
+      "statement": "Fit spec: the arrival details page recovers once every answer is given and goes to the place of destination.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:487 'recovers once every answer is given'",
+      "quote": "test('recovers once every answer is given'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-134",
+      "statement": "Fit spec: the arrival details page has no serious or critical axe violations on the initial render or in the error state.",
+      "kind": "non-functional",
+      "ref": "arrival-details/arrival-details.fit.spec.js:506,520",
+      "quote": "test('has no serious or critical axe violations on the initial render'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-135",
+      "statement": "Fit spec: changing a wood notification to potatoes clears the arrival status answer, so neither radio is checked after changing back.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:543 'changing to potatoes clears the arrival-status answer'",
+      "quote": "test('changing to potatoes clears the arrival-status answer'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-136",
+      "statement": "Fit spec: changing a potato notification to another commodity type clears the saved time and place of landing.",
+      "kind": "behaviour",
+      "ref": "arrival-details/arrival-details.fit.spec.js:567 'changing away from potatoes clears the time and place of landing'",
+      "quote": "test('changing away from potatoes clears the time and place of landing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p5-137",
+      "statement": "The arrival details page does not ask for the port of entry, transport or point of entry for plants and wood; nothing in this slice asks where a post-arrival consignment is now, although the already-arrived hint promises 'where it is now'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/template.njk; arrival-status/copy/copy.en.js:23",
       "quote": "",
       "confidence": "gap",
-      "note": "obligations/sections/arrival.js:113-115 says reg 26(2) has no landing element, which explains the place of landing but not transport."
+      "note": "Looked in the arrival-details template, controller and fields; the 'where it is now' answer may be the place of destination page, which belongs to the next part."
+    },
+    {
+      "id": "repo-plantsfrontend-p5-138",
+      "statement": "Nothing in this slice tests the conifer-wood-without-bark origin narrowing, the stale-country message, or the stale-port message end to end.",
+      "kind": "constraint",
+      "ref": "origin/origin.fit.spec.js; arrival-details/arrival-details.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every test in the three fit specs; these rules are only in controller and copy."
     }
   ]
 }

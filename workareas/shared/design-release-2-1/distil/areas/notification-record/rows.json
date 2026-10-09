@@ -2,20 +2,20 @@
   "area": "notification-record",
   "rows": [
     {
-      "title": "A notification's category is stored on its record, set once on create and read back by the frontend",
-      "detail": "Germinal products is a sibling set of live animals and both keep their notifications in the one animals backend, so the stored record must say which set it belongs to. The backend's create takes the category each set sends and stores it at the root of the record beside its status and reference; nothing after create changes it, and a record with no category is read as live animals, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. The read the frontend opens a notification with returns the category, so each set's cross-set guard can refuse the other set's notifications. The category stays on the record only: it is not published on any notification event, and the event envelope does not change.",
+      "title": "The stored notification records its category, live animals or germinal products, set once on create and returned on the read each set opens a notification with",
+      "detail": "Germinal products is a sibling set of live animals and both keep their notifications in the one animals backend, so the stored record must say which set it belongs to. The backend's create takes the category each set sends and stores it at the root of the record, beside its status and reference; nothing after create changes it. A record with no category is read as live animals everywhere, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. A notification holds commodities of its one category only, so changing the type in the journey starts a new notification of the other category and the abandoned draft keeps its own. The read the frontend opens a notification with returns the category, so each set's cross-set guard can refuse the other set's notifications. The category stays on the record only: it is not published on any notification event, the event envelope does not change, and trade-imports-schemas does not change. The field's name and values are the animals backend's to choose in its own conventions.",
       "acceptanceCriteria": [
-        "A draft the germinal products set creates is stored with the category germinal products, and a draft the live-animals set creates is stored with the category live animals, beside the record's status and reference. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-030; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-093; repo:backend repo-backend-p1-001, repo-backend-p1-002, repo-backend-p2-001)",
+        "A draft the germinal products set creates is stored with the category germinal products, and a draft the live-animals set creates is stored with the category live animals, beside the record's status and reference. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029, -p1-030; repo:backend repo-backend-p1-001, repo-backend-p1-002, repo-backend-p2-001)",
         "A notification stored before this change, with no category on its record, is read as live animals: it still opens, saves and submits in the live-animals set, with no data migration. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-029; repo:backend repo-backend-p1-002)",
         "Saving, submitting, amending, cancelling an amendment and copying a notification never change its stored category; a copy of a germinal products notification is a germinal products notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, -p1-030; repo:backend repo-backend-p2-001)",
         "A notification holds commodities of its one category only: changing the type from a live-animals draft starts a new notification of the other category, and the abandoned draft keeps its stored category live animals. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-025, -p1-054, -p1-055, -p1-056)",
         "The read the animals frontend opens a notification with returns its stored category, and live animals for a record with none, so opening a germinal products notification through a live-animals page, or a live-animals notification through a germinal products page, shows the page not found page. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-031; repo:backend repo-backend-p3-019; repo:perftests repo-perftests-p1-075)",
-        "The outbox events published for a germinal products notification have the same envelope as a live-animals notification's, with no category property, and the event envelope schema in trade-imports-schemas is unchanged. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-092, -p3-093, -p3-094; repo:tests repo-tests-p3-200; conflict c-272)"
+        "The outbox events published for a germinal products notification have the same envelope as a live-animals notification's, with no category property. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-112; repo:tests repo-tests-p3-200; conflict c-272, c-296)"
       ],
       "requirements": ["req-1884", "req-1885", "req-1886"],
       "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-023, -p1-025, -p1-029 to -p1-031, -p1-054 to -p1-056, -p1-066, -p1-070" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-092 to -p3-094" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-023, -p1-025, -p1-029 to -p1-031, -p1-035, -p1-054 to -p1-056, -p1-066, -p1-070" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-112" },
         { "source": "repo:backend", "ref": "repo-backend-p1-001, -p1-002, -p2-001, -p3-019" },
         { "source": "repo:perftests", "ref": "repo-perftests-p1-075" },
         { "source": "repo:tests", "ref": "repo-tests-p3-200" }
@@ -25,42 +25,37 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": [
-        "Combines the category on the record (req-1884), set on create and never changed (req-1885), and returned on the read the frontend rehydrates from (req-1886): one backend field, one create path and one read, observable only through the germinal set's create and the cross-set guard, so it belongs with the germinal set's first row (inc-176), as before.",
-        "The field's name and values are the animals backend's to choose in its own conventions (req-1884).",
-        "c-272 was re-ruled by the 9 October afternoon ruling: the category is not published on the event and trade-imports-schemas does not change in this programme. inc-176's criterion that every outbox event carries the category 'through the field inc-130 adds' restates overruled claims ruling-sam-2026-10-09-p1-032 and -p1-033 and must go; this row's last criterion replaces it. inc-176's dependency on inc-130 existed only for that event field and should be re-checked.",
-        "Known gap, by the ruling: until the INS dashboard is re-distilled, today's INS table lists germinal notifications without their category."
-      ],
+      "notes": "Combines the category on the record (req-1884), set on create and never changed (req-1885), and returned on the read the frontend rehydrates from (req-1886): one backend field, one create path and one read, observable only through the germinal set's create and the cross-set guard, so it belongs in inc-176, the germinal set's first row, merged with the germinal-products area's draft of it. c-272 and c-296 (9 October afternoon ruling): the category is not published on any event and trade-imports-schemas does not change; inc-176's earlier criterion that every outbox event carries the category is withdrawn, and its dependency on inc-130, which existed only for that event field, should be re-checked by the combiner. Known gap, by the ruling: until the INS dashboard is re-distilled, today's INS table lists germinal notifications without their category. The field's name and values are the animals backend's to choose (req-1884). NotificationAggregate.java and the create path in NotificationService.java are also changed by the overview-and-review theme's submit row (inc-113), so they are listed as shared.",
       "touches": [
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationFulfilmentsView.java",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java",
+        "frontend:src/server/app/services/persistence/records/notification-mapper",
+        "frontend:src/server/app/services/persistence/records/real/lifecycle/mutate.js",
+        "frontend:src/server/app/sets/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
       ],
       "shared": [
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
-        "frontend:src/server/app/services/persistence/records/notification-mapper",
-        "frontend:src/server/app/services/persistence/records/real/lifecycle/mutate.js"
+        "frontend:src/server/app/engine/persistence/records.js"
       ],
       "existingRow": "inc-176"
     },
     {
-      "title": "A germinal notification stores its temperature and is published on today's GBN-AG profile, with live-animal lines typed LIVE_ANIMAL",
-      "detail": "The germinal set always asks the consignment's temperature; the animals backend stores it on the record and shows it back, but never publishes it, because the current PIMS profile (gbn-ag-pims v0.2.0) has no field for it. A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what that profile already carries and leaving out the sections the germinal set never asks, as the mapper already leaves out an unanswered section. No PIMS profile, trade-imports-schemas shape or trade-imports-dynamics-gateway mapping changes. Once germinal lines carry their own typeCode, every live-animal trade line carries typeCode LIVE_ANIMAL too.",
+      "title": "A germinal notification's temperature is stored but not published, it is published on today's GBN-AG profile, and live-animal trade lines carry typeCode LIVE_ANIMAL",
+      "detail": "The germinal set always asks the consignment's temperature; the animals backend stores it on the record and shows it back, but never publishes it, because the current PIMS profile (gbn-ag-pims v0.2.0) has no field for it. A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what that profile already carries and leaving out the sections the germinal set never asks (unweaned animals, CPH number, per-animal permanent address), as the mapper already leaves out an unanswered section. No PIMS profile, trade-imports-schemas data shape or trade-imports-dynamics-gateway mapping changes; the PIMS schema update for germinal products is EUDPA-686, outside this backlog. Once germinal lines carry their own typeCode, every live-animal trade line carries typeCode LIVE_ANIMAL too.",
       "acceptanceCriteria": [
         "A temperature saved on germinal Commodity details is stored on the notification and shown again when the page is reopened. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021, -p1-040, -p1-042; repo:backend repo-backend-p1-002)",
         "The GBN-AG notification published for a germinal products notification carries no temperature. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-040, -p1-042)",
-        "A submitted germinal products notification is published on the same GBN-AG events as a live-animals one, and its payload is valid against gbn-ag-pims v0.2.0 as it stands in trade-imports-schemas today. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016 to -p1-018, -p1-043; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-094; repo:backend repo-backend-p6-001)",
+        "A submitted germinal products notification is published on the same GBN-AG events as a live-animals one, and its payload is valid against gbn-ag-pims v0.2.0 as it stands in trade-imports-schemas today. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-016 to -p1-018, -p1-043; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-112; repo:backend repo-backend-p6-001)",
         "That payload leaves out unweaned animals, the CPH number and per-animal permanent addresses, as it leaves out any unanswered section of a live-animals notification. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-041; repo:backend repo-backend-p6-033)",
         "In the published GBN-AG payload every live-animal trade line carries typeCode LIVE_ANIMAL. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-039; repo:backend repo-backend-p6-109, repo-backend-p6-039; conflict c-273)"
       ],
       "requirements": ["req-1889", "req-1895", "req-1894"],
       "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-016 to -p1-018, -p1-021, -p1-039 to -p1-043, -p1-046" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-094" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-016 to -p1-018, -p1-021, -p1-039 to -p1-046" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-112" },
         { "source": "repo:backend", "ref": "repo-backend-p1-002, -p6-001, -p6-033, -p6-039, -p6-109" }
       ],
       "repos": ["backend", "frontend", "tests"],
@@ -68,26 +63,20 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": [
-        "Combines the temperature's storage (req-1889), the germinal publishing on today's profile (req-1895) and the live typeCode (req-1894): one change to the record's content and one to the GBN-AG mapper, so it stays in inc-017 with the germinal Commodity details page that asks the temperature and the germinal typeCodes (req-1800).",
-        "c-273's outcome now says, after the 9 October afternoon ruling, that until the MDM catalogue separates embryos from ova, semen lines carry SEMEN and the combined 'Embryos/Ova' lines carry EMBRYO by default; inc-017's germinal typeCode criterion (req-1800, another area's) should be reworded to that default when the combiner merges.",
-        "Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox, in every environment the row builds in."
-      ],
+      "notes": "Combines the temperature's storage (req-1889), the germinal publishing on today's profile (req-1895) and the live typeCode (req-1894): one change to the record's content and one to the GBN-AG mapper, so it stays in inc-017 with the germinal Commodity details page that asks the temperature and the germinal interim typeCodes (req-1928). c-273: live lines gain LIVE_ANIMAL; germinal lines carry SEMEN, and EMBRYO for a combined 'Embryos/Ova' line, until the catalogue separates them. Temperature storage is observable only through the germinal page that asks it, so it is not a row of its own. Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox, in every environment the row builds in; nothing reaches real PIMS from a local stack, and no criterion asks it to.",
       "touches": [
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/CommodityComplement.java"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java",
+        "frontend:src/server/app/sets/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
       ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Notification.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapper.java",
-        "frontend:src/server/app/services/persistence/records/notification-mapper"
-      ],
+      "shared": [],
       "existingRow": "inc-017"
     },
     {
-      "title": "A germinal notification stores each species' donor, collection and production dates and identification mark, unpublished",
-      "detail": "The germinal set collects a donor name or ID, a collection date, a production date and an identification mark for each germinal species. The PIMS profile has no field for them, so the animals backend is their only home: it stores them, the service shows them back, and the GBN-AG payload carries none of them. Where they sit on the record (on the per-item identifier entries of each line, as animal identifiers do, or on the species line) is decided in the build from the real model.",
+      "title": "A germinal species' donor, collection date, production date and identification mark are stored and shown back, but not published",
+      "detail": "The germinal set collects a donor name or ID, a collection date, a production date and an identification mark for each germinal species. The PIMS profile has no field for them, so the animals backend is their only home: it stores them, the service shows them back, and the GBN-AG payload carries none of them. Each date is a date-only YYYY-MM-DD value. Where they sit on the record (on the per-item identifier entries of each line, as animal identifiers do, or on the species line) is decided in the build from the real model, not the prototype's shape.",
       "acceptanceCriteria": [
         "A germinal species' donor name or ID, collection date, production date and identification number or mark, once saved, are shown prefilled when germinal Identification details is reopened. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-040, -p1-042; repo:backend repo-backend-p1-046, repo-backend-p1-047)",
         "The collection date and the production date are stored as date-only YYYY-MM-DD values. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-046, -p1-047)",
@@ -103,18 +92,53 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": [
-        "The storage half of germinal identification: observable only through the germinal Identification details page that collects the four fields (req-251), so it stays in inc-052 with that page.",
-        "Where the four fields sit on the record is the build's call from the real model, not the prototype's shape (ruling claims 46 and 47)."
-      ],
+      "notes": "The storage half of germinal identification: observable only through the germinal Identification details page that collects the four fields (req-251), so it stays in inc-052 with that page, merged with the germinal-products and animal-identification areas' drafts. Where the four fields sit on the record is the build's call from the real model (ruling claims 46 and 47). Publishing is observed in the backend's own tests of the published payload and on the local stack's outbox.",
       "touches": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag",
+        "frontend:src/server/app/sets/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-052"
+    },
+    {
+      "title": "Notification statuses are add-only, and 'Submitted action required' is known to the animals frontend and the INS dashboard before the backend first sends it",
+      "detail": "Notification statuses are only ever added, never renamed or removed: DRAFT, SUBMITTED, AMEND and DELETED stay as they are. 'Submitted action required', which inc-113's submit records, is added beside them. The animals frontend throws on a status it does not know, and the INS dashboard sends only SUBMITTED notifications to the review, so each new status is mapped in the animals frontend (its persistence records, its real status mapping, the stub and the status strip's copy) and in the INS dashboard's notification links before the animals backend first sends it, on one branch name shared by the animals backend, the animals frontend and the INS frontend. The status rests on the ITAHC, so plants does not take it.",
+      "acceptanceCriteria": [
+        "The notification statuses Draft, Submitted, Amend and Deleted keep their names, and 'Submitted action required' is added beside them; the animals frontend's list, view, status strip and stub mode show a notification in that status without an error. (repo:backend repo-backend-p1-085, repo-backend-p1-006; repo:tests repo-tests-p3-059; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-098, -p1-099; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-070 to -p2-074)",
+        "On the INS front door's notification table, a notification in 'Submitted action required' links to its review, as a Submitted one does. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-075, -p2-076)",
+        "The high-risk plants frontend gains no 'Submitted action required' status, because that status rests on the ITAHC. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-065, -p3-066)"
+      ],
+      "requirements": ["req-1987"],
+      "sources": [
+        { "source": "repo:backend", "ref": "repo-backend-p1-006, -p1-085" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-059" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-098, -p1-099" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-070 to -p2-076, -p3-065, -p3-066, -p3-091" }
+      ],
+      "repos": ["insfrontend", "frontend", "backend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": "req-1987 is observable only once a notification can be in 'Submitted action required', which inc-113's submit records, so it stays in inc-113 with the submit and the action-required view, merged with the overview-and-review area's draft. The animals backend, animals frontend and INS frontend share one branch name, and the frontend and INS mappings land before the backend first sends the status. The INS link logic is in the dashboard's view-model folder, which the overview-and-review theme already touches, not in the dashboard controller, template or copy the split-off type-question-and-templates theme owns, so req-1987 is not that branch's to build. The 'Completed' half of req-1987 waits on a real source of completion: it is built by the blocked row inc-116 (req-910) under the same add-only, map-first rule, and whether plants takes 'Completed' is decided when that row unblocks.",
+      "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java",
+        "frontend:src/server/app/services/persistence/records/real/status.js",
+        "frontend:src/server/app/services/persistence/records/stub/lifecycle",
+        "insfrontend:src/server/app/features/dashboard/view-model",
+        "insfrontend:src/server/app/services/ins-backend/stub.js",
+        "tests:domain/animals/models/api/notification.ts",
+        "tests:domain/animals/models/api/notification-fulfilments.ts"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
-        "frontend:src/server/app/services/persistence/records/notification-mapper"
+        "frontend:src/server/app/engine/persistence/records.js",
+        "frontend:src/server/app/shared/kit.js",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java"
       ],
-      "existingRow": "inc-052"
+      "existingRow": "inc-113"
     }
   ],
   "unobservable": [],

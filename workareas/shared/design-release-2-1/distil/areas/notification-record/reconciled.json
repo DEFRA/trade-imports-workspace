@@ -3,7 +3,7 @@
   "requirements": [
     {
       "id": "req-1488",
-      "statement": "Apart from what other requirements add to it (the declaration date and outstanding items recorded at submit, req-909; the new statuses, each only added, req-notification-record-001; the facts, filters and sorts each set's own notification list needs; the templates store, req-1310; the authorities' outcomes once they arrive, req-1082; and the germinal products set's category, held on the record only, its details and the trade-line codes, req-1884 to req-1895), the stored notification record, its validation at the API, its lifecycle writes and what it publishes stay as the animals backend has them today.",
+      "statement": "Apart from what other requirements add to it (the declaration date and outstanding items recorded at submit, req-909; the new statuses, each only added, req-1987; the facts, filters and sorts each set's own notification list needs; the templates store, req-1310; the authorities' outcomes once they arrive, req-1082; and the germinal products set's category, held on the record only, its details and the trade-line codes, req-1884 to req-1895), the stored notification record, its validation at the API, its lifecycle writes and what it publishes stay as the animals backend has them today.",
       "why": "Design Release 2.1 shows no persistence, API, event or PIMS behaviour, so the backend changes only where another area's requirement needs it to.",
       "claims": [
         "ruling-sam-2026-10-07-p1-002",
@@ -16,9 +16,11 @@
         "ruling-sam-2026-10-09-p1-066",
         "ruling-sam-2026-10-09-p1-067",
         "ruling-sam-2026-10-09-p1-069",
-        "ruling-sam-2026-10-09-pm-p3-066",
-        "ruling-sam-2026-10-09-pm-p3-071",
-        "ruling-sam-2026-10-09-pm-p3-094"
+        "ruling-sam-2026-10-09-pm-p2-070",
+        "ruling-sam-2026-10-09-pm-p3-090",
+        "ruling-sam-2026-10-09-pm-p3-105",
+        "ruling-sam-2026-10-09-pm-p3-112",
+        "ruling-sam-2026-10-09-templates-p1-033"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -149,7 +151,7 @@
     },
     {
       "id": "req-1497",
-      "statement": "Today a notification has exactly one of four lifecycle statuses, DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and its fulfilments view alike; there is no cancelled, rejected, in-progress or template status. These four stay unchanged, and every new status ('Submitted action required', and 'Completed' once the authorities' outcomes reach the record, req-1082) is only added beside them (req-notification-record-001).",
+      "statement": "Today a notification has exactly one of four lifecycle statuses, DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and its fulfilments view alike; there is no cancelled, rejected, in-progress or template status. These four stay unchanged, and every new status ('Submitted action required', and 'Completed' once a real source of completion exists, req-1082) is only added beside them (req-1987).",
       "why": "Every lifecycle rule and every published event keys off these four values.",
       "claims": [
         "repo-backend-p1-006",
@@ -160,11 +162,14 @@
         "repo-backend-p1-089",
         "repo-tests-p3-059",
         "ruling-sam-2026-10-09-p1-098",
-        "ruling-sam-2026-10-09-pm-p2-072"
+        "ruling-sam-2026-10-09-pm-p2-072",
+        "ruling-sam-2026-10-09-pm-p2-070",
+        "ruling-sam-2026-10-09-pm-p2-071",
+        "ruling-sam-2026-10-09-p1-099"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p1-085 to p1-089 (NotificationStatus enum) and repo-tests-p3-059 hold the four values today; the additions are req-notification-record-001's.",
+      "deltaNote": "repo-backend-p1-085 to p1-089 (NotificationStatus enum) and repo-tests-p3-059 hold the four values today; the additions are req-1987's.",
       "conflicts": []
     },
     {
@@ -1977,7 +1982,7 @@
     },
     {
       "id": "req-1884",
-      "statement": "The stored notification record holds its category, live animals or germinal products, beside its status and reference at the document root; a record with no category is read everywhere as live animals, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. The category is held on the record only and is not published on the notification event (c-272). The field's name and values are the animals backend's to choose in its own conventions.",
+      "statement": "The stored notification record holds its category, live animals or germinal products, beside its status and reference at the document root; a record with no category is read everywhere as live animals, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. The category is held on the record only and is not published on any notification event, so trade-imports-schemas does not change (c-272, c-296). The field's name and values are the animals backend's to choose in its own conventions.",
       "why": "Germinal products is a sibling set of live animals in the animals frontend and both keep their records in the one animals backend; the stored category is what tells the two apart.",
       "claims": [
         "repo-backend-p1-001",
@@ -1986,13 +1991,14 @@
         "ruling-sam-2026-10-09-p1-035",
         "ruling-sam-2026-10-09-p1-066",
         "ruling-sam-2026-10-09-p1-070",
-        "ruling-sam-2026-10-09-pm-p3-093"
+        "ruling-sam-2026-10-09-pm-p3-112"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "repo-backend-p1-002 shows the record today holds identity and metadata at the root and content under notification, with no category.",
       "conflicts": [
-        "c-272"
+        "c-272",
+        "c-296"
       ]
     },
     {
@@ -2030,24 +2036,25 @@
     {
       "id": "req-1887",
       "statement": "Every outbox event the backend publishes for a notification would carry the notification's category as an optional top-level category field, with trade-imports-schemas gaining it as an optional property on event-envelope-v1, so the INS backend could file it under live animals or germinal products.",
-      "why": "Withdrawn by the 9 October afternoon ruling: every INS read-model reader of the category is now blocked or moved to the animals frontend, so the category is stored on the record and not published on the event, and trade-imports-schemas does not change in this programme (c-272). Until the INS dashboard is re-distilled, today's INS table lists germinal notifications without their category, and c-272 is reopened then.",
+      "why": "The 9 October afternoon ruling withdraws the morning ruling's event publishing: the category is stored on the record only, trade-imports-schemas does not change, and every INS reader of the category is blocked or moved to the animals frontend. Until the INS dashboard is re-distilled, today's INS table lists germinal notifications without their category; c-272 is reopened then.",
       "claims": [
         "repo-backend-p5-011",
         "ruling-sam-2026-10-09-p1-032",
         "ruling-sam-2026-10-09-p1-033",
         "ruling-sam-2026-10-09-p1-035",
         "ruling-sam-2026-10-09-p1-043",
-        "ruling-sam-2026-10-09-pm-p3-092",
-        "ruling-sam-2026-10-09-pm-p3-093",
-        "ruling-sam-2026-10-09-pm-p3-094",
-        "ruling-sam-2026-10-09-pm-p3-095",
-        "ruling-sam-2026-10-09-pm-p3-096"
+        "ruling-sam-2026-10-09-pm-p3-110",
+        "ruling-sam-2026-10-09-pm-p3-111",
+        "ruling-sam-2026-10-09-pm-p3-112",
+        "ruling-sam-2026-10-09-pm-p3-113",
+        "ruling-sam-2026-10-09-pm-p3-114"
       ],
       "status": "out-of-scope",
       "delta": "new",
       "deltaNote": "repo-backend-p5-011 shows today's event envelope: no category anywhere on it.",
       "conflicts": [
-        "c-272"
+        "c-272",
+        "c-296"
       ]
     },
     {
@@ -2100,7 +2107,7 @@
     },
     {
       "id": "req-1895",
-      "statement": "A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what the current PIMS profile (gbn-ag-pims v0.2.0 in trade-imports-schemas) already carries; the sections the germinal set never asks (unweaned animals, CPH number, per-animal permanent address) are left out as the mapper already leaves out an unanswered section (req-1597, req-1599, req-1601), and no PIMS profile, trade-imports-schemas data shape or trade-imports-dynamics-gateway mapping changes for the germinal set's details.",
+      "statement": "A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what the current PIMS profile (gbn-ag-pims v0.2.0 in trade-imports-schemas) already carries; the sections the germinal set never asks (unweaned animals, CPH number, per-animal permanent address) are left out as the mapper already leaves out an unanswered section (req-1597, req-1599, req-1601), and no PIMS profile, trade-imports-schemas data shape or trade-imports-dynamics-gateway mapping changes for the germinal set's details. The PIMS schema update for germinal products is EUDPA-686, outside this backlog, started after the programme lands.",
       "why": "The ruling keeps the germinal set on today's PIMS profile; its own details wait for the PIMS schema update outside this programme.",
       "claims": [
         "repo-backend-p6-001",
@@ -2112,8 +2119,10 @@
         "ruling-sam-2026-10-09-p1-041",
         "ruling-sam-2026-10-09-p1-042",
         "ruling-sam-2026-10-09-p1-043",
+        "ruling-sam-2026-10-09-p1-044",
+        "ruling-sam-2026-10-09-p1-045",
         "ruling-sam-2026-10-09-p1-046",
-        "ruling-sam-2026-10-09-pm-p3-094"
+        "ruling-sam-2026-10-09-pm-p3-112"
       ],
       "status": "adopted",
       "delta": "new",
@@ -2121,124 +2130,164 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-record-001",
-      "statement": "Notification statuses are only ever added, never renamed or removed: DRAFT, SUBMITTED, AMEND and DELETED stay as they are, and each new status ('Submitted action required', which inc-113's submit records, and 'Completed' once the authorities' outcomes are unblocked) is mapped in the animals frontend (its persistence records, its real status mapping, the stub and the status strip's copy) and in the INS dashboard's links to the review before the animals backend first sends it, on one branch name shared by the animals backend, the animals frontend and the INS frontend. Plants takes a new status only where it has the same lifecycle, so 'Submitted action required', which rests on the ITAHC, is animals only.",
-      "why": "The animals frontend throws on a status it does not know, and the INS dashboard sends only SUBMITTED notifications to the review, so a status the backend sends before they know it breaks every page that reads it.",
+      "id": "req-1987",
+      "statement": "Notification statuses are only ever added, never renamed or removed: DRAFT, SUBMITTED, AMEND and DELETED stay as they are. 'Submitted action required', which inc-113's submit records and the list card shows as Action required, is added beside them, and 'Completed' once a real source of completion exists (blocked until then). Each new status is mapped in the animals frontend (its persistence records, its real status mapping, the stub and the status strip's copy, since the frontend throws on a status it does not know) and in the INS dashboard's notification links, which today send only SUBMITTED notifications to the review and then send it to the review too, before the animals backend first sends it, on one branch name shared by the animals backend, the animals frontend and the INS frontend. Plants takes a new status only where it has the same lifecycle, so 'Submitted action required', which rests on the ITAHC, is animals only, and whether plants takes 'Completed' is decided when that row unblocks.",
+      "why": "The animals frontend throws on a status it does not know, and the INS dashboard sends only SUBMITTED notifications to the review, so a status the backend sends before they know it breaks every page that reads it; the 9 October afternoon ruling makes statuses add-only and keeps this one animals only.",
       "claims": [
+        "repo-backend-p1-085",
+        "repo-backend-p1-006",
+        "repo-tests-p3-059",
+        "ruling-sam-2026-10-09-p1-098",
+        "ruling-sam-2026-10-09-p1-099",
+        "ruling-sam-2026-10-09-pm-p2-070",
+        "ruling-sam-2026-10-09-pm-p2-071",
         "ruling-sam-2026-10-09-pm-p2-072",
         "ruling-sam-2026-10-09-pm-p2-073",
         "ruling-sam-2026-10-09-pm-p2-074",
         "ruling-sam-2026-10-09-pm-p2-075",
         "ruling-sam-2026-10-09-pm-p2-076",
-        "ruling-sam-2026-10-09-pm-p2-077",
-        "ruling-sam-2026-10-09-p1-098",
-        "repo-backend-p1-085",
-        "repo-tests-p3-059"
+        "ruling-sam-2026-10-09-pm-p3-065",
+        "ruling-sam-2026-10-09-pm-p3-066",
+        "ruling-sam-2026-10-09-pm-p3-091"
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "Today the backend's status enum holds only the four values (repo-backend-p1-085, repo-tests-p3-059) and nothing guards the order in which a new value reaches the frontend, which throws on an unknown status (ruling-sam-2026-10-09-pm-p2-073).",
+      "deltaNote": "Today the backend and the tests repo know only DRAFT, SUBMITTED, AMEND and DELETED (repo-backend-p1-085, repo-tests-p3-059).",
+      "conflicts": []
+    },
+    {
+      "id": "req-2025",
+      "statement": "Inspector-side capabilities for plants, such as live access to a submitted plants record and the inspector-side MI metrics (2, 4, 5, 7 and 8), are not part of the notifier journey and are not built.",
+      "why": "Plants' own ledger (d-082) places these on the inspector side, outside the notifier journey this programme changes.",
+      "claims": [
+        "repo-plantsfrontend-p9-150-m1"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-2058",
+      "statement": "The plants frontend shows a notification's reference exactly as the plants backend mints it when the record is created on the list's Start, today {YY}-{XXXXXX} with no prefix, in the same places the animals frontend shows its reference (the status strip, the list card title, the confirmation panel and the read-only review); this programme does not change the plants reference.",
+      "why": "Plants mirrors the animals reference's places and shape, and plants' backend, which mints it, is not one of this programme's repos.",
+      "claims": [
+        "repo-plantsfrontend-p9-109",
+        "repo-plantsfrontend-p9-110",
+        "ruling-sam-2026-10-09-pm-p3-072"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Plants' ledger d-060 (repo-plantsfrontend-p9-109, p9-110) already shows the reference verbatim as minted at record creation on the Start POST, in the animals display places.",
+      "conflicts": []
+    },
+    {
+      "id": "req-2059",
+      "statement": "A type-code prefix on the plants notification reference is not decided or built in this programme; plants shows the unprefixed reference verbatim everywhere.",
+      "why": "The prefix is a parked plants backend-plus-stub decision still open on EUDPA-407, and a plants change that needs trade-imports-plants-backend, which is not one of the programme's repos, is left out and recorded in deferred.md.",
+      "claims": [
+        "repo-plantsfrontend-p9-119",
+        "repo-plantsfrontend-p9-110",
+        "ruling-sam-2026-10-09-pm-p3-072",
+        "ruling-sam-2026-10-09-pm-p3-073"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-2060",
+      "statement": "A plants notification has the same four lifecycle statuses as an animals one, DRAFT, SUBMITTED, AMEND and DELETED, shown as the animals frontend's tags with the same colours on the status strip, the list card and the confirmation; lateness is never folded into the status; the confirmation prints the tag's label, never the raw constant.",
+      "why": "Plants keeps its lifecycle aligned with animals so a common status change reaches both in the same increment.",
+      "claims": [
+        "repo-plantsfrontend-p9-111",
+        "repo-plantsfrontend-p9-112",
+        "repo-tests-p3-059"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Plants' ledger d-061 and d-064 (repo-plantsfrontend-p9-111, p9-112) already hold the four-status lifecycle and the animals tags; the strip's AMEND wording changes through the shared strip (c-311).",
+      "conflicts": [
+        "c-311"
+      ]
+    },
+    {
+      "id": "req-2062",
+      "statement": "The plants backend's expiry and retention of plants notifications are not checked or changed in this programme.",
+      "why": "The plants ledger's retention row is no longer among the claims this re-distil extracted, so nothing now shows what the plants backend does, and a plants change that needs trade-imports-plants-backend, which is not one of the programme's repos, is left out of every increment.",
+      "claims": [
+        "ruling-sam-2026-10-09-pm-p3-072"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-2063",
+      "statement": "Production retention of draft and submitted notifications, the lawful basis and the privacy notice's content and URL are not decided in this programme, for plants or animals; no expiry is set in production (req-1500).",
+      "why": "Design Release 2.1 shows no retention behaviour, the animals backend stamps expiry only outside production, and plants' retention rests on trade-imports-plants-backend, which is not one of the programme's repos.",
+      "claims": [
+        "repo-backend-p1-011",
+        "repo-backend-p3-057",
+        "ruling-sam-2026-10-09-pm-p3-072"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-2064",
+      "statement": "A richer importer-facing status vocabulary for plants (late, selected for check, checked, non-compliant) is not built, check outcomes never change the importer-facing status, and plants' Welsh tag strings stay the provisional machine draft they are today.",
+      "why": "Plants' own ledger parks the richer vocabulary (d-061, d-064), and Design Release 2.1 adds no plants status.",
+      "claims": [
+        "repo-plantsfrontend-p9-112",
+        "repo-plantsfrontend-p9-120"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-record-001",
+      "statement": "Submitting a plants notification stays a synchronous save of the whole fulfilment snapshot through the plants records port, with no outbox, GBN-AG or other event publishing and no PIMS routing, and plants' confirmation makes no promise about where the notification has gone; this programme adds no publishing to plants.",
+      "why": "The GBN-AG events and PIMS route this area records are the animals backend's; plants' own ledger parks publishing, and Design Release 2.1 changes no plants persistence.",
+      "claims": [
+        "repo-plantsfrontend-p9-088",
+        "ruling-sam-2026-10-09-pm-p3-072"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Plants' ledger d-047 (repo-plantsfrontend-p9-088) already submits by a synchronous persist with no publishing.",
       "conflicts": []
     },
     {
       "id": "req-notification-record-002",
-      "statement": "The plants frontend shows a notification's reference exactly as the plants backend mints it when the record is created on the list's Start, today {YY}-{XXXXXX} with no prefix, in the same places the animals frontend shows its reference (the status strip, the list card title, the confirmation panel and the read-only review); this programme does not change the plants reference.",
-      "why": "Plants mirrors the animals reference's places and shape, and plants' backend, which mints it, is not one of this programme's repos.",
+      "statement": "Publishing plants notifications (an outbox, GBN-AG or another event, PIMS routing) and a plants backend mapper that carries every SI matter instead of only the reference number are not built in this programme.",
+      "why": "Plants' ledger parks publishing (d-047), and it needs trade-imports-plants-backend, which is not one of the programme's repos.",
       "claims": [
-        "repo-plantsfrontend-p9-118",
-        "repo-plantsfrontend-p9-120",
-        "ruling-sam-2026-10-09-pm-p3-055"
+        "repo-plantsfrontend-p9-089",
+        "ruling-sam-2026-10-09-pm-p3-072",
+        "ruling-sam-2026-10-09-pm-p3-073"
       ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-plantsfrontend-p9-118 (d-060) and p9-120: the plants frontend prints the backend's unprefixed reference, minted at record creation, in those places today.",
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
       "conflicts": []
     },
     {
       "id": "req-notification-record-003",
-      "statement": "A type-code prefix on the plants notification reference is not decided or built in this programme; plants shows the unprefixed reference verbatim everywhere.",
-      "why": "Plants parked the prefix as a policy answer nobody has, it would need the plants backend and stub, which are not this programme's repos, and Design Release 2.1 covers the animals notification.",
+      "statement": "The plants journey keeps supplying coded values and its created and submitted times for management information and asks no question for it; 'time taken per notification' reads as created to submitted.",
+      "why": "Plants' own ledger (d-082) settles what the journey records for MI; Design Release 2.1 changes none of it.",
       "claims": [
-        "repo-plantsfrontend-p9-119",
-        "repo-plantsfrontend-p9-127",
-        "ruling-sam-2026-10-09-pm-p3-055"
-      ],
-      "status": "out-of-scope",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-notification-record-004",
-      "statement": "A plants notification has the same four lifecycle statuses as an animals one, DRAFT, SUBMITTED, AMEND and DELETED, shown as the animals frontend's tags with the same colours on the status strip, the list card and the confirmation; lateness is its own Late tag and banner, never folded into the status; the confirmation prints the tag's label, never the raw constant, and carries no status strip.",
-      "why": "Plants keeps its lifecycle aligned with animals so a common status change reaches both in the same increment.",
-      "claims": [
-        "repo-plantsfrontend-p9-121",
-        "repo-plantsfrontend-p9-122",
-        "repo-tests-p3-059"
+        "repo-plantsfrontend-p9-150"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-plantsfrontend-p9-121 and p9-122 (d-061): plants shows today's four statuses with the animals tags and colours, Late separate and no strip on the confirmation; the strip's AMEND wording changes under req-notification-record-005.",
-      "conflicts": [
-        "c-notification-record-001"
-      ]
-    },
-    {
-      "id": "req-notification-record-005",
-      "statement": "In every set, live animals, germinal products and plants, the status strip shows an AMEND notification's tag as 'Amend', not 'Amending'; plants takes it through the same shared strip change as animals, in the same increment, with no plants-specific work.",
-      "why": "The 9 October afternoon ruling changes the shared strip's label in every set at once, with the Amend bar that every set that amends needs.",
-      "claims": [
-        "ruling-sam-2026-10-09-pm-p2-066",
-        "ruling-sam-2026-10-09-pm-p2-067",
-        "ruling-sam-2026-10-09-pm-p2-068",
-        "ruling-sam-2026-10-09-pm-p3-045",
-        "repo-plantsfrontend-p9-121"
-      ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "repo-plantsfrontend-p9-121: today the strip shows AMEND as 'Amending' in plants, as in animals.",
-      "conflicts": [
-        "c-notification-record-001"
-      ]
-    },
-    {
-      "id": "req-notification-record-006",
-      "statement": "The plants backend sets an expiry on a notification only outside production, as the animals backend does (req-1500); this programme does not change it.",
-      "why": "Test data is cleaned up outside production without any production record ever expiring while retention is undefined.",
-      "claims": [
-        "repo-plantsfrontend-p9-151"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-plantsfrontend-p9-151 (d-076 rationale): the plants backend sets an expiry only outside production.",
-      "conflicts": []
-    },
-    {
-      "id": "req-notification-record-007",
-      "statement": "Production retention of draft and submitted notifications, the lawful basis and the privacy notice's content and URL are not decided in this programme, for plants or animals; records stay scoped to the Defra ID organisation and no expiry is set in production.",
-      "why": "Plants parked these as policy answers nobody has, Design Release 2.1 says nothing about retention, and the plants backend is not one of this programme's repos.",
-      "claims": [
-        "repo-plantsfrontend-p9-150",
-        "repo-plantsfrontend-p9-151",
-        "ruling-sam-2026-10-09-pm-p3-055"
-      ],
-      "status": "out-of-scope",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-notification-record-008",
-      "statement": "A richer importer-facing status vocabulary for plants (late, selected for check, checked, non-compliant) is not built, and plants' Welsh tag strings stay the provisional machine draft they are today.",
-      "why": "Plants parked the richer vocabulary, and a new status reaches plants only where it has the same lifecycle as animals; 'Submitted action required' is animals only.",
-      "claims": [
-        "repo-plantsfrontend-p9-122",
-        "ruling-sam-2026-10-09-pm-p2-077"
-      ],
-      "status": "out-of-scope",
-      "delta": "new",
-      "deltaNote": "",
+      "deltaNote": "Plants' ledger d-082 (repo-plantsfrontend-p9-150) already records it.",
       "conflicts": []
     }
   ],
@@ -2249,18 +2298,28 @@
       "positions": [
         {
           "source": "ruling:sam-2026-10-09-pm",
-          "says": "The category is stored on the notification record and is not published on the notification event; this replaces c-272's earlier outcome.",
-          "claim": "ruling-sam-2026-10-09-pm-p3-093"
+          "says": "The category is stored on the notification record and is not published; trade-imports-schemas does not change in this programme.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-112"
         },
         {
           "source": "ruling:sam-2026-10-09-pm",
-          "says": "trade-imports-schemas does not change in this programme.",
-          "claim": "ruling-sam-2026-10-09-pm-p3-094"
+          "says": "c-272 is not needed in this programme.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-110"
         },
         {
           "source": "ruling:sam-2026-10-09-pm",
-          "says": "c-272 is not needed in this programme, because every INS read-model reader of the category is now blocked or moved to the animals frontend.",
-          "claim": "ruling-sam-2026-10-09-pm-p3-092"
+          "says": "Every INS read-model reader of the category is now blocked or moved to the animals frontend, which reads the category from the animals backend's own record.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-111"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Until the INS dashboard is re-distilled, today's INS table lists germinal notifications without their category.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-113"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "c-272 is reopened when the INS dashboard area is re-distilled.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-114"
         },
         {
           "source": "ruling:sam-2026-10-09",
@@ -2279,7 +2338,7 @@
         },
         {
           "source": "repo:tests",
-          "says": "Today an outbox event carries only id, aggregate id and type, sub-type, version, event type, timestamp, data, actor, status changes and metadata; the envelope schema it follows forbids any other property.",
+          "says": "Today an outbox event carries only id, aggregate id and type, sub-type, version, event type, timestamp, data, actor, status changes and metadata.",
           "claim": "repo-tests-p3-200"
         }
       ],
@@ -2296,8 +2355,13 @@
       "positions": [
         {
           "source": "ruling:sam-2026-10-09",
-          "says": "Live-animal trade lines carry typeCode LIVE_ANIMAL and germinal lines SEMEN, EMBRYO or OVA, as the GBN-AG schema names them.",
+          "says": "Live-animal trade lines carry typeCode LIVE_ANIMAL.",
           "claim": "ruling-sam-2026-10-09-p1-039"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Each germinal trade line carries the GBN-AG typeCode for what it is: SEMEN, EMBRYO or OVA.",
+          "claim": "ruling-sam-2026-10-09-p1-036"
         },
         {
           "source": "repo:backend",
@@ -2306,30 +2370,59 @@
         },
         {
           "source": "ruling:sam-2026-10-09-pm",
-          "says": "Until the MDM catalogue separates embryos from ova, today's germinal lines carry interim typeCodes: semen lines SEMEN and the combined 'Embryos/Ova' lines EMBRYO by default.",
-          "claim": "ruling-sam-2026-10-09-pm-p2-027"
-        }
-      ],
-      "resolution": "precedence",
-      "outcome": "The rulings outrank the backend: live-animal lines gain typeCode LIVE_ANIMAL (req-1894), and germinal lines carry the GBN-AG typeCode for what they are (req-1800); until the MDM catalogue separates embryos from ova, semen lines carry SEMEN and today's combined 'Embryos/Ova' lines carry EMBRYO by default, and OVA as a separate code applies once the catalogue is re-distilled. repo-backend-p6-109 is not overruled because it is the evidence of today's behaviour those requirements change, and its other half (no urlId on a trade line) still holds and stays in req-1600."
-    },
-    {
-      "id": "c-notification-record-001",
-      "about": "What the status strip calls an AMEND notification in plants: 'Amending', as plants' d-061 mirrors from animals, or 'Amend'.",
-      "positions": [
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "says": "The shared strip's 'Amending' label changes to 'Amend' in every set at once.",
-          "claim": "ruling-sam-2026-10-09-pm-p2-068"
+          "says": "Until the MDM catalogue separates embryos from ova, today's germinal lines carry interim typeCodes.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-026"
         },
         {
-          "source": "repo:plantsfrontend",
-          "says": "Plants shows AMEND as the animals 'Amending' tag with the same colour on the strip, the card and the confirmation.",
-          "claim": "repo-plantsfrontend-p9-121"
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Semen lines carry the typeCode SEMEN.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-027"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Today's combined 'Embryos/Ova' lines carry the typeCode EMBRYO by default.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-028"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "EMBRYO and OVA become separate items only once the catalogue is re-distilled.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-029"
         }
       ],
       "resolution": "precedence",
-      "outcome": "The 9 October afternoon ruling outranks plants' own ledger: the strip reads 'Amend' in every set, plants included, through the same shared strip change (req-notification-record-005). repo-plantsfrontend-p9-121 is not overruled, because the rest of it (the four-status lifecycle, the tags and colours, Late kept separate, the confirmation printing the label) still holds and backs req-notification-record-004; only its strip wording for AMEND changes. The list card's 'Amending' tag is not named by the ruling and stays as the list area has it."
+      "outcome": "The rulings outrank the backend: live-animal lines gain typeCode LIVE_ANIMAL (req-1894). Until the MDM catalogue separates embryos from ova, semen lines carry SEMEN and today's combined 'Embryos/Ova' lines carry EMBRYO by default (req-1928); OVA as its own code, with embryos and ova as separate lines, applies once the catalogue is re-distilled (req-1800). repo-backend-p6-109 is not overruled because it is the evidence of today's behaviour those requirements change, and its other half (no urlId on a trade line) still holds and stays in req-1600. ruling-sam-2026-10-09-p1-036 is not overruled: the afternoon ruling defers its OVA half until the catalogue is re-distilled rather than withdrawing it."
+    },
+    {
+      "id": "c-296",
+      "about": "Whether the notification's category is published on the notification event for the INS read model to count by.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The category is published on the notification event the INS backend reads.",
+          "claim": "ruling-sam-2026-10-09-p1-032"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "INS takes a notification's category from the event's category field, and otherwise treats it as live-animals.",
+          "claim": "ruling-sam-2026-10-09-p1-033"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The category is stored on the notification record and is not published on the notification event.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-112"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "c-272 is reopened when the INS dashboard area is re-distilled.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-114"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 9 October afternoon ruling ranks first: the animals backend stores the category on the notification record and does not publish it on the notification event in this programme, because every INS reader of it (the home's per-category counts and the drill-downs) is now blocked. How the category reaches the INS read model is decided when the INS dashboard is re-distilled. The morning ruling's event publishing and INS's reading of it are overruled.",
+      "overruled": [
+        "ruling-sam-2026-10-09-p1-032",
+        "ruling-sam-2026-10-09-p1-033"
+      ]
     }
   ]
 }

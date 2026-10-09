@@ -2,6 +2,7 @@
   "area": "review-and-submit",
   "rows": [
     {
+      "existingRow": "inc-101",
       "title": "Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages",
       "detail": "Design Release 2.1 names the review's sections and cards differently from today and puts each card straight under its numbered section heading, with no subsection heading above it. That also settles the repeated heading-then-card-title pairs DR1 parity row inc-147 left as an open design call (c-142). After this change the review reads '4. Uploaded documents' and '5. Consignment addresses', the cards are titled 'Origin of import', 'Main import reason', 'Additional details', 'Addresses' and 'Contact address', and each unfinished card's message follows its new title.",
       "acceptanceCriteria": [
@@ -29,27 +30,28 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": [],
       "gate": "Look at the review's new heading structure (cards straight under numbered sections, card titles a level up) and the renamed cards: every later review row in this area builds its cards into this structure.",
       "openQuestions": [],
       "notes": [
         "Pass 2 combines the heading, card-title and unfinished-message slices: each is one copy or heading change on the same review page with the same set-up and review, and the messages follow the card titles they name. Kept apart from the card-content rows so the structure lands once, first. The tests repo's view-state spec and page object find sections and cards by today's names ('4. Documents', 'Import details', 'Roles and addresses') and follow the new ones. Welsh copy keeps its existing shape (req-948 is out of scope).",
-        "Re-distil (9 October afternoon ruling): unchanged in substance. The review is the set's own feature folder (req-1844), so its copy and template change inside the set; the germinal set copies the result."
+        "Re-distil: unchanged in substance. The review is the set's own feature folder (ruling:sam-2026-10-09-pm claims 55 to 57), so its copy and template change inside the set; the germinal set copies the result."
       ],
       "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
-        "tests:page-objects/animals/notification-view-page.ts",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
-        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
+        "tests:page-objects/animals/notification-view-page.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-101"
+      "shared": []
     },
     {
+      "existingRow": "inc-102",
       "title": "Review rows for origin, import reason, additional details and transport and arrival follow Design Release 2.1",
       "detail": "Design Release 2.1 changes which rows the About the consignment and Transport and arrival cards show and how they read. The region code row always shows, the 'required' row goes, a transit's exit point is the 'Exit border control post', the arrival date is 'at destination', means of transport read with the question's labels, transit countries move inside Arrival details with their own row Change link (settling the card-structure question DR1 parity row inc-146 left open, c-141), transit countries become optional for submission, every transporter row always shows, and an empty Additional details card is hidden.",
       "acceptanceCriteria": [
@@ -76,24 +78,27 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-101"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Depends on the row 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (card titles and heading levels). Pass 2 combines the About the consignment row slices (origin, import reason, additional details) with the Transport and arrival slices (arrival, transit, transporter): each is a row-level read-back change on review cards with the same set-up and review, and none carries an open question. Transit countries becoming optional for submission (req-880) changes what the review counts as unfinished; if the arrival obligations mark transit countries as required for submit, that one line is a shared change with the commodities-and-reason theme's obligations file. The transit countries page's own validation is the arrival-and-transit area's. c-130 settles the transporter Country as the stored country."
+        "Depends on the row 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (card titles and heading levels). Pass 2 combines the About the consignment row slices (origin, import reason, additional details) with the Transport and arrival slices (arrival, transit, transporter): each is a row-level read-back change on review cards with the same set-up and review, and none carries an open question. Transit countries becoming optional for submission (req-880) changes what the review counts as unfinished; if the arrival obligations mark transit countries as required for submit, that one line is a shared change with the theme owning the arrival obligations. The transit countries page's own validation is the arrival-and-transit area's. c-130 settles the transporter Country as the stored country."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/applicability.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
+        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js"
-      ],
-      "existingRow": "inc-102"
+      "shared": ["frontend:src/server/app/sets/live-animals/obligations"]
     },
     {
+      "existingRow": "inc-104",
       "title": "Review reads the commodity selection back in a 'What are you importing?' card and groups species under their commodity",
       "detail": "Design Release 2.1 reads the commodity selection back once, in its own card in section 1, and then shows one card per commodity in section 2 with a block per species, title-casing species names. Today each commodity line is its own card repeating code, common name and species. DR1 parity row inc-150 deferred how unfinished commodity and species answers are named; Design Release 2.1 supplies it (c-134), with links going to the card or block they were meant to reach.",
       "acceptanceCriteria": [
@@ -121,6 +126,8 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-101"],
       "gate": "Look at the commodity card and species block layout, and where its row-level Change link sits: the germinal read-back and identification details rows build inside these blocks.",
       "openQuestions": [],
       "notes": [
@@ -128,17 +135,19 @@
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
-        "tests:page-objects/animals/notification-view-page.ts",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
+        "tests:page-objects/animals/notification-view-page.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-104"
+      "shared": []
     },
     {
+      "existingRow": "inc-105",
       "title": "The germinal set's own review: germinal answers in their species blocks, its unfinished-species messages, and no CPH or permanent address",
       "detail": "Design Release 2.1 reads a germinal product's total gross weight, package count, temperature and identification details back on the review. The 9 October ruling builds germinal products as their own set, each page a copy of its live-animals feature folder plus the prototype's germinal differences, and keeps this row's germinal content for the germinal set's copy of the review. The germinal set always asks for temperature, takes weight as a decimal total gross weight in kilograms, and stores and shows its germinal details even where PIMS does not carry them. Its review leaves out the CPH number and permanent address, and names every species short of what submit needs, a lone species included (c-277).",
       "acceptanceCriteria": [
@@ -146,32 +155,34 @@
         "In the germinal-products set's review, the first block of the first commodity card always shows a 'Temperature' row with the chosen answer (prototype:dr2-1-source prototype-dr2-1-source-p11-085; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-021)",
         "In the germinal-products set's review, a germinal species' identification details read back as a list of each identifier field and its saved value, including the details PIMS does not carry (prototype:dr2-1-source prototype-dr2-1-source-p11-087; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-042)",
         "The live-animals set's review shows none of these germinal rows (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014, ruling-sam-2026-10-09-p1-110)",
-        "The germinal products set's review is its own copy of the live-animals review: its Addresses card has no 'County parish holding (CPH) number' row and no 'Permanent address' subsection, and nothing it marks as needed before submit asks for additional details, a CPH number or a permanent address (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-009, ruling-sam-2026-10-09-p1-016, ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018; prototype:dr2-1-source prototype-dr2-1-source-p11-110, prototype-dr2-1-source-p11-111, prototype-dr2-1-source-p11-125)",
+        "The germinal products set's review is its own copy of the live-animals review: its Addresses card has no 'County parish holding (CPH) number' row and no 'Permanent address' subsection, and nothing it marks as needed before submit asks for additional details, a CPH number or a permanent address (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-009, ruling-sam-2026-10-09-p1-016, ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-056; prototype:dr2-1-source prototype-dr2-1-source-p11-110, prototype-dr2-1-source-p11-111, prototype-dr2-1-source-p11-125)",
         "In the germinal products review, each selected species short of what submit needs is named, whether one species or several are selected: 'Enter the number of packages for <species>' when it has no count, and 'Enter at least 1 animal identifier for <species>' when it has a count but no entry holding an identifier, with the species name in lower case and the entry linking to that species block (prototype:dr2-1-source prototype-dr2-1-source-p11-057, prototype-dr2-1-source-p11-058, prototype-dr2-1-source-p11-059; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057, ruling-sam-2026-10-09-p1-110; c-277)"
       ],
       "requirements": ["req-842", "req-1841", "req-1843"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-057 to p11-059, p11-083, p11-085, p11-087, p11-110, p11-111, p11-125" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, p1-009, p1-014, p1-016, p1-017, p1-018, p1-021, p1-022, p1-042, p1-057, p1-110" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-060" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-056" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-040, p13-063, p13-076, p13-082" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "germinal-products",
+      "dependsOn": ["inc-104", "inc-017", "inc-052", "inc-176", "inc-099", "inc-106"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Re-drafted for the 9 October ruling: the germinal content is built in the germinal set's copy of the review (claim 110), not in the live-animals review. Depends on the germinal set's scaffold and its Commodity details and identification rows (keeps inc-017, inc-052's content, inc-176, inc-099), which let a germinal notification be answered, and on the live-animals commodity card and identification rows (inc-104, inc-106), because the germinal review is copied from the live review once those are built (claim 14). Pass 2 combines the germinal read-back, the germinal copy's readiness test and its unfinished-species messages: one page in one feature folder. The live-animals half of the per-species messages is the identification row's (req-879). Its code is the germinal set's copy of check-answers, so it stays in the germinal-products theme."
+        "The germinal content is built in the germinal set's copy of the review (9 October ruling, claim 110; afternoon ruling claim 56), not in the live-animals review. Depends on the germinal set's scaffold and its Commodity details and identification rows (inc-017, inc-052, inc-176, inc-099), which let a germinal notification be answered, and on the live-animals commodity card and identification rows (inc-104, inc-106), because the germinal review is copied from the live review once those are built (claim 14). Pass 2 combines the germinal read-back, the germinal copy's readiness test and its unfinished-species messages: one page in one feature folder. The live-animals half of the per-species messages is the identification row's (req-879). Its code is the germinal set's copy of check-answers, so it stays in the germinal-products theme."
       ],
       "touches": [
         "frontend:src/server/app/sets/germinal-products/journeys/linear/features/check-answers",
         "tests:tests/animals/e2e/germinal-products"
       ],
-      "shared": [],
-      "existingRow": "inc-105"
+      "shared": []
     },
     {
+      "existingRow": "inc-106",
       "title": "Identification details on the review: heading, animal labels, its own Change link and per-species unfinished messages",
       "detail": "Design Release 2.1 heads each species' identifier table 'Identification details', labels each animal by species and number, lets the trader change identifiers straight from the review, and, in the live-animals set when more than one species is selected, names each species that is short of a count or an identifier. DR1 parity row inc-150 deferred the per-species marking for a design ruling; Design Release 2.1 supplies it (c-134).",
       "acceptanceCriteria": [
@@ -179,7 +190,7 @@
         "Each row of the table is labelled with the species name and the animal's number, for example 'Felis catus 1', under an 'Animal' column, with one column per identifier field (prototype:dr2-1-source prototype-dr2-1-source-p11-086; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-145)",
         "On an editable review, Identification details has its own Change link opening the animal identification page (prototype:dr2-1-source prototype-dr2-1-source-p11-088; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-145)",
         "In the live-animals set, with more than one species selected and identifiers required, a species with no count is named 'Enter the number of animals for <species>', with the species name in lower case, and the error summary entry links to that species block (prototype:dr2-1-source prototype-dr2-1-source-p11-056, prototype-dr2-1-source-p11-057, prototype-dr2-1-source-p11-058; c-134)",
-        "In the live-animals set, with more than one species selected and identifiers required, a species with a count but no identifier is named 'Enter at least 1 animal identifier for <species>', with the species name in lower case, and the entry links to that species block (prototype:dr2-1-source prototype-dr2-1-source-p11-059, prototype-dr2-1-source-p11-060; c-134)"
+        "In the live-animals set, with more than one species selected and identifiers required, a species with a count but no identifier is named 'Enter at least 1 animal identifier for <species>', with the species name in lower case, and the entry links to that species block (prototype:dr2-1-source prototype-dr2-1-source-p11-059, prototype-dr2-1-source-p11-060; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057; c-134)"
       ],
       "requirements": ["req-844", "req-845", "req-846", "req-879"],
       "sources": [
@@ -194,6 +205,8 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-104"],
       "gate": null,
       "openQuestions": [],
       "notes": [
@@ -203,12 +216,14 @@
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-106"
+      "shared": []
     },
     {
+      "existingRow": "inc-107",
       "title": "Each uploaded document has its own card on the review, showing its file name",
       "detail": "Design Release 2.1 gives every uploaded document its own 'Document <n>' card with its own Change link, shows the attached file's name rather than its type, and shows a single 'Not applicable' card when nothing is uploaded. Today all documents share one card.",
       "acceptanceCriteria": [
@@ -229,6 +244,8 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-101"],
       "gate": null,
       "openQuestions": [],
       "notes": [
@@ -236,13 +253,15 @@
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-107"
+      "shared": []
     },
     {
+      "existingRow": "inc-108",
       "title": "Addresses card: permanent addresses, CPH format, one header link and a single unfinished entry",
       "detail": "Design Release 2.1 shows pets' permanent addresses in full in the Addresses card, writes the CPH with slashes, gives the Addresses and Contact address cards one header Change link and no row actions (c-138), returns a CPH change made from the review to the review (c-141, settling DR1 parity row inc-146's open question), and lists one error summary entry per unfinished card, so a deleted saved address is named once, on its card (c-135).",
       "acceptanceCriteria": [
@@ -266,242 +285,294 @@
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-101", "inc-054"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Depends on the row 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (the Addresses and Contact address cards) and on inc-054 as before. Pass 2 combines the Addresses card's read-back slices (permanent addresses, CPH) with its link and error-summary slices (row actions, CPH return, deleted address): all change the same card and its errors. Moving the permanent address out of the identification table touches that table too; the identification row owns the table's other columns. The CPH page's own return behaviour may need the change context the CPH page reads, which is the consignment-parties theme's page: a shared change. The tests repo's page object clicks 'Edit details' today and follows the header link. req-848 is the live-animals set's only: the germinal set's review has no Permanent address subsection and no CPH row (req-1843)."
+        "Depends on the row 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (the Addresses and Contact address cards) and on inc-054 as before. Pass 2 combines the Addresses card's read-back slices (permanent addresses, CPH) with its link and error-summary slices (row actions, CPH return, deleted address): all change the same card and its errors. Moving the permanent address out of the identification table touches that table too; the identification row owns the table's other columns. The CPH page's own return behaviour may need the change context the CPH page reads, which is another theme's page: a shared change. The tests repo's page object clicks 'Edit details' today and follows the header link. req-848 is the live-animals set's only: the germinal set's review has no Permanent address subsection and no CPH row (req-1843)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/invalid-parties.js",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/incomplete-cards.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+        "tests:page-objects/animals/notification-view-page.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-copied.spec.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-edit.spec.ts"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number"
-      ],
-      "existingRow": "inc-108"
+      "shared": ["frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number"]
     },
     {
+      "existingRow": "inc-110",
       "title": "Review ends with Continue and Delete, and an amendment's review offers Cancel amend and tells the trader they are re-submitting",
-      "detail": "Design Release 2.1 ends an editable review with Continue and a red Delete. While amending, it adds a 'Cancel amend' button, retitles the review 'Review before re-submitting' once something has changed, and opens with no errors shown. The ruling's validation override still refuses an incomplete resubmission and says why (c-136). The buttons reuse the shared notification actions wording as it reads today. What the delete and cancel-amend confirmations do is the manage-notifications area's.",
+      "detail": "Design Release 2.1 ends an editable review with Continue and a red Delete. While amending, it adds a 'Cancel amend' button, retitles the review 'Review before re-submitting' once something has changed, and opens with no errors shown. The ruling's validation override still refuses an incomplete resubmission and says why (c-136). The buttons reuse the shared notification actions wording as it reads today. Plants' check answers takes the same end buttons and amend behaviour in the same increment, keeping its own wording. What the delete and cancel-amend confirmations do is the manage-notifications area's.",
       "acceptanceCriteria": [
-        "An editable journey or draft review ends with 'Continue' and, beside it, a red 'Delete' button that opens the notification's delete confirmation (prototype:dr2-1-source prototype-dr2-1-source-p11-115, prototype-dr2-1-source-p11-118; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-162, trace-prototype-dr2-1-p13-157; prototype:dr2-1-specs prototype-dr2-1-specs-p4-084; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-069, ruling-sam-2026-10-09-pm-p2-070)",
+        "An editable journey or draft review ends with 'Continue' and, beside it, a red 'Delete' button that opens the notification's delete confirmation, reading 'Delete' as the shared notification actions wording reads today (prototype:dr2-1-source prototype-dr2-1-source-p11-115, prototype-dr2-1-source-p11-118; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-162, trace-prototype-dr2-1-p13-157; prototype:dr2-1-specs prototype-dr2-1-specs-p4-084; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067, ruling-sam-2026-10-09-pm-p2-068, ruling-sam-2026-10-09-pm-p2-069)",
         "While a notification is being amended, the review ends with 'Continue', which submits, a secondary 'Cancel amend' button that opens the cancel-amendment confirmation, and a red 'Delete' button that opens the delete confirmation; there is no 'Cancel amendment' link (prototype:dr2-1-source prototype-dr2-1-source-p11-117; c-189)",
         "An amendment's review is headed and titled 'Review your notification' when first opened, and 'Review before re-submitting' once any notification answer differs from the submitted version (prototype:dr2-1-source prototype-dr2-1-source-p11-019)",
         "Changing only the uploaded documents during an amendment leaves the heading 'Review your notification', because only notification answers count as a change (prototype:dr2-1-source prototype-dr2-1-source-p11-019)",
         "An amendment's review opens with no error summary and no card errors, even when answers are missing (prototype:dr2-1-source prototype-dr2-1-source-p11-040, prototype-dr2-1-source-p11-041; c-136)",
-        "Pressing Continue on an amendment that is not complete does not submit it: the review is shown again with its error summary naming what is missing (c-136)"
+        "Pressing Continue on an amendment that is not complete does not submit it: the review is shown again with its error summary naming what is missing (prototype:dr2-1-source prototype-dr2-1-source-p11-041; c-136)",
+        "On a high-risk plants draft's editable check answers, a red warning button with plants' existing 'Delete notification' wording sits beside Continue and opens the notification's delete page; Save and return and the Cancel link stay (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-046; repo:plantsfrontend repo-plantsfrontend-p8-043, repo-plantsfrontend-p8-044, repo-plantsfrontend-p8-051)",
+        "While a plants notification is being amended, check answers offers 'Cancel amend' as a secondary button beside Continue that opens the cancel-amendment confirmation, in place of the 'Cancel amendment' link under the heading, and shows no delete button (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-046; repo:plantsfrontend repo-plantsfrontend-p8-055)",
+        "A plants amendment's check answers opens with no error summary and no errors; Continue on an incomplete amendment does not submit it, and the page shown again names what is missing (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-028, ruling-sam-2026-10-09-pm-p3-046; repo:plantsfrontend repo-plantsfrontend-p8-038, repo-plantsfrontend-p8-039; c-136)"
       ],
-      "requirements": ["req-888", "req-889", "req-890", "req-891"],
+      "requirements": ["req-888", "req-889", "req-890", "req-891", "req-1991", "req-1992", "req-1993"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-019, p11-040, p11-041, p11-115, p11-117, p11-118" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-162, p13-157" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-084" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-069, p2-070, p2-071" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-067, p2-068, p2-069, p3-028, p3-046, p3-047" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-003, p13-096, p13-097, p13-110, p13-112, p13-117" },
         { "source": "repo:tests", "ref": "repo-tests-p3-111" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p25-059" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p7-056, p13-074, p13-092" }
+        { "source": "trace:e2e", "ref": "trace-e2e-p7-056, p13-074, p13-092" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-038, p8-039, p8-043, p8-044, p8-051, p8-055, p8-100" }
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "repos": ["backend", "frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": [],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Pass 2 combines the review's end actions with the amendment review's heading and error behaviour: all are the review's own controls and state, with the same amend set-up. The backend already keeps a pre-amend snapshot of the notification separately from its documents; telling the frontend whether the notification answers differ from it is the backend part of this slice. Delete reuses the shared notification actions wording 'Delete' as it reads today; any different wording goes in the review's own copy, never the shared copy (afternoon ruling, claims 69 to 71). The tests repo asserts today that a draft review has no Delete, and the cancel-amend spec uses the 'Cancel amendment' link; both follow. Delete and cancel-amend confirmations belong to manage-notifications; this row only links to them ('Cancel amend' only leads to a confirmation, so it is a link styled as a button, c-189)."
+        "Pass 2 combines the review's end actions with the amendment review's heading and error behaviour: all are the review's own controls and state, with the same amend set-up. The backend already keeps a pre-amend snapshot of the notification separately from its documents; telling the frontend whether the notification answers differ from it is the backend part of this slice. Delete reuses the shared notification actions wording 'Delete' as it reads today; any different wording goes in the review's own copy, never the shared copy (afternoon ruling, claims p2-067 to p2-069). The tests repo asserts today that a draft review has no Delete, and the cancel-amend spec uses the 'Cancel amendment' link; both follow. Delete and cancel-amend confirmations belong to manage-notifications; this row only links to them ('Cancel amend' only leads to a confirmation, so it is a link styled as a button, c-189).",
+        "req-1991 to req-1993 (plants' review end buttons and amend review) sit here under the afternoon ruling's same-increment rule (claims p3-013 and p3-046). Plants' heading for changed answers is left out: plants' backend does not yet send that signal (claim p3-047)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationViewData.java",
-        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts",
-        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
       ],
-      "shared": [
-        "frontend:src/server/app/shared/copy.en.js"
-      ],
-      "existingRow": "inc-110"
+      "shared": []
     },
     {
+      "existingRow": "inc-111",
       "title": "A submitted notification's view has a header: reference, status, date submitted and a Back link to the set's own notification list",
-      "detail": "Design Release 2.1 heads a submitted notification's view with its reference and status, dates it, and gives it a Back link. The 9 October ruling keys the header on the real route and the stored status and keeps dashboard draft rows going to the hub; the afternoon ruling sends the Back link, and an unknown notification, to the set's own notification list in the animals frontend (c-143, c-198) and draws the header in the set's own review template with the shared status strip switched off, leaving the shared layout unchanged. This row builds the header for Submitted, Submitted action required and Completed; the draft's own header at the same review route (c-246) is the row after the header actions, because it reuses them. The page title keeps the page name before the service, as accessibility requires (c-006).",
+      "detail": "Design Release 2.1 heads a submitted notification's view with its reference and status, dates it, and gives it a Back link. The 9 October ruling keys the header on the real route and the stored status and keeps dashboard draft rows going to the hub; the afternoon ruling sends the Back link, and an unknown notification, to the set's own notification list in the animals frontend (c-143, c-198) and draws the header in the set's own review template with the shared status strip switched off, leaving the shared layout unchanged. This row builds the header for Submitted, Submitted action required and Completed; the draft's own header at the same review route (c-246) is the row after the header actions, because it reuses them. The page title keeps the page name before the service, as accessibility requires (c-006). Plants' read-only view takes the same header in the same increment.",
       "acceptanceCriteria": [
-        "A submitted notification's view shows its notification reference as the h1 in place of 'Review your notification', with its status beside it as a tag reading 'Submitted', and no status strip above it (prototype:dr2-1-source prototype-dr2-1-source-p11-021, prototype-dr2-1-source-p11-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-179, trace-prototype-dr2-1-p13-173; prototype:dr2-1-specs prototype-dr2-1-specs-p4-067, prototype-dr2-1-specs-p5-090; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-096; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-062, ruling-sam-2026-10-09-pm-p2-063)",
-        "A submitted notification's view has the page title '<reference> - Import notification service - GOV.UK', while the journey review of a draft or an amendment keeps 'Review your notification - Import notification service - GOV.UK' (trace:prototype-dr2-1 trace-prototype-dr2-1-p13-173; c-006)",
+        "A submitted notification's view shows its notification reference as the h1 in place of 'Review your notification', with its status beside it as a tag reading 'Submitted', and no status strip above it (prototype:dr2-1-source prototype-dr2-1-source-p11-021, prototype-dr2-1-source-p11-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-179, trace-prototype-dr2-1-p13-173; prototype:dr2-1-specs prototype-dr2-1-specs-p4-067, prototype-dr2-1-specs-p5-090; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-096; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-060, ruling-sam-2026-10-09-pm-p2-061, ruling-sam-2026-10-09-pm-p2-062)",
+        "A submitted notification's view has the page title '<reference> - Import notification service - GOV.UK', while the journey review of a draft or an amendment keeps 'Review your notification - Import notification service - GOV.UK' (trace:prototype-dr2-1 trace-prototype-dr2-1-p13-173; trace:animals-fit trace-animals-fit-p25-002; c-006)",
         "Under the header, a submitted notification's view shows 'Date submitted: <d Month yyyy>', the date it was submitted as stored on the notification (prototype:dr2-1-source prototype-dr2-1-source-p11-023, prototype-dr2-1-source-p11-024; prototype:dr2-1-specs prototype-dr2-1-specs-p5-092, prototype-dr2-1-specs-p5-102)",
-        "A submitted live-animals notification's view has a Back link to the live-animals notification list, the set's own list in the animals frontend (prototype:dr2-1-source prototype-dr2-1-source-p11-016; prototype:dr2-1-specs prototype-dr2-1-specs-p5-101; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-081; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-015; c-143; c-198)",
-        "Opening the view of a notification that does not exist goes to the set's own notification list (prototype:dr2-1-source prototype-dr2-1-source-p11-002, prototype-dr2-1-source-p11-007; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-065, ruling-sam-2026-10-09-pm-p3-081; c-198)"
+        "A submitted live-animals notification's view has a Back link to the live-animals notification list, the set's own list in the animals frontend (prototype:dr2-1-source prototype-dr2-1-source-p11-016; prototype:dr2-1-specs prototype-dr2-1-specs-p5-101; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-101; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-017, ruling-sam-2026-10-09-templates-p1-021; c-143; c-198)",
+        "Opening the view of a notification that does not exist goes to the set's own notification list (prototype:dr2-1-source prototype-dr2-1-source-p11-002, prototype-dr2-1-source-p11-007; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-063, ruling-sam-2026-10-09-pm-p3-101; c-198)",
+        "A submitted high-risk plants notification's read-only view has the notification reference as its heading, with its status as a tag beside it, in place of 'Check your answers', and no shared status strip above it (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-048, ruling-sam-2026-10-09-pm-p2-060, ruling-sam-2026-10-09-pm-p2-061; repo:plantsfrontend repo-plantsfrontend-p8-003, repo-plantsfrontend-p8-050)",
+        "That plants view's browser title starts with the notification reference, before the service name (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-048; repo:plantsfrontend repo-plantsfrontend-p8-003)",
+        "Under its header the plants view shows 'Date submitted: <d Month yyyy>' from the notification's stored submission date (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-048; repo:plantsfrontend repo-plantsfrontend-p8-050, repo-plantsfrontend-p8-082)",
+        "The plants view's Back link goes to plants' own notification list (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-048, ruling-sam-2026-10-09-pm-p3-101; repo:plantsfrontend repo-plantsfrontend-p8-005; c-143)"
       ],
-      "requirements": ["req-892", "req-893", "req-894", "req-899", "req-911"],
+      "requirements": ["req-892", "req-893", "req-894", "req-899", "req-911", "req-1995", "req-1996", "req-1997", "req-1998"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-002, p11-005, p11-007, p11-009, p11-016, p11-021, p11-022, p11-023, p11-024" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-179, p12-185, p13-173" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-067, p5-090, p5-092, p5-101, p5-102, p5-104" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-096" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-059, p2-062, p2-063, p2-064, p2-065, p3-081" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-015" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-055, p2-060, p2-061, p2-062, p2-063, p3-048, p3-101" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-017, p1-021" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-132" },
         { "source": "repo:tests", "ref": "repo-tests-p3-115" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p25-002, p25-005, p25-082" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p13-098, p13-104" }
+        { "source": "trace:e2e", "ref": "trace-e2e-p13-098, p13-104" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-003, p8-005, p8-050, p8-082" }
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "repos": ["backend", "frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": [],
       "gate": "Look at how the page tells a submitted notification's view from the journey review (keyed on the route and stored status), at the view header drawn in the set's own template with the status strip off, and at the Back link to the set's own list: the header-actions, action-required, draft-header and completed rows all build on this header.",
       "openQuestions": [],
       "notes": [
-        "Re-drafted for the 9 October afternoon and templates rulings: the Back link and the missing-notification redirect go to the set's own notification list in the animals frontend (the live-animals set root for live animals; the germinal set's copy of the review points at the germinal set root), replacing the earlier INS front-door destination (c-143, c-198). Because the destination is in the same frontend, every criterion is observable in the fit run, on the workspace stack and in CDP alike, with no configured URL. The header is drawn in the set's own review template with the shared strip switched off (journeyStrip: null); the shared layout is not changed (afternoon ruling, claims 62 to 64). The not-found case stays caught in the review's controller (claim 65). Pass 2 combines the view header (reference, status, title, date submitted) with its navigation (Back link, missing notification): one page state, one set-up. The backend already stores the submitted date but the view data carries only the created date; returning the submitted date is the backend part. Status tags for 'Submitted action required' and 'Submission complete'/'Completed' are the action-required and completed rows'. 'Copy as new', 'Delete' and 'Amend this notification' in the header are the header-actions row's."
+        "The Back link and the missing-notification redirect go to the set's own notification list in the animals frontend (the live-animals set root for live animals; the germinal set's copy of the review points at the germinal set root) (afternoon ruling claim p3-101; c-143, c-198). Because the destination is in the same frontend, every criterion is observable in the fit run, on the workspace stack and in CDP alike, with no configured URL. The header is drawn in the set's own review template with the shared strip switched off (journeyStrip: null); the shared layout is not changed (afternoon ruling, claims p2-060 to p2-062). The not-found case stays caught in the review's controller (claim p2-063). Pass 2 combines the view header (reference, status, title, date submitted) with its navigation (Back link, missing notification): one page state, one set-up. The backend already stores the submitted date but the view data carries only the created date; returning the submitted date is the backend part. Status tags for 'Submitted action required' and 'Submission complete'/'Completed' are the action-required and completed rows'. 'Copy as new', 'Delete' and 'Amend this notification' in the header are the header-actions row's.",
+        "req-1995 to req-1998 (plants' submitted view header) sit here under the afternoon ruling's same-increment rule (claims p3-013 and p3-048)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationViewData.java",
-        "tests:page-objects/animals/notification-view-page.ts",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
+        "tests:page-objects/animals/notification-view-page.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-111"
+      "shared": []
     },
     {
+      "existingRow": "inc-112",
       "title": "View header offers Amend, Copy as new and Delete, and shows the import reference numbers as text to copy",
-      "detail": "Design Release 2.1 offers 'Amend this notification' on a submitted notification, 'Copy as new' and 'Delete' on every submitted notification's view, and gives the trader the notification reference and customs document code they need for the customs declaration. Each state-changing control looks as Design Release 2.1 draws it but submits a form with the CSRF token (c-189), and the buttons reuse the shared notification actions wording as it reads today. The 9 October afternoon ruling builds the import reference numbers now as selectable text, without the prototype's JavaScript-only Copy buttons, which wait on design as their own requirement (c-294). What amend, copy and delete do is the manage-notifications area's.",
+      "detail": "Design Release 2.1 offers 'Amend this notification' on a submitted notification, 'Copy as new' and 'Delete' on every submitted notification's view, and gives the trader the notification reference and customs document code they need for the customs declaration. Each state-changing control looks as Design Release 2.1 draws it but submits a form with the CSRF token (c-189), and the buttons reuse the shared notification actions wording as it reads today. The 9 October afternoon ruling builds the import reference numbers now as selectable text, without the prototype's JavaScript-only Copy buttons, which wait on design as their own requirement (c-294). Plants' view takes Amend, Delete and the reference section in the same increment, without Copy as new, which plants has parked. What amend, copy and delete do is the manage-notifications area's.",
       "acceptanceCriteria": [
         "A Submitted notification's view header shows a primary 'Amend this notification' button, and a draft's review shows none (prototype:dr2-1-source prototype-dr2-1-source-p11-025, prototype-dr2-1-source-p11-026; prototype:dr2-1-specs prototype-dr2-1-specs-p5-097, prototype-dr2-1-specs-p5-103)",
-        "A submitted notification's view header always offers 'Copy as new': a secondary button beside 'Amend this notification' when that shows, otherwise the primary button (prototype:dr2-1-source prototype-dr2-1-source-p11-027; prototype:dr2-1-specs prototype-dr2-1-specs-p5-098; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-069, ruling-sam-2026-10-09-pm-p2-070; c-189)",
-        "A submitted notification's view header always shows a red 'Delete' warning button that opens the notification's delete confirmation (prototype:dr2-1-source prototype-dr2-1-source-p11-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-069, ruling-sam-2026-10-09-pm-p2-070)",
-        "A submitted notification's view shows an 'Import reference numbers' section with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.', a 'Notification reference' row with the reference and a 'Customs document code' row reading 'C640' (prototype:dr2-1-source prototype-dr2-1-source-p11-035, prototype-dr2-1-source-p11-036, prototype-dr2-1-source-p11-037; prototype:dr2-1-specs prototype-dr2-1-specs-p5-093, prototype-dr2-1-specs-p5-094; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-180, trace-prototype-dr2-1-p13-176; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-080; c-294)",
-        "Each import reference value is shown as plain text the trader can select and copy, with JavaScript on or off, and neither row shows a 'Copy' button (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-080; c-294)"
+        "A submitted notification's view header always offers 'Copy as new': a secondary button beside 'Amend this notification' when that shows, otherwise the primary button (prototype:dr2-1-source prototype-dr2-1-source-p11-027; prototype:dr2-1-specs prototype-dr2-1-specs-p5-098; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067, ruling-sam-2026-10-09-pm-p2-068; c-189)",
+        "A submitted notification's view header always shows a red 'Delete' warning button that opens the notification's delete confirmation (prototype:dr2-1-source prototype-dr2-1-source-p11-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-067, ruling-sam-2026-10-09-pm-p2-068)",
+        "A submitted notification's view shows an 'Import reference numbers' section with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.', a 'Notification reference' row with the reference and a 'Customs document code' row reading 'C640' (prototype:dr2-1-source prototype-dr2-1-source-p11-035, prototype-dr2-1-source-p11-036, prototype-dr2-1-source-p11-037; prototype:dr2-1-specs prototype-dr2-1-specs-p5-093, prototype-dr2-1-specs-p5-094; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-180, trace-prototype-dr2-1-p13-176; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-073; c-294)",
+        "Each import reference value is shown as plain text the trader can select and copy, with JavaScript on or off, and neither row shows a 'Copy' button (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-073, ruling-sam-2026-10-09-pm-p1-074; c-294)",
+        "The header of a submitted plants notification's view shows a primary 'Amend this notification' button (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-049; repo:plantsfrontend repo-plantsfrontend-p8-050)",
+        "The plants view's header shows the red warning 'Delete notification' button leading to the delete page, which no longer sits at the foot of the view, and the view offers no 'Copy as new' (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-049, ruling-sam-2026-10-09-pm-p3-050; repo:plantsfrontend repo-plantsfrontend-p8-051)",
+        "The plants view shows an 'Import reference numbers' section with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.' and a 'Notification reference' row with the reference as text the trader can select; it has no 'Customs document code' row and no Copy buttons (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-024, ruling-sam-2026-10-09-pm-p3-049, ruling-sam-2026-10-09-pm-p3-051; repo:plantsfrontend repo-plantsfrontend-p8-050, repo-plantsfrontend-p8-080; c-294)"
       ],
-      "requirements": ["req-895", "req-896", "req-897", "req-898"],
+      "requirements": ["req-895", "req-896", "req-897", "req-898", "req-1999", "req-2000", "req-2001"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-025 to p11-029, p11-035 to p11-038" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-179, p12-180, p13-176" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-093 to p5-098, p5-103" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-096" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-080, p2-069, p2-070" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-073, p1-074, p2-067, p2-068, p3-024, p3-049, p3-050, p3-051" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-106, p13-108, p13-109" },
         { "source": "repo:tests", "ref": "repo-tests-p3-111, p3-116" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p25-079, p25-080, p25-081" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p13-099" }
+        { "source": "trace:e2e", "ref": "trace-e2e-p13-099" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-050, p8-051, p8-080" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-111"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Depends on the row 'A submitted notification's view has a header…'. Pass 2 combines the header's three action buttons with the import reference numbers section: all sit in the view header under the same set-up. Re-drafted for the 9 October afternoon ruling (claim 18, c-294): the section is built now with selectable text; the Copy buttons are req-1986, its own increment in the waiting-on-design theme, blocked until design answers. Copy as new and Delete reuse the shared notification actions wording as it reads today (claims 69 and 70); any different wording goes in the review's own copy. req-896 to req-898 name the submitted statuses; c-246 also puts Copy as new, Delete and the Import reference numbers on a draft's review, which the draft-header row builds on top of this row. Copy as new submits a form (c-189); 'Amend this notification' only leads to a confirmation, so it is a link styled as a button. The Submitted action required and Completed states' buttons are checked in their own rows."
+        "Depends on the row 'A submitted notification's view has a header…'. Pass 2 combines the header's three action buttons with the import reference numbers section: all sit in the view header under the same set-up. The section is built now with selectable text (afternoon ruling claim p1-073, c-294); the Copy buttons are req-1986, its own increment in the waiting-on-design theme, blocked until design answers (claim p1-074). Copy as new and Delete reuse the shared notification actions wording as it reads today (claims p2-067 and p2-068); any different wording goes in the review's own copy. req-896 to req-898 name the submitted statuses; c-246 also puts Copy as new, Delete and the Import reference numbers on a draft's review, which the draft-header row builds on top of this row. Copy as new submits a form (c-189); 'Amend this notification' only leads to a confirmation, so it is a link styled as a button. The Submitted action required and Completed states' buttons are checked in their own rows.",
+        "req-1999 to req-2001 (plants' view header actions and import reference numbers) sit here under the afternoon ruling's same-increment rule (claims p3-013 and p3-049). Plants' customs document code row waits in its own blocked row (req-2002). The Copy buttons wait in the waiting-on-design row (req-1986)."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
-        "tests:page-objects/animals/notification-view-page.ts",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
+        "tests:page-objects/animals/notification-view-page.ts"
       ],
-      "shared": [
-        "frontend:src/server/app/shared/copy.en.js"
-      ],
-      "existingRow": "inc-112"
+      "shared": ["frontend:src/server/app/shared/copy.en.js"]
     },
     {
+      "existingRow": "inc-113",
       "title": "Submitting records its date and outstanding items, and a notification still missing its health certificate shows as 'Submitted action required'",
-      "detail": "Design Release 2.1 records the submission date and what is still outstanding at the declaration, and shows a notification submitted without its health certificate as 'Submitted action required': read-only, with a warning saying what to do, the missing certificate marked in section 4, and a Continue that leads back to the hub. The real service can only change a submitted notification through an amendment, so that Continue starts one (c-144). How action-required is stored is the real service's design. The identifier-driven items are a separate row.",
+      "detail": "Design Release 2.1 records the submission date and what is still outstanding at the declaration, and shows a notification submitted without its health certificate as 'Submitted action required': read-only, with a warning saying what to do, the missing certificate marked in section 4, and a Continue that leads back to the hub. The real service can only change a submitted notification through an amendment, so that Continue starts one (c-144). How action-required is stored is the real service's design. The afternoon ruling adds 'Submitted action required' as a new status beside the others, maps it in the animals frontend and the INS dashboard's links before the animals backend sends it, on one branch name, and keeps it animals only because it rests on the ITAHC. The identifier-driven items are a separate row.",
       "acceptanceCriteria": [
         "After declaring and submitting, the notification's view shows 'Date submitted: <the day it was submitted>', and the same date on every later visit (prototype:dr2-1-source prototype-dr2-1-source-p11-145, prototype-dr2-1-source-p11-155; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-098)",
         "A notification submitted with no uploaded ITAHC or health certificate is shown from then on with the status tag 'Submitted action required'; one submitted with an ITAHC or health certificate shows 'Submitted' (prototype:dr2-1-source prototype-dr2-1-source-p11-006, prototype-dr2-1-source-p11-011; prototype:dr2-1-specs prototype-dr2-1-specs-p5-090)",
         "The action-required view is read-only and its header carries a GOV.UK warning text reading 'You need to upload a health certificate' when the ITAHC is the only outstanding item (prototype:dr2-1-source prototype-dr2-1-source-p11-033, prototype-dr2-1-source-p11-034; prototype:dr2-1-specs prototype-dr2-1-specs-p5-091)",
         "On an action-required notification with no uploaded document, '4. Uploaded documents' shows the error 'Upload a valid health certificate' in place of document cards, inline, with no error summary (prototype:dr2-1-source prototype-dr2-1-source-p11-107; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099)",
         "The action-required view ends with 'Continue', which starts an amendment of the notification and opens its hub, where the trader can upload the certificate (prototype:dr2-1-source prototype-dr2-1-source-p11-120; c-144)",
-        "The action-required view header offers 'Amend this notification', 'Copy as new' and 'Delete' as a Submitted notification's does (prototype:dr2-1-source prototype-dr2-1-source-p11-025, prototype-dr2-1-source-p11-027, prototype-dr2-1-source-p11-029)"
+        "The action-required view header offers 'Amend this notification', 'Copy as new' and 'Delete' as a Submitted notification's does (prototype:dr2-1-source prototype-dr2-1-source-p11-025, prototype-dr2-1-source-p11-027, prototype-dr2-1-source-p11-029)",
+        "The notification statuses Draft, Submitted, Amend and Deleted keep their names, and 'Submitted action required' is added beside them; the animals frontend's list, view, status strip and stub mode show a notification in that status without an error (repo:frontend repo-frontend-p13-101; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-070, ruling-sam-2026-10-09-pm-p2-071, ruling-sam-2026-10-09-pm-p2-072, ruling-sam-2026-10-09-pm-p2-073)",
+        "On the INS front door's notification table, a notification in 'Submitted action required' links to its review, as a Submitted one does (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-074, ruling-sam-2026-10-09-pm-p2-075)",
+        "The high-risk plants frontend gains no 'Submitted action required' status, because that status rests on the ITAHC (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-076)"
       ],
       "requirements": ["req-902", "req-903", "req-907", "req-909"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-006, p11-011, p11-025, p11-027, p11-029, p11-033, p11-034, p11-107, p11-120, p11-145, p11-155" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-090, p5-091, p5-099" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-098" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-070 to p2-076" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-101, p13-106, p14-016-m1, p14-024" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p26-056-m1" }
       ],
-      "repos": ["backend", "frontend", "tests"],
+      "repos": ["backend", "frontend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-111", "inc-112"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Depends on the rows 'A submitted notification's view has a header…' and 'View header offers Amend, Copy as new and Delete…'. Pass 2 combines recording the submission (date and outstanding items, req-909) with the action-required view it feeds: the view's status, warning and date come from the stored record, so neither is observable alone. How action-required is stored is the real team's design (9 October ruling, claim 98; c-149 records it as the 'Submitted action required' status in the animals backend): the criteria name only what the trader sees. A re-submission from an amendment works the items out afresh. Uses the same ITAHC-or-health-certificate test as the confirmation page row (req-929). The flag on the set's own notification list is the 'Action required on the notification list' row. The 'You need to complete missing information before import' fallback (req-904) is out of scope."
+        "Depends on the rows 'A submitted notification's view has a header…' and 'View header offers Amend, Copy as new and Delete…'. Pass 2 combines recording the submission (date and outstanding items, req-909) with the action-required view it feeds: the view's status, warning and date come from the stored record, so neither is observable alone. How action-required is stored is the real team's design: the criteria name only what the trader sees. A re-submission from an amendment works the items out afresh. Uses the same ITAHC-or-health-certificate test as the confirmation page row (req-929). The flag on the set's own notification list is the 'Action required on the notification list' row. The 'You need to complete missing information before import' fallback (req-904) is out of scope.",
+        "Re-distil: req-902 now carries the afternoon ruling's add-only status rule itself (claims p2-070 to p2-076), so the status-mapping, INS-link and animals-only criteria cite it. req-1987 (the general add-only status rule) is not in this area's requirements; the existing row inc-113 held it, and the combiner keeps it there. The INS dashboard's links live in its dashboard view-model, outside the type-question-and-templates theme's split-off dashboard controller and template, so the INS part stays here. The animals backend, animals frontend and INS frontend share one branch name."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Notification.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationViewData.java",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/declaration",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/declaration",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/Notification.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "insfrontend:src/server/app/features/dashboard/view-model",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-113"
+      "shared": [
+        "frontend:src/server/app/engine/persistence/records.js",
+        "frontend:src/server/app/services/persistence/records/real/status.js",
+        "frontend:src/server/app/services/persistence/records/stub",
+        "frontend:src/server/app/shared/copy.en.js",
+        "insfrontend:src/server/app/services/ins-backend/stub.js"
+      ]
     },
     {
+      "existingRow": "inc-114",
       "title": "Declaration page: small checkbox in a hidden-legend fieldset, and no status strip",
-      "detail": "Design Release 2.1's declaration uses the small checkbox under a fieldset whose legend only screen readers hear, and shows no draft tag, reference or Cancel amend above its heading, at the end of a first submission and of an amendment alike. The declaration switches the shared strip off in the set's own template; the shared layout is not changed.",
+      "detail": "Design Release 2.1's declaration uses the small checkbox under a fieldset whose legend only screen readers hear, and shows no draft tag, reference or Cancel amend above its heading, at the end of a first submission and of an amendment alike. The declaration switches the shared strip off in the set's own template; the shared layout is not changed. Plants' declaration takes the same changes in the same increment.",
       "acceptanceCriteria": [
         "The declaration confirmation is a GOV.UK small checkbox (prototype:dr2-1-source prototype-dr2-1-source-p11-139; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-169, trace-prototype-dr2-1-p13-163)",
         "The checkbox sits in a fieldset whose legend 'Declaration confirmation' is announced by screen readers but not shown on screen (prototype:dr2-1-source prototype-dr2-1-source-p11-139; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-163)",
-        "The declaration page shows no status strip above its heading (no Draft, Amend or Amending tag, no notification reference and no Cancel amend), at the end of a first submission and of an amendment alike (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-170; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-062, ruling-sam-2026-10-09-pm-p2-063, ruling-sam-2026-10-09-pm-p2-064)"
+        "The declaration page shows no status strip above its heading (no Draft, Amend or Amending tag, no notification reference and no Cancel amend), at the end of a first submission and of an amendment alike (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-170; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-060, ruling-sam-2026-10-09-pm-p2-061, ruling-sam-2026-10-09-pm-p2-062)",
+        "Plants' declaration confirmation is the small GOV.UK checkbox (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-054; repo:plantsfrontend repo-plantsfrontend-p8-063)",
+        "Plants' declaration checkbox sits in a fieldset whose legend 'Declaration confirmation' is read by screen readers but not shown (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-054; repo:plantsfrontend repo-plantsfrontend-p8-063)",
+        "Plants' declaration page shows no status strip above its heading, at the end of a first submission and of an amendment alike (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-054, ruling-sam-2026-10-09-pm-p2-061, ruling-sam-2026-10-09-pm-p2-062; repo:plantsfrontend repo-plantsfrontend-p8-059)"
       ],
-      "requirements": ["req-913", "req-914", "req-917"],
+      "requirements": ["req-913", "req-914", "req-917", "req-2005", "req-2006", "req-2007"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-139" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-169, p12-170, p13-163" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-062, p2-063, p2-064" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-060, p2-061, p2-062, p3-054" },
         { "source": "repo:frontend", "ref": "repo-frontend-p14-014" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p26-005, p26-016, p26-047" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p14-003, p14-018" }
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-003, p14-018" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-059, p8-063" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": [],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Pass 2 keeps the three declaration slices together: same page, same set-up. Kept apart from the confirmation page row because they are separate feature folders that build in parallel. The strip is switched off in the declaration's own template (journeyStrip: null), never by changing the shared layout (afternoon ruling, claims 62 to 64). The tests repo's declaration page object and spec follow the hidden legend and the missing strip."
+        "Pass 2 keeps the three declaration slices together: same page, same set-up. Kept apart from the confirmation page row because they are separate feature folders that build in parallel. The strip is switched off in the declaration's own template (journeyStrip: null), never by changing the shared layout (afternoon ruling, claims p2-060 to p2-062). The tests repo's declaration page object and spec follow the hidden legend and the missing strip.",
+        "req-2005 to req-2007 (plants' declaration) sit here under the afternoon ruling's same-increment rule (claims p3-013 and p3-054)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/declaration",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/declaration",
         "tests:page-objects/animals/declaration-page.ts",
         "tests:tests/animals/e2e/pages/declaration.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-114"
+      "shared": []
     },
     {
+      "existingRow": "inc-115",
       "title": "Notification submitted page follows Design Release 2.1's guard, wording and links",
-      "detail": "Design Release 2.1 guards the submitted (confirmation) page on the declaration, asks for the ITAHC by name and checks for one rather than for any document, tells the trader they can view or change the notification from the dashboard, and opens the HMRC links in a new tab. 'Return to your dashboard' already goes to the set's own notification list, as the afternoon ruling wants (req-934 is met), so it is not changed here.",
+      "detail": "Design Release 2.1 guards the submitted (confirmation) page on the declaration, asks for the ITAHC by name and checks for one rather than for any document, tells the trader they can view or change the notification from the dashboard, and opens the HMRC links in a new tab. 'Return to your dashboard' already goes to the set's own notification list, as the afternoon ruling wants (req-934 is met), so it is not changed here. Plants' confirmation guard changes in the same increment.",
       "acceptanceCriteria": [
         "Opening the confirmation page for a notification not yet submitted goes to the declaration page (prototype:dr2-1-source prototype-dr2-1-source-p11-151; prototype:dr2-1-specs prototype-dr2-1-specs-p4-086)",
         "The outstanding documents bullet reads 'upload the ITAHC and any other required documents' (prototype:dr2-1-source prototype-dr2-1-source-p11-146)",
         "The outstanding documents bullet shows when no uploaded document is an ITAHC or health certificate, even when other documents were uploaded, and does not show when one is (prototype:dr2-1-source prototype-dr2-1-source-p11-146; document:dr1-parity-backlog document-dr1-parity-backlog-p8-059)",
         "The 'How to view or amend this notification' section reads 'You can view or change this notification from your dashboard.' (prototype:dr2-1-source prototype-dr2-1-source-p11-158; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-176; prototype:dr2-1-specs prototype-dr2-1-specs-p4-064)",
-        "The 'contact HMRC' and 'Find out about call charges' links open in a new tab, with the link text Design Release 2.1 gives them (prototype:dr2-1-source prototype-dr2-1-source-p11-164, prototype-dr2-1-source-p11-165, prototype-dr2-1-source-p11-166; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-178)"
+        "The 'contact HMRC' and 'Find out about call charges' links open in a new tab, with the link text Design Release 2.1 gives them (prototype:dr2-1-source prototype-dr2-1-source-p11-164, prototype-dr2-1-source-p11-165, prototype-dr2-1-source-p11-166; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-178)",
+        "Opening plants' confirmation page for a notification not yet submitted sends the trader to plants' declaration page (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-055; repo:plantsfrontend repo-plantsfrontend-p8-078, repo-plantsfrontend-p8-107, repo-plantsfrontend-p9-122)"
       ],
-      "requirements": ["req-927", "req-928", "req-929", "req-933", "req-937"],
+      "requirements": ["req-927", "req-928", "req-929", "req-933", "req-937", "req-2008"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-146, p11-151, p11-158, p11-164, p11-165, p11-166" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-176, p12-178" },
@@ -509,56 +580,69 @@
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-059" },
         { "source": "repo:frontend", "ref": "repo-frontend-p14-037, p14-042, p14-043, p14-049, p14-054, p14-055, p14-058, p14-063" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p26-029, p26-037, p26-041, p26-051, p26-052, p26-058" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p14-024, p14-026" }
+        { "source": "trace:e2e", "ref": "trace-e2e-p14-024, p14-026" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-055" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-078, p8-107, p9-122" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": [],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Pass 2 combines the confirmation page's guard, copy and link slices: one page, one set-up, no open question. Re-distil: req-934 ('Return to your dashboard' to the set's own list) is now adopted as already met (afternoon ruling, c-143), so it leaves this row's requirements and its criterion goes. req-935 ('Create a new notification') stays out, as before: today's real mechanism is kept (c-247). The ITAHC-or-health-certificate test should be the same one the submission record uses (req-909). The identifier bullet is the identifier row's."
+        "Pass 2 combines the confirmation page's guard, copy and link slices: one page, one set-up, no open question. req-934 ('Return to your dashboard' to the set's own list) is adopted as already met (afternoon ruling claim p3-101, c-143), so it is not in this row. req-935 ('Create a new notification') stays out: today's real mechanism is kept (c-247). The ITAHC-or-health-certificate test should be the same one the submission record uses (req-909). The identifier bullet is the identifier row's. Plants' decision d-066 (the hub) gives way to the afternoon ruling's declaration redirect (claim p3-055).",
+        "req-2008 (plants' confirmation guard) sits here under the afternoon ruling's same-increment rule (claims p3-013 and p3-055)."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation"
       ],
-      "shared": [],
-      "existingRow": "inc-115"
+      "shared": []
     },
     {
+      "existingRow": "inc-116",
       "title": "A completed notification shows as complete with no Amend button",
       "detail": "Design Release 2.1 shows a finished notification as 'Submission complete' (or its own status text, such as 'Completed') and stops amendment. 'Completed' is added as a new status, never replacing one. No completed status reaches the real service today: post-submission outcomes would come from the authorities' case system, which sends none back yet.",
       "acceptanceCriteria": [
         "A completed notification's view shows the status tag 'Submission complete', or its own status text such as 'Completed' (prototype:dr2-1-source prototype-dr2-1-source-p11-022; prototype:dr2-1-specs prototype-dr2-1-specs-p5-103; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-099, ruling-sam-2026-10-09-p1-100)",
-        "A completed notification's view header has no 'Amend this notification' button, and still offers 'Copy as new' as the primary button and 'Delete' (prototype:dr2-1-source prototype-dr2-1-source-p11-026, prototype-dr2-1-source-p11-027, prototype-dr2-1-source-p11-029)",
-        "Every existing status (Draft, Submitted, Submitted action required) still shows as it did before 'Completed' was added (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-072, ruling-sam-2026-10-09-pm-p2-078)"
+        "A completed notification's view header has no 'Amend this notification' button, and still offers 'Copy as new' as the primary button and 'Delete' (prototype:dr2-1-source prototype-dr2-1-source-p11-026)",
+        "Every existing status (Draft, Submitted, Submitted action required) still shows as it did before 'Completed' was added (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-070, ruling-sam-2026-10-09-pm-p2-071, ruling-sam-2026-10-09-pm-p2-072)"
       ],
       "requirements": ["req-910"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-022, p11-026, p11-027, p11-029" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-022, p11-026" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-103" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-099, p1-100" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-072, p2-078, p3-049" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-070, p2-071, p2-072, p3-065, p3-066" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p25-005" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "blocked",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-111", "inc-112"],
       "gate": null,
       "openQuestions": [
-        "A real source of completion must exist before the completed tag can show: no completed status reaches the service today, and the 9 October ruling (claim 99) names no provider. The likely one is the authorities' case system (PIMS Dynamics) sending post-submission outcomes back to the notification record (as req-1082). Until somebody names and builds that source, nothing here can be built or seen."
+        "A real source of completion must exist before the completed tag can show: no completed status reaches the service today, and the 9 October ruling (claim 99) names no provider. The likely one is the authorities' case system (PIMS Dynamics) sending post-submission outcomes back to the notification record (as req-1082). Who: the programme owner names and builds that source. Until then nothing here can be built or seen."
       ],
       "notes": [
-        "Blocked: req-910 carries blockedBy on a real source of completion (9 October ruling, claim 99). Once unblocked, it lands after the rows 'A submitted notification's view has a header…' and 'View header offers Amend, Copy as new and Delete…', and alongside whatever row builds that source. 'Completed' is a new status added beside the others, never replacing one; whether plants follows is decided when it unblocks (afternoon ruling, claims 72, 78 and p3-049)."
+        "Blocked: req-910 carries blockedBy on a real source of completion (9 October ruling, claim 99). Once unblocked, it lands after the rows 'A submitted notification's view has a header…' and 'View header offers Amend, Copy as new and Delete…', and alongside whatever row builds that source. 'Completed' is a new status added beside the others, never replacing one; whether plants follows is decided when it unblocks (afternoon ruling, claims p2-070, p2-071, p3-065 and p3-066)."
       ],
       "touches": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy"
       ],
-      "shared": [],
-      "existingRow": "inc-116"
+      "shared": [
+        "frontend:src/server/app/engine/persistence/records.js",
+        "frontend:src/server/app/services/persistence/records/real/status.js",
+        "insfrontend:src/server/app/features/dashboard/view-model"
+      ]
     },
     {
+      "existingRow": "inc-117",
       "title": "Tests prove the review, declaration and confirmation paths no test covers today",
       "detail": "Today's suites leave several review, declaration and confirmation paths unproven, and many of them change in this programme. After this row each one has a test that fails if the behaviour breaks.",
       "acceptanceCriteria": [
@@ -581,6 +665,8 @@
       "repos": ["frontend", "tests"],
       "kind": "test",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-104", "inc-107", "inc-108", "inc-110", "inc-112", "inc-115"],
       "gate": null,
       "openQuestions": [],
       "notes": [
@@ -591,183 +677,203 @@
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/declaration",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts",
-        "tests:tests/animals/e2e/pages/declaration.spec.ts"
+        "tests:tests/animals/e2e/pages/declaration.spec.ts",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-117"
+      "shared": []
     },
     {
+      "existingRow": "inc-131",
       "title": "Action required on the set's own notification list for a submitted notification missing its ITAHC",
-      "detail": "Design Release 2.1 flags a submitted notification still missing its ITAHC on the dashboard card. The 9 October afternoon ruling builds this on the set's own notification list in the animals frontend, read from the animals backend's record of the 'Submitted action required' state (c-149), not on the INS read model. How the INS 'Action needed' count and drill-down learn of it waits on the INS dashboard's requirements and is settled when that area is re-distilled.",
+      "detail": "Design Release 2.1 flags a submitted notification still missing its ITAHC on the dashboard card. The 9 October afternoon ruling builds this on the set's own notification list in the animals frontend, read from the animals backend's record of the 'Submitted action required' state (c-149), not on the INS read model. How the INS 'Action needed' count and drill-down learn of it waits on the INS dashboard's requirements.",
       "acceptanceCriteria": [
-        "On the live-animals notification list, a submitted notification with no uploaded ITAHC or health certificate shows an 'Action required' tag on an error card, with a red marker hidden from assistive technology, and 'ITAHC is missing' as plain text under its reference (prototype:dr2-1-source prototype-dr2-1-source-p11-148, prototype-dr2-1-source-p11-150; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-066, ruling-sam-2026-10-09-pm-p3-072; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-015; c-149)",
+        "On the live-animals notification list, a submitted notification with no uploaded ITAHC or health certificate shows an 'Action required' tag on an error card, with a red marker hidden from assistive technology, and 'ITAHC is missing' as plain text under its reference (prototype:dr2-1-source prototype-dr2-1-source-p11-148, prototype-dr2-1-source-p11-150; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-085, ruling-sam-2026-10-09-pm-p3-091; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-017; c-149)",
         "A submitted notification with an ITAHC or health certificate uploaded shows no 'Action required' tag and no 'ITAHC is missing' text on the list (prototype:dr2-1-source prototype-dr2-1-source-p11-148; c-149)",
         "Once the missing certificate is uploaded through an amendment and the notification is re-submitted, the list stops showing 'Action required' for it (prototype:dr2-1-source prototype-dr2-1-source-p11-150; c-144; c-149)"
       ],
       "requirements": ["req-939"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-148, p11-150" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-066, p3-072" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-015" }
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-085, p3-091" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-017" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "animals-dashboard",
+      "dependsOn": ["inc-113", "inc-129", "inc-130"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Re-drafted for the 9 October afternoon ruling (claims 66 and 72, with the templates ruling's claim 15): the flag is built on the animals frontend's own list from the animals backend's record, so the INS read model, the INS frontend and the INS dashboard criterion leave this row; insbackend and insfrontend leave its repos. The combiner should consider moving it from the ins-dashboard theme to the theme that owns the live-animals list's feature folder (frontend dashboard), and merging or ordering it with the notification-list area's 'Action required' card row if that area drafts the same tag. Depends on the row 'Submitting records its date and outstanding items…' (inc-113, the recorded state the flag reads); its old dependency on inc-129 was for the INS read-model field and can go unless the list row it names is still the list's own. 'Information is missing' for incomplete identifiers is the identifier row's."
+        "Built on the animals frontend's own list from the animals backend's record (afternoon ruling claims p3-085 and p3-091, with the templates ruling's claim 17), so the INS read model and INS frontend are not in this row. Depends on the row 'Submitting records its date and outstanding items…' (inc-113, the recorded state the flag reads), and on the reframed list and its card row (inc-129, inc-130), whose tag styles this flag uses. 'Information is missing' for incomplete identifiers is the identifier row's. Kept in animals-dashboard: its code is the live-animals list's feature folder."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts"
+        "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts",
+        "tests:page-objects/animals/dashboard-page.ts"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java"
-      ],
-      "existingRow": "inc-131"
+        "frontend:src/server/app/services/persistence/records/real/lifecycle/read.js",
+        "frontend:src/server/app/services/persistence/records/stub/lifecycle/read.js"
+      ]
     },
     {
+      "existingRow": "inc-147",
       "title": "Identifier-driven outstanding items: warnings, inline error, confirmation bullet and the list's 'Information is missing'",
       "detail": "Design Release 2.1 treats incomplete animal identifiers as an outstanding item: it names them in the action-required warnings, marks the species inline, adds a confirmation bullet and shows 'Information is missing' on the dashboard card. The 9 October ruling closes DR1 inc-103 (one identifier is enough to identify an animal record) and removes this row's blocker (c-133); the afternoon ruling builds the list message on the set's own notification list in the animals frontend. Identifiers are incomplete when a commodity line whose species asks for identifiers holds fewer identified animal records than the animals it declares, which includes a single-species consignment with no identifier saved.",
       "acceptanceCriteria": [
         "A notification that meets the submission minimum, but has a commodity line whose species asks for identifiers holding fewer identified animal records than the animals it declares, is submitted with the outstanding item 'complete the animal identifier information in the notification', shown on the confirmation page (prototype:dr2-1-source prototype-dr2-1-source-p11-147; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-193; c-133)",
-        "A single-species consignment submitted with no identifier saved gets the same outstanding item on the confirmation page (c-133; prototype:dr2-1-source prototype-dr2-1-source-p11-147)",
+        "A single-species consignment submitted with no identifier saved gets the same outstanding item on the confirmation page (prototype:dr2-1-source prototype-dr2-1-source-p11-147; c-133)",
         "An animal record with one identifier filled counts as identified, so a notification whose every declared animal has a record with one identifier filled gets no identifier outstanding item (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, ruling-sam-2026-10-09-p1-191)",
         "An action-required notification missing both animal identifiers and its ITAHC shows the header warning 'You need to complete animal identifiers and upload a health certificate' (prototype:dr2-1-source prototype-dr2-1-source-p11-031, prototype-dr2-1-source-p11-034)",
         "An action-required notification missing only animal identifiers shows the header warning 'You need to complete animal identifiers' (prototype:dr2-1-source prototype-dr2-1-source-p11-032, prototype-dr2-1-source-p11-034)",
         "On an action-required notification, a species that needs identifiers but has none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier' in place of its content, inline with no error summary (prototype:dr2-1-source prototype-dr2-1-source-p11-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099)",
-        "On the live-animals notification list, a submitted notification with its ITAHC but incomplete identifiers shows the error 'Information is missing' on its card (prototype:dr2-1-source prototype-dr2-1-source-p11-149; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-066, ruling-sam-2026-10-09-pm-p3-075; c-149)"
+        "On the live-animals notification list, a submitted notification with its ITAHC but incomplete identifiers shows the error 'Information is missing' on its card (prototype:dr2-1-source prototype-dr2-1-source-p11-149; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-085, ruling-sam-2026-10-09-pm-p3-094; c-149)"
       ],
       "requirements": ["req-905", "req-906", "req-908", "req-931", "req-940"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-031, p11-032, p11-034, p11-090, p11-147, p11-149" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-099" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-066, p3-075" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-085, p3-094" },
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062, p8-063-m1, p8-064-m1, p8-065, p8-065-m1" },
         { "source": "repo:frontend", "ref": "repo-frontend-p14-045, p14-046" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "animals-dashboard",
+      "dependsOn": ["inc-131", "inc-106", "inc-113"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Re-drafted for the 9 October afternoon ruling (claims 66 and 75): the 'Information is missing' message is built on the animals frontend's own list, so insbackend and insfrontend leave this row's repos; the combiner should move it with the 'Action required on the set's own notification list' row (inc-131) out of the ins-dashboard theme. Unblocked by the 9 October ruling (claims 188 to 193): one identifier is enough and DR1 inc-103 is closed. Depends on 'Submitting records its date and outstanding items…' (inc-113), whose record of outstanding items this extends; on inc-131, whose list card carries the message; and on the identification details row (inc-106), the species block the inline error replaces. The same identified-record count decides submit and the hub's Complete status (claim 189); this row adds no stricter bar. Pass 2 keeps all five identifier-driven items together: one rule, worked out once at submission, read back on four surfaces."
+        "The 'Information is missing' message is built on the animals frontend's own list (afternoon ruling claims p3-085 and p3-094). Unblocked by the 9 October ruling (claims 188 to 193): one identifier is enough and DR1 inc-103 is closed. Depends on 'Submitting records its date and outstanding items…' (inc-113), whose record of outstanding items this extends; on inc-131, whose list card carries the message; and on the identification details row (inc-106), the species block the inline error replaces. The same identified-record count decides submit and the hub's Complete status (claim 189); this row adds no stricter bar. Pass 2 keeps all five identifier-driven items together: one rule, worked out once at submission, read back on four surfaces. Its review-header warnings, inline error and confirmation bullet change code the overview-and-review theme owns: listed under shared for the combiner."
       ],
       "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java"
+      ],
+      "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
-        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js"
-      ],
-      "existingRow": "inc-147"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy"
+      ]
     },
     {
-      "title": "Review your template before saving it",
-      "detail": "A template being created ends on Design Release 2.1's template review: template mode on the set's own review page, the same page with template behaviour, never a copied page. It shows no errors, leaves out documents and the arrival date, and saves the template instead of going to the declaration. Plants pages have no template mode.",
-      "acceptanceCriteria": [
-        "'Review template' opens the review page titled 'Review your template - Import notification service - GOV.UK', with the h1 'Review your template' under the 'Template' caption and the template name, and it shows no error summary and no card errors (prototype:dr2-1-source prototype-dr2-1-source-p11-018, prototype-dr2-1-source-p11-116; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-026, ruling-sam-2026-10-09-templates-p1-027)",
-        "The template review's main button reads 'Save template' and saves the template instead of going to the declaration (prototype:dr2-1-source prototype-dr2-1-source-p11-122; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-028)",
-        "The template review shows five sections, 'About the consignment', 'Description of the goods', 'Transport and arrival', '4. Consignment addresses' and '5. Contact address', with no uploaded documents section and no arrival date row, and reads 'Not applicable' for every unanswered row (prototype:dr2-1-source prototype-dr2-1-source-p11-097, prototype-dr2-1-source-p11-103, prototype-dr2-1-source-p11-108; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-104)",
-        "For a cattle template, the Additional details card has 'Certified for' and 'Includes unweaned animals', the Addresses card adds 'County parish holding (CPH) number', there is no identification details card, and 'Main import reason' holds a single row (prototype:dr2-1-source prototype-dr2-1-source-p11-112)"
-      ],
-      "requirements": ["req-941", "req-942"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-018, p11-097, p11-103, p11-108, p11-112, p11-116, p11-122" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-104" },
-        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-026 to p1-030, p1-044" }
-      ],
-      "repos": ["backend", "frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "This area's half of inc-156: the combiner keeps it merged with the templates area's requirements there (the same page and set-up). The templates ruling (claims 26 to 30 and 44) makes the template review template mode on the set's own review page, never a copied page, and gives plants no template mode. A template never offers a declaration, so the declaration's template guards are not built (c-248). Depends on the templates area's rows that create and store a template and on 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages'. backend is listed only where saving the template from the review needs the templates area's store."
-      ],
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/template-review"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk"
-      ],
-      "existingRow": "inc-156"
-    },
-    {
-      "title": "Template review ends with Save template and Delete",
-      "detail": "Design Release 2.1's template review ends with the 'Save template' submit button and a red 'Delete' that discards a template not yet saved, or deletes a saved template being edited, through its confirmation page. The 9 October ruling names template pages by page, not by the prototype's paths.",
-      "acceptanceCriteria": [
-        "The template review ends with 'Save template' and a red warning 'Delete' button that goes to the discard confirmation for a template not yet saved, which discards it, or to the template's delete confirmation for a saved template being edited, which deletes it (prototype:dr2-1-source prototype-dr2-1-source-p11-119; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-103)"
-      ],
-      "requirements": ["req-943"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-119" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-103" }
-      ],
-      "repos": ["backend", "frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "This area's half of inc-165: the combiner keeps it merged with the templates area's discard and delete requirements there, since the review's Delete is the way into those confirmations. The earlier combiner note stands: if the templates area's re-draft leaves no saved template on a review (c-261), only the discard half applies and req-943 may sit better in inc-164; the criterion is written to req-943 as it now reads, which still names both."
-      ],
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/template-review"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk"
-      ],
-      "existingRow": "inc-165"
-    },
-    {
+      "existingRow": "inc-187",
       "title": "A draft's review shows the view header with its Draft status and stays editable",
-      "detail": "Design Release 2.1 heads a draft's review the way it heads a submitted notification's view, and keeps it editable with what is still incomplete listed. The 9 October ruling keeps that content, keys the header on the real service's one review route and the stored status, and keeps dashboard draft rows going to the hub (c-246). Today a draft's review, reached from the hub's 'Review and submit', has the journey heading and the status strip and no header. Afterwards the same review, for a Draft, shows the view header drawn in the set's own template with the status strip off: the Draft tag, the reference as heading, the date created, Copy as new, Delete and the Import reference numbers, and stays editable.",
+      "detail": "Design Release 2.1 heads a draft's review the way it heads a submitted notification's view, and keeps it editable with what is still incomplete listed. The 9 October ruling keeps that content, keys the header on the real service's one review route and the stored status, and keeps dashboard draft rows going to the hub (c-246). Today a draft's review, reached from the hub's 'Review and submit', has the journey heading and the status strip and no header. Afterwards the same review, for a Draft, shows the view header drawn in the set's own template with the status strip off: the Draft tag, the reference as heading, the date created, Copy as new, Delete and the Import reference numbers, and stays editable. Plants' draft check answers takes the same header in the same increment, without Copy as new.",
       "acceptanceCriteria": [
-        "A draft's review, reached from the hub's 'Review and submit', shows the notification reference as the h1 with a 'Draft' tag beside it, in place of the 'Review your notification' heading and the status strip (prototype:dr2-1-source prototype-dr2-1-source-p11-008, prototype-dr2-1-source-p11-009; prototype:dr2-1-specs prototype-dr2-1-specs-p5-089, prototype-dr2-1-specs-p5-104; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-096, ruling-sam-2026-10-09-p1-097; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-063, ruling-sam-2026-10-09-pm-p2-064; c-246)",
+        "A draft's review, reached from the hub's 'Review and submit', shows the notification reference as the h1 with a 'Draft' tag beside it, in place of the 'Review your notification' heading and the status strip (prototype:dr2-1-source prototype-dr2-1-source-p11-008, prototype-dr2-1-source-p11-009; prototype:dr2-1-specs prototype-dr2-1-specs-p5-089, prototype-dr2-1-specs-p5-104; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-096, ruling-sam-2026-10-09-p1-097; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-061, ruling-sam-2026-10-09-pm-p2-062; c-246)",
         "Under the header the draft's review shows 'Date created: <d Month yyyy>', the date the notification was created (prototype:dr2-1-source prototype-dr2-1-source-p11-012; prototype:dr2-1-specs prototype-dr2-1-specs-p5-104)",
         "The draft's review header offers 'Copy as new' and a red 'Delete' warning button that opens the notification's delete confirmation, and no 'Amend this notification' (prototype:dr2-1-source prototype-dr2-1-source-p11-009; prototype:dr2-1-specs prototype-dr2-1-specs-p5-104; c-246)",
         "The draft's review shows the 'Import reference numbers' section with its warning and the 'Notification reference' and 'Customs document code' rows as selectable text, as a submitted notification's view does (prototype:dr2-1-specs prototype-dr2-1-specs-p5-104; c-246; c-294)",
         "Every card on the draft's review has a Change link to its question page (prototype:dr2-1-specs prototype-dr2-1-specs-p5-105; repo:tests repo-tests-p3-110)",
         "When the draft has incomplete sections, the review shows a 'There is a problem' error summary listing each one, each entry linking to its card, and an error message under each incomplete card's heading (prototype:dr2-1-specs prototype-dr2-1-specs-p5-105, prototype-dr2-1-specs-p5-106)",
         "The draft's review ends with a Continue button (prototype:dr2-1-specs prototype-dr2-1-specs-p5-106; repo:frontend repo-frontend-p13-001)",
-        "A live-animals draft's review has a Back link to the live-animals notification list, the set's own list in the animals frontend (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-081; c-143; c-246)",
-        "On the notification list, a draft's row still opens its overview hub, not the review (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-097; repo:tests repo-tests-p3-111; c-246)"
+        "A live-animals draft's review has a Back link to the live-animals notification list, the set's own list in the animals frontend (prototype:dr2-1-source prototype-dr2-1-source-p11-009; c-143; c-246)",
+        "On the notification list, a draft's row still opens its overview hub, not the review (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-097; repo:tests repo-tests-p3-111; c-246)",
+        "A high-risk plants draft's check answers shows the same header as the submitted view, with a 'Draft' tag, the reference as heading, 'Date created: <d Month yyyy>', the delete button and the 'Import reference numbers' section, and no shared status strip; its Change links, its errors and Continue stay, and it offers no 'Copy as new' (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-056, ruling-sam-2026-10-09-pm-p2-061, ruling-sam-2026-10-09-pm-p2-062; repo:plantsfrontend repo-plantsfrontend-p8-003, repo-plantsfrontend-p8-038)"
       ],
-      "requirements": ["req-900"],
+      "requirements": ["req-900", "req-2004"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-008, p11-009, p11-012" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-089, p5-104, p5-105, p5-106" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-096, p1-097" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-063, p2-064, p3-081" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p2-061, p2-062, p3-056" },
         { "source": "repo:frontend", "ref": "repo-frontend-p13-001" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-110, p3-111" }
+        { "source": "repo:tests", "ref": "repo-tests-p3-110, p3-111" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p8-003, p8-038" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "theme": "overview-and-review",
+      "dependsOn": ["inc-101", "inc-110", "inc-111", "inc-112"],
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Re-drafted for the 9 October afternoon ruling: the Back link goes to the set's own notification list in the animals frontend (c-143), so it is observable the same way in every environment, and the import reference rows carry no Copy buttons (c-294; req-1986 waits on design). The header is drawn in the set's own review template with the strip switched off; the shared layout is not changed. Kept apart from the submitted-view header row (inc-111) because it reuses that row's header and the header-actions row's Copy as new, Delete and Import reference numbers (inc-112), so it follows both. The incomplete-card messages are the review cards row's (inc-101) and Continue is the review-ending row's (inc-110); this row shows they hold under the draft's header."
+        "The Back link goes to the set's own notification list in the animals frontend (c-143), so it is observable the same way in every environment, and the import reference rows carry no Copy buttons (c-294; req-1986 waits on design). The header is drawn in the set's own review template with the strip switched off; the shared layout is not changed (afternoon ruling claims p2-061 and p2-062). Kept apart from the submitted-view header row (inc-111) because it reuses that row's header and the header-actions row's Copy as new, Delete and Import reference numbers (inc-112), so it follows both. The incomplete-card messages are the review cards row's (inc-101) and Continue is the review-ending row's (inc-110); this row shows they hold under the draft's header.",
+        "req-2004 (plants' draft view header) sits here under the afternoon ruling's same-increment rule (claims p3-013 and p3-056)."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
         "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
       ],
-      "shared": [],
-      "existingRow": "inc-187"
+      "shared": []
+    },
+    {
+      "existingRow": "inc-198",
+      "title": "Waiting on design: a Copy button on each import reference number",
+      "detail": "Design Release 2.1 gives each row of the view's 'Import reference numbers' section its own Copy button. MoJ's Copy button is not an accepted component (Experimental, and hidden without JavaScript), so the buttons wait on design question 8. The section itself, with the values as selectable text, is built now in the header-actions row, in the animals sets and in plants. Built as design answers, or dropped if design drops it.",
+      "acceptanceCriteria": [
+        "If design keeps them under question 8 with an accepted component, each row of the 'Import reference numbers' section on the live-animals and germinal products views, and each row plants' view shows, has its own secondary 'Copy' button that copies that row's value (prototype:dr2-1-source prototype-dr2-1-source-p11-037, prototype-dr2-1-source-p11-038; prototype:dr2-1-specs prototype-dr2-1-specs-p5-096; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-180, trace-prototype-dr2-1-p13-176; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-040, ruling-sam-2026-10-09-pm-p1-074, ruling-sam-2026-10-09-pm-p3-051)",
+        "Without JavaScript no Copy button shows and each value stays text the trader can select (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-044, ruling-sam-2026-10-09-pm-p1-046, ruling-sam-2026-10-09-pm-p1-047, ruling-sam-2026-10-09-pm-p1-050; c-294)"
+      ],
+      "requirements": ["req-1986"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-037, p11-038, p11-186" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-096" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-180, p13-176" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-040, p1-044, p1-046, p1-047, p1-050, p1-074, p3-051" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p13-106" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "theme": "waiting-on-design",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [
+        "Design answers design question 8 (copy buttons): whether the Copy buttons are needed and with which accepted component, since MoJ's Copy button is not accepted (ruling:sam-2026-10-09-pm claims p1-073 and p1-074). Who: the design team. Dropped if design drops them."
+      ],
+      "notes": [
+        "Blocked: req-1986 carries blockedBy on design question 8. One increment for design question 8, changing plants too because the header-actions row does (afternoon ruling claims p3-013 and p3-051). Its JavaScript sits in the waiting-on-design theme's client enhancement folders."
+      ],
+      "touches": [
+        "frontend:src/client/javascripts/enhancements",
+        "plantsfrontend:src/client/javascripts/enhancements",
+        "tests:tests/animals/e2e/enhancements",
+        "tests:tests/plants/e2e/enhancements"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/template.njk",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers"
+      ]
+    },
+    {
+      "existingRow": "inc-199",
+      "title": "Plants' customs document code on its import reference numbers, once plants' own code is confirmed",
+      "detail": "The plants view's 'Import reference numbers' section, built in the header-actions row, has no 'Customs document code' row, because C640 is the animals code and plants' own code is not confirmed. Once it is, the row is added with plants' own code.",
+      "acceptanceCriteria": [
+        "Plants' 'Import reference numbers' section has a 'Customs document code' row reading plants' own confirmed customs document code, as text the trader can select (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-052, ruling-sam-2026-10-09-pm-p3-053)"
+      ],
+      "requirements": ["req-2002"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p3-052, p3-053" }
+      ],
+      "repos": ["plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "theme": "overview-and-review",
+      "dependsOn": [],
+      "gate": null,
+      "openQuestions": [
+        "The plants policy or customs owner confirms plants' own customs document code (C640 is the animals code); the programme owner names who confirms it. Until then plants' section shows the notification reference only."
+      ],
+      "notes": [
+        "Blocked: req-2002 carries blockedBy on plants' own customs document code. Kept apart from the header-actions row so the rest of plants' view header is not held up."
+      ],
+      "touches": [
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers"
+      ],
+      "shared": []
     }
   ],
   "unobservable": [],

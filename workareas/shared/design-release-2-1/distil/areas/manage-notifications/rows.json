@@ -15,7 +15,7 @@
         "In the high-risk plants frontend, while a plants notification is being amended, each overview-linked plants page ends with the same 'Save and return', 'Save and continue' and link-styled 'Save and return to overview' controls going to the same places, and the plants party pickers (consignor, place of destination and contact) end with 'Save and return' and 'Save and continue' only (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-017)",
         "In the high-risk plants frontend, Continue on an incomplete plants amend review leaves the trader on that review with no error summary and no error message (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-017; c-201)"
       ],
-      "requirements": ["req-1403", "req-1404", "req-1406"],
+      "requirements": ["req-1403", "req-1404", "req-1406", "req-2068"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-074" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-071 to p14-074" },
@@ -31,20 +31,17 @@
       "status": "todo",
       "gate": "Look at the amend endings on one overview-linked page and on the CPH number page, in animals and in plants, and at the held Continue: every page area's own rows keep these endings while amending.",
       "openQuestions": [],
-      "notes": "Pass 2 combines the page endings (req-1403), the Back links (req-1404) and the held Continue (req-1406): all three are how an amendment moves between its pages, built and reviewed through the same amend walk. Re-distil: plants joins in the same increment (ruling:sam-2026-10-09-pm claim 45, p3-017); no plants twin row. Plants keeps its own pages and step order. The overview-and-review row inc-110 must not carry a criterion that an incomplete amendment's Continue shows an error summary (c-201). The tests repo's change-from-cya and amend-resubmit specs move from the ?change=1 return to these controls.",
-      "touches": [
-        "frontend:src/server/app/shared/save-actions.njk",
-        "plantsfrontend:src/server/app/shared/save-actions.njk",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/review"
-      ],
+      "notes": "Unchanged by this re-distil: requirements and rulings behind it stand as they were. Pass 2 combines the page endings (req-1403), the Back links (req-1404) and the held Continue (req-1406), with plants' half (req-2068) in the same increment (ruling:sam-2026-10-09-pm p3-017): all are how an amendment moves between its pages, built and reviewed through the same amend walk. Plants keeps its own pages and step order. The overview-and-review row inc-110 must not carry a criterion that an incomplete amendment's Continue shows an error summary (c-201). The tests repo's change-from-cya and amend-resubmit specs move from the ?change=1 return to these controls. Keep its journey-foundation theme: it changes the shared save actions every page area renders.",
+      "touches": [],
       "shared": [
-        "frontend:src/server/app/shared/kit.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
-        "plantsfrontend:src/server/app/shared/kit.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker",
+        "frontend:src/server/app/shared",
+        "frontend:src/server/app/engine",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers",
+        "plantsfrontend:src/server/app/shared",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/review",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
         "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
       ],
-      "dependsOn": [],
       "existingRow": "inc-004"
     },
     {
@@ -56,7 +53,7 @@
         "'No, go back' on the amend confirmation page is a link-styled control that returns to the notification's view page with the notification still Submitted, and the page's Back link goes to the view page too (prototype:dr2-1-source prototype-dr2-1-source-p12-049; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-084)",
         "The amend confirmation page works with JavaScript turned off, and no pop-up opens over the view page or the list when Amend is chosen (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-088; c-190)",
         "Opening or posting Amend for a notification that is not Submitted (such as one already being amended from another tab) or whose reference is unknown changes nothing and returns the trader, with no message, to the set's own notification list (the live-animals set root) (prototype:dr2-1-specs prototype-dr2-1-specs-p5-129; repo:backend repo-backend-p2-092, repo-backend-p2-093; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-084; c-198)",
-        "In the high-risk plants frontend, Amend on a submitted plants notification's card (and on its view page) opens the same amend confirmation page with the same title, heading, question, 'Yes, continue' and 'No, go back'; 'Yes, continue' lands on plants' review page for that notification, and a refused amend returns to plants' own notification list with no message (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-043; repo:plantsfrontend repo-plantsfrontend-p3-134; c-310)",
+        "In the high-risk plants frontend, Amend on a submitted plants notification's card (and on its view page) opens the same amend confirmation page with the same title, heading, question, 'Yes, continue' and 'No, go back'; 'Yes, continue' lands on plants' review page for that notification, and a refused amend returns to plants' own notification list with no message (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-043; repo:plantsfrontend repo-plantsfrontend-p3-115, repo-plantsfrontend-p3-134; c-310)",
         "On the workspace stack, the k6 performance suite's amendment journey passes with Amend landing on the amend review: its 'amendment started' check expects the review page, it still edits the origin page, and both its endings still pass, cancelling at cancel-amend to land on the view page with ?cancelled=1, or resubmitting through the review and the declaration (repo:perftests repo-perftests-p1-071, repo-perftests-p1-072, repo-perftests-p1-074; c-225)",
         "With the service in Welsh, the amend confirmation page's title, heading, question and controls show Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-089; repo:plantsfrontend repo-plantsfrontend-p3-114)"
       ],
@@ -68,7 +65,7 @@
         { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-084, p1-086, p1-088, p3-043, p3-084" },
         { "source": "repo:backend", "ref": "repo-backend-p2-092, p2-093" },
         { "source": "repo:frontend", "ref": "repo-frontend-p3-089" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-114, p3-134" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-114, p3-115, p3-134" },
         { "source": "repo:tests", "ref": "repo-tests-p3-071, p3-082, p4-098" },
         { "source": "repo:perftests", "ref": "repo-perftests-p1-071, p1-072, p1-074" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-027, p3-028, p3-031" },
@@ -79,24 +76,21 @@
       "status": "todo",
       "gate": "Look at the amend confirmation page in animals and plants, and the card's Amend now a link to it: the cancel-amendment page and the germinal set's copy follow the same page pattern.",
       "openQuestions": [],
-      "notes": "Re-distil under the 9 October afternoon ruling: the dialog is gone from this row (claim 19); the confirmation is a page at the notification's own amend route carrying the pop-up's wording. req-1393 (the pop-ups) leaves this row for its own blocked waiting-on-design row. The refused-amend landing is the set's own list, not the INS front door (claim 57, c-198), so the dependency on inc-111 for the INS URL goes. Plants joins in the same increment (claim 48, p3-043). Pass 2 combines the confirmation page (req-1391, req-1392), the landing (req-1394), the guard (req-1487) and the k6 check (req-1877): one route, one page, one review and ladder. The card's Amend action today lives in each frontend's dashboard feature (a POST from the list); it becomes a link to this page, which the animals-dashboard theme's list rows must keep. The view page's 'Amend this notification' comes from inc-112 (plants too), which this row needs landed. Welsh strings here are part of req-1480, carried by the delete page row.",
+      "notes": "Unchanged in substance by this re-distil. Pass 2 combines the confirmation page (req-1391, req-1392), the landing (req-1394), the guard (req-1487) and the k6 check (req-1877): one route, one page, one review and ladder. The dialog half of req-1391/req-1392 is req-1393's, in the blocked waiting-on-design row. The card's Amend action today lives in each frontend's dashboard feature (a POST from the list; plants' amend is handled in its dashboard feature); it becomes a link to this page, which the animals-dashboard theme's list rows must keep. The view page's 'Amend this notification' comes from inc-112 (plants too), which this row needs landed. Welsh strings here are part of req-1480, carried by the delete page row. Keep its manage-notifications theme.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/amend",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/amend",
-        "tests:page-objects/animals/notification-amend-page.ts",
-        "tests:tests/animals/e2e/features/notification-actions-guards.spec.ts",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
+        "tests:tests/animals/e2e/features/promoted-lifecycle.spec.ts",
+        "tests:flows/animals/notification-actions.ts",
         "perftests:src/k6/journeys.js"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js",
-        "tests:flows/animals/notification-actions.ts",
-        "tests:flows/animals/seeded-journey.ts",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers",
+        "frontend:src/server/app/engine",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers",
         "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
       ],
-      "dependsOn": ["inc-112"],
       "existingRow": "inc-120"
     },
     {
@@ -130,40 +124,43 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Re-distil under the 9 October afternoon ruling: no dialog (claim 19); the page at today's route carries the wording. The guard lands on the set's own list (claim 57, c-198), not the overall dashboard. Plants joins in the same increment (claim 48, p3-044). Pass 2 combines the page copy (req-1410, req-1411, req-1413), the page shape and how it is reached (req-1414), the landing (req-1416) and the guard (req-1417): one route and one confirmation, reviewed once. No longer depends on the amend row: there is no shared dialog to reuse. 'Cancel amend' beside Continue on the amend review comes from inc-110, which this row needs landed. 'Yes, cancel amendment' stays a standard primary button (req-1412, already met). The k6 cancel check reads the address and the view page, so perftests needs no change here. The tests repo's cancel-amendment page object and spec move to this copy, keeping ?cancelled=1 and the smoke-tagged cancel case. Welsh strings here are part of req-1480, carried by the delete page row.",
+      "notes": "Unchanged in substance by this re-distil. Pass 2 combines the page copy (req-1410, req-1411, req-1413), the page shape and how it is reached (req-1414), the landing (req-1416) and the guard (req-1417): one route and one confirmation, reviewed once. 'Cancel amend' beside Continue on the amend review comes from inc-110, which this row needs landed; the status bar's 'Cancel amend' is the Amend status bar row's. 'Yes, cancel amendment' stays a standard primary button (req-1412, already met). The k6 cancel check reads the address and the view page, so perftests needs no change here. The tests repo's cancel-amendment page object and spec move to this copy, keeping ?cancelled=1 and the smoke-tagged cancel case. Welsh strings here are part of req-1480, carried by the delete page row. Keep its manage-notifications theme.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend",
-        "tests:page-objects/animals/notification-cancel-amend-page.ts",
-        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts"
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
+        "tests:page-objects/animals/notification-cancel-amend-page.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
+        "frontend:src/server/app/engine",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers"
       ],
-      "dependsOn": ["inc-110"],
       "existingRow": "inc-121"
     },
     {
       "title": "An amendment shows an 'Amend' status bar with Cancel amend on the review and every question page, in every set that amends",
-      "detail": "While a notification is amended, Design Release 2.1 shows an 'Amend' status bar with the reference and a 'Cancel amend' control above the caption and heading of the review and every question page. Today the tag reads 'Amending' and only the review page offers a 'Cancel amendment' link, under its heading. The 9 October afternoon ruling makes this the one change to the shared status strip itself (claim 40): it adds Cancel amend for status AMEND and changes 'Amending' to 'Amend' in every set at once, live animals, germinal products and plants. The bar's Cancel amend goes to the cancel-amendment confirmation page.",
+      "detail": "While a notification is amended, Design Release 2.1 shows an 'Amend' status bar with the reference and a 'Cancel amend' control above the caption and heading of the review and every question page. Today the tag reads 'Amending' and only the review page offers a 'Cancel amendment' link, under its heading. The 9 October afternoon ruling makes this the one change to the shared status strip itself: it adds Cancel amend for status AMEND and changes 'Amending' to 'Amend' in every set at once, live animals, germinal products and plants. The bar's Cancel amend goes to the cancel-amendment confirmation page, a page and never a pop-up.",
       "acceptanceCriteria": [
         "While a notification is being amended, its status tag on the amend review and on its question pages reads 'Amend', not 'Amending' (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063; prototype:dr2-1-specs prototype-dr2-1-specs-p5-111)",
         "During an amendment the review page and every question page show, above the caption and heading, a status bar with the 'Amend' tag, the notification's reference and a link-styled 'Cancel amend' control (prototype:dr2-1-source prototype-dr2-1-source-p1-026, prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063, trace-prototype-dr2-1-p14-070; prototype:dr2-1-specs prototype-dr2-1-specs-p5-112; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p2-067)",
-        "'Cancel amend' in a question page's status bar goes to the cancel-amendment confirmation page; its 'Go back' leaves the amendment in progress, and 'Yes, cancel amendment' restores the submitted answers and lands on the read-only Submitted view (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086, trace-prototype-dr2-1-p14-088; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-086)",
+        "'Cancel amend' in a question page's status bar goes to the cancel-amendment confirmation page; its way back leaves the amendment in progress, and 'Yes, cancel amendment' restores the submitted answers and lands on the read-only Submitted view (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086, trace-prototype-dr2-1-p14-088; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-086)",
         "A draft notification's pages show the 'Draft' tag and reference in the strip with no 'Cancel amend' (repo:frontend repo-frontend-p3-094-m1)",
         "The status bar's 'Cancel amend' works with JavaScript turned off (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-086; c-190)",
         "In the high-risk plants frontend, a plants notification being amended shows the same 'Amend' tag, reference and 'Cancel amend' control above the caption and heading of its review and question pages, going to plants' cancel-amendment page (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p3-045)",
-        "With the service in Welsh, the 'Amend' tag and 'Cancel amend' show Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-089; repo:plantsfrontend repo-plantsfrontend-p3-114)"
+        "With the service in Welsh, the 'Amend' tag and 'Cancel amend' show Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-089; repo:plantsfrontend repo-plantsfrontend-p3-114)",
+        "In the germinal products set too, an amended notification's strip tag reads 'Amend', changed once in the shared strip, and the end-to-end checks that read 'Amending' read 'Amend' (repo:tests repo-tests-p6-116; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p2-068; c-311)"
       ],
       "requirements": ["req-1397", "req-1398"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-026, p12-056" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-063, p14-070, p14-086, p14-088" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-111, p5-112" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-086, p2-066, p2-067, p3-045" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-086, p2-066 to p2-068, p3-045" },
         { "source": "repo:frontend", "ref": "repo-frontend-p3-089, p3-094-m1" },
-        { "source": "repo:tests", "ref": "repo-tests-p3-074" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-114" },
+        { "source": "repo:tests", "ref": "repo-tests-p3-074, p6-116" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-029, p3-029-m1, p3-032" },
         { "source": "trace:e2e", "ref": "trace-e2e-p14-030, p14-031, p14-055" }
       ],
@@ -172,61 +169,18 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Re-distil under the 9 October afternoon ruling: the bar's Cancel amend goes to the cancel confirmation page, not a dialog (claim 19, p1-086). Claim 40 makes this row the one change to the shared strip itself; p3-045 says plants picks it up from that change, but plants keeps its own copy of the shared layout and kit, so the same strip change is made there in this increment, with no other plants work. Pass 2 combines the tag copy (req-1397) and the bar (req-1398): the bar carries the tag. The existing row also carries req-782 (the hub's status line, notification-hub area) and its hub criteria; the combiner keeps req-782 and those criteria here as before. Depends on the cancel-amendment row, whose 'Go back' and wording the bar leads to. The declaration carries no status bar (req-917). The tests repo's reference-strip and cancel-amend specs move from 'Amending' to 'Amend' and find Cancel amend in the bar.",
+      "notes": "This area's half of existing row inc-122. Pass 2 combines the tag copy (req-1397) and the bar (req-1398): the bar carries the tag. The combiner keeps inc-122's id, its journey-foundation theme and the other areas' requirements it already holds (req-782, the hub's status line, and req-2061) with their Overview criteria, merging these criteria in. Plants keeps its own copy of the shared layout and kit, so the same strip change is made there in this increment. No dependency on the cancel-amendment row: the bar leads to today's cancel-amendment page, which inc-121 rewords later. The declaration carries no status bar (req-917). The tests repo's reference-strip and cancel-amend specs move from 'Amending' to 'Amend' and find Cancel amend in the bar.",
       "touches": [],
       "shared": [
-        "frontend:src/server/app/shared/layout.njk",
-        "frontend:src/server/app/shared/kit.js",
-        "frontend:src/server/app/shared/copy.en.js",
-        "frontend:src/server/app/shared/copy.cy.js",
-        "plantsfrontend:src/server/app/shared/layout.njk",
-        "plantsfrontend:src/server/app/shared/kit.js",
-        "plantsfrontend:src/server/app/shared/copy.en.js",
-        "plantsfrontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/shared",
+        "plantsfrontend:src/server/app/shared",
         "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts"
       ],
-      "dependsOn": ["inc-121"],
       "existingRow": "inc-122"
     },
     {
-      "title": "Waiting on design: the amend and cancel-amendment pop-ups",
-      "detail": "Design Release 2.1 opens the amend and cancel-amendment confirmations as modal dialogs over the current page. GOV.UK Frontend has no modal, the Ministry of Justice's Modal dialog is not accepted (Experimental, no documented fallback without JavaScript), and no increment writes custom JavaScript to copy the prototype. The 9 October afternoon ruling builds the confirmations now as pages carrying the pop-ups' wording, and holds the pop-ups themselves as one waiting-on-design increment for both animals sets and plants, blocked on design question 9. The expected answer is that they are not built, and the increment is then dropped; it is built only if design makes a strong case, as design then says.",
-      "acceptanceCriteria": [
-        "With JavaScript, 'Amend this notification' and 'Cancel amend' open their confirmations as modal dialogs over the current page instead of going to the confirmation pages, each hidden until opened, announced as a modal dialog named by its heading (the amend dialog also described by its question), with a Close (X) button announced as 'Close' and an overlay (prototype:dr2-1-source prototype-dr2-1-source-p1-029, prototype-dr2-1-source-p1-030, prototype-dr2-1-source-p12-050; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-183, trace-prototype-dr2-1-p14-060, trace-prototype-dr2-1-p14-061)",
-        "Close, the overlay and the dialog's 'No, go back' or 'Go back' dismiss it without acting and leave the trader where they were (prototype:dr2-1-source prototype-dr2-1-source-p12-054, prototype-dr2-1-source-p12-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-084)",
-        "With JavaScript turned off, the same controls still reach the amend and cancel-amendment confirmation pages and work as before (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-088)",
-        "The same dialogs and fallbacks apply in the high-risk plants frontend (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-088)"
-      ],
-      "requirements": ["req-1393"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-026 to p1-030, p12-050, p12-054, p12-055" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-183, p14-060, p14-061, p14-084" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-018 to p1-020, p1-056, p1-057, p1-088, p1-108" }
-      ],
-      "repos": ["frontend", "plantsfrontend", "tests"],
-      "kind": "feat",
-      "status": "blocked",
-      "gate": null,
-      "openQuestions": [
-        "Design question 9 (design must answer): are the amend and cancel-amendment pop-ups built at all, and if so with which tested component? Expected answer: not built, and this increment is dropped. Built only if design makes a strong case; MoJ's Modal dialog is not accepted (ruling:sam-2026-10-09-pm claims 7 and 19)."
-      ],
-      "notes": "New row from the 9 October afternoon ruling, claim 19 (p1-088): the pop-ups leave inc-120 and inc-121 and wait here in the waiting-on-design theme. Depends on the amend confirmation row (inc-120), the cancel-amendment row (inc-121) and the Amend status bar row (inc-122), whose no-JavaScript pages it would enhance. req-1391's dialog half, req-1392's closing and req-1414's dialog half are built here only if design says so; their page halves are built in those rows. Changes plants too when built (claim 8). The germinal set's copy follows inc-185.",
-      "touches": [
-        "frontend:src/client/javascripts/components/confirmation-dialog.js",
-        "frontend:src/client/stylesheets/components/_confirmation-dialog.scss"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/amend",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/amend",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend"
-      ],
-      "dependsOn": ["inc-120", "inc-121", "inc-122"],
-      "existingRow": null
-    },
-    {
       "title": "Copy as new carries over exactly Design Release 2.1's list, from the submitted version",
-      "detail": "Design Release 2.1 says what a copy keeps (origin, internal reference, what is imported with its species, the reasons and their follow-ups, the additional animal details, the parties and CPH) and what it leaves for the trader to fill in again (numbers of animals and packages, identifiers, arrival, transit, transporter, documents and contact address). Today the backend copy mapper and the pages disagree: the record clears the internal reference, the species, the unweaned answer and the exit date, yet the copy's overview shows counts, identification, arrival, transit, transport and contact address as Complete because the whole answer payload is copied. c-196 settles that a copy carries exactly Design Release 2.1's list, in the record and on the pages alike, and c-197 that copying an amendment in progress copies its submitted version. After this change a copy keeps and clears what Design Release 2.1 says, and a certified-for value no longer offered is mapped to a current one. Plants has parked Copy as new, so plants is not changed.",
+      "detail": "Design Release 2.1 says what a copy keeps (origin, internal reference, what is imported with its species, the reasons and their follow-ups, the additional animal details, the parties and CPH) and what it leaves for the trader to fill in again (numbers of animals and packages, identifiers, arrival, transit, transporter, documents and contact address). Today the backend copy mapper and the pages disagree: the record clears the internal reference, the species, the unweaned answer and the exit date, yet the copy's overview shows counts, identification, arrival, transit, transport and contact address as Complete because the whole answer payload is copied. c-196 settles that a copy carries exactly Design Release 2.1's list, in the record and on the pages alike, and c-197 that copying an amendment in progress copies its submitted version. After this change a copy keeps and clears what Design Release 2.1 says, and a certified-for value no longer offered is mapped to a current one. Plants does not offer Copy as new, so plants is not changed.",
       "acceptanceCriteria": [
         "A copy's origin of the import comes back with the source's internal reference number, and the copy's review shows it (prototype:dr2-1-source prototype-dr2-1-source-p12-063; c-196)",
         "A copy's commodity pages come back with the source's commodity, its commodity selections and the selected species, and the copy has the source's notification type (prototype:dr2-1-source prototype-dr2-1-source-p12-064, prototype-dr2-1-source-p12-071; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-101; c-196)",
@@ -252,16 +206,16 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Unchanged in substance by the re-distil: the 9 October afternoon ruling lets Copy as new go ahead unchanged (p1-087), and plants has parked Copy as new (claim 47), so no plants half. Pass 1 had two slices, what a copy keeps (req-1424, req-1425, req-1428, req-1429, req-1430) and what it clears (req-1426, req-1427, req-1432 to req-1435); pass 2 merges them with copying the submitted version of an amendment (req-1437) because each changes the same backend copy mapping and the frontend's stub persistence copy, proven by copying one full notification and reading the copy. What a copy already keeps or clears correctly (req-1423, req-1431, req-1436) stays. The copy must clear the cleared answers from the copied answer payload as well as the record, so the overview's task statuses follow. The certified-for mapping criterion is written for the workspace stack only, where a notification with a retired value can be stored through the backend API. The germinal halves (req-1879, req-1880) are inc-185's.",
+      "notes": "Unchanged in substance by this re-distil: Copy as new goes ahead unchanged (ruling:sam-2026-10-09-pm p1-087) and plants does not offer it (req-2003, req-2055 out of scope), so no plants half. Pass 1 had two slices, what a copy keeps (req-1424, req-1425, req-1428, req-1429, req-1430) and what it clears (req-1426, req-1427, req-1432 to req-1435); pass 2 merges them with copying the submitted version of an amendment (req-1437) because each changes the same backend copy mapping and the frontend's stub persistence copy, proven by copying one full notification and reading the copy. What a copy already keeps or clears correctly (req-1423, req-1431, req-1436) stays. The copy must clear the cleared answers from the copied answer payload as well as the record, so the overview's task statuses follow. The certified-for mapping criterion is written for the workspace stack only, where a notification with a retired value can be stored through the backend API. The germinal halves (req-1879, req-1880) are the germinal row's. Keep its manage-notifications theme.",
       "touches": [
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
-        "frontend:src/server/app/services/persistence/records/stub/lifecycle/create.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
+        "tests:tests/animals/e2e/features/promoted-lifecycle.spec.ts"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "frontend:src/server/app/services/persistence/records"
       ],
-      "dependsOn": [],
       "existingRow": "inc-123"
     },
     {
@@ -285,17 +239,19 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Unchanged by the re-distil (ruling:sam-2026-10-09-pm p1-087). Kept apart from the copy carry-over row: a frontend redirect fix with its own set-up (two tabs and a stale version). Plants has parked Copy as new, so no plants half. The view page's Copy as new button comes from inc-112, which this row needs landed.",
+      "notes": "Unchanged by this re-distil. Kept apart from the copy carry-over row: a frontend redirect fix with its own set-up (two tabs and a stale version). Plants does not offer Copy as new, so no plants half. The view page's Copy as new button comes from inc-112, which this row needs landed. Keep its manage-notifications theme.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
+        "tests:flows/animals/notification-actions.ts"
       ],
-      "shared": [],
-      "dependsOn": ["inc-112"],
+      "shared": [
+        "frontend:src/server/app/engine"
+      ],
       "existingRow": "inc-124"
     },
     {
       "title": "The delete confirmation page identifies the notification in a summary and takes Design Release 2.1's wording and buttons, in animals and plants",
-      "detail": "Design Release 2.1 shows which notification is about to be deleted, in a summary of its reference, commodity, number and origin, and words the page and its buttons more briefly, with a plain 'No, cancel' link back to the notification. Today the page has only a heading, one sentence and two buttons, shows the journey strip, and its way back goes to the list. c-195 adopts Design Release 2.1's copy. After this change the page shows the summary list, the new wording and buttons, and Back and 'No, cancel' return to the notification's view page. The 9 October afternoon ruling makes the same change to plants' delete page in the same increment, filled with plants' own commodity, origin and quantity. In the live-animals set the Number row is the total number of animals; the germinal packages case is the germinal set's.",
+      "detail": "Design Release 2.1 shows which notification is about to be deleted, in a summary of its reference, commodity, number and origin, and words the page and its buttons more briefly, with a plain 'No, cancel' link back to the notification. Today the page has only a heading, one sentence and two buttons, shows the journey strip, and its way back goes to the list. c-195 adopts Design Release 2.1's copy. After this change the page shows the summary list, the new wording and buttons, and Back and 'No, cancel' return to the notification's view page. The 9 October afternoon ruling makes the same change to plants' delete page in the same increment, filled with plants' own commodity, origin and quantity, and plants' own checks move with it. In the live-animals set the Number row is the total number of animals; the germinal packages case is the germinal set's.",
       "acceptanceCriteria": [
         "The delete confirmation page shows a GOV.UK summary list with the rows 'Reference number', 'Commodity', 'Number' and 'Origin', the Origin row showing the country of origin (prototype:dr2-1-source prototype-dr2-1-source-p11-173, prototype-dr2-1-source-p11-176; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-107, trace-prototype-dr2-1-p14-111; prototype:dr2-1-specs prototype-dr2-1-specs-p5-138; c-195)",
         "The Commodity row lists each commodity's common name with its species' Latin names in brackets, comma-separated, such as 'Sheep (Ovis Aries), Goat (Capra Hircus)'; for other live mammals it uses each species' common name (prototype:dr2-1-source prototype-dr2-1-source-p11-174; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-107; prototype:dr2-1-specs prototype-dr2-1-specs-p5-139)",
@@ -307,18 +263,19 @@
         "Beside 'Yes, delete', in the same button group, a plain link reads 'No, cancel'; no 'No, return to dashboard' button appears (prototype:dr2-1-source prototype-dr2-1-source-p11-180; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-110; prototype:dr2-1-specs prototype-dr2-1-specs-p5-142; c-195)",
         "The page's Back link and 'No, cancel' both return to the notification's view page, and the notification is not deleted (prototype:dr2-1-source prototype-dr2-1-source-p11-168, prototype-dr2-1-source-p11-170, prototype-dr2-1-source-p11-171; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-110; prototype:dr2-1-specs prototype-dr2-1-specs-p5-143)",
         "The page shows no journey strip (status tag and reference) above its heading (prototype:dr2-1-source prototype-dr2-1-source-p11-171; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-111)",
-        "In the high-risk plants frontend, the delete page shows the same summary list filled with the plants notification's reference, commodity, quantity and country of origin, the same sentence, warning, 'Yes, delete' and 'No, cancel', no journey strip, and Back and 'No, cancel' return to plants' check answers view (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-046; repo:plantsfrontend repo-plantsfrontend-p3-085 to repo-plantsfrontend-p3-089)",
-        "With the service in Welsh, every new or changed string on the delete page (the summary row keys, 'Not applicable', the confirmation sentence, the warning, 'Yes, delete' and 'No, cancel') shows Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-104; repo:plantsfrontend repo-plantsfrontend-p3-098)"
+        "In the high-risk plants frontend, the delete page shows the same summary list filled with the plants notification's reference, its commodity as plants names it, its quantity and its country of origin, the same sentence, warning, 'Yes, delete' and 'No, cancel', no journey strip, and Back and 'No, cancel' return to plants' check answers view (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-046; repo:plantsfrontend repo-plantsfrontend-p3-085 to repo-plantsfrontend-p3-089)",
+        "With the service in Welsh, every new or changed string on the delete page (the summary row keys, 'Not applicable', the confirmation sentence, the warning, 'Yes, delete' and 'No, cancel') shows Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-104; repo:plantsfrontend repo-plantsfrontend-p3-098)",
+        "The plants frontend's own checks for delete and cancel amendment assert the changed pages: the delete page's summary, wording, 'Yes, delete', 'No, cancel' and Back link to the view page, and the cancel-amendment page's new heading with no paragraph and 'Go back'; they still assert ?deleted=1, ?cancelled=1, the restored Submitted notification and no serious or critical accessibility violations, and they prove deleting a submitted and an amending plants notification and the cancel page's return to plants' list for a notification not being amended (repo:plantsfrontend repo-plantsfrontend-p3-097, repo-plantsfrontend-p3-101, repo-plantsfrontend-p3-116, repo-plantsfrontend-p3-119; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-044)"
       ],
-      "requirements": ["req-1442", "req-1443", "req-1444", "req-1445", "req-1446", "req-1447", "req-1448", "req-1449", "req-1450", "req-1451", "req-1480"],
+      "requirements": ["req-1442", "req-1443", "req-1444", "req-1445", "req-1446", "req-1447", "req-1448", "req-1449", "req-1450", "req-1451", "req-1480", "req-2053", "req-2054"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p11-168, p11-170, p11-171, p11-173 to p11-180" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-107 to p14-111" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-138 to p5-143" },
         { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-057" },
-        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-087, p3-046" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-087, p3-044, p3-046" },
         { "source": "repo:frontend", "ref": "repo-frontend-p3-089, p3-092 to p3-097, p3-094-m1, p3-104, p3-129, p3-130" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-084 to p3-091, p3-098, p3-129, p3-130" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-084 to p3-101, p3-116, p3-119, p3-129 to p3-139" },
         { "source": "repo:tests", "ref": "repo-tests-p3-095" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-007 to p3-012" },
         { "source": "trace:e2e", "ref": "trace-e2e-p3-060 to p3-064" }
@@ -328,7 +285,7 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Re-distil: plants joins in the same increment (ruling:sam-2026-10-09-pm claim 48, p3-046); the delete page otherwise goes ahead unchanged (p1-087). Pass 2 combines every change to the delete page (req-1442 to req-1451): one page, one template and copy file per frontend, reviewed together. The title, heading and serving every deletable status already hold (req-1452). req-1480 (Welsh for every new or changed string on the delete and cancel-amendment pages, the amend confirmation page and the view page) sits here because this page carries most of the new strings; the amend, cancel-amendment and status bar rows each carry a Welsh criterion for their own strings, and the view page's strings belong to the review-and-submit rows that change them. The germinal Number row (req-1878) is inc-185's. The tests repo's animals delete flow and spec, and the plants delete page object, move to the new copy and prove the way back to the view page.",
+      "notes": "Unchanged in substance by this re-distil; the plants checks criterion now also names what req-2054 says goes unproven today (deleting a submitted or amending plants notification, the cancel page's guard redirect). Pass 2 combines every change to the delete page (req-1442 to req-1451) with plants' summary (req-2053) and plants' own checks (req-2054): one page, one template and copy file per frontend, reviewed together. The title, heading and serving every deletable status already hold (req-1452). req-1480 (Welsh for every new or changed string on the delete and cancel-amendment pages, the amend confirmation page and the view page) sits here because this page carries most of the new strings; the amend, cancel-amendment and status bar rows each carry a Welsh criterion for their own strings, and the view page's strings belong to the review-and-submit rows that change them. The germinal Number row (req-1878) is the germinal row's. The tests repo's animals delete flow and spec, and the plants delete page object, move to the new copy and prove the way back to the view page. Keep its manage-notifications theme.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/delete-notification",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification",
@@ -336,18 +293,18 @@
         "tests:page-objects/plants/delete-notification-page.ts"
       ],
       "shared": [
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
         "tests:flows/animals/notification-actions.ts"
       ],
-      "dependsOn": [],
       "existingRow": "inc-125"
     },
     {
       "title": "The deletion message reads 'Notification has been deleted' on each set's own list, and deleting an amending notification is proven",
-      "detail": "After a delete the trader already lands on the set's own notification list with ?deleted=1, which shows the deletion message straight away (req-1454, req-1881, already met); the 9 October afternoon ruling keeps that landing instead of the INS front door (c-198, c-269). Design Release 2.1 words the message 'Notification has been deleted', its wording for a page that does not know the deleted reference; today it reads 'The notification has been deleted.'. Deleting a notification being amended already works, but nothing proves it and the backend's API description still says only drafts and submitted notifications can be deleted. After this change both the animals list and plants' own list say 'Notification has been deleted', the API description lists AMEND, and the end-to-end suite proves deleting an amending notification and the guard redirects of amend, cancel amendment, copy and delete, still asserting ?cancelled=1 and ?deleted=1 and keeping its smoke-tagged cancel and delete cases.",
+      "detail": "After a delete the trader already lands on the set's own notification list with ?deleted=1, which shows the deletion message straight away (req-1454, req-1881, already met). Design Release 2.1 words the message 'Notification has been deleted', its wording for a page that does not know the deleted reference; today it reads 'The notification has been deleted.'. Deleting a notification being amended already works, but nothing proves it and the backend's API description still says only drafts and submitted notifications can be deleted. After this change both the animals list and plants' own list say 'Notification has been deleted', the API description lists AMEND, and the end-to-end suite proves deleting an amending notification and the guard redirects of amend, cancel amendment, copy and delete, still asserting ?cancelled=1 and ?deleted=1 and keeping its smoke-tagged cancel and delete cases.",
       "acceptanceCriteria": [
         "After 'Yes, delete' the live-animals notification list, opened at ?deleted=1, shows the success message 'Notification has been deleted' in place of 'The notification has been deleted.' (prototype:dr2-1-source prototype-dr2-1-source-p11-183; prototype:dr2-1-specs prototype-dr2-1-specs-p5-145; c-269)",
         "In the high-risk plants frontend, plants' own notification list opened at ?deleted=1 after a delete shows the success message 'Notification has been deleted' (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-053; repo:plantsfrontend repo-plantsfrontend-p3-094)",
-        "A notification being amended can be deleted from the amend review's Delete button: after 'Yes, delete' it no longer appears in the notification list, in animals and in plants (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-118; repo:backend repo-backend-p3-034; repo:frontend repo-frontend-p3-091; repo:plantsfrontend repo-plantsfrontend-p3-092)",
+        "A notification being amended can be deleted from the amend review's Delete button: after 'Yes, delete' it no longer appears in the notification list, in animals and in plants (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-118; repo:backend repo-backend-p3-034; repo:frontend repo-frontend-p3-091; repo:plantsfrontend repo-plantsfrontend-p3-085)",
         "On the workspace stack, the backend's published API description for deleting a notification says DRAFT, SUBMITTED and AMEND notifications can be deleted (repo:backend repo-backend-p3-034, repo-backend-p3-035)",
         "The end-to-end suite on the workspace stack proves that an amending notification can be deleted, and that amend, cancel amendment, copy as new and delete for a notification that cannot take that action return to the set's own notification list with no message; it still asserts ?cancelled=1 on the cancel-amendment redirect and ?deleted=1 on the delete redirect, and its smoke-tagged cancel-amendment and delete cases still run in the smoke suite and assert the Design Release 2.1 copy and landings (repo:tests repo-tests-p3-094 to repo-tests-p3-096, repo-tests-p3-099, repo-tests-p3-209, repo-tests-p3-209-m1; repo:frontend repo-frontend-p3-135-m1; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-101; c-198)"
       ],
@@ -360,7 +317,7 @@
         { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-097, p3-052, p3-053, p3-074, p3-083, p3-085" },
         { "source": "repo:backend", "ref": "repo-backend-p3-034, p3-035" },
         { "source": "repo:frontend", "ref": "repo-frontend-p3-091, p3-099, p3-131, p3-135-m1" },
-        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-092, p3-094, p3-133" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p3-085, p3-092, p3-094, p3-133" },
         { "source": "repo:tests", "ref": "repo-tests-p3-094 to p3-096, p3-099, p3-209, p3-209-m1" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p3-016 to p3-019" },
         { "source": "trace:e2e", "ref": "trace-e2e-p3-066, p3-068, p14-080" }
@@ -370,18 +327,17 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Re-distil under the 9 October afternoon ruling: this row moves to the animals-dashboard theme (claim 50, p3-052) and no longer lands on the INS front door (claim 57, p3-085), so insfrontend leaves its repos and the dependency on inc-111's INS URL goes. req-1454 (landing on the set's own list with ?deleted=1) and req-1881 (the list shows the message at ?deleted=1 and not on a plain reload) are now adopted as already met and leave the row; c-271 is settled (the banner stays, req-1882 already met), so its open question goes. Plants joins (claim 50, p3-053). Pass 2 combines the message wording (req-1455), deleting an amending notification (req-1441) and the tests-repo proof (req-1479): all proven by the same delete walk on the stack. req-1479's guard redirects can be proven only once the amend, cancel-amendment and delete page rows have landed, and the amend review's Delete button comes from inc-110, so this row depends on inc-110, inc-120, inc-121 and inc-125. req-1455's '<reference> has been deleted' form needs a page that knows the deleted reference; no landing does, so it has no criterion. The 'Success' banner title is inc-140's. The germinal list is the germinal set's copy (inc-141).",
+      "notes": "Unchanged in substance by this re-distil. Pass 2 combines the message wording (req-1455), deleting an amending notification (req-1441) and the tests-repo proof (req-1479): all proven by the same delete walk on the stack. req-1479's guard redirects can be proven only once the amend, cancel-amendment and delete page rows have landed, and the amend review's Delete button comes from inc-110, so this row depends on inc-110, inc-120, inc-121 and inc-125. req-1455's '<reference> has been deleted' form needs a page that knows the deleted reference; no landing does, so it has no criterion. The combiner keeps inc-126's id, its animals-dashboard theme and req-2032 (plants' banner, another area's), which the plants criterion here already states. The 'Success' banner title is inc-140's. The germinal list is the germinal set's copy.",
       "touches": [
-        "tests:tests/animals/e2e/features/notification-actions-guards.spec.ts"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts",
+        "tests:tests/animals/e2e/features/notification-delete.spec.ts"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard",
-        "tests:tests/animals/e2e/features/notification-delete.spec.ts",
-        "tests:tests/animals/e2e/features/cancel-amend-ui.spec.ts"
+        "tests:flows/animals/notification-actions.ts"
       ],
-      "dependsOn": ["inc-110", "inc-120", "inc-121", "inc-125"],
       "existingRow": "inc-126"
     },
     {
@@ -405,15 +361,48 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Kept as it was, with 'dialogs' read as the confirmation pages under the 9 October afternoon ruling (claim 19) and the guards landing on the germinal set's own list (claim 57). Copies of the manage-notifications feature folders into the germinal set, observed on one submitted germinal notification. Depends on the germinal set's foundation (inc-182) and on every live-animals row it copies (inc-120 to inc-126); the germinal copy of the pop-ups, if design ever wants them, follows the waiting-on-design row.",
+      "notes": "Unchanged by this re-distil. Copies of the manage-notifications feature folders into the germinal set, observed on one submitted germinal notification. Depends on the germinal set's foundation (inc-182) and on every live-animals row it copies (inc-120 to inc-126). The germinal copy of the pop-ups, if design ever wants them, follows the waiting-on-design row. Keep its germinal-products theme.",
       "touches": [
-        "frontend:src/server/app/sets/germinal-products"
-      ],
-      "shared": [
+        "frontend:src/server/app/sets/germinal-products",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java"
       ],
-      "dependsOn": ["inc-182", "inc-120", "inc-121", "inc-122", "inc-123", "inc-124", "inc-125", "inc-126"],
+      "shared": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java"
+      ],
       "existingRow": "inc-185"
+    },
+    {
+      "title": "Waiting on design: the amend and cancel-amendment pop-ups",
+      "detail": "Design Release 2.1 opens the amend and cancel-amendment confirmations as modal dialogs over the current page. GOV.UK Frontend has no modal, the Ministry of Justice's Modal dialog is not accepted (Experimental, no documented fallback without JavaScript), and no increment writes custom JavaScript to copy the prototype. The 9 October afternoon ruling builds the confirmations now as pages carrying the pop-ups' wording, and holds the pop-ups themselves as one waiting-on-design increment for both animals sets and plants, blocked on design question 9. The expected answer is that they are not built, and the increment is then dropped; it is built only if design makes a strong case, as design then says.",
+      "acceptanceCriteria": [
+        "With JavaScript, 'Amend this notification' and 'Cancel amend' open their confirmations as modal dialogs over the current page instead of going to the confirmation pages, each hidden until opened, announced as a modal dialog named by its heading (the amend dialog also described by its question), with a Close (X) button announced as 'Close' and an overlay (prototype:dr2-1-source prototype-dr2-1-source-p1-029, prototype-dr2-1-source-p1-030, prototype-dr2-1-source-p12-050; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-183, trace-prototype-dr2-1-p14-060, trace-prototype-dr2-1-p14-061)",
+        "Close, the overlay and the dialog's 'No, go back' or 'Go back' dismiss it without acting and leave the trader where they were (prototype:dr2-1-source prototype-dr2-1-source-p12-054, prototype-dr2-1-source-p12-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-084)",
+        "With JavaScript turned off, the same controls still reach the amend and cancel-amendment confirmation pages and work as before (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-088)",
+        "The same dialogs and fallbacks apply in the high-risk plants frontend (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-088)"
+      ],
+      "requirements": ["req-1393"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p1-026 to p1-030, p12-050, p12-054, p12-055" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-183, p14-060, p14-061, p14-084" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm-p1-018 to p1-020, p1-056, p1-057, p1-088, p1-108" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Design question 9 (design must answer): are the amend and cancel-amendment pop-ups built at all, and if so with which tested component? Expected answer: not built, and this increment is dropped. Built only if design makes a strong case; MoJ's Modal dialog is not accepted (ruling:sam-2026-10-09-pm claims 7 and 19)."
+      ],
+      "notes": "Unchanged by this re-distil: req-1393 still carries blockedBy design question 9, so the row stays blocked. Depends on the amend confirmation row (inc-120), the cancel-amendment row (inc-121), the Amend status bar row (inc-122) and the germinal row (inc-185), whose no-JavaScript pages it would enhance. Changes plants too when built. Keep its waiting-on-design theme.",
+      "touches": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend",
+        "frontend:src/server/app/shared",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend",
+        "plantsfrontend:src/server/app/shared"
+      ],
+      "existingRow": "inc-195"
     }
   ],
   "unobservable": [],

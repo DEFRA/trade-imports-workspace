@@ -2217,7 +2217,8 @@ const reportPrompt = (attempt) => `You are the REPORT step of the DISTIL workflo
 ${RAILS}
 Write no file at all: return the report as your structured output. The main session saves it to ${REPORT_PATH}.
 READ FIRST, in full: ${REFERENCES_ABS}/REPORT.md, which gives the report's structure, a skeleton and the writing
-rules. Follow it section by section, then run its checks before you return.
+rules. Follow it section by section, then run its checks before you return. Group the increments as ready to go or
+blocked by what each waits on, with row-to-row order only: never number waves.
 READ: ${SOURCES_ABS}, ${WORKAREA_ABS}/distil/requirements.json, ${WORKAREA_ABS}/distil/conflicts.json and ${BACKLOG_ABS}.
 The report is for the programme's readers, never for whoever maintains this pipeline. Anything wrong with a file
 or this step goes in issues, never in the report.${goalConflictsNote}${openReconcileNote}${challengeNote}${splitOffReportNote}

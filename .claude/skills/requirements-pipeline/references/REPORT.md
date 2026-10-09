@@ -27,7 +27,7 @@ Use these sections, in this order, with these headings. Leave out a section only
 
 About five bullet lines. Each one is a fact the reader acts on:
 
-- how many increments, and how many are ready, blocked or waiting
+- how many increments, how many are ready to go and how many are blocked, and what the blocked ones wait on
 - what the backlog builds, in one line
 - how many questions are open, and that each has a default. These are only the questions that survived the
   challenge: say how many were challenged and how many precedence, a ruling or a blocker settled
@@ -81,12 +81,23 @@ A table of every adopted requirement whose delta is `exists`: the requirement an
 
 ### 8. `## The increments`
 
-A table of every increment, in build order:
+Two groups, so the reader sees at once what can be built now and what cannot. Never number waves or phases.
 
-| Id | What it delivers | Criteria | Repos | Depends on | Status |
+`### Ready to go`: a table of every `todo` row, in build order:
+
+| Id | What it delivers | Criteria | Repos | Lands after | Theme |
 |---|---|---|---|---|---|
 
-Criteria is the count of acceptance criteria. Status is ready, blocked or waiting, plus **Review point** where the loop stops for the owner. Say in one line what a review point is.
+Criteria is the count of acceptance criteria. Lands after lists the row ids in `dependsOn` and `externalDependsOn`, the only order there is: a row builds once those have landed. Mark **Review point** where the loop stops for the owner, and say in one line what a review point is.
+
+`### Blocked`: every `blocked` row, grouped under one `#### Waiting on <what>` heading per blocker, named in plain words: "Waiting on design", "Waiting on MDM commodities". Take the blocker from the `blockedBy` of the row's requirements. Order the groups by row count, largest first. Each group opens with one line: what must happen and who acts. Then a table:
+
+| Id | What it delivers | Repos | Theme |
+|---|---|---|---|
+
+A row with two blockers goes under the first, and its line names the second.
+
+Rows that are `done`, `deferred` or `dropped` go in one short table after both groups, with their status.
 
 Then **Check these ordering decisions:** a bullet each for every call the consolidator made that the owner might want another way. Examples: an increment ordered before another for a reason, a blocked row and what unblocks it, an increment that may be too big to review and how it would split, a row that is not todo and still covers a requirement now out of scope or already met.
 
@@ -94,14 +105,14 @@ Then **Check these ordering decisions:** a bullet each for every call the consol
 
 Only when the backlog has `themes`. Leave the section out otherwise.
 
-One line first: each theme builds on its own branch and machine, and no two touch the same code. Then a table of every theme, in landing order:
+One line first: each theme builds on its own branch and machine, and no two touch the same code. Then a table of every theme. Themes with ready rows come first, those that can start now (depending on no other theme) at the top. Themes whose rows are all blocked come last:
 
-| Wave | Theme | Rows | Touches | Depends on |
+| Theme | Ready | Blocked | Touches | Lands after |
 |---|---|---|---|---|
 
-Wave is the theme's place in the landing order: wave 1 lands first, and themes in one wave build in parallel. Work it out from each theme's `dependsOn`: a theme's wave is one more than the latest wave it depends on. Rows lists the theme's row ids. Touches lists its code areas as written. List any row in no theme under the table.
+Ready and Blocked are the theme's row ids by status. Touches lists its code areas as written. Lands after lists the themes in its `dependsOn`, or "nothing: can start now". Never number waves. List any row in no theme under the table.
 
-A theme split off early (the backlog's `splitOff`) is in the table too, in its wave. Its Rows cell says "split off to `<branch>`", because its rows live only in its own backlog.
+A theme split off early (the backlog's `splitOff`) is in the table too. Its Ready cell says "split off to `<branch>`", because its rows live only in its own backlog.
 
 Then **Cross-theme dependencies:** a bullet each for every row that depends on a row in another theme, or in no theme: the two ids, the two themes, and why the order is real. A row's `externalDependsOn` on a split-off theme's workarea counts. Say "None" when there are none.
 
@@ -157,7 +168,7 @@ A table of every abbreviation and term of art the report uses, alphabetical.
 
 ## Summary
 
-- The backlog has <N> increments: <n> ready to build, <n> blocked.
+- The backlog has <N> increments: <n> ready to go, <n> blocked. The blocked ones wait on <blocker> (<n>), <blocker> (<n>).
 - <What it builds, in one line.>
 - <N> questions are open, of <n> challenged. Each has a default, so building can start without an answer.
 - <Any step before building.>
@@ -198,13 +209,27 @@ question left lists the default that will be built if nobody answers.
 
 ## The increments
 
+### Ready to go
+
+| Id | What it delivers | Criteria | Repos | Lands after | Theme |
+|---|---|---|---|---|---|
+
+### Blocked
+
+#### Waiting on <what>
+
+<What must happen, and who acts.>
+
+| Id | What it delivers | Repos | Theme |
+|---|---|---|---|
+
 **Check these ordering decisions:**
 
 ## Themes
 
 Each theme builds on its own branch and machine. No two themes touch the same code.
 
-| Wave | Theme | Rows | Touches | Depends on |
+| Theme | Ready | Blocked | Touches | Lands after |
 |---|---|---|---|---|
 
 **Cross-theme dependencies:**
@@ -234,6 +259,7 @@ Branch `<branch>`, backlog `<workarea>/backlog.json`.
 - Every requirement with `blockedBy` appears once under Waiting on others.
 - Every source appears in the per-source table with its cited count.
 - Every `precedence` conflict, every `exists` requirement, every increment and every `out-of-scope` requirement appears once.
+- Every `todo` row is under Ready to go and every `blocked` row under one Waiting on heading. No wave or phase number appears anywhere.
 - When the backlog has themes, every theme appears once in the Themes table, and every row in exactly one theme or listed as in none.
 - Every requirement the workflow lists for a split branch appears once under For the split branches, under its theme, and the summary says a split branch has work to pick up.
 - Every figure matches the files.

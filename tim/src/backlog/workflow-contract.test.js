@@ -700,6 +700,7 @@ describe('increment-build-loop', () => {
           decisions: ['Filter in the backend query, not the frontend.']
         }
       ],
+      reviewChecks: [],
       specChecks: [],
       stopped: {
         reason: 'no-buildable',
@@ -837,6 +838,7 @@ describe('increment-build-loop', () => {
               'EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
           }
         ],
+        reviewChecks: [],
         specChecks: [],
         stopped: {
           reason: 'ticket-failed',
@@ -1821,6 +1823,7 @@ describe('increment-build-loop', () => {
           }).toEqual({
             result: {
               increments: [],
+              reviewChecks: [],
               specChecks: [],
               stopped: {
                 reason: 'stack-held',
@@ -2045,6 +2048,7 @@ describe('increment-build-loop', () => {
 
           expect(run.result).toEqual({
             increments: [],
+            reviewChecks: [],
             specChecks: [],
             stopped: {
               reason: 'no-buildable',
@@ -3015,6 +3019,52 @@ describe('increment-build-loop', () => {
         )
       })
 
+      describe('a row that carries a halt gate', () => {
+        const GATE_TEXT =
+          'Look at the opening run end to end on a new notification.'
+        const GATED = { ok: false, summary: GATE_TEXT }
+
+        const runGatedRow = (overrides = {}) =>
+          runBranch(
+            overrides,
+            MERGE_ROW,
+            BASELINE,
+            PLAN,
+            MERGE_STARTED,
+            ...reviewedAndLanded,
+            FOUND,
+            CI_GREEN,
+            MARKED_DONE,
+            GATED
+          )
+
+        test('returns the gate as a review check for the finished branch', async () => {
+          const run = await runGatedRow()
+
+          expect(run.result.reviewChecks).toEqual([
+            { id: 'inc-900', check: GATE_TEXT }
+          ])
+        })
+
+        test('lands the row and does not stop at the gate', async () => {
+          const run = await runGatedRow()
+
+          expect({
+            outcomes: run.result.increments.map(({ outcome }) => outcome),
+            stopped: run.result.stopped.reason
+          }).toEqual({ outcomes: ['landed'], stopped: 'count-reached' })
+        })
+
+        test('carries on to the next row', async () => {
+          const run = await runGatedRow({
+            increments: ['inc-900', 'inc-901'],
+            stopAfter: 2
+          })
+
+          expect(labelsOf(run)).toContain('inc-901 branch')
+        })
+      })
+
       test('does not wait for CI on a row that sets awaitCi false', async () => {
         const run = await runBranch(
           {},
@@ -3495,6 +3545,25 @@ describe('increment-build-loop', () => {
           branch: WORK_BRANCH,
           outcome: 'landed',
           prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('stops at a halt gate once the increment has landed', async () => {
+        const run = await runPerf(
+          { increments: ['inc-014', 'inc-015'], stopAfter: 2 },
+          {
+            'inc-014 gate check': { ok: false, summary: 'Look at the report.' }
+          }
+        )
+
+        expect({
+          stopped: run.result.stopped,
+          reviewChecks: run.result.reviewChecks,
+          nextStarted: labelsOf(run).includes('inc-015 start')
+        }).toEqual({
+          stopped: { reason: 'gate', detail: 'inc-014: Look at the report.' },
+          reviewChecks: [],
+          nextStarted: false
         })
       })
 

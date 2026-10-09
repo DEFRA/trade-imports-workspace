@@ -3172,6 +3172,7 @@ log(
 const results = []
 // One entry per theme spec check the run made, clean or red.
 const specChecks = []
+const reviewChecks = []
 let built = 0
 let lastId = null
 let stopped = null
@@ -4776,7 +4777,7 @@ Return the structured output only.`,
     `Report whether increment ${id} carries a halt gate. Run exactly one command and read it:
 \`jq -r '.increments[] | select(.id=="${id}") | .gate' ${BACKLOG_TILDE}\`
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
-in summary — the run will stop so a human can review before dependent increments proceed.
+in summary.
 Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
     light({ label: `${id} gate check`, phase: 'Done', schema: incrementSchema })
   )
@@ -4787,7 +4788,15 @@ Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
   const themeCheck = await themeSpecCheck(id)
   if (themeCheck) specChecks.push(themeCheck.record)
 
-  const halted = Boolean(gate && !gate.ok)
+  // A branch run is unattended and merges nothing: the whole theme branch waits
+  // for a person anyway, so a gate becomes a check for them at the end rather
+  // than a stop mid-theme.
+  const gated = Boolean(gate && !gate.ok)
+  if (gated && IS_BRANCH) {
+    log(`${id}: review check for the finished branch — ${gate.summary}`)
+    reviewChecks.push({ id, check: gate.summary })
+  }
+  const halted = gated && !IS_BRANCH
   if (halted) {
     log(`${id}: HALT-FOR-REVIEW GATE — stopping the run. ${gate.summary}`)
     results.push({ id, ticket: ticket?.key, outcome: 'halted-at-gate', detail: gate.summary })
@@ -4823,4 +4832,4 @@ if (workspaceLeftOn) {
 
 log(`${WORKAREA_REL}: ${built} increment(s) landed — stopping: ${stopped.reason}. ${stopped.detail}`)
 
-return { increments: results, specChecks, stopped }
+return { increments: results, specChecks, reviewChecks, stopped }

@@ -298,7 +298,8 @@ theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)) and `sto
 - at **`agent-budget`**, before starting an increment that would take the run past the
   `Workflow` tool's cap of 1000 agents. An increment is up to 41 agents on Claude and 47 on
   Codex, so a run fits roughly 24 or 21 of them. Nothing is wrong: launch again;
-- at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
+- at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
+  gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
 - at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
   `tim spec gaps --none` is red under a prefix the theme touched. The row has landed; the
   detail names the findings and the `catch-up and cover <set>` to run;
@@ -740,7 +741,9 @@ The worked example for the frontend alignment sync:
   commodity model) are. The judge absorbs routine review triage; it does not absorb these.
   The loop lands the increment, then stops. This is a row's own field, honoured regardless of
   `requireApproval` — a checkpoint somebody set deliberately on that increment, not a setting
-  on the run.
+  on the run. Under the branch lifecycle the run is unattended and merges nothing, so the gate
+  does not stop it: the loop logs it, returns it in `reviewChecks` (`{ id, check }`) and
+  carries on, for the reviewer of the finished branch.
 - **A red ladder.** Preserved as a pushed wip commit (recoverable — never `reset --hard`),
   the failure recorded in the increment's `notes`, and the run stops.
 - **`requireApproval: true`, if a programme opted into it.** Off by default — the multi-agent

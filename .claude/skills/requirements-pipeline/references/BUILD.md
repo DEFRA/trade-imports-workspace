@@ -564,7 +564,7 @@ handover prompt.
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
 | `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
-| `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
+| `gate` | Full lifecycle only. The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
 | `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves, or a prefix a row reported writing that does not exist. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
@@ -601,7 +601,11 @@ failing.
 **`gate` is honoured regardless of `requireApproval`.** A row's own `gate`
 field is a checkpoint somebody set deliberately on that specific increment —
 data on the backlog, not a setting on the run — and it is unaffected by
-whether the human approval gate is on or off. `awaiting-approval` and
+whether the human approval gate is on or off. **Under the branch lifecycle a
+gate never stops the run**: the run is unattended and merges nothing, so the
+whole theme branch already waits for a person. The loop logs the gate's text
+and returns it in `reviewChecks` (`{ id, check }`), and carries on; put those
+checks in front of the reviewer when the theme finishes. `awaiting-approval` and
 `changes-requested`, by contrast, fire only when `requireApproval: true`, or
 when a repo of the increment sets it on its own entry.
 

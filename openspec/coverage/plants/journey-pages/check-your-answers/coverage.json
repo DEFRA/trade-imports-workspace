@@ -79,10 +79,10 @@
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-004-A",
-          "name": "An unanswered destination reads Not provided, with no error shown",
+          "name": "An unanswered destination reads Not provided, with no address error, and is named as outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render an unanswered destination without a party error", "strength": "full", "notes": "every destination row Not provided; errorSummary null" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render an unanswered destination without a party error", "strength": "full", "notes": "every destination row Not provided; no party error, and the summary names the destination as a task still to complete" }
           ]
         },
         {
@@ -235,6 +235,31 @@
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "accepts a late notification and shows the stored late banner on the read-only view", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits an on-time notification without a late banner", "strength": "full", "notes": "late heading count 0 on read-only CYA" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render submitted lateness only from the stored late value", "strength": "full", "notes": "late and on-time; clock must not recompute" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-012",
+      "name": "An unfinished notification names every outstanding task",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-012-A",
+          "name": "Viewing an unfinished notification names each outstanding task",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every outstanding task on an incomplete notification, linking to its page with the change context", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "asserts the missing contact is named; does not follow its link" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-012-B",
+          "name": "Continuing from an unfinished notification is refused, keeping the user on the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete notification, naming what is outstanding", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "" }
           ]
         }
       ]

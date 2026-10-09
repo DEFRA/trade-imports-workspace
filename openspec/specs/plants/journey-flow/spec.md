@@ -80,15 +80,16 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 - **WHEN** the journey reaches the arrival section
 - **THEN** arrival status is not offered, and arrival details is offered instead
 
-### Requirement: Check your answers, the declaration and the confirmation are reachable only once every task row is ready
+### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
 **ID**: REQ-PLANTS-FLOW-006
-The system MUST withhold the review section — check your answers, the declaration and the confirmation — until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification still owes, naming what is outstanding. The Overview's check-and-submit row MUST stay withheld until every task row is ready (see REQ-PLANTS-OB-REVIEW-001), and the system MUST withhold the declaration and the confirmation until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
 
-#### Scenario: The review section is withheld while a task row is outstanding
+#### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-PLANTS-FLOW-006-A
 - **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional
-- **WHEN** the user tries to reach check your answers
-- **THEN** the review section is not open to them
+- **WHEN** the user continues from check your answers
+- **THEN** they stay on check your answers, which names what is outstanding
+- **AND** the declaration is not opened
 
 #### Scenario: The review section opens once every row is fulfilled, not applicable or optional
 **ID**: SCN-PLANTS-FLOW-006-B
@@ -96,16 +97,16 @@ The system MUST withhold the review section — check your answers, the declarat
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created in this session runs an opening sequence ending on Overview
+### Requirement: A notification created in this session runs an opening sequence ending on check your answers
 **ID**: REQ-PLANTS-FLOW-007
-The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to Overview once every step is done.
+The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence.
 
-#### Scenario: A newly created notification is walked through the opening sequence to Overview
+#### Scenario: A newly created notification is walked through the opening sequence to check your answers
 **ID**: SCN-PLANTS-FLOW-007-A
 - **GIVEN** the user has just created a notification from the dashboard
 - **WHEN** they save each page in turn, answering every step
 - **THEN** they are taken through every in-scope step of the opening sequence in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact
-- **AND** they arrive at Overview once the last step is saved, without being taken into check your answers as part of the sequence
+- **AND** they arrive at check your answers once the last step is saved
 
 #### Scenario: An opening-sequence step not yet in scope is skipped
 **ID**: SCN-PLANTS-FLOW-007-B
@@ -115,9 +116,15 @@ The system MUST walk a newly created notification through an opening sequence of
 
 #### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
 **ID**: SCN-PLANTS-FLOW-007-C
-- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview
+- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or check your answers
 - **WHEN** they open one of the opening sequence's own pages again and save it
 - **THEN** they return to Overview, not to whatever would be the next step of the sequence
+
+#### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
+**ID**: SCN-PLANTS-FLOW-007-D
+- **GIVEN** the user is in the opening sequence with tasks outstanding
+- **WHEN** they save the last step
+- **THEN** check your answers shows the unfinished notification and names every outstanding task
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008

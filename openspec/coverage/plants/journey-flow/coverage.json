@@ -124,9 +124,9 @@
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should fall through to the overview after the run's last step",
+              "test": "Should fall through to the overview when the last step is out of scope",
               "strength": "full",
-              "notes": "outside mid-run, section end \u2192 hub"
+              "notes": "with no step left in scope, the run falls through to the hub"
             },
             {
               "type": "unit",
@@ -264,12 +264,12 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-006",
-      "name": "Check your answers, the declaration and the confirmation are reachable only once every task row is ready",
+      "name": "Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-006-A",
-          "name": "The review section is withheld while a task row is outstanding",
+          "name": "Continuing from check your answers is refused while a task row is outstanding",
           "coverage": "full",
           "tests": [
             {
@@ -278,15 +278,15 @@
               "file": "tests/plants/e2e/features/review.spec.ts",
               "test": "review stays blocked until the final required row is complete",
               "strength": "full",
-              "notes": ""
+              "notes": "Continue on the unfinished review keeps the user on it with the outstanding task named"
             },
             {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/plants/e2e/features/start.spec.ts",
-              "test": "the Overview carries the journey strip and the task rows landed so far",
-              "strength": "partial",
-              "notes": "Check and submit Cannot start yet with no link on a fresh notification"
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+              "test": "Should refuse Continue on an incomplete notification, naming what is outstanding",
+              "strength": "full",
+              "notes": ""
             }
           ]
         },
@@ -317,21 +317,21 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-007",
-      "name": "A notification created in this session runs an opening sequence ending on Overview",
+      "name": "A notification created in this session runs an opening sequence ending on check your answers",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-007-A",
-          "name": "A newly created notification is walked through the opening sequence to Overview",
+          "name": "A newly created notification is walked through the opening sequence to check your answers",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "test": "Should open on commodity-type and end on check your answers",
               "strength": "full",
-              "notes": "opening spine; parties/contact continuation covered separately"
+              "notes": "the run's step list, from the entry question to check your answers"
             },
             {
               "type": "unit",
@@ -347,15 +347,15 @@
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
               "test": "renders accessible confirmation copy, actions and a bare heading",
               "strength": "partial",
-              "notes": "completeNotification helper walks opening run to hub before review \u2014 witness via setup, not the named assertion"
+              "notes": "completeNotification helper walks the opening run to check your answers \u2014 witness via setup, not the named assertion"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/plants/e2e/features/journey.spec.ts",
               "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification",
-              "strength": "partial",
-              "notes": "full happy path includes opening sequence then review; does not stop to assert hub as sequence end alone"
+              "strength": "full",
+              "notes": "the contact save lands on check your answers, which continues to the declaration"
             }
           ]
         },
@@ -410,6 +410,45 @@
               "test": "Save and return to overview saves the choice and reaches the overview",
               "strength": "partial",
               "notes": "after answers exist, exit lands on hub rather than next run step"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-007-D",
+          "name": "The opening sequence ends on check your answers even when tasks are outstanding",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should end the run on check your answers after the contact step, even with tasks outstanding",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+              "test": "Should complete the opening run when check your answers is shown",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js",
+              "test": "in the opening run, Continue goes to check your answers even though the notification is incomplete",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/review.spec.ts",
+              "test": "review stays blocked until the final required row is complete",
+              "strength": "full",
+              "notes": "the contact is left blank, the run still ends on check your answers, and the missing contact is named"
             }
           ]
         }
@@ -587,7 +626,7 @@
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "test": "Should open on commodity-type and end on check your answers",
               "strength": "full",
               "notes": "RUN_STEPS id list has commodities then origin \u2014 no commodity-details page id"
             }

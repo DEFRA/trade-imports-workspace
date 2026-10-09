@@ -1,0 +1,1022 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 2, journey flow, run, task rows and hub. Read in full the 17 files in the part's read list: journeys/linear/flow/flow.js (66 lines: 9 sections in page order, the review gate, FLOW_ONLY_KEYS, ordering rules in its doc comment), flow/run.js (59 lines: RUN_STEPS, the 9-step opening run, and nextRunTarget), flow/task-rows.js (46 lines: 7 task rows and rowStatus), flow/entry-guard.js (62 lines: the deep-link guard), flow/section-captions/index.js with copy.en.js and copy.cy.js (5 caption sections, the caption-free pages), features/index.js (17 route sets and 13 dispatch pages), features/evaluation.js (10 evaluation bindings), obligations/index.js (25 obligations, the obligation set index), the hub feature (controller.js, template.njk, copy.en.js, copy.cy.js: route, Overview heading, 4 numbered groups, 8 row titles, 5 status tags, Return to dashboard button), hub.fit.spec.js (12 tests), section-caption.fit.spec.js (2 tests) and routes-high-risk-plants.js (113 lines: the set's mount and the journey-flow seams it configures). To state how row status, row entry and Continue are worked out, also read the platform helpers these files call (shared/paths.js, bridge/status/index.js, flow/navigation.js, set.js); claims resting on those are marked inferred. Each section's own pages and obligation section files are left to the parts that own them. Claims run: flow order, opening run, task rows and status, entry guard, section captions, feature registry and obligation set, set mount, hub page, then the fit specs, then gaps.",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p2-001",
+      "statement": "The high-risk plants journey has 9 sections in this order: start, commodity, commodityDetails, origin, arrival, destination, parties, contact, review.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:52-66",
+      "quote": "export const sections = [\n  { id: 'start', pages: [dashboardPage] },\n  { id: 'commodity', pages: [commodityTypePage, commoditiesPage] },\n  { id: 'commodityDetails', pages: [commodityDetailsPage] },\n  { id: 'origin', pages: [originPage] },\n  { id: 'arrival', pages: [arrivalStatusPage, arrivalDetailsPage] },\n  { id: 'destination', pages: [placeOfDestinationPage] },\n  { id: 'parties', pages: [consignorPage, identificationNumbersPage] },\n  { id: 'contact', pages: [consignmentContactSelectPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-002",
+      "statement": "The start section holds only the dashboard page (the set's root, slug empty).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:53",
+      "quote": "{ id: 'start', pages: [dashboardPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-003",
+      "statement": "The commodity section asks the commodity type question (slug commodity-type) and then shows the commodities list page (slug commodities).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:54",
+      "quote": "{ id: 'commodity', pages: [commodityTypePage, commoditiesPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-004",
+      "statement": "The commodity details sub-page (slug commodities/details) sits in a section of its own rather than after the list page; it is reached from the commodities list and returns to it, never by continuing past the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:23-27,55",
+      "quote": "The commodity entry sub-page sits in a section of its own rather than after\n * the list page it belongs to. `nextInSection` sends a page's Continue to the\n * next page in the same section, and the list page's Continue leaves the\n * commodity section altogether — the entry page is reached from the list and\n * returns to it, never by continuing past it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-005",
+      "statement": "The commodity details sub-page carries the commodity-type prerequisite: it cannot be reached until the commodity type is answered.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:27-29",
+      "quote": "Its own section still gives it\n * the commodity-type prerequisite that every page after the entry question\n * carries.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-006",
+      "statement": "Every page after the commodity type entry question requires the commodity type to be answered before it can be reached.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:27-29",
+      "quote": "the commodity-type prerequisite that every page after the entry question\n * carries.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-007",
+      "statement": "Origin comes after the commodity details sub-page; because the origin answer is enforced at Continue, every page after origin needs it, and placing it earlier would stop a trader adding a commodity line until they had named a country.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:31-34",
+      "quote": "Origin follows the entry sub-page rather than preceding it. Its answer is\n * enforced at Continue, so every page placed after it needs one; ahead of the\n * entry sub-page it would stop a trader adding a commodity line until they had\n * named a country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-008",
+      "statement": "The arrival section opens on the arrival status question, whose answer decides what the rest of the section asks, and goes on to the arrival details page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:36-37,57",
+      "quote": "The arrival section opens on the arrival-status question, whose answer\n * decides what the rest of the section asks for, and goes on to the arrival\n * details.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-009",
+      "statement": "Potato notifications are never asked the arrival status question: it is out of scope for them, so both the opening run and the arrival row's hub link skip it and land on arrival details, which every commodity type answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:37-41",
+      "quote": "Potato notifications never see the question: `arrivalStatus` is out\n * of scope for them, so the derived page gate fails and both the opening run\n * and the arrival row's hub entry (`rowGatePasses`/`rowEntry`) pass it over,\n * landing on arrival-details instead — a page every commodity type answers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-010",
+      "statement": "The place of destination page is its own section after the arrival section, so Continue on arrival details leaves the arrival section rather than running on into destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:43-50,58",
+      "quote": "It is a section of its own so\n * that Continue leaves the arrival section at the arrival details;\n * `nextInSection` would otherwise run on into the destination page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-011",
+      "statement": "The place of destination page shows one of three questions depending on the arrival status; arrival status is not a prerequisite for it, and a trader entering from the hub with no status answered gets the pre-arrival question.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:43-48",
+      "quote": "so the page usually has a status to work from and\n * shows the right one of its three questions. It is not a prerequisite: a\n * trader entering from the hub with no status answered gets the pre-arrival\n * question, which is what the page falls back to.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-012",
+      "statement": "The parties section asks for the consignor (slug consignors/select) and then the identification numbers (slug identification-numbers).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:59",
+      "quote": "{ id: 'parties', pages: [consignorPage, identificationNumbersPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-013",
+      "statement": "The contact section holds the consignment contact address page (slug consignment/contact/select) alone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:60",
+      "quote": "{ id: 'contact', pages: [consignmentContactSelectPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-014",
+      "statement": "The review section runs check answers (slug notification-view), then the declaration, then the confirmation page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:61-65",
+      "quote": "pages: [notificationViewPage, declarationPage, confirmationPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-015",
+      "statement": "The review section is gated: it cannot be entered until the notification is ready for check your answers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:63",
+      "quote": "gate: (scope) => scope.readyForCheckYourAnswers,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-016",
+      "statement": "The declaration is a flow-only key: it is held as session state rather than as a fulfilled notification answer, and it never counts as user progress.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:18; flow/entry-guard.js:32-35",
+      "quote": "export const FLOW_ONLY_KEYS = ['declaration']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-017",
+      "statement": "Continue on a journey page goes to the next reachable page in the same section, and to the hub when the section has no further reachable page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/flow.js:24-25; src/server/app/flow/navigation.js nextInSection",
+      "quote": "`nextInSection` sends a page's Continue to the\n * next page in the same section",
+      "confidence": "inferred",
+      "note": "The fall-back to the hub comes from the platform's nextInSection in flow/navigation.js (outside the set), which returns hubPath when no later page in the section passes its gate."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-018",
+      "statement": "The opening run asks, in order: commodity type, commodities, origin, arrival status, arrival details, place of destination, consignor, identification numbers, consignment contact.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:26-45",
+      "quote": "export const RUN_STEPS = [\n  { id: commodityTypePage.id, target: flowPageTarget(commodityTypePage) },\n  { id: commoditiesPage.id, target: flowPageTarget(commoditiesPage) },\n  { id: originPage.id, target: flowPageTarget(originPage) },\n  { id: arrivalStatusPage.id, target: flowPageTarget(arrivalStatusPage) },\n  { id: arrivalDetailsPage.id, target: flowPageTarget(arrivalDetailsPage) },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-019",
+      "statement": "In the opening run, Continue on a step goes to the next step whose page the notification can reach; a step whose page is gated out is skipped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:13-14,47-57",
+      "quote": "const flowPageTarget = (page) => (scope, journeyId) =>\n  pageGatePasses(page, scope) ? pagePath(journeyId, page.slug) : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-020",
+      "statement": "When no later run step is reachable (including after the last step, consignment contact), the opening run's Continue goes to the notification's hub (task list).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:58",
+      "quote": "return hubPath(journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-021",
+      "statement": "The commodity details sub-page is not an opening run step: the commodities list sends a trader with no commodity lines there and takes them back to the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:20-21",
+      "quote": "The entry sub-page is not a step: the list page\n * sends a trader with no lines there and takes them back.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-022",
+      "statement": "The opening run skips the arrival status step for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:21-23",
+      "quote": "The\n * arrival-status step is skipped for potatoes, whose notification is never asked the\n * question.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-023",
+      "statement": "The opening run asks arrival details and place of destination of every commodity type.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:23-24",
+      "quote": "Arrival details and destination are asked of every commodity type;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-024",
+      "statement": "The opening run skips the consignor step for potatoes, and every commodity type then reaches identification numbers.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:24-25",
+      "quote": "the consignor step is skipped for potatoes, then every type reaches\n * identification numbers.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-025",
+      "statement": "A page that is not an opening run step (such as commodity details or the review pages) gets no run target, so the run does not decide where its Continue goes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.js:47-51",
+      "quote": "const index = RUN_STEPS.findIndex((step) => step.id === stepId)\n  if (index === -1) {\n    return null\n  }",
+      "confidence": "inferred",
+      "note": "nextRunTarget returns null for a step id not in RUN_STEPS; what the caller does with null is the platform's (outside this part)."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-026",
+      "statement": "The hub has 7 task rows backed by journey pages, in this order: commodities, origin, arrival, destination, consignor, identification numbers, contact.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:27-38",
+      "quote": "export const taskRows = [\n  {\n    id: 'commodities',\n    pages: [commodityTypePage, commoditiesPage, commodityDetailsPage]\n  },\n  { id: 'origin', pages: [originPage] },\n  { id: 'arrival', pages: [arrivalStatusPage, arrivalDetailsPage] },\n  { id: 'destination', pages: [placeOfDestinationPage] },\n  { id: 'consignor', pages: [consignorPage], conditional: true },\n  { id: 'identificationNumbers', pages: [identificationNumbersPage] },\n  { id: 'contact', pages: [consignmentContactSelectPage] }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-027",
+      "statement": "The commodities task row covers the commodity type, commodities list and commodity details pages.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:28-31",
+      "quote": "id: 'commodities',\n    pages: [commodityTypePage, commoditiesPage, commodityDetailsPage]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-028",
+      "statement": "The origin task row covers the origin page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:32",
+      "quote": "{ id: 'origin', pages: [originPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-029",
+      "statement": "The arrival task row covers the arrival status and arrival details pages and is unconditional; for a potato notification it opens on the arrival details page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:19-22,33",
+      "quote": "The arrival row holds the arrival question and the arrival details. The\n * question is out of scope for potatoes, so a potato notification opens the row\n * on the details page instead — every commodity type owes a date. The row is\n * not marked `conditional`: no notification finds the whole of it inapplicable.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-030",
+      "statement": "The destination task row covers the place of destination page and is unconditional, because every commodity type owes a place of destination.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:24-25,34",
+      "quote": "The destination is a row of its own beside it in the same hub group. Every\n * commodity type owes a place of destination, so it too is unconditional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-031",
+      "statement": "The consignor task row is conditional: the hub hides it when the row does not apply to the notification at all (status not applicable), as for potatoes.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:35; features/hub/controller.js:94,117-119",
+      "quote": "{ id: 'consignor', pages: [consignorPage], conditional: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-032",
+      "statement": "The identification numbers task row covers the identification numbers page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:36",
+      "quote": "{ id: 'identificationNumbers', pages: [identificationNumbersPage] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-033",
+      "statement": "The contact task row covers the consignment contact address page.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:37",
+      "quote": "{ id: 'contact', pages: [consignmentContactSelectPage] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-034",
+      "statement": "A task row's status is worked out from the answers its pages collect, giving one of five values: not applicable, not started, in progress, completed (fulfilled) or optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/task-rows.js:42-46; src/server/app/bridge/status/index.js statusOf",
+      "quote": "export const rowParts = (row) =>\n  row.parts ?? row.pages.flatMap((page) => collectsOf(page.id))\n\nexport const rowStatus = (row, answers, inScope, evaluation) =>\n  statusOf(rowParts(row), answers, inScope, evaluation)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-035",
+      "statement": "A task row is not applicable when none of the answers its pages collect is in scope for the notification.",
+      "kind": "rule",
+      "ref": "src/server/app/bridge/status/index.js statusOf",
+      "quote": "const inScopeParts = parts.filter((part) => inScope.has(partKey(part)))\n  if (inScopeParts.length === 0) {\n    return NA\n  }",
+      "confidence": "inferred",
+      "note": "Read in the platform's bridge/status module (outside the set) to explain how task-rows.js rowStatus resolves."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-036",
+      "statement": "A task row with required answers is completed when every required answer is satisfied, in progress when something is started but not all required answers are satisfied, and not started when nothing is started.",
+      "kind": "rule",
+      "ref": "src/server/app/bridge/status/index.js requiredPartsStatus",
+      "quote": "if (requiredSatisfied) {\n    return FULFILLED\n  }\n  return started ? IN_PROGRESS : NOT_STARTED",
+      "confidence": "inferred",
+      "note": "Platform status module, read to explain task-rows.js rowStatus."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-037",
+      "statement": "A task row with no required answers is optional while untouched, and once started is completed when every in-scope answer is satisfied and in progress otherwise.",
+      "kind": "rule",
+      "ref": "src/server/app/bridge/status/index.js optionalOrProgressStatus",
+      "quote": "// No required parts: OPTIONAL if untouched, else FULFILLED/IN_PROGRESS by\n// whether every in-scope part is satisfied.",
+      "confidence": "inferred",
+      "note": "Platform status module, read to explain task-rows.js rowStatus."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-038",
+      "statement": "A hub task row links to the first page in the row the notification can reach; a row is enterable when any of its pages is reachable, not only its first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:98-102,124-126; src/server/app/flow/navigation.js rowEntry, rowGatePasses",
+      "quote": "const openRowItem = (base, row, scope, status, journeyId) => ({\n  ...base,\n  href: rowEntry(row, scope, journeyId),\n  status: statusTag(status)\n})",
+      "confidence": "inferred",
+      "note": "rowEntry and rowGatePasses live in the platform's flow/navigation.js: 'Whether the hub can open a task row at all — true when any of its pages is reachable'."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-039",
+      "statement": "A hub task row none of whose pages is reachable shows the status 'Cannot start yet' and has no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:62-65,96,124-126",
+      "quote": "const blockedRowItem = (base) => ({ ...base, status: CANNOT_START_STATUS })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-040",
+      "statement": "The entry guard applies to paths under the set's /notifications/ prefix that name a journey, but not to the create-notification path itself.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:13,16-20,29",
+      "quote": "if (!path.startsWith(prefix) || path === createPath()) {\n    return false\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-041",
+      "statement": "The entry guard does not apply to the notification action pages amend, cancel-amend, copy and delete.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:14,23-25",
+      "quote": "const ACTION_SLUGS = new Set(['amend', 'cancel-amend', 'copy', 'delete'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-042",
+      "statement": "The entry guard does not apply to the commodity type page or any path beneath it, the journey's entry surface.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:26-29",
+      "quote": "const isEntrySurface =\n    slug === commodityTypePage.slug ||\n    slug.startsWith(`${commodityTypePage.slug}/`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-043",
+      "statement": "The entry guard covers the hub (the notification's own path) as well as every journey page other than commodity type, since those paths name a journey and are not an action or the entry surface.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:21-29",
+      "quote": "return Boolean(journeyId) && !isEntrySurface",
+      "confidence": "inferred",
+      "note": "The hub path /notifications/{journeyId} yields an empty slug, which is neither an action slug nor the entry surface, so it is guarded."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-044",
+      "statement": "A deep link to a guarded journey path is redirected to that journey's commodity type page when the session holds no opening run record for the journey and the notification has no committed user answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:46-62",
+      "quote": "/** Deep-link guard: a journey with neither a run record in this session nor\n * committed user answers is sent to the entry page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-045",
+      "statement": "Only an answer the user entered counts as starting a journey for the entry guard; system-populated obligations and flow-only keys such as the declaration do not.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.js:32-44",
+      "quote": "/** Only a model answer the USER entered starts a journey. System populated\n * obligations do not represent user progress, and flow-only keys such as\n * `declaration` are session state rather than canonical fulfilment, so they\n * never resolve to a manifest obligation. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-046",
+      "statement": "The entry guard runs before every route handler of the high-risk plants set and its redirect takes over the response.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:89-102",
+      "quote": "return target ? h.redirect(target).takeover() : h.continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-047",
+      "statement": "The dashboard page carries the section caption 'Dashboard' (Welsh 'Dangosfwrdd') above its heading.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:33; copy/copy.en.js:13; copy/copy.cy.js:13",
+      "quote": "dashboard: 'Dashboard',",
+      "confidence": "verbatim",
+      "note": "Welsh: dashboard: 'Dangosfwrdd'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-048",
+      "statement": "The commodity type, commodities list, commodity details and origin pages carry the section caption 'About the consignment' (Welsh 'Am y llwyth').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:34-42; copy/copy.en.js:14; copy/copy.cy.js:14",
+      "quote": "aboutTheConsignment: 'About the consignment',",
+      "confidence": "verbatim",
+      "note": "Welsh: aboutTheConsignment: 'Am y llwyth'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-049",
+      "statement": "The arrival status and arrival details pages carry the section caption 'Arrival' (Welsh 'Cyrraedd').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:43; copy/copy.en.js:15; copy/copy.cy.js:15",
+      "quote": "arrival: 'Arrival',",
+      "confidence": "verbatim",
+      "note": "Welsh: arrival: 'Cyrraedd'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-050",
+      "statement": "The place of destination page carries the section caption 'Destination' (Welsh 'Cyrchfan').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:44; copy/copy.en.js:16; copy/copy.cy.js:16",
+      "quote": "destination: 'Destination'",
+      "confidence": "verbatim",
+      "note": "Welsh: destination: 'Cyrchfan'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-051",
+      "statement": "The consignor and identification numbers pages carry the section caption 'Consignment parties' (Welsh 'Partïon y llwyth').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:45-48; copy/copy.en.js:12; copy/copy.cy.js:12",
+      "quote": "consignmentParties: 'Consignment parties',",
+      "confidence": "verbatim",
+      "note": "Welsh: consignmentParties: 'Partïon y llwyth'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-052",
+      "statement": "The overview hub, the consignment contact page, check your answers, the declaration and the confirmation page carry no section caption and open straight into their heading.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:27-30",
+      "quote": "A page that is absent is deliberately bare. The overview hub, the contact\n * page, check your answers, declaration and confirmation open straight into\n * their heading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-053",
+      "statement": "A section caption names where a page sits in the notification: one string per section shared by every page in it, never a caption chosen page by page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/index.js:22-25; copy/copy.en.js:5-8",
+      "quote": "The caption above a page heading tells someone part-way through a long\n * notification which part of it they are in, so the value is a property of\n * where the page sits in the journey, not of the page's own copy. One entry\n * per section, listing its pages — never a string per page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-054",
+      "statement": "The Welsh section captions are machine-drafted, not reviewed by a translator, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-055",
+      "statement": "Each Welsh section caption is taken from Welsh the spec already uses for the same idea, and a section added later must arrive with its own Welsh string rather than an invented one.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.cy.js:2-9",
+      "quote": "A section added later\n// must arrive with its Welsh string; do not invent one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-056",
+      "statement": "The high-risk plants set registers the routes of 17 features: cancel or amend, confirmation, declaration, check answers, consignment contact, identification numbers, dashboard, hub, delete notification, commodity type, commodities list, commodity details, origin, arrival status, arrival details, consignor and place of destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:38-56",
+      "quote": "export const allRoutes = [\n  ...cancelAmend.routes,\n  ...confirmation.routes,\n  ...declaration.routes,\n  ...checkAnswers.routes,\n  ...contact.routes,\n  ...identificationNumbers.routes,\n  ...dashboard.routes,\n  ...hub.routes,\n  ...deleteNotification.routes,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-057",
+      "statement": "Thirteen journey pages take part in dispatch (gating and task rows): confirmation, declaration, check answers, consignment contact, identification numbers, commodity type, commodities list, commodity details, origin, arrival status, arrival details, consignor and place of destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:22-36",
+      "quote": "export const dispatchPages = [\n  confirmation.meta,\n  declaration.meta,\n  checkAnswers.meta,\n  contact.meta,\n  identificationNumbers.meta,\n  commodityType.meta,\n  commoditiesList.meta,\n  commodityDetails.meta,\n  origin.meta,\n  arrivalStatus.meta,\n  arrivalDetails.meta,\n  consignor.meta,\n  placeOfDestination.meta\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-058",
+      "statement": "The dashboard and the hub collect nothing, are never gated and are never a task row.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:19-20",
+      "quote": "// Neither the dashboard nor the hub exports meta: they collect nothing, are\n// never gated and are never a task row, so they stay out of the dispatch index.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-059",
+      "statement": "Delete notification and cancel or amend are notification actions, not journey pages.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/index.js:21",
+      "quote": "// Delete-notification and cancel-amend are action slugs, not journey pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-060",
+      "statement": "Ten features contribute to working out whether the notification's obligations are fulfilled: review, consignment contact, identification numbers, commodity type, commodities, origin, arrival status, arrival details, place of destination and consignor.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/evaluation.js:13-24",
+      "quote": "export const featureEvaluationBindings = Object.freeze([\n  review,\n  contact,\n  identificationNumbers,\n  commodityType,\n  commodities,\n  origin,\n  arrivalStatus,\n  arrivalDetails,\n  placeOfDestination,\n  consignor\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-061",
+      "statement": "The plants obligation set holds 25 obligations.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:61-87",
+      "quote": "export const obligations = [\n  lateNotificationIndicator,\n  contactAddress,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-062",
+      "statement": "The review section of the obligation set holds the late notification indicator.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:1",
+      "quote": "import { lateNotificationIndicator } from './sections/review.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-063",
+      "statement": "The contact section of the obligation set holds the contact address.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:2",
+      "quote": "import { contactAddress } from './sections/contact.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-064",
+      "statement": "The parties section of the obligation set holds the supplier, producer and crop identification numbers, the consignment number and the consignor.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:3-9",
+      "quote": "import {\n  supplierIdentificationNumber,\n  producerIdentificationNumber,\n  cropIdentificationNumber,\n  consignmentNumber,\n  consignor\n} from './sections/parties.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-065",
+      "statement": "The arrival section of the obligation set holds the arrival date, arrival status, arrival time and proposed place of landing.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:10-15",
+      "quote": "import {\n  arrivalDate,\n  arrivalStatus,\n  arrivalTime,\n  proposedPlaceOfLanding\n} from './sections/arrival.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-066",
+      "statement": "The commodity section of the obligation set holds category, commodity code, commodity line, commodity type, EPPO code, genus, phytosanitary treatments, potato intended use, potato variety, quantity, size of tree and species.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:16-29",
+      "quote": "import {\n  category,\n  commodityCode,\n  commodityLine,\n  commodityType,\n  eppoCode,\n  genus,\n  phytosanitaryTreatments,\n  potatoIntendedUse,\n  potatoVariety,\n  quantity,\n  sizeOfTree,\n  species\n} from './sections/commodity.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-067",
+      "statement": "The destination section of the obligation set holds the place of destination.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:30",
+      "quote": "import { placeOfDestination } from './sections/destination.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-068",
+      "statement": "The origin section of the obligation set holds the country of origin.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:31",
+      "quote": "import { countryOfOrigin } from './sections/origin.js'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-069",
+      "statement": "An obligation that other obligations sit within (such as a repeating commodity line) is treated as a group.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/index.js:89-91",
+      "quote": "export const groups = obligations.filter((obligation) =>\n  obligations.some((other) => other.within === obligation)\n)",
+      "confidence": "inferred",
+      "note": "Which obligations are groups depends on the section files (other parts); commodityLine is the likely one."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-070",
+      "statement": "The high-risk plants set is mounted at the path /high-risk-plants.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:49,55; src/server/app/sets/high-risk-plants/set.js:6-7",
+      "quote": "export const SET_BASE = `/${SET_ID}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-071",
+      "statement": "The set's request guards are confined to its own routes, so another set mounted on the same server does not run the plants set's guards.",
+      "kind": "constraint",
+      "ref": "src/server/app/routes-high-risk-plants.js:57-60",
+      "quote": "// Every extension below is sandboxed to this plugin's realm. Without\n        // `{ sandbox: 'plugin' }` Hapi registers it server-wide, so a second\n        // set's routes would run this set's guards and the last registration\n        // would win.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-072",
+      "statement": "The service refuses to start if the plants set leaves any journey seam unconfigured, rather than answering with a silent fallback at request time.",
+      "kind": "non-functional",
+      "ref": "src/server/app/routes-high-risk-plants.js:106-109",
+      "quote": "// Last act of the registration: a seam this set never configured would\n        // otherwise answer with its fallback at request time, and three of\n        // those fallbacks are silent. Refusing here stops the server instead.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-073",
+      "statement": "At start-up the set checks that its obligations are pure and that every obligation has a fulfilment binding.",
+      "kind": "non-functional",
+      "ref": "src/server/app/routes-high-risk-plants.js:83-84",
+      "quote": "assertObligationPurity()\n        assertFulfilmentBindingCoverage()",
+      "confidence": "inferred",
+      "note": "The function names say what is asserted; their bodies are platform code outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-074",
+      "statement": "When answers are read for the plants set, party references that no longer resolve are left out.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:25,82",
+      "quote": "configureAnswersForRead(SET_ID, withoutUnresolvedPartyRefs)",
+      "confidence": "inferred",
+      "note": "Inferred from the function name; parties/index.js belongs to another part."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-075",
+      "statement": "The plants set keeps its own named session cookies and registers a journey cookie.",
+      "kind": "behaviour",
+      "ref": "src/server/app/routes-high-risk-plants.js:87-88",
+      "quote": "configureSession(SET_ID, session, SESSION_COOKIE_NAMES)\n        registerJourneyCookie(server)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-076",
+      "statement": "The overview hub (task list) is served at GET /high-risk-plants/notifications/{journeyId}.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:152-154; src/server/app/shared/paths.js hubRoutePath",
+      "quote": "{ method: 'GET', path: hubRoutePath(), options: kit.routeOptions, handler }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-077",
+      "statement": "Opening the hub completes the notification's opening run, so later Continues no longer follow the run.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:140",
+      "quote": "await completeOpeningRun(request, h, journeyId)",
+      "confidence": "inferred",
+      "note": "completeOpeningRun lives in the platform's flow/run-state.js; the effect on later Continues is read from its name."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-078",
+      "statement": "The hub's page heading is 'Overview' (Welsh 'Trosolwg'), shown as an extra-large heading, and the page title is the same.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:9; copy/copy.cy.js:3; template.njk:6; controller.js:144-145",
+      "quote": "title: 'Overview',",
+      "confidence": "verbatim",
+      "note": "Welsh: title: 'Trosolwg'. Template: <h1 class=\"govuk-heading-xl\">{{ heading }}</h1>"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-079",
+      "statement": "The hub has a Back link to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:144",
+      "quote": "...kit.base(copy.title, { backLink: dashboardPath(), journey }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-080",
+      "statement": "Below the task lists the hub shows a secondary button 'Return to dashboard' (Welsh 'Dychwelyd i’r dangosfwrdd') linking to the dashboard.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/template.njk:17-21; copy/copy.en.js:10; copy/copy.cy.js:4",
+      "quote": "returnToDashboard: 'Return to dashboard',",
+      "confidence": "verbatim",
+      "note": "Welsh: returnToDashboard: 'Dychwelyd i’r dangosfwrdd'. Template classes: \"govuk-button--secondary\", href: dashboardHref."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-081",
+      "statement": "The hub renders numbered groups in order, each as a medium heading followed by a GOV.UK task list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/template.njk:8-15",
+      "quote": "{% for group in groups %}\n    <h2 class=\"govuk-heading-m\">{{ group.caption }}</h2>\n    {{ govukTaskList({\n      idPrefix: group.id,\n      items: group.items,\n      classes: \"govuk-!-margin-bottom-8\"\n    }) }}\n  {% endfor %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-082",
+      "statement": "The hub's four groups and the rows each holds are: about the consignment (commodities, origin); arrival and destination (arrival, destination); consignment parties (consignor, identification numbers, contact); check and submit (review).",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:35-43",
+      "quote": "export const GROUPS = [\n  { id: 'about-the-consignment', rows: ['commodities', 'origin'] },\n  { id: 'arrival-and-destination', rows: ['arrival', 'destination'] },\n  {\n    id: 'consignment-parties',\n    rows: ['consignor', 'identificationNumbers', 'contact']\n  },\n  { id: 'check-and-submit', rows: ['review'] }\n]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-083",
+      "statement": "A hub group with no visible rows is not rendered.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:32-33,136",
+      "quote": "})).filter((group) => group.items.length > 0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-084",
+      "statement": "The first hub group heading reads '1. About the consignment' (Welsh '1. Am y llwyth').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:22; copy/copy.cy.js:16",
+      "quote": "'about-the-consignment': '1. About the consignment',",
+      "confidence": "verbatim",
+      "note": "Welsh: '1. Am y llwyth'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-085",
+      "statement": "The second hub group heading reads '2. Arrival and destination' (Welsh '2. Cyrraedd a chyrchfan').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:23; copy/copy.cy.js:17",
+      "quote": "'arrival-and-destination': '2. Arrival and destination',",
+      "confidence": "verbatim",
+      "note": "Welsh: '2. Cyrraedd a chyrchfan'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-086",
+      "statement": "The third hub group heading reads '3. Consignment parties' (Welsh '3. Partïon y llwyth').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:24; copy/copy.cy.js:18",
+      "quote": "'consignment-parties': '3. Consignment parties',",
+      "confidence": "verbatim",
+      "note": "Welsh: '3. Partïon y llwyth'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-087",
+      "statement": "The fourth hub group heading reads '4. Check and submit' (Welsh '4. Gwirio a chyflwyno').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:25; copy/copy.cy.js:19",
+      "quote": "'check-and-submit': '4. Check and submit'",
+      "confidence": "verbatim",
+      "note": "Welsh: '4. Gwirio a chyflwyno'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-088",
+      "statement": "The hub group headings 'Arrival and destination' and 'Consignment parties' are provisional, awaiting a copy pass under ruling d-069, with no source behind them.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:18-20",
+      "quote": "// AWAITING THE COPY PASS — 'Arrival and destination' and 'Consignment\n  // parties' are new hub strings with no source behind them (journey-spec.json\n  // pages[hub].provisionalCopy, decisions.json d-069).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-089",
+      "statement": "The Welsh hub copy is machine-drafted, not reviewed by a translator, must not ship without Welsh Language Standards sign-off, and '2. Cyrraedd a chyrchfan' awaits the copy pass.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.cy.js:1,12-14",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-090",
+      "statement": "The commodities task row is titled 'What are you importing?' (Welsh 'Beth ydych chi’n ei fewnforio?').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:32; copy/copy.cy.js:26",
+      "quote": "commodities: { title: 'What are you importing?' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-091",
+      "statement": "The origin task row is titled 'Where is this consignment coming from?' (Welsh 'O ble mae’r llwyth hwn yn dod?').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:33; copy/copy.cy.js:27",
+      "quote": "origin: { title: 'Where is this consignment coming from?' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-092",
+      "statement": "The arrival task row is titled 'Arrival details' (Welsh 'Manylion cyrraedd').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:34; copy/copy.cy.js:28",
+      "quote": "arrival: { title: 'Arrival details' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-093",
+      "statement": "The destination task row is titled 'Place of destination' (Welsh 'Man cyrchfan').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:35; copy/copy.cy.js:29",
+      "quote": "destination: { title: 'Place of destination' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-094",
+      "statement": "The consignor task row is titled 'Consignor or exporter' (Welsh 'Anfonwr neu allforiwr').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:31; copy/copy.cy.js:25",
+      "quote": "consignor: { title: 'Consignor or exporter' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-095",
+      "statement": "The identification numbers task row is titled 'Identification numbers' (Welsh 'Rhifau adnabod').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:30; copy/copy.cy.js:24",
+      "quote": "identificationNumbers: { title: 'Identification numbers' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-096",
+      "statement": "The contact task row is titled 'Contact address for consignment' (Welsh 'Cyfeiriad cyswllt ar gyfer y llwyth').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:29; copy/copy.cy.js:23",
+      "quote": "contact: { title: 'Contact address for consignment' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-097",
+      "statement": "The review task row is titled 'Check and submit' (Welsh 'Gwirio a chyflwyno').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/copy/copy.en.js:28; copy/copy.cy.js:22",
+      "quote": "review: { title: 'Check and submit' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-098",
+      "statement": "A hub task row can show a hint under its title, but no row has a hint today.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:120-123; copy/copy.en.js:27-36",
+      "quote": "...(hint ? { hint: { text: hint } } : {})",
+      "confidence": "inferred",
+      "note": "No rows entry in copy.en.js or copy.cy.js has a hint key; hub.fit.spec.js asserts the commodities row has no .govuk-task-list__hint."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-099",
+      "statement": "A completed task row shows a green tag 'Completed' (Welsh 'Wedi’i gwblhau').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:48-50; copy/copy.en.js:12; copy/copy.cy.js:6",
+      "quote": "tag: { text: copy.statuses.completed, classes: 'govuk-tag--green' }",
+      "confidence": "verbatim",
+      "note": "EN: completed: 'Completed'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-100",
+      "statement": "An optional task row shows the plain text 'Optional' (Welsh 'Dewisol') with no tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:51; copy/copy.en.js:13; copy/copy.cy.js:7",
+      "quote": "[OPTIONAL]: { text: copy.statuses.optional },",
+      "confidence": "verbatim",
+      "note": "EN: optional: 'Optional'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-101",
+      "statement": "An in-progress task row shows a light blue tag 'In progress' (Welsh 'Ar y gweill').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:52-54; copy/copy.en.js:14; copy/copy.cy.js:8",
+      "quote": "tag: { text: copy.statuses.inProgress, classes: 'govuk-tag--light-blue' }",
+      "confidence": "verbatim",
+      "note": "EN: inProgress: 'In progress'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-102",
+      "statement": "A not-started task row shows a blue tag 'Not yet started' (Welsh 'Heb ddechrau eto'), and any status without its own tag falls back to it.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:55-60; copy/copy.en.js:15; copy/copy.cy.js:9",
+      "quote": "tag: { text: copy.statuses.notYetStarted, classes: 'govuk-tag--blue' }",
+      "confidence": "verbatim",
+      "note": "Fallback: const statusTag = (status) => STATUS_TAG[status] ?? STATUS_TAG[NOT_STARTED]"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-103",
+      "statement": "A blocked task row shows 'Cannot start yet' (Welsh 'Methu dechrau eto') in the GOV.UK cannot-start-yet status style, with no tag.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:62-65; copy/copy.en.js:16; copy/copy.cy.js:10",
+      "quote": "const CANNOT_START_STATUS = {\n  text: copy.statuses.cannotStartYet,\n  classes: 'govuk-task-list__status--cannot-start-yet'\n}",
+      "confidence": "verbatim",
+      "note": "EN: cannotStartYet: 'Cannot start yet'"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-104",
+      "statement": "The 'Check and submit' row shows 'Cannot start yet' with no link until the notification is ready for check your answers.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:82-84",
+      "quote": "if (!sectionGatePasses(section, scope)) {\n    return { ...base, status: CANNOT_START_STATUS }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-105",
+      "statement": "Once the notification is ready for check your answers, the 'Check and submit' row links to the first reachable review page (check answers) and shows the review section's status.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.js:85-91",
+      "quote": "href: sectionEntry(REVIEW_ROW_ID, scope, journeyId),\n    status: statusTag(\n      sectionStatus(section, answers, scope.inScope, evaluation)\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-106",
+      "statement": "Fit test: starting a notification from the dashboard's start button lands on the commodity type page, and opening the notification's hub then shows the 'Overview' level 1 heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:43-66 'starting a notification lands on the Overview heading'",
+      "quote": "test('starting a notification lands on the Overview heading'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-107",
+      "statement": "Fit test: the hub shows the journey strip's draft tag and the notification reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:68-77 'shows the draft tag and the notification reference'",
+      "quote": "page.getByText(sharedCopy.journeyStrip.draft, { exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-108",
+      "statement": "Fit test: the hub's 'Return to dashboard' button and its Back link both point to the dashboard, and following Back lands there.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:79-92 'offers Return to dashboard and a Back link, both to the dashboard'",
+      "quote": "test('offers Return to dashboard and a Back link, both to the dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-109",
+      "statement": "Fit test: a new notification's hub shows the 'About the consignment' group, four task lists, and a commodities row linked to the commodity type page with 'Not yet started' and no hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:94-119 'renders the first group and its commodities row, linked to the page'",
+      "quote": "test('renders the first group and its commodities row, linked to the page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-110",
+      "statement": "Fit test: while the commodity type is unanswered the origin row shows 'Cannot start yet' and has no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:121-132 'renders the origin row blocked while the entry question is unanswered'",
+      "quote": "test('renders the origin row blocked while the entry question is unanswered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-111",
+      "statement": "Fit test: while the commodity type is unanswered the hub shows the 'Arrival and destination' group, with the arrival row showing 'Cannot start yet' and no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:134-148 'renders the arrival group and its row, blocked while the entry question is unanswered'",
+      "quote": "test('renders the arrival group and its row, blocked while the entry question is unanswered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-112",
+      "statement": "Fit test: while the commodity type is unanswered the destination row shows 'Cannot start yet' and has no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:150-161 'renders the destination row blocked while the entry question is unanswered'",
+      "quote": "test('renders the destination row blocked while the entry question is unanswered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-113",
+      "statement": "Fit test: the hub renders no group heading for a group with no task row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:163-173 'renders no group that has landed no task row'",
+      "quote": "test('renders no group that has landed no task row'",
+      "confidence": "verbatim",
+      "note": "Today all four groups are in RENDERED_GROUP_IDS, so the loop has no caption to check."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-114",
+      "statement": "Fit test: the hub's first render has no serious or critical axe accessibility violations against WCAG 2.0, 2.1 and 2.2 A and AA tags.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:175-195 'has no serious or critical axe violations on the initial render'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-115",
+      "statement": "Fit test: after saving each commodity type with 'Save and return to hub', the consignor row shows 'Cannot start yet' for plants for planting and for wood and cut trees, and is absent for potatoes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:198-226 'shows consignor only for plants and wood notifications'",
+      "quote": "test('shows consignor only for plants and wood notifications'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-116",
+      "statement": "Fit test: before its prerequisites are answered the identification numbers row is visible, shows 'Cannot start yet' and has no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:228-237 'shows the identification numbers row blocked before prerequisites are answered'",
+      "quote": "test('shows the identification numbers row blocked before prerequisites are answered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-117",
+      "statement": "Fit test: choosing 'Cancel and return to hub' on the commodity type page of a new notification reaches the hub, where the contact row shows 'Cannot start yet' and has no link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js:239-254 'contact task is visible and gated before the origin is answered'",
+      "quote": "test('contact task is visible and gated before the origin is answered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-118",
+      "statement": "Fit test: the dashboard shows the caption 'Dashboard' as an extra-large caption placed directly above its extra-large page heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:14-25 'names the dashboard above its heading'",
+      "quote": "page.locator('span.govuk-caption-xl + h1.govuk-heading-xl')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-119",
+      "statement": "Fit test: a page carrying a section caption (the dashboard) has no serious or critical axe violations against WCAG 2.0 A and AA tags.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js:27-47 'has no serious or critical axe violations with a caption on the page'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p2-120",
+      "statement": "No fit test proves the section caption on any page other than the dashboard; the 'About the consignment', 'Arrival', 'Destination' and 'Consignment parties' captions are untested end to end here.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/section-caption.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in section-caption.fit.spec.js and hub.fit.spec.js; the pages' own fit specs belong to other parts and may cover it."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-121",
+      "statement": "No hub fit test proves the 'Check and submit' row: neither its blocked state nor its link and status once the notification is ready.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Every test in hub.fit.spec.js was checked; none names copy.rows.review."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-122",
+      "statement": "The hub shows no summary of progress, such as how many sections are complete; the hub copy and template are silent on one.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/template.njk; copy/copy.en.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Recorded so the reconciler can weigh it against a prototype task list that may show a completion count."
+    },
+    {
+      "id": "repo-plantsfrontend-p2-123",
+      "statement": "No hub fit test proves the 'Completed', 'In progress' or 'Optional' status tags; the tests cover only 'Not yet started' and 'Cannot start yet'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -8,6 +8,7 @@
       "claims": [
         "document-dr1-parity-backlog-p7-060",
         "document-dr1-parity-backlog-p7-062",
+        "document-dr1-parity-notes-p1-014",
         "prototype-dr2-1-source-p15-001",
         "prototype-dr2-1-source-p15-002",
         "prototype-dr2-1-source-p15-112",
@@ -148,13 +149,15 @@
     },
     {
       "id": "req-1115",
-      "statement": "Search and the Type filter sit inside a collapsible 'Filter addresses' disclosure with a chevron, collapsed when the list loads, so the search field is hidden until the user opens it. It is built on the GOV.UK details component, styled to match the design.",
+      "statement": "Search and the Type filter sit inside a collapsible 'Filter addresses' disclosure with a chevron, collapsed when the list loads, so the search field is hidden until the user opens it. It is the GOV.UK details component, styled to match the design, so it opens and closes without JavaScript.",
       "why": "Design Release 2.1 tucks filtering away behind one disclosure.",
       "claims": [
         "prototype-dr2-1-source-p15-008",
         "prototype-dr2-1-specs-p6-085",
         "prototype-dr2-1-specs-p6-099",
         "repo-insfrontend-p2-005",
+        "ruling-sam-2026-10-09-pm-p1-046",
+        "ruling-sam-2026-10-09-pm-p1-098",
         "trace-e2e-p15-037",
         "trace-ins-fit-p2-054",
         "trace-prototype-dr2-1-p16-020",
@@ -201,17 +204,19 @@
     },
     {
       "id": "req-1118",
-      "statement": "The search field has an icon-only search button whose accessible name is 'Search', in place of a visible 'Search' text button; without JavaScript, pressing Enter in the search field submits the filter form.",
+      "statement": "The search field has an icon-only search button whose accessible name is 'Search', in place of a visible 'Search' text button. It is a real submit button of the filter form, so pressing it, or pressing Enter in the search field, submits the form with or without JavaScript.",
       "why": "Design Release 2.1's search control.",
       "claims": [
-        "trace-prototype-dr2-1-p16-021",
         "repo-insfrontend-p2-007",
+        "ruling-sam-2026-10-09-pm-p1-047",
+        "ruling-sam-2026-10-09-pm-p1-099",
+        "trace-e2e-p9-089",
         "trace-ins-fit-p2-011",
-        "trace-e2e-p9-089"
+        "trace-prototype-dr2-1-p16-021"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today a primary text button 'Search' submits the form (repo-insfrontend-p2-007, trace-e2e-p9-089).",
+      "deltaNote": "Today a primary text button 'Search' submits the form (repo-insfrontend-p2-007, trace-e2e-p9-089). The prototype's icon button is type=button and submits nothing (c-169); the real one submits.",
       "conflicts": [
         "c-169"
       ]
@@ -284,7 +289,7 @@
     },
     {
       "id": "req-1121",
-      "statement": "The address book filter stays a GET form to the address book list carrying the selected tab, the search and the Type filter, and the address book API filters the whole category by the search and type and returns 8 a page. The search parameter keeps today's name, q; the parameter that carries the tab and the values it takes, and the type parameter, are the INS service's to name, not the prototype's. Without JavaScript, pressing Enter in the search field, or choosing a type and pressing Enter, submits it. With JavaScript, the page re-requests the list as the user types or changes Type (debounced) and swaps in the table, results line and pagination without a full reload, with no apply button. The same holds locally, in the stub, on the compose stack and in CDP.",
+      "statement": "The address book filter stays a GET form to the address book list carrying the selected tab, the search and the Type filter, and the address book API filters the whole category by the search and type and returns 8 a page. The search parameter keeps today's name, q; the parameter that carries the tab and the values it takes, and the type parameter, are the INS service's to name, not the prototype's. Pressing the search button, or pressing Enter in the search field or on the Type select, submits the form; changing the Type select submits nothing by itself. The page works fully without JavaScript, and no script re-requests the list as the user types (that waits on design, req-address-book-list-001). The same holds locally, in the stub, on the compose stack and in CDP.",
       "why": "Design Release 2.1 filters live across the whole category with no apply button, and the prototype wins on that look and feel; the real address book is paged on the server and cannot be asked for a whole category, a constraint that overrides only the prototype's way of holding every row in the page (c-169). Sam's 9 October ruling keeps these server-side filters and leaves parameter names to the INS service.",
       "claims": [
         "prototype-dr2-1-source-p15-013-m1",
@@ -297,36 +302,40 @@
         "repo-perftests-p2-022",
         "ruling-sam-2026-10-09-p1-091",
         "ruling-sam-2026-10-09-p1-118",
+        "ruling-sam-2026-10-09-pm-p1-047",
+        "ruling-sam-2026-10-09-pm-p1-061",
+        "ruling-sam-2026-10-09-pm-p1-072",
         "trace-prototype-dr2-1-p16-022-m1",
         "trace-prototype-dr2-1-p16-026"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today search is a server-side GET form submitted by a Search button, and the API answers one server-sized page at a time (repo-insfrontend-p2-005, repo-insfrontend-p2-068, repo-addressbook-p3-010).",
+      "deltaNote": "Today search is a server-side GET form submitted by a Search button, carrying only q, and the API answers one server-sized page at a time (repo-insfrontend-p2-005, repo-insfrontend-p2-068, repo-addressbook-p3-010): there is no tab or type to carry or filter by.",
       "conflicts": [
         "c-169",
-        "c-address-book-list-001"
+        "c-253"
       ]
     },
     {
       "id": "req-1122",
-      "statement": "While a search or Type filter is active the results line counts the matches (for example 'Showing 1-2 of 2'), and pagination shows only when the matches run past one page of 8; with JavaScript both update as the list is re-requested.",
+      "statement": "While a search or Type filter is active, the submitted list's results line counts the matches (for example 'Showing 1-2 of 2'), and pagination shows only when the matches run past one page of 8.",
       "why": "Design Release 2.1 keeps the count true to what is shown while filtering and hides pagination unless the matches need it; nothing the server-paged constraint forces changes that (c-169).",
       "claims": [
-        "trace-prototype-dr2-1-p16-027",
         "repo-addressbook-p3-047",
-        "repo-insfrontend-p2-014"
+        "repo-insfrontend-p2-014",
+        "ruling-sam-2026-10-09-pm-p1-072",
+        "trace-prototype-dr2-1-p16-027"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the results line already counts only matches after a submitted search (repo-addressbook-p3-047, repo-insfrontend-p2-014), but it does not update as the user types.",
+      "deltaNote": "Today the results line already counts only matches after a submitted search (repo-addressbook-p3-047, repo-insfrontend-p2-014), but there is no Type filter to count, and pagination starts past 25 rather than 8 (req-1141).",
       "conflicts": [
         "c-169"
       ]
     },
     {
       "id": "req-1123",
-      "statement": "The list is split into four category tabs, in this order: 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch'; each tab is a link that opens the address book list on that tab, and the selected one is marked. The query parameter that carries the tab, and its values, are the INS service's to name.",
+      "statement": "The list is split into category tabs, in this order: 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch' (the 'Transporter' tab, between the second and Branch, waits with transporter management: req-address-book-list-002). The tabs are the Ministry of Justice sub navigation component, each a link that loads the address book list on that tab, with the selected one marked; the INS frontend adds the @ministryofjustice/frontend package at the same major version as the animals frontend. The query parameter that carries the tab, and its values, are the INS service's to name.",
       "why": "Design Release 2.1 groups addresses by what they are used for.",
       "claims": [
         "prototype-dr2-1-source-p15-022",
@@ -337,27 +346,32 @@
         "prototype-dr2-1-specs-p6-097",
         "repo-addressbook-p3-046",
         "ruling-sam-2026-10-09-p1-091",
+        "ruling-sam-2026-10-09-pm-p1-050",
+        "ruling-sam-2026-10-09-pm-p1-103",
+        "ruling-sam-2026-10-09-pm-p1-104",
+        "ruling-sam-2026-10-09-pm-p2-045",
         "trace-e2e-p15-026",
         "trace-prototype-dr2-1-p16-006"
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "Today the list is one table with no tabs (trace-e2e-p15-026), and the API has no type or usage filter to split by (repo-addressbook-p3-046). The address type each record carries comes from the add-and-edit area's typed record.",
+      "deltaNote": "Today the list is one table with no tabs (trace-e2e-p15-026), the API has no type or usage filter to split by (repo-addressbook-p3-046), and the INS frontend has no MoJ frontend package. The address type each record carries comes from the add-and-edit area's typed record.",
       "conflicts": [
+        "c-253",
         "c-address-book-list-001"
       ]
     },
     {
       "id": "req-1124",
-      "statement": "Each tab panel has its own heading: 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' or 'Branch addresses'.",
+      "statement": "Each tab panel has its own heading: 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses' or 'Branch addresses' ('Transporter addresses' waits with the Transporter tab, req-address-book-list-002).",
       "why": "Design Release 2.1 heads each category's table.",
       "claims": [
         "prototype-dr2-1-source-p15-023",
         "prototype-dr2-1-specs-p6-090",
         "prototype-dr2-1-specs-p6-098",
+        "ruling-sam-2026-10-09-pm-p2-045",
         "trace-prototype-dr2-1-p16-008",
         "trace-prototype-dr2-1-p16-029",
-        "trace-prototype-dr2-1-p16-031",
         "trace-prototype-dr2-1-p16-036"
       ],
       "status": "adopted",
@@ -367,7 +381,7 @@
     },
     {
       "id": "req-1125",
-      "statement": "An address appears on every tab whose category holds any of its types: Origin and Consignor holds place of origin, consignor, consignor or exporter and exporter; Destination, Consignee and Importer holds consignee, importer, place of destination, contact and packer; Transporter holds transporters; Branch holds branch addresses. So an address with several types can appear on more than one tab, and the list API can return one category's addresses. How the address record holds its types is the address book service's design.",
+      "statement": "An address appears on every tab whose category holds any of its types: Origin and Consignor holds place of origin, consignor, consignor or exporter and exporter; Destination, Consignee and Importer holds consignee, importer, place of destination, contact and packer; Branch holds branch addresses. So an address with several types can appear on more than one tab, and the list API can return one category's addresses. The Transporter category waits with the Transporter tab (req-address-book-list-002). How the address record holds its types is the address book service's design.",
       "why": "Design Release 2.1 lists an organisation under each use it is held for.",
       "claims": [
         "prototype-dr2-1-source-p15-024",
@@ -401,7 +415,7 @@
       "delta": "new",
       "deltaNote": "",
       "conflicts": [
-        "c-address-book-list-001"
+        "c-253"
       ]
     },
     {
@@ -417,7 +431,7 @@
       "delta": "new",
       "deltaNote": "",
       "conflicts": [
-        "c-address-book-list-001"
+        "c-253"
       ]
     },
     {
@@ -434,7 +448,7 @@
     },
     {
       "id": "req-1129",
-      "statement": "The filter has a select labelled 'Type' whose first option is 'Select one' (empty value), then options for the current tab only: 'Place of Origin' and 'Consignor' on Origin and Consignor; 'Consignee', 'Importer' and 'Place of Destination' on Destination, Consignee and Importer; 'Commercial' and 'Private' on Transporter; 'Branch Address' on Branch.",
+      "statement": "The filter has a select labelled 'Type' whose first option is 'Select one' (empty value), then options for the current tab only: 'Place of Origin' and 'Consignor' on Origin and Consignor; 'Consignee', 'Importer' and 'Place of Destination' on Destination, Consignee and Importer; 'Branch Address' on Branch. The Transporter tab's 'Commercial' and 'Private' wait with that tab (req-address-book-list-003).",
       "why": "Design Release 2.1 narrows a tab by type.",
       "claims": [
         "prototype-dr2-1-source-p15-013",
@@ -445,7 +459,6 @@
         "repo-addressbook-p3-046",
         "trace-prototype-dr2-1-p16-022",
         "trace-prototype-dr2-1-p16-023",
-        "trace-prototype-dr2-1-p16-024",
         "trace-prototype-dr2-1-p16-025",
         "trace-prototype-dr2-1-p16-131"
       ],
@@ -456,7 +469,7 @@
     },
     {
       "id": "req-1130",
-      "statement": "The Type filter keeps a transporter whose transporter type (Commercial or Private) equals the choice, and any other address when one of its types equals the choice; the list API takes the type and category so the filter runs over the whole category on the server, still organisation-scoped and without deleted addresses. How the record and the API carry type and category is the address book service's design.",
+      "statement": "The Type filter keeps an address when one of its types equals the choice; the list API takes the type and category so the filter runs over the whole category on the server, still organisation-scoped and without deleted addresses. How the record and the API carry type and category is the address book service's design. Filtering transporters by transporter type waits with the Transporter tab (req-address-book-list-003).",
       "why": "Design Release 2.1's type matching, delivered over the real, paged book.",
       "claims": [
         "prototype-dr2-1-source-p15-009",
@@ -557,12 +570,14 @@
     },
     {
       "id": "req-1135",
-      "statement": "On the Transporter tab the table's columns are Name, Address, Approval number and Type, then the hidden Action column, with no Country column: the country is the address's last line, the approval number reads like 'RO/BUCHAREST/T1/00092010', and Type is 'Commercial' or 'Private'.",
+      "statement": "On the Transporter tab the table's columns are Name, Address, Approval number and Type, then the hidden Action column, with no Country column: the country is the address's last line, the approval number reads like 'RO/BUCHAREST/T1/00092010', and Type is 'Commercial' or 'Private'. Built with the Transporter tab once transporter management is decided.",
       "why": "Design Release 2.1 shows transporters by approval and type.",
       "claims": [
         "prototype-dr2-1-source-p15-031",
         "prototype-dr2-1-source-p15-036",
         "prototype-dr2-1-specs-p6-098",
+        "ruling-sam-2026-10-09-pm-p2-043",
+        "ruling-sam-2026-10-09-pm-p2-045",
         "trace-prototype-dr2-1-p16-032",
         "trace-prototype-dr2-1-p16-033",
         "trace-prototype-dr2-1-p16-034",
@@ -572,7 +587,8 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": []
+      "conflicts": [],
+      "blockedBy": "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management); the transporter area is then re-distilled."
     },
     {
       "id": "req-1136",
@@ -623,7 +639,7 @@
     },
     {
       "id": "req-1139",
-      "statement": "The Type column shows the address's type labels joined by ', ', using the list's labels: 'Place of origin', 'Consignor' (for consignor, consignor or exporter and exporter), 'Consignee', 'Importer', 'Place of destination', 'Transporter', 'Branch', 'Contact address' and 'Packer'. These differ in case and wording from the Type filter's options.",
+      "statement": "The Type column shows the address's type labels joined by ', ', using the list's labels: 'Place of origin', 'Consignor' (for consignor, consignor or exporter and exporter), 'Consignee', 'Importer', 'Place of destination', 'Branch', 'Contact address' and 'Packer'. These differ in case and wording from the Type filter's options. The 'Transporter' label waits with the Transporter tab (req-address-book-list-002).",
       "why": "Design Release 2.1 labels uses in sentence case in the table.",
       "claims": [
         "prototype-dr2-1-source-p15-034",
@@ -791,16 +807,18 @@
     },
     {
       "id": "req-1147",
-      "statement": "The success banner stays on the page; it does not hide itself after a few seconds.",
+      "statement": "The success banner stays on the page until the user leaves or reloads it; it does not hide itself after a few seconds, and the INS frontend's address-book-success-banner.js, which hides it, is removed.",
       "why": "Design Release 2.1's banner stays until the user moves on, so slower readers do not miss it.",
       "claims": [
         "prototype-dr2-1-source-p15-007",
         "repo-insfrontend-p2-030",
-        "repo-insfrontend-p2-110"
+        "repo-insfrontend-p2-110",
+        "ruling-sam-2026-10-09-pm-p1-097",
+        "ruling-sam-2026-10-09-pm-p1-100"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today client JavaScript hides the banner 3 seconds after load (repo-insfrontend-p2-030).",
+      "deltaNote": "Today client JavaScript (address-book-success-banner.js) hides the banner 3 seconds after load (repo-insfrontend-p2-030); WCAG 2.2.1 rules out a message that leaves on a timer.",
       "conflicts": [
         "c-171"
       ]
@@ -1571,7 +1589,7 @@
     },
     {
       "id": "req-1186",
-      "statement": "Every new or changed English string on the list, view and delete pages has a Welsh counterpart, kept marked as an unreviewed machine draft until it has Welsh Language Standards sign-off.",
+      "statement": "Every new or changed English string on the list, view and delete pages has a Welsh counterpart, kept marked as an unreviewed machine draft until it has Welsh Language Standards sign-off. The Welsh for the Transporter tab waits with that tab (req-address-book-list-002).",
       "why": "The INS frontend carries Welsh copy for every address book string; leaving the old Welsh would show users a different page in Welsh.",
       "claims": [
         "repo-insfrontend-p2-098",
@@ -1581,7 +1599,8 @@
         "repo-insfrontend-p2-102",
         "repo-insfrontend-p2-103",
         "repo-insfrontend-p2-104",
-        "repo-insfrontend-p2-105"
+        "repo-insfrontend-p2-105",
+        "ruling-sam-2026-10-09-pm-p2-047"
       ],
       "status": "adopted",
       "delta": "change",
@@ -1590,7 +1609,7 @@
     },
     {
       "id": "req-1187",
-      "statement": "The tests repo's shared address book fixtures each carry an address type, so they land on the right category tab and the journey parties still find them, and the pre-run reconcile treats a missing or drifted type as drift.",
+      "statement": "The tests repo's shared address book fixtures each carry an address type (none of them a transporter, which waits with transporter management), so they land on the right category tab and the journey parties still find them, and the pre-run reconcile treats a missing or drifted type as drift.",
       "why": "Once the list is split by type, untyped fixtures would sit on no tab and the E2E specs that find them would break.",
       "claims": [
         "repo-tests-p5-113",
@@ -1676,7 +1695,7 @@
       "conflicts": []
     },
     {
-      "id": "req-address-book-list-001",
+      "id": "req-1858",
       "statement": "The address book list page shows the service's Alpha phase banner, 'This is a new service. Help us improve it and give your feedback by email.', with its feedback link.",
       "why": "Design Release 2.1 shows the Alpha banner on the address book list, and the INS layout already carries it.",
       "claims": [
@@ -1688,8 +1707,8 @@
       "conflicts": []
     },
     {
-      "id": "req-address-book-list-002",
-      "statement": "The address types offered when adding an address read, in order, with these hints: 'Place of Origin' ('The address where the animals begin their journey to Great Britain'), 'Consignor' ('This is the sender of the consignment.'), 'Consignee' ('This is the receiver or buyer of the consignment being shipped or transported.'), 'Importer' ('This is usually the same as the consignee. You can select a different person if needed.'), 'Place of Destination' ('This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'), 'Transporter' ('This is the person or company responsible for transporting the consignment.'), then, after a divider, 'Branch Address' ('This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.').",
+      "id": "req-1859",
+      "statement": "The address types offered when adding an address read, in order, with these hints: 'Place of Origin' ('The address where the animals begin their journey to Great Britain'), 'Consignor' ('This is the sender of the consignment.'), 'Consignee' ('This is the receiver or buyer of the consignment being shipped or transported.'), 'Importer' ('This is usually the same as the consignee. You can select a different person if needed.'), 'Place of Destination' ('This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'), then, after a divider, 'Branch Address' ('This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.'). 'Transporter' is left out until transporter management is decided (req-address-book-list-004).",
       "why": "Design Release 2.1's address type list, which also names the categories the list's tabs and Type filter group by; the choice itself is made on the add-and-edit area's type step.",
       "claims": [
         "prototype-dr2-1-source-p15-105",
@@ -1697,9 +1716,9 @@
         "prototype-dr2-1-source-p15-107",
         "prototype-dr2-1-source-p15-108",
         "prototype-dr2-1-source-p15-109",
-        "prototype-dr2-1-source-p15-110",
         "prototype-dr2-1-source-p15-111",
-        "repo-tests-p5-095"
+        "repo-tests-p5-095",
+        "ruling-sam-2026-10-09-pm-p2-046"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1707,9 +1726,9 @@
       "conflicts": []
     },
     {
-      "id": "req-address-book-list-003",
+      "id": "req-1860",
       "statement": "The INS address book keeps what the k6 performance suite reads from it: the list at /address-book with the heading 'Address book', a search by the q parameter, each row's link to /address-book/<id>, the view page at /address-book/<id> showing the address's name, the delete confirmation at /address-book/<id>/delete whose form posts nothing but the CSRF token, a 200 landing after the delete with no link to the deleted address, and the results line marked data-testid 'address-book-results-label'.",
-      "why": "Sam's 9 October ruling brings trade-imports-performance-tests into only the dashboard move, so the address book changes keep every route and hook the suite uses; no increment changes a real URL path, and the search parameter is the INS service's to name, so it keeps q.",
+      "why": "The address book changes keep every route and hook the k6 suite uses: no increment changes a real URL path, and the search parameter is the INS service's to name, so it keeps q. The suite changes only where a row breaks one of its scripts (c-225).",
       "claims": [
         "repo-perftests-p2-020",
         "repo-perftests-p2-021",
@@ -1720,21 +1739,22 @@
         "repo-perftests-p2-038",
         "repo-perftests-p2-046",
         "ruling-sam-2026-10-09-p1-072",
-        "ruling-sam-2026-10-09-p1-091",
-        "ruling-sam-2026-10-09-p1-200"
+        "ruling-sam-2026-10-09-p1-091"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "The k6 suite already requests these routes and reads these hooks against today's INS address book (repo-perftests-p2-020 to p2-022, p2-033, p2-034, p2-037, p2-038, p2-046).",
       "conflicts": [
-        "c-address-book-list-002"
+        "c-225"
       ]
     },
     {
-      "id": "req-address-book-list-004",
-      "statement": "The k6 performance suite's address book scenarios stay correct once the list is split into category tabs: the setup search that makes sure 'Perf Test Holding' exists, each address-book session's search for the address it has just added, the worst-case search, and the background-volume count of the book read from the results line all look on the tab where those addresses land, and still leave nothing behind in the book.",
-      "why": "Today's suite searches and counts the whole book on one list; once a search and the results line cover only the selected tab, a search on the default tab misses an address of another type, so setup would add a duplicate or fail and the book count would be one tab's.",
+      "id": "req-1861",
+      "statement": "The k6 performance suite's address book scenarios stay correct once the list is split into category tabs, changed in the increment that brings in the tabs: the setup search that makes sure 'Perf Test Holding' exists, each address-book session's search for the address it has just added, and the worst-case search each ask for the tab their address's type lands on; the background-volume count adds up the three tabs' results lines (and the Transporter tab's once it is built), its seeded addresses each carrying one non-transporter type so none is counted twice; and the suite still leaves nothing behind in the book.",
+      "why": "Today's suite searches and counts the whole book on one list; once a search and the results line cover only the selected tab, a search on the default tab misses an address of another type, so setup would add a duplicate or fail and the book count would be one tab's. Ruling 2026-10-09 claim 199 brings the suite into the row that breaks it (c-225).",
       "claims": [
+        "prototype-dr2-1-source-p15-025",
+        "prototype-dr2-1-source-p15-028",
         "repo-perftests-p2-023",
         "repo-perftests-p2-024",
         "repo-perftests-p2-025",
@@ -1742,16 +1762,100 @@
         "repo-perftests-p2-039",
         "repo-perftests-p2-046",
         "ruling-sam-2026-10-09-p1-199",
-        "ruling-sam-2026-10-09-p1-200",
-        "prototype-dr2-1-source-p15-025",
-        "prototype-dr2-1-source-p15-028"
+        "ruling-sam-2026-10-09-pm-p2-045"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the k6 suite searches the whole book with q and reads the whole book's count from the results line (repo-perftests-p2-039, repo-perftests-p2-046), because the list has no tabs.",
       "conflicts": [
-        "c-address-book-list-002"
+        "c-225"
       ]
+    },
+    {
+      "id": "req-address-book-list-001",
+      "statement": "With JavaScript, the address book list re-requests itself as the user types in the search field or changes the Type select (debounced), and swaps in the table, the results line and the pagination without a full page load, with no apply button, enhancing the GET form that already works without JavaScript. Built as design answers design question 5 (live filtering), or dropped if design drops it.",
+      "why": "Design Release 2.1 filters the list as the user types, but Sam's 9 October afternoon ruling holds live filtering until design and the product owner answer design question 5; the no-JavaScript search is built now (req-1121, req-1122).",
+      "claims": [
+        "trace-prototype-dr2-1-p16-026",
+        "trace-prototype-dr2-1-p16-027",
+        "ruling-sam-2026-10-09-pm-p1-017",
+        "ruling-sam-2026-10-09-pm-p1-055",
+        "ruling-sam-2026-10-09-pm-p1-056",
+        "ruling-sam-2026-10-09-pm-p1-057",
+        "ruling-sam-2026-10-09-pm-p1-061",
+        "ruling-sam-2026-10-09-pm-p1-062",
+        "ruling-sam-2026-10-09-pm-p1-071",
+        "ruling-sam-2026-10-09-pm-p1-074",
+        "repo-insfrontend-p2-005"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the list changes only when the search form is submitted (repo-insfrontend-p2-005).",
+      "conflicts": [
+        "c-169"
+      ],
+      "blockedBy": "Design and the product owner answer design question 5 (live filtering) from ruling:sam-2026-10-09-pm; it sits in the waiting-on-design theme in one increment with the party pickers' live row filter."
+    },
+    {
+      "id": "req-address-book-list-002",
+      "statement": "The address book list has a 'Transporter' tab, between 'Destination, Consignee and Importer' and 'Branch', headed 'Transporter addresses', holding addresses of the transporter type; such an address's Type column label reads 'Transporter', and the tab has Welsh copy.",
+      "why": "Design Release 2.1 has a Transporter category in the address book, but Sam's 9 October afternoon ruling blocks transporter management, the address book's Transporter tab included, until it is decided whether and where transporters are managed.",
+      "claims": [
+        "prototype-dr2-1-source-p15-022",
+        "prototype-dr2-1-source-p15-023",
+        "prototype-dr2-1-source-p15-024",
+        "prototype-dr2-1-specs-p6-088",
+        "prototype-dr2-1-specs-p6-097",
+        "trace-prototype-dr2-1-p16-006",
+        "trace-prototype-dr2-1-p16-031",
+        "ruling-sam-2026-10-09-p1-093",
+        "ruling-sam-2026-10-09-pm-p2-031",
+        "ruling-sam-2026-10-09-pm-p2-032",
+        "ruling-sam-2026-10-09-pm-p2-033",
+        "ruling-sam-2026-10-09-pm-p2-036",
+        "ruling-sam-2026-10-09-pm-p2-043",
+        "ruling-sam-2026-10-09-pm-p2-045",
+        "ruling-sam-2026-10-09-pm-p2-047",
+        "repo-addressbook-p3-046",
+        "trace-e2e-p15-026"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the list has no tabs and records carry no type (trace-e2e-p15-026, repo-addressbook-p3-046).",
+      "conflicts": [],
+      "blockedBy": "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management); the transporter area is then re-distilled."
+    },
+    {
+      "id": "req-address-book-list-003",
+      "statement": "On the Transporter tab the Type filter offers 'Select one', 'Commercial' and 'Private', and keeps a transporter whose transporter type equals the choice, filtered on the server over the whole category.",
+      "why": "Design Release 2.1 filters transporters by their type, but the Transporter tab waits with transporter management under Sam's 9 October afternoon ruling.",
+      "claims": [
+        "trace-prototype-dr2-1-p16-024",
+        "prototype-dr2-1-source-p15-017",
+        "ruling-sam-2026-10-09-pm-p2-043",
+        "ruling-sam-2026-10-09-pm-p2-045",
+        "repo-addressbook-p3-046"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today there is no type filter in the page or the API (repo-addressbook-p3-046).",
+      "conflicts": [],
+      "blockedBy": "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management); the transporter area is then re-distilled."
+    },
+    {
+      "id": "req-address-book-list-004",
+      "statement": "The address types offered when adding an address include 'Transporter', after 'Place of Destination' and before the divider, with the hint 'This is the person or company responsible for transporting the consignment.'",
+      "why": "Design Release 2.1 offers a Transporter address type, but Sam's 9 October afternoon ruling leaves it out of the address book's type choice until transporter management is decided.",
+      "claims": [
+        "prototype-dr2-1-source-p15-110",
+        "ruling-sam-2026-10-09-pm-p2-046",
+        "repo-tests-p5-095"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today an address carries no type, so no type is offered (repo-tests-p5-095).",
+      "conflicts": [],
+      "blockedBy": "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management); the transporter area is then re-distilled."
     }
   ],
   "conflicts": [
@@ -1785,7 +1889,7 @@
     },
     {
       "id": "c-169",
-      "about": "How live filtering works: the prototype holds every row of a category in the page and filters it in the browser; the real list is served one server-sized page at a time by the address book API.",
+      "about": "How filtering works: the prototype holds every row of a category in the page and filters it in the browser as the user types; the real list is served one server-sized page at a time by the address book API; Sam's 9 October afternoon ruling holds filtering as the user types until design answers.",
       "positions": [
         {
           "source": "prototype:dr2-1-source",
@@ -1816,10 +1920,15 @@
           "source": "ruling:sam-2026-10-09",
           "says": "inc-067 to inc-069's server-side filters are kept (c-169).",
           "claim": "ruling-sam-2026-10-09-p1-118"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Filtering as the trader types is not built until design answers question 5; search on the Search button or Enter is built now, and the filter is a GET form the button or Enter submits.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-061"
         }
       ],
       "resolution": "precedence",
-      "outcome": "Search on the server, with the prototype's live behaviour on top. The filter stays a GET form to /address-book carrying category, search and type; the address book API filters a whole category by q (the widened fields) and type and returns 8 a page. Without JavaScript, pressing Enter in the search field or choosing a type and pressing Enter submits it. With JavaScript, the page re-requests the list as the user types or changes Type (debounced) and swaps in the table, results line and pagination without a full reload, with no apply button. While filtering, the results line counts the matches and pagination shows only when the matches run past 8. Same locally, in the stub, on the compose stack and in CDP. The prototype's mechanism of loading a category's every address into the page as JSON and filtering in the browser is set aside: the real book is paged on the server and cannot be asked for everything, a persistence and cross-service constraint the prototype cannot express. Sam's 9 October ruling keeps these server-side filters (ruling-sam-2026-10-09-p1-118), and leaves the names of the tab and search parameters to the INS service (c-address-book-list-001).",
+      "outcome": "Search on the server, built now without JavaScript. The filter stays a GET form to /address-book carrying category, search and type; the address book API filters a whole category by q (the widened fields) and type and returns 8 a page. The icon search button is a real submit button, and pressing it or Enter submits the form; while filtering, the results line counts the matches and pagination shows only when the matches run past 8 (req-1118, req-1121, req-1122). Same locally, in the stub, on the compose stack and in CDP. Sam's 9 October afternoon ruling replaces this conflict's earlier outcome that the page re-requests the list as the user types: that JavaScript half is its own increment, blocked on design question 5 in the waiting-on-design theme (req-address-book-list-001). The prototype's mechanism of loading a category's every address into the page as JSON, filtering in the browser and a search button that submits nothing is set aside: the real book is paged on the server and cannot be asked for everything, a persistence and cross-service constraint the prototype cannot express, and every page must work without JavaScript. Sam's 9 October ruling keeps these server-side filters (ruling-sam-2026-10-09-p1-118), and leaves the names of the tab and search parameters to the INS service (c-253).",
       "overruled": [
         "prototype-dr2-1-source-p15-012",
         "trace-prototype-dr2-1-p16-028"
@@ -1894,10 +2003,15 @@
           "source": "repo:insfrontend",
           "says": "The success banner hides itself after 3 seconds.",
           "claim": "repo-insfrontend-p2-030"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The address book's success banner stays, and the INS frontend's script that hides it is removed.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-100"
         }
       ],
       "resolution": "precedence",
-      "outcome": "The ruling and the prototype outrank the INS frontend: these are differences from Design Release 2.1 and none rests on persistence, validation, authentication or cross-service behaviour, so they go. The ruling's own open point on behaviour Design Release 2.1 does not show at all does not apply: the prototype shows its empty, search and banner states. Today's claims are not listed as overruled because the change requirements cite them as the evidence of what is removed."
+      "outcome": "The rulings and the prototype outrank the INS frontend: these are differences from Design Release 2.1 and none rests on persistence, validation, authentication or cross-service behaviour, so they go. Sam's 9 October afternoon ruling confirms the banner stays and its hiding script is removed (WCAG 2.2.1). The 7 October ruling's own open point on behaviour Design Release 2.1 does not show at all does not apply: the prototype shows its empty, search and banner states. Today's claims are not listed as overruled because the change requirements cite them as the evidence of what is removed."
     },
     {
       "id": "c-172",
@@ -2004,7 +2118,7 @@
       "outcome": "Signing out is an authentication constraint the prototype cannot express, so Log out stays. The prototype wins on the rest: Address book is the active item on its pages here, and the Templates item is the shared layout area's change. Nothing is overruled."
     },
     {
-      "id": "c-address-book-list-001",
+      "id": "c-253",
       "about": "The names of the list's query parameters: the prototype carries the tab in a 'category' parameter with values such as origin-and-consignor; Sam's 9 October ruling leaves the tab parameter, its values and the search parameter to the INS service.",
       "positions": [
         {
@@ -2027,39 +2141,22 @@
       "outcome": "The ruling wins: the INS service names the tab parameter and its values, and the search parameter keeps today's q. The prototype still decides the tabs, their order, the default tab and that the form keeps the tab, so its claims stay cited for that look and feel and nothing is overruled. Acceptance criteria assert the tab shown, not a literal query string."
     },
     {
-      "id": "c-address-book-list-002",
-      "about": "Whether trade-imports-performance-tests changes with the address book's category tabs, when Sam's 9 October ruling says only the dashboard move needs it.",
+      "id": "c-address-book-list-001",
+      "about": "Which component draws the address book's category tabs: the prototype's GOV.UK tabs markup against the Ministry of Justice sub navigation Sam's 9 October afternoon ruling names.",
       "positions": [
         {
-          "source": "ruling:sam-2026-10-09",
-          "says": "No row other than inc-129 needs trade-imports-performance-tests, because the move of the documents page is dropped.",
-          "claim": "ruling-sam-2026-10-09-p1-200"
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The category tabs are MoJ sub navigation, each a link that loads the page, with the INS frontend adding the MoJ package.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-104"
         },
         {
-          "source": "ruling:sam-2026-10-09",
-          "says": "Wherever a real service differs from Design Release 2.1 in look and feel, the real service changes to match.",
-          "claim": "ruling-sam-2026-10-09-p1-065"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "says": "The list shows one category tab at a time, Origin and Consignor when none is chosen, and search stays within the tab.",
-          "claim": "prototype-dr2-1-source-p15-025"
-        },
-        {
-          "source": "repo:perftests",
-          "says": "Before a run the suite searches the list for 'Perf Test Holding' and adds it through the INS add form when the search misses it.",
-          "claim": "repo-perftests-p2-039"
-        },
-        {
-          "source": "repo:perftests",
-          "says": "The suite reads the number of addresses in the book from the list's results line.",
-          "claim": "repo-perftests-p2-046"
+          "source": "trace:prototype-dr2-1",
+          "says": "The list page is built from GOV.UK button, tabs, table, pagination, select and input components plus custom pieces.",
+          "claim": "trace-prototype-dr2-1-p16-037"
         }
       ],
-      "resolution": "question",
-      "outcome": "Open. The ruling's reason for leaving the k6 suite out (only the dashboard moves a route it uses) did not weigh the address book tabs, which keep every route but narrow what a search and the results line cover.",
-      "question": "The address book's category tabs narrow the list's search and its results line to one tab, which the k6 suite's setup search, session search and book count rely on covering the whole book: should trade-imports-performance-tests join the increment that brings in the tabs, despite the 9 October ruling naming only the dashboard move?",
-      "default": "The INS address book builds the tabs as Design Release 2.1 shows and keeps every route and hook the suite reads (req-address-book-list-003). trade-imports-performance-tests joins the increment that brings in the tabs: its setup and session searches ask for the tab their address's type lands on, and its background-volume count adds up the four tabs' results lines, its seeded addresses each carrying one type so none is counted twice. What type the suite's add form posts is the add-and-edit area's type step. No other perftests change."
+      "resolution": "precedence",
+      "outcome": "The ruling wins: the tabs are MoJ sub navigation, each a link that loads the list on that tab, and the INS frontend adds @ministryofjustice/frontend at the animals frontend's major version (req-1123). The prototype still decides the tab names, order and default. Its claim is not overruled because it also records the GOV.UK button, table, pagination, select and input components that are built as drawn."
     }
   ]
 }

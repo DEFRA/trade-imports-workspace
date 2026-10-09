@@ -4,7 +4,7 @@
     {
       "id": "req-477",
       "statement": "The documents page sits at the path segment upload-documents within the notification's journey (for example /live-animals/notifications/{reference}/upload-documents), and its scan-status and file addresses move with it.",
-      "why": "Sam's 9 October ruling drops this move as out of scope (claim 20): the prototype decides look and feel, never URL paths, and no increment changes an existing real path to match it. c-059 is overruled, so the page stays at accompanying-documents (req-documents-001).",
+      "why": "Sam's 9 October ruling drops this move as out of scope (claim 20): the prototype decides look and feel, never URL paths, and no increment changes an existing real path to match it. c-059 is overruled, so the page stays at accompanying-documents (req-1822).",
       "claims": [
         "prototype-dr2-1-source-p10-001",
         "prototype-dr2-1-specs-p2-136",
@@ -532,7 +532,7 @@
     {
       "id": "req-504",
       "statement": "The third field is a single text input labelled 'Date of issue', typed as day/month/year and enhanced by the MOJ date picker: a 'Choose date' button opens a calendar dialog with Select and Close.",
-      "why": "The design and the real page agree.",
+      "why": "The design and the real page agree, and the MoJ date picker is one of the accepted components (Sam's 9 October afternoon ruling). That ruling sends the germinal dates' calendar to design because MoJ advises against its picker for dates read from a document, but it scopes design question 12 to the germinal dates and accepts the documents page as distilled, so this existing picker, which enhances a typed text input that works without JavaScript, stays.",
       "claims": [
         "prototype-dr2-1-source-p10-032",
         "prototype-dr2-1-source-p10-033",
@@ -542,6 +542,10 @@
         "repo-perftests-p1-038",
         "repo-perftests-p1-039",
         "repo-tests-p3-007",
+        "ruling-sam-2026-10-09-pm-p1-048",
+        "ruling-sam-2026-10-09-pm-p1-096",
+        "ruling-sam-2026-10-09-pm-p2-051",
+        "ruling-sam-2026-10-09-pm-p2-052",
         "trace-animals-fit-p22-020",
         "trace-animals-fit-p22-022",
         "trace-animals-fit-p22-023",
@@ -648,7 +652,7 @@
     {
       "id": "req-509",
       "statement": "A file may be up to 50MB (50,000,000 bytes): the size bullet says 50MB, the browser and server checks allow it, the route's payload cap is the limit plus 1KiB, and a larger file shows 'The selected file must be smaller than 50MB'. The unit is written '50MB', with no space. One limit applies in every environment.",
-      "why": "Design Release 2.1 states 50MB, and DR1's inc-138 judged the same change. The backend already accepts 50MB. The frontend was put back to 10MB only because CDP's nginx ingress caps request bodies at 10 MiB; a configurable limit was rejected by DR1 because it gives no parity anywhere.",
+      "why": "Design Release 2.1 states 50MB, and DR1's inc-138 judged the same change. The backend already accepts 50MB. The frontend was put back to 10MB only because CDP's nginx ingress caps request bodies at 10 MiB; a configurable limit was rejected by DR1 because it gives no parity anywhere. Sam's 9 October afternoon ruling keeps this change blocked on the CDP ingress body cap, tracked by EUDPA-518.",
       "claims": [
         "document-dr1-parity-backlog-p5-028",
         "document-dr1-parity-backlog-p5-029",
@@ -678,6 +682,8 @@
         "repo-tests-p3-036",
         "repo-tests-p3-037",
         "repo-tests-p3-038",
+        "ruling-sam-2026-10-09-pm-p2-053",
+        "ruling-sam-2026-10-09-pm-p2-054",
         "trace-animals-fit-p22-007",
         "trace-animals-fit-p23-069",
         "trace-animals-fit-p23-071",
@@ -1471,7 +1477,7 @@
     {
       "id": "req-539",
       "statement": "Save and continue goes to the next journey step, Consignment addresses (roles and addresses); when the page was opened from the overview it returns to the overview, and from the review page (or while amending, or from a template review) it returns there.",
-      "why": "Design Release 2.1 puts Upload documents after the transporter and before Consignment addresses, and returns the trader to wherever they came from; the real page always goes to the overview. Sam's 9 October ruling confirms a page opened from its overview task returns to the overview on Save and continue (claim 39), without a ?from=hub marker (c-documents-001).",
+      "why": "Design Release 2.1 puts Upload documents after the transporter and before Consignment addresses, and returns the trader to wherever they came from; the real page always goes to the overview. Sam's 9 October ruling confirms a page opened from its overview task returns to the overview on Save and continue (claim 39), without a ?from=hub marker (c-237).",
       "claims": [
         "prototype-dr2-1-source-p10-002",
         "prototype-dr2-1-source-p10-078",
@@ -1555,13 +1561,13 @@
       "delta": "new",
       "deltaNote": "",
       "conflicts": [
-        "c-documents-001"
+        "c-237"
       ]
     },
     {
       "id": "req-543",
       "statement": "While a trader is creating a template, Upload documents is not offered: the template journey skips the page and its overview has no Documents task to follow. No guard on the page's own address is required.",
-      "why": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment, and Sam's 9 October ruling confirms a template never offers documents. The same ruling says the prototype's template URL guards are not required (claim 21; c-documents-002).",
+      "why": "Design Release 2.1 keeps documents out of templates, because a document belongs to one consignment, and Sam's 9 October ruling confirms a template never offers documents. The same ruling says the prototype's template URL guards are not required (claim 21; c-238).",
       "claims": [
         "prototype-dr2-1-source-p10-003",
         "ruling-sam-2026-10-09-p1-104",
@@ -1571,7 +1577,7 @@
       "delta": "new",
       "deltaNote": "",
       "conflicts": [
-        "c-documents-002"
+        "c-238"
       ]
     },
     {
@@ -1867,32 +1873,33 @@
       "conflicts": []
     },
     {
-      "id": "req-documents-001",
+      "id": "req-1822",
       "statement": "The documents page keeps its address at the accompanying-documents slug within the notification's journey, with its JSON scan-status route and its file download beside it; acceptance criteria assert the page by its heading and destinations, not by a literal path.",
-      "why": "Sam's 9 October ruling overrules the move to upload-documents (claim 20): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes.",
+      "why": "Sam's 9 October ruling overrules the move to upload-documents (claim 20): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes, and with the move dropped no documents row needs trade-imports-performance-tests.",
       "claims": [
-        "ruling-sam-2026-10-09-p1-077",
-        "ruling-sam-2026-10-09-p1-078",
-        "ruling-sam-2026-10-09-p1-072",
-        "ruling-sam-2026-10-09-p1-075",
-        "ruling-sam-2026-10-09-p1-200",
         "repo-frontend-p8-001",
-        "repo-tests-p3-002",
-        "trace-animals-fit-p24-002",
-        "trace-e2e-p12-003",
         "repo-perftests-p1-034",
         "repo-perftests-p1-040",
-        "repo-perftests-p1-042"
+        "repo-perftests-p1-042",
+        "repo-tests-p3-002",
+        "ruling-sam-2026-10-09-p1-072",
+        "ruling-sam-2026-10-09-p1-075",
+        "ruling-sam-2026-10-09-p1-077",
+        "ruling-sam-2026-10-09-p1-078",
+        "ruling-sam-2026-10-09-p1-200",
+        "trace-animals-fit-p24-002",
+        "trace-e2e-p12-003"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p8-001 and trace-e2e-p12-003 serve the page, its /status poll and its file download under accompanying-documents today, and repo-perftests-p1-034 requests it there.",
       "conflicts": [
-        "c-059"
+        "c-059",
+        "c-225"
       ]
     },
     {
-      "id": "req-documents-002",
+      "id": "req-1823",
       "statement": "The documents form keeps the service's own field names and actions: a multipart post of the file with accompanyingDocumentReference, accompanyingDocumentType and accompanyingDocumentDateOfIssue, action=add for Save and add another and action=continue for Save and continue. The prototype's field names are not copied.",
       "why": "Form field names are architecture, which the prototype never decides (Sam's 9 October ruling, claim 17). The k6 performance suite posts these names to add documents and leave the page, so changing them would break it for no visible gain.",
       "claims": [
@@ -1910,7 +1917,7 @@
       "conflicts": []
     },
     {
-      "id": "req-documents-003",
+      "id": "req-1824",
       "statement": "Under the k6 load model every uploaded document's virus scan settles and is not rejected, with a P99 under 60 seconds, the same allowance as upload pages; a scan still pending after 120 seconds counts as stuck. The allowance is measured against CDP's real cdp-uploader: on a local run the scan is a mock, so its timings are not CDP's.",
       "why": "A trader waits on the scan before View file appears, and the performance suite holds the service to this allowance; the documents changes in this programme must not break it.",
       "claims": [
@@ -1927,7 +1934,7 @@
       "conflicts": []
     },
     {
-      "id": "req-documents-004",
+      "id": "req-1825",
       "statement": "The germinal-products set has its own documents page: a copy of the live-animals documents feature folder, taken after this programme's documents changes have landed in live-animals, served at the same slug within the germinal set's journey and behaving as every adopted documents requirement here says. It is one of the germinal set's pages, since only Additional details, CPH number and permanent address are left out of it; its end-to-end, accessibility and security specs sit under tests/animals/{e2e,a11y,security}/germinal-products/.",
       "why": "Sam's 9 October ruling makes germinal products a sibling set whose pages are copies of their live-animals feature folders, taken after the live twin is built, with journey pages at the live-animals slugs (claims 1 to 3 and 15). Duplication is the app's architecture and is never weighed as a cost.",
       "claims": [
@@ -1944,6 +1951,20 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-001",
+      "statement": "The documents rows change the animals frontend (and the animals backend) only: the high-risk plants frontend takes no part of them, because it has no Upload documents page, no Documents task on its overview, no virus scan and no document-upload service.",
+      "why": "Sam's 9 October afternoon ruling has plants take a change in the same increment only where plants has the same page or behaviour, and a row with no plants equivalent leaves plants alone; the ITAHC and the animal document types are animals-only data that is never mirrored.",
+      "claims": [
+        "ruling-sam-2026-10-09-pm-p3-001",
+        "ruling-sam-2026-10-09-pm-p3-003",
+        "ruling-sam-2026-10-09-pm-p3-011"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "The plants frontend on origin/main has no documents feature folder under sets/high-risk-plants, and its services doc puts file attachment out of scope (plants-common-mapping-2026-10-09.json, documents theme: all six rows animals only).",
       "conflicts": []
     }
   ],
@@ -1974,7 +1995,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "Sam's 9 October ruling ranks first and withdraws the earlier outcome: the prototype never decides URL paths, so the page stays at accompanying-documents (req-documents-001) and req-477 is out of scope. The prototype's path claim is set aside; its page content still stands.",
+      "outcome": "Sam's 9 October ruling ranks first and withdraws the earlier outcome: the prototype never decides URL paths, so the page stays at accompanying-documents (req-1822) and req-477 is out of scope. The prototype's path claim is set aside; its page content still stands.",
       "overruled": [
         "prototype-dr2-1-source-p10-001"
       ]
@@ -2635,7 +2656,7 @@
       ]
     },
     {
-      "id": "c-documents-001",
+      "id": "c-237",
       "about": "How the documents page carries where the trader came from: the prototype's ?from=hub / ?from=review marker and hidden 'from' field, or the service's own mechanisms.",
       "positions": [
         {
@@ -2662,7 +2683,7 @@
       ]
     },
     {
-      "id": "c-documents-002",
+      "id": "c-238",
       "about": "Whether opening or submitting the documents page in template mode is guarded by a redirect to the overview.",
       "positions": [
         {

@@ -1,0 +1,1137 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 3 read in full the three row-action features under src/server/app/sets/high-risk-plants/journeys/linear/features/: dashboard (page.js, controller.js, template.njk, notification-helper.js, copy.en.js, copy.cy.js, view-model/sort-options.js, view-model/row/index.js, view-model/row/actions.js, dashboard.fit.spec.js), delete-notification (controller.js, template.njk, copy.en.js, copy.cy.js, delete-notification.fit.spec.js) and cancel-amend (controller.js, template.njk, copy.en.js, copy.cy.js, cancel-amend.fit.spec.js). To resolve what those files reference it also looked up, without claiming their other content, the route helpers in src/server/app/shared/paths.js, the status tag map and CYA_SLUG in src/server/app/shared/kit.js, and the notificationActions and journeyStrip keys in src/server/app/shared/copy.en.js. Covered: the dashboard page (route at the set base, heading, intro, hidden guidance link, start button, Your notifications heading, reference filter, sort select with four options and default, results-range label, one summary card per notification with seven rows, status tags and the Late tag, empty state, previous/next pagination, delete success banner), the start (POST /notifications) and amend (POST /notifications/{journeyId}/amend) actions, the row actions per status (Draft: Resume, Delete; Submitted: View, Amend, Delete; Amending: Resume, Cancel amendment, Delete; no Copy as new), the delete confirmation page (/notifications/{journeyId}/delete) and the cancel amendment page (/notifications/{journeyId}/cancel-amend) with their copy in English and Welsh, guards, outcomes and error handling, and every test in the three fit specs (14 dashboard, 4 delete, 3 cancel-amend).",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p3-001",
+      "statement": "The dashboard is served by a GET route at the root of the high-risk plants set (the set base path).",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:116-119; shared/paths.js:10",
+      "quote": "export const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-002",
+      "statement": "The dashboard page's id is 'dashboard' and its slug is empty.",
+      "kind": "data",
+      "ref": "features/dashboard/page.js:1",
+      "quote": "export const dashboardPage = { id: 'dashboard', slug: '' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-003",
+      "statement": "The dashboard's page title and level-1 heading is 'Import notification service'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:5; template.njk:22",
+      "quote": "title: 'Import notification service',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-004",
+      "statement": "The dashboard heading in Welsh is 'Gwasanaeth hysbysu mewnforio'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:6",
+      "quote": "title: 'Gwasanaeth hysbysu mewnforio',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-005",
+      "statement": "A section caption (styled govuk-caption-xl) renders above the dashboard heading when a caption is supplied.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:21",
+      "quote": "{{ sectionCaption(caption, \"govuk-caption-xl\") }}",
+      "confidence": "verbatim",
+      "note": "The controller does not pass a caption itself; whether one arrives depends on kit.base, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-006",
+      "statement": "The dashboard shows an intro paragraph telling the user what the service is for and what they will do.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:6-11; template.njk:23",
+      "quote": "'Use this service to tell the plant health authorities about high-risk ' + 'plants for planting, potatoes, or wood and cut trees you are importing ' + 'from EU member states, as required by the Plant Health National ' + 'Notification Scheme. You will answer a short set of questions about the ' + 'consignment, then submit your notification.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-007",
+      "statement": "The intro paragraph has a Welsh machine-draft translation.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:7-12",
+      "quote": "'Defnyddiwch y gwasanaeth hwn i roi gwybod i awdurdodau iechyd planhigion ' + 'am blanhigion risg uchel i’w plannu, tatws, neu bren a choed wedi’u ' + 'torri rydych chi’n eu mewnforio o aelod-wladwriaethau’r UE, fel sy’n ' + 'ofynnol gan Gynllun Hysbysu Cenedlaethol Iechyd Planhigion. Byddwch yn ' + 'ateb cyfres fer o gwestiynau am y llwyth, yna’n cyflwyno eich hysbysiad.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-008",
+      "statement": "All dashboard English copy is marked provisional, awaiting a content designer's copy pass.",
+      "kind": "constraint",
+      "ref": "features/dashboard/copy/copy.en.js:1-3",
+      "quote": "// PROVISIONAL COPY — awaiting the copy pass. The spec marks this page\n// provisionalCopy: true, so every string here is a draft the content designer\n// has still to settle.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-009",
+      "statement": "The dashboard Welsh copy is a machine draft not reviewed by a translator and must not ship without Welsh Language Standards sign-off; only the title, start button and four action labels came from the spec.",
+      "kind": "constraint",
+      "ref": "features/dashboard/copy/copy.cy.js:1-4",
+      "quote": "// PROVISIONAL COPY, MACHINE-DRAFT Welsh — not reviewed by a translator. The\n// spec supplies the title, the start button and the four action labels; every\n// other string is a machine draft awaiting the copy pass. Do not ship\n// user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-010",
+      "statement": "A GOV.UK guidance link sentence renders on the dashboard only when a guidance URL is supplied; none exists yet, so it does not render.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:24-28; copy.en.js:12-16",
+      "quote": "// The sentence renders only when the view model supplies a guidance URL.\n  // No URL exists yet, so the link text waits here for one rather than\n  // rendering a '#' href.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-011",
+      "statement": "The guidance link text is 'Check whether your goods are high-risk and when you must notify (GOV.UK)'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:15-16",
+      "quote": "'Check whether your goods are high-risk and when you must notify (GOV.UK)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-012",
+      "statement": "The guidance link text in Welsh is 'Gwiriwch a yw eich nwyddau’n risg uchel a phryd y mae’n rhaid i chi hysbysu (GOV.UK)'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:13-15",
+      "quote": "'Gwiriwch a yw eich nwyddau’n risg uchel a phryd y mae’n rhaid i chi ' + 'hysbysu (GOV.UK)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-013",
+      "statement": "No guidance URL source is configured for the dashboard: the controller never supplies guidanceUrl.",
+      "kind": "data",
+      "ref": "features/dashboard/controller.js:71-98",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the dashboard controller's view model; there is no guidanceUrl key, so the destination of the guidance link is unspecified."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-014",
+      "statement": "The dashboard has a green GOV.UK start button 'Start a new notification', in its own form posting to /notifications with a CSRF crumb.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:30-33; copy.en.js:17; controller.js:75",
+      "quote": "{{ govukButton({ text: copy.startButton, isStartButton: true }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-015",
+      "statement": "The start button in Welsh is 'Dechrau hysbysiad newydd'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:16",
+      "quote": "startButton: 'Dechrau hysbysiad newydd',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-016",
+      "statement": "Starting a notification creates a new journey, begins its linear opening run and redirects to the commodity type page, the first question.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:108-112,127-131",
+      "quote": "const journey = await startJourney(request, h)\n  await beginOpeningRun(request, h, journey.journeyId)\n  return h.redirect(pagePath(journey.journeyId, commodityTypePage.slug))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-017",
+      "statement": "Below the start button the dashboard shows a level-2 heading 'Your notifications' (Welsh 'Eich hysbysiadau').",
+      "kind": "copy",
+      "ref": "features/dashboard/template.njk:35; copy.en.js:18; copy.cy.js:17",
+      "quote": "notificationsHeading: 'Your notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-018",
+      "statement": "The notifications area is laid out with the filter in a left one-third column and the results, sort and cards in a right two-thirds column.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:36-54",
+      "quote": "<div class=\"govuk-grid-column-one-third\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-019",
+      "statement": "The filter panel has a level-3 heading 'Filter notifications' (Welsh 'Hidlo hysbysiadau').",
+      "kind": "copy",
+      "ref": "features/dashboard/template.njk:38; copy.en.js:20; copy.cy.js:19",
+      "quote": "heading: 'Filter notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-020",
+      "statement": "The filter has one text input named referenceNumber labelled 'Keyword or reference' (Welsh 'Allweddair neu gyfeirnod'), prefilled with the current search term.",
+      "kind": "data",
+      "ref": "features/dashboard/template.njk:44-49; copy.en.js:21; copy.cy.js:20",
+      "quote": "label: 'Keyword or reference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-021",
+      "statement": "The filter submits by GET to the dashboard with a 'Search' button (Welsh 'Chwilio') and carries the current sort as a hidden field.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:40-50; copy.en.js:22",
+      "quote": "{% if sort %}\n          <input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />\n        {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-022",
+      "statement": "Although labelled 'Keyword or reference', the filter is passed to the list as a reference number; no other keyword matching is visible in the dashboard.",
+      "kind": "rule",
+      "ref": "features/dashboard/controller.js:56-58",
+      "quote": "listKnownJourneys(request, { page, sort, referenceNumber })",
+      "confidence": "inferred",
+      "note": "How the list call matches the term (exact or partial, reference only or other fields) is in the engine, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-023",
+      "statement": "A search term is trimmed, and a blank or whitespace-only term means no filter.",
+      "kind": "rule",
+      "ref": "features/dashboard/controller.js:39-45",
+      "quote": "const trimmed = value.trim()\n  return trimmed.length > 0 ? trimmed : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-024",
+      "statement": "When a search matches nothing, the results label reads 'No notifications found' (Welsh 'Ni chanfuwyd unrhyw hysbysiadau') instead of 'No Results'.",
+      "kind": "copy",
+      "ref": "features/dashboard/controller.js:47-50; copy.en.js:23",
+      "quote": "noResults: 'No notifications found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-025",
+      "statement": "When a search matches nothing, the empty-state paragraph is not shown.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:117-119",
+      "quote": "{% elif not referenceNumber %}\n        <p class=\"govuk-body\">{{ copy.emptyText }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-026",
+      "statement": "When the user has no notifications and no search is applied, the dashboard says 'You have not started any notifications in this session.'",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:66; template.njk:117-119",
+      "quote": "emptyText: 'You have not started any notifications in this session.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-027",
+      "statement": "The empty-state text in Welsh is 'Nid ydych wedi dechrau unrhyw hysbysiadau yn y sesiwn hon.'",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:65",
+      "quote": "emptyText: 'Nid ydych wedi dechrau unrhyw hysbysiadau yn y sesiwn hon.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-028",
+      "statement": "A bold results-range label sits at the top of the results column.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:55",
+      "quote": "<p class=\"govuk-body govuk-!-font-weight-bold\">{{ resultsLabel }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-029",
+      "statement": "The results label reads 'No Results' when nothing is shown, 'Showing 1 Result' when there is exactly one, 'Showing N of T Results' when a page shows a single item of several, and 'Showing S to E of T Results' otherwise.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:49-55; notification-helper.js:123-135",
+      "quote": "none: 'No Results',\n      one: 'Showing 1 Result',\n      oneOf: (item, total) => `Showing ${item} of ${total} Results`,\n      many: (start, end, total) =>\n        `Showing ${start} to ${end} of ${total} Results`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-030",
+      "statement": "The results label in Welsh reads 'Dim canlyniadau', 'Yn dangos 1 canlyniad', 'Yn dangos N o T o ganlyniadau' or 'Yn dangos S i E o T o ganlyniadau'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:48-54",
+      "quote": "none: 'Dim canlyniadau',\n      one: 'Yn dangos 1 canlyniad',\n      oneOf: (item, total) => `Yn dangos ${item} o ${total} o ganlyniadau`,\n      many: (start, end, total) =>\n        `Yn dangos ${start} i ${end} o ${total} o ganlyniadau`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-031",
+      "statement": "The results range start is (page − 1) × page size + 1 and the end is capped at the total, using the backend's page size.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:106-121",
+      "quote": "const start = (page - 1) * pageSize + 1\n  return {\n    start,\n    end: Math.min(start + itemCount - 1, totalElements),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-032",
+      "statement": "The results label capitalises 'Results' and 'Result' mid-sentence, which does not follow GOV.UK sentence case.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:50-54",
+      "quote": "one: 'Showing 1 Result',",
+      "confidence": "inferred",
+      "note": "Observation only; the copy is marked provisional."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-033",
+      "statement": "A sort select labelled 'Sort by' (Welsh 'Trefnu yn ôl') sits in its own GET form with a secondary button 'Update sort' (Welsh 'Diweddaru’r drefn').",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:57-71; copy.en.js:37-38; copy.cy.js:36-37",
+      "quote": "label: 'Sort by',\n    update: 'Update sort',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-034",
+      "statement": "The sort form keeps the current page number (when above 1) and the current search term as hidden fields.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:58-63",
+      "quote": "{% if currentPage > 1 %}\n          <input type=\"hidden\" name=\"page\" value=\"{{ currentPage }}\" />\n        {% endif %}\n        {% if referenceNumber %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-035",
+      "statement": "The sort offers four options in this order: Arrival (newest to oldest), Arrival (oldest to newest), Date created (newest to oldest), Date created (oldest to newest).",
+      "kind": "data",
+      "ref": "features/dashboard/copy/copy.en.js:39-44; view-model/sort-options.js:8-18; notification-helper.js:9-14",
+      "quote": "arrivalNewest: 'Arrival (newest to oldest)',\n      arrivalOldest: 'Arrival (oldest to newest)',\n      createdNewest: 'Date created (newest to oldest)',\n      createdOldest: 'Date created (oldest to newest)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-036",
+      "statement": "The four sort options carry the query values arrivalDate,desc, arrivalDate,asc, createdAt,desc and createdAt,asc.",
+      "kind": "data",
+      "ref": "features/dashboard/notification-helper.js:9-14",
+      "quote": "'arrivalDate,desc',\n  'arrivalDate,asc',\n  'createdAt,desc',\n  'createdAt,asc'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-037",
+      "statement": "The sort options in Welsh are 'Cyrraedd (mwyaf newydd i’r hynaf)', 'Cyrraedd (hynaf i’r mwyaf newydd)', 'Dyddiad creu (mwyaf newydd i’r hynaf)' and 'Dyddiad creu (hynaf i’r mwyaf newydd)'.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:38-43",
+      "quote": "arrivalNewest: 'Cyrraedd (mwyaf newydd i’r hynaf)',\n      arrivalOldest: 'Cyrraedd (hynaf i’r mwyaf newydd)',\n      createdNewest: 'Dyddiad creu (mwyaf newydd i’r hynaf)',\n      createdOldest: 'Dyddiad creu (hynaf i’r mwyaf newydd)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-038",
+      "statement": "The default sort is arrival date newest first, and any unrecognised sort value falls back to it.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:5,51-54",
+      "quote": "export const DEFAULT_NOTIFICATION_SORT = 'arrivalDate,desc'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-039",
+      "statement": "The chosen sort option is shown as selected in the sort select.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:93-96",
+      "quote": "selected: option.value === sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-040",
+      "statement": "The dashboard reads page, sort, referenceNumber and deleted from the query string.",
+      "kind": "data",
+      "ref": "features/dashboard/controller.js:53-56,97",
+      "quote": "const queryPage = Number.parseInt(request.query?.page, DECIMAL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-041",
+      "statement": "A page number that is missing, not a whole number or below 1 is treated as page 1.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:41-49",
+      "quote": "if (!Number.isInteger(page) || page < 1 || totalPages <= 0) {\n    return 1\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-042",
+      "statement": "A page number beyond the last page is clamped to the last page and the list is fetched again for that page.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:59-62; notification-helper.js:48",
+      "quote": "const listed =\n    currentPage === requestedPage ? requested : await listFor(currentPage)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-043",
+      "statement": "The dashboard lists only the signed-in user's own known notifications, fetched page by page from the journey store with the sort and reference filter applied server side.",
+      "kind": "integration",
+      "ref": "features/dashboard/controller.js:57-58",
+      "quote": "listKnownJourneys(request, { page, sort, referenceNumber })",
+      "confidence": "inferred",
+      "note": "'Known journeys' scoping is implemented in the engine, outside this part; the empty-state copy says 'in this session'."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-044",
+      "statement": "Deleted notifications are filtered out of the dashboard list.",
+      "kind": "rule",
+      "ref": "features/dashboard/controller.js:63",
+      "quote": "const rows = listed.rows.filter((journey) => journey.status !== DELETED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-045",
+      "statement": "Filtering deleted rows after paging means a page can show fewer cards than the page size while the total still counts deleted rows.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:63-69",
+      "quote": "totalElements: listed.totalElements,",
+      "confidence": "inferred",
+      "note": "Only if the backend returns deleted rows; whether it does is outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-046",
+      "statement": "Pagination shows only when there is more than one page, as GOV.UK Previous and Next links (Welsh 'Blaenorol' and 'Nesaf'), with no numbered page links.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/notification-helper.js:77-104; copy.en.js:47-48; template.njk:121-123",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-047",
+      "statement": "Previous shows only after page 1 and Next only before the last page.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:100-103",
+      "quote": "previous: page > 1 ? pageLink(page - 1, labels.previous) : undefined,\n    next: page < totalPages ? pageLink(page + 1, labels.next) : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-048",
+      "statement": "Pagination links keep the sort and search term in the query string, omitting page 1 and the default sort.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/notification-helper.js:56-75",
+      "quote": "if (page > 1) {\n    params.set('page', String(page))\n  }\n  if (sort && sort !== DEFAULT_NOTIFICATION_SORT) {\n    params.set('sort', sort)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-049",
+      "statement": "Each notification is shown as a GOV.UK summary card titled with its reference as a level-3 heading.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:109-115",
+      "quote": "title: { text: row.reference, headingLevel: 3 },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-050",
+      "statement": "A card's reference is the notification reference, falling back to the journey id when no reference has been issued.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/index.js:17",
+      "quote": "const reference = journey.reference ?? journey.journeyId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-051",
+      "statement": "Each card shows seven rows in this order: Commodity, Origin, Arrival, Consignor, Status, Date created, Date submitted.",
+      "kind": "data",
+      "ref": "features/dashboard/template.njk:96-104; copy.en.js:25-35",
+      "quote": "commodity: 'Commodity',\n    origin: 'Origin',\n    arrival: 'Arrival',\n    consignor: 'Consignor',\n    created: 'Date created',\n    submitted: 'Date submitted',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-052",
+      "statement": "The card row keys in Welsh are Nwydd, Tarddiad, Cyrraedd, Traddodwr, Statws, Dyddiad creu, Dyddiad cyflwyno and Camau gweithredu.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.cy.js:24-34",
+      "quote": "reference: 'Cyfeirnod',\n    status: 'Statws',\n    commodity: 'Nwydd',\n    origin: 'Tarddiad',\n    arrival: 'Cyrraedd',\n    consignor: 'Traddodwr',\n    created: 'Dyddiad creu',\n    submitted: 'Dyddiad cyflwyno',\n    actions: 'Camau gweithredu'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-053",
+      "statement": "The cards have no Consignee row, because the plants set carries no consignee obligation.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/index.js:9-11",
+      "quote": "One notification card's view model. There is no consignee cell: the plants\n * set carries no consignee obligation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-054",
+      "statement": "The copy keeps a 'Reference' key (Welsh 'Cyfeirnod') that the card does not render as a row; the reference is the card title instead.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:26; template.njk:96-111",
+      "quote": "reference: 'Reference',",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-055",
+      "statement": "The copy keeps a 'Not submitted' string (Welsh 'Heb ei gyflwyno') that nothing in the dashboard renders; an unsubmitted card's Date submitted row is empty instead.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:57; view-model/row/index.js:31",
+      "quote": "notSubmitted: 'Not submitted',",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-056",
+      "statement": "The Commodity row shows the commodity's name, or failing that its text, category or genus, or a plain string commodity as-is, or blank.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:25-39",
+      "quote": "commodity.name ?? commodity.text ?? commodity.category ?? commodity.genus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-057",
+      "statement": "The Origin row shows the country's display label looked up from the country code, falling back to the code, or blank.",
+      "kind": "integration",
+      "ref": "features/dashboard/view-model/row/index.js:18-27",
+      "quote": "origin: originLabel ?? journey.originCountryCode ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-058",
+      "statement": "The Consignor row shows the consignor's name, or blank.",
+      "kind": "data",
+      "ref": "features/dashboard/view-model/row/index.js:29",
+      "quote": "consignor: journey.consignorName ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-059",
+      "statement": "Arrival, Date created and Date submitted show dates as day, short month and year (for example 9 Oct 2026), and blank when missing or invalid.",
+      "kind": "rule",
+      "ref": "features/dashboard/notification-helper.js:3,16-23; view-model/row/index.js:28-31",
+      "quote": "const LIST_DATE_FORMAT = 'd MMM yyyy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-060",
+      "statement": "The Arrival row shows only the arrival date, not the arrival time.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/index.js:28",
+      "quote": "arrival: formatDisplayDate(journey.arrivalDate),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-061",
+      "statement": "The Status row shows a GOV.UK tag: Draft (blue), Submitted (green), Amending (yellow) or Deleted (grey).",
+      "kind": "data",
+      "ref": "shared/kit.js:40-57; view-model/row/index.js:24; template.njk:75-76",
+      "quote": "journeyStrip: {\n    draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amending',\n    deleted: 'Deleted'\n  }",
+      "confidence": "verbatim",
+      "note": "Labels and colours live in shared copy and kit.js; the dashboard reuses them through journeyStrip."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-062",
+      "statement": "A red 'Late' tag (Welsh 'Hwyr') shows beside the status tag when the notification is marked late.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:77-79; copy.en.js:64; copy.cy.js:63",
+      "quote": "{% if row.late %}\n              {{ govukTag({ text: copy.statusLate, classes: \"govuk-tag--red\" }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-063",
+      "statement": "Whether a notification is late comes from a lateNotificationIndicator on the stored notification; the dashboard does not calculate lateness itself.",
+      "kind": "integration",
+      "ref": "features/dashboard/view-model/row/index.js:25",
+      "quote": "late: Boolean(journey.lateNotificationIndicator),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-064",
+      "statement": "The rule for when a notification counts as late is not visible on the dashboard.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/index.js:25",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in the dashboard, its view model and notification-helper; the indicator is read, not derived. No dashboard fit test covers the Late tag."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-065",
+      "statement": "Link actions (View, Resume, Cancel amendment, Delete) render in the summary card's header action list.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:112; view-model/row/actions.js:17-28",
+      "quote": "actions: { items: row.actions | selectattr(\"href\") }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-066",
+      "statement": "Because they sit in a summary card, link actions get the reference appended to their accessible name, for example 'Delete (REF)'.",
+      "kind": "non-functional",
+      "ref": "features/dashboard/dashboard.fit.spec.js:25-26; delete-notification.fit.spec.js:16-19",
+      "quote": "// The dashboard renders its notification actions inside a GOV.UK summary card,\n// which appends the card title — the reference — to each action's accessible name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-067",
+      "statement": "POST actions (Amend) render as secondary buttons, each in its own form with a CSRF crumb, in an 'Actions' row (Welsh 'Camau gweithredu') at the foot of the card; the row appears only when the card has a POST action.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:82-107; copy.en.js:34",
+      "quote": "{% set actionRows = [\n            { key: { text: copy.table.actions }, value: { html: postActionsHtml } }\n          ] if postActions.length else [] %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-068",
+      "statement": "A POST action button carries visually hidden text 'notification REF' (Welsh 'hysbysiad REF'), so Amend's accessible name is 'Amend notification REF'.",
+      "kind": "non-functional",
+      "ref": "features/dashboard/template.njk:85; copy.en.js:65; copy.cy.js:64; view-model/row/actions.js:48",
+      "quote": "actionHidden: (reference) => `notification ${reference}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-069",
+      "statement": "A Draft notification's card offers Resume then Delete.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/actions.js:53-55",
+      "quote": "if (journey.status === DRAFT) {\n    return [resumeAction, deleteAction]\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-070",
+      "statement": "A Submitted notification's card offers View, Amend and Delete, in that order.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/actions.js:39-52",
+      "quote": "if (journey.status === SUBMITTED) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-071",
+      "statement": "An Amending notification's card offers Resume, Cancel amendment and Delete, in that order.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/actions.js:56-65",
+      "quote": "if (journey.status === AMEND) {\n    return [\n      resumeAction,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-072",
+      "statement": "A notification in any other status offers no actions.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/actions.js:66",
+      "quote": "return []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-073",
+      "statement": "Resume (Welsh 'Ailddechrau') is a link to the notification's task hub at /notifications/{journeyId}.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:34-37; copy.en.js:61; copy.cy.js:60",
+      "quote": "const resumeAction = {\n    text: copy.actions.resume,\n    href: hubPath(journey.journeyId)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-074",
+      "statement": "View (Welsh 'Gweld') is a link to the notification's check answers view at /notifications/{journeyId}/notification-view.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:41-44; shared/kit.js:67; copy.en.js:59",
+      "quote": "text: copy.actions.view,\n        href: pagePath(journey.journeyId, CYA_SLUG)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-075",
+      "statement": "Amend (Welsh 'Diwygio') is a button that posts to /notifications/{journeyId}/amend.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:45-49; controller.js:121-125; copy.en.js:60",
+      "quote": "text: copy.actions.amend,\n        postAction: pagePath(journey.journeyId, 'amend'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-076",
+      "statement": "Amending a submitted notification puts it into amendment and takes the user to its task hub; if the amend cannot start, the user goes back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:103-106",
+      "quote": "const journey = await amendJourney(request, h, request.params.journeyId)\n  return h.redirect(journey ? hubPath(journey.journeyId) : dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-077",
+      "statement": "Amend starts straight from the dashboard button with no confirmation page.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:103-106",
+      "quote": "const amendPost = async (request, h) => {",
+      "confidence": "inferred",
+      "note": "The handler redirects immediately with no intermediate view."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-078",
+      "statement": "Cancel amendment (Welsh 'Canslo diwygiad') is a link to /notifications/{journeyId}/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:59-62; copy.en.js:62; copy.cy.js:61",
+      "quote": "text: copy.actions.cancelAmend,\n        href: pagePath(journey.journeyId, 'cancel-amend')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-079",
+      "statement": "Delete is a link labelled 'Delete' to /notifications/{journeyId}/delete, offered on Draft, Submitted and Amending cards.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:30-33; shared/copy.en.js:54-58",
+      "quote": "const deleteAction = {\n    text: sharedCopy.notificationActions.delete.text,\n    href: pagePath(journey.journeyId, 'delete')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-080",
+      "statement": "There is no 'Copy as new' action on the dashboard; it is parked with reuse of a previous consignment.",
+      "kind": "rule",
+      "ref": "features/dashboard/view-model/row/actions.js:22-23",
+      "quote": "There is no Copy as new action: it is parked with\n * reuse-previous-consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-081",
+      "statement": "After a successful delete the dashboard shows a GOV.UK success notification banner (role alert) titled 'Notification deleted' with the text 'The notification has been deleted.'",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:12-19; controller.js:97; shared/copy.en.js:54-58",
+      "quote": "successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-082",
+      "statement": "The delete success banner shows whenever the dashboard URL carries deleted=1, regardless of whether a delete just happened.",
+      "kind": "rule",
+      "ref": "features/dashboard/controller.js:97; dashboard.fit.spec.js:183-194",
+      "quote": "deletionSucceeded: request.query?.deleted === '1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-083",
+      "statement": "The dashboard renders with the 'display' content column width.",
+      "kind": "constraint",
+      "ref": "features/dashboard/controller.js:73",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-084",
+      "statement": "The delete confirmation page is at /notifications/{journeyId}/delete, with GET and POST routes.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:75-88",
+      "quote": "path: pageRoutePath('delete'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-085",
+      "statement": "The delete page's title and level-1 heading is 'Delete this notification?' (Welsh 'Dileu'r hysbysiad hwn?').",
+      "kind": "copy",
+      "ref": "features/delete-notification/copy/copy.en.js:2; copy.cy.js:3; template.njk:5",
+      "quote": "title: 'Delete this notification?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-086",
+      "statement": "The delete page body says 'This cannot be undone.' (Welsh 'Ni ellir dadwneud hyn.').",
+      "kind": "copy",
+      "ref": "features/delete-notification/copy/copy.en.js:3; copy.cy.js:4",
+      "quote": "body: 'This cannot be undone.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-087",
+      "statement": "The delete page has a red warning button 'Yes, delete notification' (Welsh 'Iawn, dileu'r hysbysiad') that submits the form.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/template.njk:12-15; copy.en.js:4; copy.cy.js:5",
+      "quote": "text: copy.confirmButton,\n        classes: \"govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-088",
+      "statement": "The delete page has a secondary link-button 'No, return to dashboard' (Welsh 'Na, dychwelyd i'r dangosfwrdd') going to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/template.njk:16-20; controller.js:42; copy.en.js:5; copy.cy.js:6",
+      "quote": "noLink: 'No, return to dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-089",
+      "statement": "The delete page's Back link goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:35",
+      "quote": "backLink: dashboardPath(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-090",
+      "statement": "The delete page asks no question with options and has no validation or error message; it is a confirm-or-return page.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/template.njk:1-23",
+      "quote": "<div class=\"govuk-button-group\">",
+      "confidence": "inferred",
+      "note": "The template has only two buttons, no radios or inputs; the partition's covers expected a question, options and error message."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-091",
+      "statement": "The delete form posts a CSRF crumb and a concurrency token.",
+      "kind": "non-functional",
+      "ref": "features/delete-notification/template.njk:9-10",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-092",
+      "statement": "Only Draft, Submitted and Amending notifications can be deleted; asking to delete one in any other status redirects to the dashboard.",
+      "kind": "rule",
+      "ref": "features/delete-notification/controller.js:22-25,50,58-60",
+      "quote": "journey.status === state.DRAFT ||\n  journey.status === state.SUBMITTED ||\n  journey.status === state.AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-093",
+      "statement": "Both delete routes check that the notification belongs to the user's session before reading it, and redirect to the dashboard if not.",
+      "kind": "rule",
+      "ref": "features/delete-notification/controller.js:27-30,46-48,54-56",
+      "quote": "// Both handlers therefore check ownership before the first read.\nconst owns = (request) => isKnownJourney(request, request.params.journeyId)",
+      "confidence": "verbatim",
+      "note": "Ownership is checked in this layer because the state read would otherwise adopt any loadable journey into the session."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-094",
+      "statement": "Confirming delete soft-deletes the notification and redirects to the dashboard with deleted=1, which shows the success banner.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:62-72",
+      "quote": "return deleted\n    ? h.redirect(`${dashboardPath()}?deleted=1`)\n    : h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-095",
+      "statement": "If the soft delete reports nothing deleted, the user goes back to the dashboard with no banner.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:70-72",
+      "quote": ": h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-096",
+      "statement": "Delete is a soft delete: the record is kept with a Deleted status rather than removed.",
+      "kind": "integration",
+      "ref": "features/delete-notification/controller.js:63; dashboard/controller.js:63",
+      "quote": "() => softDeleteJourney(request, h, request.params.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-097",
+      "statement": "If saving the delete fails, the delete page re-renders with a recoverable error and HTTP 500.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:62-68",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim",
+      "note": "The recoverable error message itself is rendered by the shared layout, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-098",
+      "statement": "The delete page Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/delete-notification/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-099",
+      "statement": "The cancel amendment page is at /notifications/{journeyId}/cancel-amend, with GET and POST routes.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:18,81-94",
+      "quote": "const CANCEL_AMEND_SLUG = 'cancel-amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-100",
+      "statement": "The cancel amendment page's title and level-1 heading is 'Cancel this amendment?' (Welsh 'Canslo’r diwygiad hwn?'), with no caption.",
+      "kind": "copy",
+      "ref": "features/cancel-amend/copy/copy.en.js:2; copy.cy.js:3; template.njk:5; cancel-amend.fit.spec.js:182",
+      "quote": "title: 'Cancel this amendment?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-101",
+      "statement": "The cancel amendment body says changes since amending started will be discarded and the submitted version restored.",
+      "kind": "copy",
+      "ref": "features/cancel-amend/copy/copy.en.js:3",
+      "quote": "body: 'Your changes since you started amending will be discarded and the submitted version restored.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-102",
+      "statement": "The cancel amendment body in Welsh is 'Bydd eich newidiadau ers i chi ddechrau diwygio yn cael eu dileu a bydd y fersiwn a gyflwynwyd yn cael ei hadfer.'",
+      "kind": "copy",
+      "ref": "features/cancel-amend/copy/copy.cy.js:4",
+      "quote": "body: 'Bydd eich newidiadau ers i chi ddechrau diwygio yn cael eu dileu a bydd y fersiwn a gyflwynwyd yn cael ei hadfer.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-103",
+      "statement": "The cancel amendment page has a primary button 'Yes, cancel amendment' (Welsh 'Iawn, canslo’r diwygiad') that submits the form.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/template.njk:12; copy.en.js:4; copy.cy.js:5",
+      "quote": "confirmButton: 'Yes, cancel amendment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-104",
+      "statement": "The cancel amendment page has a secondary link-button 'No, return to notification' (Welsh 'Na, dychwelyd i’r hysbysiad') going to the notification's check answers view.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/template.njk:13-17; controller.js:46; copy.en.js:5; copy.cy.js:6",
+      "quote": "noLink: 'No, return to notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-105",
+      "statement": "The cancel amendment page's Back link goes to the notification's check answers view, not the dashboard it was opened from.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:39",
+      "quote": "backLink: cyaPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-106",
+      "statement": "The cancel amendment page asks no question with options and has no validation or error message; it is a confirm-or-return page.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/template.njk:1-20",
+      "quote": "<div class=\"govuk-button-group\">",
+      "confidence": "inferred",
+      "note": "Only two buttons, no radios or inputs."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-107",
+      "statement": "The cancel amendment form posts a CSRF crumb and a concurrency token.",
+      "kind": "non-functional",
+      "ref": "features/cancel-amend/template.njk:9-10",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-108",
+      "statement": "Both cancel amendment routes check that the notification belongs to the user's session before reading it, and redirect to the dashboard if not.",
+      "kind": "rule",
+      "ref": "features/cancel-amend/controller.js:31-34,50-52,60-62",
+      "quote": "const owns = (request) => isKnownJourney(request, request.params.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-109",
+      "statement": "The cancel amendment page only works for an Amending notification: a Submitted one redirects to its check answers view and any other status to the dashboard.",
+      "kind": "rule",
+      "ref": "features/cancel-amend/controller.js:26-29,54-56,64-66",
+      "quote": "journey.status === state.SUBMITTED\n    ? cyaPath(journey.journeyId)\n    : dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-110",
+      "statement": "Confirming cancel amendment discards the amendment, restores the submitted version and redirects to the check answers view with cancelled=1.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:68-78",
+      "quote": "? h.redirect(`${cyaPath(restored.journeyId)}?cancelled=1`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-111",
+      "statement": "If the cancel restores nothing, the user goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:76-78",
+      "quote": ": h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-112",
+      "statement": "If saving the cancellation fails, the cancel amendment page re-renders with a recoverable error and HTTP 500.",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:68-74",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-113",
+      "statement": "What the check answers view shows for cancelled=1 (for example a success banner) is not set in the cancel amendment feature.",
+      "kind": "copy",
+      "ref": "features/cancel-amend/controller.js:77",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The redirect adds ?cancelled=1; any message it triggers lives in check-answers, another part. The fit test checks only the URL, the Submitted status and restored values."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-114",
+      "statement": "The cancel amendment Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/cancel-amend/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-115",
+      "statement": "Fit test: the dashboard renders the service heading, intro body, start button and 'Your notifications' heading.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'renders the service heading, the intro body and the start button'",
+      "quote": "test('renders the service heading, the intro body and the start button'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-116",
+      "statement": "Fit test: the guidance link is absent while no URL is supplied, and nothing in the dashboard's main content links to '#'.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'omits the guidance sentence while no guidance URL is supplied'",
+      "quote": "await expect(page.locator('main a[href=\"#\"]')).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The test notes the layout's service navigation still carries two '#' placeholder hrefs outside main."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-117",
+      "statement": "Fit test: with no notifications the dashboard shows the empty text, 'No Results' and the default sort selected.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'renders the empty state and the default sort'",
+      "quote": "await expect(page.getByLabel(copy.sort.label)).toHaveValue(DEFAULT_SORT)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-118",
+      "statement": "Fit test: the start button lands on the new notification's commodity type page.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'starts a notification and lands on its first question'",
+      "quote": "await expect(page).toHaveURL(/\\/notifications\\/[^/]+\\/commodity-type$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-119",
+      "statement": "Fit test: a draft card shows its reference heading, all seven row keys, no Consignee, the Draft tag, Resume and Delete links, no View link and no Amend button, and Resume carries no visually hidden text.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'renders a draft card with its rows and its available actions'",
+      "quote": "await expect(page.getByText('Consignee', { exact: true })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-120",
+      "statement": "Fit test: a draft card has a filled Date created row and an empty Date submitted row.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'renders a dated Date created row and an empty Date submitted row on a draft'",
+      "quote": "await expect(cardRowValue(page, copy.table.submitted)).toHaveText('')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-121",
+      "statement": "Fit test: the dashboard offers no 'Copy as new' action.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'offers no Copy as new action'",
+      "quote": "test('offers no Copy as new action'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-122",
+      "statement": "Fit test: visiting the dashboard with deleted=1 shows the deleted banner title and body.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'renders the deleted banner after a delete redirect'",
+      "quote": "await page.goto(`${BASE}?deleted=1`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-123",
+      "statement": "Fit test: searching a reference shows only that card, keeps the chosen sort and term, and the URL carries sort then referenceNumber.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'searching a reference keeps that card and preserves the sort'",
+      "quote": "`${BASE}?sort=createdAt%2Casc&referenceNumber=${firstReference}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-124",
+      "statement": "Fit test: cards are ordered by date created ascending or descending as chosen.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'orders the cards by the chosen sort'",
+      "quote": "test('orders the cards by the chosen sort'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-125",
+      "statement": "Fit test: a search that matches nothing keeps the term, shows 'No notifications found' and shows no cards.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'a search that matches nothing keeps the term and says so'",
+      "quote": "await expect(page.getByText(copy.search.noResults)).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-126",
+      "statement": "Fit test: changing the sort puts it in the query string and keeps it selected.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js — 'changing the sort round-trips through the query string'",
+      "quote": "await expect(page).toHaveURL(`${BASE}?sort=createdAt%2Casc`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-127",
+      "statement": "Fit test: the dashboard has no serious or critical WCAG 2 A/AA axe violations.",
+      "kind": "non-functional",
+      "ref": "dashboard.fit.spec.js — 'the dashboard has no serious or critical axe violations'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-128",
+      "statement": "No dashboard fit test covers the Late tag, pagination, the Submitted or Amending card actions, or the Welsh copy.",
+      "kind": "non-functional",
+      "ref": "dashboard.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Read all 14 tests in the spec. Amend and Cancel amendment are exercised only as set-up steps in cancel-amend.fit.spec.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-129",
+      "statement": "Fit test: the delete page shows its heading, body, confirm button, a 'No, return to dashboard' button linking to the dashboard, and a Back link to the dashboard.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js — 'renders confirmation copy, actions and dashboard links'",
+      "quote": "test('renders confirmation copy, actions and dashboard links'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-130",
+      "statement": "Fit test: choosing No on the delete page returns to the dashboard and the notification is still listed.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js — 'No returns to the dashboard and keeps the notification'",
+      "quote": "test('No returns to the dashboard and keeps the notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-131",
+      "statement": "Fit test: confirming delete lands on the dashboard with deleted=1, shows the success banner and no longer lists the notification.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js — 'confirmation removes the notification and shows the success banner'",
+      "quote": "await expect(page).toHaveURL(`${BASE}?deleted=1`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-132",
+      "statement": "Fit test: the delete page and the dashboard after a delete have no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "delete-notification.fit.spec.js — 'has no serious or critical axe violations on the confirmation page or after confirming'",
+      "quote": "'Dashboard after confirming a deletion'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-133",
+      "statement": "Delete is tested end to end only on a Draft notification; deleting a Submitted or Amending notification, the ownership guard and the save-failure path have no fit test.",
+      "kind": "non-functional",
+      "ref": "delete-notification.fit.spec.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Read all 4 tests; each starts a fresh draft."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-134",
+      "statement": "Fit test set-up: a potatoes notification is completed, submitted through the declaration, amended from the dashboard's 'Amend notification REF' button, a producer identification number changed, then Cancel amendment followed from the dashboard card.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:131-164 (beforeEach)",
+      "quote": "name: `Amend notification ${reference}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-135",
+      "statement": "Fit test: the cancel amendment page shows its heading with no caption, body, confirm button, a No button and Back link both pointing at the check answers view, with no serious axe violations.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js — 'renders accessible confirmation copy, actions and a bare heading'",
+      "quote": "await expect(page.locator('.govuk-caption-l')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-136",
+      "statement": "Fit test: choosing No goes to the check answers view, and after reload the notification is still Amending and keeps the amended value.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js — 'No preserves the amendment and its changes after reload'",
+      "quote": "await expect(page.getByText('Amending', { exact: true })).toBeVisible()\n  await expect(page.getByText('DiscardMe99', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-137",
+      "statement": "Fit test: confirming cancel lands on the check answers view with cancelled=1, the status is Submitted, the original value is restored and persists after reload, and no Change links show.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js — 'confirmation restores the submitted snapshot and an accessible success view'",
+      "quote": "await expect(page.getByRole('link', { name: /^Change/ })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-138",
+      "statement": "Fit test helper evidence: the linear opening run carries on into the next unanswered section, so a potatoes notification skips consignor and goes from destination to identification numbers, and the run stops at the hub before Check and submit.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:86-108",
+      "quote": "// The linear opening run carries straight on into the next unanswered\n  // section rather than stopping at the hub — potatoes skip consignor, so\n  // Save and continue here lands on identification numbers.",
+      "confidence": "verbatim",
+      "note": "Set-up evidence for journey pages owned by other parts; recorded because this part's spec states it."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-139",
+      "statement": "The cancel-amend spec's completeNotification helper accepts a late flag (arrival today instead of in 7 days) that no test uses.",
+      "kind": "behaviour",
+      "ref": "cancel-amend.fit.spec.js:68-71",
+      "quote": "date.setDate(date.getDate() + (late ? 0 : 7))",
+      "confidence": "inferred",
+      "note": "Suggests a same-day arrival is what makes a notification late, but no assertion proves it."
+    }
+  ]
+}

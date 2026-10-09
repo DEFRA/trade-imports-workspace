@@ -24,20 +24,21 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-001", "inc-015"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines three thin slices on the same page and the same flow entry (back link, entry into the step and skipping it, exit from the step): each needs the same flow change and the same journey walk to prove. req-201 is now the live half only: the 9 October ruling (ruling-sam-2026-10-09-p1-057) split off the germinal half, which belongs to the germinal-products area, so this row no longer proves the germinal-only exit. Depends on whichever row turns the linear journey into page-to-page navigation from Commodity details onwards and makes Additional details and Arrival details the pages after this one. The tests repo's shared journey flow helper today expects the identification save to return to the Overview and must follow the new next page.",
+      "dependsOn": ["inc-001", "inc-015"],
+      "notes": "Unchanged by the 9 October afternoon ruling. Combines three thin slices on the same page and the same flow entry (back link, entry into the step and skipping it, exit from the step): each needs the same flow change and the same journey walk to prove. req-201 is the live half only (ruling-sam-2026-10-09-p1-057); the germinal half belongs to the germinal-products area. Depends on the rows that turn the linear journey into page-to-page navigation from Commodity details onwards (inc-001) and chain the commodity pages (inc-015). The tests repo's shared journey flow helper today expects the identification save to return to the Overview and must follow the new next page.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.js",
-        "tests:flows/animals/journey.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "tests:flows/animals"
       ],
       "existingRow": "inc-045"
     },
@@ -49,7 +50,7 @@
         "A commodity with several selected species lists each species on its own line in its Species cell, and its quantity cell shows the row's number of animals. (prototype:dr2-1-source prototype-dr2-1-source-p5-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-058)",
         "A cattle line reads 'Cattle' in the summary's 'Common name' cell, and its identification section is headed 'Cattle (0102)'. (prototype:dr2-1-source prototype-dr2-1-source-p5-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-052; trace:e2e trace-e2e-p6-014)",
         "Identification is shown as one section per commodity headed '<commodity name> (<commodity code>)', and inside it one panel per selected species with identifier fields, in selection order, each headed with the species name, such as 'Bos taurus'. (prototype:dr2-1-source prototype-dr2-1-source-p5-040, prototype-dr2-1-source-p5-041; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-051)",
-        "A species with identifier fields but no number of animals gets no panel and no 'Enter details for <species>' form. (prototype:dr2-1-source prototype-dr2-1-source-p5-041, prototype-dr2-1-source-p5-043; repo:frontend repo-frontend-p6-063)",
+        "A species with identifier fields but no number of animals gets no panel and no 'Enter details for <species>' form. (prototype:dr2-1-source prototype-dr2-1-source-p5-041; repo:frontend repo-frontend-p6-063)",
         "A live species with 3 animals takes exactly 3 entries, its form headed 'Enter details for <species> 1 of 3' for the first. (prototype:dr2-1-source prototype-dr2-1-source-p5-043)",
         "Lowering a species' number of animals below its saved records on Commodity details still shows the refusal, and its error summary link goes to that species' panel in its new place. (trace:e2e trace-e2e-p6-061; conflicts:c-043)"
       ],
@@ -62,18 +63,20 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-045", "inc-012"],
       "status": "todo",
-      "gate": "Look at the commodity section and species panel structure: the per-species save, germinal copy and pig/sheep/goat rows all lay themselves out inside it.",
+      "gate": "Look at the commodity section and species panel structure: the per-species save, the germinal copy and the pig/sheep/goat rows all lay themselves out inside it.",
       "openQuestions": [],
-      "notes": "Combines the summary columns, the commodity/panel naming and the commodity-then-species grouping: all three change the same summary and panel structure on the same page and share one proof. The several-species-per-commodity criterion can only be observed once the commodities area lets one commodity carry several species; the combiner sets that dependsOn. The 'Number of packages' heading (req-1776) belongs to the germinal products set's own copy of this page, in the germinal-products area. The count-drop refusal on Commodity details (req-247, exists) links to the species panel, so its link target must still resolve to the new panel: the last criterion guards it. Gate added: the germinal set copies this page's structure once the live twin is built (ruling-sam-2026-10-09-p1-014).",
+      "dependsOn": ["inc-045", "inc-012"],
+      "notes": "Unchanged by the 9 October afternoon ruling. Combines the summary columns, the commodity/panel naming and the commodity-then-species grouping: all three change the same summary and panel structure on the same page and share one proof. The several-species-per-commodity criterion can only be observed once the commodities area lets one commodity carry several species (today's catalogue has cats and dogs under one commodity, 01061900); the combiner keeps that dependsOn on the commodities row (inc-012) and should check that row is still buildable after the afternoon ruling's MDM block; if it is not, the combiner sends the criterion back rather than letting this row wait on MDM. The 'Number of packages' heading (req-1776) belongs to the germinal set's copy of this page. The count-drop refusal on Commodity details (req-247, exists) links to the species panel, so its link target must still resolve to the new panel: the last criterion guards it, and it may touch the consignment-details error link. Gate: the germinal set copies this page's structure once the live twin is built (ruling-sam-2026-10-09-p1-014).",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details"
       ],
       "existingRow": "inc-046"
     },
@@ -99,18 +102,19 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-046"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the per-species save, the page buttons' narrower save, the table position, the all-entered state and the primary button: all are the species panel's save and layout, change the same records-append and panel template, and are proved by one multi-species walk. req-203 is now the live half only (ruling-sam-2026-10-09-p1-057); the germinal half belongs to the germinal-products area. Keeps the real cap-reached error and the 400 for a bad remove (c-040). Builds after the grouping row in this area, whose panel structure it lays out.",
+      "dependsOn": ["inc-046"],
+      "notes": "Unchanged by the 9 October afternoon ruling. Combines the per-species save, the page buttons' narrower save, the table position, the all-entered state and the primary button: all are the species panel's save and layout, change the same records-append and panel template, and are proved by one multi-species walk. req-203 is the live half only (ruling-sam-2026-10-09-p1-057); the germinal half belongs to the germinal-products area. Keeps the real cap-reached error and the 400 for a bad remove (c-040). Builds after the grouping row, whose panel structure it lays out.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy"
       ],
       "existingRow": "inc-047"
     },
@@ -136,13 +140,15 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "fix",
-      "dependsOn": ["inc-047"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Rewritten after the 9 October ruling (c-041, c-042): one identifier is enough, so the every-identifier rule, the per-identifier blank errors and the complete-only table this row carried are not built, and its gate falls away. req-233 and req-235 are now adopted as exists and leave the row; req-234 is the live half only (ruling-sam-2026-10-09-p1-057). The existing message and its link stay; only where the check is made changes. Builds after the per-species save row, whose panel save it validates. No new copy, so no Welsh change.",
+      "dependsOn": ["inc-047"],
+      "notes": "Unchanged by the 9 October afternoon ruling. Kept apart from the per-species save row: it is a validation fix with its own conflict (c-042), and merging it would take that row past a comfortable review size. One identifier is enough (c-041), so the every-identifier rule and the per-identifier blank errors are not built. req-234 is the live half only (ruling-sam-2026-10-09-p1-057). The existing message and its link stay; only where the check is made changes. No new copy, so no Welsh change.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
       "shared": [],
@@ -153,7 +159,7 @@
       "detail": "DR2.1 labels the microchip field 'Microchip', gives the text identifier fields no hints, and words the kept 58-character limit as '<label> must be 58 characters or less'. Today the field is 'Microchip number', each identifier has a 'For example, …' hint, the length errors say 'or fewer', and the limit is checked against the untrimmed value. The 58-character limit itself stays (c-040). Every English change is mirrored in the Welsh machine draft.",
       "acceptanceCriteria": [
         "The microchip field is labelled 'Microchip', not 'Microchip number'. (prototype:dr2-1-source prototype-dr2-1-source-p5-014; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-052; trace:e2e trace-e2e-p6-024)",
-        "The Microchip, Passport, Tattoo and Ear tag fields show no hint text. (prototype:dr2-1-source prototype-dr2-1-source-p5-024; trace:e2e trace-e2e-p6-021, trace-e2e-p6-022, trace-e2e-p6-025, trace-e2e-p6-026)",
+        "The Microchip, Passport, Tattoo and Ear tag fields show no hint text. (prototype:dr2-1-source prototype-dr2-1-source-p5-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-054-m1; trace:e2e trace-e2e-p6-021, trace-e2e-p6-022, trace-e2e-p6-025, trace-e2e-p6-026)",
         "An identifier over 58 characters shows, in the error summary and on the field, 'Microchip must be 58 characters or less', 'Passport must be 58 characters or less', 'Tattoo must be 58 characters or less', 'Ear tag must be 58 characters or less' or 'Horse name must be 58 characters or less'. (prototype:dr2-1-source prototype-dr2-1-source-p5-028; conflicts:c-040)",
         "An identifier of 58 characters typed with spaces before and after it saves with no length error and reads back without the spaces. (prototype:dr2-1-source prototype-dr2-1-source-p5-027; repo:frontend repo-frontend-p6-026-m1)",
         "The Welsh copy for this page mirrors each of these English changes as a machine draft (the microchip label, the removed hints, the five length errors), and stays not shown to users until Welsh Language Standards sign-off. (repo:frontend repo-frontend-p6-130, repo-frontend-p6-133, repo-frontend-p6-134)"
@@ -161,31 +167,33 @@
       "requirements": ["req-222", "req-223", "req-224", "req-225", "req-226", "req-229", "req-230", "req-267"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:4-8; app/views/design-release-2.1/animal-identification-details.html:140-149; app/routes.js:2118-2120, 2143-2145 (prototype-dr2-1-source-p5-014, p5-024, p5-027, p5-028)" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p13-052" },
-        { "source": "repo:frontend", "ref": "copy/copy.en.js:83-86, copy/copy.cy.js, identifier/fields.js (repo-frontend-p6-012 to p6-015, p6-021 to p6-026, p6-130 to p6-135)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p13-052, p5-054-m1" },
+        { "source": "repo:frontend", "ref": "copy/copy.en.js, copy/copy.cy.js, identifier/fields.js (repo-frontend-p6-012 to p6-015, p6-021 to p6-026, p6-130 to p6-135)" },
         { "source": "trace:e2e", "ref": "trace-e2e-p6-021, p6-022, p6-024, p6-025, p6-026" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p11-036" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": [],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the label, the four hint removals, the length-error wording and the trim-before-check: all are the live-animal identifier field definitions and their copy, reviewed together. Each copy change is its own criterion for the reviewer. Carries req-267 (Welsh mirroring); the other rows in this area that change copy each carry their own Welsh criterion as well. Welsh is not rendered to users in any environment (no locale selection exists yet), so every Welsh criterion is a reviewer check of the Welsh copy, not of a rendered page. The germinal set copies this page later (ruling-sam-2026-10-09-p1-014), so building this first means the copy starts with DR2.1's wording.",
+      "dependsOn": [],
+      "notes": "Unchanged by the 9 October afternoon ruling. Combines the label, the four hint removals, the length-error wording and the trim-before-check: all are the live-animal identifier field definitions and their copy, reviewed together. Each copy change is its own criterion for the reviewer. Carries req-267 (Welsh mirroring); the other rows in this area that change copy each carry their own Welsh criterion too. Welsh is not rendered to users in any environment (no locale selection exists yet), so every Welsh criterion is a reviewer check of the Welsh copy, not of a rendered page. The page's copy lives in the commodities feature's shared copy files, which the commodities rows also change. The germinal set copies this page later (ruling-sam-2026-10-09-p1-014), so building this first means the copy starts with DR2.1's wording.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js"
       ],
       "existingRow": "inc-050"
     },
     {
       "title": "Pigs, sheep and goats are identified by ear tag only",
-      "detail": "DR2.1 identifies pigs (0103), sheep (010410) and goats (010420) per animal by 'Ear tag' only. The real service does not offer these commodities yet; once the commodities area adds them, each selected pig, sheep or goat species gets a panel asking for one ear tag per animal.",
+      "detail": "DR2.1 identifies pigs (0103), sheep (010410) and goats (010420) per animal by 'Ear tag' only. The real service does not offer these commodities: today's live-animal catalogue holds five commodities, none of them these. The 9 October afternoon ruling puts commodity catalogue work behind the MDM commodity integration, so this row waits until pigs, sheep and goats reach the catalogue from MDM; each selected pig, sheep or goat species then gets a panel asking for one ear tag per animal.",
       "acceptanceCriteria": [
         "A selected pig species (0103) gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-017)",
         "A selected sheep (010410) or goat (010420) species gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-021)",
@@ -193,58 +201,93 @@
       ],
       "requirements": ["req-219", "req-220"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:18-20; app/routes.js:1774-1778 (prototype-dr2-1-source-p5-017, p5-021)" }
+        { "source": "prototype:dr2-1-source", "ref": "app/data/commodity-identifiers.js:18-20; app/routes.js:1774-1778 (prototype-dr2-1-source-p5-017, p5-021)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm.md claims 28 and 32 (ruling-sam-2026-10-09-pm-p2-005, p2-025, p2-026)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-046", "inc-012"],
-      "status": "todo",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
-      "notes": "Kept apart from the label/hint row because it can only be observed once the commodities area offers pigs, sheep and goats (inc-012). The ear tag is already stored by the backend, so no backend change is expected. Previously depended on the completion row (inc-049) so 'Complete' meant DR2.1's every-animal rule; the 9 October ruling made the completion and submit rule what the service does today (req-248, req-249 now exists), so that criterion and dependency are gone and it builds after the grouping row instead.",
+      "openQuestions": [
+        "Blocked until commodities come from MDM: pigs (0103), sheep (010410) and goats (010420) join the live-animals catalogue only through the MDM commodity integration, which this programme cannot build. Whoever owns the MDM commodity integration must deliver it (and Sam rule the catalogue unblocked) before this row can be built (ruling:sam-2026-10-09-pm claims 28 and 32)."
+      ],
+      "dependsOn": ["inc-012", "inc-046"],
+      "notes": "Was todo; the 9 October afternoon ruling (ruling-sam-2026-10-09-pm-p2-025) names inc-051 as waiting with the catalogue, because none of its commodities is in today's five-commodity catalogue, so it is now blocked. Kept apart from the label/hint row so that row is not held up. Once unblocked it still waits for the commodities row that offers pigs, sheep and goats (inc-012) and for the grouping row whose panels it fills (inc-046). The ear tag is already stored by the backend, so no backend change is expected; the per-commodity identifier rules sit with the commodity obligations, which the commodities rows also change.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
         "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
       ],
-      "shared": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js",
+        "frontend:src/server/app/sets/live-animals/services/commodities"
+      ],
       "existingRow": "inc-051"
     },
     {
-      "title": "Germinal date inputs and the V4 date and length rules on the germinal identification page",
-      "detail": "On the germinal products set's own copy of the identification page, Collection date and Production date are plain text inputs with a 'For example, 27/03/2026' hint. Live Animals Germinals Data Fields V4 says both dates must be valid dates in DD/MM/YYYY and the Identification Number/Mark is at most 58 characters; DR2.1 supplies the error wording. The page gives each rule its own message in the error summary and inline, and a failed save keeps the typed values and saves nothing, as the live page does.",
+      "title": "Germinal identification page heads its quantity column 'Number of packages'",
+      "detail": "The germinal products set's own copy of Identification details counts packages, not animals: its Selected commodities quantity column reads 'Number of packages' and shows each species' saved number of packages, where the live-animals page shows Number of animals. This is the one germinal requirement on this page's summary that the animal-identification area holds; the germinal-products area holds the rest of the germinal identification page.",
       "acceptanceCriteria": [
-        "On the germinal products identification page, 'Collection date' and 'Production date' are each a single text input with the hint 'For example, 27/03/2026'. (prototype:dr2-1-source prototype-dr2-1-source-p5-020, prototype-dr2-1-source-p5-023; prototype:dr2-1-specs prototype-dr2-1-specs-p2-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-068)",
-        "An Identification number/mark of 59 characters shows 'Identification number/mark must be 58 characters or less' in the error summary and inline on the field; one of 58 characters saves. (confluence:6497338582 §Germinal Data Elements, row 'Identification Number/Mark', column Type; prototype:dr2-1-source prototype-dr2-1-source-p5-018, prototype-dr2-1-source-p5-028)",
-        "A Collection date of 2026-09-01 shows 'Enter a collection date in the format DD/MM/YYYY' in the error summary and inline on the field. (confluence:6497338582 §Germinal Data Elements, row 'Collection date', column Conditions / Values; prototype:dr2-1-source prototype-dr2-1-source-p5-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-079)",
-        "A Production date of 2026-09-01 shows 'Enter a production date in the format DD/MM/YYYY' in the error summary and inline on the field. (confluence:6497338582 §Germinal Data Elements, row 'Production date', column Conditions / Values; prototype:dr2-1-source prototype-dr2-1-source-p5-029; prototype:dr2-1-specs prototype-dr2-1-specs-p2-058)",
-        "A Collection date of 99/99/2026 shows 'Collection date must be a real date' in the error summary and inline on the field. (confluence:6497338582 §Germinal Data Elements, row 'Collection date', column Conditions / Values; prototype:dr2-1-source prototype-dr2-1-source-p5-030; prototype:dr2-1-specs prototype-dr2-1-specs-p2-057; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-078)",
-        "A Production date of 31/02/2026 shows 'Production date must be a real date' in the error summary and inline on the field. (confluence:6497338582 §Germinal Data Elements, row 'Production date', column Conditions / Values; prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
+        "On the germinal products set's identification page, the 'Selected commodities' quantity column is headed 'Number of packages' and shows each species' saved number of packages, while the live-animals page keeps 'Number of animals'. (prototype:dr2-1-source prototype-dr2-1-source-p5-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-067; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-023, ruling-sam-2026-10-09-p1-110)"
+      ],
+      "requirements": ["req-1776"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p5-036" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-067" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-023, p1-057, p1-110" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "dependsOn": ["inc-046"],
+      "notes": "A thin slice, not a row to keep alone: req-1776 already sits in inc-052 with the germinal-products area's rows for the same germinal page (req-1790, req-262, req-250, req-251) and the backend storage (req-1892, notification-record area). Combiner: merge this draft into inc-052, keeping its id and the germinal-products theme; building it apart would repeat the germinal page set-up and walk. It is observable only once the germinal set's identification page exists, which inc-052 creates.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/animal-identification",
+        "tests:page-objects/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
+      ],
+      "shared": [],
+      "existingRow": "inc-052"
+    },
+    {
+      "title": "Germinal identification dates are single text inputs with V4's date and length checks",
+      "detail": "On the germinal set's copy of the identification page, the collection and production dates are single text inputs with the hint 'For example, 27/03/2026' that work without JavaScript, and the identification fields follow V4's date format, real-date and length rules. The 9 October afternoon ruling builds these now and leaves the 'Choose date' calendar (the MoJ date picker, req-253) waiting on design, so this row no longer carries the calendar.",
+      "acceptanceCriteria": [
+        "On the germinal products identification page, 'Collection date' and 'Production date' are each a single text input with the hint 'For example, 27/03/2026'. (prototype:dr2-1-source prototype-dr2-1-source-p5-023; prototype:dr2-1-specs prototype-dr2-1-specs-p4-021; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-068; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-095)",
+        "With JavaScript turned off, a trader can type both dates into their text inputs and save them, and they read back as typed. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-095, ruling-sam-2026-10-09-pm-p1-096)",
+        "A collection date and a production date in the past or in the future, and a production date earlier than the collection date, all save with no error. (prototype:dr2-1-source prototype-dr2-1-source-p5-031)",
+        "An Identification number/mark of 59 characters shows 'Identification number/mark must be 58 characters or less' in the error summary and inline on the field; one of 58 characters saves. (prototype:dr2-1-source prototype-dr2-1-source-p5-028; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-095)",
+        "A Collection date of 2026-09-01 shows 'Enter a collection date in the format DD/MM/YYYY' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-029)",
+        "A Production date of 2026-09-01 shows 'Enter a production date in the format DD/MM/YYYY' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-029)",
+        "A Collection date of 99/99/2026 shows 'Collection date must be a real date' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
+        "A Production date of 31/02/2026 shows 'Production date must be a real date' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
         "When a germinal save fails any of these rules, nothing is saved: opening the page again shows the values saved before, while the failing response keeps what was typed in the form. (conflicts:c-039; repo:frontend repo-frontend-p6-073)",
         "The germinal page's Welsh copy carries a machine-draft Welsh version of the date hint and each of the five error messages, and stays not shown to users until Welsh Language Standards sign-off. (repo:frontend repo-frontend-p6-133)"
       ],
       "requirements": ["req-252", "req-255", "req-256", "req-257", "req-258", "req-259"],
       "sources": [
-        { "source": "confluence:6497338582", "ref": "§Germinal Data Elements field table: Collection date, Production date, Identification Number/Mark (confluence-6497338582-p1-032, p1-037, p1-042, p1-044, p1-045)" },
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/animal-identification-details.html:121-150; app/routes.js:2113-2135, 4301-4323 (prototype-dr2-1-source-p5-018, p5-020, p5-022, p5-023, p5-028, p5-029, p5-030)" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-055, p2-057, p2-058, p4-021" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p5-073, p5-074, p5-078, p5-079, p12-068" },
-        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, p1-011, p1-014" }
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/animal-identification-details.html:121-150; app/routes.js:2113-2135 (prototype-dr2-1-source-p5-023, p5-028, p5-029, p5-030, p5-031)" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p4-021" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-066, p12-068" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-014, p1-110" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "ruling-sam-2026-10-09-pm.md claim 22 (ruling-sam-2026-10-09-pm-p1-095, p1-096)" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p6-073, p6-133" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-052"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the date inputs' shape and hint with the V4 date and length rules: the same two germinal date fields and the identification number field, one germinal walk with bad values proves them all. Built in the germinal products set's own copy of the identification page (sets/germinal-products, at the live-animals slug; ruling-sam-2026-10-09-p1-006, p1-011, p1-014), which the germinal-products area's rows create; it depends on the row that creates that page and its four fields (today inc-052). Combiner: the germinal-products area holds the sibling requirements for this same page and fields (req-253 date picker, req-254 donor length, req-260 date leniency, req-1797 error order); merge this row with that area's validation row (today inc-053) rather than keep two rows for one page's validation, and give it the germinal-products theme. Dates are stored as entered, so no backend change here beyond whatever row stores the germinal fields.",
+      "dependsOn": ["inc-052", "inc-050"],
+      "notes": "Rewritten after the 9 October afternoon ruling (claim 22): the single text inputs and V4's date and length checks are built now; the 'Choose date' calendar (req-253) waits on design question 12 and leaves this row, so its criterion and the date-picker sources are gone. req-253 is blocked and belongs to the germinal-products area: the combiner gives it a blocked row of its own (or keeps it out of this todo row), so this row is not held up. Combiner: the germinal-products area holds the sibling requirements for the same page and fields (req-254 donor length, req-260 date leniency, req-1797 error order); merge that area's draft for inc-053 with this one, keeping inc-053's id and the germinal-products theme. Built in the germinal set's own copy of the identification page (ruling-sam-2026-10-09-p1-014, p1-110), which inc-052 creates. Dates are stored as entered, so no backend change here beyond inc-052's storage.",
       "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/animal-identification"
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/animal-identification",
+        "tests:page-objects/germinal-products",
+        "tests:tests/animals/e2e/germinal-products"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/copy/copy.en.js",
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/commodities/copy/copy.cy.js",
-        "tests:tests/animals/e2e/pages"
-      ],
+      "shared": [],
       "existingRow": "inc-053"
     },
     {
@@ -260,27 +303,32 @@
       "requirements": ["req-263", "req-264", "req-265"],
       "sources": [
         { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-008" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-126" },
         { "source": "repo:frontend", "ref": "address/fields.js, records/append.js:11-24, _identification-card.njk, copy/copy.cy.js:120-143 (repo-frontend-p6-029 to p6-057, p6-082, p6-136, p6-137)" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p10-039 to p10-050, p11-017 to p11-035" },
         { "source": "trace:e2e", "ref": "trace-e2e-p6-028 to p6-047" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "dependsOn": ["inc-054"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines removing the address block, its validation and its table column and storage: one removal from the same panel, proved by one cat/dog walk. Must not land before the consignment-parties area's row that asks each animal's permanent address on the permanent address page (inc-054), or the service would stop capturing the address. DR1's buildable address increments on this page (inc-009, inc-059, inc-066) are out of scope with it (req-266). The backend's per-animal permanent address field stays: the permanent address page may still use it.",
+      "dependsOn": ["inc-054"],
+      "notes": "Unchanged by the 9 October afternoon ruling. Combines removing the address block, its validation and its table column and storage: one removal from the same panel, proved by one cat/dog walk. Must not land before the consignment-parties area's row that asks each animal's permanent address on the permanent address page (inc-054), or the service would stop capturing the address. DR1's buildable address increments on this page (inc-009, inc-059, inc-066) are out of scope with it (req-266). The backend's per-animal permanent address field stays: the permanent address page may still use it.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
-        "tests:tests/animals/e2e/pages/animal-identification.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+        "tests:page-objects/animals/animal-identification-page.ts",
+        "tests:tests/animals/e2e/pages/animal-identification.spec.ts",
+        "tests:tests/animals/e2e/journeys/pet-cats-air-permanent-address.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/identifiers.js"
       ],
       "existingRow": "inc-057"
     }
   ],
-  "unobservable": []
+  "unobservable": [],
+  "splitOff": []
 }

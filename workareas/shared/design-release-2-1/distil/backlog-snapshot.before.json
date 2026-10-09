@@ -171,9 +171,132 @@
     "inc-169",
     "inc-170",
     "inc-171",
-    "inc-172"
+    "inc-172",
+    "inc-173",
+    "inc-174",
+    "inc-175",
+    "inc-176",
+    "inc-177",
+    "inc-178",
+    "inc-179",
+    "inc-181",
+    "inc-183",
+    "inc-180",
+    "inc-182",
+    "inc-184",
+    "inc-185",
+    "inc-186",
+    "inc-187"
   ],
   "frozen": [
+    {
+      "id": "inc-025",
+      "title": "Arrival details page moves to the 'arrival-details' address",
+      "detail": "Design Release 2.1 names the arrival details page by what it asks. Today it is served at .../port-of-entry. After this change the page is served at .../arrival-details, and every link into it from the overview and the review goes there, so the address a trader sees matches the page.",
+      "acceptanceCriteria": [
+        "Choosing the 'Arrival details' task on the notification overview opens the page at /live-animals/notifications/<notification id>/arrival-details (prototype:dr2-1-source prototype-dr2-1-source-p6-001; prototype:dr2-1-specs prototype-dr2-1-specs-p2-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-001)",
+        "The arrival details Change links on the notification review open the page at the same .../arrival-details address (prototype:dr2-1-source prototype-dr2-1-source-p6-011; repo:frontend repo-frontend-p11-001)",
+        "The page that comes before arrival details in the journey goes on to the .../arrival-details address, and arrival details still goes on to transit countries or Transporter details as it does today (trace:e2e trace-e2e-p4-063; trace:animals-fit trace-animals-fit-p16-001)"
+      ],
+      "requirements": [
+        "req-271"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p6-001, p6-011"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p2-074"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p8-001"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p11-001"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-094"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p16-001"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-063, trace-e2e-p10-001"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "theme": "arrival-and-transit",
+      "dependsOn": [],
+      "status": "dropped",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Pass 1 slice on its own: the slug is a journey-flow change (page registry, overview task row, review change link) that every later row in this area builds on, so it lands first and the later rows' criteria use the new address. No source says what the old .../port-of-entry address should do afterwards; the drafter's default is that it is not kept. The tests repo's arrival details page object follows the new address.",
+        "Dropped: ruling:sam-2026-10-09 claim 20 put req-271 out of scope (the arrival details page keeps its port-of-entry address), so nothing is left to build; inc-026 to inc-029 no longer depend on it."
+      ]
+    },
+    {
+      "id": "inc-049",
+      "title": "Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected",
+      "detail": "Today the hub's Identification details row shows Complete straight after Commodity details, before any animal is identified, and stays Complete at 1 of 2. DR2.1 counts identification complete only when every animal of every selected species with identifier fields has a complete entry. For submitting, DR2.1 makes identification optional for a single species but needs at least one complete entry per species when more than one species is selected; the identification page itself shows no message for that rule.",
+      "acceptanceCriteria": [
+        "Straight after Commodity details, with no animals entered, the hub's Identification details row does not show Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-002; trace:animals-fit trace-animals-fit-p10-003-m1)",
+        "With 1 of 2 cattle entered, the row does not show Complete; once both are entered with ear tag and passport it shows Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-066)",
+        "A selected species with identifier fields but no number of animals keeps the row from showing Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068)",
+        "With one species selected and no identification entered, the notification can be submitted. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)",
+        "With two species with identifier fields selected and one of them without any complete entry, submitting is refused; once each has at least one complete entry, submitting goes ahead. (prototype:dr2-1-source prototype-dr2-1-source-p5-070; document:dr1-parity-backlog document-dr1-parity-backlog-p5-020)",
+        "The identification page shows no message about the submit rule. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)"
+      ],
+      "requirements": [
+        "req-248",
+        "req-249"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p5-068, p5-070"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-002, p10-003, p10-003-m1, p10-091"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-002, p6-066"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p5-020"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "theme": "identification-and-permanent-address",
+      "dependsOn": [
+        "inc-048"
+      ],
+      "status": "dropped",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the hub completion rule and the submit rule: both read the same 'complete entry' definition from the every-identifier row and change the same obligation evaluation. The submit refusal's place and wording belong to the review-and-submit area, which owns the submit gate and its messages (req-animal-identification-056's why); the criterion asserts only that submitting is refused or goes ahead. If that area drafts a row for the same gate, the combiner should merge this submit criterion into it or set dependsOn. The germinal half of the completion rule (a germinal species counts once its entry is saved) is proved in the germinal panel row. Builds after the every-identifier row in this area.",
+        "Dropped: req-248 and req-249 are adopted as already met. ruling:sam-2026-10-09 claims 13, 36 and 37 split off their germinal halves and settle that one identifier is enough for Complete and for submit, which the live-animals code does today; the germinal bar is req-261 in inc-183."
+      ]
+    },
     {
       "id": "inc-118",
       "title": "Overview totals count only positive numbers",
@@ -251,6 +374,48 @@
         "Drafted by the combiner: the review-and-submit drafter listed req-904 as unobservable. It is held here, blocked on the reconciler's answer.",
         "Dropped: the reconciler put req-904 out of scope. The only outstanding items the real service records are the ITAHC or documents item and, once DR1 inc-103 is ruled, the identifiers item, each with its own warning, so the fallback warning has nothing to trigger it. It comes back into scope with any new kind of outstanding item."
       ]
+    },
+    {
+      "id": "inc-163",
+      "title": "Edit a whole saved template on its own task list",
+      "detail": "A saved template can be reopened at its edit address on its own template task list. Saving it from the review overwrites the template, keeping its address, and moves it to the top of the list.",
+      "acceptanceCriteria": [
+        "Opening a saved template's edit address opens the template's task list ('Template tasklist', 'Template' tag and name) with the template's answers filled in (prototype:dr2-1-source app/routes.js:8551-8569; prototype:dr2-1-specs e2e/templates.fit.spec.js:88-90)",
+        "Saving the edited template from its review overwrites it: the list count is unchanged, the template keeps its address, shows the changed answer, and is listed first (prototype:dr2-1-source app/routes.js:7751, 7808-7818)",
+        "The edit address of a template that does not exist goes to Manage templates (prototype:dr2-1-source app/routes.js:8556-8560)"
+      ],
+      "requirements": [
+        "req-1362",
+        "req-1341"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:7751, 7808-7818, 8551-8569"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/templates.fit.spec.js:88-90"
+        }
+      ],
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "theme": "type-question-and-templates",
+      "dependsOn": [
+        "inc-157"
+      ],
+      "status": "dropped",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines opening the edit (req-templates-072) and saving over the template (-051): an edit is only seen whole once saved. Depends on the save row.The template page has no Edit link (req-templates-061): the address is reached directly, so tests open it by address. The review's Delete button for a saved template being edited is in the delete row.",
+        "Dropped: ruling:sam-2026-10-09 claim 82 put req-1362 and req-1341 out of scope (c-261). Requirements kept as they were; the row covers nothing. The criteria are left as the row had them, for the record; the combiner may keep the row's earlier text unchanged."
+      ]
     }
-  ]
+  ],
+  "splitOff": []
 }

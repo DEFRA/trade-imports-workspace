@@ -2,11 +2,134 @@
   "area": "transporters",
   "rows": [
     {
-      "title": "The transporter list matches DR2.1: its layout, search, columns and shipped transporters",
-      "detail": "A trader choosing a transporter sees the list laid out as Design Release 2.1 lays it out: a visible 'Select a transporter' sub-heading above the search and the table, the 'Add a transporter' button beside the search rather than below the table, 'Not applicable' where a transporter has no approval number, and a search run from an icon button that also matches a transporter's type and status. With JavaScript the search filters the rows in the page; without it the icon button submits the term and the server filters, so the page still works without JavaScript. The service ships DR2.1's eight transporters (four commercial, four private) with their addresses and approval numbers, replacing the two placeholder commercial records. The list's error and no-match search states are checked for accessibility like its other states.",
+      "title": "Save and continue on the transporter list goes on to 'Upload documents' in the journey run",
+      "detail": "In Design Release 2.1 the transporter list is followed by the documents page, so a trader running through the journey who chooses a transporter and saves moves on to 'Upload documents', at its real path, instead of landing on the overview. Opened from its overview task, the list still returns to the overview. This changes only where today's transporter list leads: the afternoon ruling of 9 October lets work over today's transporter step go ahead while transporter management waits, so the list itself stays as it is today.",
       "acceptanceCriteria": [
-        "The transporter list shows a visible sub-heading 'Select a transporter' above the search box and the transporter table. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:73; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
-        "The radio group round the transporter table keeps the legend 'Select a transporter', visually hidden, so it is announced but not shown twice. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:107-108; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
+        "Reached from arrival details in the journey run, 'Save and continue' on the transporter list, with a transporter chosen, goes to the 'Upload documents' page. (prototype:dr2-1-source prototype-dr2-1-source-p7-039; prototype:dr2-1-specs prototype-dr2-1-specs-p2-108; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-093; ruling:sam-2026-10-09-pm claim 48)",
+        "Opened from its task on the overview, 'Save and continue' on the transporter list, with a transporter chosen, returns to the overview. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196, ruling-sam-2026-10-09-p1-198)",
+        "The chosen transporter is still chosen when the trader goes back to the list from 'Upload documents'. (prototype:dr2-1-specs prototype-dr2-1-specs-p2-108)",
+        "In the journey run, saving a transporter added from the list's 'Add a transporter' also carries the trader on to 'Upload documents', as the list's own 'Save and continue' does. (repo:frontend repo-frontend-p12-051; ruling:sam-2026-10-09-pm claim 48)"
+      ],
+      "requirements": ["req-405"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-039" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-108" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-093" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-077, -p1-196, -p1-198: the documents page keeps its path; overview-opened pages return to the overview" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 48, 50: work over today's transporter step goes ahead; inc-043 no longer depends on inc-037 to inc-041 or inc-044" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p12-051 (features/transport/transporters; transporter-details-save.js)" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-132 (tests/animals/e2e/pages/transporter.spec.ts)" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p18-058, -p18-059" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p11-022" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "One slice, req-405: only the journey-run destination of today's list changes. ruling:sam-2026-10-09-pm claims 48 and 50 let it go ahead and drop its dependency on inc-037 (now blocked): it builds on today's transporter list as it stands.",
+        "Still depends on inc-001 (the journey's Design Release 2.1 step order). inc-031 is kept as the existing backlog has it, so the documents page can be entered from the run. The overview return is req-1615's (another area); the second criterion guards that this row keeps it. Today an add form's save carries the journey on from the list's next target, so the fourth criterion guards that both routes off the list agree. Today's E2E check that saving the list lands on the overview moves to 'Upload documents' for the journey run.",
+        "The list keeps its real path and form field names: the k6 journey picks the first transporter and saves there (req-1821, already met, must stay met)."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit",
+        "tests:tests/animals/e2e/pages/transporter.spec.ts",
+        "tests:page-objects/animals/transporter-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "tests:flows/animals"
+      ],
+      "existingRow": "inc-043",
+      "dependsOn": ["inc-001", "inc-031"],
+      "theme": "transporters"
+    },
+    {
+      "title": "The transporter list's buttons when amending a notification or editing a template",
+      "detail": "When today's transporter list is reached while amending a submitted notification, or while editing a template from its review, it ends with the controls Design Release 2.1 gives those modes, so the trader can return to where they came from. The controls go on today's list as it stands: its blocked Design Release 2.1 changes (layout, search, shipped records) do not hold them up. Template mode is the animals sets' only; plants pages have none.",
+      "acceptanceCriteria": [
+        "When the notification is being amended, the transporter list ends with a primary 'Save and return' that goes back to the review, a secondary 'Save and continue' and a link-style 'Save and return to overview'. (prototype:dr2-1-source prototype-dr2-1-source-p7-043; ruling:sam-2026-10-09-pm claim 48)",
+        "When the transporter list is edited from a template review, it ends with a single 'Save and return' button, which goes back to the template, and a 'Cancel' link back to the template, and shows no other save button. (prototype:dr2-1-source prototype-dr2-1-source-p7-044; ruling:sam-2026-10-09-pm claim 48; ruling:sam-2026-10-09-templates claim 34; conflicts:c-286)",
+        "In both modes the list's content, search and choice of transporter are today's: only its closing controls change. (ruling:sam-2026-10-09-templates claim 31; conflicts:c-286)"
+      ],
+      "requirements": ["req-407", "req-408"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-043, -p7-044 (journey-form-actions isAmend and isTemplateReview branches)" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 48, 50: inc-170 goes ahead and no longer depends on inc-037" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "claims 31, 34, 44: template mode works on pages as they stand; animals only" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the two alternative-mode control sets (req-407, req-408): both change only the list's closing controls. c-286 (precedence): the afternoon ruling builds the template-review controls now, on today's list. Dependency on inc-037 dropped (ruling:sam-2026-10-09-pm claim 50). Needs amending a notification (inc-004) and editing a template from its review (inc-159) first; the combiner may fold these criteria into those rows if they change the shared save controls for every page at once.",
+        "Theme kept as type-question-and-templates, as the existing backlog has it, though the change sits in the transporter list's folder; the combiner decides whether the theme boundary needs the folder moved."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "tests:tests/animals/e2e/features/templates",
+        "tests:tests/animals/e2e/features/amend-resubmit.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared",
+        "tests:page-objects/animals/transporter-page.ts"
+      ],
+      "existingRow": "inc-170",
+      "dependsOn": ["inc-004", "inc-159"],
+      "theme": "type-question-and-templates"
+    },
+    {
+      "title": "A germinal products notification chooses its transporter from its own copy of today's transporter step",
+      "detail": "Design Release 2.1's germinal journey chooses its transporter from the same transporter page as the live-animals journeys. Following the 9 October rulings, the germinal products set gets its own copy of today's transporter step, taken from the live-animals set as it stands when the copy is built: the transporter list, 'Choose a transporter type' and both add forms, with the same content, controls and validation, on the germinal journey's own pages. It leaves out the unused approved commercial transporter register page. Added transporters belong to the organisation, not to a set, so a germinal notification offers the same transporters as a live-animals one. The live-animals transporter changes that wait on transporter requirements reach the germinal copy when the transporter area is re-distilled.",
+      "acceptanceCriteria": [
+        "In a germinal products notification, the transport step shows the transporter list with the same caption, heading, search, 'Add a transporter' button, columns and shipped transporters as the live-animals transporter list shows at the time. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-101, trace-prototype-dr2-1-p12-102; ruling:sam-2026-10-09-pm claim 49; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, -p1-009)",
+        "Saving the germinal transporter list with nothing chosen shows the same error as the live-animals list. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011; ruling:sam-2026-10-09-pm claim 49)",
+        "From the germinal transporter list, 'Add a transporter' opens a germinal 'Choose a transporter type' page, and each type opens its germinal add form, each with the same copy, buttons and error messages as the live-animals page it copies. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-011, -p1-014; ruling:sam-2026-10-09-pm claim 49)",
+        "Every germinal transporter page is at /germinal-products/notifications/{journeyId}/ followed by the live-animals page's slug. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006)",
+        "The germinal set has no 'Search for an approved commercial transporter' page: opening the register page's slug under a germinal notification shows the service's page not found. (ruling:sam-2026-10-09-pm claim 49; repo:frontend repo-frontend-p12-146)",
+        "Saving a complete transporter on a germinal add form makes it the notification's transporter and carries the germinal journey on from the germinal transporter list, as the live-animals add form does from its list. (repo:frontend repo-frontend-p12-071; ruling:sam-2026-10-09-pm claim 49)",
+        "A transporter the organisation added on a live-animals notification is on the transporter list of its next germinal products notification, ready to pick, and one added on a germinal notification is on its next live-animals notification's list. (repo:frontend repo-frontend-p12-071; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-057)",
+        "Picking a transporter on a germinal notification and saving keeps it chosen when the trader returns to the germinal transporter list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-102)"
+      ],
+      "requirements": ["req-1820"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-101, -p12-102 (germinal journey's transporter page)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-006, -009, -011, -014, -057: germinal set, pages copied from live-animals feature folders, slugs" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 49, 50: inc-178 goes ahead on today's step and no longer depends on inc-037 to inc-041 or inc-044" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p12-071, repo-frontend-p12-146 (services/transporters register; features/transport/transporters-select)" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "One slice, req-1820. ruling:sam-2026-10-09-pm claims 49-50 let it go ahead on today's step and drop its dependencies on inc-037 to inc-041, inc-043 and inc-044, all but inc-043 now blocked; inc-043 was never a real ordering need, because where the germinal list's Save and continue goes is the germinal flow's, set by the germinal-products area's flow rows. Depends on the germinal set's foundation row (inc-176).",
+        "Belongs with the other germinal feature-folder copies in the germinal-products theme: it touches only the germinal set's transport folder. The shared transporter register is read, not changed. The copy does not take the commercial address search (inc-042, blocked) or the register page (inc-044)."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport",
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:page-objects/germinal-products"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
+        "frontend:src/server/app/services/transporters"
+      ],
+      "existingRow": "inc-178",
+      "dependsOn": ["inc-176"],
+      "theme": "germinal-products"
+    },
+    {
+      "title": "The transporter list matches DR2.1: its layout, search, columns and shipped transporters",
+      "detail": "A trader choosing a transporter sees the list laid out as Design Release 2.1 lays it out: a visible 'Select a transporter' sub-heading above the search and the table, the 'Add a transporter' button beside the search rather than below the table, 'Not applicable' where a transporter has no approval number, and a search run from an icon button that also matches a transporter's type and status. With JavaScript the search filters the rows in the page; without it the icon button submits the term and the server filters. The service ships DR2.1's eight transporters (four commercial, four private), replacing the two placeholder commercial records. The list's error and no-match search states are checked for accessibility like its other states. Blocked: listing and searching transporters is transporter management, which waits on transporter requirements.",
+      "acceptanceCriteria": [
+        "The transporter list shows a visible sub-heading 'Select a transporter' above the search box and the transporter table. (prototype:dr2-1-source prototype-dr2-1-source-p7-015; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-076)",
+        "The radio group round the transporter table keeps the legend 'Select a transporter', visually hidden, so it is announced but not shown twice. (prototype:dr2-1-source prototype-dr2-1-source-p7-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-083)",
         "The search runs from an icon button whose accessible name is 'Search', beside the search box, in place of today's 'Search' text button. (prototype:dr2-1-source prototype-dr2-1-source-p7-017; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-077; conflicts:c-006)",
         "With JavaScript, typing in the search filters the listed rows in the page as the trader types; without JavaScript, pressing the icon button submits the term and the list comes back filtered by the server. (prototype:dr2-1-source prototype-dr2-1-source-p7-003; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-078; trace:animals-fit trace-animals-fit-p18-024; conflicts:c-006)",
         "Searching the list for 'Commercial', 'Private', 'Approved' or 'New' leaves only the transporters of that type or status; searching by name, address or approval number still works as before. (prototype:dr2-1-source app/routes.js:3293-3301,3315-3320; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list action 60)",
@@ -20,42 +143,44 @@
       "requirements": ["req-386", "req-387", "req-389", "req-390", "req-392", "req-397", "req-398", "req-399", "req-470"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter.html; app/data/transporters.js; app/routes.js:3293-3320,3502-3538" },
-        { "source": "trace:prototype-dr2-1", "ref": "transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip actions 60, 77-78; [private] action 97" },
+        { "source": "trace:prototype-dr2-1", "ref": "transporter-details-select-a-transporter-from-the-list actions 60, 77-78; [private] action 97" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:128-146; e2e/support/journey.js:191-194" },
-        { "source": "repo:frontend", "ref": "features/transport/transporters; services/transporters/records.js; fit/axe.js" },
+        { "source": "repo:frontend", "ref": "features/transport/transporters; services/transporters; fit/axe.js" },
         { "source": "repo:tests", "ref": "page-objects/animals/transporter-page.ts; tests/animals/e2e/pages/transporter.spec.ts" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p18-019 to -098" },
-        { "source": "document:dr1-parity-backlog", "ref": "p8-008 to p8-015" }
+        { "source": "document:dr1-parity-backlog", "ref": "p8-008 to p8-015" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 31-38: listing and searching transporters is blocked on transporter requirements" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": [],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": "Check the eight shipped transporters on the list and that every E2E journey that picks a transporter now picks one of DR2.1's records: later rows and other areas' journeys rely on these records.",
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-38, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines the list page's layout and copy (req-386, req-387, req-392, req-399), its search (req-389, req-390), its accessibility gap (req-470) and the shipped records (req-397, req-398): all are observed on the one list page, and the shipped records change what every list criterion shows, so building them apart would repeat the same page set-up and review.",
-        "c-057 (precedence): DR2.1's four commercial records replace the two placeholders. The tests repo today picks 'García Livestock Transport SL' by name and must move to a DR2.1 record in this row. c-006 (precedence): the icon button and in-page filtering are adopted, with the server-side filter kept as the no-JavaScript fallback. The transporter register stays in the frontend: reference data serves no transporters list.",
-        "The list keeps its real journey path and its form field names (the transporter radios and the save action): the k6 performance journey picks the first transporter and saves there (req-1821, already met, must stay met). The in-page filter is a client-side script, which needs its build entry or it 404s silently."
+        "Blocked by ruling:sam-2026-10-09-pm claim 38 (c-285, precedence): listing and searching transporters wait on transporter requirements. Kept in the backlog for future work (claim 34).",
+        "Combines the list page's layout and copy (req-386, req-387, req-392, req-399), its search (req-389, req-390), its accessibility gap (req-470) and the shipped records (req-397, req-398): all are observed on the one list page. c-057 (precedence): DR2.1's four commercial records replace the two placeholders; the tests repo today picks 'García Livestock Transport SL' by name and must move. c-006 (precedence): the icon button and in-page filtering, with the server-side filter kept as the no-JavaScript fallback.",
+        "The list keeps its real journey path and form field names: the k6 journey picks the first transporter and saves there (req-1821, already met). The in-page filter is a client-side script, which needs its build entry or it 404s silently."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
-        "frontend:src/server/app/services/transporters/records.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit",
+        "frontend:src/server/app/services/transporters",
         "tests:page-objects/animals/transporter-page.ts",
         "tests:tests/animals/e2e/pages/transporter.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit",
-        "frontend:webpack.config.js",
-        "tests:flows/animals/journey.ts"
+        "tests:flows/animals",
+        "frontend:webpack.config.js"
       ],
-      "existingRow": "inc-037"
+      "existingRow": "inc-037",
+      "dependsOn": [],
+      "theme": "transporters"
     },
     {
       "title": "'Choose a transporter type' matches DR2.1 and refuses a blank choice",
-      "detail": "The page where a trader picks Commercial or Private before adding a transporter takes DR2.1's warning, legend and button copy, drops the notification status strip as DR2.1 does, and stops a trader who continues without choosing, instead of silently writing an empty type and going back to the list. The two add forms send a trader who reaches them without having chosen that type back to this page.",
+      "detail": "The page where a trader picks Commercial or Private before adding a transporter takes DR2.1's warning, legend and button copy, drops the notification status strip as DR2.1 does, and stops a trader who continues without choosing, instead of silently writing an empty type and going back to the list. The two add forms send a trader who reaches them without having chosen that type back to this page. Blocked: adding transporters is transporter management, which waits on transporter requirements.",
       "acceptanceCriteria": [
         "The 'Choose a transporter type' page's warning reads 'Check the transporter list before adding new transporters to avoid duplicates.' (prototype:dr2-1-source app/views/design-release-2.1/transporter-add.html:35-38; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:173; trace:prototype-dr2-1 [type] action 55)",
         "The transporter type radios' visually hidden legend reads 'Choose a transporter type'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add.html:49-81; trace:prototype-dr2-1 [type] action 55)",
@@ -68,20 +193,22 @@
       "requirements": ["req-416", "req-417", "req-420", "req-421", "req-422", "req-425", "req-427"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add.html; app/routes.js:3398-3431,12685-12777" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:173-180 'choose a transporter type'" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:173-180" },
         { "source": "trace:prototype-dr2-1", "ref": "[type] actions 55, 64-68" },
-        { "source": "repo:frontend", "ref": "features/transport/transporter-add; copy/copy.en.js:166-182" },
-        { "source": "repo:tests", "ref": "page-objects/animals/transporter-add-page.ts; tests/animals/e2e/pages/transporter-add.spec.ts" }
+        { "source": "repo:frontend", "ref": "features/transport/transporter-add" },
+        { "source": "repo:tests", "ref": "page-objects/animals/transporter-add-page.ts; tests/animals/e2e/pages/transporter-add.spec.ts" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 39: the transporter type question is blocked" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": [],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 39, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines the type page's copy (req-416, req-417, req-422), its validation (req-420, req-421), the add forms' guard that sends a trader back to it (req-425) and the status strip left off this page and the private form (req-427, c-053 precedence): one page and its entry guard, reviewed together. The private form's strip is removed here too because the same flow setting decides it for both pages."
+        "Blocked by ruling:sam-2026-10-09-pm claim 39 (c-285, precedence).",
+        "Combines the type page's copy (req-416, req-417, req-422), its validation (req-420, req-421), the add forms' guard that sends a trader back to it (req-425) and the status strip left off this page and the private form (req-427, c-053 precedence): one page and its entry guard, reviewed together."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
@@ -89,15 +216,15 @@
         "tests:tests/animals/e2e/pages/transporter-add.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js"
       ],
-      "existingRow": "inc-038"
+      "existingRow": "inc-038",
+      "dependsOn": [],
+      "theme": "transporters"
     },
     {
       "title": "Saving an added transporter returns to the list with it chosen and a success banner; cancelling goes to the dashboard",
-      "detail": "After adding a private or commercial transporter from the journey, the trader goes back to the transporter list, where the new transporter is the first row, already chosen, under a one-time success banner, instead of being sent to the overview. Both add forms gain a 'Cancel and return to dashboard' button that abandons the add and goes wherever the notifications list lives, and keep what the trader typed if a save failed validation and they come back to the form later. Added transporters belong to the organisation, so they stay on its list for later notifications.",
+      "detail": "After adding a private or commercial transporter from the journey, the trader goes back to the transporter list, where the new transporter is the first row, already chosen, under a one-time success banner. Both add forms gain a 'Cancel and return to dashboard' button that abandons the add, and keep what the trader typed if a save failed validation and they come back later. Added transporters belong to the organisation, so they stay on its list for later notifications. Blocked: adding transporters is transporter management, which waits on transporter requirements.",
       "acceptanceCriteria": [
         "Saving a complete private or commercial transporter from the journey returns the trader to the transporter list, with the new transporter as the first row and already chosen. (prototype:dr2-1-source app/routes.js:3720-3726; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:206-215; trace:prototype-dr2-1 [private] actions 88-96)",
         "The list then shows a GOV.UK success notification banner titled 'Success' reading '<name> transporter added', the name with only its first letter capitalised, so adding 'Hill Haulage' reads 'Hill haulage transporter added'; with no name it reads 'Transporter added'. (prototype:dr2-1-source app/views/design-release-2.1/transporter.html:31-38; app/routes.js:3334-3339; trace:prototype-dr2-1 [private] action 97, [commercial] action 102)",
@@ -109,43 +236,45 @@
       ],
       "requirements": ["req-413", "req-414", "req-440", "req-441", "req-442"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3334-3339,3433-3446,3540-3554,3720-3726,3761-3773; app/views/design-release-2.1/transporter.html:31-38; transporter-add-private.html:45-48; transporter-add-commercial.html:49-52" },
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3334-3339,3433-3446,3540-3554,3720-3726,3761-3773; transporter.html:31-38; transporter-add-private.html:45-48; transporter-add-commercial.html:49-52" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:206-226" },
         { "source": "trace:prototype-dr2-1", "ref": "[private] actions 88-97; [commercial] action 102; [cancel] actions 55-58" },
-        { "source": "document:dr1-parity-notes", "ref": "inc-161 design decision, lines 143-146" },
+        { "source": "document:dr1-parity-notes", "ref": "lines 143-146" },
         { "source": "repo:frontend", "ref": "features/transport/transporter-details-save.js; services/transporters/register.js" },
         { "source": "ruling:sam-2026-10-09", "ref": "claim 21: links point wherever the list lives" },
-        { "source": "ruling:sam-2026-10-07", "ref": "persistence and authorisation constraints override the prototype" }
+        { "source": "ruling:sam-2026-10-07", "ref": "persistence and authorisation constraints override the prototype" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 39: the add pages and what follows a save are blocked" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-037", "inc-038"],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": "Look at where a saved add lands, the success banner and the cancel button: the address-book add row and the germinal transporter copy reuse this save-and-cancel behaviour.",
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 39, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines what happens when an add form is saved (req-413, req-414), its buttons (req-440), cancelling (req-441) and keeping unsaved values (req-442): all are the shared save-and-cancel behaviour of the two add forms, built once in their common save path. c-056 (precedence): DR1's ruling still keeps the overview return controls off the add forms; DR2.1's 'Cancel and return to dashboard' is adopted. Added transporters belong to the organisation, not the session; the last criterion guards that the new return-to-list behaviour keeps it. Today's E2E journeys that expect the overview after an add must expect the transporter list."
+        "Blocked by ruling:sam-2026-10-09-pm claim 39 (c-285, precedence).",
+        "Combines what happens when an add form is saved (req-413, req-414), its buttons (req-440), cancelling (req-441) and keeping unsaved values (req-442): the shared save-and-cancel behaviour of the two add forms. c-056 (precedence): the overview return controls stay off the add forms; DR2.1's 'Cancel and return to dashboard' is adopted. Today's E2E journeys that expect an add to carry the journey on must expect the transporter list."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
-        "frontend:src/server/app/services/transporters/register.js",
-        "tests:tests/animals/e2e/features/private-transporter-scope.spec.ts",
-        "tests:tests/animals/e2e/features/commercial-transporter-scope.spec.ts",
-        "tests:tests/animals/e2e/features/commercial-transporter-submission.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "tests:page-objects/animals/private-transporter-page.ts",
+        "tests:page-objects/animals/commercial-transporter-page.ts"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
-        "tests:flows/animals/journey.ts"
+        "frontend:src/server/app/services/transporters",
+        "tests:flows/animals"
       ],
-      "existingRow": "inc-039"
+      "existingRow": "inc-039",
+      "dependsOn": ["inc-037", "inc-038"],
+      "theme": "transporters"
     },
     {
       "title": "'Add a private transporter' matches DR2.1: heading, country select and required fields",
-      "detail": "The private transporter form takes DR2.1's heading and drops its intro line. Its country select opens on United Kingdom, with no placeholder or divider, in alphabetical order. A completely blank form is refused, naming every required field, instead of saving nothing and carrying on.",
+      "detail": "The private transporter form takes DR2.1's heading and drops its intro line. Its country select opens on United Kingdom, with no placeholder or divider, in alphabetical order. A completely blank form is refused, naming every required field, instead of saving nothing and carrying on. Blocked: adding transporters is transporter management, which waits on transporter requirements.",
       "acceptanceCriteria": [
         "The private transporter page's heading reads 'Add a private transporter' and its browser title 'Add a private transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-private.html:8,30-31; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:185-189; trace:prototype-dr2-1 [private] action 66)",
         "The page has no intro paragraph under its heading. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-private.html:8,30-31; trace:prototype-dr2-1 [private] action 66)",
@@ -157,18 +286,20 @@
         { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add-private.html; app/views/partials/transporter-add-private-fields.html:71-83" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:185-203" },
         { "source": "trace:prototype-dr2-1", "ref": "[private] actions 64-81" },
-        { "source": "repo:frontend", "ref": "features/transport/private-transporter-details; copy/copy.en.js:241-263" },
-        { "source": "repo:tests", "ref": "page-objects/animals/private-transporter-page.ts" }
+        { "source": "repo:frontend", "ref": "features/transport/private-transporter-details" },
+        { "source": "repo:tests", "ref": "page-objects/animals/private-transporter-page.ts" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 39: the add pages are blocked" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-038"],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 39, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines the private form's copy (req-428, req-429), its country select's order and default (req-431) and its blank-form validation (req-434): one form, reviewed together. c-054 (precedence): how the list is presented is not its content, so the UK default, no placeholder and alphabetical order are built here; the list's content stays what reference-data serves and is the country-list row's (req-432)."
+        "Blocked by ruling:sam-2026-10-09-pm claim 39 (c-285, precedence).",
+        "Combines the private form's copy (req-428, req-429), its country select's order and default (req-431) and its blank-form validation (req-434): one form. c-054 (precedence): how the list is presented is not its content, so the UK default, no placeholder and alphabetical order are built here; the list's content is the country-list row's (req-432)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
@@ -177,11 +308,51 @@
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy"
       ],
-      "existingRow": "inc-040"
+      "existingRow": "inc-040",
+      "dependsOn": ["inc-038"],
+      "theme": "transporters"
+    },
+    {
+      "title": "The private transporter's country list is reference-data's GBNAG_SPS_EX countries plus the United Kingdom, as MDM serves them",
+      "detail": "The private transporter's Country select offers the United Kingdom plus the GBNAG_SPS_EX countries exactly as MDM serves them through reference-data, never edited in code. Locally and in CDP dev that is trade-imports-stub's fixture, after the stub tidy-up; in CDP test it is real MDM. Where reference-data's list differs from Design Release 2.1, the difference goes to MDM's content report, not into code. Blocked: the afternoon ruling of 9 October blocks the private transporter's country with the rest of transporter management.",
+      "acceptanceCriteria": [
+        "In the fit suites, on the local stack and in CDP dev, the private transporter's Country select offers the United Kingdom plus every country the tidied stub fixture serves for GBNAG_SPS_EX, under the fixture's names and in its count, and no other. (ruling:sam-2026-10-09 claims 25, 29-30; document:dr1-parity-notes lines 94-96; trace:animals-fit trace-animals-fit-p19-015-m1)",
+        "In CDP test, the private transporter's Country select offers the United Kingdom plus exactly the countries reference-data returns for GBNAG_SPS_EX there, none added, renamed or removed. (ruling:sam-2026-10-09 claims 25-26)",
+        "A private transporter saved with any country from the list keeps that country when the trader returns to it, and on the review. (trace:e2e trace-e2e-p11-061; prototype:dr2-1-source app/routes.js:3441,3783)"
+      ],
+      "requirements": ["req-432"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 25-30: list content is MDM's; inc-008 depends on the stub tidy-up row" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 40: inc-008 is blocked, replacing claim 28 of ruling:sam-2026-10-09 for it" },
+        { "source": "document:dr1-parity-notes", "ref": "lines 94-96" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p19-015-m1" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p11-061" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 40, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
+      "notes": [
+        "Blocked again by ruling:sam-2026-10-09-pm claim 40 (c-285, precedence), which replaces ruling:sam-2026-10-09 claim 28's unblocking for this row; inc-082 is unchanged. Its content stays MDM's: the outermost regions, territories and Crown Dependencies DR2.1 shows are not added in code (req-1818, out of scope).",
+        "Depends on the stub tidy-up row (inc-173), which changes the names and count its tests assert, and on inc-040, which changes the same Country select's order and default. referencedata is not in repos: nothing in reference-data changes."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "tests:page-objects/animals/private-transporter-page.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/countries"
+      ],
+      "existingRow": "inc-008",
+      "dependsOn": ["inc-040", "inc-173"],
+      "theme": "transporters"
     },
     {
       "title": "'Add a commercial transporter' matches DR2.1: heading, guidance banner, postcode copy and required fields",
-      "detail": "The commercial transporter form takes DR2.1's heading, its 'Important' guidance banner, its 'Postcode or Zip code' wording and its authorisation-number message, and refuses a completely blank form, naming every required field, instead of saving nothing and carrying on. Every address field is still typed by hand: the address search waits on the address lookup.",
+      "detail": "The commercial transporter form takes DR2.1's heading, its 'Important' guidance banner, its 'Postcode or Zip code' wording and its authorisation-number message, and refuses a completely blank form, naming every required field, instead of saving nothing and carrying on. Every address field is still typed by hand. Blocked: adding transporters is transporter management, which waits on transporter requirements.",
       "acceptanceCriteria": [
         "The commercial transporter page's heading reads 'Add a commercial transporter' and its browser title 'Add a commercial transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source app/views/design-release-2.1/transporter-add-commercial.html:8,32-33; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:229-233; trace:prototype-dr2-1 [commercial] action 59)",
         "The authorisation guidance is a GOV.UK notification banner titled 'Important', whose content opens with the heading 'Help with transporter authorisation'. (prototype:dr2-1-source app/views/partials/transporter-authorisation-banner.html:3-20; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:235)",
@@ -193,71 +364,38 @@
       ],
       "requirements": ["req-443", "req-444", "req-447", "req-448", "req-449", "req-450", "req-451"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/transporter-add-commercial.html; app/views/partials/transporter-add-commercial-fields.html; app/views/partials/transporter-authorisation-banner.html; app/routes.js:3601-3635" },
+        { "source": "prototype:dr2-1-source", "ref": "transporter-add-commercial.html; transporter-add-commercial-fields.html; transporter-authorisation-banner.html; app/routes.js:3601-3635" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:229-254" },
         { "source": "trace:prototype-dr2-1", "ref": "[commercial] actions 59, 80-84" },
-        { "source": "repo:frontend", "ref": "features/transport/commercial-transporter-details; copy/copy.en.js:194-237" },
-        { "source": "repo:tests", "ref": "page-objects/animals/commercial-transporter-page.ts" }
+        { "source": "repo:frontend", "ref": "features/transport/commercial-transporter-details" },
+        { "source": "repo:tests", "ref": "page-objects/animals/commercial-transporter-page.ts" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 39: the add pages are blocked" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-038"],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 39, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines the commercial form's copy (req-443, req-444, req-447), its changed messages (req-448, req-449, req-450) and its blank-form validation (req-451): one form, reviewed together. A country other than Northern Ireland posted to this form is still refused with today's message (c-055, precedence). The Northern Ireland address search and the fields hidden behind it (req-456, req-457, req-458) wait on the address lookup in their own blocked row; until then every field shows, as today."
+        "Blocked by ruling:sam-2026-10-09-pm claim 39 (c-285, precedence).",
+        "Combines the commercial form's copy (req-443, req-444, req-447), its changed messages (req-448, req-449, req-450) and its blank-form validation (req-451): one form. A country other than Northern Ireland posted to this form is still refused with today's message (c-055). The Northern Ireland address search (req-456, req-457, req-458) waits in its own row."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
         "tests:page-objects/animals/commercial-transporter-page.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy"
       ],
-      "existingRow": "inc-041"
-    },
-    {
-      "title": "The private transporter's country list is reference-data's GBNAG_SPS_EX countries plus the United Kingdom, as MDM serves them",
-      "detail": "The 9 October ruling takes the MDM block off this list: the private transporter's Country select is built now against reference-data as it is, offering the United Kingdom plus the GBNAG_SPS_EX countries exactly as MDM serves them, never edited in code. Locally and in CDP dev that is trade-imports-stub's fixture, after the stub tidy-up; in CDP test it is real MDM. Where reference-data's list differs from Design Release 2.1, the difference goes to MDM's content report, not into code.",
-      "acceptanceCriteria": [
-        "In the fit suites, on the local stack and in CDP dev, the private transporter's Country select offers the United Kingdom plus every country the tidied stub fixture serves for GBNAG_SPS_EX, under the fixture's names and in its count, and no other. (ruling:sam-2026-10-09 claims 25, 29-30; document:dr1-parity-notes lines 94-96; trace:animals-fit trace-animals-fit-p19-015-m1)",
-        "In CDP test, the private transporter's Country select offers the United Kingdom plus exactly the countries reference-data returns for GBNAG_SPS_EX there, none added, renamed or removed. (ruling:sam-2026-10-09 claims 25-26)",
-        "A private transporter saved with any country from the list keeps that country when the trader returns to it, and on the review. (trace:e2e trace-e2e-p11-061; prototype:dr2-1-source app/routes.js:3441,3783)"
-      ],
-      "requirements": ["req-432"],
-      "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 25-30: the MDM block is taken off list content; inc-008 depends on the stub tidy-up row" },
-        { "source": "document:dr1-parity-notes", "ref": "Reference-data lists come from MDM, lines 94-96" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p19-015-m1" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p11-061" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-040"],
-      "theme": "reference-lists",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "Unblocked by ruling:sam-2026-10-09 (claim 25): the MDM block rested on DR1's MDM judgement and is taken off. Its content is MDM's; the outermost regions, territories and Crown Dependencies DR2.1 shows are not added in code (req-1818 out of scope, reported to MDM instead).",
-        "Depends on the stub tidy-up row (ruling:sam-2026-10-09 claim 30), drafted by another area, because that row changes the names and count this row's tests assert; the combiner should add its id to dependsOn. Depends on inc-040 because both change the same Country select and its tests; inc-040 sets its order and default, this row its content.",
-        "referencedata dropped from repos: nothing in reference-data changes, the list is served as it is."
-      ],
-      "touches": [
-        "frontend:src/server/app/services/countries"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
-        "tests:page-objects/animals/private-transporter-page.ts"
-      ],
-      "existingRow": "inc-008"
+      "existingRow": "inc-041",
+      "dependsOn": ["inc-038"],
+      "theme": "transporters"
     },
     {
       "title": "Find a commercial transporter's Northern Ireland address with an address search",
-      "detail": "DR2.1 lets a trader adding a commercial transporter search for a Northern Ireland address instead of typing it, and fills the blank address fields from the address chosen. The search calls the same INS backend address lookup as the other address searches and keeps only results whose postcode starts 'BT'. With JavaScript the address and contact fields then start hidden behind the search and an 'Enter address manually' button. The lookup stub gains Northern Ireland addresses so the search and the fill can be seen in the fit suites and on the local stack. All of this is built with address search, once the address lookup is a real feature; until then manual entry stays as it is today.",
+      "detail": "DR2.1 lets a trader adding a commercial transporter search for a Northern Ireland address instead of typing it, and fills the blank address fields from the address chosen. The search calls the same INS backend address lookup as the other address searches and keeps only results whose postcode starts 'BT'. With JavaScript the address and contact fields start hidden behind the search and an 'Enter address manually' button. The lookup stub gains Northern Ireland addresses so the search and the fill can be seen in the fit suites and on the local stack. Blocked twice: on the address lookup becoming a real feature, and on transporter requirements.",
       "acceptanceCriteria": [
         "In the fit suites, on the local stack and in CDP dev, the commercial transporter form offers an address search labelled 'Search for an address' with the placeholder 'Start typing...' and a search icon button named 'Search', and lists the addresses found under 'Address search results'. (prototype:dr2-1-source prototype-dr2-1-source-p7-093, prototype-dr2-1-source-p7-094, prototype-dr2-1-source-p7-098; prototype:dr2-1-specs prototype-dr2-1-specs-p2-127; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-059)",
         "The search offers only Northern Ireland addresses: in the fit suites and on the local stack a search lists the lookup stub's addresses whose postcode starts 'BT' and none of its London addresses; in CDP dev it lists only results whose postcode starts 'BT'. (ruling:sam-2026-10-09 claims 34-35; repo:stub AddressLookupSimulatorController; conflicts:c-218)",
@@ -270,93 +408,60 @@
         { "source": "prototype:dr2-1-source", "ref": "app/views/partials/transporter-add-commercial-fields.html:30-86; app/routes.js:3556-3582" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:238-239" },
         { "source": "trace:prototype-dr2-1", "ref": "[commercial] actions 59-61" },
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 34-35: address search is built once the lookup is a real feature; Northern Ireland stub addresses" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 34-35: address search waits on the lookup; Northern Ireland stub addresses" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 41: inc-042 stays blocked and is also blocked on transporter management" },
         { "source": "repo:stub", "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java" },
         { "source": "repo:frontend", "ref": "features/transport/commercial-transporter-details (no address search today)" }
       ],
       "repos": ["stub", "insbackend", "frontend", "tests"],
       "kind": "feat",
       "status": "blocked",
-      "dependsOn": ["inc-041"],
-      "theme": "transporters",
       "gate": null,
       "openQuestions": [
-        "Blocked: the address lookup must become a real feature first. Today only the EUDPA-390 address lookup spike exists, gated to dev and local on a standalone page and not wired in. Whoever builds address search must land it; this row, its Northern Ireland filter and its stub data are then re-distilled with it (ruling:sam-2026-10-09)."
+        "Blocked: the address lookup must become a real feature first. Today only the EUDPA-390 address lookup spike exists, gated to dev and local on a standalone page and not wired in. Whoever builds address search must land it (ruling:sam-2026-10-09, c-217, c-218).",
+        "Blocked on transporter requirements too: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 41, c-285). The ruling names nobody to decide it; the transporter area is re-distilled once both land."
       ],
       "notes": [
-        "Combines the search (req-456), the fill from a chosen address (req-457), the fields hidden behind the search (req-458) and the lookup stub's Northern Ireland addresses (req-1819): one widget and the stub data that makes it observable. All four carry the same blocker, so they wait together and the commercial form's other changes (inc-041) build now. Until this lands every commercial address and contact field shows from the start, as today.",
-        "c-218 (precedence): the search calls the same INS backend lookup as the other address searches and keeps only BT postcodes. The insbackend repo serves the lookup and stays in repos in case the frontend needs access to it. A client-side script needs its build entry, or it 404s silently."
+        "Combines the search (req-456), the fill from a chosen address (req-457), the fields hidden behind the search (req-458) and the lookup stub's Northern Ireland addresses (req-1819): one widget and the stub data that makes it observable. c-218 (precedence): the search calls the same INS backend lookup and keeps only BT postcodes. A client-side script needs its build entry, or it 404s silently."
       ],
       "touches": [
-        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated",
+        "stub:src/test/java/uk/gov/defra/trade/imports/stubs/federated",
         "tests:page-objects/animals/commercial-transporter-page.ts"
       ],
       "shared": [
-        "frontend:webpack.config.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy"
+        "frontend:src/server/app/services/address-lookup",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "frontend:webpack.config.js"
       ],
-      "existingRow": "inc-042"
-    },
-    {
-      "title": "Save and continue on the transporter list goes on to 'Upload documents' in the journey run",
-      "detail": "In DR2.1 the transporter list is followed by the documents page, so a trader running through the journey who chooses a transporter and saves moves on to 'Upload documents', at its real path, instead of landing on the overview. Opened from its overview task, the list still returns to the overview.",
-      "acceptanceCriteria": [
-        "Reached from arrival details in the journey run, 'Save and continue' on the transporter list, with a transporter chosen, goes to the 'Upload documents' page. (prototype:dr2-1-source app/routes.js:12853-12856; prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:144-146; trace:prototype-dr2-1 transporter-details-select-a-transporter-from-the-list actions 69-72)",
-        "Opened from its task on the overview, 'Save and continue' on the transporter list, with a transporter chosen, returns to the overview. (ruling:sam-2026-10-09 claim 39)",
-        "The chosen transporter is still chosen when the trader goes back to the list from 'Upload documents'. (prototype:dr2-1-specs e2e/transport-and-arrival.fit.spec.js:144-146)"
-      ],
-      "requirements": ["req-405"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:12853-12856" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/transport-and-arrival.fit.spec.js:144-146" },
-        { "source": "trace:prototype-dr2-1", "ref": "transporter-details-select-a-transporter-from-the-list actions 69-72" },
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 20, 39: the documents page keeps its path; overview-opened pages return to the overview" },
-        { "source": "repo:frontend", "ref": "features/transport/transporters/transporters.controller.js:169-170" },
-        { "source": "repo:tests", "ref": "tests/animals/e2e/pages/transporter.spec.ts:26" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-037", "inc-001"],
-      "theme": "transporters",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "Kept apart because it needs the journey's DR2.1 step order (inc-001, journey-flow area) first. inc-031 is no longer a dependency: ruling:sam-2026-10-09 claim 20 drops the documents page's move to a new path, and the page exists at its real path today. The overview return is req-1615's (another area); the second criterion guards that this row keeps it. Today's E2E check that saving the list lands on the overview moves to 'Upload documents' for the journey run."
-      ],
-      "touches": [
-        "tests:tests/animals/e2e/pages/transporter.spec.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters"
-      ],
-      "existingRow": "inc-043"
+      "existingRow": "inc-042",
+      "dependsOn": ["inc-041"],
+      "theme": "transporters"
     },
     {
       "title": "Remove the unlinked commercial transporter register page",
-      "detail": "The old 'Search for an approved commercial transporter' page can still be opened by its address though nothing links to it, it writes the transporter inconsistently, and DR2.1 has no such page. Removing it, with its tests, leaves one way to choose a transporter: the transporter list.",
+      "detail": "The old 'Search for an approved commercial transporter' page can still be opened by its address though nothing links to it, it writes the transporter inconsistently, and DR2.1 has no such page. Removing it, with its tests, leaves one way to choose a transporter: the transporter list. Blocked: the afternoon ruling of 9 October blocks it with the rest of transporter management.",
       "acceptanceCriteria": [
-        "Opening the notification's /transporters/select address shows the service's page not found, not 'Search for an approved commercial transporter'. (prototype:dr2-1-source app/routes.js:12698-12702; repo:frontend features/transport/transporters-select/transporters-select.controller.js:22-29; ruling:sam-2026-10-09 claim 22)",
+        "Opening the notification's /transporters/select address shows the service's page not found, not 'Search for an approved commercial transporter'. (prototype:dr2-1-source app/routes.js:12698-12702; repo:frontend features/transport/transporters-select; ruling:sam-2026-10-09 claim 22)",
         "Choosing a commercial transporter from the transporter list still saves it with its type. (repo:frontend transporters.fit.spec.js 'picking a commercial transporter saves it with its type and persists')"
       ],
       "requirements": ["req-472"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:12698-12702" },
-        { "source": "repo:frontend", "ref": "features/transport/transporters-select; page.js:27-30" },
-        { "source": "repo:tests", "ref": "page-objects/animals/transporter-selection-page.ts; tests/animals/e2e/pages/transporter-selection.spec.ts; flows/animals/journey.ts:303-311" },
-        { "source": "ruling:sam-2026-10-09", "ref": "claim 22: inc-044 is kept" }
+        { "source": "repo:frontend", "ref": "features/transport/transporters-select; page.js" },
+        { "source": "repo:tests", "ref": "page-objects/animals/transporter-selection-page.ts; tests/animals/e2e/pages/transporter-selection.spec.ts; flows/animals/journey.ts" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 42: inc-044 is blocked, replacing the inc-044 clause of claim 22 of ruling:sam-2026-10-09" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "chore",
-      "status": "todo",
-      "dependsOn": [],
-      "theme": "transporters",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 42, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Kept apart: it removes a whole page and its E2E spec, page object and journey helper, a different review from any copy change. Ruling:sam-2026-10-09 claim 22 keeps it because the page is dead and writes inconsistently."
+        "Blocked by ruling:sam-2026-10-09-pm claim 42 (c-285): the row stays, blocked. Kept apart: it removes a whole page and its E2E spec, page object and journey helper."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select",
@@ -365,13 +470,15 @@
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
-        "tests:flows/animals/journey.ts"
+        "tests:flows/animals"
       ],
-      "existingRow": "inc-044"
+      "existingRow": "inc-044",
+      "dependsOn": [],
+      "theme": "transporters"
     },
     {
-      "title": "Adding a transporter from the address book",
-      "detail": "DR2.1 lets a trader add a transporter from the address book through the same 'Choose a transporter type' page and add forms. Started that way, the pages lead back to the address book: the Back link and cancel go there, and saving adds the transporter to the organisation's transporters, held wherever the real services hold transporter records, and shows it at the top of the address book's transporter list.",
+      "title": "Choosing Transporter when adding to the address book hands over to adding a transporter",
+      "detail": "Design Release 2.1 offers Transporter among the address types on the address book's add page and hands over to adding a transporter, then back to the address book. This draft covers the transporter pages' side of that route: the Back link, the cancel button and where a save lands when the add began in the address book. Blocked: the address book's transporter rows wait on transporter requirements.",
       "acceptanceCriteria": [
         "When adding a transporter was started from the address book, the 'Choose a transporter type' Back link goes to the address book's add page. (prototype:dr2-1-source app/routes.js:3380-3387)",
         "When adding a transporter was started from the address book, both add forms' cancel button reads 'Cancel and return to address book' and goes to the address book filtered to transporters. (prototype:dr2-1-source app/routes.js:3784-3786,3824-3826; app/views/design-release-2.1/transporter-add-private.html:50-55)",
@@ -381,33 +488,40 @@
       ],
       "requirements": ["req-461", "req-462", "req-463"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3380-3387,3675-3751,3784-3786,3824-3826; app/views/design-release-2.1/transporter-add-private.html:50-55" },
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:3380-3387,3675-3751,3784-3786,3824-3826; transporter-add-private.html:50-55" },
         { "source": "ruling:sam-2026-10-09", "ref": "claim 21: which service owns transporter records follows the real services" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 43, 46: the address book's transporter rows are blocked; the type choice leaves out Transporter until inc-074 is unblocked" },
         { "source": "repo:frontend", "ref": "services/transporters/register.js:24-26" }
       ],
-      "repos": ["addressbook", "frontend", "insfrontend", "tests"],
+      "repos": ["addressbook", "insfrontend", "frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-061", "inc-067", "inc-038", "inc-039"],
-      "theme": "address-book",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 43, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Combines the address-book entry route's Back link (req-461), cancel (req-462) and save (req-463): one alternative route through the same pages, observed from the address book. The address-book-add-and-edit area also drafts this row (its type-page hand-over requirements); the combiner merges them, as it did before. Which service owns transporter records follows the real services, not the prototype's session list (ruling:sam-2026-10-09 claim 21): the plan decides where an added transporter is held, and the last criterion guards that one held record serves both the address book and the journey list."
+        "Blocked by ruling:sam-2026-10-09-pm claim 43 (c-285). Combines the address-book entry route's Back link (req-461), cancel (req-462) and save (req-463): one alternative route through the same pages.",
+        "Combiner: merge into inc-074 with the address-book-add-and-edit area's draft (req-1203 to req-1206), as the backlog already does; the merged row is blocked as a whole. Theme stays address-book."
       ],
       "touches": [
-        "insfrontend:src/server/address-book"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/address-book-entry",
+        "insfrontend:src/server/app/features/address-book/add",
+        "tests:tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
-        "frontend:src/server/app/services/transporters/register.js"
+        "frontend:src/server/app/services/transporters",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address"
       ],
-      "existingRow": "inc-074"
+      "existingRow": "inc-074",
+      "dependsOn": ["inc-061", "inc-067", "inc-038", "inc-039"],
+      "theme": "address-book"
     },
     {
       "title": "Each transporter on the list links to its details page",
-      "detail": "Design Release 2.1 lets a trader check a transporter's full record before choosing it. Once the real services hold transporter records with a details page, each row of the transporter list ends with a 'View details' link to that transporter's details page, which brings the trader back to the transporter list. The details page lives where the real services hold transporter records, in their conventions, not at the prototype's path; until it exists the list carries no action column.",
+      "detail": "Design Release 2.1 lets a trader check a transporter's full record before choosing it. Once the real services hold transporter records with a details page, each row of the transporter list ends with a 'View details' link to that transporter's details page, which brings the trader back to the transporter list. The details page lives where the real services hold transporter records, in their conventions. Blocked: the address book's transporter rows wait on transporter requirements.",
       "acceptanceCriteria": [
         "Each row of the transporter list ends with a 'View details' link whose visually hidden text names the transporter. (prototype:dr2-1-source prototype-dr2-1-source-p7-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-089; conflicts:c-052)",
         "Following a transporter's 'View details' opens that transporter's details page, showing its record, and its Back link returns to the same notification's transporter list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-090, trace-prototype-dr2-1-p9-047; prototype:dr2-1-specs prototype-dr2-1-specs-p2-106; ruling:sam-2026-10-09 claim 21)"
@@ -417,91 +531,31 @@
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p7-026" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-089, -p8-090, -p9-047" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-106" },
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 18, 21: details page in the real services' conventions" }
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 18, 21: details page in the real services' conventions" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 43: inc-076 (req-394) is blocked" }
       ],
       "repos": ["insfrontend", "frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-074", "inc-075", "inc-066", "inc-037"],
-      "theme": "address-book",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm claims 31-37, 43, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then re-distilled."
+      ],
       "notes": [
-        "Kept apart: it needs transporter records with a details page (the address-book rows it depends on) and the reshaped list (inc-037). Ruling:sam-2026-10-09 claim 21 lets the real services decide which service owns transporter records and where their details page lives; the row no longer names the prototype's address-book path."
-      ],
-      "touches": [],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
-        "insfrontend:src/server/address-book"
-      ],
-      "existingRow": "inc-076"
-    },
-    {
-      "title": "The transporter list's buttons when amending a notification or editing a template",
-      "detail": "When the transporter list is reached while amending a submitted notification, or while editing a template from its review, it ends with the controls DR2.1 gives those modes, so the trader can return to where they came from.",
-      "acceptanceCriteria": [
-        "When the notification is being amended, the transporter list ends with a primary 'Save and return' that goes back to the review, a secondary 'Save and continue' and a link-style 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html isAmend branch; prototype-dr2-1-source-p7-043)",
-        "When the transporter list is edited from a template review, it ends with a single 'Save and return' button, which goes back to the template, and a 'Cancel' link back to the template. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html isTemplateReview branch; app/routes.js:3335; prototype-dr2-1-source-p7-044)"
-      ],
-      "requirements": ["req-407", "req-408"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/journey-form-actions.html; app/routes.js:3335" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-037", "inc-004", "inc-159"],
-      "theme": "type-question-and-templates",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "Combines the two alternative-mode control sets (req-407, req-408): both change only the list's closing controls. Needs amending a notification (inc-004) and editing a template from its review (inc-159) to exist first; the combiner may fold these criteria into those rows if they change the shared save controls for every page at once."
-      ],
-      "touches": [],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters"
-      ],
-      "existingRow": "inc-170"
-    },
-    {
-      "title": "A germinal products notification chooses its transporter from its own copy of the transporter step",
-      "detail": "Design Release 2.1's germinal journey chooses its transporter from the same transporter page as the live-animals journeys. Following the 9 October ruling, the germinal products set gets its own copy of the transporter step, taken from the live-animals set once this programme has built it: the transporter list, 'Choose a transporter type' and both add forms, with the same content, controls and validation, on the germinal journey's own pages. Added transporters belong to the organisation, not to a set, so a germinal notification offers the same transporters as a live-animals one.",
-      "acceptanceCriteria": [
-        "In a germinal products notification, the transport step shows the transporter list with the same caption, heading, 'Select a transporter' sub-heading, search, 'Add a transporter' button, columns and shipped transporters as the live-animals transporter list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-101, trace-prototype-dr2-1-p12-102; ruling:sam-2026-10-09 claims 1-2)",
-        "From the germinal transporter list, 'Add a transporter' opens a germinal 'Choose a transporter type' page, and each type opens its germinal add form, with the same copy, buttons and error messages as the live-animals pages, including 'Select a transporter type' for a blank choice and the full blank-form error list on each form. (ruling:sam-2026-10-09 claims 2, 13)",
-        "Every germinal transporter page is at /germinal-products/notifications/{journeyId}/ followed by the live-animals page's slug. (ruling:sam-2026-10-09 claim 1)",
-        "Saving a complete transporter on a germinal add form returns to the germinal transporter list with the new transporter first, already chosen, under the success banner; 'Cancel and return to dashboard' goes to the dashboard and adds nothing. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-101; ruling:sam-2026-10-09 claim 2)",
-        "A transporter the organisation added on a live-animals notification is on the transporter list of its next germinal products notification, ready to pick, and one added on a germinal notification is on its next live-animals notification's list. (repo:frontend services/transporters/register.js:24-26)",
-        "Picking a transporter on a germinal notification and saving keeps it chosen when the trader returns to the germinal transporter list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-102)"
-      ],
-      "requirements": ["req-1820"],
-      "sources": [
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-101, trace-prototype-dr2-1-p12-102 (germinal journey's transporter page)" },
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 1, 2, 13: germinal set, pages copied from live-animals feature folders, slugs" },
-        { "source": "repo:frontend", "ref": "services/transporters/register.js:24-26" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "dependsOn": ["inc-037", "inc-038", "inc-039", "inc-040", "inc-041"],
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "New for req-1820, the germinal half the 9 October ruling split from the live transporter step. Depends on the germinal set's foundation row (germinal-products area: 'A germinal products notification starts in its own set, with its own draft, category and origin page'), which the combiner should add to dependsOn, and on every live transporter row it copies (inc-037 to inc-041), so the copy is taken after the live twin is built. It does not copy the commercial address search (inc-042, blocked) or the dead transporters-select page (inc-044). Where the germinal list's Save and continue goes is the germinal flow's, set by the germinal-products area's flow rows.",
-        "Belongs with the other germinal feature-folder copies: the combiner should give it the germinal theme those rows sit in, as it touches only the germinal set's transport folder and shares the germinal flow. The shared transporter register is read, not changed, so the live and germinal lists offer the same organisation's transporters."
+        "Blocked by ruling:sam-2026-10-09-pm claim 43 (c-285). Kept apart: it needs transporter records with a details page (the address-book rows it depends on) and the reshaped list (inc-037)."
       ],
       "touches": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/transport",
-        "tests:page-objects/germinal-products",
-        "tests:tests/animals/e2e/germinal-products"
+        "insfrontend:src/server/app/features/address-book/view"
       ],
       "shared": [
-        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
-        "frontend:src/server/app/services/transporters",
-        "frontend:webpack.config.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "tests:page-objects/animals/transporter-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-076",
+      "dependsOn": ["inc-074", "inc-075", "inc-066", "inc-037"],
+      "theme": "address-book"
     }
   ],
-  "unobservable": []
+  "unobservable": [],
+  "splitOff": []
 }

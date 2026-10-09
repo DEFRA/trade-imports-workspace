@@ -1,0 +1,904 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 6, Place of destination and consignor pickers. Read in full: the shared address-book-picker folder (address-lines.js, render.js, pagination.js, view-model.js); every file of features/place-of-destination (page.js, evaluation.js, fields.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, view-model/index.js, view-model/pagination.js, place-of-destination.fit.spec.js); the same set for features/consignor-select; and obligations/sections/destination.js. For page size, captions and task-row titles the pages refer to, services/address-book/index.js (PAGE_SIZE and its header comments), flow/section-captions/copy/copy.en.js and hub/copy/copy.en.js were looked up by line, not read in full. Layout: the two pages are near-identical address-book pickers built on one shared surface (search box, one page of results as small radios in a table with a View details disclosure, an inset for the current selection, govukPagination, the shared save actions). Place of destination (/notifications/{ref}/destinations/select) asks one of three questions chosen from commodity type and arrival status; consignor (/notifications/{ref}/consignors/select) asks one question and redirects to the overview when the consignor is out of scope. Both store only an address-book id. destination.js holds one obligation, placeOfDestination; the consignor obligation lives in obligations/sections/parties.js, outside this part, and only its binding is claimed here. Claims run: shared picker behaviour (001-020), place of destination page (021-052), consignor page (053-066), obligations and bindings (067-069), then every fit test in place-of-destination.fit.spec.js (070-088) and consignor-select.fit.spec.js (089-109), then gaps (110-111).",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p6-001",
+      "statement": "Each address-book picker row shows the address as one line made of address line 1, address line 2, town or city, county and postal or zip code, in that order, joined with commas, skipping empty parts and leaving the country out because it has its own column.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:4-17",
+      "quote": "const ADDRESS_PARTS = [\n  'addressLine1',\n  'addressLine2',\n  'townOrCity',\n  'county',\n  'postalOrZipCode'\n]\n\n/** The address as one line for the results table. The country has its own\n * column, so it is left out here. */\nexport const addressText = (address = {}) =>\n  ADDRESS_PARTS.map((part) => address[part])\n    .filter(Boolean)\n    .join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-002",
+      "statement": "A picker row's View details disclosure lists everything the record holds, one line each: the name, each address part, the country, the telephone number and the email address, skipping any that are empty.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/address-lines.js:19-30",
+      "quote": "/** Everything the record holds, one line each, for the row's View details\n * disclosure — including the contact details the table has no column for. */\nexport const detailLines = (record) => {\n  const address = record.address ?? {}\n  return [\n    record.name,\n    ...ADDRESS_PARTS.map((part) => address[part]),\n    address.country,\n    address.telephoneNumber,\n    address.emailAddress\n  ].filter(Boolean)\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-003",
+      "statement": "A picker selection counts only if the address book still holds that record: a missing or soft-deleted id is treated as no selection, the same as a stored reference to a deleted record reading as never entered.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:6-17",
+      "quote": "A selection resolves only to a record the book still holds: a missing or\n * soft-deleted id is treated as no selection, the same way a stored reference\n * to a deleted record reads as never entered.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-004",
+      "statement": "When the address book is unavailable the picker does not treat it as a deleted selection: the failure propagates as an error, so an outage is never indistinguishable from a deletion.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:8-10",
+      "quote": "An outage is not that — the\n * address book throws and the throw propagates, because an unavailable service\n * must never be indistinguishable from a deletion.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-005",
+      "statement": "A selected id that no longer resolves to a record is not shown as the selected address and is not carried in the paging links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:55-58",
+      "quote": "// A reference that no longer resolves must not travel as \"Selected address\"\n  // or in the paging links, so it counts as no selection here too.\n  const effectiveSelectedId = selected ? selectedId : ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-006",
+      "statement": "The picker searches only the signed-in user's organisation's address book.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:53-54",
+      "quote": "const orgId = organisationIdOf(request)\n  const found = await addressBook.search(orgId, { query, page: pageNumber })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-007",
+      "statement": "Every picker page's Back link goes to the notification's overview (the hub).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:61-63",
+      "quote": "backLink: hubPath(current.journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-008",
+      "statement": "Picker pages use the wider 'display' content column rather than the default question column, inferred from the surface class the renderer sets so the results table has room.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:67",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "inferred",
+      "note": "The exact width the 'display' surface gives lives in shared/kit.js, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-009",
+      "statement": "The picker's error summary link goes to the first results row's radio when there are results, and to the search box when there are none.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:71-73",
+      "quote": "errorSummary: kit.errorSummary(error ? { [fieldName]: error } : undefined, {\n      href: () => (found.results.length > 0 ? `#${fieldName}` : '#q')\n    }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-010",
+      "statement": "Every picker renders the same surface: a search box, one page of results as radios, the current selection and the paging; only the page's identity, copy and heading vary.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/render.js:19-25",
+      "quote": "Every picker renders the same surface — a search box, one page of results as\n * radios, the selection and the paging — so only the page's own identity, its\n * copy and its heading vary.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-011",
+      "statement": "A picker page shows 5 address-book records per page of results.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/index.js:6-10",
+      "quote": "/** Rows per page of the picker's results table (design 05-03..06). Owned here,\n * not by the pages — the address book owns its own search and pagination, and\n * the API's page size is server-owned (cv-025), so this service re-slices an\n * API page down to this size rather than asking for it. */\nexport const PAGE_SIZE = 5",
+      "confidence": "verbatim",
+      "note": "Looked up outside this part's read list because the covers name the page size; the address-book service itself belongs to another part."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-012",
+      "statement": "Picker paging is a plain link, not a form submit, and each page link carries the search term (q), the page number (page) and the currently ticked address (selected) in its query string, so a row ticked on one page is not lost on paging.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:5-28",
+      "quote": "Paging is a link, not a submit, so everything the next page needs travels\n * in the query string: the search term, the page and the row the trader has\n * already ticked. Without the selection a trader who picks a row on page one\n * and then pages loses it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-013",
+      "statement": "Picker pagination is not shown when all the results fit on one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:3,58,74-76",
+      "quote": "const MINIMUM_PAGES_TO_PAGINATE = 2 ... if (totalPages < MINIMUM_PAGES_TO_PAGINATE) {\n      return null\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-014",
+      "statement": "Picker pagination shows page numbers for the first page, the last page, the current page and the page either side of it, with an ellipsis wherever pages are skipped.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:30-53",
+      "quote": "/** First, last, and the page either side of the current one — anything the gap\n * skips over becomes an ellipsis. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-015",
+      "statement": "Picker pagination shows a Previous link on every page after the first and a Next link on every page before the last, labelled from the page's own copy so they read in the page's language rather than govukPagination's built-in English.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/pagination.js:62-65,80-87",
+      "quote": "`labels`, the resolved `previous` and `next`\n * copy, so the links read in the language the rest of the page is in rather than in\n * `govukPagination`'s built-in English.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-016",
+      "statement": "The first results row on every page takes the field name as its radio id, so the error summary link always moves focus to the first row; later rows are numbered by their position in the whole result set so ids stay distinct across pages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:3-12",
+      "quote": "The first row on every page takes the field name itself, so the error-summary\n * link `#<fieldName>` always moves focus to the first control a trader can\n * choose. Later rows are numbered by their position in the whole result set,\n * so ids stay distinct across pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-017",
+      "statement": "Each picker results row shows the record's name, its one-line address, its country and its View details lines, and its radio is ticked when the record is the currently selected one.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:14-23",
+      "quote": "name: record.name,\n  addressText: addressText(record.address),\n  country: record.address?.country,\n  detailLines: detailLines(record),\n  checked: record.id === selectedId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-018",
+      "statement": "The results table caption gives how many records are shown on this page and how many the search found in total.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/view-model.js:51",
+      "quote": "resultsCaption: copy.resultsCaption(found.results.length, found.total),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-019",
+      "statement": "The address book used by the pickers has no address types: the same record may be the consignor on one notification and the consignee on the next, so every picker searches one book.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/index.js:12-15",
+      "quote": "/** Addresses have no type in the address book (D3) — the same record may be a\n * consignor on one notification and a consignee on the next. So every picker\n * searches one book, and no function here takes a role.",
+      "confidence": "verbatim",
+      "note": "Looked up outside this part's read list; cites ruling D3."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-020",
+      "statement": "The notification journey only reads from the organisation's address book; adding, changing and removing records belongs to the INS frontend, which is the only writer.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/index.js:17-19",
+      "quote": "/** This service reads and never writes. The notification journey selects from\n * the organisation's book; adding, changing and removing the records in it\n * belongs to the INS frontend, which is the only writer. */",
+      "confidence": "verbatim",
+      "note": "Looked up outside this part's read list; explains why neither picker page offers an add-address link (see the gap claim)."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-021",
+      "statement": "The place of destination page is at /notifications/{reference}/destinations/select, with the page id place-of-destination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/page.js:1-4",
+      "quote": "export const placeOfDestinationPage = {\n  id: 'place-of-destination',\n  slug: 'destinations/select'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-022",
+      "statement": "The place of destination page collects one answer named placeOfDestination, which is also the radio name and the validation error key.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/fields.js:3-10",
+      "quote": "It is the manifest obligation name, the DOM radio name and the validation\n * error key at once, so the error-summary link resolves to the first row of\n * the results table.\n */\nexport const PLACE_OF_DESTINATION = 'placeOfDestination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-023",
+      "statement": "The place of destination page asks its question in one of three states: potatoes, already arrived, and not yet arrived.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/fields.js:12-29",
+      "quote": "export const DESTINATION_STATES = Object.freeze([\n  POTATO_DESTINATION,\n  ALREADY_ARRIVED,\n  NOT_YET_ARRIVED\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-024",
+      "statement": "A notification with no arrival status in scope (potatoes, which are never asked whether the consignment has arrived because reg 24A gives them no post-arrival branch) is shown the potatoes version of the place of destination question.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:50-62",
+      "quote": "Potatoes are never asked whether the consignment has arrived — reg 24A gives\n * them no post-arrival branch — so a notification with no arrival status in\n * scope is asked for the place of destination.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-025",
+      "statement": "Plants and wood notifications whose arrival status is 'already arrived' are shown the already-arrived version of the question; any other answer, or no answer yet, gets the not-yet-arrived version, which is the one the journey opens on.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:55-66",
+      "quote": "Plants and wood take the state\n * from the arrival-status page; one that has not been answered yet is asked\n * the pre-arrival question, which is the one the journey opens on.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-026",
+      "statement": "The place of destination page title is 'Place of destination' in every state.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:24-27",
+      "quote": "const PAGE_NAME = 'Place of destination'\n\nexport const copy = {\n  title: PAGE_NAME,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-027",
+      "statement": "For potatoes and for consignments not yet arrived, the place of destination heading is 'Place of destination', the same as the overview task row that leads to it.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:28-30",
+      "quote": "potatoes: PAGE_NAME,\n    'not-yet-arrived': PAGE_NAME,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-028",
+      "statement": "For a consignment already arrived, the place of destination heading is 'Where is the consignment now?'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:31",
+      "quote": "'already-arrived': 'Where is the consignment now?'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-029",
+      "statement": "For potatoes and for consignments not yet arrived, the text under the place of destination heading is 'Where the goods will be kept after arrival. This is where a plant health inspector may carry out a spot check.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:33-37",
+      "quote": "'Where the goods will be kept after arrival. This is where a plant health inspector may carry out a spot check.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-030",
+      "statement": "For a consignment already arrived, the text under the heading is 'Give the address where the consignment is being kept. If it is still on its way to its intended destination, give that destination. A plant health inspector may carry out a spot check here.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:38-39",
+      "quote": "'Give the address where the consignment is being kept. If it is still on its way to its intended destination, give that destination. A plant health inspector may carry out a spot check here.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-031",
+      "statement": "The place of destination copy is awaiting a copy pass: the picker chrome is copied verbatim from the animals party picker, the pagination wording from the plants dashboard, and the already-arrived heading and the descriptions are the journey spec's wording, not yet content-reviewed (decision d-003).",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:1-9",
+      "quote": "// AWAITING THE COPY PASS — the title is the animals service string for the\n// same party, and the picker chrome below is copied verbatim from the animals\n// party picker, apart from `pagination`, which that picker has no counterpart\n// for and which is the dashboard's own wording\n// (features/dashboard/copy/copy.en.js). The pre-arrival headings are the\n// title, so the page is called what the hub task row that leads to it is\n// called. The already-arrived heading and the descriptions are the journey\n// spec's wording and have not been through a content review (journey-spec.json\n// pages[place-of-destination].descriptionByState, decisions.json d-003).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-032",
+      "statement": "The place of destination page has Welsh copy, machine-drafted and not reviewed by a translator: title and pre-arrival heading 'Man cyrchfan', already-arrived heading 'Ble mae’r llwyth nawr?', and error 'Dewiswch fan cyrchfan o’r rhestr'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.cy.js:1,17-24,57-59",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off. ... const PAGE_NAME = 'Man cyrchfan' ... 'already-arrived': 'Ble mae’r llwyth nawr?' ... placeOfDestination: 'Dewiswch fan cyrchfan o’r rhestr'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-033",
+      "statement": "The Welsh place of destination descriptions are 'Lle bydd y nwyddau’n cael eu cadw ar ôl cyrraedd. Dyma lle gallai arolygydd iechyd planhigion gynnal archwiliad ar hap.' before arrival and 'Rhowch y cyfeiriad lle mae’r llwyth yn cael ei gadw. Os yw’n dal ar ei ffordd i’w gyrchfan arfaethedig, rhowch y gyrchfan honno. Gallai arolygydd iechyd planhigion gynnal archwiliad ar hap yma.' once arrived, reusing wording from the arrival-status page so the pair stays consistent.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.cy.js:12-16,26-33",
+      "quote": "'Lle bydd y nwyddau’n cael eu cadw ar ôl cyrraedd. Dyma lle gallai arolygydd iechyd planhigion gynnal archwiliad ar hap.' ... 'Rhowch y cyfeiriad lle mae’r llwyth yn cael ei gadw. Os yw’n dal ar ei ffordd i’w gyrchfan arfaethedig, rhowch y gyrchfan honno. Gallai arolygydd iechyd planhigion gynnal archwiliad ar hap yma.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-034",
+      "statement": "The place of destination page shows the section caption above its heading, and its heading as a large h1 followed by the description as body text.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:12-16",
+      "quote": "{% include \"shared/error-summary.njk\" %}\n\n  {{ sectionCaption(caption) }}\n  <h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ description }}</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-035",
+      "statement": "The place of destination page's section caption is 'Destination'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.en.js:16; place-of-destination.fit.spec.js 'renders the caption, the heading, the description and the search box'",
+      "quote": "destination: 'Destination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-036",
+      "statement": "The whole picker page is one form posted without browser validation, carrying a CSRF crumb, a concurrency token, the current results page number, and the selected address id when one is selected.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:18-24",
+      "quote": "<form method=\"post\" novalidate>\n    <input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />\n    <input type=\"hidden\" name=\"page\" value=\"{{ picker.page }}\" />\n    {% if picker.selected %}\n      <input type=\"hidden\" name=\"selected\" value=\"{{ picker.selected.id }}\" />\n    {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-037",
+      "statement": "The picker needs no JavaScript: the search button and the main button are both form submits told apart by their action value, and paging is a link.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:25-27",
+      "quote": "The whole page is one form. The search button and the primary are both\n * submits, told apart by their `action` value, and paging is a link — so the\n * picker needs no client JavaScript at all.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-038",
+      "statement": "The picker's search box is a two-thirds-width text input labelled 'Search' (small bold label) with the hint 'Name, address or country', pre-filled with the current search term.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:26-33; copy/copy.en.js:41-45",
+      "quote": "id: \"q\",\n      name: \"q\",\n      classes: \"govuk-!-width-two-thirds\",\n      label: { text: copy.search.label, classes: \"govuk-label--s\" },\n      hint: { text: copy.search.hint },\n      value: picker.query ... search: {\n    label: 'Search',\n    hint: 'Name, address or country',\n    button: 'Search'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-039",
+      "statement": "Beside the search box is a secondary button labelled 'Search' that submits the form as a search.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:35-40",
+      "quote": "{{ govukButton({\n      text: copy.search.button,\n      classes: \"govuk-button--secondary\",\n      name: \"action\",\n      value: \"search\"\n    }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-040",
+      "statement": "Searching on a picker always shows the first page of the new results, whichever page it was run from, and keeps the address already ticked.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:95-108",
+      "quote": "const selectedId = payload[PLACE_OF_DESTINATION] || payload.selected || ''\n ... if (isSearch(payload)) {\n    // A new search starts at the first page, whichever page it was run from.\n    return render(request, h, current, {\n      query,\n      page: FIRST_PAGE,\n      selectedId\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-041",
+      "statement": "When an address is selected, the picker shows an inset reading 'Selected address:' followed by the record's name.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:42-44; copy/copy.en.js:46",
+      "quote": "{{ govukInsetText({ text: copy.selectedAddressPrefix + \" \" + picker.selected.name }) }} ... selectedAddressPrefix: 'Selected address:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-042",
+      "statement": "When the picker refuses an answer, the error message is shown above the results table with a visually hidden 'Error:' prefix.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:46-50; copy/copy.en.js:47",
+      "quote": "<p id=\"placeOfDestination-error\" class=\"govuk-error-message\">\n        <span class=\"govuk-visually-hidden\">{{ copy.errorPrefix }}</span> {{ picker.error }}\n      </p> ... errorPrefix: 'Error:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-043",
+      "statement": "The picker results table has a small caption ('Showing {shown} of {total} addresses') and five columns: a visually hidden 'Select' column for the radio, 'Name', 'Address', 'Country', and a visually hidden 'Actions' column for View details.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:91-102; copy/copy.en.js:49,54-60",
+      "quote": "resultsCaption: (shown, total) => `Showing ${shown} of ${total} addresses`, ... table: {\n    selectHidden: 'Select',\n    name: 'Name',\n    address: 'Address',\n    country: 'Country',\n    actionsHidden: 'Actions'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-044",
+      "statement": "Each results row has a small radio whose accessible name, visually hidden, is 'Select' followed by the record's name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:55-66; copy/copy.en.js:61",
+      "quote": "{% set selectLabel %}<span class=\"govuk-visually-hidden\">{{ copy.selectRowPrefix }} {{ row.name }}</span>{% endset %}\n          {{ govukRadios({\n            idPrefix: row.idPrefix,\n            name: \"placeOfDestination\",\n            classes: \"govuk-radios--small\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-045",
+      "statement": "Each results row has a 'View details' details disclosure, with visually hidden 'for {name}', that opens a list of the record's detail lines.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:68-81; copy/copy.en.js:62-63",
+      "quote": "<span class=\"govuk-details__summary-text\">{{ copy.viewDetails }}<span class=\"govuk-visually-hidden\"> {{ copy.viewDetailsFor }} {{ row.name }}</span></span> ... viewDetails: 'View details',\n  viewDetailsFor: 'for',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-046",
+      "statement": "When a search finds nothing the picker shows 'No addresses match your search.' instead of the results table.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:107-109; copy/copy.en.js:48",
+      "quote": "noMatches: 'No addresses match your search.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-047",
+      "statement": "The picker pagination links read 'Previous' and 'Next' in English and 'Blaenorol' and 'Nesaf' in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.en.js:50-53; copy/copy.cy.js:43-46",
+      "quote": "pagination: {\n    previous: 'Previous',\n    next: 'Next'\n  }, ... pagination: {\n    previous: 'Blaenorol',\n    next: 'Nesaf'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-048",
+      "statement": "The picker ends with the shared save actions: a 'Save and continue' button, a save-and-return-to-overview button and a cancel-and-return-to-overview link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:111-115; place-of-destination.fit.spec.js 'offers the three save controls'",
+      "quote": "{{ saveActions(\n      hubHref,\n      { text: sharedCopy.saveActions.saveAndContinue, name: \"action\", value: \"save\" },\n      sharedCopy.saveActions\n    ) }}",
+      "confidence": "verbatim",
+      "note": "The button and link wording lives in shared/copy.en.js, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-049",
+      "statement": "Opening the place of destination page shows the saved address as selected, unless the link names another selection; the search term and page number come from the link too.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:86-93",
+      "quote": "query: request.query.q ?? '',\n    page: parsePageNumber(request.query.page),\n    selectedId: request.query.selected ?? committedId(current.answers)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-050",
+      "statement": "Saving the place of destination with no address chosen, or with an id the address book no longer holds, re-shows the page with the error 'Select a place of destination from the list' and a 400 status, keeping the search term and page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:110-120; copy/copy.en.js:64-66",
+      "quote": "const chosen = await chosenFor(organisationIdOf(request), selectedId)\n  if (!chosen) {\n    return (\n      await render(request, h, current, {\n        query,\n        page: parsePageNumber(payload.page),\n        selectedId: '',\n        error: copy.errors.placeOfDestination\n      })\n    ).code(HTTP_STATUS_BAD_REQUEST) ... placeOfDestination: 'Select a place of destination from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-051",
+      "statement": "The place of destination answer saved is only a reference to the address-book record ({ addressId }), never a copy of the address; the details are resolved from the book on every read, so a corrected record is corrected on the notification and a deleted one stops resolving.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:29-32,122-127",
+      "quote": "The answer stored is the address-book id and nothing else. The details are\n * resolved from the book on every read, so a record the trader later corrects\n * is corrected on the notification too, and a record they delete stops\n * resolving rather than leaving a stale copy behind.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-052",
+      "statement": "If saving the picker answer fails in a recoverable way, the page is shown again with a recoverable-error message and a 500 status, keeping the chosen address, search term and page; otherwise it moves on to the next page in the journey.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.js:122-143",
+      "quote": "const { failure } = await kit.recoverableSave(\n ... selectedId: chosen.id,\n          recoverableError: true\n        })\n      ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)\n ... return h.redirect(await kit.nextTarget(request, page, committed.scope))",
+      "confidence": "verbatim",
+      "note": "The recoverable-error wording itself lives in the shared layout, outside this part. The consignor controller does the same (consignor-select/controller.js:104-125)."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-053",
+      "statement": "The consignor page is at /notifications/{reference}/consignors/select, with the page id consignor-select, and collects one answer named consignor.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/page.js:1-4; fields.js:1",
+      "quote": "export const consignorPage = {\n  id: 'consignor-select',\n  slug: 'consignors/select'\n} ... export const CONSIGNOR = 'consignor'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-054",
+      "statement": "The consignor page picks the consignor or exporter from the organisation's address book, using the same shared picker surface as the place of destination page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:18-23,50-59",
+      "quote": "/**\n * The consignor or exporter, picked from the organisation's address book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-055",
+      "statement": "The consignor page's title and heading are 'Consignor or exporter', the same in every state, the same as its overview task row.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js:2; controller.js:48-58; hub/copy/copy.en.js:31",
+      "quote": "title: 'Consignor or exporter',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-056",
+      "statement": "The text under the consignor heading is 'This is the sender of the consignment.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js:3",
+      "quote": "description: 'This is the sender of the consignment.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-057",
+      "statement": "The consignor page's section caption is 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/flow/section-captions/copy/copy.en.js:12; consignor-select.fit.spec.js 'renders the caption, the heading, the description and the search box'",
+      "quote": "consignmentParties: 'Consignment parties',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-058",
+      "statement": "The consignor page's search box, button, selected inset, no-matches message, results caption, table headings, row labels, View details and pagination copy are word for word the same as the place of destination page's, in English and in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js:4-26; copy/copy.cy.js:5-27",
+      "quote": "search: {\n    label: 'Search',\n    hint: 'Name, address or country',\n    button: 'Search'\n  },\n  selectedAddressPrefix: 'Selected address:',\n  errorPrefix: 'Error:',\n  noMatches: 'No addresses match your search.',\n  resultsCaption: (shown, total) => `Showing ${shown} of ${total} addresses`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-059",
+      "statement": "The consignor page's template is the same as the place of destination's (search box, inset, error, results table with radios named consignor and View details, pagination, save actions), with its error message element id consignor-error.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/template.njk:1-117",
+      "quote": "<p id=\"consignor-error\" class=\"govuk-error-message\"> ... name: \"consignor\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-060",
+      "statement": "Saving the consignor page with no address chosen, or with an id the address book no longer holds, re-shows the page with the error 'Select a consignor from the list' and a 400 status, keeping the search term.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:92-102; copy/copy.en.js:27-29",
+      "quote": "consignor: 'Select a consignor from the list'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-061",
+      "statement": "The consignor answer saved is only a reference to the address-book record ({ addressId }), resolved from the book on every read.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:25-29,104-109",
+      "quote": "committed = await state.commit(request, h, {\n        [CONSIGNOR]: { addressId: chosen.id }\n      })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-062",
+      "statement": "When the consignor is not in the notification's scope (for example a potatoes notification), opening or posting to the consignor page sends the user to the notification overview instead.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:61-65,79-81",
+      "quote": "if (!current.scope.has(CONSIGNOR)) {\n    return h.redirect(hubPath(current.journey.journeyId))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-063",
+      "statement": "Opening the consignor page shows the saved consignor as selected, unless the link names another selection; searching restarts at the first page and keeps the ticked address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:66-90",
+      "quote": "selectedId: request.query.selected ?? committedId(current.answers) ... // A new search starts at the first page, whichever page it was run from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-064",
+      "statement": "The consignor page has machine-drafted Welsh copy: title 'Anfonwr neu allforiwr', description 'Dyma anfonwr y llwyth.', error 'Dewiswch anfonwr o’r rhestr'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.cy.js:1-4,28-30",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator.\nexport const copy = {\n  title: 'Anfonwr neu allforiwr',\n  description: 'Dyma anfonwr y llwyth.', ... consignor: 'Dewiswch anfonwr o’r rhestr'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-065",
+      "statement": "The Welsh picker chrome reads: search 'Chwilio' with hint 'Enw, cyfeiriad neu wlad', 'Cyfeiriad a ddewiswyd:', 'Gwall:', 'Nid oes unrhyw gyfeiriadau’n cyfateb i’ch chwiliad.', 'Yn dangos {shown} o {total} cyfeiriad', table headings 'Dewis', 'Enw', 'Cyfeiriad', 'Gwlad', 'Camau gweithredu', and 'Gweld manylion' ... 'ar gyfer'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/copy/copy.cy.js:34-56; consignor-select/copy/copy.cy.js:5-27",
+      "quote": "search: {\n    label: 'Chwilio',\n    hint: 'Enw, cyfeiriad neu wlad',\n    button: 'Chwilio'\n  },\n  selectedAddressPrefix: 'Cyfeiriad a ddewiswyd:',\n  errorPrefix: 'Gwall:',\n  noMatches: 'Nid oes unrhyw gyfeiriadau’n cyfateb i’ch chwiliad.',\n  resultsCaption: (shown, total) => `Yn dangos ${shown} o ${total} cyfeiriad`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-066",
+      "statement": "The consignor page asks one question in one voice, so its heading and description do not change with commodity type or arrival status, unlike the place of destination page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.js:48-59",
+      "quote": "// The page asks one question in one voice, so the heading and the description\n// are the page's own copy rather than chosen per notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-067",
+      "statement": "The place of destination is one mandatory, notification-level obligation (placeOfDestination) owed by every commodity type and never gated: reg 24A(2)(c) asks potatoes for their intended destination and reg 26(2)(b) asks plants and wood for the intended destination or the current location.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/obligations/sections/destination.js:1-16",
+      "quote": "// Where the consignment is going, or — once it is here — where it is being\n// kept. One notification-level answer for every commodity type: reg 24A(2)(c)\n// asks potatoes for their intended destination and reg 26(2)(b) asks plants\n// and wood for the intended destination or the current location. The matter\n// owed is the same one, so it is one obligation and never a gate; ... export const placeOfDestination = {\n  id: '7eb0d717-f852-43f7-9377-c6a9c301d702',\n  name: 'placeOfDestination',\n  status: 'mandatory'\n}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-068",
+      "statement": "The place of destination page's answer fulfils the placeOfDestination obligation.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/evaluation.js:7-9",
+      "quote": "export const evaluationBindings = feature('place-of-destination', [\n  scalar({ field: 'placeOfDestination', obligation: placeOfDestination })\n])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-069",
+      "statement": "The consignor page's answer fulfils the consignor obligation.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/evaluation.js:7-9",
+      "quote": "export const evaluationBindings = feature('consignor-select', [\n  scalar({ field: 'consignor', obligation: consignor })\n])",
+      "confidence": "verbatim",
+      "note": "The consignor obligation itself (mandatory, applied through a gate) is in obligations/sections/parties.js, outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-070",
+      "statement": "Fit test: a seed-potatoes notification's place of destination page shows the 'Destination' caption, the potatoes heading as h1, the potatoes description, and the search box with its label and hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:188 'renders the caption, the heading, the description and the search box'",
+      "quote": "test('renders the caption, the heading, the description and the search box'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-071",
+      "statement": "Fit test: the place of destination page is reachable from the overview's 'Place of destination' task row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:210 'is reachable from the overview destination task row'",
+      "quote": "test('is reachable from the overview destination task row'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-072",
+      "statement": "Fit test: the place of destination page opens on the first page of the organisation's address book, captioned with the page size against the 13-record stub book (Showing 5 of 13 addresses), with Tech Imports Ltd shown and Alpine Supplies GmbH (on the last page) not.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:223 'shows the first page of the organisation address book with its count'",
+      "quote": "test('shows the first page of the organisation address book with its count'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-073",
+      "statement": "Fit test: the place of destination page offers Save and continue, Save and return to overview, and a Cancel and return to overview link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:237 'offers the three save controls'",
+      "quote": "test('offers the three save controls'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-074",
+      "statement": "Fit test: the place of destination page's Back link points to the notification overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:253 'sends Back to the overview'",
+      "quote": "test('sends Back to the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-075",
+      "statement": "Fit test: searching the place of destination picker for a country (Denmark) narrows the results to matching records (Copenhagen Exports ApS) and drops the others.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:262 'narrows the results to the search term'",
+      "quote": "test('narrows the results to the search term'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-076",
+      "statement": "Fit test: a place of destination search that matches nothing shows the no-matches message rather than an empty table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:272 'says so rather than showing an empty table when nothing matches'",
+      "quote": "test('says so rather than showing an empty table when nothing matches'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-077",
+      "statement": "Fit test: a row ticked before a search stays selected, shown in the 'Selected address:' inset, after the search narrows the results to exclude it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:285 'keeps a ticked row while the search narrows the results'",
+      "quote": "test('keeps a ticked row while the search narrows the results'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-078",
+      "statement": "Fit test: a saved place of destination stays shown in the selected inset after following the 'Page 2' link, where its row is not listed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:297 'carries a saved address through the paging links'",
+      "quote": "test('carries a saved address through the paging links'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-079",
+      "statement": "Fit test: for a seed-potatoes notification, saving a chosen place of destination continues to the identification numbers page, and on return the row is ticked and shown in the selected inset.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:317 'saves the chosen address, continues to identification numbers and shows it again on return'",
+      "quote": "test('saves the chosen address, continues to identification numbers and shows it again on return'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-080",
+      "statement": "Fit test: choosing a different place of destination replaces the one already saved rather than keeping both.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:332 'replaces the address already saved rather than keeping both'",
+      "quote": "test('replaces the address already saved rather than keeping both'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-081",
+      "statement": "Fit test: Save and return to overview on the place of destination page saves the address and goes to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:348 'Save and return to overview saves the address and reaches the overview'",
+      "quote": "test('Save and return to overview saves the address and reaches the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-082",
+      "statement": "Fit test: Cancel and return to overview on the place of destination page goes to the overview without saving the ticked address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:366 'Cancel and return to overview reaches the overview without saving'",
+      "quote": "test('Cancel and return to overview reaches the overview without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-083",
+      "statement": "Fit test: continuing from the place of destination page with nothing chosen stays on the page, shows the error in the error summary, and its link moves focus to the first row's radio.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:390 'continuing with nothing chosen shows the error and focuses the first row'",
+      "quote": "test('continuing with nothing chosen shows the error and focuses the first row'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-084",
+      "statement": "Fit test: after the nothing-chosen error, choosing an address and continuing reaches the identification numbers page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:407 'recovers from the error once an address is chosen'",
+      "quote": "test('recovers from the error once an address is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-085",
+      "statement": "Fit test: continuing when the search found nothing shows the error, and the error summary link moves focus to the search box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:424 'continuing with nothing found focuses the search box'",
+      "quote": "test('continuing with nothing found focuses the search box'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-086",
+      "statement": "Fit test: the place of destination page has no serious or critical axe violations (WCAG 2.0, 2.1 and 2.2 A and AA) on first render.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:453 'has no serious or critical axe violations on the initial render'",
+      "quote": "test('has no serious or critical axe violations on the initial render' ... .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-087",
+      "statement": "Fit test: the place of destination page has no serious or critical axe violations in its error state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:467 'has no serious or critical axe violations in the error state'",
+      "quote": "test('has no serious or critical axe violations in the error state'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-088",
+      "statement": "Fit test: for a wood notification whose arrival status is 'already arrived', the place of destination page asks 'Where is the consignment now?' with the already-arrived description.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/place-of-destination.fit.spec.js:490 'asks a consignment already in Great Britain where it is now'",
+      "quote": "test('asks a consignment already in Great Britain where it is now'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-089",
+      "statement": "Fit test: a wood notification's consignor page shows the 'Consignment parties' caption, the 'Consignor or exporter' h1, the description, and the search box with its label and hint.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:154 'renders the caption, the heading, the description and the search box'",
+      "quote": "test('renders the caption, the heading, the description and the search box'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-090",
+      "statement": "Fit test: the consignor page is reachable from the overview's 'Consignor or exporter' task row.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:176 'is reachable from the overview consignor task row'",
+      "quote": "test('is reachable from the overview consignor task row'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-091",
+      "statement": "Fit test: the consignor page opens on the first page of the organisation's address book with the 'Showing 5 of 13 addresses' caption against the stub book, Tech Imports Ltd shown and Alpine Supplies GmbH not.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:187 'shows the first page of the organisation address book with its count'",
+      "quote": "test('shows the first page of the organisation address book with its count'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-092",
+      "statement": "Fit test: the consignor page offers Save and continue, Save and return to overview, and a Cancel and return to overview link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:201 'offers the three save controls'",
+      "quote": "test('offers the three save controls'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-093",
+      "statement": "Fit test: the consignor page's Back link points to the notification overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:217 'sends Back to the overview'",
+      "quote": "test('sends Back to the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-094",
+      "statement": "Fit test: searching the consignor picker for Denmark narrows the results to Copenhagen Exports ApS and drops Tech Imports Ltd.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:226 'narrows the results to the search term'",
+      "quote": "test('narrows the results to the search term'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-095",
+      "statement": "Fit test: a consignor search that matches nothing shows the no-matches message rather than an empty table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:236 'says so rather than showing an empty table when nothing matches'",
+      "quote": "test('says so rather than showing an empty table when nothing matches'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-096",
+      "statement": "Fit test: a consignor row ticked before a search stays in the selected inset after the search narrows the results.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:249 'keeps a ticked row while the search narrows the results'",
+      "quote": "test('keeps a ticked row while the search narrows the results'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-097",
+      "statement": "Fit test: a saved consignor stays in the selected inset after following the 'Page 2' link, where its row is not listed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:261 'carries a saved address through the paging links'",
+      "quote": "test('carries a saved address through the paging links'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-098",
+      "statement": "Fit test: for a wood notification, saving a chosen consignor continues to the identification numbers page, and on return the row is ticked and shown in the selected inset.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:281 'saves the chosen address, continues to identification numbers and shows it again on return'",
+      "quote": "test('saves the chosen address, continues to identification numbers and shows it again on return'",
+      "confidence": "verbatim",
+      "note": "The page after the consignor depends on what the flow still needs (kit.nextTarget), which this part does not read; the test's notification has only commodity and origin answered."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-099",
+      "statement": "Fit test: choosing a different consignor replaces the one already saved rather than keeping both.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:296 'replaces the address already saved rather than keeping both'",
+      "quote": "test('replaces the address already saved rather than keeping both'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-100",
+      "statement": "Fit test: Save and return to overview on the consignor page saves the address and goes to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:312 'Save and return to overview saves the address and reaches the overview'",
+      "quote": "test('Save and return to overview saves the address and reaches the overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-101",
+      "statement": "Fit test: Cancel and return to overview on the consignor page goes to the overview without saving the ticked address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:330 'Cancel and return to overview reaches the overview without saving'",
+      "quote": "test('Cancel and return to overview reaches the overview without saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-102",
+      "statement": "Fit test: continuing from the consignor page with nothing chosen stays on the page, shows 'Select a consignor from the list' in the error summary, and its link moves focus to the first row's radio.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:354 'continuing with nothing chosen shows the error and focuses the first row'",
+      "quote": "test('continuing with nothing chosen shows the error and focuses the first row'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-103",
+      "statement": "Fit test: after the consignor nothing-chosen error, choosing an address and continuing reaches the identification numbers page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:371 'recovers from the error once an address is chosen'",
+      "quote": "test('recovers from the error once an address is chosen'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-104",
+      "statement": "Fit test: continuing on the consignor page when the search found nothing shows the error, and the error summary link moves focus to the search box.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:388 'continuing with nothing found focuses the search box'",
+      "quote": "test('continuing with nothing found focuses the search box'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-105",
+      "statement": "Fit test: the consignor page has no serious or critical axe violations on first render.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:417 'has no serious or critical axe violations on the initial render'",
+      "quote": "test('has no serious or critical axe violations on the initial render'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-106",
+      "statement": "Fit test: the consignor page has no serious or critical axe violations in its error state.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:428 'has no serious or critical axe violations in the error state'",
+      "quote": "test('has no serious or critical axe violations in the error state'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-107",
+      "statement": "Fit test: submitting the consignor page with an address-book id that does not exist is refused with the consignor error, and the search box keeps the term the user typed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:448 'rejects a missing address-book id and preserves the search'",
+      "quote": "test('rejects a missing address-book id and preserves the search'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-108",
+      "statement": "Fit test: after a saved consignor's notification is switched to potatoes, the overview no longer shows the consignor task row and a direct link to the consignor page does not stay on it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:466 'hides the row and rejects a deep link after switching to potatoes'",
+      "quote": "test('hides the row and rejects a deep link after switching to potatoes'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p6-109",
+      "statement": "A consignor answer saved before the notification was switched to potatoes is not kept: switching back to wood shows the consignor page with no address ticked, inferred from the same fit test's final assertion.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js:486-496",
+      "quote": "await page.goto(consignorPathOf(reference))\n    await expect(page).toHaveURL(PAGE_URL)\n    await expect(rowRadio(page, TECH_IMPORTS)).not.toBeChecked()",
+      "confidence": "inferred",
+      "note": "Where the answer is dropped (the engine's scope handling) is outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-110",
+      "statement": "Neither picker page offers a link to add a new address or to manage the address book: the templates hold only search, results, paging and the save actions, so a trader whose address is missing has no way forward from the page itself.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/template.njk:1-117; consignor-select/template.njk:1-117",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in both templates, both copy files and both controllers. services/address-book/index.js:17-19 says adding addresses belongs to the INS frontend, but nothing on these pages links there."
+    },
+    {
+      "id": "repo-plantsfrontend-p6-111",
+      "statement": "The consignor copy carries no copy-pass or provenance marker in English, unlike the place of destination copy, so whether 'Consignor or exporter' and 'This is the sender of the consignment.' are reviewed wording is not recorded.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/copy/copy.en.js:1-30",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

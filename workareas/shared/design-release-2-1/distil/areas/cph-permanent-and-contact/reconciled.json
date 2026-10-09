@@ -3,8 +3,8 @@
   "requirements": [
     {
       "id": "req-699",
-      "statement": "In the live-animals set, the CPH number question applies to every live-animal commodity except horses (0101) and commodity code 01061900 (cats, dogs, ferrets and other live mammals): cattle, pigs, sheep, goats, poultry, rabbits, camels, ostriches, parrots, reptiles, bees and fish all get it. Where it does not apply, the CPH page cannot be opened and sends the user to the consignment addresses page.",
-      "why": "Design Release 2.1 asks for a CPH number for every species kept on a holding, not only the few on today's list, and keeps the page out of reach for consignments that have no holding. This is the live half of the CPH rule: the 2026-10-09 ruling splits req-699 per set, and the germinal set has no CPH page at all (req-cph-permanent-and-contact-001).",
+      "statement": "In the live-animals set, the CPH number question applies to every live-animal commodity except horses (0101) and commodity code 01061900 (cats, dogs, ferrets and other live mammals). The rule is built now over the commodities today's catalogue holds, and the same rule covers pigs, sheep, goats, poultry, rabbits, camels, ostriches, parrots, reptiles, bees and fish once the MDM catalogue holds them, with no further change. Where it does not apply, the CPH page cannot be opened and sends the user to the consignment addresses page. The plants frontend has no CPH number and gets nothing from this rule.",
+      "why": "Design Release 2.1 asks for a CPH number for every species kept on a holding, not only the few on today's list, and keeps the page out of reach for consignments that have no holding. This is the live half of the CPH rule: the 2026-10-09 ruling splits req-699 per set, and the germinal set has no CPH page at all (req-1832). The 2026-10-09 afternoon ruling blocks the new catalogue on MDM but lets the CPH page go ahead on today's five commodities, and never mirrors CPH into plants.",
       "claims": [
         "prototype-dr2-1-source-p9-002",
         "prototype-dr2-1-source-p9-001",
@@ -14,7 +14,10 @@
         "trace-e2e-p6-068",
         "trace-e2e-p6-070",
         "ruling-sam-2026-10-09-p1-057",
-        "ruling-sam-2026-10-09-p1-025"
+        "ruling-sam-2026-10-09-p1-025",
+        "ruling-sam-2026-10-09-pm-p2-017",
+        "ruling-sam-2026-10-09-pm-p2-026",
+        "ruling-sam-2026-10-09-pm-p3-011"
       ],
       "status": "adopted",
       "delta": "change",
@@ -241,38 +244,48 @@
     {
       "id": "req-711",
       "statement": "With JavaScript, each CPH box drops any non-digit as the trader types and stops at its maximum length.",
-      "why": "Design Release 2.1 keeps stray characters out of the boxes as they are typed; the server checks stay as the backstop. The digit filtering is built, but not the automatic focus moves the same prototype script makes (c-006).",
+      "why": "Design Release 2.1 keeps stray characters out of the boxes as they are typed. The 2026-10-09 afternoon ruling (design question 7) builds nothing new on the CPH page now: it already works without JavaScript, with the server's checks (req-715), so this script is its own waiting-on-design increment, built as design answers or dropped. The automatic focus moves the same prototype script makes are not built (c-006, req-713).",
       "claims": [
         "prototype-dr2-1-source-p9-011",
-        "prototype-dr2-1-source-p9-012"
+        "prototype-dr2-1-source-p9-012",
+        "ruling-sam-2026-10-09-pm-p1-078",
+        "ruling-sam-2026-10-09-pm-p1-079"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today the boxes are plain text inputs with no script (trace-animals-fit-p13-014 shows the attributes only), and non-digits are caught only on save.",
       "conflicts": [
-        "c-006"
-      ]
+        "c-006",
+        "c-cph-permanent-and-contact-001"
+      ],
+      "blockedBy": "Design answers design question 7 (CPH number JavaScript) in the waiting-on-design theme: whether the CPH boxes drop non-digits as they are typed. Built as design says, or dropped if design drops it."
     },
     {
       "id": "req-712",
       "statement": "With JavaScript, pasting into a CPH box keeps only the digits and spreads them across that box and the ones after it (2, 3 then 4 digits), so pasting 123456789 or 12/345/6789 into County fills all three boxes.",
-      "why": "Traders often copy the whole number from an APHA document; Design Release 2.1 lets one paste fill the three parts.",
+      "why": "Traders often copy the whole number from an APHA document; Design Release 2.1 lets one paste fill the three parts. The 2026-10-09 afternoon ruling (design question 7) moves this script to the waiting-on-design theme, together with the question of whether one box that takes '12/345/6789' should replace the three; the page works as today until design answers.",
       "claims": [
         "prototype-dr2-1-source-p9-012-m3",
-        "repo-frontend-p10-033"
+        "repo-frontend-p10-033",
+        "ruling-sam-2026-10-09-pm-p1-078",
+        "ruling-sam-2026-10-09-pm-p1-079"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today a whole slashed number pasted into County stays there and is rejected on save with 'County must be 2 digits' and the missing-part errors (repo-frontend-p10-033); without JavaScript that stays the case.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-001"
+      ],
+      "blockedBy": "Design answers design question 7 (CPH number JavaScript) in the waiting-on-design theme: whether a paste spreads across the three CPH boxes, and whether one box taking '12/345/6789' replaces the three. Built as design says, or dropped if design drops it."
     },
     {
       "id": "req-713",
       "statement": "With JavaScript, focus moves to the next CPH box once a box is full, and Backspace in an empty box moves focus back to the previous box and deletes its last digit.",
-      "why": "Moving focus while the trader types is a change of context that accessibility guidance warns against, and the accessibility duty overrides Design Release 2.1 here: the CPH boxes keep the digit filtering and paste spreading but not the automatic focus moves (c-006).",
+      "why": "Moving focus while the trader types is a change of context that accessibility guidance warns against, and the accessibility duty overrides Design Release 2.1 here: the automatic focus moves are not built (c-006). The 2026-10-09 afternoon ruling adds that the prototype's JavaScript is not copied into the frontend; the digit filtering and paste spreading wait on design (req-711, req-712).",
       "claims": [
         "prototype-dr2-1-source-p9-012-m1",
-        "prototype-dr2-1-source-p9-012-m2"
+        "prototype-dr2-1-source-p9-012-m2",
+        "ruling-sam-2026-10-09-pm-p1-010"
       ],
       "status": "out-of-scope",
       "delta": "new",
@@ -471,9 +484,12 @@
     },
     {
       "id": "req-723",
-      "statement": "The CPH and contact address forms post back to their own URL with a CSRF crumb and the notification's concurrency token, and a failed save re-renders the page with status 500, the recoverable-error banner and the trader's values kept.",
+      "statement": "The CPH and contact address forms, and the plants consignment contact form, post back to their own URL with a CSRF crumb and the notification's concurrency token, and a failed save re-renders the page with status 500, the recoverable-error banner and the trader's values kept. On the plants contact page an unavailable address book raises the error rather than treating the contact as deleted or unselected.",
       "why": "Real persistence and concurrency constraints the prototype cannot express.",
       "claims": [
+        "repo-plantsfrontend-p7-102",
+        "repo-plantsfrontend-p7-081",
+        "repo-plantsfrontend-p7-082",
         "trace-animals-fit-p13-024",
         "trace-animals-fit-p13-029",
         "trace-animals-fit-p13-026-m1",
@@ -485,14 +501,15 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "trace-animals-fit-p13-024, repo-frontend-p10-048 and repo-frontend-p10-078.",
+      "deltaNote": "trace-animals-fit-p13-024, repo-frontend-p10-048 and repo-frontend-p10-078; for plants, repo-plantsfrontend-p7-102, repo-plantsfrontend-p7-081 and repo-plantsfrontend-p7-082.",
       "conflicts": []
     },
     {
       "id": "req-724",
-      "statement": "The CPH, permanent address and contact address pages have no serious or critical WCAG 2 A/AA axe violations, clean and in their error states, and each radio group's description names its hint and, on error, its error.",
+      "statement": "The CPH, permanent address and contact address pages, and the plants consignment contact page, have no serious or critical WCAG 2 A/AA axe violations, clean and in their error states, and each radio group's description names its hint and, on error, its error.",
       "why": "The service must be accessible; the prototype does not test this.",
       "claims": [
+        "repo-plantsfrontend-p7-084",
         "repo-frontend-p10-049",
         "repo-frontend-p10-082",
         "trace-animals-fit-p13-046",
@@ -503,14 +520,15 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-049 and repo-frontend-p10-082 for the CPH and contact pages today; the permanent address page needs the same check when it is built.",
+      "deltaNote": "repo-frontend-p10-049 and repo-frontend-p10-082 for the CPH and contact pages today, and repo-plantsfrontend-p7-084 for the plants contact page; the permanent address page needs the same check when it is built.",
       "conflicts": []
     },
     {
       "id": "req-725",
-      "statement": "Every English string changed or added on the CPH, permanent address and contact address pages gets a Welsh version in the same change, marked as a machine draft that must not ship without Welsh Language Standards sign-off.",
-      "why": "Both pages already carry a Welsh version of every string, so a changed English string without its Welsh would leave the Welsh page wrong.",
+      "statement": "Every English string changed or added on the CPH, permanent address and contact address pages, and on the plants consignment contact page, gets a Welsh version in the same change, marked as a machine draft that must not ship without Welsh Language Standards sign-off.",
+      "why": "These pages already carry a Welsh version of every string, so a changed English string without its Welsh would leave the Welsh page wrong.",
       "claims": [
+        "repo-plantsfrontend-p7-085",
         "repo-frontend-p10-050",
         "repo-frontend-p10-051",
         "repo-frontend-p10-052",
@@ -520,23 +538,25 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the CPH and contact pages have machine-draft Welsh for today's strings (repo-frontend-p10-051, repo-frontend-p10-084); the new and changed strings have none yet.",
+      "deltaNote": "Today the CPH and contact pages, and the plants contact page ('Cyfeiriad cyswllt ar gyfer y llwyth', repo-plantsfrontend-p7-085), have machine-draft Welsh for today's strings (repo-frontend-p10-051, repo-frontend-p10-084); the new and changed strings have none yet.",
       "conflicts": []
     },
     {
       "id": "req-726",
-      "statement": "Cats, dogs and ferrets need a permanent address; 'Other live mammals', which shares their commodity code 01061900, does not.",
-      "why": "Design Release 2.1 asks for a permanent address only for pets that APHA must be able to check.",
+      "statement": "Cats, dogs and ferrets need a permanent address; 'Other live mammals', which shares their commodity code 01061900, does not. It is built now for cats and dogs, and the same rule takes in ferrets once the commodity catalogue holds them.",
+      "why": "Design Release 2.1 asks for a permanent address only for pets that APHA must be able to check. The 2026-10-09 afternoon ruling builds the permanent address page for cats and dogs now, and ferrets once the catalogue, which waits on MDM, holds them.",
       "claims": [
         "prototype-dr2-1-source-p9-023",
         "trace-prototype-dr2-1-p7-109",
         "trace-e2e-p6-028",
         "document-dr1-parity-backlog-p6-012",
-        "document-dr1-parity-backlog-p6-015"
+        "document-dr1-parity-backlog-p6-015",
+        "ruling-sam-2026-10-09-pm-p2-017",
+        "ruling-sam-2026-10-09-pm-p2-018"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the frontend asks for a permanent address for cats and dogs only (trace-e2e-p6-028; DR1 inc-057 records the same); ferrets are not in today's commodity catalogue.",
+      "deltaNote": "Today the frontend asks for a permanent address for cats and dogs only (trace-e2e-p6-028; DR1 inc-057 records the same); ferrets are not in today's commodity catalogue, so nothing changes for them until the MDM catalogue holds them.",
       "conflicts": []
     },
     {
@@ -570,7 +590,7 @@
       "deltaNote": "Today there is no permanent address page: the address fields sit inside the animal identification form after the identifier fields (trace-e2e-p6-028, document-dr1-parity-backlog-p6-058).",
       "conflicts": [
         "c-119",
-        "c-cph-permanent-and-contact-002"
+        "c-240"
       ]
     },
     {
@@ -923,7 +943,7 @@
     {
       "id": "req-746",
       "statement": "Saving 'Same as the place of destination (POD)' for an animal gives that animal the place of destination's address as its permanent address (name, address lines, country, email and phone, as the review then shows); saving 'Enter a new address' gives it the animal's own name, address lines, town or city, county, postcode, country United Kingdom, email and phone. Whether the same-as-destination answer is held as a copy of the place of destination or as a reference to it, and where the answer is stored, is for the plan to decide in the real service's model.",
-      "why": "Each animal's permanent address must be held with the notification, whichever way it was given. The 2026-10-09 ruling keeps this behaviour but leaves its storage shape to the plan, because the prototype never decides the data model (c-cph-permanent-and-contact-001).",
+      "why": "Each animal's permanent address must be held with the notification, whichever way it was given. The 2026-10-09 ruling keeps this behaviour but leaves its storage shape to the plan, because the prototype never decides the data model (c-239).",
       "claims": [
         "prototype-dr2-1-source-p9-067",
         "prototype-dr2-1-source-p9-068",
@@ -936,7 +956,7 @@
       "deltaNote": "Today each animal record stores the address typed on the identification form; nothing gives an animal the place of destination's address.",
       "conflicts": [
         "c-119",
-        "c-cph-permanent-and-contact-001"
+        "c-239"
       ]
     },
     {
@@ -952,8 +972,8 @@
       "delta": "new",
       "deltaNote": "Today's identification form stores each field by name (trace-e2e-p6-032); the new page must keep that.",
       "conflicts": [
-        "c-126",
-        "c-119"
+        "c-119",
+        "c-126"
       ]
     },
     {
@@ -1028,9 +1048,11 @@
     },
     {
       "id": "req-752",
-      "statement": "The contact address page has the h1 'Contact address for consignment', no section caption, and the browser title 'Contact address for consignment - Import notification service - GOV.UK'.",
-      "why": "Design Release 2.1 and today agree on the page's identity.",
+      "statement": "The contact address page, in the animals sets and in plants, has the h1 'Contact address for consignment', no section caption, and the browser title 'Contact address for consignment - Import notification service - GOV.UK'.",
+      "why": "Design Release 2.1 and today agree on the page's identity, and the plants contact page already shares it.",
       "claims": [
+        "repo-plantsfrontend-p7-048",
+        "repo-plantsfrontend-p7-050",
         "prototype-dr2-1-source-p8-116",
         "trace-prototype-dr2-1-p7-065",
         "trace-prototype-dr2-1-p12-140",
@@ -1049,14 +1071,16 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-058 and trace-animals-fit-p12-041: the same heading and title, with no caption, today (as the radios legend).",
+      "deltaNote": "repo-frontend-p10-058 and trace-animals-fit-p12-041: the same heading and title, with no caption, today (as the radios legend); repo-plantsfrontend-p7-048 and repo-plantsfrontend-p7-050 for plants.",
       "conflicts": []
     },
     {
       "id": "req-753",
-      "statement": "Directly under the contact page's heading, body text reads 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.', replacing the hint 'Selecting a contact copies their name and address into this notification.'",
-      "why": "It tells the trader whose address this is; DR1 inc-046 judged the copy sentence loses nothing the trader can act on.",
+      "statement": "Directly under the contact page's heading, body text reads 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.', replacing the hint 'Selecting a contact copies their name and address into this notification.' The plants consignment contact page takes the same change in the same increment, in English and Welsh.",
+      "why": "It tells the trader whose address this is; DR1 inc-046 judged the copy sentence loses nothing the trader can act on. The 2026-10-09 afternoon ruling has plants' contact picker take the new intro in the same increment, because plants has the same page with the same hint.",
       "claims": [
+        "ruling-sam-2026-10-09-pm-p3-029",
+        "repo-plantsfrontend-p7-049",
         "prototype-dr2-1-source-p8-117",
         "trace-prototype-dr2-1-p7-067",
         "trace-prototype-dr2-1-p12-140",
@@ -1073,16 +1097,18 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the page carries only the fieldset hint 'Selecting a contact copies their name and address into this notification.' (trace-e2e-p7-006, trace-animals-fit-p12-042).",
+      "deltaNote": "Today the page carries only the fieldset hint 'Selecting a contact copies their name and address into this notification.' (trace-e2e-p7-006, trace-animals-fit-p12-042); the plants contact page says the same under its heading (repo-plantsfrontend-p7-049).",
       "conflicts": [
         "c-120"
       ]
     },
     {
       "id": "req-754",
-      "statement": "Below the intro, the contact page has the sub-heading 'Select an address' (an h2), and the radios' fieldset legend 'Select an address' is visually hidden, so the h1 is no longer the radios legend.",
-      "why": "This is Design Release 2.1's page structure: a heading for the page and a heading for the choice.",
+      "statement": "Below the intro, the contact page has the sub-heading 'Select an address' (an h2), and the radios' fieldset legend 'Select an address' is visually hidden, so the h1 is no longer the radios legend. The plants consignment contact page gains the same 'Select an address' sub-heading above its results in the same increment, in English and Welsh.",
+      "why": "This is Design Release 2.1's page structure: a heading for the page and a heading for the choice. The 2026-10-09 afternoon ruling gives plants' contact picker the same heading.",
       "claims": [
+        "ruling-sam-2026-10-09-pm-p3-029",
+        "repo-plantsfrontend-p7-048",
         "prototype-dr2-1-source-p8-118",
         "trace-prototype-dr2-1-p7-068",
         "repo-frontend-p10-058",
@@ -1090,7 +1116,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the radios legend is the page's h1 and there is no 'Select an address' heading (repo-frontend-p10-058).",
+      "deltaNote": "Today the radios legend is the page's h1 and there is no 'Select an address' heading (repo-frontend-p10-058); the plants contact page has its h1 and no 'Select an address' heading either (repo-plantsfrontend-p7-048).",
       "conflicts": [
         "c-120"
       ]
@@ -1322,9 +1348,11 @@
     },
     {
       "id": "req-766",
-      "statement": "In the journey's first pass, reached from the consignment addresses page, choosing a contact address and pressing 'Save and continue' saves it and goes to the review page ('Review your notification'). Opened from its overview task or from the review page, the contact page returns there instead (req-768).",
-      "why": "In Design Release 2.1 the contact address is the last step before review. The 2026-10-09 ruling has a page opened from its overview task return to the overview on 'Save and continue', so only the first pass goes on to review.",
+      "statement": "In the journey's first pass, reached from the consignment addresses page, choosing a contact address and pressing 'Save and continue' saves it and goes to the review page ('Review your notification'). Opened from its overview task or from the review page, the contact page returns there instead (req-768). In plants, where the contact page is the opening run's last step, saving it in the opening run likewise goes on to plants' review page, even when the notification is incomplete.",
+      "why": "In Design Release 2.1 the contact address is the last step before review. The 2026-10-09 ruling has a page opened from its overview task return to the overview on 'Save and continue', so only the first pass goes on to review. The 2026-10-09 afternoon ruling has plants' opening run end on its review page too (inc-001's plants half).",
       "claims": [
+        "ruling-sam-2026-10-09-pm-p3-014",
+        "repo-plantsfrontend-p9-042",
         "prototype-dr2-1-source-p8-128",
         "trace-prototype-dr2-1-p7-076",
         "trace-prototype-dr2-1-p12-144",
@@ -1336,7 +1364,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today a saved contact goes on to the next page of the journey flow, which lands on the overview (repo-frontend-p10-076, trace-e2e-p7-022); nothing goes on to the review page.",
+      "deltaNote": "Today a saved contact goes on to the next page of the journey flow, which lands on the overview (repo-frontend-p10-076, trace-e2e-p7-022); nothing goes on to the review page. In plants the opening run ends at the contact page and lands on the overview (repo-plantsfrontend-p9-042).",
       "conflicts": [
         "c-123",
         "c-204"
@@ -1363,9 +1391,11 @@
     },
     {
       "id": "req-768",
-      "statement": "Opened from its overview task ('Contact address for this consignment'), the contact page returns to the overview on 'Save and continue' as well as on the return-to-overview button; opened from the review page, it returns to the review after saving.",
-      "why": "A trader changing one answer goes back to where they started; the 2026-10-09 ruling has every page opened from its overview task return to the overview on 'Save and continue' (req-1615).",
+      "statement": "Opened from its overview task ('Contact address for this consignment'; 'Contact address for consignment' in plants), the contact page returns to the overview on 'Save and continue' as well as on the return-to-overview button, with the task then shown complete; opened from the review page, it returns to the review after saving.",
+      "why": "A trader changing one answer goes back to where they started; the 2026-10-09 ruling has every page opened from its overview task return to the overview on 'Save and continue' (req-1615), and plants already does.",
       "claims": [
+        "repo-plantsfrontend-p7-047",
+        "repo-plantsfrontend-p7-070",
         "prototype-dr2-1-source-p8-133",
         "repo-frontend-p10-076",
         "ruling-sam-2026-10-09-p1-196",
@@ -1379,7 +1409,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "trace-e2e-p7-022, trace-e2e-p7-030 and repo-tests-p1-153: opened from the overview, saving a contact returns to the overview today; repo-frontend-p10-076: a change visit returns to check answers.",
+      "deltaNote": "trace-e2e-p7-022, trace-e2e-p7-030 and repo-tests-p1-153: opened from the overview, saving a contact returns to the overview today; repo-frontend-p10-076: a change visit returns to check answers; repo-plantsfrontend-p7-070: plants returns to the overview with the row 'Completed'.",
       "conflicts": [
         "c-123",
         "c-204"
@@ -1387,9 +1417,12 @@
     },
     {
       "id": "req-769",
-      "statement": "Outside amend, the contact page ends with all three controls: 'Save and continue', a secondary button that saves and returns to the hub, and a link that cancels and returns to the hub.",
+      "statement": "Outside amend, the contact page, in the animals sets and in plants, ends with all three controls: 'Save and continue', a secondary button that saves and returns to the hub, and a link that cancels and returns to the hub without saving.",
       "why": "The hub's task list links to the contact page, so under DR1's inc-161 rule (b) it keeps the three return controls, as Design Release 2.1 shows; the controls' wording is the journey-wide rename.",
       "claims": [
+        "repo-plantsfrontend-p7-073",
+        "repo-plantsfrontend-p7-074",
+        "repo-plantsfrontend-p7-075",
         "prototype-dr2-1-source-p8-129",
         "prototype-dr2-1-source-p8-130",
         "trace-prototype-dr2-1-p7-073",
@@ -1406,23 +1439,27 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-081 and trace-e2e-p7-019 to trace-e2e-p7-021: the three controls are there today, labelled 'overview' where Design Release 2.1 says 'hub'.",
+      "deltaNote": "repo-frontend-p10-081 and trace-e2e-p7-019 to trace-e2e-p7-021: the three controls are there today, labelled 'overview' where Design Release 2.1 says 'hub'; repo-plantsfrontend-p7-073 to repo-plantsfrontend-p7-075 for plants.",
       "conflicts": []
     },
     {
       "id": "req-770",
-      "statement": "While a notification is being amended, the contact, CPH and permanent address pages show the amend controls: 'Save and return' (to the review page) and a secondary 'Save and continue', with no return-to-hub button or cancel link; the CPH page also offers the cancel-amend dialog.",
-      "why": "Design Release 2.1 sends an amending trader back to review rather than to the hub.",
+      "statement": "While a notification is being amended, the contact, CPH and permanent address pages show the amend controls: 'Save and return' (to the review page) and a secondary 'Save and continue', with no return-to-hub button or cancel link. None of them carries a cancel-amend dialog: cancelling the amendment is the Amend bar's 'Cancel amend', which opens the cancel amendment confirmation page.",
+      "why": "Design Release 2.1 sends an amending trader back to review rather than to the hub. The 2026-10-09 afternoon ruling keeps the amend and cancel confirmations as pages and holds the prototype's pop-ups, the CPH page's cancel-amend dialog among them, in one waiting-on-design increment (c-cph-permanent-and-contact-002).",
       "claims": [
         "prototype-dr2-1-source-p8-131",
         "prototype-dr2-1-source-p9-020",
-        "prototype-dr2-1-source-p9-078"
+        "prototype-dr2-1-source-p9-078",
+        "ruling-sam-2026-10-09-pm-p1-083",
+        "ruling-sam-2026-10-09-pm-p1-086",
+        "ruling-sam-2026-10-09-pm-p1-088"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "No today source shows these pages in an amend.",
       "conflicts": [
-        "c-210"
+        "c-210",
+        "c-cph-permanent-and-contact-002"
       ]
     },
     {
@@ -1463,9 +1500,12 @@
     },
     {
       "id": "req-773",
-      "statement": "Choosing a contact saves a copy of that address's name and address into the notification, remembering which record it came from; the held copy stays valid, and the task complete, even if the address-book record later changes or is deleted.",
+      "statement": "Choosing a contact, in the animals sets and in plants, saves a copy of that address's name and address into the notification, remembering which record it came from, and replaces any contact saved before; the held copy stays valid, and the task complete, even if the address-book record later changes or is deleted.",
       "why": "Copy semantics is a real persistence and cross-service constraint: the address book is another service, and a submitted notification must keep the address it was submitted with.",
       "claims": [
+        "repo-plantsfrontend-p7-068",
+        "repo-plantsfrontend-p7-072",
+        "repo-plantsfrontend-p9-044",
         "prototype-dr2-1-source-p8-127",
         "repo-frontend-p10-055",
         "repo-frontend-p10-074",
@@ -1477,7 +1517,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-074 and repo-frontend-p10-075: a copy with pickedFromId, never flagged invalid on return, today.",
+      "deltaNote": "repo-frontend-p10-074 and repo-frontend-p10-075: a copy with pickedFromId, never flagged invalid on return, today; repo-plantsfrontend-p7-068, repo-plantsfrontend-p7-072 and repo-plantsfrontend-p9-044 for plants.",
       "conflicts": [
         "c-124"
       ]
@@ -1485,7 +1525,7 @@
     {
       "id": "req-774",
       "statement": "The contact page shows the radios list alone, with the current contact pre-selected, and no 'Current contact address' summary card or 'Edit details' link.",
-      "why": "Design Release 2.1's contact page has no such card and the prototype wins on look and feel; no DR1 judgement covers it, and the 2026-10-09 ruling leaves c-125 unchanged. What happens to the edit route the card linked to is c-cph-permanent-and-contact-003.",
+      "why": "Design Release 2.1's contact page has no such card and the prototype wins on look and feel; no DR1 judgement covers it, and the 2026-10-09 ruling leaves c-125 unchanged. What happens to the edit route the card linked to is c-241.",
       "claims": [
         "prototype-dr2-1-source-p8-122",
         "repo-frontend-p10-065",
@@ -1512,18 +1552,17 @@
       "deltaNote": "Today, once a contact is held, the page shows a 'Current contact address' card with an 'Edit details' link below the radios (trace-e2e-p7-026).",
       "conflicts": [
         "c-125",
-        "c-cph-permanent-and-contact-003"
+        "c-241"
       ]
     },
     {
       "id": "req-775",
-      "statement": "The contact edit route (/consignment/contact/edit) and its edit form stay in the service: saving it changes only this notification's copy of the contact, leaves the address-book record unchanged and adds no record, and the review's contact row shows the edited name and address. Whether anything still links to the route, once the contact page loses its card (req-774) and the review its 'Edit details' links (c-138), waits on c-cph-permanent-and-contact-003.",
-      "why": "The 2026-10-09 ruling keeps the contact edit route, because removing it to match the prototype would be an architecture change the prototype cannot decide; the same ruling keeps c-125, which takes the card and link off the contact page.",
+      "statement": "The contact edit route (/consignment/contact/edit) and its edit form stay in the service: saving it changes only this notification's copy of the contact, leaves the address-book record unchanged and adds no record. No page links to it: the contact page loses its card (req-774) and the review its 'Edit details' links (c-138), and no new link is added until a later ruling or design names an entry point.",
+      "why": "The 2026-10-09 ruling keeps the contact edit route, because removing it to match the prototype would be an architecture change the prototype cannot decide; which links a page offers is look and feel, and Design Release 2.1 offers no way to edit the chosen contact (c-241).",
       "claims": [
         "ruling-sam-2026-10-09-p1-094",
         "ruling-sam-2026-10-09-p1-126",
         "repo-frontend-p10-057",
-        "repo-tests-p5-076",
         "repo-tests-p5-080",
         "repo-tests-p5-081",
         "trace-e2e-p8-077",
@@ -1533,12 +1572,12 @@
         "trace-animals-fit-p12-070",
         "trace-e2e-p7-058"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-057 and trace-e2e-p8-077 to trace-e2e-p8-080: the edit route exists today, edits only this notification's copy and is shown on the review.",
+      "deltaNote": "repo-frontend-p10-057 and trace-e2e-p8-077 to trace-e2e-p8-080: the edit route exists today and edits only this notification's copy.",
       "conflicts": [
         "c-125",
-        "c-cph-permanent-and-contact-003"
+        "c-241"
       ]
     },
     {
@@ -1558,15 +1597,15 @@
       "conflicts": []
     },
     {
-      "id": "req-cph-permanent-and-contact-001",
+      "id": "req-1832",
       "statement": "The germinal products set has no CPH number page: its consignment addresses page has no 'County parish holding (CPH) number' section, and nothing in the set links to or asks for a CPH number.",
       "why": "The 2026-10-09 ruling leaves the CPH number page out of the germinal set, and Design Release 2.1 asks for no CPH number for semen, embryos or ova (05111000, 05119985). This is the germinal half of req-699, split out so each half sits in one set's increment.",
       "claims": [
-        "ruling-sam-2026-10-09-p1-017",
-        "ruling-sam-2026-10-09-p1-057",
+        "prototype-dr2-1-source-p9-002",
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-014",
-        "prototype-dr2-1-source-p9-002"
+        "ruling-sam-2026-10-09-p1-017",
+        "ruling-sam-2026-10-09-p1-057"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1574,14 +1613,14 @@
       "conflicts": []
     },
     {
-      "id": "req-cph-permanent-and-contact-002",
+      "id": "req-1833",
       "statement": "The germinal products set has no permanent address page: its consignment addresses page has no 'Permanent address' section, and nothing in the set asks for an animal's permanent address.",
       "why": "The 2026-10-09 ruling leaves the permanent address page out of the germinal set; Design Release 2.1 asks for it only for cats, dogs and ferrets under 01061900, which a germinal consignment never holds.",
       "claims": [
-        "ruling-sam-2026-10-09-p1-018",
+        "prototype-dr2-1-source-p9-024",
         "ruling-sam-2026-10-09-p1-014",
-        "ruling-sam-2026-10-09-p1-025",
-        "prototype-dr2-1-source-p9-024"
+        "ruling-sam-2026-10-09-p1-018",
+        "ruling-sam-2026-10-09-p1-025"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1589,7 +1628,7 @@
       "conflicts": []
     },
     {
-      "id": "req-cph-permanent-and-contact-003",
+      "id": "req-1834",
       "statement": "When the CPH number, permanent address or contact address page shows errors, its browser title starts 'Error: ' and the page is answered with HTTP 400.",
       "why": "The 'Error: ' prefix is GOV.UK's accessible signal that a page holds a validation error, part of the real validation the prototype does not model (c-006, c-028); Design Release 2.1 keeps the plain title and answers 200.",
       "claims": [
@@ -1604,13 +1643,13 @@
       "delta": "new",
       "deltaNote": "The CPH and contact pages already do this today (trace-animals-fit-p13-005 and -p13-030, trace-animals-fit-p12-052 and repo-frontend-p10-071); the new permanent address page must do the same.",
       "conflicts": [
-        "c-cph-permanent-and-contact-004",
-        "c-006"
+        "c-006",
+        "c-242"
       ]
     },
     {
-      "id": "req-cph-permanent-and-contact-004",
-      "statement": "The CPH number and contact address pages keep the real service's paths under the notification (cph-number and consignment/contact/select) and its form field names (cphCounty, cphParish and cphHolding; contactAddress, whose value is the address record's id), not the prototype's /contact-address-for-consignment path or its contactAddressId field.",
+      "id": "req-1835",
+      "statement": "The CPH number and contact address pages keep the real service's paths under the notification (cph-number and consignment/contact/select) and its form field names (cphCounty, cphParish and cphHolding; contactAddress, whose value is the address record's id), not the prototype's /contact-address-for-consignment path or its contactAddressId field. The plants consignment contact page keeps the same path and field name.",
       "why": "The 2026-10-09 ruling: the prototype never decides URL paths or form field names, and no increment changes an existing real path to match it. The k6 performance scripts and the end-to-end page objects use these paths and names today.",
       "claims": [
         "ruling-sam-2026-10-09-p1-066",
@@ -1626,14 +1665,185 @@
         "repo-tests-p1-087",
         "repo-tests-p1-148",
         "repo-perftests-p1-054",
-        "repo-perftests-p1-063"
+        "repo-perftests-p1-063",
+        "repo-plantsfrontend-p7-046",
+        "repo-plantsfrontend-p7-058",
+        "repo-plantsfrontend-p7-101"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-001, -p10-054, trace-animals-fit-p13-024 and -p12-044, and the k6 scripts (repo-perftests-p1-054, -p1-063): both pages sit at these paths with these field names today.",
+      "deltaNote": "repo-frontend-p10-001, -p10-054, trace-animals-fit-p13-024 and -p12-044, and the k6 scripts (repo-perftests-p1-054, -p1-063): both pages sit at these paths with these field names today; repo-plantsfrontend-p7-046, -p7-058 and -p7-101 for the plants contact page.",
       "conflicts": [
-        "c-cph-permanent-and-contact-002"
+        "c-240"
       ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-001",
+      "statement": "The plants consignment contact page keeps its search over the organisation's address book: a search narrows the results to the term, a new search starts at the first page and keeps the ticked row, a search that matches nothing shows 'No addresses match your search.' instead of an empty list, each result has a radio named 'Select <name>' and a 'View details' disclosure listing the name, address lines, country, telephone number and email address, and the whole page is one form, so search, selection and save work without JavaScript.",
+      "why": "The 2026-10-09 afternoon ruling gives plants' contact picker the same search control as the other party pickers, so plants keeps a search where Design Release 2.1's animals contact page has none; every page must work without JavaScript.",
+      "claims": [
+        "repo-plantsfrontend-p7-051",
+        "repo-plantsfrontend-p7-054",
+        "repo-plantsfrontend-p7-055",
+        "repo-plantsfrontend-p7-058",
+        "repo-plantsfrontend-p7-060",
+        "repo-plantsfrontend-p7-067",
+        "repo-plantsfrontend-p7-083",
+        "ruling-sam-2026-10-09-pm-p3-025",
+        "ruling-sam-2026-10-09-pm-p1-046"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-054, -p7-055, -p7-058, -p7-060, -p7-067 and -p7-083: the plants contact page does all of this today. How the search control, heading, count, fieldset and address lines look changes with the party pickers' layout (req-cph-permanent-and-contact-002).",
+      "conflicts": []
+    },
+    {
+      "id": "req-cph-permanent-and-contact-002",
+      "statement": "The plants consignment contact page takes the party pickers' layout in the same increment as the animals and plants consignor and place of destination pickers: the same search control in place of today's 'Search' label, 'Name, address or country' hint and secondary 'Search' button; the results count moved out of the table caption under the 'Select an address' heading; the radios in a fieldset with a hidden legend; and each address read back on separate lines instead of one comma-joined line with the country in its own column.",
+      "why": "The 2026-10-09 afternoon ruling has inc-086's picker layout change plants' consignor, place of destination and contact pickers at once, so the three plants pickers start consistent with the animals ones.",
+      "claims": [
+        "ruling-sam-2026-10-09-pm-p3-025",
+        "repo-plantsfrontend-p7-052",
+        "repo-plantsfrontend-p7-053",
+        "repo-plantsfrontend-p7-057",
+        "repo-plantsfrontend-p7-059"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the plants contact page has a 'Search' box with the hint 'Name, address or country' and a secondary 'Search' button (repo-plantsfrontend-p7-052, -p7-053), a table captioned 'Showing N of TOTAL addresses' with Name, Address and Country columns (repo-plantsfrontend-p7-057), and comma-joined address lines with the country in its own column (repo-plantsfrontend-p7-059).",
+      "conflicts": []
+    },
+    {
+      "id": "req-cph-permanent-and-contact-003",
+      "statement": "The plants consignment contact page shows five address-book records a page with GOV.UK pagination ('Previous', 'Next' and numbered page links, none for a single page), carries the search term, page number and ticked address in its paging links, and shows an inset 'Selected address: <name>' for a ticked or saved contact even on a page where that record is not listed.",
+      "why": "Plants' contact picker lists the whole address book, not one role's records, so the list can be long; whether the party pickers' move to one unpaginated page with no inset reaches it is open (c-cph-permanent-and-contact-005).",
+      "claims": [
+        "repo-plantsfrontend-p7-061",
+        "repo-plantsfrontend-p7-062",
+        "repo-plantsfrontend-p7-063",
+        "repo-plantsfrontend-p7-064",
+        "repo-plantsfrontend-p7-065",
+        "repo-plantsfrontend-p7-066",
+        "repo-plantsfrontend-p7-071",
+        "ruling-sam-2026-10-09-pm-p3-027"
+      ],
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-061 to -p7-066 and -p7-071: the plants contact page pages five at a time with the Selected address inset today.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-005"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-004",
+      "statement": "The plants consignment contact page lists every record in the organisation's address book, not only branch addresses, and offers no link to add a new address.",
+      "why": "Plants is not wired to the INS address book's add path, and the 2026-10-09 afternoon ruling's plants changes leave out inc-095 (branch addresses only and the add-a-branch link), so plants' contact list stays as it is (c-cph-permanent-and-contact-004).",
+      "claims": [
+        "repo-plantsfrontend-p7-056",
+        "repo-plantsfrontend-p7-103",
+        "ruling-sam-2026-10-09-pm-p3-003",
+        "ruling-sam-2026-10-09-pm-p3-012",
+        "ruling-sam-2026-10-09-pm-p3-048"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-056 and repo-plantsfrontend-p7-103: the plants contact page lists the organisation's whole address book and has no add link today.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-004"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-005",
+      "statement": "On the plants consignment contact page a blank save is allowed: 'Save and continue' or 'Save and return to overview' with nothing ticked saves nothing, moves on and leaves the task 'Not yet started'. The contact address is mandatory and ungated for every plants commodity, and is enforced when the notification is submitted.",
+      "why": "The 2026-10-09 afternoon ruling gives plants only the contact page's new intro and 'Select an address' heading from inc-094; plants keeps its mandatory-to-submit rule rather than the 'Select a contact address' error the animals contact page gains (req-764, c-cph-permanent-and-contact-003).",
+      "claims": [
+        "repo-plantsfrontend-p7-069",
+        "repo-plantsfrontend-p7-098",
+        "repo-plantsfrontend-p7-099",
+        "ruling-sam-2026-10-09-pm-p3-029"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-069 and repo-plantsfrontend-p7-099: plants allows a blank save and enforces the contact at submission today.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-003"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-006",
+      "statement": "Submitting an id the address book does not hold, or a soft-deleted record, on the plants consignment contact page is refused with HTTP 400 and 'Select a contact address from the list' in an error summary and inline above the results (with a hidden 'Error:' prefix), each radio described by the error, no row ticked, the search term kept and the same page of results shown; the summary link focuses the first radio, or the search box when there are no results; ticking a real contact and saving then clears the error.",
+      "why": "A forged or stale choice must not be saved; plants keeps its own refusal, which the ruling's plants share of the contact page changes leaves alone.",
+      "claims": [
+        "repo-plantsfrontend-p7-077",
+        "repo-plantsfrontend-p7-077-m1",
+        "repo-plantsfrontend-p7-078",
+        "repo-plantsfrontend-p7-079",
+        "repo-plantsfrontend-p7-080"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-077 to -p7-080 and -p7-077-m1: the plants contact page refuses an unknown id this way today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-cph-permanent-and-contact-007",
+      "statement": "The plants consignment contact page is reached from the overview's 'Contact address for consignment' task row, and its back link goes to the notification overview.",
+      "why": "Plants has no consignment addresses page for the back link to return to, and keeps its own step order and sections (c-cph-permanent-and-contact-003).",
+      "claims": [
+        "repo-plantsfrontend-p7-047",
+        "repo-plantsfrontend-p7-076",
+        "ruling-sam-2026-10-09-pm-p3-009"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p7-047 and repo-plantsfrontend-p7-076.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-003"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-008",
+      "statement": "In plants the contact section is the one address-book pick: the picked record's name is the nominated contact, its record carries name, address, telephone and email (the address book requires both telephone and email), and there is no separate contact number, contact email or contact details question.",
+      "why": "Plants' own decisions d-012 and d-013 make the address-book pick the whole contact section, the same shape as animals; nothing in Design Release 2.1 or the rulings changes it.",
+      "claims": [
+        "repo-plantsfrontend-p9-038",
+        "repo-plantsfrontend-p9-038-m1",
+        "repo-plantsfrontend-p9-040",
+        "repo-plantsfrontend-p9-041",
+        "repo-plantsfrontend-p9-045",
+        "repo-plantsfrontend-p9-045-m1"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p9-038 and repo-plantsfrontend-p9-041: the contact pick is the whole plants contact section today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-cph-permanent-and-contact-009",
+      "statement": "On plants' review page the contact card drops its Telephone number and Email address rows and reads the contact back as the other party cards do (req-680).",
+      "why": "The 2026-10-09 afternoon ruling has inc-109's party cards change plants too, dropping telephone and email, which withdraws plants' own d-013 addition of those rows to the contact card (c-cph-permanent-and-contact-006).",
+      "claims": [
+        "ruling-sam-2026-10-09-pm-p3-031"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today plants' check-your-answers contact card adds Telephone number and Email address rows from the picked record (repo-plantsfrontend-p9-043, plants decision d-013).",
+      "conflicts": [
+        "c-cph-permanent-and-contact-006"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-010",
+      "statement": "Plants' optional Consignment Number on its identification-numbers page, and the parked reading of 'Name of person making entry' as the signed-in user, are not changed by this programme.",
+      "why": "They are plants' own questions under its d-012 decision; Design Release 2.1 has no such question, and plants keeps its own questions and data when mirrored.",
+      "claims": [
+        "repo-plantsfrontend-p9-039",
+        "ruling-sam-2026-10-09-pm-p3-009"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p9-039.",
+      "conflicts": []
     }
   ],
   "conflicts": [
@@ -2227,7 +2437,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The contact page matches Design Release 2.1: the radios list alone, the current contact pre-selected, with no 'Current contact address' card and no 'Edit details' link on it. The notification still stores the chosen contact as a copy, which the review's contact row shows. The ruling's 'wherever they differ, change to match' covers a feature Design Release 2.1 does not show, and nothing that may override the prototype applies: no DR1 judgement covers the card. The 2026-10-09 ruling leaves this conflict unchanged but keeps the contact edit route itself (req-775); whether anything still links to that route is c-cph-permanent-and-contact-003.",
+      "outcome": "The contact page matches Design Release 2.1: the radios list alone, the current contact pre-selected, with no 'Current contact address' card and no 'Edit details' link on it. The notification still stores the chosen contact as a copy, which the review's contact row shows. The ruling's 'wherever they differ, change to match' covers a feature Design Release 2.1 does not show, and nothing that may override the prototype applies: no DR1 judgement covers the card. The 2026-10-09 ruling leaves this conflict unchanged but keeps the contact edit route itself (req-775); whether anything still links to that route is c-241.",
       "overruled": [
         "repo-frontend-p10-064",
         "repo-tests-p5-078"
@@ -2261,7 +2471,7 @@
       ]
     },
     {
-      "id": "c-cph-permanent-and-contact-001",
+      "id": "c-239",
       "about": "How the permanent address an animal shares with the place of destination is stored: copied field by field (Design Release 2.1) or as the real model decides.",
       "positions": [
         {
@@ -2279,7 +2489,7 @@
       "outcome": "The ruling ranks first: what the trader sees and what the review shows follow Design Release 2.1, and the storage shape (a copy or a reference to the place of destination, and where it is held) is the plan's, designed in the real service's model. prototype-dr2-1-source-p9-067 is not overruled: it still backs which address details the animal ends up with."
     },
     {
-      "id": "c-cph-permanent-and-contact-002",
+      "id": "c-240",
       "about": "Which paths and form field names the CPH, permanent address and contact address pages use: the prototype's or the real service's.",
       "positions": [
         {
@@ -2315,7 +2525,7 @@
       ]
     },
     {
-      "id": "c-cph-permanent-and-contact-003",
+      "id": "c-241",
       "about": "Whether the kept contact edit route is still linked from anywhere once the contact page's card and the review's 'Edit details' links go.",
       "positions": [
         {
@@ -2337,15 +2547,21 @@
           "source": "repo:tests",
           "says": "Today the review page carries an 'Edit details' link for each copied address, the contact address included.",
           "claim": "repo-tests-p5-076"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Wherever a real service differs from Design Release 2.1 in look and feel, the real service changes to match.",
+          "claim": "ruling-sam-2026-10-09-p1-065"
         }
       ],
-      "resolution": "question",
-      "outcome": "The ruling says two things that build different pages when read together with c-138: the edit route stays, while the card that links to it goes, and the review's 'Edit details' links go too. Neither precedence nor any ruling says whether the kept route needs a way in.",
-      "question": "With the contact page's 'Edit details' card gone (c-125) and the review's 'Edit details' links gone (c-138), should the kept contact edit route still be linked from somewhere, and if so from where?",
-      "default": "The contact page follows Design Release 2.1 with no card and no 'Edit details' link, the review follows c-138, and the /consignment/contact/edit route and its copy-only edit form stay in the service as they are today with no new link added; nothing in the journey then opens it until the owner names an entry point."
+      "resolution": "precedence",
+      "outcome": "No new link is added. Whether and where a page links to the contact edit route is look and feel, which the prototype decides, and Design Release 2.1 offers no way to edit the chosen contact on the contact page or the review. So the contact page shows the radios alone (c-125, req-774), the review drops its 'Edit details' links (c-138), and the /consignment/contact/edit route and its copy-only edit form stay in the service unchanged (ruling:sam-2026-10-09 claim 94, req-775), because removing a route is architecture the prototype never decides. Nothing in the journey opens the route until a later ruling or design names an entry point.",
+      "overruled": [
+        "repo-tests-p5-076"
+      ]
     },
     {
-      "id": "c-cph-permanent-and-contact-004",
+      "id": "c-242",
       "about": "Whether the CPH, permanent address and contact pages' error states keep the 'Error: ' title prefix and HTTP 400 that Design Release 2.1 leaves out.",
       "positions": [
         {
@@ -2374,6 +2590,179 @@
       "overruled": [
         "trace-prototype-dr2-1-p7-075-m1",
         "trace-prototype-dr2-1-p7-096-m1"
+      ]
+    },
+    {
+      "id": "c-cph-permanent-and-contact-001",
+      "about": "Whether the CPH boxes' JavaScript (dropping non-digits as typed, spreading a paste across the boxes) is built now.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Design question 7: the CPH page works as today with the server's checks, so nothing new is built now and all of inc-093 moves to waiting-on-design.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-078"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Dropping non-digits, spreading a paste and whether one box taking '12/345/6789' replaces the three wait on design, replacing c-006's 'build the digit filtering and paste spreading'.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-079"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Pasting into a CPH box keeps only the digits and spreads them across the boxes.",
+          "claim": "prototype-dr2-1-source-p9-012-m3"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 afternoon ruling ranks first: the CPH page is built without new JavaScript and keeps today's server checks (req-715). The digit filtering and paste spreading (req-711, req-712) stay adopted but are blocked on design question 7, as one waiting-on-design increment, built as design answers or dropped. The prototype claims are not overruled: they still describe what that increment would build if design keeps it."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-002",
+      "about": "Whether the CPH page carries the prototype's cancel-amend dialog while a notification is being amended.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "While amending, the CPH page includes the cancel-amend modal.",
+          "claim": "prototype-dr2-1-source-p9-020"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The amend and cancel confirmation stays a separate page at today's route and carries the pop-up's wording as page content.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-083"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The amend and cancel pop-ups wait as one waiting-on-design increment for both animals sets and plants, expected to be dropped.",
+          "claim": "ruling-sam-2026-10-09-pm-p1-088"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 afternoon ruling ranks first: no page in this area carries a cancel-amend dialog. While amending, the CPH, permanent address and contact pages show the amend controls (req-770), and cancelling goes through the Amend bar's 'Cancel amend' to the cancel amendment confirmation page. The CPH page's dialog is part of the amend pop-ups' waiting-on-design increment (inc-185). prototype-dr2-1-source-p9-020 is not overruled: it still backs the CPH page's amend button set."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-003",
+      "about": "Which of the contact page's Design Release 2.1 changes reach the plants consignment contact page: the required choice and the back link to the consignment addresses page, or only the intro and heading.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "inc-094 also changes plants: the contact picker takes the new intro and the 'Select an address' heading.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-029"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Submitting the contact page without choosing shows 'Select a contact address'.",
+          "claim": "prototype-dr2-1-source-p8-126"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The contact page's back link goes to review when opened from review, otherwise to the consignment addresses page.",
+          "claim": "prototype-dr2-1-source-p8-132"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "A blank save on the plants contact page saves nothing, moves on and leaves the task 'Not yet started'.",
+          "claim": "repo-plantsfrontend-p7-069"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "The plants contact page's back link goes to the notification overview.",
+          "claim": "repo-plantsfrontend-p7-076"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 afternoon ruling ranks first and names plants' share of inc-094: the new intro and the 'Select an address' heading (req-753, req-754). Plants keeps its blank save under its mandatory-to-submit rule (req-cph-permanent-and-contact-005) and its back link to the overview, since plants has no consignment addresses page and keeps its own step order (req-cph-permanent-and-contact-007). The prototype claims are not overruled: they still back the animals contact page (req-764, req-767)."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-004",
+      "about": "Whether the plants contact page takes inc-095: only branch addresses, and an 'add a new branch address' link through the INS address book.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "A row with no plants equivalent leaves the plants frontend alone.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-003"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The mapping marks 30 rows change-both, all covered by this ruling's plants claims; inc-095 is not among them.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-012"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Plants is not wired to the INS address book.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-048"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The contact options are the organisation's branch addresses.",
+          "claim": "prototype-dr2-1-source-p8-123"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Under 'Select an address' the page tells the trader to add a new branch address and links to it.",
+          "claim": "prototype-dr2-1-source-p8-118"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "The plants contact choices come from the organisation's whole address book.",
+          "claim": "repo-plantsfrontend-p7-056"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "The plants contact page has no link to add a new address.",
+          "claim": "repo-plantsfrontend-p7-103"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 afternoon ruling ranks first: its plants changes leave out inc-095, and plants has no add path into the INS address book, so the plants contact page keeps listing the whole address book with no add link (req-cph-permanent-and-contact-004). The prototype claims are not overruled: they still back the animals contact page (req-755, req-756, req-760)."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-005",
+      "about": "Whether the party pickers' move to one unpaginated page with no 'Selected address' inset reaches the plants contact picker, which lists the whole address book.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "inc-087 also changes plants: its address-book service asks for one role and gets an unpaginated list, and pagination and the 'Selected address' inset go.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-027"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "The plants contact page shows five records a page with pagination.",
+          "claim": "repo-plantsfrontend-p7-061"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "The plants contact page shows a 'Selected address: <name>' inset for a ticked or saved contact.",
+          "claim": "repo-plantsfrontend-p7-064"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The contact addresses are one list of radios with no search and no pagination.",
+          "claim": "prototype-dr2-1-source-p8-125"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Open. The ruling's inc-087 plants half speaks of the role-filtered pickers, and the plants contact picker asks for no role (c-cph-permanent-and-contact-004), so it can be read either way: the contact picker keeps its paging and inset, or loses them with the consignor and place of destination pickers.",
+      "question": "Does the plants contact picker, which lists the whole address book rather than one role's records, also drop its five-a-page pagination and 'Selected address' inset when inc-087 does so for the plants consignor and place of destination pickers?",
+      "default": "No: inc-087 changes only the plants consignor and place of destination pickers; the plants contact picker keeps its five-a-page pagination and 'Selected address' inset as today, and takes only the shared layout change (req-cph-permanent-and-contact-002)."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-006",
+      "about": "Whether plants' review contact card keeps the Telephone number and Email address rows plants' d-013 added.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "inc-109 also changes plants: the party cards drop telephone and email and read the address back line by line.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-031"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "d-013: the plants check-your-answers Contact card adds Telephone number and Email address rows from the picked record.",
+          "claim": "repo-plantsfrontend-p9-043"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 afternoon ruling ranks first: plants' contact card, like its other party cards, drops the telephone and email rows (req-cph-permanent-and-contact-009). The address-book record still carries both, so d-012's single pick still collects them (req-cph-permanent-and-contact-008).",
+      "overruled": [
+        "repo-plantsfrontend-p9-043"
       ]
     }
   ]

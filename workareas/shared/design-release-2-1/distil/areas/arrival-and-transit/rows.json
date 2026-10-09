@@ -2,205 +2,238 @@
   "area": "arrival-and-transit",
   "rows": [
     {
-      "title": "The stub's ports of entry match real MDM",
-      "detail": "Sam's 9 October ruling accepts a stub tidy-up so the stub matches real MDM wherever the real thing exists. Today the stub's ports fixture is 78 hand-kept Great Britain ports carrying only an id, a code and a name, so the port type the list order needs never reaches reference data locally or in CDP dev. After this change the stub serves MDM's real port records, whole, in MDM's order, and the animals frontend's captured ports fixture is recaptured from it, so every later port row is built and tested against what MDM really serves. MDM's duplicate and misspelt ports stay: they are MDM's content, reported to the MDM team, and no test pins them.",
+      "title": "The stub's ports match real MDM, and every captured ports fixture is recaptured from it",
+      "detail": "Sam's 9 October ruling accepts a stub tidy-up so the stub matches real MDM, ahead of the list rows that assert port names and counts. Today the stub's ports are 78 hand-kept Great Britain ports carrying only an id, a code and a name, and the stub drops any field its models do not know. After this change the stub serves MDM's real port records, whole and in MDM's order, each with its traffic, so the port type reaches reference data locally and in CDP dev as it does from real MDM. The animals frontend's and the plants frontend's captured ports fixtures are recaptured from it, so every later list row is built and tested against what MDM really serves. MDM's duplicate and misspelt ports stay: they are MDM's content, reported to the MDM team, and no test pins them.",
       "acceptanceCriteria": [
         "Locally and in CDP dev, the stub's MDM ports call answers with MDM's real port records in MDM's order, in place of the 78 hand-kept ports, each record carrying its traffic (Airport, Port or Rail), its address and its status (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-004, ruling-sam-2026-10-09-p1-150, ruling-sam-2026-10-09-p1-151; repo:stub repo-stub-p2-056, repo-stub-p2-057, repo-stub-p2-081)",
-        "Locally and in CDP dev, the stub serves each port record whole, including fields its own models do not name, so each port's traffic is in the response reference data reads (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-154)",
+        "Locally and in CDP dev, the stub serves each port record whole, including fields its own models do not name, so each port's traffic is in the response reference data reads (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-154; repo:stub repo-stub-p2-056)",
         "Locally and in CDP dev, the ports the stub serves keep MDM's duplicate and misspelt entries and GB MID's non-breaking spaces as MDM has them, and no value MDM masks is filled in (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-151, ruling-sam-2026-10-09-p1-153, ruling-sam-2026-10-09-p1-163)",
         "Locally and in CDP dev, the stub's ports call still answers as MDM does: 200 OK with the port list in its result field, needing a subscription key header whose value it does not check (repo:stub repo-stub-p2-058, repo-stub-p2-060, repo-stub-p2-061)",
         "Locally, the port of entry search on arrival details offers the tidied stub's ports, as reference data serves them, rather than the 78 hand-kept ones (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-150; repo:referencedata repo-referencedata-p1-037)",
-        "In the animals frontend's stub mode, the port of entry search offers the same ports, in the same order, as reference data serves from the tidied stub, and no port check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-157, ruling-sam-2026-10-09-p1-158)"
+        "In the animals frontend's stub mode, the port of entry search offers the same ports, in the same order, as reference data serves from the tidied stub, and no port check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-157, ruling-sam-2026-10-09-p1-158; document:dr1-parity-notes document-dr1-parity-notes-p1-043)",
+        "In the plants frontend's stub mode, the place of landing search offers the same ports, in the same order, as reference data serves from the tidied stub, and every plants check that pinned an old port name or the old count of 77 passes against the recaptured list (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-019; repo:plantsfrontend repo-plantsfrontend-p9-108, repo-plantsfrontend-p9-107-m1)"
       ],
-      "requirements": ["req-1811", "req-1812", "req-1814"],
+      "requirements": ["req-1811", "req-1812", "req-1814", "req-1933"],
       "sources": [
         { "source": "ruling:sam-2026-10-09", "ref": "claim 30: ruling-sam-2026-10-09-p1-004, p1-147, p1-148, p1-150, p1-151, p1-153, p1-154, p1-157, p1-158, p1-163, p1-164" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 45 (inc-173): ruling-sam-2026-10-09-pm-p3-019" },
         { "source": "repo:stub", "ref": "repo-stub-p2-056 to p2-066, p2-081" },
-        { "source": "repo:referencedata", "ref": "repo-referencedata-p1-037" }
+        { "source": "repo:referencedata", "ref": "repo-referencedata-p1-037" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p9-107-m1, p9-108" },
+        { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-043" }
       ],
-      "repos": ["stub", "frontend"],
+      "repos": ["stub", "frontend", "plantsfrontend", "tests"],
       "kind": "chore",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "The ports half of the stub tidy-up. Sam's 9 October ruling (ruling-sam-2026-10-09-p1-148) makes the stub tidy-up ONE new row at the head of the reference-lists theme, so the combiner should merge this draft with the countries half (req-1744 to req-1747, req-1750 to req-1752), which no area holds today, into that one row. mdm/stub-tidy-up-spec.md is the accepted spec; where it and mdm/findings.md differ, the spec wins (ruling-sam-2026-10-09-p1-164).",
-        "Combines req-1811 (regenerate the fixture), req-1812 (serve it whole) and req-1814 (recapture the frontend's fixture): the recapture can only be observed once the stub serves the new fixture, and building them apart would repeat the same stub-and-capture set-up.",
-        "The tests repo's port test data already names ports the real list holds (req-1815, exists), so no tests repo change is expected for the ports half. No test may pin a misspelt or duplicated port name (ruling-sam-2026-10-09-p1-171).",
-        "inc-007 (port order) depends on this row, because it changes the names and counts the list tests assert (ruling-sam-2026-10-09-p1-149). The new transit country list row depends on the countries half for the same reason."
+        "The ports half of the one stub tidy-up row (ruling-sam-2026-10-09-p1-148). The combiner keeps this row's id and merges back the countries half it already holds (req-1744 to req-1747, req-1750 to req-1752), the insfrontend repo and their criteria: this draft carries only this area's requirements. mdm/stub-tidy-up-spec.md is the accepted spec; where it and mdm/findings.md differ, the spec wins (ruling-sam-2026-10-09-p1-164).",
+        "Combines req-1811 (regenerate the fixture), req-1812 (serve it whole), req-1814 (recapture the animals fixture) and req-1933 (rerun plants' capture and fix its specs): the recaptures can only be observed once the stub serves the new fixture, and building them apart repeats the same stub-and-capture set-up.",
+        "req-1933 is drafted here although areas.json does not yet give it to any area: the area's scope includes the plants arrival pages, and the 9 October afternoon ruling (claim 45, ruling-sam-2026-10-09-pm-p3-019) puts plants' recapture in this same increment, adding plantsfrontend to the row.",
+        "The tests repo's port test data already names ports the real list holds (req-1815, exists). No test may pin a misspelt or duplicated port name (ruling-sam-2026-10-09-p1-171).",
+        "inc-007 (port order) and inc-174 (transit list) depend on this row, because it changes the names and counts their checks assert (ruling-sam-2026-10-09-p1-149)."
       ],
       "touches": [
         "stub:src/main/java/uk/gov/defra/trade/imports/stubs/mdm/poe",
-        "stub:src/main/resources/responses/portsOfEntryResponse.json"
+        "stub:src/main/resources/responses/portsOfEntryResponse.json",
+        "frontend:src/server/app/services/_capture/fixtures/ports-of-entry.json",
+        "plantsfrontend:src/server/app/services/_capture/fixtures/ports-of-entry.json"
       ],
       "shared": [
-        "stub:src/test/java/uk/gov/defra/trade/imports/utils/FileUtilsTest.java",
-        "frontend:src/server/app/services/_capture"
+        "frontend:src/server/app/services/_capture",
+        "plantsfrontend:src/server/app/services/_capture",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/arrival-details.fit.spec.js",
+        "tests:tests/plants/e2e/features/arrival.spec.ts"
       ],
       "dependsOn": [],
-      "existingRow": null
+      "theme": "reference-lists",
+      "existingRow": "inc-173"
     },
     {
-      "title": "Port of entry list ordered airports, then seaports, then rail, from MDM's port type",
-      "detail": "Design Release 2.1 puts airports before seaports, and Sam's 9 October ruling builds the order now: MDM's traffic field already gives every port its type, so nothing waits on MDM and no future ticket is needed. Reference data maps the type through and orders the list airports, then seaports, then rail ports in a group of their own, each group A to Z by name ignoring letter case. Today reference data sorts by name alone, case-sensitively, so airports and seaports are mixed and names in capitals sort first. List content stays what MDM serves: it is never edited in code.",
+      "title": "Port lists ordered airports, then seaports, then rail, from MDM's port type",
+      "detail": "Design Release 2.1 puts airports before seaports, and Sam's 9 October ruling builds the order now: MDM's traffic field already gives every port its type, so nothing waits on MDM. Reference data maps the type through and orders the list airports, then seaports, then rail ports in a group of their own, each group A to Z by name ignoring letter case. Today reference data sorts by name alone, case-sensitively, so airports and seaports are mixed and names in capitals sort first. The plants frontend's place of landing list follows the same order in the same increment. List content stays what MDM serves: it is never edited in code.",
       "acceptanceCriteria": [
         "Reference data's GET /ports-of-entry returns each port's type (airport, seaport or rail), taken from MDM's traffic field, alongside its code and name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-172, ruling-sam-2026-10-09-p1-176; repo:referencedata repo-referencedata-p1-031, repo-referencedata-p1-032, repo-referencedata-p1-033)",
         "Locally, in CDP dev and in CDP test, the port of entry search on arrival details lists every airport first, then every seaport, then every rail port (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-173, ruling-sam-2026-10-09-p1-174; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-019)",
         "Within each group, ports are listed A to Z by name ignoring letter case, so a name written in capitals sorts among the other names that start with the same letter rather than ahead of them (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-175; repo:referencedata repo-referencedata-p1-030; trace:e2e trace-e2e-p4-076)",
         "Non-breaking and doubled spaces in a port name are compared as single spaces, so such a name sorts where the same name with single spaces would (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-175)",
-        "The ordered list still holds every port reference data returns, and choosing a port still saves its code (repo:referencedata repo-referencedata-p1-031; repo:frontend repo-frontend-p11-027)"
+        "The ordered list still holds every port reference data returns, and choosing a port still saves its code (repo:referencedata repo-referencedata-p1-031; repo:frontend repo-frontend-p11-027)",
+        "In the plants frontend, the place of landing search lists the ports in the same order: airports, then seaports, then rail ports, each group A to Z by name ignoring letter case (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-018; repo:plantsfrontend repo-plantsfrontend-p9-108, repo-plantsfrontend-p5-086)"
       ],
-      "requirements": ["req-304", "req-1813"],
+      "requirements": ["req-304", "req-1813", "req-1932"],
       "sources": [
         { "source": "ruling:sam-2026-10-09", "ref": "claims 25 and 33: ruling-sam-2026-10-09-p1-004, p1-131, p1-133, p1-172 to p1-176" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 45 (inc-007): ruling-sam-2026-10-09-pm-p3-018" },
         { "source": "repo:referencedata", "ref": "repo-referencedata-p1-030 to p1-033" },
         { "source": "repo:stub", "ref": "repo-stub-p2-059" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-086, p9-108" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-019" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-043-m1" },
         { "source": "trace:e2e", "ref": "trace-e2e-p4-076" }
       ],
-      "repos": ["referencedata", "frontend", "tests"],
+      "repos": ["referencedata", "frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Unblocked by Sam's 9 October ruling: claim 25 takes the MDM block off c-048 (ruling-sam-2026-10-09-p1-133) and claim 33 builds the port order now from MDM's traffic field (ruling-sam-2026-10-09-p1-172). Was blocked on the MDM integration.",
-        "Rewritten: req-302 and req-303 (Design Release 2.1's own ports, corrected spellings) are now out of scope and leave this row for the MDM content report (ruling-sam-2026-10-09-p1-170). req-370 (transit country list) moves to its own row in the arrival-and-transit theme, because it changes the transit countries page's options, code that theme owns; it no longer shares a blocker with the ports.",
-        "Depends on the stub tidy-up row (ruling-sam-2026-10-09-p1-149): locally and in CDP dev the type only reaches reference data once the stub serves MDM's traffic field. The frontend is listed because its captured ports fixture must follow the new order; the order itself is reference data's. Rail sits after seaports by the ruling; Design Release 2.1 has no rail entry.",
+        "Combines req-304 (the order) and req-1813 (reference data returns the port type the order needs): the order cannot be observed without the type. req-1932 adds plants' recaptured ports in the new order, by the 9 October afternoon ruling (claim 45), which puts plants in the same increment; areas.json does not yet give req-1932 to any area, and this area's scope includes the plants arrival pages.",
+        "The combiner keeps this row's id and merges back the port of exit labels and order (req-1768, req-1769) it already holds and their criteria: this draft carries only this area's requirements. Plants has no port of exit.",
+        "Depends on the stub tidy-up row (inc-173): locally and in CDP dev the type only reaches reference data once the stub serves MDM's traffic field. The frontends are listed because their captured ports fixtures must follow the new order; the order itself is reference data's. Rail sits after seaports by the ruling; Design Release 2.1 has no rail entry.",
         "No criterion names a particular port, so nothing pins MDM's duplicates or misspellings (ruling-sam-2026-10-09-p1-171)."
       ],
       "touches": [
-        "referencedata:src/main/java/uk/gov/defra/trade/imports/portsofentry",
-        "referencedata:src/main/java/uk/gov/defra/trade/imports/client/MdmPortOfEntry.java",
-        "tests:tests/animals/e2e/features/reference-lists"
+        "referencedata:src",
+        "frontend:src/server/app/services/ports",
+        "plantsfrontend:src/server/app/services/ports"
       ],
       "shared": [
-        "frontend:src/server/app/services/_capture",
-        "frontend:src/server/app/services/ports"
+        "frontend:src/server/app/services/_capture/fixtures/ports-of-entry.json",
+        "plantsfrontend:src/server/app/services/_capture/fixtures/ports-of-entry.json",
+        "tests:tests/animals/e2e/features/port-of-entry-select.spec.ts"
       ],
-      "dependsOn": ["the stub tidy-up row"],
+      "dependsOn": ["inc-173"],
+      "theme": "reference-lists",
       "existingRow": "inc-007"
     },
     {
-      "title": "Transit country search offers the GBNAG_SPS_EX countries and their subdivisions",
-      "detail": "Sam's 9 October ruling builds the transit country list now against reference data as MDM serves it, keeping the MDM block the list uses today. Today the transit search offers the 31-country origin list with no subdivisions. After this change it offers reference data's GBNAG_SPS_EX countries plus their subdivisions, each subdivision named with its parent country, in alphabetical order, as the country of origin page does. Where the content differs from Design Release 2.1's 41 countries, that is MDM's content to change, never a list edited in code.",
-      "acceptanceCriteria": [
-        "The transit country search offers the same countries and subdivisions as the country of origin search, from reference data's GBNAG_SPS_EX block, in alphabetical order (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-138, ruling-sam-2026-10-09-p1-145; repo:frontend repo-frontend-p11-066, repo-frontend-p11-067)",
-        "Each subdivision in the transit search reads '<territory> (<parent country>)', with and without JavaScript (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-139)",
-        "Adding a subdivision lists it as '<territory> (<parent country>)', Save and continue saves its code, and reopening the page lists it again under the same name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-139; conflict c-047; repo:frontend repo-frontend-p11-102)",
-        "A country or subdivision that is not on the offered list is still refused with 'Select countries from the list' (conflict c-045)"
-      ],
-      "requirements": ["req-370"],
-      "sources": [
-        { "source": "ruling:sam-2026-10-09", "ref": "claims 25, 27 and 29: ruling-sam-2026-10-09-p1-131, p1-133, p1-138, p1-139, p1-145, p1-149" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p11-066, p11-067, p11-102" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-007-m2" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p17-015, p17-016" },
-        { "source": "trace:e2e", "ref": "trace-e2e-p10-052" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": [
-        "req-370 was in inc-007 with the port list, blocked on MDM. Sam's 9 October ruling (claim 27, ruling-sam-2026-10-09-p1-138) builds it now. It is drafted as its own row because it changes the transit countries page's options, code the arrival-and-transit theme owns, while the port order is reference data's; the two lists no longer share a blocker or a set-up.",
-        "Depends on the stub tidy-up row's countries half (ruling-sam-2026-10-09-p1-149), because the stub's GBNAG_SPS_EX answer changes the names and counts the transit tests assert. No criterion states a count, because the count differs between the stub and real MDM.",
-        "The subdivision labelling already exists for the country of origin page; this row reuses it rather than building a second one. The countries service is shared with the reference-lists and origin themes."
-      ],
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
-        "tests:page-objects/animals/transited-countries-page.ts",
-        "tests:tests/animals/e2e/pages/transited-countries.spec.ts"
-      ],
-      "shared": [
-        "frontend:src/server/app/services/countries"
-      ],
-      "dependsOn": ["the stub tidy-up row"],
-      "existingRow": null
-    },
-    {
       "title": "Arrival details wording: labels, hints, placeholder and means of transport options",
-      "detail": "Bring the arrival details page's visible copy up to Design Release 2.1: medium-size question labels, the new port of entry hint and placeholder, the shorter means of transport options and the shorter transport identification lead-in. What the page submits and stores does not change: means of transport is still stored as its code, because the backend and other services read it (c-047). The page stays at its 'port-of-entry' address.",
+      "detail": "Bring the arrival details page's visible copy up to Design Release 2.1: medium-size question labels, the new port of entry hint and placeholder, the shorter means of transport options and the shorter transport identification lead-in. The plants frontend's arrival details takes the same label size and the same hint pattern for its place of landing in the same increment, keeping its own questions. What the pages submit and store does not change: means of transport is still stored as its code, because the backend and other services read it (c-047). The animals page stays at its 'port-of-entry' address.",
       "acceptanceCriteria": [
-        "Each of the five question labels on arrival details (arrival date, port of entry, means of transport, transport identification, transport document reference) is set in the GOV.UK medium label size rather than the small bold size (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-028; trace:e2e trace-e2e-p10-006)",
-        "The port of entry hint reads 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.' (prototype:dr2-1-source prototype-dr2-1-source-p6-025; prototype:dr2-1-specs prototype-dr2-1-specs-p2-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-012)",
-        "The port of entry search shows the placeholder 'Select a port' when no port is chosen (prototype:dr2-1-source prototype-dr2-1-source-p6-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013)",
+        "Each of the five question labels on arrival details (arrival date, port of entry, means of transport, transport identification, transport document reference) is set in the GOV.UK medium label size rather than the small bold size (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-028; trace:e2e trace-e2e-p10-006; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-022)",
+        "The port of entry hint reads 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.' (prototype:dr2-1-source prototype-dr2-1-source-p6-025; prototype:dr2-1-specs prototype-dr2-1-specs-p2-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-012; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-026)",
+        "The port of entry search shows the placeholder 'Select a port' when no port is chosen (prototype:dr2-1-source prototype-dr2-1-source-p6-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-028)",
         "The means of transport options read 'Air', 'Rail', 'Road' and 'Sea', in that order (prototype:dr2-1-source prototype-dr2-1-source-p6-036; prototype:dr2-1-specs prototype-dr2-1-specs-p2-077; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-023)",
         "Choosing 'Air', 'Rail', 'Road' or 'Sea' still stores the means of transport as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL in the saved notification, and Rail or Road still leads to transit countries (conflict c-047; repo:frontend repo-frontend-p11-036)",
-        "The transport identification hint's lead-in reads 'Enter one of the following:' (prototype:dr2-1-source prototype-dr2-1-source-p6-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-025)"
+        "The transport identification hint's lead-in reads 'Enter one of the following:' (prototype:dr2-1-source prototype-dr2-1-source-p6-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-025)",
+        "In the plants frontend, every question label on arrival details (the arrival date in each of its three wordings, 'Expected time of arrival' and 'Proposed place of landing') is set in the GOV.UK medium label size (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-022; repo:plantsfrontend repo-plantsfrontend-p5-081, repo-plantsfrontend-p5-084)",
+        "In the plants frontend, the place of landing hint reads 'Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code.' (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-022; repo:plantsfrontend repo-plantsfrontend-p5-084, repo-plantsfrontend-p5-100; prototype:dr2-1-source prototype-dr2-1-source-p6-025)"
       ],
-      "requirements": ["req-278", "req-293", "req-294", "req-309", "req-310", "req-311", "req-312", "req-318"],
+      "requirements": ["req-278", "req-293", "req-294", "req-309", "req-310", "req-311", "req-312", "req-318", "req-1930", "req-1931"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-025, p6-026, p6-036, p6-043" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-076, p2-077, p4-027" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-012, p8-013, p8-023, p8-025, p8-028" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 2 and 45 (inc-026): ruling-sam-2026-10-09-pm-p1-026, p1-028, p3-008, p3-009, p3-022" },
         { "source": "repo:frontend", "ref": "repo-frontend-p11-025, p11-026, p11-036, p11-040" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-081, p5-084, p5-100" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-013, p16-041, p16-042, p16-059, p16-064" },
         { "source": "trace:e2e", "ref": "trace-e2e-p10-006, p10-014, p10-020, p10-022" },
         { "source": "repo:tests", "ref": "repo-tests-p1-114" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Combines the copy slices for one page (req-278 labels, req-293 hint, req-294 placeholder, req-309 to req-312 means of transport options, req-318 lead-in): same page, same copy and same review. The four option relabels are one criterion because the reviewer checks them together in one list; the stored code is a separate criterion (c-047). GOV.UK's medium label is the in-toolbox equivalent of the prototype's heading class.",
-        "No longer depends on inc-025: req-271 (move to 'arrival-details') is out of scope by Sam's 9 October ruling (claim 20), and the page stays at 'port-of-entry' (req-1807). inc-025 now covers nothing and should become dropped. The k6 performance script keeps working because the field names and codes do not change (req-1808).",
-        "The transport copy is shared with the transporters area."
+        "Combines the copy slices for one page (req-278 labels, req-293 hint, req-294 placeholder, req-309 to req-312 means of transport options, req-318 lead-in) with plants' mirror of the labels and hint (req-1931, req-1930): same page, same copy and same review, and the 9 October afternoon ruling (claim 45) puts plants in this same increment. areas.json does not yet give req-1930 or req-1931 to any area; this area's scope includes the plants arrival pages. The four option relabels are one criterion because the reviewer checks them together; the stored code is a separate criterion (c-047).",
+        "The hint and placeholder follow the prototype within the accessible-autocomplete the real frontend already uses (ruling:sam-2026-10-09-pm claim 2). inc-025 (move to 'arrival-details') is dropped; the page stays at 'port-of-entry' (req-1807), and the k6 script keeps working because field names and codes do not change (req-1808).",
+        "The transport copy file is shared with the transporters area."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details",
         "tests:page-objects/animals/arrival-details-page.ts",
         "tests:tests/animals/e2e/pages/arrival-details.spec.ts"
       ],
-      "shared": [],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js",
+        "tests:page-objects/plants/arrival-details-page.ts",
+        "tests:tests/plants/e2e/features/arrival.spec.ts"
+      ],
       "dependsOn": [],
+      "theme": "arrival-and-transit",
       "existingRow": "inc-026"
     },
     {
-      "title": "Port and transit country searches: 'name - code' options, a search button and the matched text in bold",
-      "detail": "Design Release 2.1 shows each port as its name, a dash and its code, gives the port and transit country type-aheads a search button, and bolds the part of each result that matches what was typed. The real service keeps submitting and storing the port code (c-047), and keeps a native select underneath that works without JavaScript (c-006).",
+      "title": "Port options read '<port name> - <port code>'",
+      "detail": "Design Release 2.1 shows each port as its name, a dash and its code. The 9 October afternoon ruling builds the label now, in the animals port of entry search and the plants place of landing search in the same increment, within the accessible-autocomplete the real frontends already use. The real service keeps submitting and storing the port code (c-047) and keeps a native select underneath that works without JavaScript (c-006). The search button waits on design (its own row) and bold matches are not copied (req-299, out of scope).",
       "acceptanceCriteria": [
-        "Each port of entry option reads '<port name> - <port code>', for example 'Port of Dover - GB DVR', with and without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p6-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014)",
+        "Each port of entry option reads '<port name> - <port code>', for example 'Port of Dover - GB DVR', with and without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p6-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-034)",
         "With JavaScript, once a port is chosen the search box shows it as '<port name> - <port code>' (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-084; trace:animals-fit trace-animals-fit-p16-050)",
         "Choosing 'Port of Dover - GB DVR' still saves the port code GB DVR in the saved notification (conflict c-047; repo:frontend repo-frontend-p11-027)",
-        "With JavaScript, the port of entry search and the transit country search each have a search button beside the box whose accessible name is 'Search' (prototype:dr2-1-source prototype-dr2-1-source-p6-026, prototype-dr2-1-source-p6-070; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013, trace-prototype-dr2-1-p8-053)",
-        "With JavaScript, typing 'Dov' in the port search lists 'Port of Dover - GB DVR' with 'Dov' in bold (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014; trace:animals-fit trace-animals-fit-p16-048)",
-        "Without JavaScript, the port of entry and transit country questions are still labelled native selects that choose and save an answer (conflict c-006; repo:frontend repo-frontend-p11-103)"
+        "In the plants frontend, each place of landing option, and with JavaScript the chosen port in the search box, reads '<port name> - <port code>', for example 'Port of Dover - GB DVR', and choosing one still saves its port code (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-023; repo:plantsfrontend repo-plantsfrontend-p5-086; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-014)",
+        "Without JavaScript, the port of entry and place of landing questions are still labelled native selects that choose and save an answer (conflict c-006; repo:frontend repo-frontend-p11-103)"
       ],
-      "requirements": ["req-295", "req-296", "req-299"],
+      "requirements": ["req-295", "req-1929"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-026, p6-028, p6-070" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-013, p8-014, p8-053, p12-083, p12-084" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-028" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-014, p12-083, p12-084" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 3 and 45 (inc-027): ruling-sam-2026-10-09-pm-p1-026, p1-034, p3-001, p3-023" },
         { "source": "repo:frontend", "ref": "repo-frontend-p11-027" },
+        { "source": "repo:plantsfrontend", "ref": "repo-plantsfrontend-p5-086" },
         { "source": "repo:tests", "ref": "repo-tests-p1-095, p1-116" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-043, p16-045, p16-048, p16-050, p17-013" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-043, p16-050" },
         { "source": "trace:e2e", "ref": "trace-e2e-p4-068, p4-070, p10-016" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "plantsfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at the type-ahead's search button and bold match before other searches copy it: c-006 gives the origin country search the same search icon, so this sets the pattern for the shared type-ahead.",
+      "gate": null,
       "openQuestions": [],
       "notes": [
-        "Combines req-295 (option text), req-296 (search button on both searches) and req-299 (bold match): all three change how the shared type-ahead renders, so they share one set-up and review. req-296 covers the transit search too, so this row also touches the transit countries page's search markup.",
-        "No longer depends on inc-025 (now covering nothing: req-271 is out of scope by Sam's 9 October ruling, claim 20). The 'Port of Dover - GB DVR' example is a real, correctly spelt port in both the stub and MDM.",
-        "The client type-ahead component is shared with the origin area's country search (c-006 asks origin for the same search icon); it sits in the journey-foundation theme's touches, so the combiner should place the component change there or order this row with the origin one. The tests repo's port selection relies on the '(code)' text today and must follow the new option text."
+        "Rewritten by the 9 October afternoon ruling (claim 3): req-295 is built now; req-296 (the Search button) leaves for its own waiting-on-design row; req-299 (bold matches) is out of scope and leaves the row. The gate on the search button pattern is removed, because the button is no longer built here.",
+        "req-1929 (plants' port labels) joins by claim 45, which puts plants in this same increment; areas.json does not yet give it to any area, and this area's scope includes the plants arrival pages.",
+        "The 'Port of Dover - GB DVR' example is a real, correctly spelt port in both the stub and MDM. The tests repo's port selection relies on the '(code)' text today and must follow the new option text."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
-        "frontend:src/server/app/services/ports",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details",
         "tests:tests/animals/e2e/features/port-of-entry-select.spec.ts"
       ],
       "shared": [
-        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries"
+        "frontend:src/server/app/services/ports",
+        "plantsfrontend:src/server/app/services/ports",
+        "tests:page-objects/animals/arrival-details-page.ts",
+        "tests:page-objects/plants/arrival-details-page.ts",
+        "tests:tests/plants/e2e/features/arrival.spec.ts"
       ],
       "dependsOn": [],
+      "theme": "arrival-and-transit",
       "existingRow": "inc-027"
+    },
+    {
+      "title": "Waiting on design: a Search button beside the port of entry, transit country and place of landing searches",
+      "detail": "Design Release 2.1 gives its type-aheads a separate Search button. A separate button is beyond the accessible-autocomplete's own options, so the 9 October afternoon ruling puts it to design as question 1. When design answers, it is built as design says, in the animals port of entry and transit country searches and the plants place of landing search, or dropped if design drops it.",
+      "acceptanceCriteria": [
+        "With JavaScript, the port of entry search and the transit country search each have a search button beside the box whose accessible name is 'Search' (prototype:dr2-1-source prototype-dr2-1-source-p6-026, prototype-dr2-1-source-p6-070; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-013, trace-prototype-dr2-1-p8-053)",
+        "In the plants frontend, with JavaScript, the place of landing search has the same search button with the accessible name 'Search' (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-035, ruling-sam-2026-10-09-pm-p3-023)",
+        "Without JavaScript, the three questions are still labelled native selects that choose and save an answer, with no search button (conflict c-006; repo:frontend repo-frontend-p11-103)"
+      ],
+      "requirements": ["req-296"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-026, p6-070" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-013, p8-053, p12-083" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 3, 8, 10 and 45: ruling-sam-2026-10-09-pm-p1-027, p1-035, p1-057, p1-063, p3-023" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-045, p17-013" }
+      ],
+      "repos": ["frontend", "plantsfrontend", "tests"],
+      "kind": "feat",
+      "status": "blocked",
+      "gate": null,
+      "openQuestions": [
+        "Design answers design question 1 (search buttons) of the 9 October afternoon ruling: is a separate Search button beside the type-ahead strongly needed, and from which tested library? Built as design says, or dropped if design drops it."
+      ],
+      "notes": [
+        "Split off inc-027 by the 9 October afternoon ruling (claims 3, 8 and 10): req-296 has blockedBy, so it sits apart from the built-now port labels. Claim 10 makes the country of origin's search icon (req-018, in inc-009) and this button ONE waiting-on-design increment; the combiner merges this draft with the origin area's req-018 draft into that one row, in the waiting-on-design theme.",
+        "Depends on inc-027 (the port labels it sits beside). Claim 8: where a design increment's row also changes plants, it changes plants too, so plantsfrontend is in its repos. No custom JavaScript is written to copy the prototype (claim 5)."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details"
+      ],
+      "shared": [
+        "frontend:src/server/common/components/accessible-autocomplete",
+        "tests:page-objects/animals/arrival-details-page.ts",
+        "tests:page-objects/animals/transited-countries-page.ts"
+      ],
+      "dependsOn": ["inc-027"],
+      "theme": "waiting-on-design",
+      "existingRow": null
     },
     {
       "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from",
@@ -222,6 +255,7 @@
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-081, p2-082" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-030, p8-031, p8-032, p8-033, p8-046" },
         { "source": "ruling:sam-2026-10-09", "ref": "claim 39: ruling-sam-2026-10-09-p1-196, p1-198" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claim 49 (inc-028 animals only): ruling-sam-2026-10-09-pm-p3-015, p3-016" },
         { "source": "repo:frontend", "ref": "repo-frontend-p11-003, p11-019, p11-047, p11-048, p11-052, p11-099" },
         { "source": "repo:tests", "ref": "repo-tests-p1-101, p1-102, p1-104" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p16-073, p16-079, p16-087, p16-088, p17-059" },
@@ -234,20 +268,23 @@
       "openQuestions": [],
       "notes": [
         "Combines req-315 (means of transport required), req-327 (return to overview), req-328 (return to review) and req-329 (Save and return to overview): all four decide what Save and continue and Save and return do on the same two pages, and each criterion needs the others' set-up to observe.",
-        "c-045 keeps today's field checks, so the prototype's soft-validation claims are not built; c-211 keeps format checks on 'Save and return to overview'. The arrival date is typed as day/month/year, so the impossible-date example is written that way.",
-        "Depends on inc-002 (journey-foundation), which changes the live flow so a page opened from its overview task returns to the overview; Sam's 9 October ruling (claim 39) adds no marker to the address, so this row uses that mechanism rather than building a second one. No longer depends on inc-025, which now covers nothing (req-271 out of scope, claim 20)."
+        "Animals only by the 9 October afternoon ruling (claim 49): plants gets return to the overview and the lenient save from inc-002 and inc-003 (req-1934, req-1935), not from this row.",
+        "c-045 keeps today's field checks; c-211 keeps format checks on 'Save and return to overview'. Depends on inc-002 (a page opened from its overview task returns there; claim 39 adds no address marker) and on inc-003 ('Save and return to overview' without required checks), so this row uses those mechanisms rather than building second ones."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
         "tests:tests/animals/e2e/pages/arrival-details.spec.ts",
-        "tests:tests/animals/e2e/pages/transited-countries.spec.ts",
         "tests:tests/animals/e2e/features/transit-means-scope.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/page.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js"
       ],
-      "dependsOn": ["inc-002"],
+      "dependsOn": ["inc-002", "inc-003"],
+      "theme": "arrival-and-transit",
       "existingRow": "inc-028"
     },
     {
@@ -277,24 +314,25 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Combines the transit countries page's server-rendered changes (req-338 title, req-343 Back link, req-344 redirect, req-356 empty state): one page and one review. The 'Error: ' title prefix is kept by c-006.",
-        "The page stays at its 'transit-countries' address (req-337, req-1808). Sam's 9 October ruling (claim 39) adds no marker to the address for 'opened from the overview', so the Back link follows the same live-flow mechanism inc-002 builds; keep this row next to inc-028. No longer depends on inc-025, which now covers nothing."
+        "Combines the transit countries page's server-rendered changes (req-338 title, req-343 Back link, req-344 redirect, req-356 empty state): one page and one review. The 'Error: ' title prefix is kept by c-006. Transit is animals only, so plants is untouched (ruling:sam-2026-10-09-pm claim 44).",
+        "The page stays at its 'transit-countries' address (req-337, req-1808). The Back link follows the same live-flow mechanism inc-002 builds, with no address marker (claim 39 of ruling:sam-2026-10-09)."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
         "tests:page-objects/animals/transited-countries-page.ts",
-        "tests:tests/animals/e2e/pages/transited-countries.spec.ts",
-        "tests:tests/animals/e2e/features/transit-means-scope.spec.ts"
+        "tests:tests/animals/e2e/pages/transited-countries.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js"
       ],
       "dependsOn": ["inc-002"],
+      "theme": "arrival-and-transit",
       "existingRow": "inc-029"
     },
     {
-      "title": "Transit countries are added and removed in place with JavaScript, with 'Added' and 'Removed' announcements",
-      "detail": "With JavaScript, Design Release 2.1 adds a country as soon as it is picked and removes one without a page load. Without JavaScript the real service keeps the native select, the Add country button and the Remove buttons that submit the form (c-006). Screen reader announcements change to Design Release 2.1's wording. The saved answer is still a list of country codes (c-047), and every server check on transit countries stays (c-045).",
+      "title": "Waiting on design: transit countries added and removed in place with JavaScript, with 'Added' and 'Removed' announcements",
+      "detail": "With JavaScript, Design Release 2.1 adds a country as soon as it is picked, removes one without a page load and announces 'Added <country>' and 'Removed <country>'. The 9 October afternoon ruling puts all of this to design as question 4: without JavaScript the page already works with today's native select, Add country button and submitting Remove buttons, so nothing new is built now and today's announcements stay. When design answers, it is built as design says, or dropped if design drops it. The saved answer stays a list of country codes (c-047), and every server check on transit countries stays (c-045).",
       "acceptanceCriteria": [
         "With JavaScript, choosing a country in the transit search adds it to the list straight away and clears the search box, and no 'Add country' button is shown (prototype:dr2-1-specs prototype-dr2-1-specs-p2-093, prototype-dr2-1-specs-p4-029; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-055, trace-prototype-dr2-1-p8-056)",
         "With JavaScript, Remove takes that country off the list without a page load and leaves the other countries listed (prototype:dr2-1-source prototype-dr2-1-source-p6-072; prototype:dr2-1-specs prototype-dr2-1-specs-p2-095; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-058)",
@@ -311,6 +349,7 @@
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-072" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p2-093, p2-095, p4-029" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p8-055, p8-056, p8-058, p12-094, p13-072, p13-074" },
+        { "source": "ruling:sam-2026-10-09-pm", "ref": "claims 8 and 14: ruling-sam-2026-10-09-pm-p1-055, p1-069, p1-070" },
         { "source": "repo:frontend", "ref": "repo-frontend-p11-070, p11-071, p11-072-m1, p11-091, p11-092, p11-093, p11-094, p11-095, p11-096, p11-102, p11-103" },
         { "source": "repo:tests", "ref": "repo-tests-p1-119, p1-120, p1-122" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p17-019, p17-043, p17-044, p17-048" },
@@ -319,12 +358,15 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
+      "status": "blocked",
       "gate": null,
-      "openQuestions": [],
+      "openQuestions": [
+        "Design answers design question 4 (transit countries) of the 9 October afternoon ruling: are adding on pick, removing without a page load and the 'Added'/'Removed' wording strongly needed, and from which tested library? Built as design says, or dropped if design drops it."
+      ],
       "notes": [
-        "Combines req-348 (add on pick), req-349 (remove in place), req-353 ('Added' announcement, with the cap message) and req-354 ('Removed' announcement): the announcements are spoken by the same in-place add and remove, so they share one client script, one page and one review. c-006 keeps the no-JavaScript build and the visually hidden country name on Remove; c-047 keeps country codes as the saved answer; c-045 keeps the duplicate and 12-country checks.",
-        "Depends on inc-029 (same page, server-rendered list it builds on). Germany is in the GBNAG_SPS_EX block in both the stub and MDM, so the examples hold after the transit list row. The status announcer component is shared (journey-foundation)."
+        "Was todo; the 9 October afternoon ruling (claim 14) moves all of inc-030 to the waiting-on-design theme, because the no-JavaScript page already works and has nothing new to build now. Every requirement here has blockedBy design question 4.",
+        "Combines req-348 (add on pick), req-349 (remove in place), req-353 ('Added' announcement, with the cap message) and req-354 ('Removed' announcement): one design question, one client behaviour, one page and one review. Depends on inc-029 (same page). Animals only: transit is never mirrored to plants (claim 44).",
+        "inc-182 (germinal arrival and transit pages) lists inc-030 in its dependsOn; now that inc-030 is blocked, the combiner should take it out of inc-182's dependsOn, or the germinal journey waits on design for no reason."
       ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
@@ -332,10 +374,11 @@
         "tests:tests/animals/e2e/pages/transited-countries.spec.ts"
       ],
       "shared": [
-        "frontend:src/client/javascripts/components/status-announcer.js",
-        "frontend:src/client/javascripts/components/accessible-autocomplete.js"
+        "frontend:src/server/common/components",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy"
       ],
       "dependsOn": ["inc-029"],
+      "theme": "waiting-on-design",
       "existingRow": "inc-030"
     },
     {
@@ -360,32 +403,35 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Combines req-332 (stale arrival date status), req-372 (transit status) and req-375 (review row): all three are how the arrival and transit answers read back elsewhere, through the section's completion rules and the review card, so they share the same set-up of a saved notification. The stale-date criterion is observed with a notification whose arrival date is set up in the past through the backend, since the page refuses such a date; that is set-up for a one-page assertion, not a seeded journey.",
-        "Kept in the overview-and-review theme with its existing dependencies (inc-028, inc-101). The arrival obligations file is shared with the commodities-and-reason theme, and the review copy with the review area."
+        "Combines req-332 (stale arrival date status), req-372 (transit status) and req-375 (review row): all three are how the arrival and transit answers read back elsewhere, through the section's completion rules and the review card, so they share the set-up of a saved notification. The stale-date criterion is observed with a notification whose arrival date is set up in the past through the backend, since the page refuses such a date; that is set-up for a one-page assertion, not a seeded journey.",
+        "Kept in the overview-and-review theme with its existing dependencies (inc-028, inc-101). Animals only: plants has no transit, and its arrival window rules are its own."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/rows"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/copy/copy.en.js",
         "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
       ],
       "dependsOn": ["inc-028", "inc-101"],
+      "theme": "overview-and-review",
       "existingRow": "inc-103"
     },
     {
       "title": "Arrival details while creating or editing a template",
-      "detail": "A template is reused across consignments, so a one-off arrival date does not belong in it: while a template is being created, arrival details does not ask for the arrival date and the section is complete without one. A trader editing a template from its review is sent back to the template review.",
+      "detail": "A template is reused across consignments, so a one-off arrival date does not belong in it: while a live-animals template is being created, arrival details does not ask for the arrival date, saves none, and the section is complete without one. A trader editing a template from its review is sent back to the template review by Back and by Save and continue. The 9 October templates ruling keeps template mode to the animals sets; plants' arrival pages have no template mode.",
       "acceptanceCriteria": [
-        "While a template is being created, arrival details shows no arrival date question, and the other four questions are shown as usual (prototype:dr2-1-source prototype-dr2-1-source-p6-022; repo:frontend repo-frontend-p11-007)",
-        "While a template is being created, saving arrival details saves no arrival date, and the template's arrival details count as complete without one (prototype:dr2-1-source prototype-dr2-1-source-p6-023, prototype-dr2-1-source-p6-056)",
-        "When arrival details is opened to edit a template from its review, the Back link goes to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-006; repo:frontend repo-frontend-p11-006)",
-        "When arrival details is opened to edit a template from its review, Save and continue saves and returns to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-053, prototype-dr2-1-source-p6-083)"
+        "While a live-animals template is being created, arrival details shows no arrival date question, and the other four questions are shown as usual (prototype:dr2-1-source prototype-dr2-1-source-p6-022; repo:frontend repo-frontend-p11-007; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-026)",
+        "While a live-animals template is being created, saving arrival details saves no arrival date, and the template's arrival details count as complete without one (prototype:dr2-1-source prototype-dr2-1-source-p6-023, prototype-dr2-1-source-p6-056; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-028, ruling-sam-2026-10-09-templates-p1-030)",
+        "When arrival details is opened to edit a live-animals template from its review, the Back link goes to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-006; repo:frontend repo-frontend-p11-006; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-041)",
+        "When arrival details is opened to edit a live-animals template from its review, Save and continue saves and returns to the template review (prototype:dr2-1-source prototype-dr2-1-source-p6-053, prototype-dr2-1-source-p6-083; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-029)"
       ],
       "requirements": ["req-290", "req-291"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p6-006, p6-022, p6-023, p6-053, p6-056, p6-083" },
+        { "source": "ruling:sam-2026-10-09-templates", "ref": "ruling-sam-2026-10-09-templates-p1-026, p1-028, p1-029, p1-030, p1-041, p1-044" },
         { "source": "repo:frontend", "ref": "repo-frontend-p11-006, p11-007" }
       ],
       "repos": ["frontend", "tests"],
@@ -394,19 +440,60 @@
       "gate": null,
       "openQuestions": [],
       "notes": [
-        "Combines req-290 (no arrival date in a template) and req-291 (return to template review): both are arrival details' behaviour in template mode. The frontend has no templates today, so this row keeps its dependencies on the templates rows that create a template through the journey and add the template review page (inc-156, inc-159), and on inc-028 for the save routing. Kept in the type-question-and-templates theme so the other arrival rows are not held up by templates.",
-        "Criterion 2 no longer lists which other answers make the section complete: that rule is req-331 (exists) less the arrival date, so the criterion states only the change."
+        "Combines req-290 (no arrival date in a template) and req-291 (return to template review): both are arrival details' behaviour in template mode. Keeps its dependencies on the templates rows that create a template through the journey and add the template review (inc-156, inc-159), and on inc-028 for the save routing. Kept in the type-question-and-templates theme so the other arrival rows are not held up by templates.",
+        "The criteria name live animals only: the germinal set's arrival details does not exist until inc-182 builds it, and adding a dependency on inc-182 here would make the templates and germinal-products themes wait on each other. The germinal half of req-290 and req-291 is observed through inc-186 (germinal templates answered on the germinal set's pages), whose pages copy this behaviour; the combiner should add a germinal criterion to inc-186 if it does not already carry one.",
+        "Criterion 2 states only the change: the rest of the completion rule is req-331 (exists). req-1345 (a template never holds an arrival date) belongs to the templates area."
       ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
-        "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/evaluation.js",
+        "tests:tests/animals/e2e/features/templates"
       ],
       "dependsOn": ["inc-028", "inc-156", "inc-159"],
+      "theme": "type-question-and-templates",
       "existingRow": "inc-168"
+    },
+    {
+      "title": "Transit country search offers the GBNAG_SPS_EX countries and their subdivisions",
+      "detail": "Sam's 9 October ruling builds the transit country list now against reference data as MDM serves it, keeping the MDM block the list uses today. Today the transit search offers the 31-country origin list with no subdivisions. After this change it offers reference data's GBNAG_SPS_EX countries plus their subdivisions, each subdivision named with its parent country, in alphabetical order, as the country of origin page does. Where the content differs from Design Release 2.1's 41 countries, that is MDM's content to change, never a list edited in code.",
+      "acceptanceCriteria": [
+        "The transit country search offers the same countries and subdivisions as the country of origin search, from reference data's GBNAG_SPS_EX block, in alphabetical order (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-138, ruling-sam-2026-10-09-p1-145; repo:frontend repo-frontend-p11-066, repo-frontend-p11-067)",
+        "Each subdivision in the transit search reads '<territory> (<parent country>)', with and without JavaScript (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-139)",
+        "Adding a subdivision lists it as '<territory> (<parent country>)', Save and continue saves its code, and reopening the page lists it again under the same name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-139; conflict c-047; repo:frontend repo-frontend-p11-102)",
+        "A country or subdivision that is not on the offered list is still refused with 'Select countries from the list' (conflict c-045)"
+      ],
+      "requirements": ["req-370"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 25, 27 and 29: ruling-sam-2026-10-09-p1-131, p1-133, p1-138, p1-139, p1-145, p1-149" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p11-066, p11-067, p11-102" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p8-007-m2" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p17-015, p17-016" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p10-052" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Its own row because it changes the transit countries page's options, code the arrival-and-transit theme owns, while the port order is reference data's.",
+        "Depends on the stub tidy-up row (inc-173), whose countries half changes the GBNAG_SPS_EX names and counts the transit tests assert. No criterion states a count, because the count differs between the stub and real MDM. The subdivision labelling already exists for the country of origin page; this row reuses it. Animals only: transit is never mirrored to plants."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries",
+        "tests:tests/animals/e2e/pages/transited-countries.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/services/countries"
+      ],
+      "dependsOn": ["inc-173"],
+      "theme": "arrival-and-transit",
+      "existingRow": "inc-174"
     }
   ],
-  "unobservable": []
+  "unobservable": [],
+  "splitOff": []
 }

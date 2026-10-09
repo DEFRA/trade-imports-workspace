@@ -138,17 +138,17 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: The review names a document that is still being scanned or was found infected, and refuses to continue while it is
+### Requirement: The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is
 **ID**: REQ-CYA-010
-The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — naming the infected document ahead of one still scanning — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
+The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
 
-#### Scenario: Continuing while a document is still being scanned is refused, naming it on the review
+#### Scenario: Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review
 **ID**: SCN-CYA-010-A
 - **GIVEN** a ready draft notification is open on the review, and one of its documents is still being scanned
 - **WHEN** the user continues
 - **THEN** they are returned to the review, which marks the uploaded-documents card as still being scanned
 
-#### Scenario: An infected document is named on the review in preference to one still scanning
+#### Scenario: An infected document marks the uploaded-documents card in preference to one still scanning
 **ID**: SCN-CYA-010-B
 - **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
 - **WHEN** the user continues

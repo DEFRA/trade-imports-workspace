@@ -64,6 +64,92 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-DECLARATION-005",
+      "name": "The declaration is reached only by continuing from check your answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-005-A",
+          "name": "Opening the declaration page directly shows check your answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "sends a typed or bookmarked declaration URL back to the review", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send a bookmark or typed URL back to the review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-005-B",
+          "name": "A form altered to continue to the declaration, without check your answers having been opened, shows check your answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "sends a hand-crafted Continue from a browser that never opened the review back to the review", "strength": "full", "notes": "re-points the origin page's form at the declaration with step=review on a complete notification; reaches the declaration with the session guard disabled" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send step=%s back to the review when the session never rendered it", "strength": "full", "notes": "parameterised over step=review and step=declare" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should record in the session the token an editable review was rendered with", "strength": "partial", "notes": "the review's half of the guard" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-DECLARATION-006",
+      "name": "A notification is submitted only as check your answers showed it",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-DECLARATION-006-A",
+          "name": "A notification unchanged since check your answers submits",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "submits a complete notification, redirects to confirmation and keeps the declaration", "strength": "full", "notes": "Review → Continue → Declaration → Submit with nothing changed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should redirect to the confirmation page after a successful submit, forgetting the review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-006-B",
+          "name": "A change made after the declaration was shown stops the submission",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses the submit and returns to the review when the notification changed after the declaration rendered", "strength": "full", "notes": "edits the internal reference in a second page, then asserts the review URL with the banner and the changed value" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should refuse the submit when the notification changed after the declaration rendered", "strength": "full", "notes": "asserts the redirect, that finalise is never called, and that the notification stays a draft" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-006-C",
+          "name": "A declaration shown again is still held to the original check your answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should check the reviewed token, not the current one, when an unticked declaration is resubmitted after a change", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should re-render an unconfirmed declaration with its message, the reviewed token, and commit nothing", "strength": "partial", "notes": "the re-shown declaration carries the reviewed token" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-006-F",
+          "name": "A declaration shown again after a failed save is still held to the original check your answers",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should re-render declaration at 500 with its checked value, the reviewed token, banner and retry form", "strength": "partial", "notes": "the failed-save re-show carries a token, but the posted token equals the current one so the assertion cannot tell reviewed from current; no test changes the notification and resubmits after the failed save" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-006-D",
+          "name": "Refreshing the declaration after a change does not show it again",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review with the changed banner when the notification changed after the review", "strength": "partial", "notes": "a refresh re-sends the review's Continue, which this drives at a stale token; no test drives the browser refresh itself" }
+          ]
+        },
+        {
+          "id": "SCN-DECLARATION-006-E",
+          "name": "A change landing at the moment of submission stops the submission",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "submit_shouldReturn409StaleConcurrencyToken_whenNotificationChangedSinceTokenWasRead", "strength": "full", "notes": "backend integration test against real Mongo (recorded as unit, the nearest type): a submit at a token an edit has moved past is refused 409, stays a draft, and writes no outbox event" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java", "test": "submitNotification_shouldSaveAtTheExpectedConcurrencyToken", "strength": "partial", "notes": "the save carries the caller's token, so @Version refuses it atomically" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review when an edit lands between the check and the submit", "strength": "partial", "notes": "the frontend's handling of the backend's 409, faked at fetch" }
+          ]
+        }
+      ]
     }
   ]
 }

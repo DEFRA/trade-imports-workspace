@@ -61,7 +61,7 @@ The system MUST persist every field entered for a new address, including its opt
 
 ### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional
 **ID**: REQ-INS-ADDR-005
-The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code.
+The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, and MUST hint that an international phone number should include its country code, and MUST offer United Kingdom first in the country field, followed by every country the reference data service serves, in the order it serves them.
 
 #### Scenario: The add form asks for every field, marking address line 2 and county optional
 **ID**: SCN-INS-ADDR-005-A
@@ -70,6 +70,12 @@ The system MUST ask for name, address line 1, town or city, postcode, country, p
 - **THEN** every field is asked for, with address line 2 and county labelled optional
 - **AND** the country field offers a populated list of countries
 - **AND** a hint explains that an international phone number should include its country code
+
+#### Scenario: The country field offers United Kingdom, then every country the reference data service serves
+**ID**: SCN-INS-ADDR-005-B
+- **GIVEN** the user opens the add address form
+- **WHEN** the country list is read in full
+- **THEN** after its placeholder it offers United Kingdom, then every country the reference data service serves, by their served names, in the order it serves them
 
 ### Requirement: A mandatory field left blank blocks the save, naming and focusing it
 **ID**: REQ-INS-ADDR-006

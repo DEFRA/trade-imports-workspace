@@ -47,7 +47,7 @@ The system MUST ask a potatoes notification for the expected time of arrival and
 
 ### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-003
-The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code.
+The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code, and MUST list every port the reference data service serves, in the order it serves them.
 
 #### Scenario: Choosing a port shows its name and code and is kept on return
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-A
@@ -55,6 +55,12 @@ The system MUST let the user find a proposed place of landing by typing a port's
 - **WHEN** they choose a port, complete the page and save it
 - **THEN** the port field shows that port's name and code together
 - **AND** returning to the page still holds that choice
+
+#### Scenario: Every port the reference data service serves is offered as a place of landing, in its order
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-B
+- **GIVEN** a potatoes notification is on the arrival details page
+- **WHEN** the place-of-landing list is read in full
+- **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
 
 ### Requirement: A complete set of answers for the notification's state is accepted
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-004

@@ -1,0 +1,364 @@
+{
+  "programme": "design-release-2-1-reference-lists",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "insfrontend": {
+      "path": "repos/trade-imports-ins-frontend",
+      "github": "DEFRA/trade-imports-ins-frontend"
+    },
+    "referencedata": {
+      "path": "repos/trade-imports-reference-data",
+      "github": "DEFRA/trade-imports-reference-data"
+    },
+    "stub": {
+      "path": "repos/trade-imports-stub",
+      "github": "DEFRA/trade-imports-stub"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "theme": "reference-lists",
+  "branch": "feat/EUDPA-692-design-release-2-1-reference-lists",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 1,
+    "landsAfter": []
+  },
+  "touches": [
+    "frontend:src/server/app/services/_capture",
+    "frontend:src/server/app/services/countries",
+    "frontend:src/server/app/services/ports",
+    "insfrontend:src/server/app/services/countries",
+    "plantsfrontend:src/server/app/services/_capture",
+    "plantsfrontend:src/server/app/services/countries",
+    "plantsfrontend:src/server/app/services/ports",
+    "referencedata:src",
+    "stub:src/main/java/uk/gov/defra/trade/imports/stubs/mdm",
+    "stub:src/main/resources/responses",
+    "stub:src/test/java/uk/gov/defra/trade/imports/utils",
+    "tests:tests/animals/e2e/features/reference-lists",
+    "tests:domain/animals/constants/country-codes.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-006",
+      "title": "Destination country selects offer reference-data's countries and their subdivisions",
+      "detail": "Design Release 2.1 offers places beside the countries as destinations, labelled with their parent country. The 9 October ruling builds this now: the transhipment and transit 'Destination country' selects are built from reference-data's GBNAG_SPS_EX countries plus their subdivisions, as the origin page already is. What the list holds is MDM's to own, so no entry is added, removed or respelt in code, and the list shows whatever reference-data serves in each environment (trade-imports-stub locally and in CDP dev, real MDM in CDP test).",
+      "acceptanceCriteria": [
+        "The transhipment 'Destination country' select offers the same places, countries and their subdivisions, as the country of origin page offers, taken from reference-data's GBNAG_SPS_EX block as served in that environment (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-135, ruling-sam-2026-10-09-p1-145; repo:frontend repo-frontend-p7-035)",
+        "The transit 'Destination country' select offers the same places as the transhipment one (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-135; trace:e2e trace-e2e-p4-106)",
+        "Each subdivision in both selects is labelled '<territory> (<parent>)', with the parent country's name as reference-data serves it (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-130, ruling-sam-2026-10-09-p1-133)",
+        "Countries and subdivisions are listed together in one alphabetical order, as the country of origin page orders them, after the empty placeholder option (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-134)",
+        "A subdivision chosen as the destination country saves without an error, and the reason page shows it selected when reopened (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-135)",
+        "A destination country saved before this change, from today's 31-country list, is still shown selected when the reason page is reopened (trace:animals-fit trace-animals-fit-p7-044)"
+      ],
+      "dependsOn": [
+        "inc-173"
+      ],
+      "theme": "reference-lists",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-129 to p1-137, p1-145, p1-149"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-025, p1-026, p2-007"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-035"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p7-044"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-106"
+        }
+      ],
+      "requirements": [
+        "req-147"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "c-026: the 9 October ruling wins; the list content is reference-data's, never typed into code (req-1766 is out of scope). req-149 (the port of exit list) is already met and is not in this row.",
+        "No referencedata change: the frontend already fetches the GBNAG_SPS_EX block with its subdivisions for the origin page; the reason page today offers only the countries, without subdivisions. The criteria name no entry or count, because the list differs by environment.",
+        "Ordering need (ruling:sam-2026-10-09 claim p1-149): builds after the stub tidy-up row at the head of the reference-lists theme (inc-173), which changes the names and counts the tests assert.",
+        "Theme: the change sits in the import-reason feature folder, which the commodities-and-reason theme owns, and in the countries service, which reference-lists owns. The combiner should either keep it in reference-lists and give that theme this row's reach, or move it to commodities-and-reason with its dependency on inc-173."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-007",
+      "title": "Port lists ordered airports, then seaports, then rail, from MDM's port type, with the port of exit reading and ordering like the port of entry, in animals and plants",
+      "detail": "Design Release 2.1 puts airports before seaports, and Sam's 9 October ruling builds the order now: MDM's traffic field already gives every port its type, so nothing waits on MDM. Reference data maps the type through and orders the list airports, then seaports, then rail ports in a group of their own, each group A to Z by name ignoring letter case. Today reference data sorts by name alone, case-sensitively, so airports and seaports are mixed and names in capitals sort first. The plants frontend's place of landing list follows the same order in the same increment. List content stays what MDM serves: it is never edited in code. Design Release 2.1 labels each port of exit '<port name> - <port code>', as the port of entry options are labelled, and the 9 October ruling orders the port of exit lists as the port of entry list: airports, then seaports, then rail ports, each A to Z by name. Both lists read the same ports reference data serves, so the order and the label are built once for entry and exit.",
+      "acceptanceCriteria": [
+        "Reference data's GET /ports-of-entry returns each port's type (airport, seaport or rail), taken from MDM's traffic field, alongside its code and name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-172, ruling-sam-2026-10-09-p1-176; repo:referencedata repo-referencedata-p1-031, repo-referencedata-p1-032, repo-referencedata-p1-033)",
+        "Locally, in CDP dev and in CDP test, the port of entry search on arrival details lists every airport first, then every seaport, then every rail port (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-173, ruling-sam-2026-10-09-p1-174; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-019)",
+        "Within each group, ports are listed A to Z by name ignoring letter case, so a name written in capitals sorts among the other names that start with the same letter rather than ahead of them (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-175; repo:referencedata repo-referencedata-p1-030; trace:e2e trace-e2e-p4-076)",
+        "Non-breaking and doubled spaces in a port name are compared as single spaces, so such a name sorts where the same name with single spaces would (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-175)",
+        "The ordered list still holds every port reference data returns, and choosing a port still saves its code (repo:referencedata repo-referencedata-p1-031; repo:frontend repo-frontend-p11-027)",
+        "In the plants frontend, the place of landing search lists the ports in the same order: airports, then seaports, then rail ports, each group A to Z by name ignoring letter case (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-018; repo:plantsfrontend repo-plantsfrontend-p9-108, repo-plantsfrontend-p5-086)",
+        "Each 'Port of exit' option, on both the transit and the temporary admission selects, reads '<port name> - <port code>', the same label the port of entry options take, and choosing one still saves the port code (prototype:dr2-1-specs prototype-dr2-1-specs-p1-084; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-035; repo:frontend repo-frontend-p7-037; trace:animals-fit trace-animals-fit-p7-045; trace:e2e trace-e2e-p4-108)",
+        "Locally, in CDP dev and in CDP test, both 'Port of exit' selects list every airport first, then every seaport, then every rail port (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-165, ruling-sam-2026-10-09-p1-172, ruling-sam-2026-10-09-p1-173, ruling-sam-2026-10-09-p1-174; trace:animals-fit trace-animals-fit-p7-046)",
+        "Within each group of a 'Port of exit' select, ports are listed A to Z by name ignoring letter case, with non-breaking and doubled spaces compared as single spaces (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-175)",
+        "A port of exit saved before this change is still shown selected when the reason page is reopened (trace:animals-fit trace-animals-fit-p7-045)"
+      ],
+      "dependsOn": [
+        "inc-173"
+      ],
+      "theme": "reference-lists",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "referencedata",
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "claims 25 and 33: ruling-sam-2026-10-09-p1-004, p1-131, p1-133, p1-172 to p1-176"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "claim 45 (inc-007): ruling-sam-2026-10-09-pm-p3-018"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "repo-referencedata-p1-030 to p1-033"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "repo-stub-p2-059"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p5-086, p9-108"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p8-019"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p16-043-m1"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-076"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-084"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-035"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-165, p1-172 to p1-175"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-037"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p7-045, p7-046"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-108"
+        }
+      ],
+      "requirements": [
+        "req-304",
+        "req-1813",
+        "req-1932",
+        "req-1768",
+        "req-1769"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the arrival-and-transit, reason-and-additional-details areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
+        "Combines req-304 (the order) and req-1813 (reference data returns the port type the order needs): the order cannot be observed without the type. req-1932 adds plants' recaptured ports in the new order, by the 9 October afternoon ruling (claim 45), which puts plants in the same increment; areas.json does not yet give req-1932 to any area, and this area's scope includes the plants arrival pages.",
+        "The combiner keeps this row's id and merges back the port of exit labels and order (req-1768, req-1769) it already holds and their criteria: this draft carries only this area's requirements. Plants has no port of exit.",
+        "Depends on the stub tidy-up row (inc-173): locally and in CDP dev the type only reaches reference data once the stub serves MDM's traffic field. The frontends are listed because their captured ports fixtures must follow the new order; the order itself is reference data's. Rail sits after seaports by the ruling; Design Release 2.1 has no rail entry.",
+        "No criterion names a particular port, so nothing pins MDM's duplicates or misspellings (ruling-sam-2026-10-09-p1-171).",
+        "Combines the port of exit label slice (req-1768; c-226, the prototype wins by default) with the port of exit order slice (req-1769): both change the same two selects from the same ports list.",
+        "Already sits in inc-007 with the port of entry order (req-304, req-1813, from another area's draft): the order is reference data's and the exit selects read the same list, so building it once for entry and exit avoids repeating the reference-data change and its ladder. The combiner should keep these requirements in inc-007 and merge this draft into it. The type reaches reference data under req-304's work, after the stub tidy-up row (inc-173).",
+        "req-1932 (plants' ports fixture recaptured in the new order) is added here by the combiner: the row's plants criterion already states it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-173",
+      "title": "The stub's countries and ports match real MDM, and every captured country and port fixture is recaptured from it",
+      "detail": "The 9 October ruling's stub tidy-up, countries half: trade-imports-stub's MDM countries fixture is regenerated from MDM's raw responses, all 250 countries in MDM's order with their full real records, served whole, and filtered by the blocks parameter as MDM does. The animals frontend, the high-risk plants frontend, the INS frontend and the tests repo then recapture or derive their country data from what reference data now serves, so every later list row is built and tested against what MDM really serves. Sam's 9 October ruling accepts a stub tidy-up so the stub matches real MDM, ahead of the list rows that assert port names and counts. Today the stub's ports are 78 hand-kept Great Britain ports carrying only an id, a code and a name, and the stub drops any field its models do not know. After this change the stub serves MDM's real port records, whole and in MDM's order, each with its traffic, so the port type reaches reference data locally and in CDP dev as it does from real MDM. The animals frontend's and the plants frontend's captured ports fixtures are recaptured from it, so every later list row is built and tested against what MDM really serves. MDM's duplicate and misspelt ports stay: they are MDM's content, reported to the MDM team, and no test pins them.",
+      "acceptanceCriteria": [
+        "Locally and in CDP dev, the stub's MDM countries call without a blocks filter answers all 250 countries in MDM's order with their full real records, in place of today's 31 hand-kept records, and no value MDM masks is filled in (ruling:sam-2026-10-09 p1-147, p1-150, p1-152, p1-153; repo:stub repo-stub-p2-011, repo-stub-p2-047)",
+        "Locally and in CDP dev, the stub's countries call for the GBNAG_SPS_EX block answers the 32 countries in that block, as MDM does (ruling:sam-2026-10-09 p1-155; repo:stub repo-stub-p2-005, repo-stub-p2-043, repo-stub-p2-079)",
+        "Locally and in CDP dev, the stub serves each country record whole, including fields its own models do not name (ruling:sam-2026-10-09 p1-154; repo:stub repo-stub-p2-008, repo-stub-p2-046)",
+        "The stub's own tests check the regenerated countries fixture, and check that the blocks filter answers 32 countries for GBNAG_SPS_EX and 250 without it (ruling:sam-2026-10-09 p1-156; repo:stub repo-stub-p2-069, repo-stub-p2-070, repo-stub-p2-074)",
+        "In the animals frontend's stub mode, the country of origin list offers the same countries, names and order as reference data serves from the tidied stub, and no country check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 p1-157, p1-158; repo:frontend repo-frontend-p4-077; trace:animals-fit trace-animals-fit-p5-016)",
+        "In the high-risk plants frontend's stub mode, the origin page's country list offers the same countries, names and order as reference data serves from the tidied stub for the GBNAG_SPS_EX block, and the plants frontend's own checks pass against it (ruling:sam-2026-10-09-pm p3-020; repo:plantsfrontend repo-plantsfrontend-p9-110-m1)",
+        "In the INS frontend's stub mode, the address book's Country select offers the countries captured from the reference data service's unfiltered list, not the four hand-typed ones (United Kingdom, France, Germany, Ireland) (ruling:sam-2026-10-09 p1-143, p1-144, p1-159; conflicts:c-177)",
+        "The end-to-end specs take their country names from the recaptured countries fixture, the tests repo keeps no unused hand-kept list of country rows, and every spec that counts the unfiltered country list expects the count served, 249 places on the local stack rather than 31 (ruling:sam-2026-10-09 p1-160, p1-161, p1-162)",
+        "Locally and in CDP dev, the stub's MDM ports call answers with MDM's real port records in MDM's order, in place of the 78 hand-kept ports, each record carrying its traffic (Airport, Port or Rail), its address and its status (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-004, ruling-sam-2026-10-09-p1-150, ruling-sam-2026-10-09-p1-151; repo:stub repo-stub-p2-056, repo-stub-p2-057, repo-stub-p2-081)",
+        "Locally and in CDP dev, the stub serves each port record whole, including fields its own models do not name, so each port's traffic is in the response reference data reads (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-154; repo:stub repo-stub-p2-056)",
+        "Locally and in CDP dev, the ports the stub serves keep MDM's duplicate and misspelt entries and GB MID's non-breaking spaces as MDM has them, and no value MDM masks is filled in (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-151, ruling-sam-2026-10-09-p1-153, ruling-sam-2026-10-09-p1-163)",
+        "Locally and in CDP dev, the stub's ports call still answers as MDM does: 200 OK with the port list in its result field, needing a subscription key header whose value it does not check (repo:stub repo-stub-p2-058, repo-stub-p2-060, repo-stub-p2-061)",
+        "Locally, the port of entry search on arrival details offers the tidied stub's ports, as reference data serves them, rather than the 78 hand-kept ones (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-150; repo:referencedata repo-referencedata-p1-037)",
+        "In the animals frontend's stub mode, the port of entry search offers the same ports, in the same order, as reference data serves from the tidied stub, and no port check is marked as waiting on an endpoint that is not built (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-157, ruling-sam-2026-10-09-p1-158; document:dr1-parity-notes document-dr1-parity-notes-p1-043)",
+        "In the plants frontend's stub mode, the place of landing search offers the same ports, in the same order, as reference data serves from the tidied stub, and every plants check that pinned an old port name or the old count of 77 passes against the recaptured list (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-019; repo:plantsfrontend repo-plantsfrontend-p9-108, repo-plantsfrontend-p9-107-m1)"
+      ],
+      "dependsOn": [],
+      "theme": "reference-lists",
+      "status": "todo",
+      "kind": "chore",
+      "repos": [
+        "stub",
+        "frontend",
+        "plantsfrontend",
+        "insfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "claim 30: p1-143, p1-144, p1-147, p1-148, p1-150, p1-152 to p1-162, p1-164"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p3-020"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "repo-stub-p2-005 to p2-050, p2-067 to p2-080"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p4-077"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p9-110-m1"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p5-016"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "claim 30: ruling-sam-2026-10-09-p1-004, p1-147, p1-148, p1-150, p1-151, p1-153, p1-154, p1-157, p1-158, p1-163, p1-164"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "claim 45 (inc-173): ruling-sam-2026-10-09-pm-p3-019"
+        },
+        {
+          "source": "repo:stub",
+          "ref": "repo-stub-p2-056 to p2-066, p2-081"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "repo-referencedata-p1-037"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p9-107-m1, p9-108"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "ref": "document-dr1-parity-notes-p1-043"
+        }
+      ],
+      "requirements": [
+        "req-1744",
+        "req-1745",
+        "req-1746",
+        "req-1747",
+        "req-1750",
+        "req-1751",
+        "req-1752",
+        "req-1811",
+        "req-1812",
+        "req-1814",
+        "req-1933"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the start-and-origin, arrival-and-transit areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
+        "The countries half of inc-173. The 9 October ruling makes the stub tidy-up one row at the head of the reference-lists theme (p1-148); the combiner merges this draft with the arrival-and-transit area's ports half (req-1811, req-1812, req-1814) back into inc-173 and keeps that id. mdm/stub-tidy-up-spec.md is the accepted spec (p1-164).",
+        "Change from the existing row: the afternoon ruling makes the stub tidy-up change plants in the same increment (req-1750), so plantsfrontend joins the repos and its captured countries fixtures are recaptured; the reference-lists theme's touches gain plantsfrontend:src/server/app/services/countries and plantsfrontend:src/server/app/services/_capture. Merge order: the stub first, then each frontend that recaptures from it, then the tests repo.",
+        "Combines the regenerated fixture, the blocks filter, serving records whole, the stub's own tests and every recapture: the recaptures can only be observed once the stub serves the new fixture, and building them apart would repeat the same stub-and-capture set-up. inc-175 and the other country list rows depend on this row, because it changes the names and counts their checks assert.",
+        "The ports half of the one stub tidy-up row (ruling-sam-2026-10-09-p1-148). The combiner keeps this row's id and merges back the countries half it already holds (req-1744 to req-1747, req-1750 to req-1752), the insfrontend repo and their criteria: this draft carries only this area's requirements. mdm/stub-tidy-up-spec.md is the accepted spec; where it and mdm/findings.md differ, the spec wins (ruling-sam-2026-10-09-p1-164).",
+        "Combines req-1811 (regenerate the fixture), req-1812 (serve it whole), req-1814 (recapture the animals fixture) and req-1933 (rerun plants' capture and fix its specs): the recaptures can only be observed once the stub serves the new fixture, and building them apart repeats the same stub-and-capture set-up.",
+        "req-1933 is drafted here although areas.json does not yet give it to any area: the area's scope includes the plants arrival pages, and the 9 October afternoon ruling (claim 45, ruling-sam-2026-10-09-pm-p3-019) puts plants' recapture in this same increment, adding plantsfrontend to the row.",
+        "The tests repo's port test data already names ports the real list holds (req-1815, exists). No test may pin a misspelt or duplicated port name (ruling-sam-2026-10-09-p1-171).",
+        "inc-007 (port order) and inc-174 (transit list) depend on this row, because it changes the names and counts their checks assert (ruling-sam-2026-10-09-p1-149).",
+        "req-1933 (plants' capture rerun against the tidied stub) is added here by the combiner: the row's plants criteria already state it."
+      ],
+      "gate": null
+    }
+  ]
+}

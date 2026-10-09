@@ -1,0 +1,631 @@
+{
+  "programme": "design-release-2-1-journey-foundation",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "insfrontend": {
+      "path": "repos/trade-imports-ins-frontend",
+      "github": "DEFRA/trade-imports-ins-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "theme": "journey-foundation",
+  "branch": "feat/EUDPA-691-design-release-2-1-journey-foundation",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 1,
+    "landsAfter": []
+  },
+  "touches": [
+    "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+    "frontend:src/server/app/sets/live-animals/docs",
+    "frontend:fit",
+    "frontend:src/server/app/shared",
+    "frontend:src/client/javascripts/components/accessible-autocomplete.js",
+    "frontend:src/client/javascripts/components/status-announcer.js",
+    "insfrontend:src/server/app/shared",
+    "plantsfrontend:src/server/app/shared",
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/flow",
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/review",
+    "plantsfrontend:src/client/javascripts/components/accessible-autocomplete.js",
+    "tests:flows/animals",
+    "tests:flows/plants",
+    "tests:page-objects/shared/base-page.ts",
+    "tests:tests/animals/e2e/journeys/persistence",
+    "tests:tests/animals/e2e/journeys/promoted-notification.spec.ts",
+    "tests:tests/animals/e2e/journeys/horse-temporary-admission.spec.ts",
+    "tests:tests/animals/e2e/features/cph-scope.spec.ts",
+    "tests:tests/animals/e2e/features/soft-save.spec.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-001",
+      "title": "Opening run follows the Design Release 2.1 step order and ends on the review page",
+      "detail": "A trader starting a new notification is carried through the pages in Design Release 2.1's order: the reason for import is asked straight after what is being imported and before commodity details, the CPH number page is no longer a step after roles and addresses (it is reached only from its row there), roles and addresses goes on to the contact address unless everything is already complete, and the contact address always goes on to the review page, which names anything still outstanding. The tests repo's full journey is rewritten as Design Release 2.1's cattle-by-air journey in the new order, because today's cattle-by-road walk follows the old order and would break.",
+      "acceptanceCriteria": [
+        "In a new notification's opening run, 'Save and continue' on 'What are you importing?' goes to 'Main reason for import', and 'Save and continue' on 'Main reason for import' goes to 'Commodity details'. (prototype:dr2-1-source app/routes.js:1495-1501; trace:prototype-dr2-1 p13-180)",
+        "In the opening run, 'Save and continue' on 'Commodity details' goes to 'Identification details' when a chosen commodity needs animal identifiers, and otherwise to 'Additional details'. (prototype:dr2-1-source app/routes.js:1495-1501; trace:prototype-dr2-1 p13-180)",
+        "In the opening run, 'Save and continue' on 'Roles and addresses' goes to 'Contact address for this consignment', including for a consignment that needs a CPH number; the run never shows the CPH number page. (prototype:dr2-1-source app/routes.js:1495-1534)",
+        "The CPH number page opens only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'. (prototype:dr2-1-source app/routes.js:1495-1534; repo:tests tests/animals/e2e/features/cph-scope.spec.ts:56-64)",
+        "When every section on the overview is already complete, 'Save and continue' on 'Roles and addresses' goes to the overview instead of the contact address page. (prototype:dr2-1-source app/routes.js:1545-1547)",
+        "'Save and continue' on 'Contact address for this consignment' at the end of the opening run goes to the review page even when the notification is incomplete, and the review page names what is outstanding. (prototype:dr2-1-source app/routes.js:1523-1527, 1536-1554; prototype:dr2-1-specs COVERAGE.md:163-164)",
+        "The tests repo walks a cattle-by-air notification from create to 'Import notification submitted' in this order: origin of the import with a region code and an internal reference, 'What are you importing?' with cattle (Bos taurus), 'Main reason for import' (Internal market, Breeding), 'Commodity details' for 2 animals, 'Identification details' with an ear tag and passport for each animal, 'Additional details' with the unweaned question answered, arrival details by air, transporter, documents, 'Roles and addresses' with a CPH number, contact address, review, declaration. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:222-236; trace:prototype-dr2-1 p12-197, p12-198)",
+        "In that walk, every task on the overview reads 'Complete' before the review is opened, and the review shows the origin with its region code, the internal reference, Bos taurus, Breeding, the purpose given, the CPH number and the chosen transporter. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:222-236, p7-204)",
+        "In the high-risk plants frontend, 'Continue' on the consignment contact page, the last step of the opening run, goes to plants' check your answers page even when the notification is incomplete, and that page shows the unfinished notification and names what is outstanding (repo:plantsfrontend repo-plantsfrontend-p2-014, repo-plantsfrontend-p2-016, repo-plantsfrontend-p8-002; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-002, ruling-sam-2026-10-09-pm-p3-014; c-312)",
+        "In the high-risk plants frontend, Continue on check your answers for an incomplete notification shows check your answers again with its errors instead of going to the hub; only the declaration and confirmation still wait for a complete notification, and plants keeps its own step order (repo:plantsfrontend repo-plantsfrontend-p8-041, repo-plantsfrontend-p9-004; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-009)",
+        "The plants rulings ledger records the change as a new decision superseding d-069's landing on the hub, without editing d-069 (repo:plantsfrontend repo-plantsfrontend-p9-008, repo-plantsfrontend-p9-138)"
+      ],
+      "dependsOn": [],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:1495-1554 (step order and next page)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p12-197, p12-198, p13-180 (opening run order)"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:222-236 (cattle by air); COVERAGE.md:163-164; p7-204"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "flow/flow.js sections; flow/run.js nextRunTarget; docs/journey-flow-and-gates.md:54-57; fit/journey-smoke.fit.spec.js:31-79 (p1-096, p1-098, p1-100, p1-106, p1-113, p1-165, p1-176, p2-124)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "flows/animals/journey.ts:146-224, 357-368; tests/animals/e2e/features/cph-scope.spec.ts:56-78 (p1-166, p2-043, p2-135, p2-138)"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p1-055, p1-061, p1-094 (today's order)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p14-108, p14-118 (today's order)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p2-014, p2-016, p8-002, p8-041, p9-004, p9-008, p9-138"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-002, p3-009, p3-014"
+        }
+      ],
+      "requirements": [
+        "req-1610",
+        "req-1611",
+        "req-1612",
+        "req-1614",
+        "req-1655",
+        "req-1988"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines four thin slices that all change the opening run's step list and next-page rule (req-1610 reason before commodity details, c-202; req-1611 no CPH step, c-203; req-1612 complete-run skip; req-1614 run always ends on review, c-205) with req-1655, the tests repo's whole-journey proof, because the reorder breaks today's cattle-by-road walk and the same journey helper has to be rewritten in the same change.",
+        "The frontend's rule that a run with no open later step ends on the overview (repo-frontend-p1-113) still holds. The frontend's journey-flow documentation is updated to the new order in the same change.",
+        "Re-distil: unchanged in substance from inc-001.",
+        "req-1988 (plants' opening run ends on its check answers page) is added here by the combiner: ruling:sam-2026-10-09-pm claim 45 makes inc-001 change plants in the same increment. Plants' check answers page is the overview-and-review theme's code, which lands after this theme; the plants run change here is the flow's end, and the page's rendering of an unfinished notification follows that theme's rows."
+      ],
+      "gate": "Look at the opening run end to end on a new notification: reason for import before commodity details, no CPH step, contact address then review even when incomplete. Every later row's end-to-end walk, in every area, follows this order."
+    },
+    {
+      "id": "inc-002",
+      "title": "A page opened from an overview task returns to the overview when saved",
+      "detail": "Design Release 2.1 sends a trader who opens a page from its task on the overview back to the overview on 'Save and continue', rather than on through the rest of the page's flow section. The service tells such a page by its own journey state, not by a marker in the page address: any save made outside the opening run and outside a change from the review page returns to the overview. Every page the journey chains to today has its own row on the overview, so nothing becomes unreachable. Design Release 2.1 sends a trader who opens a page from its task on the live-animals Overview back to the Overview on 'Save and continue', rather than on through the rest of the section. Today the main import reason runs on to Additional details, Arrival details runs on to Transit countries and Transport details, and the consignment addresses page runs on to the CPH number page. Only the live flow's own fallback changes: no marker is added to the row links or the forms (9 October ruling, c-243).",
+      "acceptanceCriteria": [
+        "Opened from its overview task, 'What are you importing?' goes to the overview on 'Save and continue', not to 'Commodity details'. (prototype:dr2-1-source app/routes.js:1588-1602; ruling:sam-2026-10-09 p1-196 to p1-198)",
+        "Opened from its overview task, 'Main reason for import' goes to the overview on 'Save and continue', not to 'Additional details'. (prototype:dr2-1-source app/routes.js:1588-1602; trace:animals-fit p1-058 to p1-063)",
+        "Opened from its overview task, 'Arrival details' goes to the overview on 'Save and continue', not to 'Transit countries' or the transporter page. (prototype:dr2-1-source app/routes.js:1588-1602; trace:e2e p14-091)",
+        "Opened from its overview task, 'Roles and addresses' goes to the overview on 'Save and continue', not to the CPH number page, including for a consignment that needs a CPH number. (prototype:dr2-1-source app/routes.js:1588-1602; ruling:sam-2026-10-09-pm p3-015)",
+        "'Commodity details', 'Additional details', 'Transit countries' and the transporter page each open from their own overview row and return to the overview on 'Save and continue'. (prototype:dr2-1-source app/routes.js:1588-1602)",
+        "'Upload documents' opened from the overview keeps its add-another round trip on the page, then returns to the overview on 'Save and continue'. (prototype:dr2-1-source app/routes.js:1588-1602; repo:tests p2-019-m1)",
+        "A page opened from its overview task has the same address as when it is reached in the opening run, with no from=hub marker added, and still returns to the overview on 'Save and continue'. (ruling:sam-2026-10-09 p1-198)",
+        "A new notification's opening run, started from the dashboard rather than the overview, still carries the trader from page to page in the step order without stopping at the overview. (repo:frontend fit/journey-smoke.fit.spec.js:31-79; trace:e2e p14-108)",
+        "Opened from its Overview task, the main import reason page goes to the Overview on 'Save and continue', not on to 'Additional details' (prototype:dr2-1-source app/routes.js:1588-1602; trace:animals-fit p4-030; ruling:sam-2026-10-09 claim 196)",
+        "Opened from its Overview task, 'Arrival details' goes to the Overview on 'Save and continue', not on to 'Transit countries' or 'Transport details' (prototype:dr2-1-source app/routes.js:1588-1602; trace:animals-fit p4-046; trace:e2e p13-041)",
+        "Opened from its Overview task, the consignment addresses page goes to the Overview on 'Save and continue', not on to the CPH number page, including for a consignment that needs a CPH number (prototype:dr2-1-source app/routes.js:1588-1602; trace:e2e p13-041; ruling:sam-2026-10-09 claim 197)",
+        "A page opened from its Overview task has the same address as when it is reached in the opening run, with nothing added to the link or the form to mark that it came from the Overview, and still returns to the Overview on 'Save and continue' (ruling:sam-2026-10-09 claim 198; trace:e2e p13-041-m1)",
+        "After returning, the task just saved reads 'Complete' on the Overview when its answers pass their page's rules (repo:frontend p4-030; prototype:dr2-1-specs hub task return)",
+        "In the high-risk plants frontend, a page opened from a task row on the Overview returns to the Overview on 'Save and continue' once that row's own pages are done, with no marker on the row links: arrival details opened from the Overview returns there instead of going on to the place of destination (prototype:dr2-1-specs prototype-dr2-1-specs-p4-080; repo:plantsfrontend repo-plantsfrontend-p2-017, repo-plantsfrontend-p5-092; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-015; c-243)",
+        "In the high-risk plants frontend, a task row made of more than one page still moves through its own pages first (commodity type to the commodities list and details, arrival status to arrival details, consignor to identification numbers) before returning to the Overview (repo:plantsfrontend repo-plantsfrontend-p2-026, repo-plantsfrontend-p2-029; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-015)"
+      ],
+      "dependsOn": [
+        "inc-001"
+      ],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:1588-1602 (continue target after a section page); p1-071"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "p1-196 to p1-198 (return to the overview; no from=hub marker)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p3-015"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "fit/journey-smoke.fit.spec.js:81-89; docs/journey-flow-and-gates.md:105-111 (p1-167, p2-133)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "p1-008 to p1-015, p2-019-m1, p2-024, p2-063, p2-066-m1, p2-136"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p1-058 to p1-063 (today's section chaining)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p14-091 (today's arrival run-on)"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:1588-1602"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p4-030, p4-046"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p13-041, p13-041-m1"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "claims 196 to 198 (c-243)"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "hub task return"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "flow/run.js; features/hub/controller.js:90"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p2-017, p2-026, p2-029, p5-092"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-015"
+        }
+      ],
+      "requirements": [
+        "req-1615",
+        "req-808",
+        "req-1934"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the journey-flow, notification-hub areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
+        "One slice (req-1615, c-204, c-276): only the live flow's fallback changes, with no marker on the links or forms. Depends on the opening-run step-order row (same flow code, and the tests that drive the overview follow the new order). Existing tests that rely on chaining (animal-identifiers-cap, reason-purpose-scope, the journey helper's section completion) change with it.",
+        "inc-002 also holds req-808 (notification-hub area), the same fallback change; the combiner should keep that merge and inc-002's id, with req-808's 'Complete after returning' criterion.",
+        "existingRow inc-002 already holds req-808 merged with req-1615 (the journey-flow area's same fallback change, which the ruling names). Drafted here so this area covers req-808; the combiner keeps inc-002's id, theme and text and merges these criteria into it, removing repeats.",
+        "c-243 (ruled): the return is built by the live flow's fallback, with no from=hub marker on the links or forms; the overruled marker claims are not named here.",
+        "ruling:sam-2026-10-09-pm claim p3-015 says inc-002 also changes the plants frontend (kit.nextTarget's fallback returns to the overview, plants' multi-page rows still move within their row). That half is not in req-808's statement; the combiner should add plantsfrontend to inc-002's repos with that half if req-1615 or another requirement carries it.",
+        "req-1934 (plants' overview return) is added here by the combiner, under ruling:sam-2026-10-09-pm claim 45."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-003",
+      "title": "'Save and return to overview' saves without the page's required-answer checks",
+      "detail": "Design Release 2.1 lets a trader leave most pages for the overview without finishing them, so they can come back later. The backend already stores missing or empty answers. An answer that breaks its own format rule is still refused, because the service cannot store a value that does not fit its field, and consignment details, the CPH number page and the contact address page keep checking their answers before saving.",
+      "acceptanceCriteria": [
+        "On origin of the import, 'What are you importing?', 'Main reason for import', 'Identification details', 'Additional details', 'Arrival details', 'Transit countries', the transporter page, 'Upload documents' and 'Roles and addresses', pressing 'Save and return to overview' with a required answer missing shows no error, saves what was entered and goes to the overview. (prototype:dr2-1-source app/routes.js:1560-1566, p1-068)",
+        "After such a save the page's overview task does not read 'Complete', and reopening the page shows the answers that were entered. (prototype:dr2-1-specs COVERAGE.md:163-164)",
+        "An answer that fails its own format rule, such as an impossible arrival date or a malformed region code, is refused on 'Save and return to overview' with that answer's error, and the page is not saved. (ruling:sam-2026-10-07 claim 10)",
+        "On 'Commodity details' and 'Contact address for this consignment', 'Save and return to overview' with a required answer missing shows the page's errors and saves nothing. (prototype:dr2-1-specs COVERAGE.md:162)",
+        "In the high-risk plants frontend, 'Save and return to overview' saves what was entered and goes to the Overview without refusing the page for a missing required answer, such as a blank arrival status, date, time or place of landing (repo:plantsfrontend repo-plantsfrontend-p5-060, repo-plantsfrontend-p9-117; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-016; c-313)",
+        "In the high-risk plants frontend, 'Save and return to overview' still refuses an answer that fails its own format rule (a date that is not real, a future date once arrived, a time not on the 24-hour clock, a port not on the list or a quantity that is not a whole number) and shows its error, and 'Continue' keeps today's checks (repo:plantsfrontend repo-plantsfrontend-p5-094; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-016; c-313)"
+      ],
+      "dependsOn": [],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:1560-1566 (hub and review are soft-save actions); p1-068"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "COVERAGE.md:162-164 (hard stops)"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "claim 10 (validation and persistence override the prototype)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "src/server/app/shared/save-actions.njk; src/server/app/shared/kit.js:96-97 (p1-074)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p13-113"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p5-060, p5-094, p9-117"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-016"
+        }
+      ],
+      "requirements": [
+        "req-1625",
+        "req-1935"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "One slice (req-1625, c-211), kept apart because it changes the exit rule shared by every page. Other areas carry page-level versions of the same rule; the combiner merges them here where they repeat the same set-up.",
+        "The CPH number page outside amend ends with 'Save and continue' alone (DR1 rule (b), c-208), so it has no 'Save and return to overview' to test. No backend change is expected. The button keeps the real service's exit=hub field (c-275).",
+        "Re-distil: unchanged in substance from inc-003.",
+        "req-1935 (plants' lenient 'Save and return to overview') is added here by the combiner, under ruling:sam-2026-10-09-pm claim 45. It overlaps EUDPA-667's mandatory-to-submit work."
+      ],
+      "gate": "Look at one soft-save page and one format-refused answer: the pattern for leaving a page unfinished is set here, and other areas' per-page 'Save and return to overview' rows follow it."
+    },
+    {
+      "id": "inc-004",
+      "title": "During an amendment, pages end with Save and return, Save and continue and Save and return to overview, and Continue on the amend review is held while anything is incomplete, in animals and plants",
+      "detail": "While amending, Design Release 2.1 lets the trader save a page and go straight back to the amend review, carry on to the next page, or return to the overview, and it quietly holds Continue on the amend review until every answer is complete and valid. Today a Change link opens a question in change mode and saving always returns to the notification view, and an amendment reaches the declaration only once every task row is fulfilled. After this change each overview-linked page ends with 'Save and return' (to the amend review), 'Save and continue' and a link-styled 'Save and return to overview' while amending; the party pickers, the CPH number page and the permanent address page show the first two only (c-210); question pages keep their usual Back links; and Continue on an incomplete or invalid amend review leaves the trader there with no error summary (c-201). The buttons post the real service's own fields: exit=hub and ?change=1 stay, with no new action field (c-267). The 9 October afternoon ruling makes the same change in the high-risk plants frontend in the same increment: its save actions get the same three amend controls, its pickers the same two buttons, and its amend review holds Continue without an error summary.",
+      "acceptanceCriteria": [
+        "While a notification is being amended, each page the overview links to ends with a primary 'Save and return' button, a secondary 'Save and continue' button and a link-styled 'Save and return to overview' button, with no cancel link (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-071, trace-prototype-dr2-1-p14-072; prototype:dr2-1-specs prototype-dr2-1-specs-p5-114, prototype-dr2-1-specs-p5-116)",
+        "'Save and return' saves the page and goes to the amend review, which shows the changed answer; 'Save and continue' saves and goes to the next page; 'Save and return to overview' saves and goes to the overview hub (prototype:dr2-1-specs prototype-dr2-1-specs-p5-114, prototype-dr2-1-specs-p5-116, prototype-dr2-1-specs-p5-119; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-071, trace-prototype-dr2-1-p14-072)",
+        "A question page opened from a Change link on the amend review ends with the same three controls, and 'Save and return' brings the trader back to the amend review showing the changed answer (prototype:dr2-1-specs prototype-dr2-1-specs-p5-119; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-072)",
+        "The three amend controls submit the page's existing form fields: 'Save and return to overview' still sends exit=hub and a page opened from a Change link still carries ?change=1; no new action field is sent (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-089; c-267)",
+        "While amending, the party pickers, the CPH number page and the permanent address page end with 'Save and return' (primary, to the amend review) and 'Save and continue' (secondary) only, without 'Save and return to overview'; outside an amendment they keep their single primary button (c-210; document:dr1-parity-notes document-dr1-parity-notes-p1-055)",
+        "During an amendment, question pages keep the journey's usual Back links (the origin of the import back to the notification type page, arrival details back to the overview hub), never a Back link to the amend review (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-073)",
+        "Continue on the amend review while an answer is incomplete or invalid (for example an arrival date changed to more than 6 months ahead) leaves the trader on the amend review with no error summary and no error message, and the notification stays being amended (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-074; prototype:dr2-1-specs prototype-dr2-1-specs-p5-117, prototype-dr2-1-specs-p5-118; c-201)",
+        "In the high-risk plants frontend, while a plants notification is being amended, each overview-linked plants page ends with the same 'Save and return', 'Save and continue' and link-styled 'Save and return to overview' controls going to the same places, and the plants party pickers (consignor, place of destination and contact) end with 'Save and return' and 'Save and continue' only (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-017)",
+        "In the high-risk plants frontend, Continue on an incomplete plants amend review leaves the trader on that review with no error summary and no error message (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-017; c-201)"
+      ],
+      "dependsOn": [],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p1-074"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p14-071 to p14-074"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-114, p5-116 to p5-119"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "ref": "document-dr1-parity-notes-p1-055"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-089"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-017"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-079, p3-085"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p14-047"
+        }
+      ],
+      "requirements": [
+        "req-1403",
+        "req-1404",
+        "req-1406",
+        "req-2068"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Pass 2 combines the page endings (req-1403), the Back links (req-1404) and the held Continue (req-1406): all three are how an amendment moves between its pages, built and reviewed through the same amend walk. Re-distil: plants joins in the same increment (ruling:sam-2026-10-09-pm claim 45, p3-017); no plants twin row. Plants keeps its own pages and step order. The overview-and-review row inc-110 must not carry a criterion that an incomplete amendment's Continue shows an error summary (c-201). The tests repo's change-from-cya and amend-resubmit specs move from the ?change=1 return to these controls.",
+        "req-2068 (plants' amend page endings and amend review) is added here by the combiner: the row's plants criteria already state it."
+      ],
+      "gate": "Look at the amend endings on one overview-linked page and on the CPH number page, in animals and in plants, and at the held Continue: every page area's own rows keep these endings while amending."
+    },
+    {
+      "id": "inc-005",
+      "title": "End-to-end proof: horse by sea under temporary admission",
+      "detail": "Design Release 2.1 proves a horse-by-sea journey end to end. The real journey already offers horses and the temporary admission reason, but no end-to-end test walks them.",
+      "acceptanceCriteria": [
+        "The tests repo walks a horse-by-sea notification from create to 'Import notification submitted': origin Republic of Ireland, one horse (Equus caballus), 'Temporary admission horses' with an exit date and a port of exit, microchip, passport and horse name, 'Registered equine animal', arrival by sea with a transport identification, and a transporter. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:277-290, p4-071)",
+        "In that walk, every task on the overview reads 'Complete' before the review is opened. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:277-290)",
+        "The review shows 'Temporary admission horses', the port of exit, 'Registered equine animal' and the chosen transporter. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:277-290)"
+      ],
+      "dependsOn": [
+        "inc-001"
+      ],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:277-290 (horse by sea); p4-071"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "services/commodities/stub.js; obligations/sections/import-reason.js (p2-026, p2-086, p2-100)"
+        }
+      ],
+      "requirements": [
+        "req-1658"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "One slice (req-1658). Tests only, because the frontend already supports every answer this walk gives (repo-frontend-p2-026, p2-086, p2-100), so its acceptance is observable as soon as it lands. Depends on the opening-run step-order row, whose rewritten journey helper this walk uses.",
+        "Re-distil: unchanged from inc-005."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-122",
+      "title": "An amendment shows an 'Amend' status bar with Cancel amend on the overview, the review and every question page, in every set that amends",
+      "detail": "While a notification is amended, Design Release 2.1 shows an 'Amend' status bar with the reference and a 'Cancel amend' control above the caption and heading of the review and every question page. Today the tag reads 'Amending' and only the review page offers a 'Cancel amendment' link, under its heading. The 9 October afternoon ruling makes this the one change to the shared status strip itself (claim 40): it adds Cancel amend for status AMEND and changes 'Amending' to 'Amend' in every set at once, live animals, germinal products and plants. The bar's Cancel amend goes to the cancel-amendment confirmation page. While a submitted notification is being amended, Design Release 2.1's shared status line shows a 'Cancel amend' control beside the 'Amend' tag and reference. It goes to the same cancel-amendment confirmation page the review page uses, a page and never a pop-up (9 October afternoon ruling). It comes from the shared status strip, the one change the ruling allows to that strip, so every set's Overview shows it: live animals, germinal products once that set copies the Overview, and high-risk plants, whose own copy of the shared strip takes the same change in the same increment.",
+      "acceptanceCriteria": [
+        "While a notification is being amended, its status tag on the amend review and on its question pages reads 'Amend', not 'Amending' (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063; prototype:dr2-1-specs prototype-dr2-1-specs-p5-111)",
+        "During an amendment the review page and every question page show, above the caption and heading, a status bar with the 'Amend' tag, the notification's reference and a link-styled 'Cancel amend' control (prototype:dr2-1-source prototype-dr2-1-source-p1-026, prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-063, trace-prototype-dr2-1-p14-070; prototype:dr2-1-specs prototype-dr2-1-specs-p5-112; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p2-067)",
+        "'Cancel amend' in a question page's status bar goes to the cancel-amendment confirmation page; its 'Go back' leaves the amendment in progress, and 'Yes, cancel amendment' restores the submitted answers and lands on the read-only Submitted view (prototype:dr2-1-source prototype-dr2-1-source-p12-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-086, trace-prototype-dr2-1-p14-088; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-086)",
+        "A draft notification's pages show the 'Draft' tag and reference in the strip with no 'Cancel amend' (repo:frontend repo-frontend-p3-094-m1)",
+        "The status bar's 'Cancel amend' works with JavaScript turned off (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-086; c-190)",
+        "In the high-risk plants frontend, a plants notification being amended shows the same 'Amend' tag, reference and 'Cancel amend' control above the caption and heading of its review and question pages, going to plants' cancel-amendment page (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p3-045)",
+        "With the service in Welsh, the 'Amend' tag and 'Cancel amend' show Welsh text, in animals and in plants (repo:frontend repo-frontend-p3-089; repo:plantsfrontend repo-plantsfrontend-p3-114)",
+        "While a submitted live-animals notification is being amended, the Overview's status line shows the 'Amend' tag, the reference and a link-styled 'Cancel amend' control (prototype:dr2-1-source app/views/partials/design-release-2.1/notification-status.html:10-14; ruling:sam-2026-10-09-pm p2-066, p2-067)",
+        "'Cancel amend' on the Overview opens the cancel-amendment confirmation page the review page uses, as a page and not a pop-up (ruling:sam-2026-10-09-pm p1-083, p1-086; c-127)",
+        "A draft notification's Overview shows the 'Draft' tag and reference and no 'Cancel amend' (repo:frontend p4-004; trace:animals-fit p4-003)",
+        "While a submitted high-risk plants notification is being amended, its Overview's status line shows the 'Amend' tag, the reference and 'Cancel amend', which opens plants' own cancel-amendment confirmation page (ruling:sam-2026-10-09-pm p2-066, p3-045; repo:plantsfrontend p2-107)",
+        "A draft high-risk plants notification's Overview shows its draft tag and reference and no 'Cancel amend' (repo:plantsfrontend p2-107)",
+        "With the service in Welsh, 'Cancel amend' on the Overview shows Welsh text (repo:frontend p4-053)",
+        "In the germinal products set too, an amended notification's strip tag reads 'Amend', changed once in the shared strip, and the end-to-end checks that read 'Amending' read 'Amend' (repo:tests repo-tests-p6-116; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-066, ruling-sam-2026-10-09-pm-p2-068; c-311)"
+      ],
+      "dependsOn": [],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p1-026, p12-056"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p14-063, p14-070, p14-086, p14-088"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-111, p5-112"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-086, p2-066, p2-067, p3-045"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p3-089, p3-094-m1"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p3-074"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p3-029, p3-029-m1, p3-032"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p14-030, p14-031, p14-055"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/partials/design-release-2.1/notification-status.html:10-14"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p1-083, p1-086, p2-062, p2-066 to p2-068, p3-045"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "p4-004 (features/hub/controller.js:168; shared/layout.njk; shared/kit.js)"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "p2-107 (shared/kit.js journeyStrip)"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p4-003"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p6-116"
+        }
+      ],
+      "requirements": [
+        "req-1397",
+        "req-1398",
+        "req-782",
+        "req-2061"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the manage-notifications, notification-hub areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
+        "Re-distil under the 9 October afternoon ruling: the bar's Cancel amend goes to the cancel confirmation page, not a dialog (claim 19, p1-086). Claim 40 makes this row the one change to the shared strip itself; p3-045 says plants picks it up from that change, but plants keeps its own copy of the shared layout and kit, so the same strip change is made there in this increment, with no other plants work. Pass 2 combines the tag copy (req-1397) and the bar (req-1398): the bar carries the tag. The existing row also carries req-782 (the hub's status line, notification-hub area) and its hub criteria; the combiner keeps req-782 and those criteria here as before. Depends on the cancel-amendment row, whose 'Go back' and wording the bar leads to. The declaration carries no status bar (req-917). The tests repo's reference-strip and cancel-amend specs move from 'Amending' to 'Amend' and find Cancel amend in the bar.",
+        "existingRow inc-122 already holds req-782 with the manage-notifications area's Amend bar on every page (req-1397, req-1398). Drafted here so this area covers req-782; the combiner keeps inc-122's id and theme and merges these criteria in.",
+        "c-127 (ruled): the control shows on the Overview and goes to the cancel-amendment confirmation page. inc-122 today carries a criterion that 'Cancel amend' on a question page opens a dialog over the page; ruling:sam-2026-10-09-pm p1-083 and p1-088 keep the confirmation a page and park the pop-up in its own waiting-on-design increment, so the combiner should reword that criterion to the confirmation page.",
+        "Decision: req-782 says the plants Overview gets the bar 'with no plants-specific work'. The plants frontend is a separate repo with its own copy of the shared strip (its shared/kit.js has the same AMEND strip entry), so the animals change cannot reach it on its own. I read the requirement as: plants takes the same shared-strip change in its own shared code in this increment (ruling p3-001, p3-002), and nothing on plants' Overview page itself. So plantsfrontend joins this row's repos (ruling p3-007 adds it to the programme); the combiner adds plantsfrontend to the envelope's repos if it is not there.",
+        "The germinal Overview inherits the bar from the shared strip once inc-099 copies the Overview; its own criterion is not written here because a germinal amendment needs the germinal set's submit and amend rows.",
+        "Theme moved to journey-foundation: this row changes the shared layout, status strip or page titles of every frontend, which the foundation theme owns so the shared change is made once, in an early wave (ruling:sam-2026-10-09-pm claim 40 for the Amend bar, claim 53 for the titles).",
+        "Its dependency on the cancel-amendment row (inc-121) is dropped: the bar's 'Cancel amend' leads to today's cancel-amendment page, which already exists, and inc-121 rewords that page later. Keeping it would make the foundation theme wait on manage-notifications, which itself waits on the foundation. req-2061 (the 'Amend' tag, once, in the shared strip of every set) is added here by the combiner."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-127",
+      "title": "Page titles on the INS front door and in plants follow the GOV.UK title pattern, including the INS home's 'Dashboard' title",
+      "detail": "Design Release 2.1 uses one browser title pattern on every page. The INS frontend's titles change from '<page title> | Import notification service' to '<page title> - Import notification service - GOV.UK', as the animals frontend's already read. The pattern lives in the INS frontend's shared layout, so one change gives every INS page the new title at once. Sam's 9 October afternoon ruling says this is not the blocked dashboard summary information and goes ahead now, on today's pages. Design Release 2.1 titles the home 'Dashboard - Import notification service - GOV.UK'. Today the INS home's title reads 'Dashboard | Import notification service'. The page's own title stays 'Dashboard'; only the shared title pattern changes, which the layout area's INS title-pattern row already makes for every INS page. This is a title, not summary information, so Sam's 9 October rulings leave it to go ahead on today's home.",
+      "acceptanceCriteria": [
+        "On the INS frontend, every page's browser title reads the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', such as 'Address book - Import notification service - GOV.UK' (repo:insfrontend repo-insfrontend-p4-001; prototype:dr2-1-source prototype-dr2-1-source-p1-086; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064; conflicts:c-146)",
+        "On an INS frontend page shown with validation errors, the browser title reads 'Error: ' followed by the same pattern, such as 'Error: Add address details - Import notification service - GOV.UK' (repo:insfrontend repo-insfrontend-p4-001)",
+        "The INS frontend's error pages follow the same pattern, such as 'Page not found - Import notification service - GOV.UK' (trace:e2e trace-e2e-p15-004; repo:insfrontend repo-insfrontend-p4-001)",
+        "No INS frontend page's browser title contains ' | Import notification service' any more (trace:e2e trace-e2e-p15-004; repo:insfrontend repo-insfrontend-p4-001)",
+        "Opening the INS front door's home as a signed-in trader, the browser title reads 'Dashboard - Import notification service - GOV.UK' (prototype:dr2-1-specs e2e/dashboard.fit.spec.js:14; trace:ins-fit trace-ins-fit-p4-003; conflicts:c-146)",
+        "The home's browser title no longer contains ' | Import notification service' (trace:ins-fit trace-ins-fit-p4-003; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064)",
+        "On the high-risk plants frontend, every page's browser title reads the page's title, then 'Import notification service', then 'GOV.UK', joined by ' - ', in place of '<page title> | Import notification service' (repo:plantsfrontend repo-plantsfrontend-p1-001; repo:frontend repo-frontend-p1-001; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-005)"
+      ],
+      "dependsOn": [],
+      "theme": "journey-foundation",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "plantsfrontend",
+        "insfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "repo:insfrontend",
+          "ref": "repo-insfrontend-p4-001 (src/server/app/shared/layout.njk:18)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p15-004"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p1-086"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-064"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/dashboard.fit.spec.js:14"
+        },
+        {
+          "source": "trace:ins-fit",
+          "ref": "trace-ins-fit-p4-003"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p1-001"
+        }
+      ],
+      "requirements": [
+        "req-1686",
+        "req-953",
+        "req-2088"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the drafts of the layout-and-sign-in, dashboard-home areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
+        "One thin slice: req-1686 is this area's only buildable change that stands on its own; every other adopted requirement here is already met (exists) and goes to the report. The pattern is one line of the INS frontend's shared layout, so the INS dashboard and address book rows assert it on their own pages rather than change it.",
+        "c-146 settles the home's own title as 'Dashboard - Import notification service - GOV.UK', which this pattern produces from today's 'Dashboard' page title; the ruling (claim 53) calls inc-127 the one ready row left in the ins-dashboard theme. The home's title (req-953) sits in inc-128 today, whose other requirements are blocked; the combiner may move req-953 here so the home's title lands now with the pattern.",
+        "The 'Error: ' prefix is kept from today's layout. The tests repo has no INS title assertion today, so the end-to-end proof of the pattern is new.",
+        "Combiner: merge into inc-127 ('INS page titles follow the GOV.UK title pattern', req-1686, the layout area's row). req-953 was in inc-128, which is now blocked as summary information; its title is not summary information (ruling:sam-2026-10-09-pm p3-064 names inc-127 as the ready row in this theme), and inc-127's shared-layout change produces exactly this title, so building it apart would repeat the same set-up.",
+        "The home keeps its page title 'Dashboard' from today's copy; nothing else on the home changes in this row.",
+        "Theme moved to journey-foundation: this row changes the shared layout, status strip or page titles of every frontend, which the foundation theme owns so the shared change is made once, in an early wave (ruling:sam-2026-10-09-pm claim 40 for the Amend bar, claim 53 for the titles).",
+        "Combines the INS titles (req-1686), the INS home's own title (req-953, moved here from the blocked inc-128 because a title is not summary information) and plants' titles (req-2088), which the ruling builds in the same increment: one title pattern in each frontend's shared layout."
+      ],
+      "gate": null
+    }
+  ]
+}

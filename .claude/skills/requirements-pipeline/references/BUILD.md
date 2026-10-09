@@ -218,10 +218,10 @@ with commits of its own is left as it is. A failure names its step and its exact
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 39 agents on Claude and 45 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 41 agents on Claude and 47 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
-   increments on Claude and 22 on Codex.
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 24
+   increments on Claude and 21 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
    one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
@@ -434,9 +434,19 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, stopped}`: one entry per increment it attempted,
-each with its `outcome`, and one `stopped` saying which condition ended the run.
-Do not trust that report on its own.
+The run returns `{increments, specChecks, stopped}`: one entry per increment it attempted,
+each with its `outcome`, one entry per theme whose spec it checked, and one `stopped` saying
+which condition ended the run. Do not trust that report on its own.
+
+**The Behaviour Spec.** Every row keeps `openspec/` current, whatever its repos: its plan's
+section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
+Step 5 where the row is routed there), and the land stage commits them with the rest. A row that
+changes nothing the spec records reports `Spec sync: none — <reason>`, which the consistency
+reviewer checks. Once a theme's last row lands, the run lints the spec and lists unproven
+scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
+its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
+by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
+[`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -549,6 +559,7 @@ handover prompt.
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
 | `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
 | `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
+| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves, or a prefix a row reported writing that does not exist. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
 | `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
@@ -704,7 +715,7 @@ three.
 A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
 reviewers read them against HEAD, and the result lists them in `leftUncommitted`. **Commit them yourself after the
-run**, then push the workspace. Give such a row `gatePhases: []`, because nothing in the backlog repos changes.
+run**, then push the workspace. `openspec/` edits are not in that list: the land stage has already committed them. Give such a row `gatePhases: []`, because nothing in the backlog repos changes.
 
 ### Building the args
 

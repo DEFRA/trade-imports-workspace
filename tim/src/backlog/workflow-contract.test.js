@@ -177,20 +177,38 @@ const ACQUIRE_LABEL = 'run lease:acquire'
 const RELEASE_LABEL = 'run lease:release'
 const isRunLease = (label) => /^run lease:/.test(label ?? '')
 
-const answeringRunLease = (answers, leaseAnswers = {}) => {
+// After every landing the loop reads the row's theme, and once a theme has no
+// row left to build it checks the spec under the prefixes the theme touched.
+// Those agents are answered here too — by default a row in no theme — so a
+// test's answers list stays the stages it is about. A test about the theme
+// check passes its own answers for them, keyed by label.
+const NO_THEME = {
+  exitCode: 0,
+  stdout: '{"theme":null,"rows":0,"todo":0,"built":[],"otherRepos":[]}'
+}
+const isThemeCheck = (label) => / theme$|^spec check:/.test(label ?? '')
+const themeAnswer = (themeAnswers, label) => {
+  if (label in themeAnswers) return themeAnswers[label]
+  return / theme$/.test(label) ? NO_THEME : null
+}
+
+const answeringRunLease = (answers, leaseAnswers = {}, themeAnswers = {}) => {
   const leaseAnswer = (label) =>
     label === ACQUIRE_LABEL
       ? (leaseAnswers.acquire ?? LEASE_ACQUIRED)
       : (leaseAnswers.release ?? LEASE_RELEASED)
+  const answerOwnStage = (label) =>
+    isRunLease(label) ? leaseAnswer(label) : themeAnswer(themeAnswers, label)
+  const isOwnStage = (label) => isRunLease(label) || isThemeCheck(label)
   if (typeof answers === 'function') {
     return (prompt, options) =>
-      isRunLease(options.label)
-        ? leaseAnswer(options.label)
+      isOwnStage(options.label)
+        ? answerOwnStage(options.label)
         : answers(prompt, options)
   }
   let next = 0
   return (prompt, options) => {
-    if (isRunLease(options.label)) return leaseAnswer(options.label)
+    if (isOwnStage(options.label)) return answerOwnStage(options.label)
     const answer = next < answers.length ? answers[next] : null
     next += 1
     return answer
@@ -202,10 +220,10 @@ const stageLabels = (run) =>
     .map((entry) => entry.options.label)
     .filter((label) => !isRunLease(label))
 
-const runLoop = (path, { answers = [], lease, ...options } = {}) =>
+const runLoop = (path, { answers = [], lease, themes, ...options } = {}) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease)
+    answers: answeringRunLease(answers, lease, themes)
   })
 
 // What `tim build start --json` prints, as the start agent copies it.
@@ -682,6 +700,7 @@ describe('increment-build-loop', () => {
           decisions: ['Filter in the backend query, not the frontend.']
         }
       ],
+      specChecks: [],
       stopped: {
         reason: 'no-buildable',
         detail: 'the increments list is built out'
@@ -818,6 +837,7 @@ describe('increment-build-loop', () => {
               'EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
           }
         ],
+        specChecks: [],
         stopped: {
           reason: 'ticket-failed',
           detail:
@@ -1061,27 +1081,33 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
           .filter((label) => !isRunLease(label))
 
+      // Review to fix: one confirmed finding, fixed, with a fixer that reports
+      // no Spec sync line of its own.
+      const FIX_STAGE_ANSWERS = [
+        NO_FINDINGS,
+        { findings: [FINDING] },
+        NO_FINDINGS,
+        { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+        {
+          decisions: [
+            { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
+          ],
+          fixNow: ['Save the origin in src/a.js.'],
+          summary: 'one fix'
+        },
+        {
+          ok: true,
+          summary: 'Saved the origin.',
+          notes: 'FIT went green once the port-holding test server exited.'
+        }
+      ]
+
       const runThroughFixToLadder = () =>
         runFrom(
           BASELINE_ANSWER,
           PLAN_ANSWER,
           implementAnswer(['frontend:src/a.js']),
-          NO_FINDINGS,
-          { findings: [FINDING] },
-          NO_FINDINGS,
-          { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
-          {
-            decisions: [
-              { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-            ],
-            fixNow: ['Save the origin in src/a.js.'],
-            summary: 'one fix'
-          },
-          {
-            ok: true,
-            summary: 'Saved the origin.',
-            notes: 'FIT went green once the port-holding test server exited.'
-          }
+          ...FIX_STAGE_ANSWERS
         )
 
       const ladderPrompt = (run) =>
@@ -1284,6 +1310,192 @@ describe('increment-build-loop', () => {
         expect(promptOf(run, 'inc-900 plan')).toContain(
           "The integration proof is still the gate's E2E phase"
         )
+      })
+
+      describe('keeping the Behaviour Spec current', () => {
+        const SPEC_SYNC_NOTE =
+          'Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+
+        const runWithImplementNotes = (notes) =>
+          runFrom(BASELINE_ANSWER, PLAN_ANSWER, {
+            ...implementAnswer(['frontend:src/a.js']),
+            notes
+          })
+
+        test('gives every plan a spec sync section, naming the prefix by repo and set', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect({
+            section: prompt.includes(
+              '8. Spec sync — every row has one, whatever its repos.'
+            ),
+            germinal: prompt.includes(
+              'under `sets/germinal-products`\n  → `germinal-products/`. They are sibling sets'
+            ),
+            insRepos: prompt.includes(
+              '`trade-imports-ins-frontend`, `trade-imports-ins-backend` and `trade-imports-address-book` → `ins/`.'
+            ),
+            asksForPrefixes: prompt.includes(
+              'specPrefixes (the prefixes section 8 writes under, [] for none)'
+            )
+          }).toEqual({
+            section: true,
+            germinal: true,
+            insRepos: true,
+            asksForPrefixes: true
+          })
+        })
+
+        test('tells the planner which spec namespace each frontend-change set writes', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            '       - frontend (`repos/trade-imports-animals-frontend`): `sets/live-animals` → spec namespace `live-animals/`, `sets/germinal-products` → spec namespace `germinal-products/`'
+          )
+        })
+
+        test('says precisely which wording, content and layout changes the spec records', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            "So a WORDING change is spec'd wherever a title, a Purpose, a requirement or a scenario\nstates that wording"
+          )
+          expect(prompt).toContain(
+            'and pure styling (spacing, colour, a class)\nthat changes none of those is not.'
+          )
+        })
+
+        test('tells every implementor to keep the spec current and validate it, whatever its repos', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+          )
+          expect(prompt).toContain(
+            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [<capability path> ...]`'
+          )
+          expect(prompt).toContain(
+            'Either exiting non-zero means the row is NOT complete'
+          )
+        })
+
+        test('tells the implementor to report a spec sync line, none with its reason included', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain('`Spec sync: none — <reason>`')
+        })
+
+        test('hands the consistency reviewer the implementor’s spec sync line to judge', async () => {
+          const run = await runWithImplementNotes(
+            `Built it.\n${SPEC_SYNC_NOTE}`
+          )
+          const prompt = promptOf(run, 'inc-900 consistency')
+
+          expect(prompt).toContain(
+            `The implementor reported:\n   ${SPEC_SYNC_NOTE}`
+          )
+          expect(prompt).toContain(
+            "a `Spec sync: none` whose reason does not hold against the plan's\nbehaviour changes"
+          )
+        })
+
+        test('reads a spec sync line written as a bullet', async () => {
+          const run = await runWithImplementNotes(
+            `Built it.\n- ${SPEC_SYNC_NOTE}`
+          )
+
+          expect(promptOf(run, 'inc-900 consistency')).toContain(
+            `The implementor reported:\n   ${SPEC_SYNC_NOTE}\n`
+          )
+        })
+
+        test('reads a spec sync line with a bold label, dropping the markers', async () => {
+          const run = await runWithImplementNotes(
+            'Built it.\n**Spec sync:** none — only spacing changed'
+          )
+
+          expect(promptOf(run, 'inc-900 consistency')).toContain(
+            'The implementor reported:\n   Spec sync: none — only spacing changed\n'
+          )
+        })
+
+        test('tells the ladder a row with no spec sync line from either agent is red', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            "2a. THE SPEC SYNC. Every row reports a `Spec sync:` line. The implementor's:\n   (none reported)"
+          )
+          expect(prompt).toContain(
+            'When NEITHER the implementor NOR the fixer reported a `Spec sync:` line, that is a failure: put "no spec sync\n   reported" in failures[].'
+          )
+        })
+
+        test('tells the ladder a fixer with no spec sync line is normal when the implementor reported one', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            {
+              ...implementAnswer(['frontend:src/a.js']),
+              notes: `Built it.\n${SPEC_SYNC_NOTE}`
+            },
+            ...FIX_STAGE_ANSWERS
+          )
+          const prompt = ladderPrompt(run)
+
+          expect(prompt).toContain(
+            `The implementor's:\n   ${SPEC_SYNC_NOTE}\n   The fixer's: (none reported)`
+          )
+          expect(prompt).toContain(
+            'A fixer with no line is normal when the implementor reported one'
+          )
+        })
+
+        test('tells the implementor to mark a deleted capability and confirm it is gone rather than validate it', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'each one removed as `deleted: <capability path>`'
+          )
+          expect(prompt).toContain(
+            'A capability you deleted is not validated: confirm it is gone\n   with `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
+          )
+        })
+
+        test('tells the ladder to validate only the capabilities that still exist', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            'A path marked `deleted:` is not validated: confirm it is gone with `ls ~/ws/openspec/specs/<capability path>`,\n   which must fail'
+          )
+        })
+
+        test('tells the ladder to validate the spec write again', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [...] > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-validate.log 2>&1`'
+          )
+        })
+
+        test('tells the fixer to keep the spec in step with its fix', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
+
+          expect(prompt).toContain(
+            'THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps `~/ws/openspec/` in step'
+          )
+        })
       })
 
       describe('the command forms a plan check may take', () => {
@@ -1609,6 +1821,7 @@ describe('increment-build-loop', () => {
           }).toEqual({
             result: {
               increments: [],
+              specChecks: [],
               stopped: {
                 reason: 'stack-held',
                 detail:
@@ -1832,6 +2045,7 @@ describe('increment-build-loop', () => {
 
           expect(run.result).toEqual({
             increments: [],
+            specChecks: [],
             stopped: {
               reason: 'no-buildable',
               detail: 'tim build start found nothing buildable in the backlog'
@@ -1914,8 +2128,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
-        // Claude, plus the run’s four own agents, the twenty-sixth does not
+        // The Workflow tool caps a run at 1000 agents. At 41 an increment on
+        // Claude, plus the run’s four own agents, the twenty-fifth does not
         // fit — so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1925,9 +2139,337 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(25)
+          expect(run.result.increments.length).toBe(24)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('24 increment(s) landed')
+        })
+
+        describe('checking a theme’s spec once its last row lands', () => {
+          const THEME = 'origin-pages'
+          const SPEC_CHECK_LABEL = `spec check:${THEME}`
+          const IMPLEMENT_ANSWER_INDEX = 2
+
+          // What the theme reader's jq summary prints.
+          const themeStatus = (summary) => ({
+            exitCode: 0,
+            stdout: JSON.stringify({
+              theme: THEME,
+              rows: 1,
+              todo: 0,
+              built: ['inc-901'],
+              otherRepos: [],
+              ...summary
+            })
+          })
+          // inc-901, built by this run, and inc-800, built by an earlier one
+          // in the frontend, which reaches both of its sets' prefixes.
+          const BUILT = themeStatus({ rows: 2, otherRepos: ['frontend'] })
+          const ONE_LEFT = themeStatus({
+            rows: 2,
+            todo: 1,
+            otherRepos: ['frontend']
+          })
+          const REACHED = ['repo reach']
+
+          const checkedPrefix = (prefix, fields = {}) => ({
+            prefix,
+            present: true,
+            lintOk: true,
+            lintFindings: 0,
+            noneCount: 0,
+            partialCount: 2,
+            noneScenarios: [],
+            lintLog: `~/ws/workareas/shared/args-fixture/logs/spec-check-${THEME}-${prefix}-lint.json`,
+            gapsLog: `~/ws/workareas/shared/args-fixture/logs/spec-check-${THEME}-${prefix}-gaps.json`,
+            ...fields
+          })
+          const NO_GERMINAL_SPEC = {
+            prefix: 'germinal-products',
+            present: false
+          }
+          const CLEAN = {
+            prefixes: [checkedPrefix('live-animals'), NO_GERMINAL_SPEC],
+            summary: 'checked'
+          }
+
+          const landedWithNotes = (notes) =>
+            notes === undefined
+              ? LANDED
+              : LANDED.with(IMPLEMENT_ANSWER_INDEX, {
+                  ...LANDED[IMPLEMENT_ANSWER_INDEX],
+                  notes
+                })
+
+          const runThemed = ({ status, specCheck, notes }) =>
+            runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithNotes(notes)
+              ],
+              themes: {
+                'inc-901 theme': status,
+                [SPEC_CHECK_LABEL]: specCheck
+              }
+            })
+
+          test('reads the theme of the row that landed', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: CLEAN })
+
+            expect(promptOf(run, 'inc-901 theme')).toContain(
+              'select(.id=="inc-901") | (.theme // $split)'
+            )
+          })
+
+          test('asks jq for a summary of the theme, not its rows, naming the rows this run built', async () => {
+            const prompt = promptOf(
+              await runThemed({ status: BUILT, specCheck: CLEAN }),
+              'inc-901 theme'
+            )
+
+            expect(prompt).toContain('["inc-901"] as $built')
+            expect(prompt).toContain(
+              'todo: ([$rows[] | select(.status == "todo")] | length)'
+            )
+            expect(prompt).not.toContain('{id, status, repos}')
+          })
+
+          test('waits for the theme’s last row before checking its spec', async () => {
+            const run = await runThemed({ status: ONE_LEFT, specCheck: CLEAN })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              specChecks: run.result.specChecks,
+              stopped: run.result.stopped.reason
+            }).toEqual({
+              checked: false,
+              specChecks: [],
+              stopped: 'count-reached'
+            })
+          })
+
+          test('checks every prefix a theme row the run did not build could reach once its last row lands', async () => {
+            const prompt = promptOf(
+              await runThemed({ status: BUILT, specCheck: CLEAN }),
+              SPEC_CHECK_LABEL
+            )
+
+            expect(prompt).toContain(
+              'in this order — `live-animals`, `germinal-products` — one Bash call per command'
+            )
+            expect(prompt).toContain(
+              '`tim spec lint --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-<prefix>-lint.json 2>&1`'
+            )
+            expect(prompt).toContain(
+              '`tim spec gaps --none --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-<prefix>-gaps.json 2>&1`'
+            )
+          })
+
+          test('records a clean check and carries on', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: CLEAN })
+
+            expect({
+              specChecks: run.result.specChecks,
+              stopped: run.result.stopped.reason
+            }).toEqual({
+              specChecks: [
+                {
+                  after: 'inc-901',
+                  theme: THEME,
+                  outcome: 'spec-checked',
+                  prefixes: [
+                    {
+                      prefix: 'live-animals',
+                      present: true,
+                      lintOk: true,
+                      noneCount: 0,
+                      partialCount: 2
+                    },
+                    { prefix: 'germinal-products', present: false }
+                  ],
+                  sources: {
+                    'live-animals': REACHED,
+                    'germinal-products': REACHED
+                  },
+                  problems: []
+                }
+              ],
+              stopped: 'count-reached'
+            })
+          })
+
+          test('stops with spec-check-red, naming the catch-up and cover to run, when a scenario has no test', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: {
+                ...CLEAN,
+                prefixes: [
+                  checkedPrefix('live-animals', {
+                    noneCount: 1,
+                    noneScenarios: ['SCN-ORIGIN-009-A']
+                  }),
+                  NO_GERMINAL_SPEC
+                ]
+              }
+            })
+
+            expect(run.result.stopped).toEqual({
+              reason: 'spec-check-red',
+              detail: `theme origin-pages, after inc-901: 1 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json). Every row of the theme is built, so nothing re-runs this check: run "catch-up and cover animals" (spec-catchup, then spec-cover), then launch again`
+            })
+          })
+
+          test('stops with spec-check-red when lint finds anything', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: {
+                ...CLEAN,
+                prefixes: [
+                  checkedPrefix('live-animals', {
+                    lintOk: false,
+                    lintFindings: 3
+                  }),
+                  NO_GERMINAL_SPEC
+                ]
+              }
+            })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'tim spec lint found 3 finding(s) under live-animals/ (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-lint.json)'
+            ])
+          })
+
+          test('stops when a row wrote the spec under a prefix that has no spec', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: CLEAN,
+              notes:
+                'Built it.\nSpec sync: germinal-products/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+            })
+
+            expect(run.result.stopped.reason).toBe('spec-check-red')
+            expect(run.result.stopped.detail).toContain(
+              'a row reported writing the spec under germinal-products/, but openspec/specs/germinal-products does not exist'
+            )
+            expect(run.result.stopped.detail).toContain(
+              'run "catch-up and cover germinal"'
+            )
+          })
+
+          test('stops when the spec check agent dies, rather than calling the spec clean', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: null })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'the spec check agent died, so nothing checked the spec'
+            ])
+          })
+
+          test('checks only the prefixes a row this run built wrote under, not every prefix its repos reach', async () => {
+            const run = await runThemed({
+              status: themeStatus({}),
+              specCheck: {
+                prefixes: [checkedPrefix('live-animals')],
+                summary: 'checked'
+              },
+              notes:
+                'Built it.\n- Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+            })
+
+            expect({
+              asked: promptOf(run, SPEC_CHECK_LABEL).includes(
+                'in this order — `live-animals` — one Bash call per command'
+              ),
+              sources: run.result.specChecks[0].sources
+            }).toEqual({
+              asked: true,
+              sources: { 'live-animals': ['written'] }
+            })
+          })
+
+          test('stops when a row wrote under a prefix that has no spec, its line in bold', async () => {
+            const run = await runThemed({
+              status: themeStatus({}),
+              specCheck: { prefixes: [NO_GERMINAL_SPEC], summary: 'checked' },
+              notes:
+                'Built it.\n**Spec sync:** germinal-products/journey-pages/origin-of-import (2 scenarios) — validate green'
+            })
+
+            expect(run.result.stopped.detail).toContain(
+              'a row reported writing the spec under germinal-products/, but openspec/specs/germinal-products does not exist'
+            )
+          })
+
+          test('checks nothing for a theme that touched no spec prefix', async () => {
+            const run = await runThemed({
+              status: themeStatus({ rows: 2, otherRepos: ['tests'] }),
+              specCheck: CLEAN,
+              notes:
+                'Built it.\nSpec sync: none — only sets/high-risk-plants/ spacing changed'
+            })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              outcome: run.result.specChecks[0].outcome
+            }).toEqual({ checked: false, outcome: 'no-spec-prefix' })
+          })
+
+          test('reads an unreadable theme a second time, then stops rather than lose the check', async () => {
+            const run = await runThemed({
+              status: { exitCode: 5, stdout: 'jq: error: Could not open file' },
+              specCheck: CLEAN
+            })
+
+            expect({
+              reads: labels(run).filter((label) => label === 'inc-901 theme')
+                .length,
+              outcome: run.result.specChecks[0].outcome,
+              stopped: run.result.stopped.reason,
+              unread: run.result.stopped.detail.includes('theme unread')
+            }).toEqual({
+              reads: 2,
+              outcome: 'theme-unread',
+              stopped: 'spec-check-red',
+              unread: true
+            })
+          })
+
+          test('carries on when the second read of the theme succeeds', async () => {
+            const readings = [
+              { exitCode: 0, stdout: '{"theme":"origin-pa' },
+              BUILT
+            ]
+            const run = await runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...LANDED
+              ],
+              themes: {
+                get 'inc-901 theme'() {
+                  return readings.shift()
+                },
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect({
+              outcome: run.result.specChecks[0].outcome,
+              stopped: run.result.stopped.reason
+            }).toEqual({ outcome: 'spec-checked', stopped: 'count-reached' })
+          })
+
+          test('checks nothing for a row in no theme', async () => {
+            const run = await runThemed({ status: NO_THEME, specCheck: CLEAN })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              specChecks: run.result.specChecks
+            }).toEqual({ checked: false, specChecks: [] })
+          })
         })
       })
 
@@ -2287,7 +2829,8 @@ describe('increment-build-loop', () => {
           'inc-900 pr',
           'inc-900 ci watch',
           'inc-900 done',
-          'inc-900 gate check'
+          'inc-900 gate check',
+          'inc-900 theme'
         ])
       })
 
@@ -2585,7 +3128,10 @@ describe('increment-build-loop', () => {
       })
 
       describe('a docs row that changes no backlog repo', () => {
-        const runDocsRow = () =>
+        const REPORT_FILE =
+          'workspace:workareas/shared/frontend-alignment/report.md'
+
+        const runDocsRow = (changedFiles = [REPORT_FILE]) =>
           runBranch(
             {},
             { ...ROW, repos: [], gatePhases: [] },
@@ -2594,9 +3140,7 @@ describe('increment-build-loop', () => {
             {
               ok: true,
               summary: 'Rewrote the report.',
-              changedFiles: [
-                'workspace:workareas/shared/frontend-alignment/report.md'
-              ]
+              changedFiles
             },
             NO_FINDINGS,
             NO_FINDINGS,
@@ -2623,7 +3167,8 @@ describe('increment-build-loop', () => {
             'inc-900 branch-guard:land',
             'inc-900 land',
             'inc-900 done',
-            'inc-900 gate check'
+            'inc-900 gate check',
+            'inc-900 theme'
           ])
         })
 
@@ -2637,6 +3182,17 @@ describe('increment-build-loop', () => {
             ],
             ci: 'none: the row changes no backlog repo'
           })
+        })
+
+        test('leaves the spec files the land stage commits out of the edits it reports', async () => {
+          const run = await runDocsRow([
+            REPORT_FILE,
+            'workspace:openspec/specs/live-animals/journey-pages/origin-of-import/spec.md'
+          ])
+
+          expect(run.result.increments[0].leftUncommitted).toEqual([
+            REPORT_FILE
+          ])
         })
 
         test('tells the implementor to leave the workspace edits unstaged', async () => {
@@ -2925,7 +3481,8 @@ describe('increment-build-loop', () => {
           'inc-014 ci watch',
           'inc-014 merge',
           'inc-014 done',
-          'inc-014 gate check'
+          'inc-014 gate check',
+          'inc-014 theme'
         ])
       })
 
@@ -3104,9 +3661,29 @@ describe('increment-build-loop', () => {
           }
         )
 
-        expect(promptOf(run, 'inc-014 plan')).not.toContain('frontend-change')
+        expect(promptOf(run, 'inc-014 plan')).not.toContain(
+          'frontend-change/SKILL.md'
+        )
         expect(promptOf(run, 'inc-014 implement')).not.toContain(
-          'frontend-change'
+          'frontend-change/SKILL.md'
+        )
+        expect(promptOf(run, 'inc-014 implement')).toContain(
+          'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+        )
+      })
+
+      test('gives the Codex implementor the same spec duty', async () => {
+        const run = await runPerf(
+          { executor: 'codex' },
+          { 'inc-014 codex:implement': { ok: true, summary: 'ran' } }
+        )
+        const prompt = promptOf(run, 'inc-014 codex:implement')
+
+        expect(prompt).toContain(
+          'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+        )
+        expect(prompt).toContain(
+          '**Paths under the WORKSPACE root `~/ws` are LITERAL'
         )
       })
 
@@ -3461,7 +4038,8 @@ describe('increment-build-loop', () => {
           'inc-020 merge',
           'inc-020 done',
           'inc-020 workspace to base',
-          'inc-020 gate check'
+          'inc-020 gate check',
+          'inc-020 theme'
         ])
         expect(run.result.increments[0]).toMatchObject({
           id: 'inc-020',

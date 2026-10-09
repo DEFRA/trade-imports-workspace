@@ -28,6 +28,14 @@ namespace do not share a name:
 |---|---|
 | `sets/live-animals` | `live-animals/` |
 | `sets/high-risk-plants` | `plants/` |
+| `sets/germinal-products` | `germinal-products/` |
+
+`sets/germinal-products` shares `trade-imports-animals-frontend` with
+`sets/live-animals` and starts as a copy of its feature folders. A copied
+page is still a new capability under `germinal-products/`: never write a
+germinal increment into a `live-animals/` spec, and never point a
+`live-animals/` capability at a germinal page because the copy looks the
+same.
 
 **Kind → capability directory**, under that namespace:
 
@@ -81,7 +89,7 @@ held to: *"no existing leaf covers this subject"*, or *"this is
 this wrong mints a duplicate capability for a page that is already
 specified, and nothing downstream will catch it.
 
-The two namespaces are also not symmetric. `live-animals/` has
+The namespaces are also not symmetric. `live-animals/` has
 capabilities `plants/` does not (`page-titles`, `service-navigation`,
 `notification-events`, `notification-status-and-reference`). A capability
 genuinely absent from the namespace you are writing into is new — mint
@@ -123,8 +131,11 @@ only after the explicit judgement above. Four things land together:
 
 2. **An AREA code.** Derive a candidate from the leaf, prefixed to match
    the namespace's existing rows (`PLANTS-` inside `plants/`; unprefixed
-   inside `live-animals/`). An obligation sharing a leaf name with a page
-   takes an `OB-` prefix — `ORIGIN` the page, `OB-ORIGIN` the obligation.
+   inside `live-animals/`; `GERMINAL-` inside `germinal-products/`, from
+   its very first row, when there are no existing rows to match). An obligation sharing a leaf name with a page takes an
+   `OB-` prefix after the namespace prefix — `ORIGIN` the page,
+   `OB-ORIGIN` the obligation; `GERMINAL-ORIGIN` and
+   `GERMINAL-OB-ORIGIN` in germinal products.
    Never reuse a code, and never derive one from the capability's path —
    `config.yaml` is explicit that codes are assigned once, in `AREAS.md`,
    and never regenerated from a current path.

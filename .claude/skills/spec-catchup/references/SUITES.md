@@ -1,15 +1,34 @@
 # Suite table
 
 One journey set at a time. `catch-up` / `cover` / `catch-up and cover`
-with no set name runs all four, one at a time, each following the table
-below.
+with no set name runs every set in the table, one at a time, each
+following the table below.
 
 | Set | Set name | Spec prefix | Local suite | E2E project |
 |---|---|---|---|---|
 | Live animals | `animals` | `live-animals` | `trade-imports-animals-frontend`: `npm run test:fit` | `animals` |
+| Germinal products | `germinal` | `germinal-products` | `trade-imports-animals-frontend`: `npm run test:fit` | `animals` (provisional) |
 | High-risk plants | `plants` | `plants` | `trade-imports-plants-frontend`: `npm run test:fit` | `plants` |
 | Import Notification Service | `ins` | `ins` | `trade-imports-ins-frontend`: `npm run test:fit` | `ins` |
 | Admin | `admin` | `admin` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `animals-admin` |
+
+Germinal products is a sibling set of live animals in the same frontend
+repo (`sets/germinal-products`), built by the Design Release 2.1
+programme. Until that build writes its first capability under
+`openspec/specs/germinal-products/`, there is nothing to catch up or
+cover, and `tim spec lint|gaps --capability germinal-products` exits 2
+with `Can't find capability` — skip the set and say so. Germinal fit
+specs appear in the `test:fit` report only once the repo's
+`playwright.config.js` has a project covering `sets/germinal-products`
+(today the `features` project covers `sets/live-animals` only). Until
+then, skip the local-suite half for germinal and record that you did,
+rather than judging against a report that cannot contain germinal specs
+— an absent germinal spec there is not evidence that no test exists.
+Once the project exists, judge only the germinal specs in the report.
+`trade-imports-ins-tests` has no germinal project yet; its E2E specs are
+assumed to land in the `animals` project, as the repo's other domain.
+When the tests repo gives the set its own project, replace `animals
+(provisional)` with that project's name.
 
 `<prefix>` in every command below is the **Spec prefix** column exactly
 as written — no trailing slash (`tim spec gaps --capability live-animals/`

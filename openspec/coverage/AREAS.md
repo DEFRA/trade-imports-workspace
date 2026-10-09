@@ -2,6 +2,8 @@
 
 The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned once per capability, in this table, never regenerated from the capability's current path or name — see the stable-ID note in `openspec/config.yaml`. Adding a capability later: pick a code that doesn't collide with this list, add a row, done — no other file needs to change.
 
+Codes carry their namespace's prefix: none inside `live-animals/`, `PLANTS-` inside `plants/`, `ADMIN-` inside `admin/`, `INS-` inside `ins/`, and `GERMINAL-` inside `germinal-products/`. An obligation sharing a leaf name with a page puts `OB-` after the namespace prefix (`GERMINAL-OB-ORIGIN` beside the page's `GERMINAL-ORIGIN`). `germinal-products/` has no rows yet — the Design Release 2.1 build mints each one as it creates the capability, even where the page began as a copy of a `live-animals/` one.
+
 | Capability | Area code |
 |---|---|
 | admin/authentication | ADMIN-AUTH |

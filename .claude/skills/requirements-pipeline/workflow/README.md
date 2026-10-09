@@ -247,7 +247,12 @@ stage raised them in is an accident:
 
 `frontend-change` is routed by what a repo is, not by its key: the planner and implementor are
 sent to it only for a configured repo at `repos/trade-imports-animals-frontend` or
-`repos/trade-imports-plants-frontend`, and a programme with neither never hears of it.
+`repos/trade-imports-plants-frontend`, and a programme with neither never hears of it. Each
+repo's sets are listed with the spec namespace each writes — `sets/live-animals` → `live-animals/`
+and `sets/germinal-products` → `germinal-products/` in the animals repo, `sets/high-risk-plants`
+→ `plants/` in the plants repo — and the planner names the set from the path the change lives
+under, because two sets share the animals repo. Nothing else in the loop keys on a set or a
+prefix.
 
 ### What drains the backlog, and what stops it
 
@@ -260,15 +265,20 @@ run outlives the session that started it. Resuming is launching it again with th
 args: `backlog.json` carries the status, ticket, branch and PRs, and the start stage
 resumes an increment part-way through its lifecycle.
 
-The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. It stops:
+The run returns `{increments, specChecks, stopped}`, where `specChecks` holds one entry per
+theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)) and `stopped` is
+`{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 45 on
-  Codex, so a run fits roughly 25 or 22 of them. Nothing is wrong: launch again;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 41 agents on Claude and 47 on
+  Codex, so a run fits roughly 24 or 21 of them. Nothing is wrong: launch again;
 - at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
+- at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
+  `tim spec gaps --none` is red under a prefix the theme touched. The row has landed; the
+  detail names the findings and the `catch-up and cover <set>` to run;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
   is no longer the run's (see [The workspace stack lease](#the-workspace-stack-lease)). A
@@ -411,13 +421,14 @@ refuses to commit a spec change rather than put it on the base branch with no re
 |---|---|---|
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
 | Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
-| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
-| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
+| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope, and the spec sync (section 8). Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
+| Implement | 1 | Executes the plan, across every repo the slice needs, and keeps the Behaviour Spec current (see [The Behaviour Spec](#the-behaviour-spec)). Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
+| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change, which also judges the spec write and any `Spec sync: none` reason. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
-| Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Theme spec check | 1–2 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched. See [The Behaviour Spec](#the-behaviour-spec) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
@@ -428,6 +439,48 @@ agent picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
+
+### The Behaviour Spec
+
+**Every row keeps `openspec/` current, whatever its repos.** Before this, only a row routed through
+`frontend-change` (an animals or plants frontend field, page, section, collection, obligation or flow change)
+reached its Step 5, so a backend, INS, address-book or reference-data row, and a wording or layout row, left the
+spec behind.
+
+| Stage | What it does with the spec |
+|---|---|
+| Plan | Section 8 names the prefix by repo and set (`live-animals`, `germinal-products`, `plants`, `ins`, `admin`), each capability, requirement and scenario to change, any new AREA row and the coverage links — or `none — <reason>`. Returns `specPrefixes` |
+| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tools/frontend-change/openspec-validate.sh --root <workspace>` and `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
+| Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
+| Fix | A fix that changes behaviour updates the spec too, and reports its own line |
+| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
+| Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
+
+The prompts say what the spec records, from `openspec/config.yaml`: observable behaviour only. A wording change is
+spec'd where a title, Purpose, requirement or scenario states that wording; a content change when it changes what a
+page shows or asks; a layout change when it changes page order, what a page offers or groups, or a caption. Pure
+styling is not.
+
+**Once a theme's last row lands, the run checks the spec.** After the gate check, a light agent reads the landed
+row's theme (or a split backlog's own) as one short jq summary: how many rows are `todo`, which ones this run built,
+and the repos of the rest. A line it cannot read is read once more; unread twice, the run stops at `spec-check-red`
+with `theme unread`, since it cannot tell whether that was the theme's last row. When none is `todo`, a second light
+agent runs, for every prefix the theme touched, `tim spec lint --capability <prefix>` and
+`tim spec gaps --none --capability <prefix>`, each to a log under `logs/spec-check-<theme>-<prefix>-*.json`. The
+script reads the counts. A lint finding, a scenario no test proves, or a prefix a row reported writing that does not
+exist stops the run at `spec-check-red`, naming the `catch-up and cover <set>` to run. Partly proven scenarios are
+recorded, not red: there are pre-existing ones. Every check lands in the result's `specChecks`, with `sources`
+saying where each prefix came from. A row this run built gives only the prefixes its plan named (`planned`) and its
+`Spec sync:` lines wrote (`written`). A theme row it did not build is known only by its repos, so it gives every
+prefix those repos could reach (`repo reach`): `trade-imports-animals-frontend` reaches both `live-animals` and
+`germinal-products`.
+
+**Why not spec-catchup and spec-cover themselves.** Neither can run headless inside the loop as written. Both start
+the workspace stack with `tim docker up`, which the run already holds under lease. Catch-up runs a FIT suite behind a
+`PORT=` prefix the deny list refuses, and fans out to Task subagents. Both stop to ask a person to start Docker. Cover
+commits in service repos on a branch named after the workspace's, with no pull request, outside the increment's own
+branch and PR. So the loop runs the two deterministic checks those skills start from, and a red one hands the skills
+to a person. Every row of the theme is built by then, so nothing re-runs the check: the stop is the record.
 
 ### Plan checks
 
@@ -622,7 +675,8 @@ is clean for the next run, and nothing half-resolved ever reaches a reviewer.
 
 A row with `repos: []` changes no backlog repo: its whole output is in the workspace repo, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop leaves those edits unstaged and uncommitted, reviews
-them against HEAD, and lists them in the result's `leftUncommitted` for the orchestrator to commit. Such a row
+them against HEAD, and lists them in the result's `leftUncommitted` for the orchestrator to commit. Edits under
+`openspec/` are not listed: the land stage commits those itself. Such a row
 normally also sets `gatePhases: []`.
 
 The worked example for the frontend alignment sync:

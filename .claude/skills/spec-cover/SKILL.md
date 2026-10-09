@@ -1,6 +1,6 @@
 ---
 name: spec-cover
-description: 'Cover Behaviour Spec scenarios that have no adequate test, for one journey set at a time — the direction where the spec says something no test proves. Uses tim spec gaps --none (or --partial if asked) as the work list, maps every Then to an assert, writes the test in the right service repo, proves it with an invert-red/restore-green mutation probe before claiming full, updates the coverage.json link, then commits in both this workspace repo and the service repo on the same branch name. Fans out per-gap judgement to Task subagents when several gaps do not share a test file; the parent writes, probes, lints and commits. Assumes the spec is already true — run spec-catchup first if it might not be. Use when the user asks to cover a journey set''s gaps (triggers: "cover", "cover animals", "cover plants", "cover ins", "cover admin", "catch-up and cover"). NOT for drift between the spec and the code — use spec-catchup. NOT for rewriting a requirement to match a missing test — that hides the hole.'
+description: 'Cover Behaviour Spec scenarios that have no adequate test, for one journey set at a time — the direction where the spec says something no test proves. Uses tim spec gaps --none (or --partial if asked) as the work list, maps every Then to an assert, writes the test in the right service repo, proves it with an invert-red/restore-green mutation probe before claiming full, updates the coverage.json link, then commits in both this workspace repo and the service repo on the same branch name. Fans out per-gap judgement to Task subagents when several gaps do not share a test file; the parent writes, probes, lints and commits. Assumes the spec is already true — run spec-catchup first if it might not be. Use when the user asks to cover a journey set''s gaps (triggers: "cover", "cover animals", "cover germinal", "cover plants", "cover ins", "cover admin", "catch-up and cover"). NOT for drift between the spec and the code — use spec-catchup. NOT for rewriting a requirement to match a missing test — that hides the hole.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Edit, Write, Task]
 ---
@@ -37,8 +37,8 @@ hygiene".
 
 | Trigger | What happens |
 |---|---|
-| `cover` | All four sets, one at a time, each following this skill |
-| `cover animals` / `plants` / `ins` / `admin` | One set |
+| `cover` | Every set in `../spec-catchup/references/SUITES.md`, one at a time, each following this skill |
+| `cover animals` / `germinal` / `plants` / `ins` / `admin` | One set |
 | `catch-up and cover` | Driven by `spec-catchup`, which follows this skill after finishing catch-up for the same set |
 
 Prefer starting with `none` (unproven). Use `--partial` only when the

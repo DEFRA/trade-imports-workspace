@@ -52,11 +52,11 @@ The system MUST show the selected consignment contact's name, address, telephone
 **ID**: REQ-PLANTS-CYA-004
 The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST NOT show an unanswered role as an error. A party's card shows the address copied onto the notification, which a later change to the address book does not reach, as governed by `plants/addresses`.
 
-#### Scenario: An unanswered destination reads Not provided, with no error shown
+#### Scenario: An unanswered destination reads Not provided, with no address error, and is named as outstanding
 **ID**: SCN-PLANTS-CYA-004-A
 - **GIVEN** a notification whose place of destination has never been answered
 - **WHEN** the user views check-your-answers
-- **THEN** the destination card's rows each read "Not provided", and no error is shown against it
+- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names the place of destination as a task still to complete
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
@@ -166,3 +166,21 @@ The system MUST offer, on a draft's consignor-or-exporter, place-of-destination 
 - **WHEN** the user views check-your-answers
 - **THEN** the Contact card offers Change and Edit details as two separate actions, Edit details opening the contact address's edit page
 - **AND** the Place of destination card offers only Change
+
+### Requirement: An unfinished notification names every outstanding task
+**ID**: REQ-PLANTS-CYA-013
+The system MUST show check-your-answers for a notification that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
+
+#### Scenario: Viewing an unfinished notification names each outstanding task
+**ID**: SCN-PLANTS-CYA-013-A
+- **GIVEN** a draft notification with one or more tasks not yet complete
+- **WHEN** the user views check-your-answers
+- **THEN** an error summary titled "There is a problem" names each task not yet complete
+- **AND** each entry links to that task's page, which returns to check-your-answers once saved
+
+#### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page
+**ID**: SCN-PLANTS-CYA-013-B
+- **GIVEN** a draft notification with a task still to complete is open on check-your-answers
+- **WHEN** the user continues
+- **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
+- **AND** the declaration is not opened

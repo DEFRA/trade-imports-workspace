@@ -38,7 +38,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "accepts a valid CPH number", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, continues the run and comes back split", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -46,7 +46,7 @@
           "name": "Returning to the page splits the saved number back into its three boxes",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, continues the run and comes back split", "strength": "full", "notes": "fills 12/345/6789, saves, revisits the page and asserts each box holds its own part" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "full", "notes": "fills 12/345/6789, saves, revisits the page and asserts each box holds its own part" }
           ]
         }
       ]
@@ -131,16 +131,15 @@
     },
     {
       "id": "REQ-CPH-006",
-      "name": "The back link returns to where the page was entered from",
+      "name": "The back link returns to the consignment addresses page from its row, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CPH-006-A",
-          "name": "The back link opens Overview on a sequential walk",
+          "name": "The back link opens Overview when the page was not opened from its row",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the main hub on a sequential-walk entry", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the overview when entered other than from its row", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -148,7 +147,34 @@
           "name": "The back link returns to the addresses hub when entered from there",
           "coverage": "full",
           "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "back link returns to the consignment addresses page", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should back-link to the addresses hub when entered from its CPH row", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CPH-007",
+      "name": "Saving the CPH number returns to the consignment addresses page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CPH-007-A",
+          "name": "Saving from its row returns to the consignment addresses page, showing the number",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "Add from the row, save, back on the addresses page with the row reading 123456789" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save and return to the addresses hub when entered from its CPH row", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "partial", "notes": "proves the return to the addresses page; the row's displayed digits are asserted in the e2e link" }
+          ]
+        },
+        {
+          "id": "SCN-CPH-007-B",
+          "name": "Saving without the row's context also returns to the consignment addresses page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should hand back to the consignment addresses page when entered without return context", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should hand the CPH number back to the roles and addresses, mid-run and outside it", "strength": "full", "notes": "" }
           ]
         }
       ]

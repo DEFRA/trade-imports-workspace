@@ -18,15 +18,15 @@ The system MUST withhold the Check and submit task until every other task row on
 - **WHEN** they complete the contact and return to Overview
 - **THEN** Check and submit is offered and opens check-your-answers
 
-### Requirement: Continuing from check-your-answers while a task is still outstanding returns to Overview
+### Requirement: Continuing from check-your-answers while a task is still outstanding is refused on the page
 **ID**: REQ-PLANTS-OB-REVIEW-002
-The system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead return them to Overview when they continue from check-your-answers.
+The system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead keep them on check-your-answers with the outstanding tasks named.
 
-#### Scenario: Continuing an incomplete notification returns to Overview
+#### Scenario: Continuing an incomplete notification stays on check-your-answers
 **ID**: SCN-PLANTS-OB-REVIEW-002-A
 - **GIVEN** a notification is open on check-your-answers with a task still outstanding
 - **WHEN** the user continues
-- **THEN** they are returned to Overview
+- **THEN** they stay on check-your-answers, which names the outstanding task
 
 ### Requirement: An origin that commodity lines no longer allow blocks continue, with a correction into origin
 **ID**: REQ-PLANTS-OB-REVIEW-003

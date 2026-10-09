@@ -14,7 +14,7 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification is being worked on
 - **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; consignment addresses and County Parish Holding; the transport pages; contact address; and finally check your answers, declaration and confirmation
+- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
 
 #### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B
@@ -75,15 +75,16 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 - **WHEN** the journey reaches the point that page would be offered
 - **THEN** the page is not offered, and the journey continues past it
 
-### Requirement: Check your answers, the declaration and the confirmation are reachable only once every task row is ready
+### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST withhold the review section — check your answers, the declaration and the confirmation — until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers whatever the notification still owes, naming what is outstanding, and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
 
-#### Scenario: The review section is withheld while a task row is outstanding
+#### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A
 - **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional
-- **WHEN** the user tries to reach check your answers
-- **THEN** the review section is not open to them
+- **WHEN** the user continues from check your answers
+- **THEN** they stay on check your answers, which names what is outstanding
+- **AND** the declaration is not opened
 
 #### Scenario: The review section opens once every row is fulfilled, not applicable or optional
 **ID**: SCN-FLOW-006-B
@@ -91,16 +92,22 @@ The system MUST withhold the review section — check your answers, the declarat
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created in this session runs an opening sequence covering the whole journey, ending on review
+#### Scenario: Check and submit on Overview is withheld while a task row is outstanding
+**ID**: SCN-FLOW-006-C
+- **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional
+- **WHEN** the user views Overview
+- **THEN** the Check and submit row cannot be started yet and offers no link
+
+### Requirement: A notification created in this session runs an opening sequence covering the whole journey, ending on check your answers
 **ID**: REQ-FLOW-007
-The system MUST walk a newly created notification through an opening sequence covering every section of the journey, skipping any step not in scope, and MUST deliver the user to the review section once every step is done, or to Overview if a task remains outstanding. This order is the opening sequence's own and MUST NOT be assumed to match the order of the flow sections stated in REQ-FLOW-001.
+The system MUST walk a newly created notification through an opening sequence covering the whole journey, skipping any step not in scope. The sequence MUST NOT offer the CPH number page as a step, MUST go to Overview from roles and addresses when every task is already complete, and MUST end on check your answers once the contact address is saved, complete or not; reaching either ends it. Its order is its own and MUST NOT be assumed to match the order of the flow sections in REQ-FLOW-001.
 
 #### Scenario: A newly created notification is walked through the whole opening sequence to review
 **ID**: SCN-FLOW-007-A
 - **GIVEN** the user has just created a notification from the dashboard
 - **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through every section of the journey in turn
-- **AND** they arrive at check your answers once the last step is saved, without returning to Overview partway through
+- **THEN** they are taken through origin of the import, what are you importing, main reason for import, commodity details, identification details, additional details, arrival details, the transporter, upload documents, roles and addresses and the contact address, in that order
+- **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
 
 #### Scenario: An opening-sequence step not yet in scope is skipped
 **ID**: SCN-FLOW-007-B
@@ -113,6 +120,32 @@ The system MUST walk a newly created notification through an opening sequence co
 - **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or review
 - **WHEN** they open one of the opening sequence's own pages again and save it
 - **THEN** they return to Overview, not to whatever would be the next step of the sequence
+
+#### Scenario: The reason for import is asked before the commodity details
+**ID**: SCN-FLOW-007-D
+- **GIVEN** the user is in the opening sequence on what are you importing
+- **WHEN** they save a selection
+- **THEN** main reason for import is shown
+- **WHEN** they save the reason
+- **THEN** commodity details is shown
+
+#### Scenario: The CPH number page is never a step of the opening sequence
+**ID**: SCN-FLOW-007-E
+- **GIVEN** the user is in the opening sequence for a consignment that needs a CPH number
+- **WHEN** they save roles and addresses
+- **THEN** contact address for this consignment is shown, not the CPH number page
+
+#### Scenario: Roles and addresses goes to Overview when nothing is outstanding
+**ID**: SCN-FLOW-007-F
+- **GIVEN** the user is in the opening sequence with every task already complete
+- **WHEN** they save roles and addresses
+- **THEN** Overview is shown
+
+#### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
+**ID**: SCN-FLOW-007-G
+- **GIVEN** the user is in the opening sequence with tasks outstanding
+- **WHEN** they save the contact address
+- **THEN** check your answers is shown, naming every unfinished card
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

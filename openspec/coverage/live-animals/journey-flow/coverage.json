@@ -68,7 +68,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter selection saves and persists", "strength": "full", "notes": "select save lands on Overview URL" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to import reason mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to the identification surface mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "commercial select save → Overview" }
           ]
         }
@@ -119,16 +119,16 @@
     },
     {
       "id": "REQ-FLOW-006",
-      "name": "Check your answers, the declaration and the confirmation are reachable only once every task row is ready",
+      "name": "Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-006-A",
-          "name": "The review section is withheld while a task row is outstanding",
+          "name": "Continuing from check your answers is refused while a task row is outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "renders navigation copy and the task statuses of a newly entered journey", "strength": "full", "notes": "Check and submit cannotStartYet and has no link" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should lock the review section on a blank journey", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review stays on it, with the outstanding tasks named and the summary focused" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should lock the review section on a blank journey", "strength": "partial", "notes": "the review section's gate on a blank journey; does not drive the refused Continue" }
           ]
         },
         {
@@ -140,12 +140,21 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should open the review section once every answer section is ready — even with the declaration unanswered (no deadlock)", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "journey.toReview reaches CYA; does not assert declaration/confirmation chain" }
           ]
+        },
+        {
+          "id": "SCN-FLOW-006-C",
+          "name": "Check and submit on Overview is withheld while a task row is outstanding",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "renders navigation copy and the task statuses of a newly entered journey", "strength": "full", "notes": "Check and submit cannotStartYet and has no link" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should lock the review section on a blank journey", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
     {
       "id": "REQ-FLOW-007",
-      "name": "A notification created in this session runs an opening sequence covering the whole journey, ending on review",
+      "name": "A notification created in this session runs an opening sequence covering the whole journey, ending on check your answers",
       "coverage": "full",
       "scenarios": [
         {
@@ -153,7 +162,8 @@
           "name": "A newly created notification is walked through the whole opening sequence to review",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "each page's heading is awaited in order from origin to the review, then every task reads Complete and the notification is submitted" }
           ]
         },
         {
@@ -172,7 +182,51 @@
           "name": "Revisiting an opening-sequence page after the run has finished does not resume it",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification on past the additional details", "strength": "full", "notes": "navigates to Overview mid-run, then re-saves origin and confirms it returns to Overview rather than resuming the run" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification on past the additional details", "strength": "full", "notes": "navigates to Overview mid-run, then re-saves origin and confirms it returns to Overview rather than resuming the run" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should flip the record to complete when the review page is shown", "strength": "partial", "notes": "pins that reaching the review page ends the run; the later save returning to Overview is pinned by the hub-arrival tests" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-007-D",
+          "name": "The reason for import is asked before the commodity details",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the search page to import reason once a line exists", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send import reason on to the consignment details, whichever reason is given", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send What are you importing? on to the main reason for import mid-run, and to the commodity details outside the run", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification on past the additional details", "strength": "full", "notes": "species save shows Main reason for import, whose save shows Commodity details" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-007-E",
+          "name": "The CPH number page is never a step of the opening sequence",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the roles and addresses straight on to the contact address, never the CPH number", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should return null for the CPH number page — it is not a run step", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "Cattle need a CPH number, and the run goes from roles and addresses straight to the contact address" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-007-F",
+          "name": "Roles and addresses goes to Overview when nothing is outstanding",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the roles and addresses to the overview when every task is already complete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send roles and addresses to the overview mid-run once every task is complete", "strength": "full", "notes": "" }
+          ],
+          "notes": "Unit-only: no Playwright test finishes every other task while still in the opening run."
+        },
+        {
+          "id": "SCN-FLOW-007-G",
+          "name": "The opening sequence ends on check your answers even when tasks are outstanding",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should end the run on the review page even when the notification is incomplete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should end the run on the review page from the contact address mid-run, even with tasks outstanding", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run ends on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "" }
           ]
         }
       ]

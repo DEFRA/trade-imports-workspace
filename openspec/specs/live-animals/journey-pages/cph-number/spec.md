@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached from the addresses page, so it ends with its primary action alone (`live-animals/journey-flow`'s REQ-FLOW-012).
+Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached only from its row on the consignment addresses page — never a step of the opening sequence — so it ends with its primary action alone (`live-animals/journey-flow`'s REQ-FLOW-012).
 
 ## Requirements
 
@@ -101,13 +101,13 @@ The system MUST show a collapsed expander above the CPH boxes offering to explai
 - **WHEN** the user opens the expander
 - **THEN** the explanation, including where to find the number, becomes visible
 
-### Requirement: The back link returns to where the page was entered from
+### Requirement: The back link returns to the consignment addresses page from its row, and to Overview otherwise
 **ID**: REQ-CPH-006
-The system MUST return the user to Overview when they follow the back link from the CPH number page during the sequential journey walk, and to the addresses hub when they arrived at the page from its row there.
+The system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page after arriving from its row there, and to Overview when they arrived any other way.
 
-#### Scenario: The back link opens Overview on a sequential walk
+#### Scenario: The back link opens Overview when the page was not opened from its row
 **ID**: SCN-CPH-006-A
-- **GIVEN** the user reached the CPH number page by walking the journey in order
+- **GIVEN** the user reached the CPH number page other than from its row on the consignment addresses page (for example a Change link from check your answers)
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
@@ -116,3 +116,20 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user reached the CPH number page from its row on the addresses hub (`?return=addresses`)
 - **WHEN** they follow the back link
 - **THEN** the addresses hub is shown
+
+### Requirement: Saving the CPH number returns to the consignment addresses page
+**ID**: REQ-CPH-007
+The system MUST return the user to the consignment addresses page after they save the CPH number, whether or not an opening sequence is under way.
+
+#### Scenario: Saving from its row returns to the consignment addresses page, showing the number
+**ID**: SCN-CPH-007-A
+- **GIVEN** the user opened the CPH number page from its row on the consignment addresses page
+- **WHEN** they save a valid CPH number
+- **THEN** the consignment addresses page is shown
+- **AND** the CPH number row shows the nine digits
+
+#### Scenario: Saving without the row's context also returns to the consignment addresses page
+**ID**: SCN-CPH-007-B
+- **GIVEN** the user reached the CPH number page other than from its row and not from check your answers
+- **WHEN** they save a valid CPH number
+- **THEN** the consignment addresses page is shown

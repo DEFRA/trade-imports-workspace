@@ -150,9 +150,9 @@ The system MUST mark the uploaded-documents card on a draft's review while any s
 
 #### Scenario: An infected document is named on the review in preference to one still scanning
 **ID**: SCN-CYA-010-B
-- **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected
+- **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
 - **WHEN** the user continues
-- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document
+- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document, not as still being scanned
 
 ### Requirement: Continuing is refused if the notification has changed since the review was shown
 **ID**: REQ-CYA-011

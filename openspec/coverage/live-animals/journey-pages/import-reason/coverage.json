@@ -143,6 +143,67 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-009",
+      "name": "The destination country is chosen from the origin countries and their territories, each territory named with its country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-009-A",
+          "name": "The transhipment destination country offers the origin countries and their territories",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "compose stack only; compares with the stub's MDM fixture" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "partial", "notes": "stub mode, captured fixture" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-009-B",
+          "name": "The transit destination country offers the same places",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "compose stack only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-009-C",
+          "name": "Each territory is named with its country",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer destination options as whatever reference data serves, each subdivision named with its parent, in one alphabetical list", "strength": "full", "notes": "real mode, labels and order" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-010",
+      "name": "A chosen destination country, a territory included, is kept and offered back",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-010-A",
+          "name": "A territory chosen as the destination country is kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "a territory chosen as the destination country saves and is shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a territory as the destination country and offers it back", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should commit a subdivision chosen as the transhipment destination country", "strength": "partial", "notes": "commit only" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-010-B",
+          "name": "A destination country saved before territories were offered is still shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "a destination country from the country list is still shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer a stored destination country to both reveals that ask for it", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
     }
   ]
 }

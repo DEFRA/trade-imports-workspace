@@ -101,3 +101,42 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the import reason page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: The destination country is chosen from the origin countries and their territories, each territory named with its country
+**ID**: REQ-IMPORT-REASON-009
+The system MUST offer, for the destination country under both Transit and Transhipment or onward travel, a placeholder and then the origin countries and their territories that the reference data service serves, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name.
+
+#### Scenario: The transhipment destination country offers the origin countries and their territories
+**ID**: SCN-IMPORT-REASON-009-A
+- **GIVEN** the user has chosen "Transhipment or onward travel"
+- **WHEN** the destination country list is read in full
+- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
+
+#### Scenario: The transit destination country offers the same places
+**ID**: SCN-IMPORT-REASON-009-B
+- **GIVEN** the user has chosen "Transit"
+- **WHEN** the destination country list is read in full
+- **THEN** it holds the same places as under "Transhipment or onward travel"
+
+#### Scenario: Each territory is named with its country
+**ID**: SCN-IMPORT-REASON-009-C
+- **GIVEN** either destination country list
+- **WHEN** a territory is read
+- **THEN** it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+### Requirement: A chosen destination country, a territory included, is kept and offered back
+**ID**: REQ-IMPORT-REASON-010
+The system MUST save a territory chosen as the destination country without an error, and MUST show the saved destination country, a territory or a country saved before territories were offered, as chosen when the page is reopened.
+
+#### Scenario: A territory chosen as the destination country is kept
+**ID**: SCN-IMPORT-REASON-010-A
+- **GIVEN** the user has chosen a reason that asks the destination country
+- **WHEN** they choose a territory and save and continue
+- **THEN** no error is shown
+- **AND** when they reopen the page the territory is shown as chosen
+
+#### Scenario: A destination country saved before territories were offered is still shown
+**ID**: SCN-IMPORT-REASON-010-B
+- **GIVEN** the notification holds a destination country from the country list
+- **WHEN** the user reopens the page
+- **THEN** that country is shown as chosen

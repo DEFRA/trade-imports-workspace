@@ -3,500 +3,542 @@
   "rows": [
     {
       "title": "Manage templates page, empty, read from the user's stored templates",
-      "detail": "No real service has notification templates today. Design Release 2.1 adds a Manage templates page that lists a trader's saved templates. This first slice builds the page itself and the store it reads from: the heading, intro line, phase banner, 'Templates' as the current navigation item, the 'My templates' heading and the results count, all built from GOV.UK Frontend components. With nothing saved yet the page shows a zero count and an empty list. Later rows add creating, viewing, using and deleting templates on top of this page and store.",
+      "detail": "No real service has notification templates today. Design Release 2.1 adds a Manage templates page that lists a trader's saved templates. This first slice builds the page and the store it reads from: the heading, intro line, phase banner, the 'My templates' heading and the results count, built from GOV.UK Frontend components. Templates are stored by the animals backend and kept between sessions, with no seeded examples (c-183). With nothing saved yet the page shows a zero count and an empty list. The page's path follows the real service's conventions, not the prototype's (c-258). Later rows add creating, viewing, using, changing and deleting templates on top of this page and store.",
       "acceptanceCriteria": [
-        "A signed-in user opening /templates sees a page titled 'Manage templates - Import notification service - GOV.UK' with the H1 'Manage templates' and, under it, the line 'Select, manage or create new notification templates' (prototype:dr2-1-source app/views/design-release-2.1/dashboard-templates.html:9,43-44; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:15-19)",
+        "A signed-in user opening Manage templates sees a page titled 'Manage templates - Import notification service - GOV.UK' with the H1 'Manage templates' (prototype:dr2-1-source dashboard-templates.html:9,43; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:15-19; ruling:sam-2026-10-09 claim 103)",
+        "Under the heading the page shows the line 'Select, manage or create new notification templates' (prototype:dr2-1-source dashboard-templates.html:44; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:19)",
         "Manage templates has no Back link: the page starts with its heading (trace:prototype-dr2-1 T1 action 24)",
-        "The page shows the Alpha phase banner 'This is a new service. Help us improve it and give your feedback by email.', whose feedback link goes to the same feedback address the service's other pages use, never '#' (prototype:dr2-1-source app/views/design-release-2.1/dashboard-templates.html:12-17)",
-        "The service navigation marks 'Templates' as the current item on Manage templates (prototype:dr2-1-source app/routes.js:8939; trace:prototype-dr2-1 T1 action 21; prototype:dr2-1-specs e2e/templates.fit.spec.js:26)",
-        "The templates are listed under an H2 'My templates' (prototype:dr2-1-source app/views/design-release-2.1/dashboard-templates.html:58; prototype:dr2-1-specs e2e/templates.fit.spec.js:21)",
-        "With no saved templates the page shows 'Show 0 of 0 results' and an empty list, with no empty-state message, no filter, no search and no pagination control (prototype:dr2-1-source app/routes.js:7644-7658, dashboard-templates.html:61,77-81; prototype:dr2-1-specs e2e/templates.fit.spec.js:22)",
-        "A user who has never saved a template sees no example templates: the list holds only templates that user has really saved (ruling:sam-2026-10-07 claim 6; conflicts:c-templates-001)",
-        "The page is built from GOV.UK Frontend components (the standard heading, caption, phase banner and summary list markup) rather than the prototype's custom app-dr2-* blocks, and renders as the design does (trace:prototype-dr2-1 T1 action 24 main outerHTML)"
+        "The page shows the Alpha phase banner 'This is a new service. Help us improve it and give your feedback by email.', whose feedback link goes to the same feedback address the service's other pages use, never '#' (prototype:dr2-1-source dashboard-templates.html:12-17)",
+        "The templates are listed under an H2 'My templates' (prototype:dr2-1-source dashboard-templates.html:58; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:21)",
+        "With no saved templates the page shows 'Show 0 of 0 results' and an empty list, with no empty-state message, no filter, no search and no pagination control (prototype:dr2-1-source dashboard-templates.html:61,77-81; trace:prototype-dr2-1 T1 action 24; prototype:dr2-1-specs e2e/templates.fit.spec.js:22)",
+        "A user who has never saved a template sees no example templates: the list holds only templates that user has really saved (ruling:sam-2026-10-07 claim 10; ruling:sam-2026-10-09 claim 125; c-183)",
+        "The page is built from GOV.UK Frontend components (the standard heading, caption and phase banner) rather than the prototype's custom app-dr2-* blocks, and renders as the design does (trace:prototype-dr2-1 T1 action 24 main outerHTML)"
       ],
-      "requirements": ["req-templates-001", "req-templates-002", "req-templates-004", "req-templates-005", "req-templates-006", "req-templates-007", "req-templates-008", "req-templates-010", "req-templates-016"],
+      "requirements": ["req-1291", "req-1292", "req-1294", "req-1296", "req-1297", "req-1298", "req-1300", "req-1306", "req-1310"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-templates.html; app/routes.js:7644-7689, 8444-8464, 8939" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-templates.html" },
         { "source": "trace:prototype-dr2-1", "ref": "T1 manage-templates-lists-the-saved-templates-with-view-and-use-actions" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:15-26" },
-        { "source": "ruling:sam-2026-10-07", "ref": "claim 6 (persistence overrides the prototype's session store)" }
+        { "source": "ruling:sam-2026-10-07", "ref": "claim 10 (persistence overrides the prototype's session store)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 103 (templates pages named by page, not path) and 125 (c-183 kept)" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at where templates live and the shape of the stored template record (owner, organisation, title, category, date created, the notification answers it holds), and at the Manage templates page pattern: every later templates row builds its pages and its saves on these.",
+      "dependsOn": [],
+      "gate": "Look at where templates live and the shape of the stored template record (owner, set it was made in, title, date created, the notification answers it holds), and at the Manage templates page pattern: every later templates row builds its pages and its saves on these.",
       "openQuestions": [],
-      "notes": "Pass 1 slices combined: the page chrome (req-templates-001, -002, -004, -006), the navigation state (-005), the list heading, count and empty state (-007, -008, -010) and the GOV.UK component rule (-016), which every later templates page also follows. All share one page and one set-up. Decision (this drafter): the templates pages live in the animals frontend under the live-animals set, and templates are stored by the animals backend, because a template is a set of live-animals notification answers answered on the animals journey's own question pages, task list and review cards, and using one creates an animals notification; the INS front door only links in (navigation item, dashboard 'Use template', the template-mode type question). This differs from the layout area's assumption (req-layout-and-sign-in-061's why) that templates land in the INS frontend; combiner, reconcile the two. The 'Templates' navigation item itself is the layout-and-sign-in area's row: this row depends on it for the current-item criterion. The seeded prototype templates are set aside by conflict c-templates-001. Privacy and persistence across sign-in are observed in the save row, once a template can exist.",
+      "notes": [
+        "Re-distil (9 October ruling): rewritten to the current requirements. The page is named by page, never by the prototype's path (c-258, ruling claim 103). req-1310 (templates stored by the animals backend, no seeded templates) moves here from the save row: the empty, unseeded list is where it is first seen, and the store is built here; its kept-between-sessions half is observed again in the save row once a template can exist. req-1295 (Templates marked current) stays with the navigation row (inc-152).",
+        "Combines the page chrome (req-1291, req-1292, req-1294, req-1296), the list heading, count and empty state (req-1297, req-1298, req-1300), the GOV.UK component rule (req-1306), which every later templates page also follows, and the store (req-1310): one page, one set-up.",
+        "Templates belong to both sets (live animals and germinal products, ruling claim 51 and 127), so the Manage templates, template page and delete pages are not set pages; the existing decision keeps them in the animals frontend beside the live-animals set's features, where the theme already draws them. The plan may place the folder outside sets/live-animals if the germinal set needs to reach it; say so in the plan."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/manage",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/index.js",
-        "frontend:src/server/app/shared/paths.js",
         "frontend:src/server/app/shared/layout.njk",
-        "frontend:src/server/app/shared/copy.en.js",
-        "frontend:src/server/app/shared/copy.cy.js",
-        "frontend:src/server/app/services/persistence"
+        "frontend:src/server/router.js"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-151"
+    },
+    {
+      "title": "Templates marked current in the service navigation on every templates page",
+      "detail": "On every templates page (Manage templates, Enter template name, the template page and the delete and discard confirmations) the service navigation marks 'Templates' as the current item. The navigation item itself is the layout area's work in the same row.",
+      "acceptanceCriteria": [
+        "On Manage templates, Templates is the item marked as current in the service navigation, and Dashboard and Address book are not (prototype:dr2-1-source app/views/layouts/main.html:79-95; trace:prototype-dr2-1 T1 action 24 .govuk-service-navigation; prototype:dr2-1-specs e2e/templates.fit.spec.js:23)"
+      ],
+      "requirements": ["req-1295"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/layouts/main.html:79-95" },
+        { "source": "trace:prototype-dr2-1", "ref": "T1 action 24 .govuk-service-navigation" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:23" }
+      ],
+      "repos": ["frontend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": ["inc-151"],
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combiner: merge into inc-152 (the layout area's 'Templates item in the service navigation on both frontends', req-965), as the earlier combiner did; it already observes the current marking on every templates page. Only the Manage templates page exists when inc-152 lands; each later templates row's page inherits the same layout, so its current marking is seen as those pages land."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/layout.njk",
+        "insfrontend:src/server/app/shared"
+      ],
+      "existingRow": "inc-152"
     },
     {
       "title": "Start a template: notification type, template name and origin in template mode",
-      "detail": "A trader starts a new template from Manage templates. 'Create new template' asks the notification type question, then a template name page, then opens Origin of the import in template mode, where the page carries a 'Template' caption with the template's name. The name is optional and unvalidated. Starting a template never creates or changes a notification. This row sets the template-mode pattern (caption, buttons and back link) every later template-mode question page follows.",
+      "detail": "A trader starts a new template from Manage templates. 'Create new template' asks the notification type question, offering only the types whose service stores templates (Live animals and Germinal products, ruling 9 October claims 127 and 128), then a template name page, then opens Origin of the import in template mode, where the page carries a 'Template' caption with the template's name. The name is optional and unvalidated. Starting a template leaves the user's draft notifications untouched. This row sets the template-mode pattern (caption, buttons and back link) every later template-mode question page follows.",
       "acceptanceCriteria": [
-        "Manage templates has a primary 'Create new template' button, a link styled as a button; following it shows 'What are you importing?' under the caption 'About the consignment', with the radios Live animals, Germinal products (semen, ova, embryos), Plants for planting, Potatoes (seed and ware) and Wood products, none preselected, a 'Continue' button, a Back link to Manage templates and no 'Template' caption; continuing with no choice shows the page's usual error (prototype:dr2-1-source dashboard-templates.html:50-53, app/routes.js:8958-8964; trace:prototype-dr2-1 T9 action 11; prototype:dr2-1-specs e2e/templates.fit.spec.js:20, 124-127)",
-        "Continuing from the type question goes to the template name page, titled 'Enter template name - Import notification service - GOV.UK', with the caption 'Create a new template', the H1 'Enter template name', one text input labelled by the H1 with the visually hidden label 'Enter template name', and no hint (prototype:dr2-1-source create-template.html:8,30-45; trace:prototype-dr2-1 T9 action 23; prototype:dr2-1-specs e2e/templates.fit.spec.js:128-136)",
-        "The template name page has a 'Save and continue' button and a 'Cancel and return to manage templates' link to Manage templates (prototype:dr2-1-source create-template.html:48-55; prototype:dr2-1-specs e2e/templates.fit.spec.js:137)",
-        "The template name page's Back link goes to the type question when a type has been chosen, and to Manage templates otherwise (prototype:dr2-1-source app/routes.js:8980; prototype:dr2-1-specs e2e/templates.fit.spec.js:138)",
-        "A blank name moves on to Origin of the import with no error, and no length, character or duplicate-name rule is applied; spaces around a name are trimmed (prototype:dr2-1-source app/routes.js:8984-9002; trace:prototype-dr2-1 T10 actions 11-13; prototype:dr2-1-specs e2e/templates.fit.spec.js:174-179)",
-        "Going back to the name page part way through creating a template shows the name already entered; starting a new template shows it empty (prototype:dr2-1-source app/routes.js:8966-8975)",
-        "While a new template is being created, Origin of the import shows a 'Template' caption with the template name above the caption 'About the consignment', asks the same questions with the same hints and guidance as for a notification (country search, region of origin, internal reference), offers only 'Save and continue' with no Cancel link, and its Back link returns to the template name page (trace:prototype-dr2-1 T11 action 14, T9 actions 30-38; prototype:dr2-1-specs e2e/templates.fit.spec.js:146-147)",
-        "Starting and naming a template creates no notification and changes none: the user's notifications on the dashboard are the same before and after, and the chosen notification type is kept on the template in progress (prototype:dr2-1-source app/routes.js:8989-9001; prototype:dr2-1-specs e2e/templates.fit.spec.js:140-142)"
+        "Manage templates has a primary 'Create new template' button, a link styled as a button; following it shows 'What are you importing?' under the caption 'About the consignment', with only the radios Live animals and Germinal products (semen, ova, embryos), none preselected, a 'Continue' button, a Back link to Manage templates and no 'Template' caption (prototype:dr2-1-source dashboard-templates.html:50-53; trace:prototype-dr2-1 T9 actions 4-11; prototype:dr2-1-specs e2e/templates.fit.spec.js:20, 124-127; ruling:sam-2026-10-09 claims 127-128; c-220; c-265)",
+        "Continuing with no choice shows the page's usual error, whose error summary link moves focus to the first radio (trace:prototype-dr2-1 T9 action 11; ruling:sam-2026-10-09 claim 106)",
+        "Continuing from the type question with either type goes to the template name page, titled 'Enter template name - Import notification service - GOV.UK', with the caption 'Create a new template', the H1 'Enter template name', one text input labelled by the H1 with the visually hidden label 'Enter template name', and no hint (prototype:dr2-1-source create-template.html:8,30-45; trace:prototype-dr2-1 T9 action 23; prototype:dr2-1-specs e2e/templates.fit.spec.js:128-136)",
+        "The template name page has a 'Save and continue' button and a 'Cancel and return to manage templates' link to Manage templates (prototype:dr2-1-source create-template.html:48-55; trace:prototype-dr2-1 T9 action 23; prototype:dr2-1-specs e2e/templates.fit.spec.js:137)",
+        "The template name page's Back link goes to the type question when a type has been chosen, and to Manage templates otherwise (prototype:dr2-1-source create-template back link; trace:prototype-dr2-1 T9 action 23; prototype:dr2-1-specs e2e/templates.fit.spec.js:138)",
+        "A blank name moves on to Origin of the import with no error, and no length, character or duplicate-name rule is applied; spaces around a name are trimmed (prototype:dr2-1-source create-template.html form novalidate; trace:prototype-dr2-1 T10 actions 11-13; prototype:dr2-1-specs e2e/templates.fit.spec.js:174-179)",
+        "Going back to the name page part way through creating a template shows the name already entered; starting another new template shows it empty (prototype:dr2-1-source prototype-dr2-1-source-p14-031; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-114)",
+        "After a Live animals choice, Origin of the import shows a 'Template' caption with the template name above the caption 'About the consignment', asks the same questions with the same hints and guidance as for a notification (country search, region of origin, internal reference), offers only 'Save and continue' with no Cancel link, and its Back link returns to the template name page (trace:prototype-dr2-1 T9 actions 30-38, T11 action 14; prototype:dr2-1-specs e2e/templates.fit.spec.js:146-147)",
+        "Starting and naming a template creates no notification and changes none: the user's draft notifications on the dashboard are the same before and after (ruling:sam-2026-10-09 claim 125; c-183; prototype:dr2-1-specs e2e/templates.fit.spec.js:140-142)"
       ],
-      "requirements": ["req-templates-003", "req-templates-023", "req-templates-024", "req-templates-025", "req-templates-026", "req-templates-027", "req-templates-028", "req-templates-030", "req-templates-031", "req-templates-032", "req-templates-033", "req-templates-034", "req-templates-035"],
+      "requirements": ["req-1293", "req-1313", "req-1314", "req-1316", "req-1317", "req-1318", "req-1320", "req-1321", "req-1322", "req-1323", "req-1324", "req-1325"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/create-template.html; app/routes.js:8958-9002" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/create-template.html; dashboard-templates.html:50-53" },
         { "source": "trace:prototype-dr2-1", "ref": "T9 create-a-new-template-type-name-answers-review-save; T10; T11" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:124-147, 174-179" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:124-147, 174-179" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 103, 106, 125, 127, 128" }
       ],
       "repos": ["backend", "frontend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes) and where a template in progress is held: every later template-mode page copies this.",
+      "dependsOn": ["inc-151", "inc-148", "inc-010"],
+      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes), where a template in progress is held, and how the type question hands a germinal choice on: every later template-mode page, and the germinal set's template mode (req-1876), copies this.",
       "openQuestions": [],
-      "notes": "Combines the start of template creation: the button (req-templates-003), the type question in template mode (-023, -024, -025), the name page (-026 to -028, -030 to -033) and the first template-mode question page (-034, -035). They are one journey a reviewer walks once; split, none can be seen alone. Depends on the Manage templates row, and on the start-and-origin row that builds the type question. The prototype's 'clears any notification in progress' has no real counterpart (real notifications are not a single session draft), so the criterion is written as 'creates and changes no notification'. The type question lives in the INS frontend (start-and-origin area's rows); its template mode hands off to the animals frontend's name page. Combiner: the start-and-origin row 'Start template creation from the notification type question' (req-010) describes the same page in template mode, merge it into this row. Backend is listed so the plan can hold the template in progress in the template store rather than as a notification; if the plan holds it elsewhere, the backend repo carries no change in this row. 'Template' caption and template-mode save actions change shared page chrome every question page uses.",
+      "notes": [
+        "Re-distil (9 October ruling): the type question now offers only Live animals and Germinal products (c-220, c-265; the earlier criterion listing the plants types is withdrawn), its error links to the first radio and its field name is the service's (claim 106); paths, ?from= markers and field names are the service's (c-258); the user's other drafts are left untouched (c-183).",
+        "Combines the start of template creation: the button (req-1293), the type question in template mode (req-1313, req-1314), the name page (req-1316 to req-1318, req-1320 to req-1323) and the first template-mode question page (req-1324, req-1325). They are one journey a reviewer walks once; split, none can be seen alone.",
+        "Germinal: choosing Germinal products is observed here only as far as the template name page. What a germinal template asks after its name (the germinal set's origin and pages in template mode) is req-1876, in the germinal area's row, built in the germinal theme's copies of these pages once the germinal set exists (ruling claims 6, 14, 58). Keeping it apart keeps every criterion here observable before the germinal theme lands.",
+        "Combiner: the start-and-origin area's req-010 (template mode on the type question) is the same page; keep it in this row as before. The type question lives in the INS front door (c-007, ruling claim 126); its template mode hands off to the animals frontend's name page. Backend is listed so the plan can hold the template in progress in the template store rather than as a notification; if the plan holds it elsewhere, the backend carries no change in this row. The 'Template' caption and template-mode save actions change the shared caption and save-actions chrome every question page uses."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/create",
+        "insfrontend:src/server/app/features/notification-type",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
+        "tests:tests/ins/e2e/features/notification-type",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/notification-type",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
         "frontend:src/server/app/shared/section-caption.njk",
         "frontend:src/server/app/shared/save-actions.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/index.js",
-        "frontend:src/server/app/shared/paths.js",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-154"
     },
     {
       "title": "The template's task list and 'What are you importing?' in template mode",
-      "detail": "While a template is being created, 'What are you importing?' returns to the template's own task list, which is headed 'Template tasklist', shows a 'Template' tag and the template name, has five sections with no Documents section, and ends with 'Review template' and 'Return to manage templates'. Upload documents and the declaration are not part of a template.",
+      "detail": "While a template is being created, 'What are you importing?' returns to the template's own task list, which is headed 'Template tasklist', shows a 'Template' tag and the template name, has five sections with no Documents section, and ends with 'Review template' and 'Return to manage templates'. A template never offers documents or a declaration; the prototype's redirects guarding those addresses are not built (c-264).",
       "acceptanceCriteria": [
         "While a new template is being created, 'What are you importing?' shows the 'Template' caption and name, has a Back link to Origin of the import, and offers 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link to the template's task list (trace:prototype-dr2-1 T9 action 43)",
         "Saving 'What are you importing?' in template mode returns to the template's task list instead of going on to the main import reason (trace:prototype-dr2-1 T9 actions 46-49; prototype:dr2-1-specs e2e/templates.fit.spec.js:145-148)",
-        "The template's task list shows a 'Template' tag and the template name in place of the draft status and notification reference, is headed 'Template tasklist' instead of 'Notification tasklist', and keeps the 'Overview' H1 and the 'Your commodities' figures for animals and packages (0 and 0 before any are entered) (trace:prototype-dr2-1 T7 actions 7-10, 17, T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:92-93, 149)",
-        "The template's task list has five sections, '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Consignment parties' and '5. Contact address', with no Documents section and no 'Upload documents' task (trace:prototype-dr2-1 T7 actions 11-12; prototype:dr2-1-specs e2e/templates.fit.spec.js:94-96)",
-        "Its tasks are Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transport details, Roles and addresses (hint 'Consignor or Exporter, Consignee, Importer and Place of Destination') and Contact address for this consignment, each opening its question page (trace:prototype-dr2-1 T7 action 17)",
-        "Each task shows a green 'Complete' tag when answered and a blue 'To do' tag otherwise (trace:prototype-dr2-1 T7 action 17, T9 action 52)",
-        "The task list ends with a primary 'Review template' button to the template review and a secondary 'Return to manage templates' button to Manage templates, in place of 'Review and submit' and 'Return to dashboard' (trace:prototype-dr2-1 T7 actions 13-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:97-98)",
-        "In template mode, opening Upload documents returns to the template's task list, and opening the declaration goes to the template review (trace:prototype-dr2-1 T9 actions 57-60; prototype:dr2-1-specs e2e/templates.fit.spec.js:153-157)"
+        "The template's task list and its question pages show a grey 'Template' tag followed by the template's name in the status strip, in place of the draft status and notification reference (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:92, 149)",
+        "The template's task list is headed 'Template tasklist' instead of 'Notification tasklist', and keeps the 'Overview' H1 and the 'Your commodities' figures for animals and packages (0 and 0 before any are entered) (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:93)",
+        "The template's task list has five sections, '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Consignment parties' and '5. Contact address', with no Documents section and no 'Upload documents' task (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:94-96)",
+        "A live animals template's tasks are Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transport details, Roles and addresses (hint 'Consignor or Exporter, Consignee, Importer and Place of Destination') and Contact address for this consignment, each opening its question page (trace:prototype-dr2-1 T9 action 52; ruling:sam-2026-10-09 claim 103)",
+        "Each task shows a green 'Complete' tag when answered and a blue 'To do' tag otherwise (trace:prototype-dr2-1 T9 action 52)",
+        "The task list ends with a primary 'Review template' button to the template review and a secondary 'Return to manage templates' button to Manage templates, in place of 'Review and submit' and 'Return to dashboard' (trace:prototype-dr2-1 T9 action 52; prototype:dr2-1-specs e2e/templates.fit.spec.js:97-98)",
+        "Nothing on a template's task list or question pages links to Upload documents or the declaration (ruling:sam-2026-10-09 claims 104-105; c-264)",
+        "For a notification, the Overview page still shows its status and reference, 'Notification tasklist', its Documents section, 'Review and submit' and 'Return to dashboard' (repo:frontend features/hub; trace:animals-fit hub buttons)"
       ],
-      "requirements": ["req-templates-036", "req-templates-037", "req-templates-038", "req-templates-039", "req-templates-040", "req-templates-041", "req-templates-042", "req-templates-043", "req-templates-044"],
+      "requirements": ["req-1326", "req-1327", "req-1328", "req-1329", "req-1330", "req-1331", "req-1332", "req-1333", "req-1334"],
       "sources": [
-        { "source": "trace:prototype-dr2-1", "ref": "T7 a-saved-template-edit-opens-the-template-on-its-own-task-list; T9 actions 43-60" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:92-98, 145-157" }
+        { "source": "trace:prototype-dr2-1", "ref": "T9 actions 43-52" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:92-98, 145-149" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 103, 104, 105" },
+        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub" },
+        { "source": "trace:animals-fit", "ref": "hub buttons" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-154", "inc-098"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the commodity page in template mode (req-templates-036, -037), the template task list (-038 to -043) and the excluded pages (-044): one set-up, a template being created, and one page the others return to. The 'Review template' button points at the review row's page; the criterion is its target, observed once that row lands, so the review row follows straight after. Depends on the 'Start a template' row. Combiner: the notification-hub area's row 'The hub while a template is being created' (req-notification-hub-038 to -042) restates the same hub behaviour; merge it into this row, keeping both areas' ids.",
+      "notes": [
+        "Re-distil (9 October ruling): the criterion that Upload documents and the declaration redirect in template mode is withdrawn (c-264, claims 104-105): a template never offers them, and no guard is built. The task-list criteria no longer rest on the dropped whole-template edit trace (c-261); they are observed on a template being created.",
+        "Combines the commodity page in template mode (req-1326, req-1327), the template task list (req-1328 to req-1333) and the no-documents rule (req-1334): one set-up, a template being created, and one page the others return to. 'Review template' points at the review row's page; its target is observed once that row lands, so the review row follows straight after.",
+        "Combiner: keep the notification-hub area's req-814 to req-818 merged here, as before. A germinal template's task list (no Additional details task) is req-1876's."
+      ],
       "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/search",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/documents",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/declaration",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-155"
     },
     {
       "title": "Review your template",
-      "detail": "'Review template' opens a review page for the template in progress, with the template's five sections, 'Not applicable' for every unanswered row, and Change links straight to the question pages.",
+      "detail": "'Review template' opens a review page for the template in progress, with the template's sections and Change links straight to the question pages for the template being created. The review never leads to documents or the declaration; its main button saves the template (the save row).",
       "acceptanceCriteria": [
-        "'Review template' opens a page titled 'Review your template - Import notification service - GOV.UK' with the H1 'Review your template' under the 'Template' caption and the template name (trace:prototype-dr2-1 T9 actions 63-68; prototype:dr2-1-specs e2e/templates.fit.spec.js:161-164)",
         "The template review's Back link returns to the template's task list (trace:prototype-dr2-1 T9 action 68)",
-        "The review shows the sections About the consignment, Description of the goods, Transport and arrival, Consignment addresses and Contact address, with 'Not applicable' for every unanswered row and no documents section (trace:prototype-dr2-1 T9 action 68)",
-        "For cattle, the Additional details card has 'Certified for' and 'Includes unweaned animals', the Addresses card adds 'County parish holding (CPH) number', there is no identification details card, and 'Main import reason' holds a single row (trace:prototype-dr2-1 T9 action 68)",
-        "The review's Change links go straight to the question pages, such as Origin of the import and the contact address page, not to a saved template's change addresses (trace:prototype-dr2-1 T9 action 68 LINKS)"
+        "While a template is being created, the review's Change links open each question page directly to change the template in progress, such as Origin of the import and the contact address page, and that page shows the template-creation buttons, not 'Save and return' with a 'Cancel' back to a template page (trace:prototype-dr2-1 T9 action 68 LINKS; ruling:sam-2026-10-09 claim 103)"
       ],
-      "requirements": ["req-templates-045", "req-templates-046", "req-templates-047", "req-templates-048"],
+      "requirements": ["req-1336", "req-1338"],
       "sources": [
         { "source": "trace:prototype-dr2-1", "ref": "T9 actions 63-68" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:161-164" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:161-164" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 103" }
       ],
-      "repos": ["frontend", "tests"],
+      "repos": ["frontend", "backend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-155", "inc-101"],
       "gate": null,
       "openQuestions": [],
-      "notes": "One page, one slice. Depends on the template task list row. Kept apart from saving so the review cards (shared with the notification review) are reviewed on their own. The review's 'Delete' button is in the delete row (req-templates-049), since its target for a saved template exists only there; 'Save template' is in the save row. The review reuses the notification review's cards: coordinate with the review-and-submit area's card structure row.",
+      "notes": [
+        "Re-distil: rewritten to this area's two requirements; Change links are named by page, never by ?from= markers (c-258).",
+        "Combiner: keep the review-and-submit area's req-941 and req-942 (the review page, its sections and no errors or arrival date) merged here as before: the same page. The review reuses the notification review's cards."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/review",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/template-review",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/controller.js"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-156"
     },
     {
       "title": "Save a template and see it on Manage templates",
-      "detail": "'Save template' stores the template, even part answered, and returns to Manage templates with a success banner and the new template first in the list. Each card shows its title and links to view or use it. Templates are kept by the backend between sessions and belong to the user who saved them. A template saved with no name is 'Untitled template'.",
+      "detail": "'Save template' stores the template, even part answered, and returns to Manage templates with a success banner and the new template first in the list. Each card shows its title and links to view or use it. Templates are kept by the backend between sessions and belong to the user who saved them (c-183, c-184). A template saved with no name is 'Untitled template'. A template is saved only by the form post (c-188).",
       "acceptanceCriteria": [
-        "The template review has a 'Save template' button that posts the form; saving, even with only some sections answered, returns to Manage templates with the new template first in the list and the count one higher, such as 'Show 1-1 of 1 results' (trace:prototype-dr2-1 T9 actions 72-78; prototype:dr2-1-specs e2e/templates.fit.spec.js:166-169; conflicts:c-templates-006)",
-        "After saving, Manage templates shows a GOV.UK success notification banner with role alert, titled 'Success', headed '<template title> saved to templates'; it shows once, not again on reload, and with JavaScript on it dismisses itself after 5 seconds (prototype:dr2-1-source dashboard-templates.html:24-37, app/routes.js:8932-8936, 9010; trace:prototype-dr2-1 T5 action 26)",
+        "The template review's 'Save template' button saves the template, even with only some sections answered, and returns to Manage templates with the new template first in the list and the count one higher, such as 'Show 1-1 of 1 results' (trace:prototype-dr2-1 T9 actions 72-78; prototype:dr2-1-specs e2e/templates.fit.spec.js:166-169; c-188)",
+        "After saving, Manage templates shows a GOV.UK success notification banner with role alert, titled 'Success', headed '<template title> saved to templates' (prototype:dr2-1-source dashboard-templates.html:24-37; trace:prototype-dr2-1 T9 action 78; prototype:dr2-1-specs e2e/templates.fit.spec.js:168)",
+        "The banner shows once: it is gone on reload; it does not dismiss itself and stays on the page, with or without JavaScript, until the trader leaves or reloads (prototype:dr2-1-source dashboard-templates.html:24-37; c-006)",
         "A template saved with no name is titled 'Untitled template': the banner reads 'Untitled template saved to templates' and it is listed first (trace:prototype-dr2-1 T10 actions 14-16; prototype:dr2-1-specs e2e/templates.fit.spec.js:174, 182)",
         "Each template is a card labelled 'Template <title>' showing the template's category label above its title, which is an H3, with a 'View template' link to the template's page and a 'Use template' link (prototype:dr2-1-source partials/design-release-2.1/dashboard-template-card.html:2-11; trace:prototype-dr2-1 T1 actions 19-24; prototype:dr2-1-specs e2e/templates.fit.spec.js:24-25)",
-        "The list shows the user's saved templates newest saved first (prototype:dr2-1-source app/routes.js:7680-7689, 7808-7818)",
-        "A new template's address is built from its title in lower case with every run of other characters replaced by a hyphen ('template' if nothing is left), with -2, -3 and on added when the user already has a template with that address: two templates both named 'Weekly cattle' get distinct addresses (prototype:dr2-1-source app/routes.js:7695-7712)",
-        "A saved template is still listed after the user signs out and signs back in (ruling:sam-2026-10-07 claim 6; conflicts:c-templates-001)",
-        "A template is private to the user who saved it: another signed-in user does not see it on their Manage templates and cannot open it (conflicts:c-templates-002 default)",
-        "A saved template never appears among the user's notifications on the dashboard (ruling:sam-2026-10-07 claim 6)"
+        "With two templates saved one after the other, the list shows the later one first (prototype:dr2-1-source prototype-dr2-1-source-p14-012; c-183)",
+        "A saved template is still listed after the user signs out and signs back in (ruling:sam-2026-10-07 claim 10; c-183)",
+        "A template is private to the user who saved it: another signed-in user does not see it on their Manage templates and cannot open it (c-184)",
+        "A saved template never appears among the user's notifications on the dashboard (c-183)"
       ],
-      "requirements": ["req-templates-050", "req-templates-052", "req-templates-029", "req-templates-017", "req-templates-018", "req-templates-011", "req-templates-012", "req-templates-013", "req-templates-020", "req-templates-021"],
+      "requirements": ["req-1340", "req-1319", "req-1307", "req-1308", "req-1301", "req-1302", "req-1303", "req-1311"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:7680-7712, 7808-7818, 8932-8936, 9010; partials/design-release-2.1/dashboard-template-card.html" },
-        { "source": "trace:prototype-dr2-1", "ref": "T1; T5 action 26; T9 actions 72-78; T10" },
+        { "source": "prototype:dr2-1-source", "ref": "dashboard-templates.html:24-37; partials/design-release-2.1/dashboard-template-card.html" },
+        { "source": "trace:prototype-dr2-1", "ref": "T1; T9 actions 72-78; T10" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:24-25, 166-182" },
-        { "source": "ruling:sam-2026-10-07", "ref": "claim 6" }
+        { "source": "ruling:sam-2026-10-07", "ref": "claim 10" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-156"],
       "gate": null,
-      "openQuestions": [
-        "Should a saved template be private to the user who saved it, or shared with everyone in their organisation? Default followed: private to the signed-in user who saved it, held against their user id and organisation, matching 'My templates'; nobody else sees, uses, changes or deletes it. (conflicts:c-templates-002)"
+      "openQuestions": [],
+      "notes": [
+        "Re-distil (9 October ruling): the banner no longer dismisses itself after 5 seconds (c-006); the template-id-from-title criterion is withdrawn (req-1342 out of scope, c-259: how a template is identified is the backend's design); the ownership question is settled (c-184: private to the user who saved it), so the row carries no open question; req-1310 moved to the Manage templates row, where the store is built.",
+        "Combines saving (req-1340, req-1319), the success banner (req-1307, req-1308), the list order and card frame (req-1301, req-1302, req-1303) and privacy (req-1311): saving is the first moment a template exists, so each is first seen here. The 'Use template' link's target is built by the use row (req-1303's destination is observed there). The card's answer rows and category rule are in the card-answers row. The cross-user criterion uses a second test user, as the address book's cross-user spec does. The success banner pattern is reused by the delete, discard and change rows.",
+        "Combiner: the review-and-submit area's 'Save template' criterion (req-942) is the same button; it stays in inc-156."
       ],
-      "notes": "Combines saving (req-templates-050, -052, -029), the success banner (-017, -018), the list order and card frame (-011, -012, -013) and the storage rules (-020, -021): saving is the first moment a template exists, so each can only be seen here and they share one set-up. Depends on the review row. A template is saved only by the 'Save template' form post; a GET to a save address is not built (conflict c-templates-006, req-templates-099 out of scope). The card's answer rows (Commodity, Origin, Consignee, Consignor) and category rule are in the card-answers row, which carries the party-address question. The cross-user criterion uses a second test user, as the address book's cross-user spec does. The success banner pattern is reused by the delete, discard and change rows.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/manage",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/review",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
-      "shared": [
-        "frontend:src/server/app/services/persistence"
-      ],
-      "dependsOn": null,
-      "existingRow": null
+      "shared": [],
+      "existingRow": "inc-157"
     },
     {
       "title": "View a saved template",
-      "detail": "A saved template has its own page: its title as the heading, the date it was created, every saved answer in the same cards as the notification review with a Change link on each, and 'Use template' and 'Delete' buttons. A template never holds an arrival date. Addresses for a template that does not exist go back to Manage templates.",
+      "detail": "A saved template has its own page: its title as the heading, the date it was created, every saved answer in the same cards as the notification review with a Change link on each, and 'Use template' and 'Delete' buttons, with no Edit action (c-261). Opening the page of a template that does not exist or has been deleted goes back to Manage templates.",
       "acceptanceCriteria": [
         "'View template' opens the template page, with the caption 'Templates' above the template's title, which is its H1 and its page title ('<template name> - Import notification service - GOV.UK') (prototype:dr2-1-source view-template.html:8,46-47; trace:prototype-dr2-1 T3 actions 8-11; prototype:dr2-1-specs e2e/templates.fit.spec.js:40-44)",
         "The template page shows 'Date created: <d Month yyyy>' with the day the template was saved (trace:prototype-dr2-1 T3 action 12; prototype:dr2-1-specs e2e/templates.fit.spec.js:45)",
-        "The template page has a primary 'Use template' button and a red warning 'Delete' button, a Back link to Manage templates, and no Edit button or link (prototype:dr2-1-source view-template.html:55-66, app/routes.js:8478, 8501-8504; trace:prototype-dr2-1 T3 actions 13-20; prototype:dr2-1-specs e2e/templates.fit.spec.js:46-50)",
-        "The template page lists the answers in the notification review's cards in five numbered sections, '1. About the consignment' (Origin of import, What are you importing?, Main import reason), '2. Description of the goods' (a card per commodity '<common name> (<code>)' with species, Number of animals, Number of packages when required, the identification details table, and an Additional details card), '3. Transport and arrival' (Arrival details and Transport details), '4. Consignment addresses' and '5. Contact address', with no documents section and a Change link on every card (prototype:dr2-1-source app/routes.js:8277-8298, 8487-8496; trace:prototype-dr2-1 T3 actions 16, 20; prototype:dr2-1-specs e2e/templates.fit.spec.js:38, 48-49)",
-        "A template saved after answering every section shows on its page the country and region of origin, internal reference, commodity codes, common names and species, reason for import, purpose in the market, certified for, unweaned animals, animal and package totals and per-species numbers, net weight, package type, animal identification details, port of entry, means of transport, transport identification, transport document reference, the transporter's name, address, country, approval number and type, and the CPH number (prototype:dr2-1-source app/routes.js:7759-7803)",
-        "A template never shows or holds an arrival date or time, even when one was answered before saving (prototype:dr2-1-source app/routes.js:7784-7786; trace:prototype-dr2-1 T3 action 20)",
-        "The Change links go to the template's own change addresses for origin of the import, what are you importing, reason for import, consignment details (the commodity card header and its number-of-animals row), animal identification details, additional animal details, arrival details, transporter, roles and addresses, and contact address (prototype:dr2-1-source app/routes.js:8219-8275; trace:prototype-dr2-1 T3 action 15)",
-        "Posting to a template's page changes nothing and shows the page again (prototype:dr2-1-source app/routes.js:8659-8665; trace:prototype-dr2-1 T6 actions 8-10; prototype:dr2-1-specs e2e/templates.fit.spec.js:79-83)",
-        "Opening the page, or the use, edit, change or delete address, of a template that does not exist, has been deleted, or belongs to another user, goes to Manage templates (prototype:dr2-1-source app/routes.js:8471-8475, 8514-8518, 8556-8560, 8608-8612, 8633-8637, 11596-11600; trace:prototype-dr2-1 T6 actions 11-12; prototype:dr2-1-specs e2e/templates.fit.spec.js:84-85)"
+        "The template page has a primary 'Use template' button and a red warning 'Delete' button (prototype:dr2-1-source view-template.html:55-66; trace:prototype-dr2-1 T3 actions 13-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:46-47)",
+        "The template page's Back link goes to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-049; trace:prototype-dr2-1 T3 action 15; prototype:dr2-1-specs e2e/templates.fit.spec.js:50)",
+        "The template page has no Edit button or link (prototype:dr2-1-source prototype-dr2-1-source-p14-050; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-055; ruling:sam-2026-10-09 claim 82; c-261)",
+        "The template page lists the answers in the notification review's cards in five numbered sections, '1. About the consignment' (Origin of import, What are you importing?, Main import reason), '2. Description of the goods' (a card per commodity '<common name> (<code>)' with species, Number of animals, Number of packages when required, the identification details table, and an Additional details card), '3. Transport and arrival' (Arrival details and Transport details), '4. Consignment addresses' and '5. Contact address', with no documents section and a Change link on every card (trace:prototype-dr2-1 T3 actions 16, 20; prototype:dr2-1-specs e2e/templates.fit.spec.js:38, 48-49)",
+        "A live animals template saved after answering every section shows on its page the country and region of origin, internal reference, commodity codes, common names and species, reason for import, purpose in the market, certified for, unweaned animals, animal and package totals and per-species numbers, net weight, package type, animal identification details, port of entry, means of transport, transport identification, transport document reference, the transporter's name, address, country, approval number and type, and the CPH number (prototype:dr2-1-source prototype-dr2-1-source-p14-041, p14-042; trace:prototype-dr2-1 T3 action 20)",
+        "Each card's Change link opens the change of that section of the saved template: origin of the import, what you are importing, reason for import, consignment details (on the commodity card header and its number-of-animals row), animal identification details, additional animal details, arrival details, transporter, roles and addresses and contact address (trace:prototype-dr2-1 T3 action 15; ruling:sam-2026-10-09 claim 103)",
+        "Opening the page of a template that has been deleted, or of one that does not exist, goes to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-021; trace:prototype-dr2-1 T6 actions 11-12; prototype:dr2-1-specs e2e/templates.fit.spec.js:84-85)"
       ],
-      "requirements": ["req-templates-057", "req-templates-058", "req-templates-059", "req-templates-060", "req-templates-061", "req-templates-062", "req-templates-063", "req-templates-054", "req-templates-055", "req-templates-065", "req-templates-022"],
+      "requirements": ["req-1347", "req-1348", "req-1349", "req-1350", "req-1351", "req-1352", "req-1353", "req-1344", "req-1312"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/view-template.html; app/routes.js:7759-7803, 8219-8298, 8471-8504, 8659-8665" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/view-template.html; prototype-dr2-1-source-p14-021, p14-041, p14-042, p14-049, p14-050" },
         { "source": "trace:prototype-dr2-1", "ref": "T3 a-saved-template-view-the-template-answers-with-a-change-link-per-section; T6" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:38-50, 79-85" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:38-50, 84-85" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 82, 103" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-157"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the template page (req-templates-057 to -063, -065), what a saved template holds (-054, -055, first observable on this page) and the not-found rule (-022). Depends on the save row. The not-found criterion names every template address; the use, edit, change and delete addresses are built by later rows, each of which keeps this rule, so the criterion is fully observable once they land (the rows after this one restate it for their own address). The Addresses and Contact address cards' party content follows the party-address question and is in the card-answers row. The page reuses the notification review cards: coordinate with the review-and-submit area's card rows.",
+      "notes": [
+        "Re-distil (9 October ruling): the 'posting to the template page' criterion is withdrawn (req-1355 out of scope, c-262); the Change links are named by section, not by change addresses (c-258); the not-found criterion no longer names an edit address (c-261) and covers the template page only. req-1345 (never an arrival date) moves to the change row, where both its halves (on save and after a change) can be seen.",
+        "Combines the template page (req-1347 to req-1353), what a saved template holds (req-1344, first observable on this page) and the not-found rule (req-1312). req-1312 also names the change, use and delete pages; each of those rows observes it for its own page as it lands (inc-159, inc-160, inc-165), since those pages do not exist yet when this row lands.",
+        "The Addresses and Contact address cards' party content is in the card-answers row (req-1346). The page reuses the notification review cards."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/view",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/sections"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-158"
     },
     {
       "title": "Change one section of a saved template",
-      "detail": "A Change link on a template's page opens that section's question page prefilled with the template's answers, with only 'Save and return' and a 'Cancel' link. Saving updates the template, resets its date created, and returns to the template page with a success banner.",
+      "detail": "A Change link on a template's page opens that section's question page prefilled with the template's answers, with only 'Save and return' and a 'Cancel' link. Saving updates the template, never a draft notification, resets its date created, and returns to the template page with a success banner. A template never holds an arrival date, before or after a change.",
       "acceptanceCriteria": [
-        "Following a Change link on a template's page opens that section's question page prefilled with the template's answers, ready to edit; an unanswered optional field is empty, never 'Not applicable' (prototype:dr2-1-source app/routes.js:8539-8548; trace:prototype-dr2-1 T5 action 14; prototype:dr2-1-specs e2e/templates.fit.spec.js:64-71)",
-        "When changing a template section, the question page's only submit button is 'Save and return', beside a 'Cancel' link back to the template page, and its Back link returns to the template page (trace:prototype-dr2-1 T5 actions 10-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:68-69)",
-        "Saving a changed section returns to the template page, which shows the new answer and a success banner titled 'Success' headed '<template name> has been updated', shown once and, with JavaScript on, dismissing itself after 5 seconds; this holds for every section, not only origin (trace:prototype-dr2-1 T5 actions 18-26; prototype:dr2-1-specs e2e/templates.fit.spec.js:72-75; prototype:dr2-1-source view-template.html:28-41)",
-        "After a section is changed and saved, the template page's 'Date created' shows the day of that save (prototype:dr2-1-source app/routes.js:7758; trace:prototype-dr2-1 T5 action 26)",
-        "A change address for a section that is not one of the template's sections goes to the template page (prototype:dr2-1-source app/routes.js:8520-8537)",
-        "Leaving a change part way and opening the template page again abandons it: the template keeps its saved answers (prototype:dr2-1-source app/routes.js:8479-8485)",
-        "A change address for a template that does not exist goes to Manage templates (prototype:dr2-1-source app/routes.js:8514-8518)"
+        "Following a Change link on a template's page opens that section's question page prefilled with the template's answers, ready to edit; an unanswered optional field is empty, never 'Not applicable' (trace:prototype-dr2-1 T5 action 14; prototype:dr2-1-specs e2e/templates.fit.spec.js:64-71)",
+        "When changing a template section, the question page's only submit button is 'Save and return', beside a 'Cancel' link back to the template page, with none of the amend or journey buttons (trace:prototype-dr2-1 T5 actions 10-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:68-69; prototype:dr2-1-specs prototype-dr2-1-specs-p7-166)",
+        "When changing a template section, the question page's Back link returns to the template page (trace:prototype-dr2-1 T5 action 12)",
+        "Saving a changed section returns to the template page, which shows the new answer and a success banner titled 'Success' headed '<template name> has been updated'; the user's draft notifications on the dashboard are unchanged (trace:prototype-dr2-1 T5 actions 18-26; prototype:dr2-1-specs e2e/templates.fit.spec.js:72-75)",
+        "A template with no name, once a section is changed and saved, shows the banner 'Template has been updated' (prototype:dr2-1-specs prototype-dr2-1-specs-p7-167)",
+        "The template page's banner shows once: it is gone on reload; it does not dismiss itself and stays, with or without JavaScript, until the trader leaves or reloads (prototype:dr2-1-source view-template.html:28-41; c-006)",
+        "Changing and saving each section the template page links to (origin, what you are importing, reason for import, consignment details, animal identification details, additional animal details, arrival details, transporter, roles and addresses and contact address) updates the template and returns to its page with the new answer (prototype:dr2-1-specs prototype-dr2-1-specs-p7-183; trace:prototype-dr2-1 T3 action 15)",
+        "After a section is changed and saved, the template page's 'Date created' shows the day of that save (prototype:dr2-1-source prototype-dr2-1-source-p14-040; trace:prototype-dr2-1 T5 action 26)",
+        "A template never shows or holds an arrival date or time: answering one on the arrival page while creating it, or while changing its arrival details section, leaves the template page with no arrival date or time (prototype:dr2-1-source prototype-dr2-1-source-p14-043, p14-043-m1; trace:prototype-dr2-1 T3 action 20)",
+        "Leaving a change part way and opening the template page again abandons it: the template keeps its saved answers (prototype:dr2-1-source prototype-dr2-1-source-p14-054)",
+        "The change of a template that has been deleted goes to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-021; prototype:dr2-1-specs e2e/templates.fit.spec.js:84-85)"
       ],
-      "requirements": ["req-templates-064", "req-templates-066", "req-templates-067", "req-templates-068", "req-templates-069", "req-templates-070", "req-templates-071", "req-templates-053"],
+      "requirements": ["req-1354", "req-1356", "req-1358", "req-1359", "req-1360", "req-1361", "req-1343", "req-1345"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:7758, 8479-8485, 8514-8548; view-template.html:28-41" },
+        { "source": "prototype:dr2-1-source", "ref": "view-template.html:28-41; prototype-dr2-1-source-p14-040, p14-043, p14-054, p14-056" },
         { "source": "trace:prototype-dr2-1", "ref": "T5 a-saved-template-change-one-section-save-and-return-goes-back-to-the-template" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:64-75" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:64-75; prototype-dr2-1-specs-p7-166, p7-167, p7-183" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-158"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the change journey (req-templates-066 to -071), the template page banner and abandon rule (-064) and the date-created reset (-053), all seen only by changing a saved section. Depends on the view row.The arrival date is never held after a change (req-templates-055, in the view row) and the plan should keep that. The 'Save and return' and 'Cancel' actions change the shared save-actions chrome every question page uses.",
+      "notes": [
+        "Re-distil (9 October ruling): the section allow-list criterion is withdrawn (req-1357 out of scope, c-263); the banner no longer dismisses itself (c-006); 'Template has been updated' for an unnamed template and the every-section criterion added (req-1361); req-1345 moved here from the view row.",
+        "Combines the change journey (req-1356, req-1358 to req-1361), the template page banner and abandon rule (req-1354) and the date-created reset (req-1343), all seen only by changing a saved section, plus the arrival-date rule (req-1345), whose second half needs a change. Eleven criteria because each section's change is reviewed once; split by section only if the plan finds it too big.",
+        "The 'Save and return' and 'Cancel' actions change the shared save-actions chrome every question page uses, and take precedence over the amend ending (req-1358)."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/change",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
         "frontend:src/server/app/shared/save-actions.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/view",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-159"
     },
     {
       "title": "Use a template to start a notification",
-      "detail": "'Use template' creates and saves a new draft notification seeded from the template's answers and opens its normal notification task list. The arrival date is left to answer, no documents are carried, and the new notification starts with no validation errors.",
+      "detail": "'Use template' creates and saves a new draft notification in the template's own set, seeded from the template's answers, and opens its normal notification task list with a new GBN-AG reference. The arrival date is left to answer, no documents are carried, and the new notification starts with no validation errors. Other drafts are left untouched (c-183).",
       "acceptanceCriteria": [
-        "'Use template', from a card or the template page, creates a new draft notification and opens its task list headed 'Notification tasklist' with the status 'Draft' and a new notification reference made the same way as any new notification's; the new draft is listed on the dashboard (prototype:dr2-1-source app/routes.js:7820-7850, 11591-11607; trace:prototype-dr2-1 T4 actions 7-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:54-59)",
-        "The new notification uses the normal six-section task list, including '4. Documents' and '5. Consignment parties', ending with 'Review and submit' and 'Return to dashboard', and nothing on it names the template it came from (trace:prototype-dr2-1 T4 action 14)",
-        "The new notification's record holds the template's id and title (prototype:dr2-1-source app/routes.js:8014-8015)",
+        "'Use template', from a live animals template's card or its template page, creates a new live animals draft notification and opens its task list headed 'Notification tasklist' with the status 'Draft' and a new GBN-AG notification reference made the same way as any new notification's; the new draft is listed on the dashboard and the user's other drafts are unchanged (trace:prototype-dr2-1 T4 actions 7-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:54-59; ruling:sam-2026-10-09 claims 27, 51; c-183)",
+        "The new notification uses the set's normal task list, including '4. Documents' and '5. Consignment parties', ending with 'Review and submit' and 'Return to dashboard', and nothing on it names the template it came from (trace:prototype-dr2-1 T4 action 14)",
         "Its overview shows the template's animal and package totals under 'Your commodities' (trace:prototype-dr2-1 T4 action 14)",
-        "It is seeded with the template's country of origin, region of origin ('Yes' with the code when the template has one, 'No' when not) and internal reference (blank when none) (prototype:dr2-1-source app/routes.js:8006-8022)",
-        "It is seeded with the template's commodities and species, the notification type from the template's category, the commodity selections, animal and package numbers per species, net weight, package type and animal identification details (prototype:dr2-1-source app/routes.js:7897-7966, 8005, 8024-8049)",
-        "It is seeded with the main reason for import; the purpose in the internal market only when the reason is 'Internal market'; 'Certified for' when the template's value is a valid option, otherwise 'Further keeping'; the storage temperature only when it is a germinal product temperature option; and the unweaned animals answer when valid for the species, 'No' when the species have unweaned options and the template has none (prototype:dr2-1-source app/routes.js:7987-8001, 8051-8067)",
-        "It is seeded with the CPH number, port of entry, means of transport, transport identification and transport document reference, and leaves the arrival date empty, so Arrival details and Upload documents show 'To do' (prototype:dr2-1-source app/routes.js:8088-8094; trace:prototype-dr2-1 T4 action 14)",
-        "It is seeded with the transporter's name, address, country, approval number and type (prototype:dr2-1-source app/routes.js:8096-8106; conflicts:c-templates-005 default)",
-        "It carries no documents and shows no validation errors when first opened (prototype:dr2-1-source app/routes.js:8003-8124)",
-        "The use address of a template that does not exist goes to Manage templates and creates no notification (prototype:dr2-1-source app/routes.js:11596-11600)"
+        "It is seeded with the template's country of origin, region of origin ('Yes' with the code when the template has one, 'No' when not) and internal reference (blank when none) (prototype:dr2-1-source prototype-dr2-1-source-p14-062, p14-063)",
+        "It is seeded with the template's commodities and species, the commodity selections, animal and package numbers per species, net weight, package type and animal identification details (prototype:dr2-1-source prototype-dr2-1-source-p14-064 to p14-066; ruling:sam-2026-10-09 claim 51)",
+        "It is seeded with the main reason for import, and with the purpose in the internal market only when the reason is 'Internal market' (prototype:dr2-1-source prototype-dr2-1-source-p14-067)",
+        "It is seeded with 'Certified for' when the template's value is a valid option, otherwise 'Further keeping'; and with the unweaned animals answer when valid for the species, 'No' when the species have unweaned options and the template has none (prototype:dr2-1-source prototype-dr2-1-source-p14-068, p14-070; ruling:sam-2026-10-09 claim 57)",
+        "It is seeded with the CPH number, port of entry, means of transport, transport identification and transport document reference, and leaves the arrival date empty, so Arrival details and Upload documents show 'To do' (prototype:dr2-1-source prototype-dr2-1-source-p14-072; trace:prototype-dr2-1 T4 action 14)",
+        "It is seeded with the transporter's name, address, country, approval number and type (prototype:dr2-1-source prototype-dr2-1-source-p14-042; trace:prototype-dr2-1 T3 action 20; c-187)",
+        "It carries no documents and shows no validation errors when first opened (prototype:dr2-1-source prototype-dr2-1-source-p14-075)",
+        "Using a template that has been deleted goes to Manage templates and creates no notification (prototype:dr2-1-source prototype-dr2-1-source-p14-021)"
       ],
-      "requirements": ["req-templates-073", "req-templates-074", "req-templates-075", "req-templates-076", "req-templates-077", "req-templates-078", "req-templates-079", "req-templates-080", "req-templates-081", "req-templates-082"],
+      "requirements": ["req-1363", "req-1364", "req-1365", "req-1367", "req-1368", "req-1369", "req-1370", "req-1371", "req-1372"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:7820-8124, 11591-11607" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p14-021, p14-042, p14-059 to p14-075" },
         { "source": "trace:prototype-dr2-1", "ref": "T4 a-saved-template-use-starts-a-new-draft-notification-from-the-template" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:54-59" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:54-59" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 27, 51, 57" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-157", "inc-158"],
       "gate": null,
-      "openQuestions": [
-        "When a template is used, should the transporter's country it holds be carried into the new notification like the transporter's other details? Default followed: yes, seed it with the name, address, approval number and type. (conflicts:c-templates-005)"
+      "openQuestions": [],
+      "notes": [
+        "Re-distil (9 October ruling): the 'notification records the template's id and title' criterion is withdrawn (req-1366 out of scope, c-260); the notification starts in the template's own set (claim 51, c-266); req-1369 is now the live-animals half only (claim 57), so the storage-temperature seeding criterion leaves this row for the germinal half; the transporter-country question is settled (c-187), so the row carries no open question.",
+        "Combines every seeding rule (req-1363 to req-1365, req-1367 to req-1372): one action, one new notification, one set-up per check. Eleven criteria because the seeding rules are reviewed one by one; split only if the plan finds it too big.",
+        "Germinal: using a germinal products template, which starts a germinal products notification in the germinal set, is observed in req-1876's row once the germinal set exists; every criterion here is observed with a live animals template. Seeding party and contact addresses is in the card-answers row. Creating a seeded draft resembles copy-as-new: the plan may reuse the notification copy path."
       ],
-      "notes": "Combines every seeding rule (req-templates-073 to -082): one action, one new notification, one set-up per check. Eleven criteria because the seeding copy rules are reviewed one by one; split only if the plan finds it too big. Depends on the save row and the view row (the template page's 'Use template' button).The prototype's 'clears any notification in progress' has no real counterpart; the new draft is simply created. Seeding party and contact addresses follows the party-address question and is in the card-answers row. The template id and title on the record are observed through the notification record, as the backend's API returns it; nothing on the page shows them. Creating a seeded draft resembles copy-as-new: the plan may reuse the notification copy path (manage-notifications area).",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/use",
-        "tests:tests/animals/e2e/features/templates"
-      ],
-      "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification",
-        "frontend:src/server/app/services/persistence"
-      ],
-      "dependsOn": null,
-      "existingRow": null
-    },
-    {
-      "title": "Template card answers, category and each party's address",
-      "detail": "Each template card lists Commodity, Origin, Consignee and Consignor and is labelled 'Live animals' or 'Germinal products'. Following the default for the party-address question, a template saves each consignment party's address and the contact address as answered, shows them on its page, and seeds each back into a notification started from it.",
-      "acceptanceCriteria": [
-        "Each template card lists, in this order, Commodity (the commodity common names), Origin (the country of origin), Consignee (the consignee's name) and Consignor (the consignor's name), each reading 'Not applicable' when the template has no answer; a template saved with nothing answered shows 'Not applicable' for all four (prototype:dr2-1-source dashboard-template-card.html:15-34, app/routes.js:7730-7757; trace:prototype-dr2-1 T9 action 78, T10 action 16)",
-        "A template's category label reads 'Germinal products' when its notification holds only germinal products, and 'Live animals' otherwise (prototype:dr2-1-source app/routes.js:7752)",
-        "A template saves the place of origin, consignor, consignee, importer, place of destination and contact address each as answered, and its page's Addresses and Contact address cards show each of them (trace:prototype-dr2-1 T3 action 20; conflicts:c-templates-004 default)",
-        "Where the contact address was not chosen, the template uses the place of origin as its contact address, as the design does (prototype:dr2-1-source app/routes.js:7800-7802; conflicts:c-templates-004 default)",
-        "A notification started from a template has each party and the contact address seeded as the template holds them (prototype:dr2-1-source app/routes.js:7968-7985, 8069-8086, 8108-8120; conflicts:c-templates-004 default)"
-      ],
-      "requirements": ["req-templates-014", "req-templates-015", "req-templates-056"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "partials/design-release-2.1/dashboard-template-card.html:15-34; app/routes.js:7730-7757, 7800-7802, 7968-8120" },
-        { "source": "trace:prototype-dr2-1", "ref": "T3 action 20; T9 action 78; T10 action 16" }
-      ],
-      "repos": ["backend", "frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [
-        "Should a template save and reuse each party's address separately (consignor, consignee, importer, place of destination), or, as Design Release 2.1 does, save the place of origin and use it for every party? Default followed: save each party's address and the contact address separately as answered, show them on the template page and as the card's Consignee and Consignor, and seed each back into a notification started from it; where the contact address was not chosen, use the place of origin. (conflicts:c-templates-004)"
-      ],
-      "notes": "Kept apart because it carries the party-address question the other rows do not. Combines the card's answer rows (req-templates-014), the category rule (-015) and party addresses (-056): the card's Consignee and Consignor come from the same saved party addresses. Depends on the save row (cards), the view row (template page cards) and the use row (seeding), since its criteria are seen on all three. Germinal products can only be chosen once the commodities area's germinal products row lands; the category criterion's germinal half waits on it, the combiner should add that dependency.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/manage",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/view",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/use",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "frontend:src/server/app/services/persistence/records"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-160"
     },
     {
-      "title": "Sort the templates list",
-      "detail": "Manage templates has a 'Sort by:' select. Following the default for the sort question, it works the same way as the dashboard's sort, including without JavaScript: Newest first and Oldest first order by date created, and 'Select one' and 'Arrival date' keep the newest-first order.",
+      "title": "Template card answers, category and each party's address",
+      "detail": "Each template card lists Commodity, Origin, Consignee and Consignor and is labelled with the set the template was made in. A template saves each consignment party's address and the contact address as answered, shows them on its page, and seeds each back into a notification started from it, because the real notification persists and sends each party separately (c-186).",
       "acceptanceCriteria": [
-        "Manage templates has a 'Sort by:' select with the options 'Select one', 'Newest first', 'Oldest first' and 'Arrival date', preselecting the option that matches the current sort (prototype:dr2-1-source dashboard-templates.html:63-74; trace:prototype-dr2-1 T1 action 24)",
-        "With two or more templates, choosing 'Oldest first' lists them oldest date created first, and 'Newest first' newest first, with and without JavaScript, the same way the dashboard's sort applies (conflicts:c-templates-003 default)",
-        "'Select one' and 'Arrival date' keep the default newest-first order (conflicts:c-templates-003 default)"
+        "Each template card lists, in this order, Commodity (the commodity common names), Origin (the country of origin), Consignee (the consignee's name) and Consignor (the consignor's name), each reading 'Not applicable' when the template has no answer; a template saved with nothing answered shows 'Not applicable' for all four (prototype:dr2-1-source dashboard-template-card.html:15-34; trace:prototype-dr2-1 T9 action 78, T10 action 16; c-186)",
+        "A template made as a live animals template is labelled 'Live animals' on its card (prototype:dr2-1-source prototype-dr2-1-source-p14-014; trace:prototype-dr2-1 T1 action 24; ruling:sam-2026-10-09 claim 51; c-266)",
+        "A template saves the place of origin, consignor, consignee, importer, place of destination and contact address each as answered, and its page's Addresses card (Place of origin, Consignor, Consignee, Importer, Place of destination) and Contact address card show each of them as the design renders them (trace:prototype-dr2-1 T3 action 20; c-186)",
+        "Where the contact address was not chosen, the template's Contact address card shows the place of origin, as the design does (prototype:dr2-1-source prototype-dr2-1-source-p14-045; c-186)",
+        "A notification started from a template has each party and the contact address seeded as the template holds them (prototype:dr2-1-source prototype-dr2-1-source-p14-071, p14-074; c-186)"
       ],
-      "requirements": ["req-templates-009"],
+      "requirements": ["req-1304", "req-1305", "req-1346"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-templates.html:63-74; app/routes.js:7660-7674, 8444-8464" },
-        { "source": "trace:prototype-dr2-1", "ref": "T1 action 24 select#dashboard-templates-sort" }
+        { "source": "prototype:dr2-1-source", "ref": "partials/design-release-2.1/dashboard-template-card.html:15-34; prototype-dr2-1-source-p14-014, p14-045, p14-071, p14-074" },
+        { "source": "trace:prototype-dr2-1", "ref": "T1 action 24; T3 action 20; T9 action 78; T10 action 16" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 23, 51, 125" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-157", "inc-158", "inc-160", "inc-016"],
       "gate": null,
-      "openQuestions": [
-        "Should the templates list's Sort by select work, and if so what should 'Arrival date' do for templates that hold no arrival date? Default followed: build the select with the four options as designed, working the same way as the dashboard's sort (including without JavaScript): Newest first and Oldest first order by date created, 'Select one' and 'Arrival date' keep the default newest-first order. (conflicts:c-templates-003)"
+      "openQuestions": [],
+      "notes": [
+        "Re-distil (9 October ruling): the category is the set the template was made in, not worked out from its goods (c-266); the party-address question is settled (c-186, kept by claim 125), so the row carries no open question.",
+        "Combines the card's answer rows (req-1304), the category label (req-1305) and party addresses (req-1346): the card's Consignee and Consignor come from the same saved party addresses. Depends on the save, view and use rows, since its criteria are seen on all three.",
+        "Germinal: the 'Germinal products' half of req-1305 is observed in req-1876's row (a germinal template is saved and listed with that category) once the germinal set exists; here the label is observed for a live animals template, so the row needs no dependency on the germinal theme."
       ],
-      "notes": "Kept apart: it carries the sort question no other row does. Depends on the save row (two templates are needed to see an order). How the dashboard's sort submits (the notification-list area's sort row) is the pattern to copy; the combiner should order this row after that one.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/manage",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
       "shared": [
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards"
       ],
-      "dependsOn": null,
-      "existingRow": null
+      "existingRow": "inc-161"
+    },
+    {
+      "title": "Sort by select on Manage templates",
+      "detail": "Manage templates has a 'Sort by:' select built as Design Release 2.1 has it: four options, the current one preselected, outside any form and with no apply button. As in the prototype it does not reorder the list (c-185), so 'Arrival date' needs no meaning for templates.",
+      "acceptanceCriteria": [
+        "Manage templates has a 'Sort by:' select with the options 'Select one', 'Newest first', 'Oldest first' and 'Arrival date', with 'Select one' preselected when no sort has been chosen (prototype:dr2-1-source dashboard-templates.html:63-74; trace:prototype-dr2-1 T1 action 24; c-185)",
+        "The select sits outside any form and has no apply button (prototype:dr2-1-source prototype-dr2-1-source-p14-009; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-016-m1; c-185)",
+        "With two templates saved, choosing any option leaves the list in its newest-saved-first order (prototype:dr2-1-source prototype-dr2-1-source-p14-009; c-185)"
+      ],
+      "requirements": ["req-1299"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/dashboard-templates.html:63-74; prototype-dr2-1-source-p14-008, p14-009" },
+        { "source": "trace:prototype-dr2-1", "ref": "T1 action 24 Sort by select" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "dependsOn": ["inc-157"],
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Re-distil: c-185 now settles the sort question against the earlier default: the select is built as designed and does not reorder, so the row no longer needs the backend or the dashboard's sort pattern (dependency on inc-136 removed) and carries no open question. The select's name is the service's (c-258).",
+        "Kept apart rather than merged into the Manage templates row because its third criterion needs two saved templates (inc-157)."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "tests:tests/animals/e2e/features/templates"
+      ],
+      "shared": [],
+      "existingRow": "inc-162"
     },
     {
       "title": "Edit a whole saved template on its own task list",
-      "detail": "A saved template can be reopened at its edit address on its own template task list. Saving it from the review overwrites the template, keeping its address, and moves it to the top of the list.",
+      "detail": "Dropped by the 9 October ruling: no page links to the whole-template edit mode, so it is not built. A saved template is changed one section at a time (inc-159).",
       "acceptanceCriteria": [
         "Opening a saved template's edit address opens the template's task list ('Template tasklist', 'Template' tag and name) with the template's answers filled in (prototype:dr2-1-source app/routes.js:8551-8569; prototype:dr2-1-specs e2e/templates.fit.spec.js:88-90)",
         "Saving the edited template from its review overwrites it: the list count is unchanged, the template keeps its address, shows the changed answer, and is listed first (prototype:dr2-1-source app/routes.js:7751, 7808-7818)",
         "The edit address of a template that does not exist goes to Manage templates (prototype:dr2-1-source app/routes.js:8556-8560)"
       ],
-      "requirements": ["req-templates-072", "req-templates-051"],
+      "requirements": ["req-1362", "req-1341"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:7751, 7808-7818, 8551-8569" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:88-90" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:88-90" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 82" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
-      "status": "todo",
+      "status": "dropped",
+      "dependsOn": ["inc-157"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines opening the edit (req-templates-072) and saving over the template (-051): an edit is only seen whole once saved. Depends on the save row.The template page has no Edit link (req-templates-061): the address is reached directly, so tests open it by address. The review's Delete button for a saved template being edited is in the delete row.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/edit",
-        "tests:tests/animals/e2e/features/templates"
+      "notes": [
+        "Dropped: ruling:sam-2026-10-09 claim 82 put req-1362 and req-1341 out of scope (c-261). Requirements kept as they were; the row covers nothing. The criteria are left as the row had them, for the record; the combiner may keep the row's earlier text unchanged."
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/review",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template"
-      ],
-      "dependsOn": null,
-      "existingRow": null
+      "touches": [],
+      "shared": [],
+      "existingRow": "inc-163"
     },
     {
       "title": "Discard a template being created",
-      "detail": "A template being created can be thrown away from its review, through the same 'Delete this template?' confirmation, without being saved. The confirmation uses the journey layout.",
+      "detail": "A template being created can be thrown away from its review, through the same 'Delete this template?' confirmation, without being saved. The confirmation uses the journey layout. The discard page shows only while a template is being created.",
       "acceptanceCriteria": [
-        "The template review's red warning 'Delete' button, for a template being created, opens a page with the H1 'Delete this template?', a one-row summary list keyed 'Name' holding the name entered ('this template' when none), 'Confirm that you want to delete this template.' and 'This action cannot be undone.', and a Back link and 'No, cancel' link to the template review (prototype:dr2-1-source app/routes.js:8571-8587; trace:prototype-dr2-1 T11 actions 14-21; prototype:dr2-1-specs e2e/templates.fit.spec.js:185-195)",
+        "On the review of a template being created, the red warning 'Delete' button opens a page with the H1 'Delete this template?', a one-row summary list keyed 'Name' holding the name entered ('this template' when none), 'Confirm that you want to delete this template.' and 'This action cannot be undone.' (trace:prototype-dr2-1 T11 actions 14-21; prototype:dr2-1-specs e2e/templates.fit.spec.js:185-195; ruling:sam-2026-10-09 claim 103)",
+        "The discard confirmation's Back link and 'No, cancel' link go to the template review (trace:prototype-dr2-1 T11 actions 19-21; prototype:dr2-1-specs e2e/templates.fit.spec.js:193-195)",
         "The discard confirmation uses the journey layout, not the dashboard layout (prototype:dr2-1-source delete-template.html:1,23)",
-        "Confirming 'Yes, delete' throws the template away unsaved and returns to Manage templates, list and count unchanged, with the success banner '<template name> has been deleted', or 'Template has been deleted' when no name was entered (prototype:dr2-1-source app/routes.js:8589-8600; trace:prototype-dr2-1 T11 actions 25-28; prototype:dr2-1-specs e2e/templates.fit.spec.js:197-199)",
-        "Opening the discard page when no template is being created goes to Manage templates, and posting to it then changes nothing and returns to Manage templates (prototype:dr2-1-source app/routes.js:8572-8574; trace:prototype-dr2-1 T12 actions 7-8; prototype:dr2-1-specs e2e/templates.fit.spec.js:202-204)"
+        "Confirming 'Yes, delete' throws the template away unsaved and returns to Manage templates, list and count unchanged, with the success banner '<template name> has been deleted' (trace:prototype-dr2-1 T11 actions 25-28; prototype:dr2-1-specs e2e/templates.fit.spec.js:197-199)",
+        "Discarding a template with no name entered shows the banner 'Template has been deleted' (prototype:dr2-1-source prototype-dr2-1-source-p14-087; prototype:dr2-1-specs prototype-dr2-1-specs-p7-185)",
+        "Opening the discard page when no template is being created goes to Manage templates, and confirming it then changes nothing and returns to Manage templates (trace:prototype-dr2-1 T12 actions 7-8; prototype:dr2-1-specs e2e/templates.fit.spec.js:202-204)"
       ],
-      "requirements": ["req-templates-090", "req-templates-091", "req-templates-092", "req-templates-088"],
+      "requirements": ["req-1380", "req-1381", "req-1382", "req-1378"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:8571-8600; app/views/design-release-2.1/delete-template.html" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/delete-template.html; prototype-dr2-1-source-p14-085 to p14-087" },
         { "source": "trace:prototype-dr2-1", "ref": "T11 create-a-new-template-discard-a-template-being-created; T12" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:185-204" }
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:185-204; prototype-dr2-1-specs-p7-185" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-156"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the discard page (req-templates-090), its guard (-091), the outcome (-092) and the journey layout rule (-088, which the delete row's confirmation also keeps). The prototype's unguarded discard post is not reproduced (req-templates-096 out of scope). Depends on the review row. The 'Delete' button's half for a saved template is req-templates-049, in the delete row.",
+      "notes": [
+        "Re-distil: pages named by page (c-258, claim 103); the unnamed-template banner split into its own criterion so the reviewer checks the copy.",
+        "Combines the discard page (req-1380), its guard (req-1381), the outcome (req-1382) and the journey layout rule (req-1378, which the delete row's confirmation also keeps; observed for that page in inc-165). The prototype's unguarded discard post is not reproduced (req-1386 out of scope). req-1381 is kept: it is look and feel the trader can reach by Back, unlike the template URL guards claim 105 drops."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/discard",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
         "tests:tests/animals/e2e/features/templates"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/review"
-      ],
-      "dependsOn": null,
-      "existingRow": null
+      "shared": [],
+      "existingRow": "inc-164"
     },
     {
       "title": "Delete a saved template",
-      "detail": "A saved template can be deleted from its page, or from its review while it is being edited, through a 'Delete this template?' confirmation. Deleting removes it and returns to Manage templates with a banner.",
+      "detail": "A saved template can be deleted from its page through a 'Delete this template?' confirmation. Deleting removes it and returns to Manage templates with a banner.",
       "acceptanceCriteria": [
-        "The template page's 'Delete' button opens a page titled 'Delete this template? - Import notification service - GOV.UK' with the H1 'Delete this template?', using the journey layout (prototype:dr2-1-source delete-template.html:1,6,23, app/routes.js:8616-8618; trace:prototype-dr2-1 T8 actions 8-11; prototype:dr2-1-specs e2e/templates.fit.spec.js:102-107)",
-        "The confirmation shows a one-row summary list keyed 'Name' holding the template's title, then 'Confirm that you want to delete this template.' and 'This action cannot be undone.' (prototype:dr2-1-source delete-confirmation.html:6-11; trace:prototype-dr2-1 T8 actions 12-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:109-111)",
-        "It has a red warning 'Yes, delete' button and a 'No, cancel' link back to the template page in a GOV.UK button group, and a Back link to the template page (prototype:dr2-1-source delete-confirmation.html:13-21; trace:prototype-dr2-1 T8 actions 15-18; prototype:dr2-1-specs e2e/templates.fit.spec.js:112)",
-        "Confirming 'Yes, delete' removes the template and returns to Manage templates with one template fewer in the count and the success banner '<title> has been deleted'; the template's page then goes to Manage templates (prototype:dr2-1-source app/routes.js:8627-8657; trace:prototype-dr2-1 T8 actions 22-29; prototype:dr2-1-specs e2e/templates.fit.spec.js:114-117)",
-        "On the template review, the red warning 'Delete' button goes to the discard confirmation for a template being created, and to the delete confirmation for a saved template being edited (trace:prototype-dr2-1 T9 action 68; prototype:dr2-1-specs e2e/templates.fit.spec.js:166)",
-        "The delete address of a template that does not exist goes to Manage templates (prototype:dr2-1-source app/routes.js:8608-8612, 8633-8637)"
+        "The template page's 'Delete' button opens a page titled 'Delete this template? - Import notification service - GOV.UK' with the H1 'Delete this template?', using the journey layout (prototype:dr2-1-source delete-template.html:1,6,23; trace:prototype-dr2-1 T8 actions 8-11; prototype:dr2-1-specs e2e/templates.fit.spec.js:102-107; ruling:sam-2026-10-09 claim 103)",
+        "The confirmation shows a one-row summary list keyed 'Name' holding the template's title (prototype:dr2-1-source delete-confirmation.html:6-8; trace:prototype-dr2-1 T8 action 12; prototype:dr2-1-specs e2e/templates.fit.spec.js:109)",
+        "Under the summary it says 'Confirm that you want to delete this template.' and 'This action cannot be undone.' (prototype:dr2-1-source delete-confirmation.html:9-11; trace:prototype-dr2-1 T8 actions 13-14; prototype:dr2-1-specs e2e/templates.fit.spec.js:110-111)",
+        "It has a red warning 'Yes, delete' button and a 'No, cancel' link back to the template page, in a GOV.UK button group (prototype:dr2-1-source delete-confirmation.html:13-21; trace:prototype-dr2-1 T8 actions 15-18; prototype:dr2-1-specs e2e/templates.fit.spec.js:112)",
+        "Its Back link goes to the template page (prototype:dr2-1-source prototype-dr2-1-source-p14-080; trace:prototype-dr2-1 T8 action 16; prototype:dr2-1-specs e2e/templates.fit.spec.js:107)",
+        "Confirming 'Yes, delete' removes the template and returns to Manage templates with one template fewer in the count and the success banner '<title> has been deleted' (trace:prototype-dr2-1 T8 actions 22-29; prototype:dr2-1-specs e2e/templates.fit.spec.js:114-117)",
+        "After deletion the template's page, and its delete confirmation, go to Manage templates (prototype:dr2-1-source prototype-dr2-1-source-p14-021; prototype:dr2-1-specs prototype-dr2-1-specs-p7-184)"
       ],
-      "requirements": ["req-templates-083", "req-templates-084", "req-templates-085", "req-templates-086", "req-templates-087", "req-templates-089", "req-templates-019", "req-templates-049"],
+      "requirements": ["req-1373", "req-1374", "req-1375", "req-1376", "req-1377", "req-1379", "req-1309"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/delete-template.html; partials/design-release-2.1/delete-confirmation.html; app/routes.js:8608-8657" },
-        { "source": "trace:prototype-dr2-1", "ref": "T8 a-saved-template-delete-confirm-then-the-list-says-it-was-deleted; T9 action 68" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:102-119, 166" }
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/delete-template.html; partials/design-release-2.1/delete-confirmation.html; prototype-dr2-1-source-p14-076 to p14-082" },
+        { "source": "trace:prototype-dr2-1", "ref": "T8 a-saved-template-delete-confirm-then-the-list-says-it-was-deleted" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:102-119; prototype-dr2-1-specs-p7-184" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 103" }
       ],
       "repos": ["backend", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
+      "dependsOn": ["inc-158", "inc-164"],
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the delete confirmation (req-templates-083 to -087), the outcome and banner (-089, -019) and the review's Delete button (-049), whose saved-template half needs this page and the edit row. Depends on the view, edit and discard rows. Deleted templates are removed from the store, so the prototype's seeded-template resurrection does not arise (conflict c-templates-001).",
+      "notes": [
+        "Re-distil (9 October ruling): the dependency on the dropped whole-template edit row (inc-163) is removed, and with it the criterion that the review's Delete goes to the delete confirmation for a saved template being edited: a saved template is never on a review any more (c-261). Pages named by page (c-258).",
+        "Combines the delete confirmation (req-1373 to req-1377), the outcome and banner (req-1379, req-1309). Depends on the view row (the Delete button) and the discard row (the shared confirmation page). Deleted templates are removed from the store, so the prototype's seeded-template resurrection does not arise (c-183).",
+        "Combiner: the review-and-submit area's req-943 (the review's Delete button) sat here before; with the edit mode dropped it is only the discard half, so consider moving it to inc-164."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/delete",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template",
         "tests:tests/animals/e2e/features/templates"
       ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/review",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/templates/discard",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/template"
-      ],
-      "dependsOn": null,
-      "existingRow": null
-    },
-    {
-      "title": "'Use template' on the dashboard opens Manage templates",
-      "detail": "The INS front door's dashboard gains a secondary 'Use template' button, a link styled as a button, that opens Manage templates in the animals frontend.",
-      "acceptanceCriteria": [
-        "The dashboard has a secondary 'Use template' button, a link styled as a button, and following it opens Manage templates at /templates (trace:prototype-dr2-1 T2 action 8; prototype:dr2-1-specs e2e/templates.fit.spec.js:30-34)"
-      ],
-      "requirements": ["req-templates-093"],
-      "sources": [
-        { "source": "trace:prototype-dr2-1", "ref": "T2 manage-templates-the-dashboard-use-template-button-opens-manage-templates action 8" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/templates.fit.spec.js:30-34" }
-      ],
-      "repos": ["insfrontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "The same button is required by the dashboard-home area ('The home has a secondary Use template button linking to the templates list') and the notification-list area: combiner, merge this row into the dashboard-home row that builds the home's buttons, keeping req-templates-093 there. Depends on the Manage templates row, which builds the page it opens.",
-      "touches": [
-        "tests:tests/ins/e2e/features"
-      ],
-      "shared": [
-        "insfrontend:src/server/app/features/dashboard"
-      ],
-      "dependsOn": null,
-      "existingRow": null
+      "shared": [],
+      "existingRow": "inc-165"
     }
   ],
   "unobservable": []

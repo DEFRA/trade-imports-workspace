@@ -2,66 +2,74 @@
   "area": "notification-list",
   "requirements": [
     {
-      "id": "req-notification-list-001",
-      "statement": "The live animals notifications list is served at /live-animals by the service that hosts the category lists; by default that is the INS frontend reading the INS backend read model, with the animals frontend's own dashboard at its set root sending the user to that list, and the animals backend's GET /notifications left as it is until nothing calls it.",
-      "why": "Design Release 2.1 puts a category's list at /live-animals inside one service, while the real dashboard is ruled temporary in the animals frontend and due to move to the INS frontend, and the animals backend list is due to be replaced by the event-populated read model. Which service hosts the list decides where every other requirement in this area is built.",
+      "id": "req-1032",
+      "statement": "The INS frontend serves the live animals notification list, in its own path shape, reading the INS backend read model; the live-animals set root in the animals frontend no longer renders a notification list and sends the trader to the INS frontend's live animals list; the animals backend's GET /notifications is left as it is until nothing calls it.",
+      "why": "Rhys's DR1 judgement (2026-08-28) moves the temporary animals-frontend dashboard to the INS frontend, and the 2026-10-09 ruling keeps the move for that judgement alone, not because the prototype shows it (c-159); each set's root redirects to its own INS list. This is the live animals half: the germinal products half is a requirement of its own, as the ruling splits req-1032 per set.",
       "claims": [
+        "document-dr1-parity-backlog-p2-002",
+        "document-dr1-parity-notes-p1-014",
         "prototype-dr2-1-source-p13-015",
         "prototype-dr2-1-specs-p5-032",
-        "document-dr1-parity-notes-p1-014",
-        "document-dr1-parity-backlog-p2-002",
         "repo-backend-p3-001",
         "repo-backend-p3-018",
         "repo-insbackend-p1-024",
         "repo-insbackend-p1-025",
         "repo-insbackend-p1-027",
-        "repo-frontend-p3-001",
+        "repo-tests-p4-005",
+        "repo-tests-p4-043",
+        "ruling-sam-2026-10-09-p1-034",
+        "ruling-sam-2026-10-09-p1-057",
+        "ruling-sam-2026-10-09-p1-072",
+        "ruling-sam-2026-10-09-p1-113",
+        "ruling-sam-2026-10-09-p1-114",
         "trace-animals-fit-p2-001",
         "trace-animals-fit-p2-084",
         "trace-animals-fit-p2-085",
-        "trace-e2e-p3-001",
+        "trace-e2e-p2-038",
         "trace-e2e-p2-043",
         "trace-e2e-p2-044",
-        "trace-e2e-p3-086",
-        "repo-tests-p4-005"
+        "trace-e2e-p3-001",
+        "trace-e2e-p3-086"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the dashboard is the animals frontend's GET route at /live-animals, backed by the animals backend's GET /notifications; the INS backend read model exists but serves the INS frontend's own dashboard.",
-      "conflicts": ["c-notification-list-001"]
+      "deltaNote": "Today the dashboard is the animals frontend's GET route at the live-animals set root, backed by the animals backend's GET /notifications, and the animals frontend's service root redirects there, dropping the query string (repo-tests-p4-043); the INS backend read model exists but serves the INS frontend's own dashboard.",
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-002",
+      "id": "req-1033",
       "statement": "The list page's browser title is 'Dashboard - Import notification service - GOV.UK', with the caption 'Dashboard' above an h1 naming the category: 'Live animals' on the live animals list.",
       "why": "Design Release 2.1 titles every list 'Dashboard' and heads it with the category, so a trader can tell which category's notifications they are looking at.",
       "claims": [
         "prototype-dr2-1-source-p13-021",
         "prototype-dr2-1-source-p13-100",
-        "trace-prototype-dr2-1-p1-038",
-        "trace-prototype-dr2-1-p1-038-m2",
         "prototype-dr2-1-specs-p5-032",
         "prototype-dr2-1-specs-p5-033",
         "repo-frontend-p3-002",
         "repo-frontend-p3-003",
+        "repo-tests-p4-005",
         "trace-animals-fit-p2-002",
         "trace-e2e-p3-002",
         "trace-e2e-p3-003",
-        "repo-tests-p4-005"
+        "trace-prototype-dr2-1-p1-038",
+        "trace-prototype-dr2-1-p1-038-m2"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the page title and the extra-large h1 are both 'Import notification service' (the 'Dashboard' caption already exists).",
+      "deltaNote": "Today the animals dashboard's browser title repeats the service name: 'Import notification service - Import notification service - GOV.UK'.",
       "conflicts": []
     },
     {
-      "id": "req-notification-list-003",
+      "id": "req-1034",
       "statement": "The list page has no introductory paragraph and no Messages link: the heading is followed directly by the 'Create new' and 'Use template' buttons.",
       "why": "Design Release 2.1's category list goes straight from its heading to its actions; the service explanation and messages live on the overall home.",
       "claims": [
-        "trace-prototype-dr2-1-p1-038-m1",
         "repo-frontend-p3-004",
         "trace-animals-fit-p2-003",
-        "trace-e2e-p3-004"
+        "trace-e2e-p3-004",
+        "trace-prototype-dr2-1-p1-038-m1"
       ],
       "status": "adopted",
       "delta": "change",
@@ -69,14 +77,14 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-004",
-      "statement": "The list page has a 'Back' link to the overall dashboard home at the service root (/).",
+      "id": "req-1035",
+      "statement": "The list page has a 'Back' link to the overall home.",
       "why": "In Design Release 2.1 a category list is reached from the overall home, and the back link returns the trader there.",
       "claims": [
         "prototype-dr2-1-source-p13-019",
+        "prototype-dr2-1-specs-p5-034",
         "trace-prototype-dr2-1-p1-039",
-        "trace-prototype-dr2-1-p1-078",
-        "prototype-dr2-1-specs-p5-034"
+        "trace-prototype-dr2-1-p1-078"
       ],
       "status": "adopted",
       "delta": "new",
@@ -84,35 +92,19 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-005",
-      "statement": "The list page shows the Alpha phase banner with its feedback link, as every page of the service does.",
-      "why": "Design Release 2.1 shows the Alpha phase banner on the list, and the real dashboard already does.",
-      "claims": [
-        "prototype-dr2-1-source-p13-019",
-        "repo-frontend-p3-116",
-        "repo-frontend-p3-117",
-        "trace-animals-fit-p2-067",
-        "trace-animals-fit-p2-068",
-        "trace-animals-fit-p2-069"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-frontend-p3-116 and trace-animals-fit-p2-067: the dashboard already shows the Alpha banner 'This is a new service. Help us improve it and give your feedback by email.'",
-      "conflicts": []
-    },
-    {
-      "id": "req-notification-list-006",
-      "statement": "The list page has a primary 'Create new' button that links to the start of the create journey carrying the list's category (create-notification?category=live-animals on the live animals list), instead of a 'Start a new notification' form that creates a draft on the click.",
-      "why": "Design Release 2.1 starts a notification by asking its type first, carrying the category the trader was looking at; today's button creates a draft and its reference straight away, with no question asked, and every press makes another draft.",
+      "id": "req-1037",
+      "statement": "The live animals list has a primary 'Create new' button that links to the start of the create journey, carrying the list's category so the journey goes on to start a live animals notification, instead of a 'Start a new notification' form that creates a draft on the click. Where the link points and how the category is carried are the services' to name.",
+      "why": "Design Release 2.1 starts a notification by asking its type first, carrying the category the trader was looking at; today's button creates a draft and its reference straight away, with no question asked, and every press makes another draft. The 2026-10-09 ruling keeps the destination and the category, not the prototype's create-notification?category= address (c-notification-list-001).",
       "claims": [
         "prototype-dr2-1-source-p13-022",
-        "trace-prototype-dr2-1-p1-040",
-        "prototype-dr2-1-specs-p5-035",
         "repo-frontend-p3-005",
+        "repo-frontend-p3-005-m1",
         "repo-frontend-p3-006",
         "repo-frontend-p3-007",
-        "repo-frontend-p3-005-m1",
         "repo-frontend-p3-106",
+        "repo-tests-p4-006",
+        "repo-tests-p4-007",
+        "ruling-sam-2026-10-09-p1-102",
         "trace-animals-fit-p2-004",
         "trace-animals-fit-p2-005",
         "trace-animals-fit-p2-006",
@@ -120,8 +112,6 @@
         "trace-animals-fit-p2-008",
         "trace-animals-fit-p2-009",
         "trace-animals-fit-p2-066",
-        "repo-tests-p4-006",
-        "repo-tests-p4-007",
         "trace-e2e-p3-005",
         "trace-e2e-p3-006",
         "trace-e2e-p3-007",
@@ -129,15 +119,18 @@
         "trace-e2e-p3-009",
         "trace-e2e-p3-010",
         "trace-e2e-p3-011",
-        "trace-e2e-p3-058"
+        "trace-e2e-p3-058",
+        "trace-prototype-dr2-1-p1-040"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a GOV.UK start button 'Start a new notification' POSTs to /live-animals/notifications, which creates a draft and redirects straight to its origin page.",
-      "conflicts": []
+      "conflicts": [
+        "c-notification-list-001"
+      ]
     },
     {
-      "id": "req-notification-list-007",
+      "id": "req-1038",
       "statement": "The list page has a secondary 'Use template' button beside 'Create new' that links to the templates page, without a category.",
       "why": "Design Release 2.1 offers starting from a saved template from every category list.",
       "claims": [
@@ -151,18 +144,18 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-008",
+      "id": "req-1039",
       "statement": "The list page has an h2 'Summary' section with two glance cards: 'Action needed' with 'Tasks requiring your attention' and a 'View tasks' link to the action-needed page filtered to the category, and 'Status updated' with 'Changes in the past 24 hours' and a 'View updates' link to the changes page filtered to the category.",
       "why": "Design Release 2.1 puts what needs the trader's attention at the top of each category list.",
       "claims": [
         "prototype-dr2-1-source-p13-024",
+        "prototype-dr2-1-specs-p5-036",
+        "prototype-dr2-1-specs-p5-037",
+        "prototype-dr2-1-specs-p5-038",
         "trace-prototype-dr2-1-p1-042",
         "trace-prototype-dr2-1-p1-043",
         "trace-prototype-dr2-1-p1-044",
-        "trace-prototype-dr2-1-p1-080",
-        "prototype-dr2-1-specs-p5-036",
-        "prototype-dr2-1-specs-p5-037",
-        "prototype-dr2-1-specs-p5-038"
+        "trace-prototype-dr2-1-p1-080"
       ],
       "status": "adopted",
       "delta": "new",
@@ -170,90 +163,98 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-009",
-      "statement": "The two glance cards show live counts for the category: 'Action needed' counts the notifications showing the 'Action required' tag (a 'Delayed' one does not count), and 'Status updated' counts the notifications whose status changed in the past 24 hours, each matching the list its link opens.",
-      "why": "The counts are only useful if they agree with the drill-down pages, and both depend on outcomes the authorities set after submission.",
+      "id": "req-1040",
+      "statement": "The list's 'Action needed' glance card shows a live count for the category: the notifications showing the 'Action required' tag (a 'Delayed' one does not count), matching the Action needed list its link opens.",
+      "why": "The count is only useful if it agrees with the drill-down page; a notification is action-required when it is missing a required document or required identifiers, as Design Release 2.1 works it out (c-149).",
       "claims": [
+        "document-dr1-parity-backlog-p3-031",
+        "document-dr1-parity-backlog-p3-031-m1",
         "prototype-dr2-1-source-p13-025",
         "prototype-dr2-1-source-p13-069",
-        "trace-prototype-dr2-1-p1-123",
-        "document-dr1-parity-backlog-p3-031",
-        "document-dr1-parity-backlog-p3-031-m1"
+        "trace-prototype-dr2-1-p1-123"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": [],
-      "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; no such feed exists today, so no real notification can be counted as needing action or as status-updated."
+      "conflicts": [
+        "c-148",
+        "c-149"
+      ]
     },
     {
-      "id": "req-notification-list-010",
+      "id": "req-1041",
       "statement": "The list's notifications sit under an h2 'Notifications', replacing the h2 'Your notifications'.",
       "why": "Design Release 2.1 heads the list section 'Notifications'; DR1's 'My notifications' row was only deferred, never judged.",
       "claims": [
-        "trace-prototype-dr2-1-p1-045",
+        "document-dr1-parity-backlog-p2-035",
+        "document-dr1-parity-backlog-p2-036-m1",
         "prototype-dr2-1-source-p13-026",
         "repo-frontend-p3-008",
         "trace-animals-fit-p2-015",
         "trace-e2e-p3-012",
-        "document-dr1-parity-backlog-p2-035",
-        "document-dr1-parity-backlog-p2-036-m1"
+        "trace-prototype-dr2-1-p1-045"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the list heading is the medium h2 'Your notifications' (Welsh 'Eich hysbysiadau'), also used as the breadcrumb label on the delete and cancel-amendment pages.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-011",
+      "id": "req-1042",
       "statement": "The search, sort and additional filters sit in one column above the tabs inside the 'Notifications' section, with no 'Filter notifications' heading and no separate one-third filter aside beside the results.",
       "why": "Design Release 2.1 lays the list out as one column: search and sort, then the filters disclosure, then the tabs and cards.",
       "claims": [
-        "trace-prototype-dr2-1-p1-045",
+        "document-dr1-parity-backlog-p2-012",
         "repo-frontend-p3-009",
         "repo-frontend-p3-010",
+        "repo-tests-p4-034",
         "trace-animals-fit-p2-016",
         "trace-animals-fit-p2-093",
         "trace-e2e-p2-001",
         "trace-e2e-p2-002",
         "trace-e2e-p2-046",
         "trace-e2e-p3-013",
-        "repo-tests-p4-034",
-        "document-dr1-parity-backlog-p2-012"
+        "trace-prototype-dr2-1-p1-045"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the list is two columns: a one-third aside headed 'Filter notifications' (h3) holding the search, and a two-thirds column holding the results count, sort and cards.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-012",
+      "id": "req-1043",
       "statement": "The search field is labelled 'Search by'.",
       "why": "Design Release 2.1's label; today's 'Keyword or reference' promises a keyword search the service does not give.",
       "claims": [
+        "document-dr1-parity-backlog-p2-020",
         "prototype-dr2-1-source-p13-027",
-        "trace-prototype-dr2-1-p1-046",
         "prototype-dr2-1-specs-p5-039",
         "repo-frontend-p3-011",
+        "repo-tests-p4-035",
         "trace-animals-fit-p2-017",
         "trace-e2e-p2-004",
-        "repo-tests-p4-035",
-        "document-dr1-parity-backlog-p2-020"
+        "trace-prototype-dr2-1-p1-046"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the field is labelled 'Keyword or reference' (small bold label) and named referenceNumber.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-013",
+      "id": "req-1044",
       "statement": "The search field has the hint 'Keyword, notification number, commodity, consignee or consignor'.",
       "why": "The hint tells the trader what the search matches.",
       "claims": [
         "prototype-dr2-1-source-p13-027",
-        "trace-prototype-dr2-1-p1-046",
         "prototype-dr2-1-specs-p5-040",
-        "trace-e2e-p2-005"
+        "trace-e2e-p2-005",
+        "trace-prototype-dr2-1-p1-046"
       ],
       "status": "adopted",
       "delta": "new",
@@ -261,14 +262,14 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-014",
+      "id": "req-1045",
       "statement": "The search is submitted by an icon-only button showing a magnifying glass, whose accessible name is 'Search'.",
       "why": "Design Release 2.1's search control; today's is a standard primary button reading 'Search'.",
       "claims": [
         "prototype-dr2-1-source-p13-027",
-        "trace-prototype-dr2-1-p1-047",
+        "repo-frontend-p3-012",
         "trace-e2e-p2-006",
-        "repo-frontend-p3-012"
+        "trace-prototype-dr2-1-p1-047"
       ],
       "status": "adopted",
       "delta": "change",
@@ -276,49 +277,52 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-015",
+      "id": "req-1046",
       "statement": "A search lists the notifications whose reference number, commodity, consignee or consignor contains the searched text, ignoring case, rather than only an exact, whole reference number.",
       "why": "The hint promises a keyword search over those facts. The prototype cannot persist or query, so its search is inert; a real search box that does nothing would mislead the trader, so the real service applies it.",
       "claims": [
+        "document-dr1-parity-backlog-p2-019-m1",
+        "document-dr1-parity-backlog-p2-022",
         "prototype-dr2-1-source-p13-027",
         "prototype-dr2-1-specs-p5-040",
-        "ruling-sam-2026-10-07-p1-010",
         "repo-frontend-p3-017",
         "repo-frontend-p3-112",
         "repo-tests-p4-036",
         "repo-tests-p4-037",
         "repo-tests-p4-040",
         "repo-tests-p4-044",
+        "ruling-sam-2026-10-07-p1-010",
+        "trace-animals-fit-p2-052",
+        "trace-animals-fit-p2-086",
         "trace-e2e-p2-010",
         "trace-e2e-p2-015",
         "trace-e2e-p2-016",
-        "trace-e2e-p2-017",
-        "trace-animals-fit-p2-052",
-        "trace-animals-fit-p2-086",
-        "document-dr1-parity-backlog-p2-019-m1",
-        "document-dr1-parity-backlog-p2-022"
+        "trace-e2e-p2-017"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the term is passed to the listing only as referenceNumber, an exact match on a complete reference, so a commodity or a party name finds nothing.",
-      "conflicts": ["c-notification-list-004", "c-notification-list-009"]
+      "conflicts": [
+        "c-162",
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-016",
+      "id": "req-1047",
       "statement": "After a search the field keeps the searched text, and searching with an empty or whitespace-only field clears the search and lists everything again.",
       "why": "The trader can see and change what they searched for; both Design Release 2.1 and today keep the text.",
       "claims": [
         "prototype-dr2-1-source-p13-027",
-        "trace-prototype-dr2-1-p1-051",
         "prototype-dr2-1-specs-p5-059",
         "repo-frontend-p3-015",
         "repo-frontend-p3-016",
         "repo-frontend-p3-114",
+        "repo-tests-p4-042",
+        "trace-animals-fit-p2-057",
         "trace-e2e-p2-009",
         "trace-e2e-p2-018",
         "trace-e2e-p2-035",
-        "trace-animals-fit-p2-057",
-        "repo-tests-p4-042"
+        "trace-prototype-dr2-1-p1-051"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -326,20 +330,17 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-017",
+      "id": "req-1048",
       "statement": "Search, sort and every additional filter are one GET form to the list's own path, submitted by the search button; it carries the current tab (unless 'In progress') and the current page (when above 1) as hidden fields, so the result stays on that tab.",
       "why": "Design Release 2.1 puts sort and filters inside the search form with one submit control; today search and sort are two forms and a search always restarts at page 1.",
       "claims": [
+        "document-dr1-parity-backlog-p2-058",
         "prototype-dr2-1-source-p13-026",
         "prototype-dr2-1-source-p13-036",
-        "trace-prototype-dr2-1-p1-049",
-        "trace-prototype-dr2-1-p1-050",
-        "trace-prototype-dr2-1-p1-059",
-        "trace-prototype-dr2-1-p1-081",
         "prototype-dr2-1-specs-p5-058",
         "repo-frontend-p3-013",
-        "repo-frontend-p3-014",
         "repo-frontend-p3-013-m1",
+        "repo-frontend-p3-014",
         "trace-animals-fit-p2-018",
         "trace-animals-fit-p2-056",
         "trace-animals-fit-p2-065",
@@ -349,7 +350,10 @@
         "trace-e2e-p2-037",
         "trace-e2e-p3-014",
         "trace-e2e-p3-015",
-        "document-dr1-parity-backlog-p2-058"
+        "trace-prototype-dr2-1-p1-049",
+        "trace-prototype-dr2-1-p1-050",
+        "trace-prototype-dr2-1-p1-059",
+        "trace-prototype-dr2-1-p1-081"
       ],
       "status": "adopted",
       "delta": "change",
@@ -357,83 +361,96 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-018",
+      "id": "req-1049",
       "statement": "The sort select is labelled 'Sort by:'.",
       "why": "Design Release 2.1's label for the sort control.",
       "claims": [
-        "prototype-dr2-1-source-p13-028",
         "document-dr1-parity-backlog-p2-046",
+        "prototype-dr2-1-source-p13-028",
         "repo-frontend-p3-026",
-        "trace-e2e-p2-022",
-        "repo-tests-p4-028"
+        "repo-tests-p4-028",
+        "trace-e2e-p2-022"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the select is labelled 'Sort by' with no colon (small bold label).",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-019",
+      "id": "req-1050",
       "statement": "The sort select offers exactly 'Newest first', 'Oldest first' and 'Arrival date', in that order, with no unselected 'Select one' option.",
       "why": "Design Release 2.1's three orderings replace today's four; DR1 already rejected an unsorted 'Select one' state, so the list is always sorted.",
       "claims": [
-        "prototype-dr2-1-source-p13-028",
         "document-dr1-parity-backlog-p2-046",
         "document-dr1-parity-backlog-p3-045",
         "document-dr1-parity-backlog-p3-067",
         "document-dr1-parity-notes-p1-012",
+        "prototype-dr2-1-source-p13-028",
         "repo-frontend-p3-027",
         "repo-frontend-p3-070",
         "repo-tests-p4-030",
+        "trace-animals-fit-p2-019",
         "trace-e2e-p2-023",
         "trace-e2e-p2-024",
-        "trace-animals-fit-p2-019",
         "trace-e2e-p3-016"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the options are 'Arrival (newest to oldest)', 'Arrival (oldest to newest)', 'Date created (newest to oldest)' and 'Date created (oldest to newest)'.",
-      "conflicts": ["c-notification-list-003", "c-notification-list-009"]
+      "conflicts": [
+        "c-161",
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-020",
+      "id": "req-1051",
       "statement": "The list is always sorted and the sort is applied for real: 'Newest first' and 'Oldest first' order by when the notification was created, 'Arrival date' orders by arrival date newest first, and with no sort chosen the list is ordered by arrival date newest first with 'Arrival date' selected.",
       "why": "DR1 judged the list always sorted; the prototype never orders its list, so the real service applies the orderings, keeping today's default order (which the prototype's completed tab also shows).",
       "claims": [
-        "prototype-dr2-1-source-p13-028",
-        "trace-prototype-dr2-1-p1-053",
-        "trace-prototype-dr2-1-p1-076",
-        "prototype-dr2-1-specs-p5-060",
-        "ruling-sam-2026-10-07-p1-010",
+        "document-dr1-parity-backlog-p2-046-m1",
         "document-dr1-parity-backlog-p2-047",
         "document-dr1-parity-backlog-p3-047",
-        "document-dr1-parity-backlog-p2-046-m1",
-        "repo-frontend-p3-028",
+        "prototype-dr2-1-source-p13-028",
+        "prototype-dr2-1-specs-p5-060",
         "repo-frontend-p3-027-m1",
+        "repo-frontend-p3-028",
+        "repo-tests-p4-029",
+        "repo-tests-p4-033",
+        "ruling-sam-2026-10-07-p1-010",
         "trace-animals-fit-p2-020",
         "trace-animals-fit-p2-022",
         "trace-e2e-p2-025",
         "trace-e2e-p2-032",
         "trace-e2e-p2-036",
         "trace-e2e-p2-047",
-        "repo-tests-p4-029",
-        "repo-tests-p4-033"
+        "trace-prototype-dr2-1-p1-053",
+        "trace-prototype-dr2-1-p1-076"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the default is 'Arrival (newest to oldest)' and any unknown value falls back to it; the stub orders every option by creation date, and no test proves the order of the cards.",
-      "conflicts": ["c-notification-list-003", "c-notification-list-004"]
+      "conflicts": [
+        "c-161",
+        "c-162"
+      ]
     },
     {
-      "id": "req-notification-list-021",
+      "id": "req-1052",
       "statement": "There is no 'Update sort' button: the chosen sort is applied by the search button with the rest of the form, and the chosen option stays selected after the page reloads.",
       "why": "Design Release 2.1's sort has no button of its own; DR1 only deferred this difference.",
       "claims": [
+        "document-dr1-parity-backlog-p2-055",
+        "document-dr1-parity-backlog-p2-056",
         "prototype-dr2-1-source-p13-028",
         "prototype-dr2-1-source-p13-036",
-        "trace-prototype-dr2-1-p1-051",
         "repo-frontend-p3-029",
         "repo-frontend-p3-030",
+        "repo-tests-p4-028",
+        "repo-tests-p4-031",
+        "repo-tests-p4-032",
+        "repo-tests-p4-041",
         "trace-animals-fit-p2-021",
         "trace-animals-fit-p2-053",
         "trace-animals-fit-p2-063",
@@ -445,170 +462,183 @@
         "trace-e2e-p2-031",
         "trace-e2e-p2-033",
         "trace-e2e-p2-034",
-        "repo-tests-p4-028",
-        "repo-tests-p4-031",
-        "repo-tests-p4-032",
-        "repo-tests-p4-041",
-        "document-dr1-parity-backlog-p2-055",
-        "document-dr1-parity-backlog-p2-056"
+        "trace-prototype-dr2-1-p1-051"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a separate GET sort form with a secondary 'Update sort' button applies the sort, carrying the page and the search as hidden fields.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-022",
+      "id": "req-1053",
       "statement": "The list has a collapsible 'Additional filters' section with a chevron, closed on load and open whenever an arrival-date, date-range or status filter is set.",
       "why": "Design Release 2.1 keeps the extra filters out of the way until the trader needs them.",
       "claims": [
+        "document-dr1-parity-backlog-p2-011",
         "prototype-dr2-1-source-p13-030",
-        "trace-prototype-dr2-1-p1-054",
         "prototype-dr2-1-specs-p5-049",
         "repo-frontend-p3-018",
         "trace-e2e-p2-042",
-        "document-dr1-parity-backlog-p2-011"
+        "trace-prototype-dr2-1-p1-054"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-023",
+      "id": "req-1054",
       "statement": "The additional filters have a 'By arrival date' column of small radios 'Today', 'Tomorrow' and 'Next 7 days' (legend visually hidden, the same words shown as its heading); choosing one lists only notifications arriving in that range, and the choice stays checked.",
       "why": "Design Release 2.1 lets a trader find what is arriving soon; the prototype's filter is inert, so the real service applies it.",
       "claims": [
-        "prototype-dr2-1-source-p13-031",
-        "trace-prototype-dr2-1-p1-055",
-        "trace-prototype-dr2-1-p1-060",
-        "prototype-dr2-1-specs-p5-050",
         "document-dr1-parity-backlog-p2-004",
         "document-dr1-parity-backlog-p2-006",
-        "repo-frontend-p3-018"
+        "prototype-dr2-1-source-p13-031",
+        "prototype-dr2-1-specs-p5-050",
+        "repo-frontend-p3-018",
+        "trace-prototype-dr2-1-p1-055",
+        "trace-prototype-dr2-1-p1-060"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-004", "c-notification-list-009"]
+      "conflicts": [
+        "c-162",
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-024",
+      "id": "req-1055",
       "statement": "The additional filters have a 'By date range' column with the hint 'For example, 27/3/2026' and two MOJ date pickers, 'Start date' and 'End date' (a 'Choose date' calendar opening on the current month, weeks starting Monday); the list shows only notifications arriving between the two dates, and the entered dates are kept.",
       "why": "Design Release 2.1's date range; it sits beside the arrival-date radios, so it filters the arrival date, as DR1's row also read it.",
       "claims": [
-        "prototype-dr2-1-source-p13-032",
-        "trace-prototype-dr2-1-p1-056",
-        "trace-prototype-dr2-1-p1-057",
-        "trace-prototype-dr2-1-p1-121",
-        "prototype-dr2-1-specs-p5-051",
-        "prototype-dr2-1-specs-p5-052",
         "document-dr1-parity-backlog-p2-004",
         "document-dr1-parity-backlog-p2-005",
-        "document-dr1-parity-backlog-p2-007"
+        "document-dr1-parity-backlog-p2-007",
+        "prototype-dr2-1-specs-p5-051",
+        "prototype-dr2-1-specs-p5-052",
+        "trace-prototype-dr2-1-p1-056",
+        "trace-prototype-dr2-1-p1-057",
+        "trace-prototype-dr2-1-p1-121"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-004", "c-notification-list-009"]
+      "conflicts": [
+        "c-162",
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-025",
-      "statement": "When a start or end date cannot be read as a date, or the end date is before the start date, the list shows an error rather than silently ignoring the filter.",
-      "why": "The prototype has no validation for the dates; a real filter has to answer a date it cannot use, and nothing says how.",
+      "id": "req-1056",
+      "statement": "When the start or end date cannot be read as a date, or the end date is before the start date, the list shows a GOV.UK error summary and an inline error on the date field ('Enter a real start date', 'Enter a real end date' or 'End date must be the same as or after the start date'), opens 'Additional filters', keeps the entered text in the 'Start date' and 'End date' pickers, and lists notifications without the date-range filter.",
+      "why": "Validation is a real constraint the prototype cannot express, so a date the filter cannot use is answered with an error rather than silently ignored; the prototype still sets the labels and keeps the entered dates, and the GOV.UK date-input error pattern supplies the messages (c-166).",
       "claims": [
-        "prototype-dr2-1-source-p13-032",
         "ruling-sam-2026-10-07-p1-010",
         "trace-e2e-p2-047"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-008"]
+      "conflicts": [
+        "c-166"
+      ]
     },
     {
-      "id": "req-notification-list-026",
+      "id": "req-1057",
       "statement": "The additional filters have a 'Status' select offering exactly 'Select one', 'Action required', 'Submitted' and 'Completed'; choosing a status lists only notifications in it, and the choice stays selected.",
       "why": "Design Release 2.1's status filter offers the statuses a trader acts on; drafts have their own tab, so Draft is not offered.",
       "claims": [
-        "prototype-dr2-1-source-p13-035",
-        "trace-prototype-dr2-1-p1-058",
-        "prototype-dr2-1-specs-p5-053",
         "document-dr1-parity-backlog-p2-027",
         "document-dr1-parity-backlog-p2-029",
         "document-dr1-parity-backlog-p3-030",
-        "repo-frontend-p3-018"
+        "prototype-dr2-1-source-p13-035",
+        "prototype-dr2-1-specs-p5-053",
+        "repo-frontend-p3-018",
+        "trace-prototype-dr2-1-p1-058"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-004", "c-notification-list-009"]
+      "conflicts": [
+        "c-162",
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-027",
-      "statement": "The list has three tabs, 'In progress', 'Draft' and 'Completed', each a link that loads the page ('In progress' the list path, 'Draft' ?tab=drafts, 'Completed' ?tab=completed); an unknown or missing tab shows 'In progress', and following a tab drops the search, sort and filters.",
+      "id": "req-1058",
+      "statement": "The list has three tabs, 'In progress', 'Draft' and 'Completed', each a link that loads the page with that tab chosen; 'In progress' is the list with no tab chosen, an unknown or missing tab shows 'In progress', and following a tab drops the search, sort and filters. The tab parameter's name and values are the INS service's.",
       "why": "Design Release 2.1 separates work in flight, unfinished drafts and finished notifications; drafts keep a home on the list, which DR1 said must not be lost.",
       "claims": [
+        "document-dr1-parity-backlog-p3-033",
+        "document-dr1-parity-backlog-p3-036",
+        "document-dr1-parity-backlog-p3-062",
         "prototype-dr2-1-source-p13-037",
         "prototype-dr2-1-source-p13-038",
         "prototype-dr2-1-source-p13-038-m1",
-        "trace-prototype-dr2-1-p1-061",
-        "trace-prototype-dr2-1-p1-081",
         "prototype-dr2-1-specs-p5-042",
-        "prototype-dr2-1-specs-p5-054",
-        "prototype-dr2-1-specs-p5-056",
-        "document-dr1-parity-backlog-p3-033",
-        "document-dr1-parity-backlog-p3-036",
-        "document-dr1-parity-backlog-p3-062"
+        "ruling-sam-2026-10-09-p1-066",
+        "ruling-sam-2026-10-09-p1-075",
+        "trace-prototype-dr2-1-p1-061",
+        "trace-prototype-dr2-1-p1-081"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": []
+      "conflicts": [
+        "c-notification-list-001"
+      ]
     },
     {
-      "id": "req-notification-list-028",
+      "id": "req-1059",
       "statement": "The 'In progress' tab lists submitted and action-required notifications, 'Draft' lists drafts and 'Completed' lists completed notifications.",
-      "why": "Each tab holds the notifications at that stage; where a notification being amended goes is a question.",
+      "why": "Each tab holds the notifications at that stage, as Design Release 2.1 sets them out; a notification being amended goes in 'In progress' (c-165).",
       "claims": [
-        "prototype-dr2-1-source-p13-039",
-        "trace-prototype-dr2-1-p1-073",
-        "trace-prototype-dr2-1-p1-075",
         "document-dr1-parity-backlog-p3-061",
+        "prototype-dr2-1-source-p13-039",
         "repo-frontend-p3-050",
-        "trace-animals-fit-p2-034"
+        "trace-animals-fit-p2-034",
+        "trace-prototype-dr2-1-p1-073",
+        "trace-prototype-dr2-1-p1-075"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-007"]
+      "conflicts": [
+        "c-165"
+      ]
     },
     {
-      "id": "req-notification-list-029",
-      "statement": "A notification being amended is listed in the 'In progress' tab with a yellow 'Amending' tag.",
-      "why": "Design Release 2.1 has no amending state on the list (its status mapping would treat one as a draft), while the real service keeps an amendment as the same submitted notification under change.",
+      "id": "req-1060",
+      "statement": "A notification being amended is listed in the 'In progress' tab with today's yellow 'Amending' tag and its status-driven actions (Resume, Copy as new, Cancel amendment, Delete).",
+      "why": "Design Release 2.1 has no amending state and its catch-all status mapping would file one as a draft only by fallback, while the backend persists an amendment as a submitted notification in AMEND that never returns to DRAFT and publishes it as an amendment of a submission: a persistence and cross-service constraint the prototype cannot express (c-165).",
       "claims": [
-        "prototype-dr2-1-source-p13-066",
+        "document-dr1-parity-backlog-p3-044",
         "repo-frontend-p3-046",
+        "repo-frontend-p3-111",
         "trace-animals-fit-p2-035",
         "trace-animals-fit-p2-049",
-        "trace-e2e-p3-031",
-        "repo-frontend-p3-111",
-        "document-dr1-parity-backlog-p3-044"
+        "trace-e2e-p3-031"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "change",
       "deltaNote": "Today an amending notification is listed with every other notification, with a yellow 'Amending' tag; there are no tabs.",
-      "conflicts": ["c-notification-list-007"]
+      "conflicts": [
+        "c-165"
+      ]
     },
     {
-      "id": "req-notification-list-030",
+      "id": "req-1061",
       "statement": "Only the 'In progress' tab shows a count, in bold brackets, such as 'In progress (2)'; 'Draft' and 'Completed' show none, even when selected.",
       "why": "Design Release 2.1 counts only the notifications in flight.",
       "claims": [
         "prototype-dr2-1-source-p13-037",
-        "trace-prototype-dr2-1-p1-062",
-        "prototype-dr2-1-specs-p5-043"
+        "prototype-dr2-1-specs-p5-043",
+        "trace-prototype-dr2-1-p1-062"
       ],
       "status": "adopted",
       "delta": "new",
@@ -616,17 +646,17 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-031",
+      "id": "req-1062",
       "statement": "Under the tabs the cards sit under an h3 naming the tab: 'Notifications in progress', 'Draft notifications' or 'Completed notifications'.",
       "why": "Design Release 2.1's subheading for each tab panel.",
       "claims": [
         "prototype-dr2-1-source-p13-040",
-        "trace-prototype-dr2-1-p1-063",
-        "trace-prototype-dr2-1-p1-073",
-        "trace-prototype-dr2-1-p1-075",
         "prototype-dr2-1-specs-p5-044",
         "prototype-dr2-1-specs-p5-055",
-        "prototype-dr2-1-specs-p5-057"
+        "prototype-dr2-1-specs-p5-057",
+        "trace-prototype-dr2-1-p1-063",
+        "trace-prototype-dr2-1-p1-073",
+        "trace-prototype-dr2-1-p1-075"
       ],
       "status": "adopted",
       "delta": "new",
@@ -634,19 +664,19 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-032",
+      "id": "req-1063",
       "statement": "The list shows 8 notifications a page.",
       "why": "Design Release 2.1's page size for every list.",
       "claims": [
         "prototype-dr2-1-source-p13-041",
+        "repo-backend-p3-005",
         "repo-frontend-p3-036",
         "repo-frontend-p3-115",
+        "repo-insbackend-p1-034",
+        "repo-tests-p4-021",
         "trace-animals-fit-p2-058",
         "trace-e2e-p3-021",
-        "trace-e2e-p3-052",
-        "repo-tests-p4-021",
-        "repo-insbackend-p1-034",
-        "repo-backend-p3-005"
+        "trace-e2e-p3-052"
       ],
       "status": "adopted",
       "delta": "change",
@@ -654,29 +684,29 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-033",
+      "id": "req-1064",
       "statement": "A list of more than one page shows GOV.UK pagination with numbered page links, a 'Previous' link from page 2 and a 'Next' link before the last page; a list of one page, or no results, shows no pagination.",
       "why": "Design Release 2.1 uses numbered pagination; today there are only Previous and Next.",
       "claims": [
         "prototype-dr2-1-source-p13-042",
         "repo-frontend-p3-033",
         "repo-frontend-p3-035",
+        "repo-tests-p4-022",
+        "repo-tests-p4-023",
+        "repo-tests-p4-025",
         "trace-animals-fit-p2-059",
         "trace-animals-fit-p2-060",
         "trace-animals-fit-p2-061",
         "trace-animals-fit-p2-087",
+        "trace-e2e-p2-041",
+        "trace-e2e-p2-041-m1",
         "trace-e2e-p3-050",
+        "trace-e2e-p3-050-m1",
         "trace-e2e-p3-051",
         "trace-e2e-p3-053",
         "trace-e2e-p3-054",
         "trace-e2e-p3-056",
-        "trace-e2e-p3-088",
-        "trace-e2e-p2-041",
-        "trace-e2e-p2-041-m1",
-        "trace-e2e-p3-050-m1",
-        "repo-tests-p4-022",
-        "repo-tests-p4-023",
-        "repo-tests-p4-025"
+        "trace-e2e-p3-088"
       ],
       "status": "adopted",
       "delta": "change",
@@ -684,17 +714,17 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-034",
+      "id": "req-1065",
       "statement": "A page number below 1 or not a number shows page 1, and a page past the last shows the last page.",
       "why": "Design Release 2.1 clamps the page, so a stale or hand-typed page never shows an empty list.",
       "claims": [
         "prototype-dr2-1-source-p13-041",
+        "repo-backend-p3-004",
         "repo-frontend-p3-032-m1",
         "repo-insbackend-p1-029",
         "repo-insbackend-p1-031",
         "repo-insbackend-p1-032",
         "repo-insbackend-p1-036-m1",
-        "repo-backend-p3-004",
         "repo-tests-p4-027",
         "trace-e2e-p2-035-m1"
       ],
@@ -704,13 +734,13 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-035",
+      "id": "req-1066",
       "statement": "Page links keep the tab (unless 'In progress'), the sort (unless the default), the search text and every additional filter.",
       "why": "Because the real search and filters apply, a page link that dropped them would show a different, unfiltered list on page 2.",
       "claims": [
-        "ruling-sam-2026-10-07-p1-010",
         "repo-frontend-p3-031",
         "repo-frontend-p3-034",
+        "ruling-sam-2026-10-07-p1-010",
         "trace-animals-fit-p2-064",
         "trace-e2e-p2-039",
         "trace-e2e-p2-040"
@@ -718,53 +748,57 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today Previous and Next keep the sort (unless the default) and the reference search; there are no tabs or filters to keep.",
-      "conflicts": ["c-notification-list-005"]
+      "conflicts": [
+        "c-163"
+      ]
     },
     {
-      "id": "req-notification-list-036",
+      "id": "req-1067",
       "statement": "The list shows no results count: the 'Showing 1 Result', 'Showing S to E of T Results', 'Showing N of T Results' and 'No Results' line goes.",
       "why": "Design Release 2.1's category list shows no results count; DR1 only deferred its rewrite of the count.",
       "claims": [
+        "document-dr1-parity-backlog-p2-040",
+        "document-dr1-parity-backlog-p2-042-m1",
         "prototype-dr2-1-source-p13-044",
-        "trace-prototype-dr2-1-p1-077",
         "repo-frontend-p3-019",
         "repo-frontend-p3-020",
         "repo-tests-p4-008",
         "repo-tests-p4-024",
         "repo-tests-p4-026",
+        "trace-animals-fit-p2-023",
+        "trace-animals-fit-p2-026",
+        "trace-animals-fit-p2-027",
+        "trace-animals-fit-p2-062",
+        "trace-animals-fit-p2-095",
         "trace-e2e-p2-011",
         "trace-e2e-p2-012",
         "trace-e2e-p2-045",
         "trace-e2e-p3-017",
         "trace-e2e-p3-018",
         "trace-e2e-p3-020",
-        "trace-animals-fit-p2-023",
-        "trace-animals-fit-p2-026",
-        "trace-animals-fit-p2-027",
-        "trace-animals-fit-p2-062",
-        "trace-animals-fit-p2-095",
-        "document-dr1-parity-backlog-p2-040",
-        "document-dr1-parity-backlog-p2-042-m1"
+        "trace-prototype-dr2-1-p1-077"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a small bold line above the cards reads 'No Results', 'Showing 1 Result', 'Showing N of T Results' or 'Showing S to E of T Results'.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-037",
+      "id": "req-1068",
       "statement": "A search or filter that matches nothing shows an empty list with no message: the 'No notifications found' line goes.",
       "why": "Design Release 2.1 has no empty-state message on any list.",
       "claims": [
+        "document-dr1-parity-backlog-p2-041",
         "prototype-dr2-1-source-p13-045",
         "repo-frontend-p3-021",
         "repo-frontend-p3-113",
         "repo-tests-p4-039",
+        "trace-animals-fit-p2-054",
         "trace-e2e-p2-013",
         "trace-e2e-p2-014",
-        "trace-e2e-p3-019",
-        "trace-animals-fit-p2-054",
-        "document-dr1-parity-backlog-p2-041"
+        "trace-e2e-p3-019"
       ],
       "status": "adopted",
       "delta": "change",
@@ -772,22 +806,22 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-038",
+      "id": "req-1069",
       "statement": "A tab with no notifications shows an empty list with no message: the sentence 'You have not started any notifications in this session.' goes.",
       "why": "Design Release 2.1 has no empty-state message; today's sentence also wrongly says the list is session-scoped.",
       "claims": [
+        "document-dr1-parity-backlog-p2-042",
         "prototype-dr2-1-source-p13-045",
         "repo-frontend-p3-022",
         "repo-frontend-p3-023",
-        "repo-frontend-p3-105",
         "repo-frontend-p3-024-m1",
+        "repo-frontend-p3-105",
         "repo-tests-p4-045",
         "trace-animals-fit-p2-024",
         "trace-animals-fit-p2-025",
         "trace-animals-fit-p2-055",
         "trace-e2e-p3-087",
-        "trace-e2e-p9-097",
-        "document-dr1-parity-backlog-p2-042"
+        "trace-e2e-p9-097"
       ],
       "status": "adopted",
       "delta": "change",
@@ -795,17 +829,17 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-039",
+      "id": "req-1070",
       "statement": "Each notification card is labelled for screen readers 'Notification <reference>' and has the reference as its h3.",
       "why": "Design Release 2.1's card names itself to assistive technology; the reference heading already exists.",
       "claims": [
         "prototype-dr2-1-source-p13-046",
-        "trace-prototype-dr2-1-p1-064",
-        "trace-prototype-dr2-1-p1-122",
         "repo-frontend-p3-037",
+        "repo-tests-p4-009",
         "trace-animals-fit-p2-028",
         "trace-e2e-p3-022",
-        "repo-tests-p4-009"
+        "trace-prototype-dr2-1-p1-064",
+        "trace-prototype-dr2-1-p1-122"
       ],
       "status": "adopted",
       "delta": "change",
@@ -813,17 +847,20 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-040",
+      "id": "req-1071",
       "statement": "A card shows its facts in two rows: 'Commodity', 'Arrival date', 'Consignee' and 'Notification status', then the quantity, 'Origin', 'Consignor' and, when inspection is required, 'Inspection'.",
       "why": "Design Release 2.1's card leads with what is coming, when, to whom and its status.",
       "claims": [
+        "document-dr1-parity-backlog-p3-012",
+        "document-dr1-parity-backlog-p3-013",
         "prototype-dr2-1-source-p13-053",
         "prototype-dr2-1-source-p13-054",
-        "trace-prototype-dr2-1-p1-065",
-        "trace-prototype-dr2-1-p1-070",
         "repo-frontend-p3-038",
-        "repo-frontend-p3-045",
         "repo-frontend-p3-040",
+        "repo-frontend-p3-045",
+        "repo-tests-p4-010",
+        "repo-tests-p4-011",
+        "repo-tests-p4-016",
         "trace-animals-fit-p2-029",
         "trace-animals-fit-p2-030",
         "trace-animals-fit-p2-093",
@@ -832,44 +869,45 @@
         "trace-e2e-p3-027",
         "trace-e2e-p3-028",
         "trace-e2e-p3-035",
-        "repo-tests-p4-010",
-        "repo-tests-p4-011",
-        "repo-tests-p4-016",
-        "document-dr1-parity-backlog-p3-012",
-        "document-dr1-parity-backlog-p3-013"
+        "trace-prototype-dr2-1-p1-065",
+        "trace-prototype-dr2-1-p1-070"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the card shows eight facts in three rows: Commodity, Origin, 'Arrival at destination'; Consignee, Consignor, Status; 'Date created', 'Date submitted'.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-041",
+      "id": "req-1072",
       "statement": "The card labels the arrival date 'Arrival date'.",
       "why": "Design Release 2.1's label; DR1's own rename row was deferred, not judged.",
       "claims": [
+        "document-dr1-parity-backlog-p3-015",
+        "document-dr1-parity-backlog-p3-053",
         "prototype-dr2-1-source-p13-053",
-        "trace-prototype-dr2-1-p1-065",
         "repo-frontend-p3-038",
         "repo-tests-p4-012",
-        "document-dr1-parity-backlog-p3-015",
-        "document-dr1-parity-backlog-p3-053"
+        "trace-prototype-dr2-1-p1-065"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the label is 'Arrival at destination'.",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-042",
+      "id": "req-1073",
       "statement": "The card labels the status 'Notification status'.",
       "why": "Design Release 2.1's label for the status fact.",
       "claims": [
         "prototype-dr2-1-source-p13-053",
-        "trace-prototype-dr2-1-p1-065",
         "repo-frontend-p3-038",
         "repo-tests-p4-013",
-        "repo-tests-p4-014"
+        "repo-tests-p4-014",
+        "trace-prototype-dr2-1-p1-065"
       ],
       "status": "adopted",
       "delta": "change",
@@ -877,15 +915,13 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-043",
-      "statement": "The card shows the quantity: 'Number of animals' on a live animals notification and 'Number of packages' on a germinal products notification, from the notification's own count.",
+      "id": "req-1074",
+      "statement": "A live animals notification's card shows its quantity as 'Number of animals', from the notification's own count.",
       "why": "Design Release 2.1 shows how much is coming on every card; today no card shows a quantity.",
       "claims": [
         "prototype-dr2-1-source-p13-054",
-        "prototype-dr2-1-source-p13-058",
-        "trace-prototype-dr2-1-p1-082",
-        "prototype-dr2-1-specs-p5-064",
-        "repo-frontend-p3-038"
+        "repo-frontend-p3-038",
+        "trace-prototype-dr2-1-p1-082"
       ],
       "status": "adopted",
       "delta": "new",
@@ -893,57 +929,58 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-044",
+      "id": "req-1075",
       "statement": "The card shows no 'Date created' and no 'Date submitted'.",
       "why": "Design Release 2.1's card has no dates other than arrival; today's 'Date submitted' is also blank on every card, submitted ones included.",
       "claims": [
+        "document-dr1-parity-backlog-p3-012",
+        "document-dr1-parity-backlog-p3-052",
         "prototype-dr2-1-source-p13-102",
         "repo-frontend-p3-042",
         "repo-frontend-p3-043",
         "repo-frontend-p3-044",
         "trace-animals-fit-p2-048",
         "trace-e2e-p3-032",
-        "trace-e2e-p3-033",
-        "document-dr1-parity-backlog-p3-012",
-        "document-dr1-parity-backlog-p3-052"
+        "trace-e2e-p3-033"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the card's third row shows 'Date created' and 'Date submitted' (the latter blank in every end-to-end trace).",
-      "conflicts": ["c-notification-list-009"]
+      "conflicts": [
+        "c-167"
+      ]
     },
     {
-      "id": "req-notification-list-045",
+      "id": "req-1076",
       "statement": "The card writes the arrival date as the day, the full month name and the year, such as '21 June 2026'.",
-      "why": "The prototype's code and its rendered page disagree on the arrival date's format, and today's card uses a short month name.",
+      "why": "Design Release 2.1's card writes the arrival date with the full month name, in its code and its render alike, and nothing overrides the prototype here (c-164).",
       "claims": [
-        "prototype-dr2-1-source-p13-055",
-        "trace-prototype-dr2-1-p1-066",
-        "repo-frontend-p3-041",
+        "repo-tests-p4-012",
         "trace-animals-fit-p2-031",
         "trace-e2e-p3-026",
-        "repo-tests-p4-012"
+        "trace-prototype-dr2-1-p1-066"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the arrival date is written as day, short month name and year, such as '7 Nov 2026'.",
-      "conflicts": ["c-notification-list-006"]
+      "conflicts": [
+        "c-164"
+      ]
     },
     {
-      "id": "req-notification-list-046",
+      "id": "req-1077",
       "statement": "A card whose notification has no commodity, no arrival date or no quantity yet shows 'Not applicable' for that fact instead of a blank value.",
       "why": "Design Release 2.1 never shows an empty fact; today a draft card is mostly empty labels.",
       "claims": [
-        "prototype-dr2-1-source-p13-055",
+        "document-dr1-parity-backlog-p3-052",
         "prototype-dr2-1-source-p13-056",
         "prototype-dr2-1-source-p13-058",
         "prototype-dr2-1-source-p13-101",
         "repo-frontend-p3-039",
         "repo-frontend-p3-043",
-        "trace-animals-fit-p2-032",
-        "trace-e2e-p3-034",
         "repo-insbackend-p1-038-m1",
-        "document-dr1-parity-backlog-p3-052"
+        "trace-animals-fit-p2-032",
+        "trace-e2e-p3-034"
       ],
       "status": "adopted",
       "delta": "change",
@@ -951,84 +988,52 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-047",
-      "statement": "The card's commodity is the notification's commodity name; on a germinal products notification it is the species then the product type, separated by a comma, such as 'Cattle, Semen'.",
+      "id": "req-1078",
+      "statement": "The card's commodity is the notification's commodity name.",
       "why": "Design Release 2.1 names the commodity as the trader chose it; germinal products need the product type as well as the species.",
       "claims": [
         "prototype-dr2-1-source-p13-056",
-        "trace-prototype-dr2-1-p1-083",
-        "prototype-dr2-1-specs-p5-063",
         "repo-frontend-p3-039",
+        "repo-insbackend-p1-017",
+        "repo-insbackend-p1-018",
         "trace-animals-fit-p2-030",
         "trace-e2e-p3-024",
-        "trace-e2e-p3-094",
-        "repo-insbackend-p1-017",
-        "repo-insbackend-p1-018"
+        "trace-e2e-p3-094"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the card shows the commodity's common name for its code (a commodity chosen as Bos taurus shows 'Cow'); the INS read model keeps only the first commodity's common name; there are no germinal products notifications.",
+      "deltaNote": "Today the card shows the commodity's common name for its code (a commodity chosen as Bos taurus shows 'Cow'), and the INS read model keeps only the first commodity's common name. The germinal products form of the name is req-1738.",
       "conflicts": []
     },
     {
-      "id": "req-notification-list-048",
-      "statement": "A draft's status is a 'Draft' tag and an action-required notification's an 'Action required' tag, while 'Submitted' and 'Completed' are plain styled text, not tags.",
+      "id": "req-1079",
+      "statement": "A draft's status is a 'Draft' tag and an action-required notification's an 'Action required' tag, while 'Submitted' is plain styled text, not a tag.",
       "why": "Design Release 2.1 uses a tag only for statuses that ask something of the trader.",
       "claims": [
+        "document-dr1-parity-backlog-p3-059",
         "prototype-dr2-1-source-p13-061",
         "prototype-dr2-1-source-p13-062",
-        "trace-prototype-dr2-1-p1-068",
         "repo-frontend-p3-046",
+        "repo-tests-p4-013",
+        "repo-tests-p4-014",
         "trace-animals-fit-p2-033",
         "trace-animals-fit-p2-034",
         "trace-e2e-p3-029",
         "trace-e2e-p3-030",
-        "repo-tests-p4-013",
-        "repo-tests-p4-014",
-        "document-dr1-parity-backlog-p3-059"
+        "trace-prototype-dr2-1-p1-068"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today every status is a tag: Draft blue, Submitted green, Amending yellow (Deleted grey, never shown).",
+      "deltaNote": "Today every status is a tag: Draft blue, Submitted green, Amending yellow (Deleted grey, never shown). The 'Completed' style is req-1739.",
       "conflicts": []
     },
     {
-      "id": "req-notification-list-049",
-      "statement": "A submitted notification that needs something from the trader shows an 'Action required' tag on an error card (a red marker, hidden from assistive technology) with the problem as plain text under the reference: 'ITAHC is missing' when no ITAHC or health certificate is attached, otherwise 'Information is missing' when required animal identifiers are incomplete, or the notification's own stored message when it has one.",
-      "why": "Design Release 2.1 tells the trader on the list what is outstanding.",
-      "claims": [
-        "prototype-dr2-1-source-p13-052",
-        "prototype-dr2-1-source-p13-063",
-        "prototype-dr2-1-source-p13-064",
-        "prototype-dr2-1-source-p13-064-m1",
-        "prototype-dr2-1-source-p13-071",
-        "trace-prototype-dr2-1-p1-067",
-        "trace-prototype-dr2-1-p1-122",
-        "prototype-dr2-1-specs-p5-046",
-        "document-dr1-parity-backlog-p3-029",
-        "document-dr1-parity-backlog-p3-029-m1",
-        "document-dr1-parity-backlog-p3-058",
-        "document-dr1-parity-backlog-p3-060-m1",
-        "repo-insbackend-p1-022",
-        "repo-insbackend-p1-023",
-        "repo-insbackend-p1-005",
-        "trace-animals-fit-p2-088",
-        "trace-e2e-p3-093"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": [],
-      "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; today a status is only the journey's own lifecycle state (Draft, Submitted, Amending, Deleted)."
-    },
-    {
-      "id": "req-notification-list-050",
+      "id": "req-1081",
       "statement": "A delayed notification shows a 'Delayed' tag on an error card with the reason for the delay; the prototype's placeholder text 'Error message' is not copied.",
       "why": "Design Release 2.1 shows delays on the list; its message is placeholder copy.",
       "claims": [
-        "prototype-dr2-1-source-p13-065",
-        "prototype-dr2-1-source-p13-066",
-        "prototype-dr2-1-source-p13-052"
+        "prototype-dr2-1-source-p13-052",
+        "prototype-dr2-1-source-p13-065"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1037,13 +1042,12 @@
       "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; no delay status or reason reaches the service today."
     },
     {
-      "id": "req-notification-list-051",
+      "id": "req-1082",
       "statement": "A notification the authorities have finished with shows the status 'Completed' and is listed in the 'Completed' tab.",
       "why": "Design Release 2.1 moves finished notifications out of the in-progress list.",
       "claims": [
-        "prototype-dr2-1-source-p13-061",
-        "prototype-dr2-1-source-p13-066",
         "document-dr1-parity-backlog-p3-032",
+        "prototype-dr2-1-source-p13-061",
         "repo-insbackend-p1-023"
       ],
       "status": "adopted",
@@ -1053,7 +1057,7 @@
       "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; no completed status reaches the service today."
     },
     {
-      "id": "req-notification-list-052",
+      "id": "req-1083",
       "statement": "A notification chosen for inspection shows an extra 'Inspection' fact with a 'Required' tag at the end of the card's second row.",
       "why": "Design Release 2.1 warns the trader on the list that the consignment will be inspected.",
       "claims": [
@@ -1067,20 +1071,18 @@
       "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; no inspection decision reaches the service today."
     },
     {
-      "id": "req-notification-list-053",
+      "id": "req-1084",
       "statement": "A card keeps its status-driven actions, each named for screen readers with ' notification <reference>': a draft offers Resume, 'Copy as new' and Delete; a submitted notification offers View, Amend, 'Copy as new' and Delete; a notification being amended offers Resume, 'Copy as new', 'Cancel amendment' and Delete. Amend and 'Copy as new' stay link-styled buttons that post, in the same typeface as the links.",
       "why": "DR1 judged that the card keeps its status-driven links rather than DR1's flat 'Copy as new' and 'View', and that judgement wins over Design Release 2.1's same flat pair. Without it a trader could not resume a draft from the list.",
       "claims": [
-        "document-dr1-parity-notes-p1-011",
         "document-dr1-parity-backlog-p3-040",
         "document-dr1-parity-backlog-p3-041",
         "document-dr1-parity-backlog-p3-042",
         "document-dr1-parity-backlog-p3-043",
-        "document-dr1-parity-backlog-p3-044",
         "document-dr1-parity-backlog-p3-043-m1",
+        "document-dr1-parity-backlog-p3-044",
         "document-dr1-parity-backlog-p3-066",
-        "ruling-sam-2026-10-07-p1-006",
-        "ruling-sam-2026-10-07-p1-007",
+        "document-dr1-parity-notes-p1-011",
         "repo-frontend-p3-047",
         "repo-frontend-p3-048",
         "repo-frontend-p3-049",
@@ -1101,10 +1103,13 @@
         "repo-tests-p4-017",
         "repo-tests-p4-018",
         "repo-tests-p4-019",
+        "ruling-sam-2026-10-07-p1-006",
+        "ruling-sam-2026-10-07-p1-007",
         "trace-animals-fit-p2-036",
         "trace-animals-fit-p2-037",
         "trace-animals-fit-p2-038",
         "trace-animals-fit-p2-039",
+        "trace-animals-fit-p2-039-m1",
         "trace-animals-fit-p2-040",
         "trace-animals-fit-p2-041",
         "trace-animals-fit-p2-042",
@@ -1113,7 +1118,7 @@
         "trace-animals-fit-p2-045",
         "trace-animals-fit-p2-050",
         "trace-animals-fit-p2-094",
-        "trace-animals-fit-p2-039-m1",
+        "trace-e2e-p2-019",
         "trace-e2e-p3-036",
         "trace-e2e-p3-037",
         "trace-e2e-p3-038",
@@ -1122,86 +1127,104 @@
         "trace-e2e-p3-041",
         "trace-e2e-p3-043",
         "trace-e2e-p3-044",
+        "trace-e2e-p3-044-m1",
         "trace-e2e-p3-045",
         "trace-e2e-p3-046",
         "trace-e2e-p3-047",
-        "trace-e2e-p3-048",
-        "trace-e2e-p2-019",
-        "trace-e2e-p3-044-m1"
+        "trace-e2e-p3-048"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p3-047, p3-050 and p3-052 (proven by trace-animals-fit-p2-037, p2-042 and p2-044): the card already offers these sets in this order, with visually hidden ' notification <reference>' text.",
-      "conflicts": ["c-notification-list-002"]
+      "conflicts": [
+        "c-160",
+        "c-194"
+      ]
     },
     {
-      "id": "req-notification-list-054",
+      "id": "req-1085",
       "statement": "A card in a status the real service does not have today (action required, delayed or completed) offers 'Copy as new' then 'View', View opening the notification's review page.",
       "why": "DR1's judgement covers only the card links built today; for the new statuses nothing overrides Design Release 2.1, whose card offers 'Copy as new' and 'View'.",
       "claims": [
         "prototype-dr2-1-source-p13-047",
         "prototype-dr2-1-source-p13-048",
         "prototype-dr2-1-source-p13-049",
-        "trace-prototype-dr2-1-p1-064",
         "prototype-dr2-1-specs-p5-048",
-        "repo-frontend-p3-054"
+        "repo-frontend-p3-054",
+        "trace-prototype-dr2-1-p1-064"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a notification in any status other than Draft, Submitted or Amending has no actions on its card.",
-      "conflicts": ["c-notification-list-002"],
+      "conflicts": [
+        "c-149",
+        "c-160"
+      ],
       "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; until it does, no card is in these statuses."
     },
     {
-      "id": "req-notification-list-055",
-      "statement": "After an action that sends the trader back to the list (such as a delete), the list shows a green success banner titled 'Success' with that action's message.",
-      "why": "Design Release 2.1 uses one success banner titled 'Success'; the message itself is set by the action.",
+      "id": "req-1086",
+      "statement": "After an action that sends the trader back to the list with that action's flag on the redirect (such as a delete), the list shows a GOV.UK success notification banner with role alert, titled 'Success', carrying that action's message.",
+      "why": "Design Release 2.1 uses one success banner titled 'Success'; the message itself is set by the action. The 2026-10-09 ruling keeps the flag on the redirect (such as ?deleted=1) rather than a message held for the trader (c-notification-list-002).",
       "claims": [
         "prototype-dr2-1-source-p13-020",
         "repo-frontend-p3-062",
         "repo-frontend-p3-063",
         "repo-frontend-p3-064",
         "repo-frontend-p3-065",
-        "repo-frontend-p3-136"
+        "repo-frontend-p3-136",
+        "ruling-sam-2026-10-09-p1-085"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the banners are titled for the action: 'Notification deleted' with 'The notification has been deleted.' and 'Notification copied' with 'A new draft notification has been created.' (the copied one is never reached).",
-      "conflicts": []
+      "conflicts": [
+        "c-notification-list-002"
+      ]
     },
     {
-      "id": "req-notification-list-056",
+      "id": "req-1087",
       "statement": "The success message is held for the trader and shown once, then cleared, rather than shown whenever the list's address carries a flag such as ?deleted=1.",
-      "why": "Design Release 2.1 clears the message after showing it, so reloading or sharing the address does not repeat it.",
+      "why": "The 2026-10-09 ruling drops moving the success banner to a message held for the trader and shown once (req-1087, inc-140 criteria 2 and 3): the flag on the redirect, such as ?deleted=1, stays, so the banner shows whenever the list is opened with it (c-notification-list-002).",
       "claims": [
         "prototype-dr2-1-source-p13-020",
         "repo-frontend-p3-062",
-        "repo-frontend-p3-063"
+        "repo-frontend-p3-063",
+        "ruling-sam-2026-10-09-p1-085",
+        "ruling-sam-2026-10-09-p1-101"
+      ],
+      "status": "out-of-scope",
+      "delta": "change",
+      "deltaNote": "Today the banners show whenever the dashboard is opened with ?deleted=1 or ?copied=1, and that stays.",
+      "conflicts": [
+        "c-notification-list-002"
+      ]
+    },
+    {
+      "id": "req-1088",
+      "statement": "The notification list's success banner, the deletion message included, does not dismiss itself: it stays until the trader leaves or reloads the page.",
+      "why": "A message that disappears on a timer can vanish before a screen reader or a slow reader reaches it; this accessibility duty overrides Design Release 2.1's 5-second auto-dismiss, and everything else about the banner follows Design Release 2.1 (c-006).",
+      "claims": [
+        "prototype-dr2-1-source-p13-020",
+        "repo-frontend-p3-062",
+        "repo-frontend-p3-065"
       ],
       "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today the banners show whenever the dashboard is opened with ?deleted=1 or ?copied=1.",
-      "conflicts": []
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p3-062 and repo-frontend-p3-065: today's deletion banner is a GOV.UK success banner announced as an alert, with no timer that dismisses it.",
+      "conflicts": [
+        "c-006"
+      ]
     },
     {
-      "id": "req-notification-list-057",
-      "statement": "The success banner dismisses itself after 5 seconds.",
-      "why": "Design Release 2.1 marks the banner to dismiss itself after 5000 milliseconds.",
-      "claims": ["prototype-dr2-1-source-p13-020"],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-notification-list-058",
+      "id": "req-1089",
       "statement": "The list keeps its stale-action banner ('The notification has been updated' / 'This notification was updated since you opened it. Review the details and try again.') and its 'There is a problem' banner when a copy from the list fails.",
       "why": "Concurrency and failure handling are real constraints the prototype cannot express, so they stay although Design Release 2.1 shows neither.",
       "claims": [
-        "ruling-sam-2026-10-07-p1-010",
         "repo-frontend-p3-066",
         "repo-frontend-p3-067",
         "repo-frontend-p3-134",
+        "ruling-sam-2026-10-07-p1-010",
         "trace-e2e-p3-083",
         "trace-e2e-p3-092"
       ],
@@ -1211,8 +1234,8 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-059",
-      "statement": "Every list string has a Welsh version, and the Welsh copy ships only after a translator signs it off under the Welsh Language Standards.",
+      "id": "req-1090",
+      "statement": "Every list string has a Welsh version, marked as a machine draft that ships only after a translator signs it off under the Welsh Language Standards.",
       "why": "The real service is bilingual and its dashboard Welsh is an unreviewed machine draft; Design Release 2.1's new strings need Welsh twins too.",
       "claims": [
         "repo-frontend-p3-068",
@@ -1222,11 +1245,10 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today every English dashboard key has a machine-drafted Welsh twin in copy.cy.js, not yet reviewed by a translator.",
-      "conflicts": [],
-      "blockedBy": "A Welsh translator reviews and signs off the list's Welsh copy under the Welsh Language Standards."
+      "conflicts": []
     },
     {
-      "id": "req-notification-list-060",
+      "id": "req-1091",
       "statement": "The list has no serious or critical WCAG 2 A or AA axe violations, empty or with cards, and does not scroll sideways at 1280px or at 769px wide.",
       "why": "The real dashboard meets this today and the rebuilt list must keep meeting it.",
       "claims": [
@@ -1243,35 +1265,43 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-061",
-      "statement": "There is a germinal products list at /germinal-products with the h1 'Germinal products', its own Summary counts, the same search, sort, additional filters and tabs pointed at its own path, and a 'Create new' button carrying category=germinal-products.",
-      "why": "Design Release 2.1 gives each category of animal notification its own list.",
+      "id": "req-1092",
+      "statement": "The INS frontend serves a germinal products list, in its own path shape, with the caption 'Dashboard', the h1 'Germinal products', its own Summary counts, the same search, sort, additional filters and tabs pointed at its own address, and a 'Create new' button that starts a germinal products notification in the germinal products set.",
+      "why": "Design Release 2.1 gives each category of animal notification its own list, and the 2026-10-09 ruling builds the germinal list and has its Create new start the germinal set. The list and its Create new may land before the germinal set itself is built.",
       "claims": [
         "prototype-dr2-1-source-p13-015",
         "prototype-dr2-1-source-p13-021",
+        "prototype-dr2-1-specs-p5-061",
+        "prototype-dr2-1-specs-p5-064-m1",
+        "ruling-sam-2026-10-09-p1-049",
+        "ruling-sam-2026-10-09-p1-050",
+        "ruling-sam-2026-10-09-p1-053",
+        "ruling-sam-2026-10-09-p1-061",
+        "ruling-sam-2026-10-09-p1-102",
         "trace-prototype-dr2-1-p1-078",
         "trace-prototype-dr2-1-p1-079",
         "trace-prototype-dr2-1-p1-080",
         "trace-prototype-dr2-1-p1-081",
-        "trace-prototype-dr2-1-p1-087",
-        "prototype-dr2-1-specs-p5-061",
-        "prototype-dr2-1-specs-p5-062",
-        "prototype-dr2-1-specs-p5-064-m1"
+        "trace-prototype-dr2-1-p1-087"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": []
+      "conflicts": [
+        "c-159",
+        "c-notification-list-001"
+      ]
     },
     {
-      "id": "req-notification-list-062",
-      "statement": "Each category list shows only that category's notifications: the live animals list only live animals notifications and the germinal products list only germinal products notifications.",
-      "why": "A trader looking at one category must not see another's notifications.",
+      "id": "req-1093",
+      "statement": "The live animals list shows only live animals notifications: a germinal products notification, or any other category's, that reaches the INS read model never appears on it.",
+      "why": "A trader looking at one category must not see another's notifications; the read model aggregates every journey and today records no journey or category. The category comes from the notification event, absent meaning live animals.",
       "claims": [
-        "prototype-dr2-1-source-p13-017",
         "prototype-dr2-1-source-p13-015",
+        "prototype-dr2-1-source-p13-017",
         "repo-insbackend-p1-021",
-        "repo-insbackend-p1-025"
+        "repo-insbackend-p1-025",
+        "ruling-sam-2026-10-09-p1-033"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1279,13 +1309,15 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-063",
+      "id": "req-1094",
       "statement": "Deleted notifications never appear on any list or in a search.",
       "why": "A deleted notification is gone for the trader; both Design Release 2.1 and the real services leave it out.",
       "claims": [
+        "document-dr1-parity-backlog-p2-030",
+        "document-dr1-parity-backlog-p3-060",
         "prototype-dr2-1-source-p13-051",
-        "repo-frontend-p3-025",
         "repo-backend-p3-002",
+        "repo-frontend-p3-025",
         "repo-insbackend-p1-039",
         "repo-insbackend-p1-040",
         "repo-insbackend-p1-041",
@@ -1294,9 +1326,7 @@
         "repo-insbackend-p1-115",
         "repo-insbackend-p1-116",
         "repo-insbackend-p1-117",
-        "repo-insbackend-p1-131",
-        "document-dr1-parity-backlog-p3-060",
-        "document-dr1-parity-backlog-p2-030"
+        "repo-insbackend-p1-131"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -1304,13 +1334,13 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-064",
+      "id": "req-1095",
       "statement": "A newly started notification appears on the list within seconds.",
       "why": "The list is read from an event-populated read model, so it lags writes slightly; a trader must still find their new draft straight away.",
       "claims": [
+        "repo-insbackend-p1-072",
         "repo-tests-p4-002",
-        "trace-e2e-p3-049",
-        "repo-insbackend-p1-072"
+        "trace-e2e-p3-049"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -1318,17 +1348,17 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-065",
+      "id": "req-1096",
       "statement": "A list shows only the notifications of the signed-in trader's organisation, and the list API refuses a caller that does not say which organisation it acts for.",
       "why": "Authentication and data separation are real constraints the prototype cannot express; today every caller of either list API is served every trader's notifications.",
       "claims": [
-        "ruling-sam-2026-10-07-p1-010",
         "repo-backend-p3-003",
+        "repo-frontend-p3-024-m1",
+        "repo-frontend-p3-137",
         "repo-insbackend-p1-068",
         "repo-insbackend-p1-069",
         "repo-insbackend-p1-070",
-        "repo-frontend-p3-024-m1",
-        "repo-frontend-p3-137",
+        "ruling-sam-2026-10-07-p1-010",
         "trace-animals-fit-p2-091",
         "trace-e2e-p3-095"
       ],
@@ -1338,7 +1368,7 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-066",
+      "id": "req-1097",
       "statement": "The read model behind the list is filled from the notification events on the queue: one record per notification keyed by its aggregate id, applied only when an event's version is higher than the stored one, with malformed or unknown events rejected.",
       "why": "This is how the list learns about notifications today, and the list depends on it staying in step.",
       "claims": [
@@ -1364,8 +1394,10 @@
         "repo-insbackend-p1-075",
         "repo-insbackend-p1-076",
         "repo-insbackend-p1-077",
+        "repo-insbackend-p1-077-m1",
         "repo-insbackend-p1-078",
         "repo-insbackend-p1-079",
+        "repo-insbackend-p1-079-m1",
         "repo-insbackend-p1-080",
         "repo-insbackend-p1-081",
         "repo-insbackend-p1-082",
@@ -1375,6 +1407,7 @@
         "repo-insbackend-p1-086",
         "repo-insbackend-p1-087",
         "repo-insbackend-p1-088",
+        "repo-insbackend-p1-088-m1",
         "repo-insbackend-p1-089",
         "repo-insbackend-p1-090",
         "repo-insbackend-p1-091",
@@ -1392,59 +1425,70 @@
         "repo-insbackend-p1-127",
         "repo-insbackend-p1-128",
         "repo-insbackend-p1-129",
-        "repo-insbackend-p1-130",
-        "repo-insbackend-p1-079-m1",
-        "repo-insbackend-p1-088-m1",
-        "repo-insbackend-p1-077-m1"
+        "repo-insbackend-p1-130"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-insbackend-p1-074, p1-080 and p1-092: the INS backend upserts one record per notification from the queued events, guarded by aggregateVersion, proven by repo-insbackend-p1-128 and p1-129.",
-      "conflicts": ["c-notification-list-001"]
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-067",
+      "id": "req-1098",
       "statement": "The list API returns, for each notification, what the card shows: the reference number, status, category, commodity name, arrival date, origin country name, consignee name, consignor name and number of animals or packages, with a missing fact returned as empty.",
       "why": "The card cannot show facts its list API does not return; the INS read model holds only the reference, status, origin code, first commodity name, arrival date and last update.",
       "claims": [
-        "repo-insbackend-p1-002",
-        "repo-insbackend-p1-015",
-        "repo-insbackend-p1-021",
-        "repo-insbackend-p1-038",
-        "repo-insbackend-p1-038-m1",
-        "repo-insbackend-p1-122-m1",
         "repo-backend-p3-015",
         "repo-backend-p3-016",
         "repo-backend-p3-017",
         "repo-backend-p3-078",
         "repo-frontend-p3-040",
-        "repo-frontend-p3-045"
+        "repo-frontend-p3-045",
+        "repo-insbackend-p1-002",
+        "repo-insbackend-p1-015",
+        "repo-insbackend-p1-021",
+        "repo-insbackend-p1-038",
+        "repo-insbackend-p1-038-m1",
+        "repo-insbackend-p1-122-m1"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the INS read model has no category, consignee, consignor, quantity or country name (origin is a code), and the animals backend list item carries commodity, consignor, consignee, origin and transport but no category or quantity of its own.",
-      "conflicts": ["c-notification-list-001"]
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-068",
-      "statement": "The list API filters by category and by tab (the in-progress statuses, drafts, or completed), and reports how many notifications the 'In progress' tab holds.",
+      "id": "req-1099",
+      "statement": "The INS backend's list API filters by category and by tab (the in-progress statuses, drafts, or completed), and reports how many notifications the 'In progress' tab holds; the animals backend's list gains no category filter.",
       "why": "Each list and tab shows only its own notifications, and the 'In progress' tab shows its count.",
       "claims": [
+        "repo-backend-p3-013",
+        "repo-insbackend-p1-021",
         "repo-insbackend-p1-044",
         "repo-insbackend-p1-045",
-        "repo-insbackend-p1-021",
-        "repo-backend-p3-013"
+        "ruling-sam-2026-10-09-p1-034"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-001"]
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-069",
+      "id": "req-1100",
       "statement": "The list API takes a search text and returns every notification whose reference number, commodity, consignee or consignor contains it, ignoring case and surrounding spaces, paged like any other list.",
       "why": "The list's search matches a keyword across those facts; today both list APIs match only one exact, case-sensitive, whole reference and return at most one notification.",
       "claims": [
+        "document-dr1-parity-backlog-p2-021",
+        "document-dr1-parity-backlog-p2-022",
+        "repo-backend-p3-010",
+        "repo-backend-p3-011",
+        "repo-backend-p3-012",
+        "repo-backend-p3-079",
+        "repo-backend-p3-080",
         "repo-insbackend-p1-059",
         "repo-insbackend-p1-060",
         "repo-insbackend-p1-061",
@@ -1452,42 +1496,46 @@
         "repo-insbackend-p1-063",
         "repo-insbackend-p1-064",
         "repo-insbackend-p1-065",
-        "repo-insbackend-p1-066",
-        "repo-backend-p3-010",
-        "repo-backend-p3-011",
-        "repo-backend-p3-012",
-        "repo-backend-p3-079",
-        "repo-backend-p3-080",
-        "document-dr1-parity-backlog-p2-021",
-        "document-dr1-parity-backlog-p2-022"
+        "repo-insbackend-p1-066"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today referenceNumber is trimmed and matched exactly and case-sensitively against a whole reference; a match is always page 1 of 1, and a miss answers 200 with empty content.",
-      "conflicts": ["c-notification-list-001", "c-notification-list-004"]
+      "conflicts": [
+        "c-159",
+        "c-162"
+      ]
     },
     {
-      "id": "req-notification-list-070",
+      "id": "req-1101",
       "statement": "The list API filters by status and by an arrival-date range (from and to dates, either optional).",
       "why": "The status select and both arrival-date filters need the API to narrow the list; today neither list API has any filter beyond an exact reference.",
       "claims": [
-        "repo-insbackend-p1-044",
-        "repo-insbackend-p1-045",
-        "repo-backend-p3-013",
         "document-dr1-parity-backlog-p2-006",
+        "document-dr1-parity-backlog-p2-014-m1",
         "document-dr1-parity-backlog-p2-028",
-        "document-dr1-parity-backlog-p2-014-m1"
+        "repo-backend-p3-013",
+        "repo-insbackend-p1-044",
+        "repo-insbackend-p1-045"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-notification-list-001", "c-notification-list-004"]
+      "conflicts": [
+        "c-159",
+        "c-162"
+      ]
     },
     {
-      "id": "req-notification-list-071",
+      "id": "req-1102",
       "statement": "The list API sorts by creation date (newest or oldest first) and by arrival date, defaults to arrival date newest first, and breaks ties on a second key so no notification repeats or goes missing between pages.",
       "why": "'Newest first' and 'Oldest first' order by creation date, which the INS read model does not hold (it sorts on last update), and a single-key sort with ties is unstable across pages.",
       "claims": [
+        "repo-backend-p3-006",
+        "repo-backend-p3-007",
+        "repo-backend-p3-008",
+        "repo-backend-p3-009",
+        "repo-backend-p3-009-m1",
         "repo-insbackend-p1-046",
         "repo-insbackend-p1-047",
         "repo-insbackend-p1-048",
@@ -1502,11 +1550,6 @@
         "repo-insbackend-p1-057",
         "repo-insbackend-p1-058",
         "repo-insbackend-p1-120",
-        "repo-backend-p3-006",
-        "repo-backend-p3-007",
-        "repo-backend-p3-008",
-        "repo-backend-p3-009",
-        "repo-backend-p3-009-m1",
         "trace-animals-fit-p2-022-m1",
         "trace-animals-fit-p2-052-m1",
         "trace-animals-fit-p2-092",
@@ -1515,13 +1558,19 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the INS backend sorts on arrivalDate or lastUpdated (the animals backend on arrivalDate or createdAt), one field only with no tie-breaker, defaulting to arrival date newest first.",
-      "conflicts": ["c-notification-list-001"]
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-072",
+      "id": "req-1103",
       "statement": "The list API serves 8 notifications a page, numbered from 1, and reports the page, size, number of elements, total elements and total pages.",
       "why": "The list shows 8 a page and builds numbered pagination from the totals.",
       "claims": [
+        "repo-backend-p3-004",
+        "repo-backend-p3-005",
+        "repo-backend-p3-014",
+        "repo-backend-p3-077",
         "repo-insbackend-p1-028",
         "repo-insbackend-p1-033",
         "repo-insbackend-p1-034",
@@ -1530,19 +1579,17 @@
         "repo-insbackend-p1-037",
         "repo-insbackend-p1-113",
         "repo-insbackend-p1-114",
-        "repo-insbackend-p1-119",
-        "repo-backend-p3-004",
-        "repo-backend-p3-005",
-        "repo-backend-p3-014",
-        "repo-backend-p3-077"
+        "repo-insbackend-p1-119"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today both list APIs serve 25 a page, set by configuration (NOTIFICATION_LIST_PAGE_SIZE in the INS backend); the response shape and 1-based page already exist.",
-      "conflicts": ["c-notification-list-001"]
+      "conflicts": [
+        "c-159"
+      ]
     },
     {
-      "id": "req-notification-list-073",
+      "id": "req-1104",
       "statement": "The list API answers a bad request, such as a page below 1, with a 400 validation problem response naming the field, and an unexpected failure with a 500 problem response that hides the underlying error.",
       "why": "Callers get a consistent problem-details error from the list API.",
       "claims": [
@@ -1563,7 +1610,7 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-074",
+      "id": "req-1105",
       "statement": "Read-model defects and operational details the design release does not touch stay as they are and go to the report: a non-numeric page likely answering 500, a shared reference likely answering 500, failed events never retried and so lost, no dead-letter queue shown, untested lastUpdated sorts and deletion end to end, the metrics, logging, port, switched-off OpenAPI, template README, empty seed, missing rulings ledger and the absence of a get-one endpoint.",
       "why": "None of these is a difference from Design Release 2.1; the programme does not fix them, so they are reported rather than built.",
       "claims": [
@@ -1590,7 +1637,7 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-075",
+      "id": "req-1106",
       "statement": "The prototype's demo data is not built: its seeded notifications and their fixed references, the states it fakes by a notification's position (action required, status changes, delays, inspection, Plants), its placeholder number of animals, its demo consignee and consignor names, its fixed commodity-code look-up, its category guess for unlabelled notifications and its session ordering of drafts, submissions and seeds.",
       "why": "These are demonstration mechanics of the prototype, not rules for the real service, which holds real notifications with their own facts and statuses.",
       "claims": [
@@ -1609,13 +1656,13 @@
         "prototype-dr2-1-source-p13-076",
         "prototype-dr2-1-source-p13-077",
         "prototype-dr2-1-source-p13-078",
+        "prototype-dr2-1-specs-p5-045",
+        "prototype-dr2-1-specs-p5-088",
         "trace-prototype-dr2-1-p1-071",
         "trace-prototype-dr2-1-p1-072",
         "trace-prototype-dr2-1-p1-084",
         "trace-prototype-dr2-1-p1-085",
-        "trace-prototype-dr2-1-p1-086",
-        "prototype-dr2-1-specs-p5-045",
-        "prototype-dr2-1-specs-p5-088"
+        "trace-prototype-dr2-1-p1-086"
       ],
       "status": "out-of-scope",
       "delta": "new",
@@ -1623,16 +1670,207 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-list-076",
+      "id": "req-1107",
       "statement": "The prototype's list with no category is not built: its fallback heading 'Live animals and germinal products', its 'By type' select (shown only without a category, hiding Plants) and its uncategorised 'View tasks' and 'View updates' links.",
       "why": "Design Release 2.1 always reaches a list with a category, so these are never seen.",
       "claims": [
         "prototype-dr2-1-source-p13-021",
+        "prototype-dr2-1-source-p13-024-m1",
         "prototype-dr2-1-source-p13-033",
-        "prototype-dr2-1-source-p13-034",
-        "prototype-dr2-1-source-p13-024-m1"
+        "prototype-dr2-1-source-p13-034"
       ],
       "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-1735",
+      "statement": "The list's 'Status updated' glance card shows a live count for the category: the notifications whose status changed in the past 24 hours, matching the Status updated list its link opens.",
+      "why": "The count is only useful if it agrees with the drill-down page, and it depends on outcomes the authorities set after submission.",
+      "claims": [
+        "document-dr1-parity-backlog-p3-031",
+        "document-dr1-parity-backlog-p3-031-m1",
+        "prototype-dr2-1-source-p13-025",
+        "prototype-dr2-1-source-p13-069",
+        "trace-prototype-dr2-1-p1-123"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-148"
+      ],
+      "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record; no such feed exists today, so no real notification can be counted as needing action or as status-updated."
+    },
+    {
+      "id": "req-1736",
+      "statement": "The germinal products list shows only germinal products notifications.",
+      "why": "A trader looking at one category must not see another's notifications; the 2026-10-09 ruling builds the germinal list, so this no longer waits, and the category comes from the notification event.",
+      "claims": [
+        "prototype-dr2-1-source-p13-015",
+        "prototype-dr2-1-source-p13-017",
+        "ruling-sam-2026-10-09-p1-033",
+        "ruling-sam-2026-10-09-p1-050"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-1737",
+      "statement": "A germinal products notification's card shows its quantity as 'Number of packages', from the notification's package count.",
+      "why": "Design Release 2.1 counts germinal products in packages, not animals; the 2026-10-09 ruling builds the germinal cards, so this no longer waits.",
+      "claims": [
+        "prototype-dr2-1-source-p13-058",
+        "prototype-dr2-1-specs-p5-064",
+        "repo-frontend-p3-038",
+        "ruling-sam-2026-10-09-p1-050",
+        "trace-prototype-dr2-1-p1-082"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-1738",
+      "statement": "On a germinal products notification's card the commodity is the species then the product type, separated by a comma, such as 'Cattle, Semen'.",
+      "why": "Germinal products need the product type as well as the species to say what is coming; the 2026-10-09 ruling builds the germinal cards, so this no longer waits.",
+      "claims": [
+        "prototype-dr2-1-specs-p5-063",
+        "ruling-sam-2026-10-09-p1-050",
+        "trace-prototype-dr2-1-p1-083"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-1739",
+      "statement": "A completed notification's status 'Completed' is plain styled text, not a tag.",
+      "why": "Design Release 2.1 uses a tag only for statuses that ask something of the trader; no completed status reaches the service until the authorities' outcomes do (req-1082).",
+      "claims": [
+        "prototype-dr2-1-source-p13-061",
+        "trace-prototype-dr2-1-p1-068"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [],
+      "blockedBy": "The authorities' case system (PIMS Dynamics) sends post-submission outcomes, completed among them, back to the notification record; no completed status reaches the service today (as req-1082)."
+    },
+    {
+      "id": "req-notification-list-001",
+      "statement": "The germinal products set's root in the animals frontend renders no notification list and sends the trader to the INS frontend's germinal products list.",
+      "why": "The germinal half of req-1032, split per set by the 2026-10-09 ruling: each set's root redirects to its own INS list, following Rhys's DR1 judgement that the dashboard lives in the INS frontend.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-034",
+        "ruling-sam-2026-10-09-p1-057",
+        "ruling-sam-2026-10-09-p1-008",
+        "ruling-sam-2026-10-09-p1-113",
+        "document-dr1-parity-notes-p1-014"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-159"
+      ]
+    },
+    {
+      "id": "req-notification-list-002",
+      "statement": "The k6 journey script no longer reads the notification list from the live-animals set root: its crumb for creating a notification, its search for a notification by reference and its check that a submitted notification is listed follow the create journey and the INS frontend's live animals list.",
+      "why": "Moving the list to the INS frontend changes a route the k6 scripts use: the live-animals set root stops rendering the list, so trade-imports-performance-tests joins that change and no other.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-199",
+        "ruling-sam-2026-10-09-p1-200",
+        "repo-perftests-p1-005",
+        "repo-perftests-p1-068",
+        "repo-perftests-p1-069"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today journeys.js opens the live-animals set root for the crumb it posts back to create a notification, searches it with a referenceNumber query and checks the page text for the submitted notification's reference.",
+      "conflicts": [
+        "c-159"
+      ]
+    },
+    {
+      "id": "req-notification-list-003",
+      "statement": "The k6 background-volume script keeps counting notifications from the animals and plants backends' reference-number endpoints, which the list's move does not touch.",
+      "why": "Only the set root moves; the backends' reference-number endpoints stay, so the background count needs no change.",
+      "claims": [
+        "repo-perftests-p2-045",
+        "repo-perftests-p2-045-m1",
+        "ruling-sam-2026-10-09-p1-200"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-perftests-p2-045 and repo-perftests-p2-045-m1: background-volume.js reads totalElements from GET /notifications/reference-numbers?page=0 on each backend.",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-list-004",
+      "statement": "The animals backend stores each notification's category (live animals or germinal products) on the notification record, a record with none counting as live animals, and publishes the category on the notification event the INS backend reads. The field's name and values are the backend's to choose.",
+      "why": "Each INS list shows only its own category, and the read model can only learn a notification's category from the event; the 2026-10-09 ruling chose this over a backend list filter.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-029",
+        "ruling-sam-2026-10-09-p1-032",
+        "ruling-sam-2026-10-09-p1-035",
+        "repo-backend-p3-015",
+        "repo-insbackend-p1-021"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-159"
+      ]
+    },
+    {
+      "id": "req-notification-list-005",
+      "statement": "The INS read model records each notification's category from the category on its notification events, and treats a notification whose events carry none as live animals.",
+      "why": "The lists filter by category, and the 2026-10-09 ruling has INS take the category from the event, defaulting to live animals, so notifications made before the field existed stay on the live animals list.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-033",
+        "ruling-sam-2026-10-09-p1-032",
+        "repo-insbackend-p1-002",
+        "repo-insbackend-p1-021"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-159"
+      ]
+    },
+    {
+      "id": "req-notification-list-006",
+      "statement": "The germinal products set creates each draft with the category germinal products, so its notifications reach the germinal products list and not the live animals list.",
+      "why": "The 2026-10-09 ruling has each set pass its category when it creates the draft; without it a germinal notification would count as live animals. Split per set as the ruling directs.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-030",
+        "ruling-sam-2026-10-09-p1-029",
+        "ruling-sam-2026-10-09-p1-006"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-notification-list-007",
+      "statement": "The live-animals set creates each draft with the category live animals.",
+      "why": "The 2026-10-09 ruling has each set pass its category when it creates the draft; a record with none still counts as live animals, so older drafts stay on the live animals list. Split per set as the ruling directs.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-030",
+        "ruling-sam-2026-10-09-p1-029",
+        "repo-backend-p3-015"
+      ],
+      "status": "adopted",
       "delta": "new",
       "deltaNote": "",
       "conflicts": []
@@ -1640,7 +1878,7 @@
   ],
   "conflicts": [
     {
-      "id": "c-notification-list-001",
+      "id": "c-159",
       "about": "Which service hosts the Design Release 2.1 category notification lists and their list API.",
       "positions": [
         {
@@ -1667,15 +1905,37 @@
           "source": "repo:frontend",
           "says": "Today the dashboard is the animals frontend's GET route at /live-animals.",
           "claim": "repo-frontend-p3-001"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "inc-129 and c-159 are kept because Rhys's DR1 judgement moves the dashboard to the INS front door; c-159's 'as the prototype shows' clause is struck.",
+          "claim": "ruling-sam-2026-10-09-p1-113"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "There is no backend list filter by category; each set's root redirects to its INS list.",
+          "claim": "ruling-sam-2026-10-09-p1-034"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The /dashboard redirect is dropped and struck from c-159.",
+          "claim": "ruling-sam-2026-10-09-p1-079"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "GET /dashboard redirects to /live-animals keeping its query string, or to the overall home without one.",
+          "claim": "prototype-dr2-1-source-p13-016"
         }
       ],
-      "resolution": "question",
-      "outcome": "Open: the move ruling is a DR1-era decision about where the dashboard lives, not a judgement on a difference from the prototype, and the 2026-10-07 ruling neither confirms nor withdraws it, so precedence does not rank the two homes. Building in either place produces different repos' changes.",
-      "question": "Should the Design Release 2.1 category lists (/live-animals and /germinal-products) be built in the INS frontend on the INS backend read model, or in the animals frontend on the animals backend list?",
-      "default": "The INS frontend hosts both category lists at /live-animals and /germinal-products, reading the INS backend read model, which gains the facts, filters, search and sorts the list needs; the animals frontend's dashboard at its set root sends the trader to the INS frontend's live animals list; the animals backend's GET /notifications is left unchanged until nothing calls it."
+      "resolution": "precedence",
+      "outcome": "The INS frontend hosts both category lists, live animals and germinal products, in its own path shape, reading the INS backend read model, which gains the category (from the notification event, absent meaning live animals), facts, filters, search and sorts the list needs. This follows Rhys's DR1 judgement (2026-08-28) that the dashboard is temporary in the animals frontend and moves to the INS frontend, which matches the animals backend's own note that its list endpoint is being replaced; the 2026-10-09 ruling keeps the move for that judgement alone, not because the prototype shows the lists beside the overall home. Each set's root in the animals frontend (live-animals, germinal-products) sends the trader to its own INS list, and the animals backend gains no list filter by category; its GET /notifications is left unchanged until nothing calls it. The home's 'View dashboard' links and the drill-downs' Back links point wherever the list lives. The prototype's /dashboard redirect is not built: the 2026-10-09 ruling strikes it from this conflict.",
+      "overruled": [
+        "repo-frontend-p3-001",
+        "prototype-dr2-1-source-p13-016"
+      ]
     },
     {
-      "id": "c-notification-list-002",
+      "id": "c-160",
       "about": "The actions a notification card offers: Design Release 2.1's 'Copy as new' and 'View' on every card, or today's status-driven actions.",
       "positions": [
         {
@@ -1718,7 +1978,7 @@
       ]
     },
     {
-      "id": "c-notification-list-003",
+      "id": "c-161",
       "about": "Whether the sort select starts on an unselected 'Select one' option, leaving the list unsorted.",
       "positions": [
         {
@@ -1755,7 +2015,7 @@
       ]
     },
     {
-      "id": "c-notification-list-004",
+      "id": "c-162",
       "about": "Whether search, sort and the additional filters change the list, or are only read back into the form as in the prototype.",
       "positions": [
         {
@@ -1787,7 +2047,7 @@
       ]
     },
     {
-      "id": "c-notification-list-005",
+      "id": "c-163",
       "about": "Whether page links keep the search text and the additional filters.",
       "positions": [
         {
@@ -1807,11 +2067,13 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The ruling ranks first: because the real search and filters apply (c-notification-list-004), a page link that dropped them would show an unfiltered page 2, so page links keep the tab, the sort, the search and every filter.",
-      "overruled": ["prototype-dr2-1-source-p13-043"]
+      "outcome": "The ruling ranks first: because the real search and filters apply (c-162), a page link that dropped them would show an unfiltered page 2, so page links keep the tab, the sort, the search and every filter.",
+      "overruled": [
+        "prototype-dr2-1-source-p13-043"
+      ]
     },
     {
-      "id": "c-notification-list-006",
+      "id": "c-164",
       "about": "How the card writes the arrival date: '21/06/2026' or '21 June 2026'.",
       "positions": [
         {
@@ -1828,15 +2090,22 @@
           "source": "repo:frontend",
           "says": "Today's card shows the chosen arrival day; the traces render it as day, short month name and year.",
           "claim": "repo-frontend-p3-041"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "On look and feel, the prototype wins by default over what the real services do today.",
+          "claim": "ruling-sam-2026-10-09-p1-068"
         }
       ],
-      "resolution": "question",
-      "outcome": "Open: the prototype's code reading and its rendered page disagree about the same card. '21 June 2026' should parse as a date, so the dd/mm/yyyy formatter may not be the one the card uses; ranking the code over the render would settle a doubt about what the prototype does with the plain reading of one extract.",
-      "question": "Does the Design Release 2.1 card write the arrival date as '21/06/2026' or as '21 June 2026'?",
-      "default": "Day, full month name and year, such as '21 June 2026', as the prototype renders it."
+      "resolution": "precedence",
+      "outcome": "The Design Release 2.1 card writes the arrival date as day, full month name and year, such as '21 June 2026'. The prototype's code and render agree: at 04a073b the card partial (app/views/partials/design-release-2.1/dashboard-notification-card.html) prints arrivalDateDisplay, which formatDashboardArrivalDate (app/routes.js:7201) builds from notification.arrivalDate; it only rewrites a d/m/yyyy value to dd/mm/yyyy and otherwise passes the stored text through. Every value the card receives is already 'D Month YYYY': the seed data in app/data/dashboard-notifications.js stores '21 June 2026', and submitted notifications store formatDateForDashboard(snapshot.arrivalDateAtPort) (app/routes.js:6883, 6989), which writes the full month name via formatDeclarationDate. So the dd/mm/yyyy branch is never reached on the card, and the rendered '21 June 2026' is what the prototype does. Today's card's short month name ('7 Nov 2026') changes to the full month name; no DR1 judgement or real constraint overrides the prototype on this difference.",
+      "overruled": [
+        "prototype-dr2-1-source-p13-055",
+        "repo-frontend-p3-041"
+      ]
     },
     {
-      "id": "c-notification-list-007",
+      "id": "c-165",
       "about": "Where a notification being amended appears on the list and how its status shows.",
       "positions": [
         {
@@ -1848,15 +2117,21 @@
           "source": "repo:frontend",
           "says": "A notification being amended shows a yellow 'Amending' tag and Resume, Copy as new, Cancel amendment and Delete.",
           "claim": "repo-frontend-p3-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "says": "A real constraint the prototype cannot express, such as persistence or cross-service behaviour, overrides the prototype default.",
+          "claim": "ruling-sam-2026-10-07-p1-010"
         }
       ],
-      "resolution": "question",
-      "outcome": "Open: Design Release 2.1 has no amending state on its lists, so its fallback mapping would show an amendment as a draft in the 'Draft' tab, while the real service keeps an amendment as the same submitted notification under change. Neither a ruling nor DR1 judges this difference.",
-      "question": "When a submitted notification is being amended, should it be listed in the 'In progress' tab with an 'Amending' tag, or in the 'Draft' tab as a draft?",
-      "default": "The 'In progress' tab, with today's yellow 'Amending' tag and its status-driven actions (Resume, Copy as new, Cancel amendment, Delete)."
+      "resolution": "precedence",
+      "outcome": "A notification being amended is listed in the 'In progress' tab with today's yellow 'Amending' tag and its status-driven actions (Resume, Copy as new, Cancel amendment, Delete). The tabs otherwise follow Design Release 2.1 ('In progress' for submitted and action-required, 'Draft' for drafts, 'Completed' for completed). The prototype's fallback mapping of unknown statuses to the draft variant is set aside for amendments only, because an amendment is a persisted, already-submitted notification under change (status AMEND, which nothing moves back to DRAFT, re-submitted as NotificationSubmissionAmended and deleted as a submission), a lifecycle and cross-service constraint the prototype cannot express.",
+      "overruled": [
+        "prototype-dr2-1-source-p13-066"
+      ]
     },
     {
-      "id": "c-notification-list-008",
+      "id": "c-166",
       "about": "What the date-range filter does with a date it cannot read or a range that ends before it starts.",
       "positions": [
         {
@@ -1870,13 +2145,14 @@
           "claim": "ruling-sam-2026-10-07-p1-010"
         }
       ],
-      "resolution": "question",
-      "outcome": "Open: the ruling says validation overrides the prototype, but no source says what the trader sees for an unreadable or reversed range, and an error, a silent ignore and a swap would each build something different.",
-      "question": "When a date-range filter has an unreadable date or an end date before the start date, should the list show an error, or ignore the bad dates?",
-      "default": "The list shows a GOV.UK error summary and an inline error on the date field ('Enter a real start date', 'Enter a real end date' or 'End date must be the same as or after the start date'), opens 'Additional filters', keeps the entered text, and lists notifications without the date-range filter."
+      "resolution": "precedence",
+      "outcome": "When the start or end date cannot be read as a date, or the end date is before the start date, the list shows a GOV.UK error summary and an inline error on the date field ('Enter a real start date', 'Enter a real end date' or 'End date must be the same as or after the start date'), opens 'Additional filters', keeps the entered text in the prototype's 'Start date' and 'End date' pickers, and lists notifications without the date-range filter. The ruling makes validation a real constraint that overrides the prototype's absence of validation; everything else about the pickers follows the prototype.",
+      "overruled": [
+        "prototype-dr2-1-source-p13-032"
+      ]
     },
     {
-      "id": "c-notification-list-009",
+      "id": "c-167",
       "about": "Whether DR1's deferred dashboard parity rows (inc-015 to inc-024) hold back the matching Design Release 2.1 differences.",
       "positions": [
         {
@@ -1896,7 +2172,84 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The 2026-10-07 ruling ranks first: a deferral is not a judgement on a difference, so the DR1 blocks on the heading, results count, search, filters, sort labels, sort button, card facts and arrival label do not override Design Release 2.1, which is built. The blocks remain true as history and are not overruled; only the two rejections (inc-030, inc-031) are judgements, handled in c-notification-list-002 and c-notification-list-003."
+      "outcome": "The 2026-10-07 ruling ranks first: a deferral is not a judgement on a difference, so the DR1 blocks on the heading, results count, search, filters, sort labels, sort button, card facts and arrival label do not override Design Release 2.1, which is built. The blocks remain true as history and are not overruled; only the two rejections (inc-030, inc-031) are judgements, handled in c-160 and c-161."
+    },
+    {
+      "id": "c-notification-list-001",
+      "about": "Whether the lists copy the prototype's addresses and query parameters: Create new's create-notification?category=, the tabs' ?tab=drafts and ?tab=completed, and the lists at /live-animals and /germinal-products.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype never decides URL paths or query parameter names; Create new links to the start of the create journey with the list's category, not to create-notification?category=.",
+          "claim": "ruling-sam-2026-10-09-p1-102"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Acceptance criteria assert pages, headings and destinations, not literal paths or query strings.",
+          "claim": "ruling-sam-2026-10-09-p1-075"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Create new goes to /create-notification?category=<category>, carrying the list's category.",
+          "claim": "prototype-dr2-1-source-p13-022"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The tabs link to the list path, <list path>?tab=drafts and <list path>?tab=completed.",
+          "claim": "prototype-dr2-1-source-p13-038"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "The live animals list's Create new links to /create-notification?category=live-animals.",
+          "claim": "prototype-dr2-1-specs-p5-035"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "The germinal products list's Create new links to /create-notification?category=germinal-products.",
+          "claim": "prototype-dr2-1-specs-p5-062"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "Choosing the Draft tab puts tab=drafts in the URL.",
+          "claim": "prototype-dr2-1-specs-p5-054"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "Choosing the Completed tab puts tab=completed in the URL.",
+          "claim": "prototype-dr2-1-specs-p5-056"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 ruling ranks first: the lists keep the prototype's content (a list per category, Create new carrying the list's category into the create journey, three tabs as links with 'In progress' as the default), while the INS frontend names their addresses, the tab parameter and its values, and the create journey's entry. The live list's Create new starts a live animals notification and the germinal list's starts the germinal set. The spec claims that assert only a literal address are overruled; prototype-dr2-1-source-p13-022, p13-038 and the trace claims are not, because they still back the button, the category it carries and the tabs.",
+      "overruled": [
+        "prototype-dr2-1-specs-p5-035",
+        "prototype-dr2-1-specs-p5-062",
+        "prototype-dr2-1-specs-p5-054",
+        "prototype-dr2-1-specs-p5-056"
+      ]
+    },
+    {
+      "id": "c-notification-list-002",
+      "about": "How the list's success banner is triggered: a message held for the trader and shown once (Design Release 2.1), or the action's flag on the redirect (today).",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Moving the success banner to a session flash is dropped; ?deleted=1 stays on the redirect.",
+          "claim": "ruling-sam-2026-10-09-p1-085"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The list shows a 'Success' banner when the session holds a success message, then clears the message so it shows only once.",
+          "claim": "prototype-dr2-1-source-p13-020"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "With ?deleted=1 the dashboard shows the deletion success banner.",
+          "claim": "repo-frontend-p3-062"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 2026-10-09 ruling ranks first: the banner keeps being triggered by the action's flag on the redirect, such as ?deleted=1, and no held, show-once message is built (req-1087 out of scope). The banner's look follows Design Release 2.1 (titled 'Success', req-1086) and it never dismisses itself (c-006). prototype-dr2-1-source-p13-020 is not overruled because it still backs the 'Success' title and the banner itself."
     }
   ]
 }

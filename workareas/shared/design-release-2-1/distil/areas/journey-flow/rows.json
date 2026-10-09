@@ -7,7 +7,7 @@
       "acceptanceCriteria": [
         "In a new notification's opening run, 'Save and continue' on 'What are you importing?' goes to 'Main reason for import', and 'Save and continue' on 'Main reason for import' goes to 'Commodity details'. (prototype:dr2-1-source app/routes.js:1495-1501; trace:prototype-dr2-1 index.json pages for both traces)",
         "In the opening run, 'Save and continue' on 'Commodity details' goes to 'Identification details' when a chosen commodity needs animal identifiers, and otherwise to 'Additional details'. (trace:prototype-dr2-1 index.json pages for both traces)",
-        "In the opening run, 'Save and continue' on 'Roles and addresses' goes to 'Contact address for this consignment', including for a consignment that needs a CPH number; the run never shows the CPH number page. (prototype:dr2-1-source app/routes.js:1523-1527, app/routes.js:1495-1534)",
+        "In the opening run, 'Save and continue' on 'Roles and addresses' goes to 'Contact address for this consignment', including for a consignment that needs a CPH number; the run never shows the CPH number page. (prototype:dr2-1-source app/routes.js:1495-1534)",
         "The CPH number page opens only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'. (prototype:dr2-1-source app/routes.js:1495-1534; repo:tests tests/animals/e2e/features/cph-scope.spec.ts:56-64)",
         "When every section on the overview is already complete, 'Save and continue' on 'Roles and addresses' goes to the overview instead of the contact address page. (prototype:dr2-1-source app/routes.js:1545-1547)",
         "'Save and continue' on 'Contact address for this consignment' at the end of the opening run goes to the review page even when the notification is incomplete, and the review page names what is outstanding. (prototype:dr2-1-source app/routes.js:1523-1527, app/routes.js:1536-1554; prototype:dr2-1-specs COVERAGE.md:163-164)",
@@ -17,95 +17,84 @@
       "requirements": ["req-1610", "req-1611", "req-1612", "req-1614", "req-1655"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1495-1554 (step order and next page)" },
-        { "source": "trace:prototype-dr2-1", "ref": "index.json pages for both traces (opening run order)" },
+        { "source": "trace:prototype-dr2-1", "ref": "index.json pages for both traces (opening run order); p12-197, p12-198, p13-180" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/journeys.fit.spec.js:222-236 (cattle by air); COVERAGE.md:163-164" },
-        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js RUN_STEPS, reviewTarget, nextRunTarget; fit/journey-smoke.fit.spec.js:31-79" },
+        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/flow/run.js nextRunTarget; src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:54-57; fit/journey-smoke.fit.spec.js:31-79" },
         { "source": "repo:tests", "ref": "flows/animals/journey.ts:146-224, 357-368; tests/animals/e2e/features/cph-scope.spec.ts:56-78" },
         { "source": "trace:animals-fit", "ref": "p1-055, p1-061, p1-094 (today's order)" },
         { "source": "trace:e2e", "ref": "p14-108, p14-118 (today's order)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
+      "dependsOn": [],
       "status": "todo",
       "gate": "Look at the opening run end to end on a new notification: reason for import before commodity details, no CPH step, contact address then review even when incomplete. Every later row's end-to-end walk, in every area, follows this order.",
       "openQuestions": [],
-      "notes": "Combines four thin slices that all change the opening run's step list and next-page rule (req-1610 reason before commodity details, c-202; req-1611 no CPH step, c-203; req-1612 complete-run skip; req-1614 run always ends on review, c-205) with req-1655, the tests repo's whole-journey proof, because the reorder breaks today's cattle-by-road walk and the same helper has to be rewritten in the same change. The frontend's own rule that a run with no open later step ends on the overview (repo-frontend-p1-113) still holds and is not overruled. The frontend's journey-flow documentation is updated to the new order in the same change. The unweaned question is asked for cattle today; req-175 (another area) widens it to pigs and does not block this walk.",
+      "notes": [
+        "Combines four thin slices that all change the opening run's step list and next-page rule (req-1610 reason before commodity details, c-202; req-1611 no CPH step, c-203; req-1612 complete-run skip; req-1614 run always ends on review, c-205) with req-1655, the tests repo's whole-journey proof, because the reorder breaks today's cattle-by-road walk and the same helper has to be rewritten in the same change.",
+        "The frontend's own rule that a run with no open later step ends on the overview (repo-frontend-p1-113) still holds and is not overruled. The frontend's journey-flow documentation is updated to the new order in the same change.",
+        "Re-distil: unchanged from the existing row; the 9 October ruling (c-202) only adds that question order counts as look and feel the prototype decides."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js",
-        "frontend:src/server/app/sets/live-animals/docs/journey-flow-and-gates.md",
         "frontend:fit/journey-smoke.fit.spec.js",
-        "tests:tests/animals/e2e/journeys"
+        "frontend:src/server/app/sets/live-animals/docs/journey-flow-and-gates.md",
+        "tests:flows/animals/journey.ts",
+        "tests:tests/animals/e2e/features/cph-scope.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
-        "frontend:fit/live-animals-journey.js",
-        "tests:flows/animals/journey.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "frontend:src/server/app/flow/run-state.js"
       ],
-      "existingRow": null
+      "existingRow": "inc-001"
     },
     {
       "title": "A page opened from an overview task returns to the overview on save",
-      "detail": "Every Design Release 2.1 overview task opens its page in an overview context, and that page goes back to the overview when the trader presses 'Save and continue'. Today several pages chain on through the rest of their section first. Each chained-to page has its own overview row, so nothing becomes unreachable.",
+      "detail": "Every Design Release 2.1 overview task opens its page in an overview context, and that page goes back to the overview when the trader presses 'Save and continue'. Today several pages chain on through the rest of their section first. The service tells the overview context from its own journey state: any save made outside the opening run and outside a change from the review page returns to the overview, and no marker is added to the page's address. Each chained-to page has its own overview row, so nothing becomes unreachable.",
       "acceptanceCriteria": [
-        "Opened from its overview task, 'What are you importing?' goes to the overview on 'Save and continue', not to 'Commodity details'. (prototype:dr2-1-source app/routes.js:1588-1602, app/routes.js:440-442)",
-        "Opened from its overview task, 'Main reason for import' goes to the overview on 'Save and continue', not to 'Additional details'. (prototype:dr2-1-source app/routes.js:1588-1602)",
-        "Opened from its overview task, 'Arrival details' goes to the overview on 'Save and continue', not to 'Transit countries' or the transporter page. (prototype:dr2-1-source app/routes.js:1588-1602)",
-        "Opened from its overview task, 'Roles and addresses' goes to the overview on 'Save and continue', not to the CPH number page. (prototype:dr2-1-source app/routes.js:1588-1602)",
+        "Opened from its overview task, 'What are you importing?' goes to the overview on 'Save and continue', not to 'Commodity details'. (prototype:dr2-1-source app/routes.js:1588-1602; ruling:sam-2026-10-09 claim 39)",
+        "Opened from its overview task, 'Main reason for import' goes to the overview on 'Save and continue', not to 'Additional details'. (prototype:dr2-1-source app/routes.js:1588-1602; trace:animals-fit p1-058 to p1-063)",
+        "Opened from its overview task, 'Arrival details' goes to the overview on 'Save and continue', not to 'Transit countries' or the transporter page. (prototype:dr2-1-source app/routes.js:1588-1602; trace:e2e p14-091)",
+        "Opened from its overview task, 'Roles and addresses' goes to the overview on 'Save and continue', not to the CPH number page, including for a consignment that needs a CPH number. (prototype:dr2-1-source app/routes.js:1588-1602; ruling:sam-2026-10-09 claim 39)",
         "'Commodity details', 'Additional details', 'Transit countries' and the transporter page each open from their own overview row and return to the overview on 'Save and continue'. (prototype:dr2-1-source app/routes.js:1588-1602)",
-        "'Upload documents' opened from the overview keeps its add-another round trip on the page, then returns to the overview on 'Save and continue'. (prototype:dr2-1-source app/routes.js:1588-1602)"
+        "'Upload documents' opened from the overview keeps its add-another round trip on the page, then returns to the overview on 'Save and continue'. (prototype:dr2-1-source app/routes.js:1588-1602)",
+        "A page opened from its overview task has the same address as when it is reached in the opening run, with no from=hub marker added, and still returns to the overview on 'Save and continue'. (ruling:sam-2026-10-09 claim 39)",
+        "After returning, the task just saved reads 'Complete' on the overview when its answers pass their pages' rules. (prototype:dr2-1-specs hub task return; repo:frontend features/hub)",
+        "A new notification's opening run, started from the dashboard rather than the overview, still carries the trader from page to page in the step order without stopping at the overview. (repo:frontend fit/journey-smoke.fit.spec.js:31-79; trace:e2e p14-108)"
       ],
       "requirements": ["req-1615"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:440-442, 1588-1602 (from=hub context and continue target)" },
-        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:81-87; fit/live-animals-journey.js:459-470" },
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:1588-1602 (continue target after a section page)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 39 (return to the overview; no from=hub marker; old criterion 10 removed)" },
+        { "source": "prototype:dr2-1-specs", "ref": "hub task return" },
+        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/docs/journey-flow-and-gates.md:81-87, 105-111; fit/journey-smoke.fit.spec.js:81-89" },
         { "source": "repo:tests", "ref": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts:55-57; reason-purpose-scope.spec.ts:19-23; flows/animals/journey.ts:195-207" },
-        { "source": "trace:animals-fit", "ref": "p1-058 to p1-063 (today's section chaining)" }
+        { "source": "trace:animals-fit", "ref": "p1-058 to p1-063 (today's section chaining)" },
+        { "source": "trace:e2e", "ref": "p14-091 (today's arrival run-on)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
+      "dependsOn": ["inc-001"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1615, c-204): section chaining after the overview has been shown is removed for every section. Kept apart from the Back-link row because that one waits on template editing from another area. Depends on the opening-run step-order row (same flow code, and the tests that drive the overview follow the new order). Existing tests that rely on chaining (animal-identifiers-cap, reason-purpose-scope, the journey helper's completeAnswerSections) change with it.",
+      "notes": [
+        "One slice (req-1615, c-204, c-276). Kept apart from the Back-link row because that one waits on template editing from another area. Depends on the opening-run step-order row (same flow code, and the tests that drive the overview follow the new order). Existing tests that rely on chaining (animal-identifiers-cap, reason-purpose-scope, the journey helper's completeAnswerSections) change with it.",
+        "Re-distil: the existing row's criterion that 'Roles and addresses' opened from the overview runs on to the CPH number page is removed, as the 9 October ruling (claim 39, c-204) says; it contradicted the criterion above. The from=hub context the prototype uses is not built (c-276): only the live flow's fallback changes. Criteria that repeated each other after the earlier merge are folded together.",
+        "The existing row also covers req-808 (notification-hub area), merged by the previous combiner because it changes the same next-page rule; the combiner should keep that merge."
+      ],
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js",
-        "frontend:src/server/app/sets/live-animals/docs/journey-flow-and-gates.md"
+        "tests:tests/animals/e2e/features/animal-identifiers-cap.spec.ts",
+        "tests:tests/animals/e2e/features/reason-purpose-scope.spec.ts",
+        "frontend:fit/journey-smoke.fit.spec.js"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js",
-        "frontend:fit/live-animals-journey.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "frontend:src/server/app/flow/navigation.js",
+        "frontend:src/server/app/flow/run-state.js",
+        "frontend:src/server/app/sets/live-animals/docs/journey-flow-and-gates.md",
         "tests:flows/animals/journey.ts"
       ],
-      "existingRow": null
-    },
-    {
-      "title": "Back links follow the context a page was opened in",
-      "detail": "Design Release 2.1 builds every journey page's Back link from how the page was reached: to the overview from an overview task, to the template's review page from a template review, and otherwise to the previous page in the step order, including when the page was opened from the review page's Change link. Today task pages point Back at the overview whatever context they were opened in.",
-      "acceptanceCriteria": [
-        "A page opened from its overview task has a 'Back' link to the overview. (prototype:dr2-1-source app/routes.js:488-498)",
-        "A page reached by 'Save and continue' in the opening run has a 'Back' link to the previous page in the step order: 'Main reason for import' goes back to 'What are you importing?', and 'Commodity details' goes back to 'Main reason for import'. (prototype:dr2-1-source app/routes.js:488-498, app/routes.js:1495-1501)",
-        "A page opened from a Change link on the review page has a 'Back' link to the previous page in the step order, not to the review page; 'Save and continue' there still returns to the review page. (prototype:dr2-1-source app/routes.js:488-498)",
-        "A page opened from a template's review page has a 'Back' link to that template's review page. (prototype:dr2-1-source app/routes.js:488-498)"
-      ],
-      "requirements": ["req-1616"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:488-498 (back link rule)" },
-        { "source": "trace:animals-fit", "ref": "p1-045, p1-047, p1-083 (today's Back links)" },
-        { "source": "repo:tests", "ref": "page-objects/shared/base-page.ts:59-61; tests/animals/e2e/features/cph-scope.spec.ts:66-73" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "One slice (req-1616, c-206). Depends on the opening-run step-order row (the previous page is taken from the new order) and on the templates area's row that lets a template be edited from its review page (req-1358): the template-review criterion cannot be observed before that context exists, and a requirement cannot be split across rows. Pages behind 'Roles and addresses' (party pickers, CPH number) keep their Back link to it (repo-tests-p2-042), which is not a journey step.",
-      "touches": [],
-      "shared": [
-        "frontend:src/server/app/shared/kit.js",
-        "frontend:src/server/app/shared/layout.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/flow.js"
-      ],
-      "existingRow": null
+      "existingRow": "inc-002"
     },
     {
       "title": "'Save and return to overview' saves without the page's required-answer checks",
@@ -122,84 +111,28 @@
         { "source": "prototype:dr2-1-specs", "ref": "COVERAGE.md:158-164 (soft validation and hard stops)" },
         { "source": "ruling:sam-2026-10-07", "ref": "claim 10 (validation and persistence override the prototype)" },
         { "source": "repo:frontend", "ref": "src/server/app/shared/save-actions.njk; src/server/app/shared/kit.js:96-97" },
-        { "source": "repo:backend", "ref": "p1-026, p1-073, p1-098, p1-100, p1-112 (missing and empty answers stored)" }
+        { "source": "trace:e2e", "ref": "p13-113" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
+      "dependsOn": [],
       "status": "todo",
       "gate": "Look at one soft-save page and one format-refused answer: the pattern for leaving a page unfinished is set here, and other areas' per-page 'Save and return to overview' rows follow it.",
       "openQuestions": [],
-      "notes": "One slice (req-1625, c-211), kept apart because it changes the exit rule shared by every page. Other areas carry page-level versions of the same rule (req-088 commodity page, req-166 main import reason, req-180 additional details, req-329 arrival and transit, req-540 upload documents); the combiner should merge those into this row where they repeat the same set-up. The CPH number page outside amend ends with 'Save and continue' alone (req-605), so it has no 'Save and return to overview' to test. No backend change is expected: the backend already stores missing or empty answers.",
-      "touches": [],
+      "notes": [
+        "One slice (req-1625, c-211), kept apart because it changes the exit rule shared by every page. Other areas carry page-level versions of the same rule (req-088 commodity page, req-166 main import reason, req-180 additional details, req-329 arrival and transit, req-540 upload documents); the combiner should merge those into this row where they repeat the same set-up.",
+        "The CPH number page outside amend ends with 'Save and continue' alone (DR1 rule (b), c-208), so it has no 'Save and return to overview' to test. No backend change is expected: the backend already stores missing or empty answers. The button keeps the real service's exit=hub field (c-275).",
+        "Re-distil: unchanged from the existing row."
+      ],
+      "touches": [
+        "tests:tests/animals/e2e/features/task-page-exits.spec.ts"
+      ],
       "shared": [
         "frontend:src/server/app/shared/kit.js",
         "frontend:src/server/app/shared/save-actions.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features"
+        "frontend:src/server/app/flow/dispatch.js"
       ],
-      "existingRow": null
-    },
-    {
-      "title": "Hard stops: means of transport on arrival details and number of packages on commodity details",
-      "detail": "Design Release 2.1 makes the means of transport the only hard stop on 'Arrival details', because it decides whether transit countries apply; the other arrival answers can be left for later. On commodity details the number of packages becomes a hard stop, alongside the number of animals, on each line that asks for it.",
-      "acceptanceCriteria": [
-        "On 'Arrival details', 'Save and continue' with no means of transport chosen is refused with an error on the means of transport question. (prototype:dr2-1-specs COVERAGE.md:162)",
-        "On 'Arrival details', 'Save and continue' with a means of transport chosen and the arrival date, port of entry, transport identification and transport document reference blank goes on to the next page. (prototype:dr2-1-specs COVERAGE.md:158)",
-        "On 'Commodity details', 'Save and continue' with a line that asks for a number of packages left without one is refused with an error on that line's number of packages. (prototype:dr2-1-specs COVERAGE.md:162)",
-        "On 'Commodity details', a line that does not ask for a number of packages can be saved without one. (prototype:dr2-1-specs COVERAGE.md:162; repo:frontend src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:4-8)"
-      ],
-      "requirements": ["req-1642", "req-1643"],
-      "sources": [
-        { "source": "prototype:dr2-1-specs", "ref": "COVERAGE.md:158, 162 (soft validation and hard stops)" },
-        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:4-8, 76-84" },
-        { "source": "repo:tests", "ref": "tests/animals/e2e/features/transit-means-scope.spec.ts:14-15; port-of-entry-select.spec.ts:27-31; flows/animals/journey.ts:108-109" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines two hard-stop slices (req-1642 arrival, req-1643 packages): both change which answers are required to proceed, on the obligations rather than the page content, and are reviewed together. The error wording for each new hard stop is taken from the Design Release 2.1 page and kept as its own criterion in the plan. Which species ask for a number of packages is req-112 (another area); this row only makes the question required where it is asked. Existing tests that say arrival details is enforced as a whole page (transit-means-scope) change with it.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js",
-        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities/lines.js"
-      ],
-      "shared": [],
-      "existingRow": null
-    },
-    {
-      "title": "Page endings: 'hub' wording on the contact address page, and the amend ending on pages reached from roles and addresses",
-      "detail": "Design Release 2.1 words the contact address page's return controls with 'hub'. While a notification is being amended, the party pickers, the CPH number page and the permanent address page gain the amend-only 'Save and return' (to the review page) and 'Save and continue' buttons, and keep the hub control off, as DR1 ruled for pages reached from another page. Outside amend they keep the primary button alone.",
-      "acceptanceCriteria": [
-        "The contact address for consignment page's return controls read 'Save and return to hub' and 'Cancel and return to hub'. (trace:prototype-dr2-1 trace pet-cats-by-air actions 100-150, trace poultry-by-rail action 133)",
-        "While a notification is being amended, each party picker (place of origin, consignor, consignee, importer, place of destination) ends with a primary 'Save and return' button and a secondary 'Save and continue' button, and no 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 44-56, 88-96; document:dr1-parity-notes rule (b))",
-        "While a notification is being amended, the CPH number page and the permanent address page end with a primary 'Save and return' button and a secondary 'Save and continue' button, and no 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:7-10; document:dr1-parity-notes rule (b))",
-        "On those pages while amending, 'Save and return' saves and goes to the review page, and 'Save and continue' saves and goes to 'Roles and addresses'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:44-56)",
-        "Outside amend, the party pickers, the CPH number page and the permanent address page still end with the primary 'Save and continue' button alone. (document:dr1-parity-notes rule (b))"
-      ],
-      "requirements": ["req-1622", "req-1624"],
-      "sources": [
-        { "source": "trace:prototype-dr2-1", "ref": "pet-cats-by-air actions 100, 106, 112, 118, 124, 136, 150; poultry-by-rail action 133" },
-        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 44-56, 88-96" },
-        { "source": "document:dr1-parity-notes", "ref": "rule (b): a page reached from another page ends with the primary button alone" },
-        { "source": "trace:animals-fit", "ref": "p1-050, p1-051 (today's endings)" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines two ending slices on the shared journey buttons (req-1622, c-209; req-1624, c-210): both change which controls a page ends with, in the same shared partial. Depends on the row that builds the permanent address as its own page (req-727, another area), since one criterion is about that page. req-770 (another area) says the same amend ending for the contact, CPH and permanent address pages: the combiner should merge it into this row. Welsh versions of the changed strings follow req-725 (another area).",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/contact",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number"
-      ],
-      "shared": [
-        "frontend:src/server/app/shared/save-actions.njk",
-        "frontend:src/server/app/shared/copy.en.js",
-        "frontend:src/server/app/shared/copy.cy.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses"
-      ],
-      "existingRow": null
+      "existingRow": "inc-003"
     },
     {
       "title": "End-to-end proof: horse by sea under temporary admission",
@@ -216,17 +149,55 @@
       ],
       "repos": ["tests"],
       "kind": "test",
+      "dependsOn": ["inc-001"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1658). Tests only, because the frontend already supports every answer this walk gives (repo-frontend-p2-026, p2-086, p2-100). Depends on the opening-run step-order row, whose rewritten journey helper this walk uses.",
+      "notes": [
+        "One slice (req-1658). Tests only, because the frontend already supports every answer this walk gives (repo-frontend-p2-026, p2-086, p2-100), so its acceptance is observable as soon as it lands. Depends on the opening-run step-order row, whose rewritten journey helper this walk uses.",
+        "Re-distil: unchanged from the existing row."
+      ],
       "touches": [
         "tests:tests/animals/e2e/journeys"
       ],
       "shared": [
         "tests:flows/animals/journey.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-005"
+    },
+    {
+      "title": "Hard stops: means of transport on arrival details and number of packages on commodity details",
+      "detail": "Design Release 2.1 makes the means of transport the only hard stop on 'Arrival details', because it decides whether transit countries apply; the other arrival answers can be left for later. On commodity details the number of packages becomes a hard stop, alongside the number of animals, on each line that asks for it.",
+      "acceptanceCriteria": [
+        "On 'Arrival details', 'Save and continue' with no means of transport chosen is refused with an error on the means of transport question. (prototype:dr2-1-specs COVERAGE.md:162)",
+        "On 'Arrival details', 'Save and continue' with a means of transport chosen and the arrival date, port of entry, transport identification and transport document reference blank goes on to the next page. (prototype:dr2-1-specs COVERAGE.md:158)",
+        "On 'Commodity details', 'Save and continue' with a line that asks for a number of packages left without one is refused with an error on that line's number of packages. (prototype:dr2-1-specs COVERAGE.md:162)",
+        "On 'Commodity details', a line that does not ask for a number of packages can be saved without one. (prototype:dr2-1-specs COVERAGE.md:162; repo:frontend src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:4-8)"
+      ],
+      "requirements": ["req-1642", "req-1643"],
+      "sources": [
+        { "source": "prototype:dr2-1-specs", "ref": "COVERAGE.md:158, 162 (soft validation and hard stops); p7-129, p7-139, p7-140" },
+        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/obligations/sections/commodities/lines.js:4-8, 76-84" },
+        { "source": "repo:tests", "ref": "tests/animals/e2e/features/transit-means-scope.spec.ts:14-15; port-of-entry-select.spec.ts:27-31; flows/animals/journey.ts:108-109" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines two hard-stop slices (req-1642 arrival, req-1643 packages): both change which answers are required to proceed, on the obligations rather than the page content, and are reviewed together. The error wording for each new hard stop is taken from the Design Release 2.1 page and kept as its own criterion in the plan. Which species ask for a number of packages is req-112 (another area); this row only makes the question required where it is asked. Existing tests that say arrival details is enforced as a whole page (transit-means-scope) change with it.",
+        "Re-distil: unchanged from the existing row."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/obligations/sections/commodities",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js",
+        "tests:tests/animals/e2e/features/transit-means-scope.spec.ts",
+        "tests:tests/animals/e2e/features/port-of-entry-select.spec.ts"
+      ],
+      "shared": [],
+      "existingRow": "inc-018"
     },
     {
       "title": "End-to-end proof: poultry by rail in transit",
@@ -244,17 +215,21 @@
       ],
       "repos": ["tests"],
       "kind": "test",
+      "dependsOn": ["inc-012", "inc-001"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1656). Depends on the commodities area's row that adds Chicken (010511) to the catalogue (req-094) and on the opening-run step-order row. Drafted tests-only because the frontend change it needs is that other row's; the combiner should fold this criterion set into req-094's row as its end-to-end proof, which makes it a full-stack slice and removes the cross-area dependency.",
+      "notes": [
+        "One slice (req-1656). Depends on the commodities area's row that adds Chicken (010511) to the catalogue (req-094) and on the opening-run step-order row. Drafted tests-only because the frontend change it needs is that other row's; the combiner should fold this criterion set into req-094's row as its end-to-end proof, which makes it a full-stack slice and removes the cross-area dependency.",
+        "Re-distil: unchanged from the existing row."
+      ],
       "touches": [
         "tests:tests/animals/e2e/journeys"
       ],
       "shared": [
         "tests:flows/animals/journey.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-019"
     },
     {
       "title": "End-to-end proof: pet cats by air with permanent addresses",
@@ -272,17 +247,101 @@
       ],
       "repos": ["tests"],
       "kind": "test",
+      "dependsOn": ["inc-054", "inc-057", "inc-001"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "One slice (req-1657, c-119). Depends on the rows that build the permanent address as its own page with the same-as-destination choice (req-727, req-746 and their area) and remove it from the identification form (req-263), and on the opening-run step-order row. Drafted tests-only because the frontend change it needs is those rows'; the combiner should fold this criterion set into the permanent address row as its end-to-end proof. Today's animal-identifiers-conditional test of the in-form permanent address is replaced by that row, not this one.",
+      "notes": [
+        "One slice (req-1657, c-119). Depends on the rows that build the permanent address as its own page with the same-as-destination choice (req-727, req-746 and their area) and remove it from the identification form (req-263), and on the opening-run step-order row. Drafted tests-only because the frontend change it needs is those rows'; the combiner should fold this criterion set into the permanent address row as its end-to-end proof. Today's animal-identifiers-conditional test of the in-form permanent address is replaced by that row, not this one.",
+        "Re-distil: unchanged from the existing row."
+      ],
       "touches": [
         "tests:tests/animals/e2e/journeys"
       ],
       "shared": [
         "tests:flows/animals/journey.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-058"
+    },
+    {
+      "title": "Page endings: 'hub' wording on the contact address page, and the amend ending on pages reached from roles and addresses",
+      "detail": "Design Release 2.1 words the contact address page's return controls with 'hub'. While a notification is being amended, the party pickers, the CPH number page and the permanent address page gain the amend-only 'Save and return' (to the review page) and 'Save and continue' buttons, and keep the overview control off, as DR1 ruled for pages reached from another page. Outside amend they keep the primary button alone. The buttons keep the real service's own form fields; only their wording, order and destinations follow Design Release 2.1.",
+      "acceptanceCriteria": [
+        "The contact address for consignment page's return controls read 'Save and return to hub' and 'Cancel and return to hub'. (trace:prototype-dr2-1 pet-cats-by-air actions 100-150, poultry-by-rail action 133)",
+        "While a notification is being amended, each party picker (place of origin, consignor, consignee, importer, place of destination) ends with a primary 'Save and return' button and a secondary 'Save and continue' button, and no 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 44-56; document:dr1-parity-notes rule (b))",
+        "While a notification is being amended, the CPH number page and the permanent address page end with a primary 'Save and return' button and a secondary 'Save and continue' button, and no 'Save and return to overview'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:7-10; document:dr1-parity-notes rule (b))",
+        "On those pages while amending, 'Save and return' saves and goes to the review page, and 'Save and continue' saves and goes to 'Roles and addresses'. (prototype:dr2-1-source app/views/partials/design-release-2.1/journey-form-actions.html:44-56; ruling:sam-2026-10-09 claim 21)",
+        "Outside amend, the party pickers, the CPH number page and the permanent address page still end with the primary 'Save and continue' button alone. (document:dr1-parity-notes rule (b))"
+      ],
+      "requirements": ["req-1622", "req-1624"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "pet-cats-by-air actions 100, 106, 112, 118, 124, 136, 150; poultry-by-rail action 133 (p13-027)" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/journey-form-actions.html:7-10, 44-56, 88-96" },
+        { "source": "document:dr1-parity-notes", "ref": "rule (b): a page reached from another page ends with the primary button alone (p1-057, p1-058)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 21 (no action field; exit=hub and ?change=1 stay)" },
+        { "source": "trace:animals-fit", "ref": "p1-050, p1-051 (today's endings)" },
+        { "source": "trace:e2e", "ref": "p14-088" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-054", "inc-091", "inc-094", "inc-004"],
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines two ending slices on the shared journey buttons (req-1622, c-209; req-1624, c-208, c-210): both change which controls a page ends with, in the same shared partial. Depends on the row that builds the permanent address as its own page (req-727, another area), since one criterion is about that page. Welsh versions of the changed strings follow req-725 (another area).",
+        "The amend buttons keep the real service's fields (exit=hub, ?change=1); the prototype's action=review|continue|hub field is not added (c-275).",
+        "The existing row also covers req-770 (cph-permanent-and-contact area: the same amend ending on the contact, CPH and permanent address pages), merged by the previous combiner; the combiner should keep that merge and its criteria. Re-distil: criteria otherwise unchanged."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cph-number",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/contact"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/save-actions.njk",
+        "frontend:src/server/app/shared/copy.en.js",
+        "frontend:src/server/app/shared/copy.cy.js"
+      ],
+      "existingRow": "inc-097"
+    },
+    {
+      "title": "Back links follow the context a page was opened in",
+      "detail": "Design Release 2.1 builds every journey page's Back link from how the page was reached: to the overview from an overview task, to the template's review page from a template review, and otherwise to the previous page in the step order, including when the page was opened from the review page's Change link. The context comes from the service's own journey state (the opening run, ?change=1, template editing), not from a from=hub or from=review marker. Today task pages point Back at the overview whatever context they were opened in.",
+      "acceptanceCriteria": [
+        "A page opened from its overview task has a 'Back' link to the overview. (prototype:dr2-1-source app/routes.js:488-498)",
+        "A page reached by 'Save and continue' in the opening run has a 'Back' link to the previous page in the step order: 'Main reason for import' goes back to 'What are you importing?', and 'Commodity details' goes back to 'Main reason for import'. (prototype:dr2-1-source app/routes.js:488-498, app/routes.js:1495-1501)",
+        "A page opened from a Change link on the review page has a 'Back' link to the previous page in the step order, not to the review page; 'Save and continue' there still returns to the review page. (prototype:dr2-1-source app/routes.js:488-498; ruling:sam-2026-10-09 claim 21)",
+        "A page opened from a template's review page has a 'Back' link to that template's review page. (prototype:dr2-1-source app/routes.js:488-498)",
+        "Pages behind 'Roles and addresses' (the party pickers and the CPH number page) keep their 'Back' link to 'Roles and addresses'. (repo:tests tests/animals/e2e/features/cph-scope.spec.ts:66-73)"
+      ],
+      "requirements": ["req-1616"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:488-498 (back link rule)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 21 and 39 (?change=1 stays; no from=hub marker)" },
+        { "source": "trace:animals-fit", "ref": "p1-045, p1-047, p1-083 (today's Back links)" },
+        { "source": "repo:tests", "ref": "page-objects/shared/base-page.ts:59-61; tests/animals/e2e/features/cph-scope.spec.ts:66-73" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "dependsOn": ["inc-001", "inc-159"],
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "One slice (req-1616, c-206, c-276). Depends on the opening-run step-order row (the previous page is taken from the new order) and on the templates area's row that lets a template be edited from its review page (req-1358): the template-review criterion cannot be observed before that context exists, and a requirement cannot be split across rows.",
+        "Re-distil: the detail now says the context is the service's own state, not a URL marker (c-276, 9 October ruling), and the 'Roles and addresses' Back link, previously only in notes, is a criterion."
+      ],
+      "touches": [
+        "tests:page-objects/shared/base-page.ts",
+        "tests:tests/animals/e2e/features/cph-scope.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "frontend:src/server/app/flow/navigation.js",
+        "frontend:src/server/app/shared/layout.njk"
+      ],
+      "existingRow": "inc-171"
     }
   ],
   "unobservable": []

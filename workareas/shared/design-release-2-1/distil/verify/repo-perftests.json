@@ -1,0 +1,890 @@
+{
+  "source": "repo:perftests",
+  "extractHash": "3c80c271ddd2f826aa717d8e5fc01afb096c8d27d0e3227850ac388ebad2175d",
+  "verdicts": [
+    {
+      "id": "repo-perftests-p1-001",
+      "holds": true,
+      "reason": "src/config/smoke.js:40 reads setBase: '/live-animals', under JOURNEYS['live-animals']."
+    },
+    {
+      "id": "repo-perftests-p1-002",
+      "holds": true,
+      "reason": "src/config/smoke.js:38 reads frontend: 'trade-imports-animals-frontend'."
+    },
+    {
+      "id": "repo-perftests-p1-003",
+      "holds": true,
+      "reason": "src/config/smoke.js:39 reads backend: 'trade-imports-animals-backend'; journeys.js:70-121 reads and replaces notifications on that backend, so 'persists' is a fair reading of the config."
+    },
+    {
+      "id": "repo-perftests-p1-004",
+      "holds": true,
+      "reason": "The quote is the notificationSplits doc comment at src/config/smoke.js:100-101, and live-animals.js:229 gives notificationType: 'live-animals'."
+    },
+    {
+      "id": "repo-perftests-p1-005",
+      "holds": true,
+      "reason": "journeys.js:156-167 opens run.journey.setBase and checks 'journey dashboard opens with a crumb' (status 200, crumb non-empty); createDraft at 169-175 posts { crumb: dashboard.crumb }. The partition note is correctly flagged as context."
+    },
+    {
+      "id": "repo-perftests-p1-006",
+      "holds": true,
+      "reason": "startUserSession calls openInsDashboard(ins) at journeys.js:151, and runUserSession calls it (411) before openJourneyDashboard (412); the doc comment at 490 says each session signs in afresh through the INS front door."
+    },
+    {
+      "id": "repo-perftests-p1-007",
+      "holds": true,
+      "reason": "journeys.js:123 builds createPathOf as `${journey.setBase}/notifications`, and 171-175 posts { crumb: dashboard.crumb } to it."
+    },
+    {
+      "id": "repo-perftests-p1-008",
+      "holds": true,
+      "reason": "journeys.js:178-183 checks the created page's URL ends with /${firstSavePage}, and smoke.js:41 sets firstSavePage: 'origin'; the id is read from under the create path (176). It is the suite's expectation of the redirect."
+    },
+    {
+      "id": "repo-perftests-p1-009",
+      "holds": true,
+      "reason": "redirects.js:103-120: journeyIdFrom takes the path segment after `${createPath}/`; the quote is the doc comment at 104."
+    },
+    {
+      "id": "repo-perftests-p1-010",
+      "holds": true,
+      "reason": "redirects.test.js:140-147 uses DRAFT.GB.2026.1 as the fixture id; correctly marked inferred with the note that it is a fixture."
+    },
+    {
+      "id": "repo-perftests-p1-011",
+      "holds": true,
+      "reason": "journeys.js:125 baseOf = `${createPathOf(journey)}/${id}`, and journey-pages.js:72 pagePath = `${base}/${slug}`."
+    },
+    {
+      "id": "repo-perftests-p1-012",
+      "holds": true,
+      "reason": "journeys.js:294 opens context.base with run.shared.hub, and 425 opens baseOf(...) with run.shared.hub (endpoint '<prefix>-hub', journey-endpoints.js:74)."
+    },
+    {
+      "id": "repo-perftests-p1-013",
+      "holds": true,
+      "reason": "Quote is the doc comment at journeys.js:486-488; line 490 says each session signs in afresh, and a later session opens the hub at baseOf(run.journey, run.id) at 424-425."
+    },
+    {
+      "id": "repo-perftests-p1-014",
+      "holds": true,
+      "reason": "live-animals.js:166-219 lists the draft steps in exactly this order (identification at commodities/identification, documents via documentsStep); the quote is at 167-169."
+    },
+    {
+      "id": "repo-perftests-p1-015",
+      "holds": true,
+      "reason": "journey-pages.js:15-16 isSaved = status 200 and not tooManyRedirects and not staleActionHandled; saved() at 25-29 checks `${name} saved`. 'No redirect loop' is a fair reading of tooManyRedirects."
+    },
+    {
+      "id": "repo-perftests-p1-016",
+      "holds": true,
+      "reason": "live-animals.js:168 reachAndSubmit('origin', 'origin', ...) with the slug 'origin' under the base."
+    },
+    {
+      "id": "repo-perftests-p1-017",
+      "holds": true,
+      "reason": "live-animals.js:37-43 answers countryOfOrigin with drawnOrElse, which (34-35) draws at random from selectOptions and falls back to FRANCE = 'FR' (31). The quote is at 38-43 rather than the cited 34-43, a loose ref."
+    },
+    {
+      "id": "repo-perftests-p1-018",
+      "holds": true,
+      "reason": "live-animals.js:44 regionOfOriginCodeRequirement: 'no'."
+    },
+    {
+      "id": "repo-perftests-p1-019",
+      "holds": true,
+      "reason": "live-animals.js:45 posts `PERF-${context.vu}-${context.iteration}${context.suffix}`; journeys.js:44 AMENDMENT_SUFFIX = '-A' and 330 passes it for the amendment context. 'Text field' is a light inference from the free-text value."
+    },
+    {
+      "id": "repo-perftests-p1-020",
+      "holds": true,
+      "reason": "live-animals.js:52-61 reaches pagePath(context, 'commodities') and submits { commoditySearch: ANIMAL_COMMODITY_SEARCH, action: 'search' } (59)."
+    },
+    {
+      "id": "repo-perftests-p1-021",
+      "holds": true,
+      "reason": "src/config/test-data.js:5 export const ANIMAL_COMMODITY_SEARCH = 'Cow'."
+    },
+    {
+      "id": "repo-perftests-p1-022",
+      "holds": true,
+      "reason": "test-data.js:4 comment says Cow is the one commodity whose pages match the step list exactly; the inference that other commodities bring different pages is sound and the note says the comment names none."
+    },
+    {
+      "id": "repo-perftests-p1-023",
+      "holds": true,
+      "reason": "live-animals.js:63-69 submits { species: pickFrom(context, choiceValues(searched, 'species')) } on the search results and wraps it in saved('commodities', ...)."
+    },
+    {
+      "id": "repo-perftests-p1-024",
+      "holds": true,
+      "reason": "live-animals.js:170-175 answers consignment-details with blankFieldAnswers(page.formInputs, ...), which (form-fill.js:57-77) answers blank text fields and unselected selects."
+    },
+    {
+      "id": "repo-perftests-p1-025",
+      "holds": true,
+      "reason": "live-animals.js:176-181 reachAndSubmit('identification', 'commodities/identification', ...) with blankFieldAnswers."
+    },
+    {
+      "id": "repo-perftests-p1-026",
+      "holds": true,
+      "reason": "form-fill.js:19-23 FIELD_RULES give the values quoted, 32-34 fall back to `PERF${vu}${iteration}`, and the doc comment at 60 says text fields get a value that passes validation. 'Passes the animals pages' validation' rests on that comment, not on a check."
+    },
+    {
+      "id": "repo-perftests-p1-027",
+      "holds": true,
+      "reason": "form-fill.js:36-42 firstOption picks the first non-empty value, doc comment 'Picks the first option that is not the empty placeholder.' at 37; the placeholder inference is sound and marked inferred."
+    },
+    {
+      "id": "repo-perftests-p1-028",
+      "holds": true,
+      "reason": "form-fill.js:12-17 SEARCH_FIELDS and 29-30 isBlankTextField excludes them, so blankFieldAnswers never fills them."
+    },
+    {
+      "id": "repo-perftests-p1-029",
+      "holds": true,
+      "reason": "live-animals.js:182-189 reachAndSubmit('import-reason', 'import-reason', ...) posts reasonForImport: 'internalMarket' (187)."
+    },
+    {
+      "id": "repo-perftests-p1-030",
+      "holds": true,
+      "reason": "live-animals.js:188 purposeInInternalMarket: 'breeding', posted together with reasonForImport 'internalMarket'. The suite always posts both; that the field is shown only for internal market is not stated in the source, so the 'when' reads as the pairing the suite posts, not a proven conditional reveal."
+    },
+    {
+      "id": "repo-perftests-p1-031",
+      "holds": true,
+      "reason": "live-animals.js:191-200 posts animalsCertifiedFor via choiceLabelled(page, 'animalsCertifiedFor', 'Slaughter'). choiceLabelled falls back to the first choice (journey-pages.js:50-62), so the option labelled 'Slaughter' is the suite's expectation rather than something it checks."
+    },
+    {
+      "id": "repo-perftests-p1-032",
+      "holds": true,
+      "reason": "live-animals.js:201-205 choiceLabelled(page, 'containsUnweanedAnimals', 'No'); same first-choice fallback caveat as p1-031."
+    },
+    {
+      "id": "repo-perftests-p1-033",
+      "holds": true,
+      "reason": "journey-pages.js:31-32 labelOf finds label[for=\"<input id>\"]; choiceLabelled at 58-63 matches on that label text and falls back to the first input. Sound inference, marked inferred."
+    },
+    {
+      "id": "repo-perftests-p1-034",
+      "holds": true,
+      "reason": "documents.js:21 DOCUMENTS_SLUG = 'accompanying-documents', reached at 131-135 with pagePath(context, DOCUMENTS_SLUG)."
+    },
+    {
+      "id": "repo-perftests-p1-035",
+      "holds": true,
+      "reason": "documents.js:32-43 answers accompanyingDocumentReference, accompanyingDocumentType, accompanyingDocumentDateOfIssue and action: 'add'; 93-105 calls walker.upload with one file, which pages.js:96-97 and 142-148 says posts a multipart form with one file."
+    },
+    {
+      "id": "repo-perftests-p1-036",
+      "holds": true,
+      "reason": "documents.js:34-37 pickFrom(context, selectOptions(page.formInputs, 'accompanyingDocumentType')); pickFrom draws with context.random (Math.random, journeys.js:199)."
+    },
+    {
+      "id": "repo-perftests-p1-037",
+      "holds": true,
+      "reason": "Verbatim comment at documents.js:28, above referenceFor which builds `PERFDOC${vu}V${iteration}N${number}`."
+    },
+    {
+      "id": "repo-perftests-p1-038",
+      "holds": true,
+      "reason": "documents.js:38-41 slashDateText(context.now, -DOCUMENT_ISSUED_DAYS_AGO) and test-data.js:47-48 DOCUMENT_ISSUED_DAYS_AGO = 30; slashDateText writes d/m/yyyy (form-fill.js:105-110). 'One text field' is inferred from the single posted value."
+    },
+    {
+      "id": "repo-perftests-p1-039",
+      "holds": true,
+      "reason": "form-fill.js:100-111: 'Writes a date the way the frontends render one, in UTC', returning d/m/yyyy with no zero padding; used for the document date and arrivalDateAtPort."
+    },
+    {
+      "id": "repo-perftests-p1-040",
+      "holds": true,
+      "reason": "documents.js:89-91 isUploaded requires status 200 and a URL path ending `${base}/accompanying-documents`; 107-109 checks 'document uploaded' with it."
+    },
+    {
+      "id": "repo-perftests-p1-041",
+      "holds": true,
+      "reason": "Verbatim doc comment at documents.js:121-122. On a local run, test-data.js:70-73 says the cdp-uploader is the stack's container with a mock scan (recorded as a missed claim)."
+    },
+    {
+      "id": "repo-perftests-p1-042",
+      "holds": true,
+      "reason": "documents.js:62-77 polls `${base}/accompanying-documents/status` with session.getJson and reads .documents; the doc comment at 122-123 says the page's script polls every 3 seconds until nothing is pending, and test-data.js:50-53 ties pollSeconds 3 to the animals frontend's scan-poll.js POLL_INTERVAL_MS."
+    },
+    {
+      "id": "repo-perftests-p1-043",
+      "holds": true,
+      "reason": "test-data.js:50-54 timeoutSeconds: 120, commented as how long a scan may stay pending before the run records it as stuck; documents.js:68-74 stops polling then."
+    },
+    {
+      "id": "repo-perftests-p1-044",
+      "holds": true,
+      "reason": "documents.js:83-86 checks 'document scan settled' and 'document scan not rejected'."
+    },
+    {
+      "id": "repo-perftests-p1-045",
+      "holds": true,
+      "reason": "test-data.js:61-62 documentScanAllowanceLine returns the quoted string. It is a setup-log line naming the allowance, not a threshold in this slice; the statement does not overreach."
+    },
+    {
+      "id": "repo-perftests-p1-046",
+      "holds": true,
+      "reason": "documents.js:141-144 submits { action: 'continue' }; the loop at 137 runs plan.documents times, and the doc comment at 124-125 says with no documents the step only opens the page and continues."
+    },
+    {
+      "id": "repo-perftests-p1-047",
+      "holds": true,
+      "reason": "live-animals.js:78 const path = pagePath(context, 'addresses')."
+    },
+    {
+      "id": "repo-perftests-p1-048",
+      "holds": true,
+      "reason": "live-animals.js:24-30 PARTY_SLUGS in that order, iterated at 81-88 with pickAddress from the addresses page."
+    },
+    {
+      "id": "repo-perftests-p1-049",
+      "holds": true,
+      "reason": "journey-pages.js:114-124 submits { q: addressName, action: 'search' } then { [field]: ..., action: 'save' }; live-animals.js:85 passes field: 'party'. 'Radios' is inferred from choiceInputs reading input[name=party]."
+    },
+    {
+      "id": "repo-perftests-p1-050",
+      "holds": true,
+      "reason": "Verbatim doc comment at journey-pages.js:96."
+    },
+    {
+      "id": "repo-perftests-p1-051",
+      "holds": true,
+      "reason": "journey-pages.js:74-90 submits worstCaseSearchTerm(WORST_CASE_SEARCH_LENGTH) with q and checks 'worst-case address search answered' (status 200); test-data.js:1-2 gives 255 and its source as the address-book name maxLength. It runs only for a share of notifications on the first picker (recorded as a missed claim)."
+    },
+    {
+      "id": "repo-perftests-p1-052",
+      "holds": true,
+      "reason": "smoke.js:13-23 PERF_ADDRESS has the quoted values; I confirmed the wiring outside this part's read: suites/smoke.k6.js:159, peak-day.k6.js:167 and background-volume.k6.js:119 set addressName: PERF_ADDRESS.name, which journeys.js:191 passes to the pickers. Inferred is fair; the pickers use only the name."
+    },
+    {
+      "id": "repo-perftests-p1-053",
+      "holds": true,
+      "reason": "live-animals.js:90-97 reaches the addresses path again and submits {} with ENDPOINTS.addresses.save."
+    },
+    {
+      "id": "repo-perftests-p1-054",
+      "holds": true,
+      "reason": "live-animals.js:210-214 reachAndSubmit('cph-number', 'cph-number', ...) posts cphCounty '12', cphParish '345', cphHolding '6789'."
+    },
+    {
+      "id": "repo-perftests-p1-055",
+      "holds": true,
+      "reason": "live-animals.js:23 ARRIVAL_DAYS_AHEAD = 7 and 101-106 posts arrivalDateAtPort: slashDateText(context.now, ARRIVAL_DAYS_AHEAD) on the 'port-of-entry' slug."
+    },
+    {
+      "id": "repo-perftests-p1-056",
+      "holds": true,
+      "reason": "live-animals.js:32 DEFAULT_PORT_OF_ENTRY = 'GB ABD' and 107-112 drawnOrElse(..., 'portOfEntry', DEFAULT_PORT_OF_ENTRY)."
+    },
+    {
+      "id": "repo-perftests-p1-057",
+      "holds": true,
+      "reason": "live-animals.js:113 meansOfTransport: 'ROAD_VEHICLE'."
+    },
+    {
+      "id": "repo-perftests-p1-058",
+      "holds": true,
+      "reason": "live-animals.js:114 transportIdentification: 'FR-892-LK'."
+    },
+    {
+      "id": "repo-perftests-p1-059",
+      "holds": true,
+      "reason": "live-animals.js:115 transportDocumentReference: 'CMR-2026-884721'."
+    },
+    {
+      "id": "repo-perftests-p1-060",
+      "holds": true,
+      "reason": "live-animals.js:119-141 reaches 'transit-countries' and submits transitedCountry via drawnOrElse with fallback FRANCE ('FR') and action: 'add' (132-138)."
+    },
+    {
+      "id": "repo-perftests-p1-061",
+      "holds": true,
+      "reason": "live-animals.js:143 has the quote verbatim: after the add submit, the page is submitted with {} to the save endpoint."
+    },
+    {
+      "id": "repo-perftests-p1-062",
+      "holds": true,
+      "reason": "live-animals.js:147-155 opens 'transporters' and posts transporter: choiceValues(page, 'transporter')[0] with action 'save'. choiceValues reads input[name=transporter], so 'radios' is a fair reading, and the suite takes the first one."
+    },
+    {
+      "id": "repo-perftests-p1-063",
+      "holds": true,
+      "reason": "live-animals.js:157-164 quote verbatim; choiceLabelled (journey-pages.js:58-63) picks the input whose label contains the address name, falling back to the first."
+    },
+    {
+      "id": "repo-perftests-p1-064",
+      "holds": false,
+      "reason": "The reEdit list is verbatim at live-animals.js:220-226, but journeys.js:237-249 runs reEditPlan (lib/traffic-shape.js:44-59), which reopens only as many pages as the pages-per-notification target needs, cycling through that list: it may be none, some or repeats. The statement that all five are reopened before submission overreaches. A corrected claim is added as p1-064-m1."
+    },
+    {
+      "id": "repo-perftests-p1-065",
+      "holds": true,
+      "reason": "journeys.js:251-256 submitFromReview opens pagePath(context, 'notification-view') before the declaration."
+    },
+    {
+      "id": "repo-perftests-p1-066",
+      "holds": true,
+      "reason": "journeys.js:257-266 reaches pagePath(context, 'declaration') and submits { declaration: 'confirmed' }."
+    },
+    {
+      "id": "repo-perftests-p1-067",
+      "holds": true,
+      "reason": "journeys.js:268-273 checks page.url.endsWith('/confirmation'); check name 'submitted through the declaration page' at 379-384."
+    },
+    {
+      "id": "repo-perftests-p1-068",
+      "holds": true,
+      "reason": "journeys.js:285-292 opens `${run.journey.setBase}?referenceNumber=${run.id}` with setBase '/live-animals' (smoke.js:40)."
+    },
+    {
+      "id": "repo-perftests-p1-069",
+      "holds": true,
+      "reason": "journeys.js:300-303 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p1-070",
+      "holds": true,
+      "reason": "journeys.js:293-307 opens the hub and notification-view and checks each answers 200 ('submitted hub reads back', 'submitted notification view reads back')."
+    },
+    {
+      "id": "repo-perftests-p1-071",
+      "holds": true,
+      "reason": "journeys.js:328-340 posts { crumb } to `${context.base}/amend` and checks page.url.endsWith(context.base); the crumb is search.crumb from readBack (journeys.js:390-393)."
+    },
+    {
+      "id": "repo-perftests-p1-072",
+      "holds": true,
+      "reason": "live-animals.js:227 amendEdit: 'origin'; journeys.js:346-347 runs that draft step."
+    },
+    {
+      "id": "repo-perftests-p1-073",
+      "holds": true,
+      "reason": "journeys.js:312-326 opens cancel-amend, submits {} and checks the URL includes '/notification-view' and 'cancelled=1'."
+    },
+    {
+      "id": "repo-perftests-p1-074",
+      "holds": true,
+      "reason": "journeys.js:353-358: when not cancelling, submitFromReview(run, context, 'amendment resubmitted', 'amendment') runs notification-view, declaration and the /confirmation check."
+    },
+    {
+      "id": "repo-perftests-p1-075",
+      "holds": true,
+      "reason": "journeys.js:70-79 GETs `${backendUrl}/notifications/${id}/fulfilments`; for live-animals the backend is trade-imports-animals-backend (smoke.js:39)."
+    },
+    {
+      "id": "repo-perftests-p1-076",
+      "holds": true,
+      "reason": "journeys.js:80-85 GETs `${backendUrl}/notifications?referenceNumber=${id}`; line 64 reads list.json('content.0')."
+    },
+    {
+      "id": "repo-perftests-p1-077",
+      "holds": true,
+      "reason": "journeys.js:99-121 PUTs JSON.stringify(body) to the notification URL, body from replaceBodyFrom(fulfilments, list content.0), and checks 200."
+    },
+    {
+      "id": "repo-perftests-p1-078",
+      "holds": true,
+      "reason": "redirects.js:61 quote verbatim; redirects.test.js:88 '/live-animals?staleAction=1' is the example, as the note says."
+    },
+    {
+      "id": "repo-perftests-p1-079",
+      "holds": false,
+      "reason": "redirects.js:84-101 does count /auth/, /oauth2/, /idphub/ and /organisations hops as sign-in, but '/oauth2/authresp' is not where sign-in ends: browser-session.js:215-216 posts the credentials to that page, and redirects.test.js:19,73-77 shows it then redirects to the frontend's /auth/callback. 'Ending at the OIDC callback /oauth2/authresp' overreaches. A corrected claim is added as p1-079-m1."
+    },
+    {
+      "id": "repo-perftests-p1-080",
+      "holds": true,
+      "reason": "Inferred, and sound: redirects.test.js:118-135 classifies sign-in hops in a chain started by animals-dashboard, and returning-session.js opens /live-animals for the returning-animals user and re-authenticates there."
+    },
+    {
+      "id": "repo-perftests-p1-081",
+      "holds": true,
+      "reason": "redirects.js:33 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p1-082",
+      "holds": true,
+      "reason": "forms.js:19 quote verbatim; browser-session.js submitForm merges the page's hidden fields with the answers. 'Such as the crumb' is a fair reading; the create and amend posts send the crumb explicitly."
+    },
+    {
+      "id": "repo-perftests-p1-083",
+      "holds": true,
+      "reason": "journey-endpoints.js:1-45 builds exactly these names from page() and picker(); endpoints.js:31-62,71 lists them in the catalogue."
+    },
+    {
+      "id": "repo-perftests-p1-084",
+      "holds": true,
+      "reason": "journey-endpoints.js:70-81 sharedEndpoints and 99-101 the backend names; with prefix 'animals' they are the names listed."
+    },
+    {
+      "id": "repo-perftests-p1-085",
+      "holds": true,
+      "reason": "smoke.js:6 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p1-086",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-performance-tests.md:38 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p1-087",
+      "holds": true,
+      "reason": "Gap confirmed: grep -rli germinal over src/ finds nothing, and smoke.js:36-53 JOURNEYS has only live-animals and high-risk-plants."
+    },
+    {
+      "id": "repo-perftests-p1-088",
+      "holds": true,
+      "reason": "Gap confirmed: every check in journeys.js, live-animals.js, journey-pages.js and documents.js tests status, URL, scan state or the reference number in the search page text; none asserts a heading, label or error on a live-animals page."
+    },
+    {
+      "id": "repo-perftests-p1-089",
+      "holds": true,
+      "reason": "Gap confirmed: form-fill.js:57-62 says text fields get 'a value that passes validation', and no step posts an invalid answer or checks an error."
+    },
+    {
+      "id": "repo-perftests-p2-001",
+      "holds": true,
+      "reason": "front-door.js:50 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-002",
+      "holds": true,
+      "reason": "front-door.js:41 quote verbatim; browser-session.js follows the redirect chain and posts the credentials on the way, so sign-in is a hop of the '/' request."
+    },
+    {
+      "id": "repo-perftests-p2-003",
+      "holds": true,
+      "reason": "front-door.js:56-59 quote verbatim; heading is the first h1 (browser-session.js:123)."
+    },
+    {
+      "id": "repo-perftests-p2-004",
+      "holds": true,
+      "reason": "front-door.js:60-63 quote verbatim; signedIn is set only after posting credentials at the identity provider's /oauth2/authresp page (browser-session.js:215-218)."
+    },
+    {
+      "id": "repo-perftests-p2-005",
+      "holds": true,
+      "reason": "browser-session.js:215-216 quote verbatim; the line range is a little wide."
+    },
+    {
+      "id": "repo-perftests-p2-006",
+      "holds": true,
+      "reason": "Inferred, and sound: browser-session.test.js:60,92 fixtures and redirects.test.js:19,120 use /auth/sign-in and /auth/callback; the note says this comes only from test fixtures."
+    },
+    {
+      "id": "repo-perftests-p2-007",
+      "holds": true,
+      "reason": "browser-session.js:17 quote verbatim; paramsFor tags every request with its endpoint, and kindOf (endpoints.js:165-173) throws for an unknown name."
+    },
+    {
+      "id": "repo-perftests-p2-008",
+      "holds": true,
+      "reason": "browser-session.js:158-161 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-009",
+      "holds": true,
+      "reason": "browser-session.js:222-224 quote verbatim; browser-session.test.js:58-69 proves a chain ending 503 is not counted."
+    },
+    {
+      "id": "repo-perftests-p2-010",
+      "holds": true,
+      "reason": "browser-session.js:122 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-011",
+      "holds": true,
+      "reason": "browser-session.js:42-52 quote verbatim; 248-256 submitForm posts prefilled values and the chosen form's hidden fields with the answers."
+    },
+    {
+      "id": "repo-perftests-p2-012",
+      "holds": true,
+      "reason": "browser-session.js:201-204 quote verbatim; the doc comment at 135-136 calls it a stale-concurrency redirect counted as a handled outcome."
+    },
+    {
+      "id": "repo-perftests-p2-013",
+      "holds": true,
+      "reason": "browser-session.js:18 and 180-188 quote verbatim. The document upload (submitMultipart) is the exception: it posts multipart."
+    },
+    {
+      "id": "repo-perftests-p2-014",
+      "holds": true,
+      "reason": "front-door.js:111-129 quote verbatim; further = pagesPerDashboardOnlySession - SIGN_IN_AND_DASHBOARD_PAGES (2)."
+    },
+    {
+      "id": "repo-perftests-p2-015",
+      "holds": true,
+      "reason": "endpoints.js:153-154 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-016",
+      "holds": true,
+      "reason": "design-target.js:341-350 quote verbatim (outside the partition's read list but checked); returning-session.js:83-112 keeps one session per scenario and opens entry.path."
+    },
+    {
+      "id": "repo-perftests-p2-017",
+      "holds": true,
+      "reason": "returning-session.js:77-80 quote verbatim; the doc comment at 88-91 says the visit goes through Defra ID and lands back on the dashboard."
+    },
+    {
+      "id": "repo-perftests-p2-018",
+      "holds": true,
+      "reason": "returning-session.js:119-121 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-019",
+      "holds": true,
+      "reason": "returning-session.js:91-94 quote verbatim; 55-66 clears the jar when sessionExpiry is 'client' and the lifetime has passed."
+    },
+    {
+      "id": "repo-perftests-p2-020",
+      "holds": true,
+      "reason": "front-door.js:15 and 202-203 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-021",
+      "holds": true,
+      "reason": "readiness.js:50-52 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-022",
+      "holds": true,
+      "reason": "front-door.js:29 quote verbatim; used with 'ins-address-book-search' at 207."
+    },
+    {
+      "id": "repo-perftests-p2-023",
+      "holds": true,
+      "reason": "address-book.js:23-26 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-024",
+      "holds": true,
+      "reason": "test-data.js:1-2 gives 255 as the INS name field's maxLength, the longest searchable field; address-book.js:17-18,31-32 pads the prefix with 'x'."
+    },
+    {
+      "id": "repo-perftests-p2-025",
+      "holds": true,
+      "reason": "front-door.js:162-175 quote verbatim; isChosen against model.addressBook.worstCaseSearchShare picks the share."
+    },
+    {
+      "id": "repo-perftests-p2-026",
+      "holds": true,
+      "reason": "front-door.js:180-182 quote verbatim; 203-236 make exactly those nine requests."
+    },
+    {
+      "id": "repo-perftests-p2-027",
+      "holds": true,
+      "reason": "front-door.js:133-141 quote verbatim, with 'ins-address-add-save' at 139."
+    },
+    {
+      "id": "repo-perftests-p2-028",
+      "holds": true,
+      "reason": "smoke.js:13-23 quote verbatim; front-door.js:131 replaces the name with the session's own name, which p2-030 records."
+    },
+    {
+      "id": "repo-perftests-p2-029",
+      "holds": true,
+      "reason": "Inferred, and sound: smoke.js:16,18 posts both blank, and the session then expects to find the address by search ('address added' check, front-door.js:207-210)."
+    },
+    {
+      "id": "repo-perftests-p2-030",
+      "holds": true,
+      "reason": "front-door.js:195 quote verbatim; prefix 'Address Book Load' at smoke.js:25."
+    },
+    {
+      "id": "repo-perftests-p2-031",
+      "holds": true,
+      "reason": "background-volume.js:139-140 and 173-176 quote verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-032",
+      "holds": true,
+      "reason": "Quote is verbatim at src/k6/front-door.js:207-210; addressIdFrom (src/lib/address-book.js:1-15) takes the first href matching /address-book/<id> and skips 'add'; the early return at 212-214 follows a failed 'address added' check."
+    },
+    {
+      "id": "repo-perftests-p2-033",
+      "holds": true,
+      "reason": "ADDRESS_LINK regex at src/lib/address-book.js:1 and hrefsOf at front-door.js:21-25 read '/address-book/<id>' links off the list/search page, and front-door.js:216 opens that path as the view page. Strictly inferred from the regex plus the view request rather than stated, but sound."
+    },
+    {
+      "id": "repo-perftests-p2-034",
+      "holds": true,
+      "reason": "Verbatim at src/k6/front-door.js:216-221: opens `${ADDRESS_BOOK}/${id}` as 'ins-address-view' and checks status 200 and body text includes the name."
+    },
+    {
+      "id": "repo-perftests-p2-035",
+      "holds": true,
+      "reason": "Verbatim at src/k6/front-door.js:143-151 with EDITED_TOWN = 'Dundee' at line 16. 'Prefilled' follows from valuesOf(form) reading the form inputs' values (lines 31-38), which excludes radio and checkbox inputs."
+    },
+    {
+      "id": "repo-perftests-p2-036",
+      "holds": true,
+      "reason": "Verbatim at src/k6/front-door.js:225-228: 'address edited' checks 200 and page.url.endsWith('/address-book')."
+    },
+    {
+      "id": "repo-perftests-p2-037",
+      "holds": true,
+      "reason": "Verbatim at src/k6/front-door.js:153-160: opens /address-book/<id>/delete as 'ins-address-delete' and submits it with {} as 'ins-address-delete-save'."
+    },
+    {
+      "id": "repo-perftests-p2-038",
+      "holds": true,
+      "reason": "Verbatim at src/k6/front-door.js:232-236: 'address deleted' checks 200 and no '/address-book/<id>' link remains."
+    },
+    {
+      "id": "repo-perftests-p2-039",
+      "holds": true,
+      "reason": "ensurePerfAddress at src/k6/front-door.js:255-286 searches by address.name, adds via /address-book/add when absent and throws the quoted error when still missing; it is called in setup by the smoke, peak-day, background-volume and design-target suites, and PERF_ADDRESS.name is 'Perf Test Holding' (src/config/smoke.js:14)."
+    },
+    {
+      "id": "repo-perftests-p2-040",
+      "holds": true,
+      "reason": "Verbatim at src/k6/readiness.js:29-40, with the probe named 'INS signed-in page' at lines 72-73."
+    },
+    {
+      "id": "repo-perftests-p2-041",
+      "holds": true,
+      "reason": "Verbatim at src/k6/readiness.js:42-53, with the probe named 'address book read' at lines 74-75."
+    },
+    {
+      "id": "repo-perftests-p2-042",
+      "holds": true,
+      "reason": "Six probes at src/k6/readiness.js:64-76; loop and quoted throw at 97-110; READINESS = { timeoutSeconds: 300, pollSeconds: 5 } at src/config/smoke.js:10. The reference-data probe also requires a non-empty JSON array (added as a missed claim)."
+    },
+    {
+      "id": "repo-perftests-p2-043",
+      "holds": true,
+      "reason": "Verbatim at src/k6/readiness.js:10-11, whose doc comment says the tags keep a readiness request out of every threshold; ensurePerfAddress and background-volume reads also pass READINESS_TAGS."
+    },
+    {
+      "id": "repo-perftests-p2-044",
+      "holds": true,
+      "reason": "src/k6/background-volume.js:94-97 reads `${urls.insBackend}/notifications?page=1` through totalOf (25-39), which requires 200 and an integer response.json('totalElements')."
+    },
+    {
+      "id": "repo-perftests-p2-045",
+      "holds": true,
+      "reason": "Verbatim at src/k6/background-volume.js:86-89, through totalOf reading 'totalElements'."
+    },
+    {
+      "id": "repo-perftests-p2-046",
+      "holds": true,
+      "reason": "RESULTS_LABEL at src/k6/background-volume.js:18 and addressCountFrom({ heading, labelText }) at 55-58. Kind 'copy' is loose (it is a page element used for a count), but the claim is right."
+    },
+    {
+      "id": "repo-perftests-p2-047",
+      "holds": true,
+      "reason": "Verbatim at src/k6/background-volume.js:162-171: ...PERF_ADDRESS with name backgroundAddressName(index) and addressLine1 `${index + 1} Background Road`."
+    },
+    {
+      "id": "repo-perftests-p2-048",
+      "holds": true,
+      "reason": "INS_PAGES at src/config/endpoints.js:12-24 lists exactly those eleven names."
+    },
+    {
+      "id": "repo-perftests-p2-049",
+      "holds": true,
+      "reason": "ANIMALS_PAGES at src/config/endpoints.js:26-69 and ANIMALS_UPLOADS at 71 match the listed pages; the upload is in a separate upload list, which the statement reflects as 'documents (with status and an upload)'."
+    },
+    {
+      "id": "repo-perftests-p2-050",
+      "holds": true,
+      "reason": "Gap confirmed: endpoints.js lists only STUB_CALLS, INS_PAGES, ANIMALS_PAGES, ANIMALS_UPLOADS, PLANTS_PAGES, BACKEND_APIS and REFERENCE_DATA_APIS, and `grep -rn germinal` over src/ finds nothing."
+    },
+    {
+      "id": "repo-perftests-p2-051",
+      "holds": true,
+      "reason": "Quote verbatim at src/config/endpoints.js:159-160; kindOf throws for an unknown name (165-172) and browser-session.js:172 calls kindOf on every request's tags, as does thresholds.js."
+    },
+    {
+      "id": "repo-perftests-p2-052",
+      "holds": true,
+      "reason": "LOCAL_PORTS at src/config/target.js:22-27 matches; ref range 22-35 is slightly wide."
+    },
+    {
+      "id": "repo-perftests-p2-053",
+      "holds": true,
+      "reason": "LOCAL_PORTS at src/config/target.js:28-34 matches verbatim."
+    },
+    {
+      "id": "repo-perftests-p2-054",
+      "holds": true,
+      "reason": "src/config/target.js:164-191: an override in serviceUrlVariable(serviceName) wins (169-171), otherwise non-local, non-gateway runs return the quoted CDP URL at 190. The statement omits the local-stack and gateway branches, which other claims cover."
+    },
+    {
+      "id": "repo-perftests-p2-055",
+      "holds": true,
+      "reason": "Quote verbatim at src/config/target.js:153-155; usesGateway (144-147) requires a non-local environment, CDP_LOCAL=true and a service in GATEWAY_SERVICES (12-20, the backends, stub, dynamics gateway and address book)."
+    },
+    {
+      "id": "repo-perftests-p2-056",
+      "holds": true,
+      "reason": "resolveEnvironment at src/config/target.js:47-63 throws when ENVIRONMENT is blank and, with the quoted message, when it is 'prod' (case-insensitive)."
+    }
+  ],
+  "missed": [
+    {
+      "id": "repo-perftests-p1-035-m1",
+      "statement": "How many documents a live-animals notification uploads is drawn from the traffic model's documentsPerNotification distribution, and each file's type and size are drawn from the model's documentTypes and documentKilobytes.",
+      "kind": "data",
+      "ref": "src/k6/live-animals.js:228-231; src/k6/documents.js:45-56, 137",
+      "quote": "documents: countAt(iteration, journeyModel.documentsPerNotification)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-037-m1",
+      "statement": "Each uploaded document's reference is written PERFDOC<vu>V<iteration>N<document number>, letters and digits only.",
+      "kind": "data",
+      "ref": "src/k6/documents.js:28-30",
+      "quote": "const referenceFor = ({ vu, iteration }, number) =>\n  `PERFDOC${vu}V${iteration}N${number}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-041-m1",
+      "statement": "On a local run, document storage and virus scanning are the stack's cdp-uploader container with a mock scan, so scan results there are not CDP's.",
+      "kind": "integration",
+      "ref": "src/config/test-data.js:64-73",
+      "quote": "Stand-ins: SNS and SQS are floci, and document storage and virus scanning are the stack's cdp-uploader container with a mock scan, so results that depend on them are not CDP's",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-051-m1",
+      "statement": "The worst-case 255-character search is run only for a share of notifications (the address book's worstCaseSearchShare), once per notification, on the first party picker before its real search.",
+      "kind": "behaviour",
+      "ref": "src/k6/journey-pages.js:97-98, 111-113; src/k6/journeys.js:468-470",
+      "quote": "When the notification's worst-case search is still pending, the first picker\n * runs it before the real search.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p1-064-m1",
+      "statement": "Before submission the suite reopens and resaves pages already answered, cycling through origin, import-reason, additional-details, cph-number and port-of-entry for as many re-edits as it needs to reach its pages-per-notification target. A page can be reopened and saved more than once, or not at all.",
+      "kind": "behaviour",
+      "ref": "src/lib/traffic-shape.js:44-59; src/k6/journeys.js:237-249; src/k6/live-animals.js:220-226",
+      "quote": "return Array.from(\n    { length: reEdits },\n    (_, index) => stepNames[index % stepNames.length]\n  )",
+      "confidence": "verbatim",
+      "note": "Replaces the refuted p1-064, which said all five pages are reopened every time."
+    },
+    {
+      "id": "repo-perftests-p1-079-m1",
+      "statement": "Every redirect hop through the frontend's /auth/ routes, or an identity-provider path containing /oauth2/ or /idphub/, or the path /organisations, counts as sign-in. The identity provider's /oauth2/authresp page is where the stub's sign-in form takes the credentials, and from there the chain returns through the frontend's /auth/callback to the page asked for.",
+      "kind": "integration",
+      "ref": "src/lib/redirects.js:92-101; src/k6/browser-session.js:215-216; src/lib/redirects.test.js:17-19,73-77",
+      "quote": "path.startsWith('/auth/') ||\n    path.includes('/oauth2/') ||\n    path.includes('/idphub/') ||\n    path === '/organisations'",
+      "confidence": "verbatim",
+      "note": "Replaces the refuted p1-079, which said sign-in ends at /oauth2/authresp."
+    },
+    {
+      "id": "repo-perftests-p1-080-m1",
+      "statement": "A journey session shares one cookie jar between the INS frontend and the journey frontend, as one browser does, so the sign-in made at the INS dashboard carries over when the user moves to the live-animals dashboard.",
+      "kind": "behaviour",
+      "ref": "src/k6/journeys.js:127-154; src/k6/browser-session.js:143",
+      "quote": "A cookie jar to share with another session, as one browser does across frontends.",
+      "confidence": "inferred",
+      "note": "That the sign-in carries over is inferred: both sessions use the same jar, and the journey opens INS first."
+    },
+    {
+      "id": "repo-perftests-p2-002-m1",
+      "statement": "When opening the INS dashboard signed the session in through Defra ID, the sign-in is recorded as a page of its own in the request mix, before the dashboard read.",
+      "kind": "non-functional",
+      "ref": "src/k6/front-door.js:43-54",
+      "quote": "Records the sign-in as a page of its own, then the dashboard read, and checks\n * that the sign-in went through Defra ID.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-009-m1",
+      "statement": "A redirect chain through the frontend's sign-in routes that lands with a 200 without showing the identity provider's form still counts as a sign-in, as when the identity provider already holds a session.",
+      "kind": "non-functional",
+      "ref": "src/k6/browser-session.test.js:90-102; src/k6/browser-session.js:212-224",
+      "quote": "counts a chain through the sign-in routes that lands without a form",
+      "confidence": "verbatim",
+      "note": "'As when the identity provider already holds a session' is the verifier's reading of the test fixture."
+    },
+    {
+      "id": "repo-perftests-p2-012-m1",
+      "statement": "A session follows at most 10 redirect hops per request. A page still redirecting after that is marked as too many redirects, and a step whose save lands like that fails its saved check.",
+      "kind": "non-functional",
+      "ref": "src/config/smoke.js:8; src/k6/browser-session.js:198,226-229; src/k6/journey-pages.js:15-16",
+      "quote": "export const MAX_REDIRECT_HOPS = 10",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-017-m1",
+      "statement": "A returning user's sign-in after their first one is recorded as re-authentication traffic and counted in a 'reauthentications' counter. Each visit then waits for the model's visit interval.",
+      "kind": "non-functional",
+      "ref": "src/k6/returning-session.js:17,68-81,122",
+      "quote": "state.walker.record(TRAFFIC_CLASSES.RE_AUTHENTICATION)\n  reauthentications.add(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-042-m1",
+      "statement": "The reference-data readiness probe passes only when GET '<reference-data>/countries' answers 200 with a non-empty JSON array.",
+      "kind": "integration",
+      "ref": "src/k6/readiness.js:19-27",
+      "quote": "const response = serviceHttp.get(`${url}/countries`, { tags: READINESS_TAGS })\n\n  return (\n    response.status === HTTP_OK &&\n    Array.isArray(response.json()) &&\n    response.json().length > 0\n  )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-042-m2",
+      "statement": "Readiness is judged by real functional reads rather than health endpoints, because each service that owns a datastore builds its indexes before it answers, so one passing round means the indexes are built.",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:83-90",
+      "quote": "Waits until the stack is functionally ready, rather than trusting health endpoints. ... Each service that owns a datastore\n * builds its indexes before it answers, so a pass also means the indexes are\n * built.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-045-m1",
+      "statement": "The plants backend answers GET '/notifications/reference-numbers?page=0' with a 'totalElements' count of high-risk-plants notifications.",
+      "kind": "integration",
+      "ref": "src/k6/background-volume.js:90-93",
+      "quote": "'high-risk-plants': totalOf(\n    `${urls.plantsBackend}/notifications/reference-numbers?page=0`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-047-m1",
+      "statement": "Each background address save is checked to answer 200 on a URL ending '/address-book' (the 'background address added' check), since with no picker handshake the save redirects to the address-book list.",
+      "kind": "behaviour",
+      "ref": "src/k6/background-volume.js:136-141,173-176",
+      "quote": "'background address added': (page) =>\n      page.status === HTTP_OK && page.url.endsWith(ADDRESS_BOOK)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-047-m2",
+      "statement": "A load run stops before measuring when any datastore (live-animals, high-risk-plants, dashboard read model, address book) holds less than its background-volume target, naming each datastore below target; the volume at the start of a run is recorded in a 'background_volume' gauge so the report states it.",
+      "kind": "non-functional",
+      "ref": "src/k6/background-volume.js:20,101-134",
+      "quote": "Stops a load run that would measure an environment short of its background volume.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-053-m1",
+      "statement": "Local runs reach each service on its workspace-stack host port on 'localhost', or on LOCALHOST_ALIAS when that is set; a local service with no known port must have its <SERVICE_NAME>_URL set.",
+      "kind": "constraint",
+      "ref": "src/config/target.js:65-73,173-183",
+      "quote": "`${variable} must be set when ENVIRONMENT is local and ${serviceName} has no local port.`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-053-m2",
+      "statement": "A resilience run injects Service Bus faults through the toxiproxy in front of the Service Bus emulator: TOXIPROXY_URL when set, otherwise in local the workspace stack's toxiproxy on port 8474, and none elsewhere.",
+      "kind": "integration",
+      "ref": "src/config/target.js:9-10,75-93",
+      "quote": "Works out the base URL of the toxiproxy that stands in front of the Service\n * Bus emulator, where a resilience run injects its Service Bus faults.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-055-m1",
+      "statement": "CDP's protected gateway is at https://ephemeral-protected.api.<environment>.cdp-int.defra.cloud/<service>, and calls to it carry the developer key in an 'x-api-key' header; a run that needs the gateway without DEVELOPER_API_KEY set fails.",
+      "kind": "integration",
+      "ref": "src/config/target.js:5-6,121-142,201-213",
+      "quote": "\"DEVELOPER_API_KEY is not set. Set it in .env: CDP_LOCAL=true sends backend calls through CDP's protected gateway, which needs it.\"",
+      "confidence": "verbatim",
+      "note": "No key value is copied here."
+    }
+  ]
+}

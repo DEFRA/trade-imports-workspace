@@ -2,7 +2,7 @@
   "area": "journey-flow",
   "requirements": [
     {
-      "id": "req-journey-flow-001",
+      "id": "req-1610",
       "statement": "In the opening run, 'Save and continue' on 'What are you importing?' goes to 'Main reason for import', and 'Main reason for import' goes on to 'Commodity details' (consignment details): the reason for import is asked before the numbers of animals and packages.",
       "why": "Design Release 2.1 asks origin, what you are importing, the reason for import and then commodity details, in that order. Today the real journey asks commodity details before the reason.",
       "claims": [
@@ -15,11 +15,13 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the opening run goes origin, What are you importing?, Commodity details, Main reason for import, Identification details (trace-animals-fit-p1-055, trace-e2e-p14-118, repo-frontend-p1-165). After the change it goes origin, What are you importing?, Main reason for import, Commodity details, then identification when it applies.",
-      "conflicts": ["c-journey-flow-001"]
+      "conflicts": [
+        "c-202"
+      ]
     },
     {
-      "id": "req-journey-flow-002",
-      "statement": "'Save and continue' on 'Roles and addresses' (consignment addresses) goes to 'Contact address for this consignment', not to the CPH number page. The CPH number page is not a step of the journey: it is reached only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'.",
+      "id": "req-1611",
+      "statement": "In the opening run, 'Save and continue' on 'Roles and addresses' (consignment addresses) goes to 'Contact address for this consignment', not to the CPH number page. The CPH number page is not a step of the journey: it is reached only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'.",
       "why": "Design Release 2.1's step order has no CPH step: roles and addresses is followed by the contact address, and the CPH number and permanent address are reached from inside roles and addresses. Today the run and the section both walk on from the addresses page to the CPH page.",
       "claims": [
         "prototype-dr2-1-source-p1-062",
@@ -34,10 +36,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today 'Save and continue' on the addresses page goes to the CPH number page whenever CPH is in scope, in the opening run and from the overview alike (trace-animals-fit-p1-061, trace-e2e-p14-108, repo-tests-p2-043, repo-tests-p2-135). The CPH row's own Add link already returns to the addresses page on save (repo-tests-p2-040); that part stays.",
-      "conflicts": ["c-journey-flow-002"]
+      "conflicts": [
+        "c-203"
+      ]
     },
     {
-      "id": "req-journey-flow-003",
+      "id": "req-1612",
       "statement": "When every section on the overview is already complete, 'Save and continue' on 'Roles and addresses' returns to the overview instead of going on to the contact address page.",
       "why": "Design Release 2.1 skips the rest of the linear run once nothing is left to answer, so a trader who finishes roles and addresses last lands on the overview.",
       "claims": [
@@ -50,7 +54,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-004",
+      "id": "req-1613",
       "statement": "A new notification's opening run takes 'Save and continue' from page to page through every question that applies, in the journey's order, without stopping at the overview; the overview is reached only by 'Save and return to overview' or 'Cancel and return to overview'.",
       "why": "Design Release 2.1 sends each saved step to the next step in a fixed order. The real journey already does this for a new notification.",
       "claims": [
@@ -72,7 +76,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-005",
+      "id": "req-1614",
       "statement": "'Save and continue' on the contact address page at the end of the opening run always goes to the review page, even when the notification is incomplete; the review page then names what is outstanding.",
       "why": "In Design Release 2.1 review is an ordinary step after the contact address, and completeness is enforced only by the overview and the review page. Today a run that arrives incomplete is diverted to the overview.",
       "claims": [
@@ -83,15 +87,16 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the opening run reaches the review page only when every task row is ready and otherwise falls through to the overview (recorded in c-journey-flow-004). The review page already renders an unfinished notification and names what is outstanding (repo-frontend-p2-124).",
-      "conflicts": ["c-journey-flow-004"]
+      "deltaNote": "Today the opening run reaches the review page only when every task row is ready and otherwise falls through to the overview (recorded in c-205). The review page already renders an unfinished notification and names what is outstanding (repo-frontend-p2-124).",
+      "conflicts": [
+        "c-205"
+      ]
     },
     {
-      "id": "req-journey-flow-006",
-      "statement": "A page opened from a task on the overview returns to the overview on 'Save and continue'. It does not chain on to the next page of its section: 'What are you importing?' no longer goes on to commodity details, 'Main reason for import' to additional details, 'Arrival details' to transit countries and the transporter, or 'Roles and addresses' to the CPH number.",
-      "why": "Every Design Release 2.1 overview task opens its page in an overview context, and every page in that context returns to the overview when saved. Each page the real journey chains to has its own row on the overview, so nothing becomes unreachable.",
+      "id": "req-1615",
+      "statement": "A page opened from a task on the overview returns to the overview on 'Save and continue'. It does not chain on to the next page of its section: 'What are you importing?' no longer goes on to commodity details, 'Main reason for import' to additional details, 'Arrival details' to transit countries and the transporter, or 'Roles and addresses' to the CPH number. The service tells such a page by its own state, not by a marker in the URL: any save made outside the opening run and outside a change from the review page returns to the overview.",
+      "why": "Every Design Release 2.1 overview task returns to the overview when saved, and Sam's 9 October ruling confirms it while ruling out a ?from=hub marker: only the live flow's fallback changes (c-journey-flow-003). Each page the real journey chains to has its own row on the overview, so nothing becomes unreachable.",
       "claims": [
-        "prototype-dr2-1-source-p1-047",
         "prototype-dr2-1-source-p1-071",
         "trace-e2e-p14-091",
         "trace-animals-fit-p1-058",
@@ -105,17 +110,25 @@
         "repo-tests-p2-063",
         "repo-tests-p2-066-m1",
         "repo-tests-p2-019-m1",
-        "repo-tests-p2-136"
+        "repo-tests-p2-136",
+        "ruling-sam-2026-10-09-p1-196",
+        "ruling-sam-2026-10-09-p1-197",
+        "ruling-sam-2026-10-09-p1-198",
+        "repo-frontend-p2-133",
+        "repo-frontend-p1-167"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today, once the overview has been shown, a save moves through the rest of its flow section before returning to the overview: commodities to consignment details, import reason to additional details, arrival to transit countries and transporter, addresses to CPH number (trace-animals-fit-p1-059 to p1-062, repo-tests-p2-024, repo-tests-p2-063). Single-page tasks already return straight to the overview (trace-animals-fit-p1-063, repo-tests-p2-019-m1). Upload documents keeps its own add-another round trip before returning.",
-      "conflicts": ["c-journey-flow-003"]
+      "conflicts": [
+        "c-204",
+        "c-journey-flow-003"
+      ]
     },
     {
-      "id": "req-journey-flow-007",
-      "statement": "A journey page's Back link goes to the overview when the page was opened from the overview, to the template's review page when it was opened from a template review, and otherwise to the previous page in the journey's step order. A page opened from the review page's Change link also goes back to the previous journey page, not to the review page.",
-      "why": "Design Release 2.1 builds every journey page's Back link this way. Today the real task pages point Back at the overview whatever context they were opened in.",
+      "id": "req-1616",
+      "statement": "A journey page's Back link goes to the overview when the page was opened from the overview (outside the opening run), to the template's review page when it was opened from a template review, and otherwise, in the opening run, to the previous page in the journey's step order. A page opened from the review page's Change link also goes back to the previous journey page, not to the review page. The context comes from the service's own journey state (the opening run, ?change=1), not from a from=hub or from=review marker.",
+      "why": "Design Release 2.1 builds every journey page's Back link this way. The prototype tells the contexts apart by URL markers, which Sam's 9 October ruling leaves out (c-journey-flow-003). Today the real task pages point Back at the overview whatever context they were opened in.",
       "claims": [
         "prototype-dr2-1-source-p1-052",
         "prototype-dr2-1-source-p1-053",
@@ -123,33 +136,39 @@
         "trace-animals-fit-p1-083",
         "trace-animals-fit-p1-047",
         "repo-tests-p2-042",
-        "repo-tests-p2-129"
+        "repo-tests-p2-129",
+        "ruling-sam-2026-10-09-p1-198",
+        "ruling-sam-2026-10-09-p1-089"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a task page's Back link goes to the overview, including in change mode from the review page (trace-animals-fit-p1-083, trace-animals-fit-p1-045 once the notification has answers); pages behind the addresses page go back to it (trace-animals-fit-p1-047, repo-tests-p2-042).",
-      "conflicts": ["c-journey-flow-005"]
+      "conflicts": [
+        "c-206",
+        "c-journey-flow-003"
+      ]
     },
     {
-      "id": "req-journey-flow-008",
-      "statement": "'Save and return to overview' saves the page and takes the user to the notification's overview instead of the next page.",
-      "why": "Design Release 2.1 treats it as a save that leaves the linear flow. The real journey already does this.",
+      "id": "req-1617",
+      "statement": "'Save and return to overview' saves the page and takes the user to the notification's overview instead of the next page. The button keeps the real service's own form field (exit=hub); no action=continue|hub|review field is added.",
+      "why": "Design Release 2.1 treats it as a save that leaves the linear flow. The real journey already does this; form field names are architecture, which the prototype does not decide (c-journey-flow-002).",
       "claims": [
         "prototype-dr2-1-source-p1-068",
         "prototype-dr2-1-source-p1-069",
-        "prototype-dr2-1-specs-p1-104",
-        "prototype-dr2-1-specs-p2-005",
-        "prototype-dr2-1-specs-p4-034",
         "repo-frontend-p1-074",
-        "repo-tests-p2-112"
+        "repo-tests-p2-112",
+        "ruling-sam-2026-10-09-p1-089",
+        "trace-animals-fit-p1-050"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-tests-p2-112: a task page's 'Save and return to overview' saves the page and goes to the overview instead of the next step.",
-      "conflicts": []
+      "conflicts": [
+        "c-journey-flow-002"
+      ]
     },
     {
-      "id": "req-journey-flow-009",
+      "id": "req-1618",
       "statement": "'Cancel and return to overview' is a link to the overview that leaves the page without saving what was typed.",
       "why": "Design Release 2.1's cancel control is a plain link to the overview. The real journey already does this.",
       "claims": [
@@ -164,7 +183,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-010",
+      "id": "req-1619",
       "statement": "Every page the overview links to ends with a primary 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link, in that order.",
       "why": "This is Design Release 2.1's default page ending, and the DR1 rule (b) ruling gives exactly the overview-linked pages these three controls. The real journey already does this.",
       "claims": [
@@ -181,42 +200,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "trace-animals-fit-p1-050 and trace-e2e-p14-088: question pages end with 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link.",
-      "conflicts": []
+      "conflicts": [
+        "c-207"
+      ]
     },
     {
-      "id": "req-journey-flow-011",
-      "statement": "The origin of the import page keeps its 'Save and return to overview' button and 'Cancel and return to overview' link alongside 'Save and continue'.",
-      "why": "Design Release 2.1 drops both return controls from the origin page, but DR1 already judged this same difference: rule (b) gives every page the overview links to the three controls, and the design's page-by-page button list (which also showed origin with one button) was rejected (inc-161, inc-013). A DR1 judgement on the same difference overrides the prototype.",
-      "claims": [
-        "document-dr1-parity-notes-p1-055",
-        "document-dr1-parity-notes-p1-056",
-        "document-dr1-parity-notes-p1-013",
-        "trace-e2e-p14-088",
-        "repo-tests-p2-111"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-e2e-p14-088: the origin page offers Save and continue, Save and return to overview and a Cancel and return to overview link.",
-      "conflicts": ["c-journey-flow-006"]
-    },
-    {
-      "id": "req-journey-flow-012",
-      "statement": "The five party pickers (place of origin, consignor or exporter, consignee, importer, place of destination), the CPH number page and the animals' permanent address page end with the primary 'Save and continue' button alone: no 'Save and return to hub' button and no 'Cancel and return to hub' link.",
-      "why": "Design Release 2.1 gives these pages 'Save and return to hub' and 'Cancel and return to hub', but DR1 already judged this same difference under rule (b): a page reached from another page, not from the overview, ends with the primary button alone, naming the CPH number page and the party pickers (inc-161). A DR1 judgement on the same difference overrides the prototype.",
-      "claims": [
-        "document-dr1-parity-notes-p1-057",
-        "document-dr1-parity-notes-p1-058",
-        "repo-frontend-p1-073",
-        "trace-animals-fit-p1-051",
-        "trace-animals-fit-p1-052"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-animals-fit-p1-051 and trace-animals-fit-p1-052: the party select pages offer only Search and Save and continue, and the CPH number page only Save and continue. The permanent address page does not exist on its own today; when it is built it follows the same rule.",
-      "conflicts": ["c-journey-flow-007"]
-    },
-    {
-      "id": "req-journey-flow-013",
+      "id": "req-1622",
       "statement": "The contact address for consignment page's return controls read 'Save and return to hub' and 'Cancel and return to hub', not 'Save and return to overview' and 'Cancel and return to overview'.",
       "why": "Design Release 2.1 words the contact address page's return controls with 'hub'. The prototype wins over the real service's own rule that 'hub' never appears to users, which is not a DR1 judgement: DR1's rename to 'overview' (inc-006) followed DR1's design rather than departing from it.",
       "claims": [
@@ -227,108 +216,48 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today every page with return controls, the contact address page included, reads 'Save and return to overview' and 'Cancel and return to overview' (trace-animals-fit-p1-050, trace-e2e-p14-088).",
-      "conflicts": ["c-journey-flow-008"]
+      "conflicts": [
+        "c-209"
+      ]
     },
     {
-      "id": "req-journey-flow-014",
-      "statement": "While a submitted notification is being amended, each page the overview links to ends with a primary 'Save and return' button that saves and goes to the review page, a secondary 'Save and continue' button that saves and goes to the next page, and a link-styled 'Save and return to overview' button; there is no cancel link.",
-      "why": "Design Release 2.1 changes the page ending while a notification's status is Amend, so a trader amending one answer goes straight back to the review page. Today an amend uses the ordinary page ending.",
-      "claims": [
-        "prototype-dr2-1-source-p1-074",
-        "prototype-dr2-1-source-p1-067",
-        "repo-tests-p2-152",
-        "trace-animals-fit-p1-050"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "Today amending a submitted notification returns to the overview (repo-tests-p2-152) and its pages end with the ordinary three controls (trace-animals-fit-p1-050); no page offers 'Save and return' to the review page.",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-015",
-      "statement": "While a notification is being amended, the party pickers and the CPH number page, which end with the primary button alone outside amend, show a primary 'Save and return' button (to the review page) and a secondary 'Save and continue' button, and no 'Save and return to overview'.",
-      "why": "Design Release 2.1's amend ending adds 'Save and return' and a link-styled 'Save and return to overview' to every page, while DR1 rule (b) keeps these pages to the primary button alone; nothing ranks which controls they show while amending.",
+      "id": "req-1624",
+      "statement": "While a notification is being amended, the party pickers, the CPH number page and the permanent address page, which end with the primary button alone outside amend, show a primary 'Save and return' button (to the review page) and a secondary 'Save and continue' button, and no link-styled 'Save and return to overview'. The buttons use the real service's own form fields, not the prototype's action field.",
+      "why": "DR1 rule (b) judged where return-to-overview controls go and keeps the hub control off these pages, while the amend-only 'Save and return' and 'Save and continue', which DR1 never judged, follow Design Release 2.1's amend ending (c-210).",
       "claims": [
         "prototype-dr2-1-source-p1-074",
         "document-dr1-parity-notes-p1-057",
-        "trace-animals-fit-p1-051"
+        "trace-animals-fit-p1-051",
+        "ruling-sam-2026-10-09-p1-089",
+        "document-dr1-parity-notes-p1-058"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "new",
       "deltaNote": "Today the party pickers and the CPH number page show 'Save and continue' alone, amend or not (trace-animals-fit-p1-051).",
-      "conflicts": ["c-journey-flow-009"]
+      "conflicts": [
+        "c-210",
+        "c-208",
+        "c-journey-flow-002"
+      ]
     },
     {
-      "id": "req-journey-flow-016",
+      "id": "req-1625",
       "statement": "Pressing 'Save and return to overview' does not refuse the page for an unanswered question: it saves what was entered and goes to the overview. An answer that fails its own format rule is still refused with its error, and consignment details, the CPH number page and the contact address page check their answers before saving.",
-      "why": "Design Release 2.1 lets a trader leave most pages for the overview without the page's checks, so they can come back later. The real service stores no invalid value, so a malformed answer cannot be saved as it stands.",
+      "why": "Design Release 2.1 lets a trader leave most pages for the overview without the page's checks, so they can come back later, and the backend stores missing or empty answers freely; but it cannot store a value that does not fit its field's type, a persistence and validation constraint that overrides the prototype for malformed answers (c-211).",
       "claims": [
-        "prototype-dr2-1-specs-p7-202",
         "prototype-dr2-1-source-p1-068",
         "repo-frontend-p1-074",
         "trace-e2e-p13-113"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a page runs its validation before any exit, so 'Save and return to overview' is refused on the same errors as 'Save and continue' (the page controllers validate first; repo-frontend-p1-074 saves the page's answers before going to the overview). No trace shows it with invalid input (trace-e2e-p13-113).",
-      "conflicts": ["c-journey-flow-010"]
+      "conflicts": [
+        "c-211"
+      ]
     },
     {
-      "id": "req-journey-flow-017",
-      "statement": "While a template is being edited from its review page, each journey page ends with a primary 'Save and return' button and a 'Cancel' link to that template's page; this ending takes precedence over the amend ending.",
-      "why": "Design Release 2.1 gives template editing its own page ending so the trader returns to the template rather than walking the notification journey.",
-      "claims": [
-        "prototype-dr2-1-source-p1-075",
-        "prototype-dr2-1-source-p1-049"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-018",
-      "statement": "Saving a journey page while editing a template from its review saves the template, does not save a draft notification, and returns to that template's review page with the success message '<template title> has been updated' ('Template has been updated' when the template has no title or name).",
-      "why": "Design Release 2.1 routes every save made in template-edit mode back to the template review and confirms it there.",
-      "claims": [
-        "prototype-dr2-1-source-p1-051",
-        "prototype-dr2-1-source-p1-070",
-        "prototype-dr2-1-source-p1-050",
-        "prototype-dr2-1-source-p1-071"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-019",
-      "statement": "While a template is being created, the journey skips the upload documents step and the declaration step.",
-      "why": "Design Release 2.1 leaves documents and the declaration out of a template, because they belong to one consignment, not to a reusable template.",
-      "claims": [
-        "prototype-dr2-1-source-p1-061",
-        "prototype-dr2-1-source-p1-063"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-020",
-      "statement": "While a template is being created, the status strip shows a grey 'Template' tag followed by the template's name in place of the notification reference.",
-      "why": "Design Release 2.1's status strip tells the trader they are building a template, not a notification.",
-      "claims": [
-        "prototype-dr2-1-source-p1-077-m1",
-        "prototype-dr2-1-source-p1-078"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-021",
+      "id": "req-1630",
       "statement": "Pages inside a notification (the overview, the question pages and the review page) show a status strip above the caption: a blue 'Draft' tag (or the notification's own status) followed by the notification reference in bold. The strip shows from the first request on the origin page and never on the dashboard.",
       "why": "Design Release 2.1 shows the status and reference on every journey page, with Draft when the notification has no other status. The real journey already does this.",
       "claims": [
@@ -354,72 +283,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-022",
-      "statement": "When the notification's status is Amend, the status strip shows a 'Cancel amend' link-styled button after the reference, which opens the cancel amendment dialog.",
-      "why": "Design Release 2.1 lets a trader abandon an amendment from any journey page through the status strip.",
-      "claims": [
-        "prototype-dr2-1-source-p1-079",
-        "trace-animals-fit-p1-048"
-      ],
-      "status": "adopted",
-      "delta": "new",
-      "deltaNote": "Today the strip holds only the status tag and the reference (trace-animals-fit-p1-048).",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-023",
-      "statement": "The declaration page shows no status strip.",
-      "why": "Design Release 2.1 includes the status strip page by page, and the declaration page does not include it.",
-      "claims": [
-        "prototype-dr2-1-source-p1-077-m1",
-        "trace-e2e-p13-010"
-      ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today the declaration page carries the Draft status strip (trace-e2e-p13-010), because the shared layout adds it to every page inside a notification.",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-024",
-      "statement": "The 'Add a transporter' type choice page and the 'Add private transporter' page show no status strip; the 'Add commercial transporter' page keeps it.",
-      "why": "Design Release 2.1 includes the status strip page by page: the commercial transporter page includes it, the transporter type and private transporter pages do not.",
-      "claims": [
-        "prototype-dr2-1-source-p1-077-m1",
-        "repo-tests-p2-119"
-      ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today the shared layout puts the strip on every page inside a notification, the add-a-transporter pages included (repo-tests-p2-119).",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-025",
-      "statement": "Every new notification gets a reference of the form GBN-AG-<two-digit year>-<six upper-case letters or digits> when it is created, different from every reference already in use, and every journey page's URL carries it.",
-      "why": "Design Release 2.1 gives every new notification a GBN-AG-26 reference at the start. The real service already mints one at creation, from a Crockford alphabet (no I, L, O or U) that is a subset of what the prototype allows.",
-      "claims": [
-        "prototype-dr2-1-source-p1-041",
-        "prototype-dr2-1-source-p1-042",
-        "prototype-dr2-1-specs-p7-124",
-        "repo-frontend-p2-009",
-        "repo-frontend-p2-010",
-        "repo-frontend-p2-011",
-        "repo-frontend-p1-088-m1",
-        "repo-frontend-p1-085",
-        "repo-tests-p2-117",
-        "repo-tests-p2-118",
-        "repo-tests-p1-003",
-        "repo-tests-p2-125",
-        "trace-animals-fit-p1-037",
-        "trace-e2e-p13-004",
-        "trace-e2e-p13-005"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-animals-fit-p1-037 and repo-frontend-p2-009: a new notification is given a GBN-AG-YY-XXXXXX reference at creation, and every notification URL is keyed by it.",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-026",
+      "id": "req-1635",
       "statement": "Starting a new notification creates a fresh, empty notification; the trader's other drafts, submitted notifications, templates and address book are kept.",
       "why": "Design Release 2.1 clears the journey's answers when a notification is started but keeps everything else. The real service already creates a new record for each start.",
       "claims": [
@@ -427,7 +291,9 @@
         "prototype-dr2-1-source-p1-045",
         "trace-animals-fit-p1-036",
         "trace-e2e-p13-003",
-        "repo-tests-p1-004"
+        "repo-tests-p1-004",
+        "repo-perftests-p1-007",
+        "repo-perftests-p1-008"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -435,23 +301,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-027",
-      "statement": "A notification started from the live-animals dashboard skips the notification type question and opens at 'Origin of the import'.",
-      "why": "Design Release 2.1 skips the notification type question when a notification is started from a category dashboard, and the live-animals dashboard is one. The real journey already opens at origin.",
-      "claims": [
-        "prototype-dr2-1-specs-p7-122",
-        "repo-frontend-p1-163",
-        "trace-e2e-p14-084",
-        "trace-e2e-p14-085",
-        "trace-e2e-p13-002"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-frontend-p1-163 and trace-e2e-p14-085: the dashboard's 'Start a new notification' creates a notification and opens its origin page.",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-028",
+      "id": "req-1637",
       "statement": "Opening any page of a notification directly sends the user to its origin page when the notification has no opening run in this session and no answer the user entered; the origin page itself, creating a notification, and the amend, cancel-amend, copy and delete actions are exempt.",
       "why": "Real notifications are server records anyone signed in can reach by URL, which the prototype (one notification per browser session) cannot express: the entry guard is a real persistence constraint that overrides the prototype.",
       "claims": [
@@ -467,7 +317,8 @@
         "trace-animals-fit-p1-041",
         "trace-animals-fit-p1-044-m1",
         "repo-tests-p1-005",
-        "repo-tests-p2-134"
+        "repo-tests-p2-134",
+        "repo-perftests-p1-013"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -475,8 +326,8 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-029",
-      "statement": "Every journey page needs a signed-in session: a signed-out request is sent to sign-in and returned to the page it asked for afterwards.",
+      "id": "req-1638",
+      "statement": "Every page needs a signed-in session: a signed-out user who opens any page is sent to the service's /auth/sign-in, with the page they asked for kept in a 'redirect' parameter, and after signing in returns to that page, such as a journey page with its saved answers intact, or to the dashboard when none was asked for. A redirect is followed only when it is a relative path on the same service, and it is used once.",
       "why": "Authentication is a real constraint the prototype cannot express (its sign-in is outside Design Release 2.1), so it overrides the prototype.",
       "claims": [
         "ruling-sam-2026-10-07-p1-010",
@@ -494,11 +345,10 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-030",
-      "statement": "A page opened from the review page returns to the review page on 'Save and continue', and keeps that context through its own in-page actions (add, remove, upload) until it does; 'Save and return to overview' still goes to the overview first.",
-      "why": "Design Release 2.1 returns a page reached from review to review, with the overview taking precedence over review. The real journey already does this with its change context.",
+      "id": "req-1639",
+      "statement": "A page opened from the review page (with ?change=1) returns to the review page on 'Save and continue', and keeps that context through its own in-page actions (add, remove, upload) until it does; 'Save and return to overview' still goes to the overview first.",
+      "why": "Design Release 2.1 returns a page reached from review to review, with the overview taking precedence over review. The real journey already does this with its ?change=1 context, which Sam's 9 October ruling keeps in place of the prototype's from=review marker (c-journey-flow-003).",
       "claims": [
-        "prototype-dr2-1-source-p1-048",
         "prototype-dr2-1-source-p1-071",
         "repo-frontend-p1-077",
         "repo-frontend-p1-078",
@@ -516,15 +366,18 @@
         "repo-tests-p2-107",
         "repo-tests-p2-108",
         "repo-tests-p2-110",
-        "repo-frontend-p1-079"
+        "repo-frontend-p1-079",
+        "ruling-sam-2026-10-09-p1-089"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "trace-animals-fit-p1-080 and repo-tests-p2-107: in change mode 'Save and continue' returns to the review page; repo-frontend-p2-156: the context survives add, remove and save round trips, and a return to the overview wins first.",
-      "conflicts": []
+      "conflicts": [
+        "c-journey-flow-003"
+      ]
     },
     {
-      "id": "req-journey-flow-031",
+      "id": "req-1640",
       "statement": "Every journey page is a server-rendered form: a successful save is a full-page POST answered by a redirect to the next page, each save stores the notification as a draft, and every option list arrives in the page rather than from a browser call to another service.",
       "why": "Design Release 2.1 posts each page and redirects, persisting a draft each time, with every list rendered by the server. The real journey already works this way.",
       "claims": [
@@ -535,7 +388,8 @@
         "repo-tests-p2-141",
         "repo-tests-p2-142",
         "trace-e2e-p14-121",
-        "trace-e2e-p13-111"
+        "trace-e2e-p13-111",
+        "repo-perftests-p1-082"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -543,8 +397,8 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-032",
-      "statement": "A page refuses 'Save and continue' only for its own hard stops; every other answer can be left blank to proceed, and completeness is enforced by the overview's statuses and the review page's submit. For example, a blank main reason for import and a blank transporter are allowed, a reason's follow-up question is required once that reason is chosen, the number of animals is required, and documents are optional.",
+      "id": "req-1641",
+      "statement": "A page refuses 'Save and continue' only for its own hard stops; every other answer can be left blank to proceed, and completeness is enforced by the overview's statuses and the review page's submit. For example, a blank main reason for import and a blank transporter are allowed, a reason's follow-up question is required once that reason is chosen, the number of animals is required, and documents are optional unless the user has started one by picking a document type.",
       "why": "Design Release 2.1 separates what blocks a page from what blocks submission. The real journey already keeps that separation on the pages the evidence shows.",
       "claims": [
         "prototype-dr2-1-specs-p7-126",
@@ -567,7 +421,10 @@
         "repo-tests-p2-068",
         "repo-tests-p2-068-m1",
         "repo-frontend-p2-140",
-        "trace-e2e-p14-097"
+        "trace-e2e-p14-097",
+        "prototype-dr2-1-specs-p7-132",
+        "repo-frontend-p2-150",
+        "trace-animals-fit-p1-057"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -575,7 +432,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-033",
+      "id": "req-1642",
       "statement": "On 'Arrival details', 'Save and continue' is refused only when the means of transport is missing; the arrival date, port of entry, transport identification and transport document reference can be left blank to proceed.",
       "why": "Design Release 2.1 makes the means of transport the arrival page's only hard stop, because it decides whether transit countries apply.",
       "claims": [
@@ -590,7 +447,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-034",
+      "id": "req-1643",
       "statement": "On commodity details (consignment details), 'Save and continue' is refused when a line that asks for a number of packages has none.",
       "why": "Design Release 2.1 makes the number of packages a hard stop on that page alongside the number of animals.",
       "claims": [
@@ -604,7 +461,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-035",
+      "id": "req-1644",
       "statement": "The transit countries step, and its row on the overview, apply only when the means of transport is rail or road; choosing any other means skips the step, removes the row and deletes any saved transit countries. Transit countries are optional to proceed.",
       "why": "Design Release 2.1 adds the transit countries step only for Rail or Road. The real journey already does this.",
       "claims": [
@@ -627,7 +484,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-036",
+      "id": "req-1645",
       "statement": "The animal identification step follows commodity details only when at least one chosen species has identifiers of its own; a consignment with none never reaches the identification page, and a commodity with none gets no panel on it.",
       "why": "Design Release 2.1 adds the identification step only when a selected species has identifier fields. The real journey already does this.",
       "claims": [
@@ -648,7 +505,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-037",
+      "id": "req-1646",
       "statement": "The additional details step applies to every live-animals consignment because it always asks what the animals are certified for; its unweaned animals question appears only when a commodity line is one that triggers it, such as cattle.",
       "why": "Design Release 2.1 adds the additional details page whenever it would ask the certification purpose or the unweaned question, and live animals are always asked the purpose. The real journey already does this.",
       "claims": [
@@ -665,7 +522,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-038",
+      "id": "req-1647",
       "statement": "The CPH number applies unless every commodity in the consignment is exempt (horses 0101, and cats, dogs and ferrets 01061900); for cats, dogs and ferrets each animal's permanent address is asked instead of a CPH number.",
       "why": "Design Release 2.1 brings the CPH number in by commodity code with the same exemptions, and asks a cat's permanent address in its place. The real journey already scopes it this way.",
       "claims": [
@@ -687,7 +544,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-039",
+      "id": "req-1648",
       "statement": "Each reason for import brings in only its own follow-up questions, revealed on the same page: the purpose for internal market; the exit port and destination country for transit; the destination country for transhipment or onward travel; the exit date and port of exit for temporary admission of horses. Changing the reason deletes the follow-up answers that no longer apply.",
       "why": "Design Release 2.1 requires a reason's follow-ups once that reason is chosen and walks each branch this way. The real journey already scopes them like this.",
       "claims": [
@@ -711,7 +568,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-040",
+      "id": "req-1649",
       "statement": "Only the transporter details that match the chosen transporter type are kept: switching between commercial and private deletes the other type's details.",
       "why": "Keeping one consistent transporter record is a real persistence constraint the prototype cannot express. The real journey already does this.",
       "claims": [
@@ -731,7 +588,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-041",
+      "id": "req-1650",
       "statement": "An answer to a question that no longer applies is not shown, checked or saved, and any stored value is removed in the same save; when one field of a collection entry leaves scope only that field is wiped.",
       "why": "The real service must not store answers the notification no longer needs: a real persistence and validation constraint that holds whatever the prototype shows.",
       "claims": [
@@ -747,7 +604,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-042",
+      "id": "req-1651",
       "statement": "A notification's arrival date counts as complete only when it falls between 7 days in the past and 6 months ahead.",
       "why": "Design Release 2.1 holds the arrival details task back outside that window. The real journey already applies the same window.",
       "claims": [
@@ -761,26 +618,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-043",
-      "statement": "Documents are optional to proceed and to submit: a trader can pass the upload documents step without adding one, and can add several (up to 15).",
-      "why": "Design Release 2.1 lets documents be skipped unless the trader picks a document type, and lets more than one be added. The real journey already does this.",
-      "claims": [
-        "prototype-dr2-1-specs-p7-132",
-        "repo-frontend-p2-014",
-        "repo-frontend-p2-016",
-        "repo-frontend-p2-017",
-        "repo-frontend-p2-150",
-        "trace-animals-fit-p1-057",
-        "trace-e2e-p14-098",
-        "repo-tests-p2-140"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-animals-fit-p1-057 and trace-e2e-p14-098: Upload documents can be passed without a document and a notification can be submitted with it still To do; repo-frontend-p2-014: 0 to 15 documents.",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-044",
+      "id": "req-1653",
       "statement": "Each journey page carries the caption of the part of the notification it belongs to: 'About the consignment' (origin, what are you importing, main reason for import, identification), 'Commodity details' (additional details), 'Transport and arrival' (arrival details, transporter), 'Movement' (transit countries), 'Add a new transporter' (the add-a-transporter pages), 'Documents' (upload documents) and 'Consignment parties' (roles and addresses, party pickers, CPH number); the overview, contact address, review, declaration and confirmation pages carry none.",
       "why": "Design Release 2.1's pages carry these captions. The real journey already captions them the same way, except commodity details.",
       "claims": [
@@ -806,20 +644,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-045",
-      "statement": "The commodity details (consignment details) page is captioned 'Description of the goods', matching the overview section that holds it.",
-      "why": "Design Release 2.1 captions commodity details 'Description of the goods'. Today it is captioned 'About the consignment' although its task sits under '2. Description of the goods' on the overview.",
-      "claims": [
-        "repo-frontend-p1-139",
-        "trace-animals-fit-p1-070"
-      ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today the consignment details page is captioned 'About the consignment' (repo-frontend-p1-139, trace-animals-fit-p1-070).",
-      "conflicts": []
-    },
-    {
-      "id": "req-journey-flow-046",
+      "id": "req-1655",
       "statement": "The tests repo walks a cattle-by-air notification (identification, the unweaned question and a CPH number) from create to submitted in the Design Release 2.1 step order, checks every overview task reads Complete before review, and checks the review shows the answers given.",
       "why": "Design Release 2.1 proves this journey end to end. The real suite proves a cattle journey by road in today's step order, which the step-order changes will break.",
       "claims": [
@@ -839,7 +664,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-047",
+      "id": "req-1656",
       "statement": "A poultry-by-rail notification (Chicken 010511 Gallus domesticus, Transit with an exit port and destination country, transit countries and a CPH number, no identification step) can be walked from create to submitted, and the tests repo proves it.",
       "why": "Design Release 2.1 proves this journey end to end. Today the commodity list offers only Cow, Horse, Cat, Dog and Fish, so poultry cannot be chosen.",
       "claims": [
@@ -859,15 +684,13 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-048",
+      "id": "req-1657",
       "statement": "A pet-cats-by-air notification (microchip, passport and tattoo per cat, a companion-animal purpose, and each cat's permanent address chosen on its own page in roles and addresses, one the same as the place of destination and one new) can be walked from create to submitted, and the tests repo proves it.",
-      "why": "Design Release 2.1 proves this journey end to end. Today the permanent address is typed in full on the identification form, and moving it into roles and addresses is held by the address-space block.",
+      "why": "Design Release 2.1 proves this journey end to end. Today the permanent address is typed in full on the identification form; conflict c-119 settles that it moves to its own page in roles and addresses now.",
       "claims": [
         "prototype-dr2-1-specs-p4-070",
         "trace-prototype-dr2-1-p13-001",
         "trace-prototype-dr2-1-p13-181",
-        "document-dr1-parity-notes-p1-028",
-        "document-dr1-parity-notes-p1-029",
         "repo-tests-p2-003",
         "repo-tests-p2-006",
         "repo-tests-p2-010"
@@ -875,11 +698,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today the cat's permanent address is part of its identifier form (repo-tests-p2-006, repo-tests-p2-010).",
-      "conflicts": [],
-      "blockedBy": "The team's address work settles and Rhys lifts the 2026-09-04 address-space block on inc-057 and inc-058 (DR1 parity notes), which holds moving the permanent address into the consignment parties section and reusing the place of destination address."
+      "conflicts": [
+        "c-119"
+      ]
     },
     {
-      "id": "req-journey-flow-049",
+      "id": "req-1658",
       "statement": "A horse-by-sea notification (temporary admission of horses with an exit date and port of exit, microchip, passport and horse name, a registered equine animal) can be walked from create to submitted, and the tests repo proves it.",
       "why": "Design Release 2.1 proves this journey end to end; no real end-to-end journey walks a horse or temporary admission today.",
       "claims": [
@@ -894,7 +718,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-050",
+      "id": "req-1659",
       "statement": "Every new or changed piece of user-facing text has a Welsh version, and the English and Welsh copy keep the same shape.",
       "why": "The real service is bilingual, a real constraint the English-only prototype cannot express.",
       "claims": [
@@ -907,7 +731,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-051",
+      "id": "req-1660",
       "statement": "Journey changes keep the frontend's standing structure: the obligation model decides what applies and whether it is mandatory, the flow decides page order, task rows decide grouping on the overview, each answer is owned by exactly one page, and the model holds no display copy.",
       "why": "These are the real frontend's recorded rulings on how scope, order and grouping are kept apart; every flow change in this area lands through them.",
       "claims": [
@@ -936,7 +760,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-052",
+      "id": "req-1661",
       "statement": "The service refuses to start when the journey is not fully configured (flow, obligations, bindings, cookies, field names), and the platform's limits hold: scope rules are code, a page's gate opens when one of its answers is in scope, saves are not transactional across backend projections, and collection positions are not durable ids.",
       "why": "These are real constraints of the platform every flow change runs on.",
       "claims": [
@@ -960,7 +784,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-053",
+      "id": "req-1662",
       "statement": "Every changed page passes axe with no serious or critical WCAG 2 A or AA violation on first render and in its error state, and the audited pages keep their Lighthouse thresholds.",
       "why": "Accessibility is a real constraint of a GOV.UK service that the prototype does not check.",
       "claims": [
@@ -980,8 +804,8 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-054",
-      "statement": "A validation failure shows a GOV.UK error summary titled 'There is a problem', listing each message as a link to its field in field order, and an inline error under each field with the 'Error:' prefix.",
+      "id": "req-1663",
+      "statement": "A page with validation errors shows a GOV.UK error summary titled 'There is a problem' ('Mae problem' in Welsh) at the top of the content, above the caption and heading, listing one entry per field in field order with the first failing rule's message, each linking to its field. The summary is exposed as an alert and takes focus when the user has just been refused. Each field shows the same message inline, read out with a visually hidden 'Error:' prefix. A page with no errors shows no summary.",
       "why": "Design Release 2.1 shows every error this way. The real journey already does.",
       "claims": [
         "prototype-dr2-1-specs-p1-102",
@@ -999,7 +823,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-055",
+      "id": "req-1664",
       "statement": "Date fields take a date as d/m/yyyy with single-digit days and months allowed, through an MOJ date picker the user can also type into.",
       "why": "Design Release 2.1's date pickers work this way. The real journey already does.",
       "claims": [
@@ -1017,7 +841,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-056",
+      "id": "req-1665",
       "statement": "The prototype's version mount and session mechanics are not built: the /design-release-2.1 base path, the per-version session nest and its shared keys, path prefixing, override-view fallback and the route and coverage tables that describe them.",
       "why": "They are how the prototype kit hosts several design releases side by side, not behaviour of the real services, which serve live animals under /live-animals and keep notifications and the address book in their own services.",
       "claims": [
@@ -1062,9 +886,9 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-057",
-      "statement": "The prototype's seed shortcuts and fixtures are not built: the /prototype/reason-for-import seed route, the legacy /transport-details redirect, the design release index page, the fixed GBN-AG-26-7K8M2P reference and the seeded dashboard reference mapping, and the submitted view's fixed sample answers.",
-      "why": "They exist to demo and test the prototype, not as service behaviour.",
+      "id": "req-1666",
+      "statement": "The prototype's seed shortcuts and fixtures are not built: the /prototype/reason-for-import seed route, the legacy /transport-details redirect, the design release index page, the fixed GBN-AG-26-7K8M2P reference and the seeded dashboard reference mapping, the seeded GBN-GP germinal references, and the submitted view's fixed sample answers.",
+      "why": "They exist to demo and test the prototype, not as service behaviour; Sam's 9 October ruling calls GBN-GP references demonstration data only.",
       "claims": [
         "prototype-dr2-1-source-p1-040",
         "prototype-dr2-1-source-p1-043",
@@ -1073,7 +897,9 @@
         "prototype-dr2-1-specs-p7-177",
         "prototype-dr2-1-specs-p7-179",
         "prototype-dr2-1-specs-p7-180",
-        "trace-prototype-dr2-1-p13-196"
+        "trace-prototype-dr2-1-p13-196",
+        "prototype-dr2-1-specs-p7-125",
+        "ruling-sam-2026-10-09-p1-028"
       ],
       "status": "out-of-scope",
       "delta": "new",
@@ -1081,7 +907,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-058",
+      "id": "req-1667",
       "statement": "The prototype's mount leaks are not copied: the template Cancel link, the transporter 'View details' links and the document virus check that leave /design-release-2.1 for the root paths.",
       "why": "They are defects of the prototype's version mount, with no counterpart in a service that has one set of paths.",
       "claims": [
@@ -1097,19 +923,13 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-059",
-      "statement": "The germinal products, plants for planting, potatoes and wood products journeys are not built here: their reduced reasons, absent additional details page, per-species donor identification, package and weight totals, and GBN-GP references.",
-      "why": "The goal covers the live-animals journey, its dashboard, templates and address book; the other notification types are separate journeys.",
+      "id": "req-1668",
+      "statement": "The plants for planting, potatoes and wood products journeys are not built in the animals frontend: in Design Release 2.1 they reach a commodity search that offers nothing.",
+      "why": "Those types belong to the high-risk plants journey in its own frontend. Germinal products is no longer excluded: Sam's 9 October ruling makes it a sibling set of live animals in the animals frontend, and its journey is carried by req-journey-flow-002 and req-journey-flow-003.",
       "claims": [
         "prototype-dr2-1-specs-p7-123",
-        "prototype-dr2-1-specs-p7-125",
-        "prototype-dr2-1-specs-p7-146",
-        "prototype-dr2-1-specs-p7-147",
-        "prototype-dr2-1-specs-p7-148",
-        "prototype-dr2-1-specs-p7-149",
-        "prototype-dr2-1-specs-p7-150",
-        "prototype-dr2-1-specs-p7-203",
-        "prototype-dr2-1-specs-p4-072"
+        "ruling-sam-2026-10-09-p1-086",
+        "ruling-sam-2026-10-09-p1-006"
       ],
       "status": "out-of-scope",
       "delta": "new",
@@ -1117,7 +937,7 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-060",
+      "id": "req-1669",
       "statement": "What the Design Release 2.1 traces and specs do not exercise is recorded, not built: page validation before the declaration, the save and cancel return controls, amend, copy and delete, multi-commodity and mixed-species consignments, transhipment, the review's Change links, finished virus scans, the region code and package totals, no-JavaScript searches, and observed but unasserted behaviour such as a cattle animal with only an ear tag staying To do.",
       "why": "These are gaps in the target evidence; nothing in them says what to build differently.",
       "claims": [
@@ -1156,8 +976,8 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-061",
-      "statement": "What today's traces and tests do not show is recorded, not built: backend calls behind the browser, real identity-provider sign-in, where the exits lead from a page in change mode, what the review's Continue leads to in the fit traces, 404 and error pages, no-JavaScript country and port selects, invalid input on 'Save and return to overview', copy as new, cancelling an amendment from the dashboard, the Railway means through the UI, and Change links from review cards other than import details and additional animal details.",
+      "id": "req-1670",
+      "statement": "What today's traces and tests do not show is recorded, not built: backend calls behind the browser, real identity-provider sign-in, where the exits lead from a page in change mode, what the review's Continue leads to in the fit traces, 404 and error pages, no-JavaScript country and port selects, invalid input on 'Save and return to overview', copy as new, cancelling an amendment from the dashboard, the Railway means through the UI, Change links from review cards other than import details and additional animal details, and any heading, copy or validation error on the pages the k6 performance suite drives.",
       "why": "These are gaps in the evidence of today's behaviour; each is weighed where its page is built.",
       "claims": [
         "trace-animals-fit-p1-038",
@@ -1169,7 +989,9 @@
         "trace-e2e-p14-151",
         "trace-e2e-p14-152",
         "repo-tests-p2-032",
-        "repo-tests-p2-156"
+        "repo-tests-p2-156",
+        "repo-perftests-p1-088",
+        "repo-perftests-p1-089"
       ],
       "status": "out-of-scope",
       "delta": "new",
@@ -1177,9 +999,9 @@
       "conflicts": []
     },
     {
-      "id": "req-journey-flow-062",
-      "statement": "The tests repo's fixture data and seeding mechanics (default test notification, named parties, country and species constants, Yes/No values, field names posted by the seeder, address-book lookups by name) are test scaffolding, not requirements.",
-      "why": "They describe how the suite drives the service, not what a user sees; they change only as the journeys they drive change.",
+      "id": "req-1671",
+      "statement": "The tests repo's and the k6 performance suite's fixture data and driving mechanics (default test notification, named parties, country and species constants, Yes/No values, field names posted by the seeder, address-book lookups by name, the k6 blank-field answers and select defaults, its skipped search boxes, its sample draft id and its endpoint tags) are test scaffolding, not requirements.",
+      "why": "They describe how the suites drive the service, not what a user sees; they change only as the journeys they drive change.",
       "claims": [
         "repo-tests-p1-001",
         "repo-tests-p1-002",
@@ -1201,17 +1023,162 @@
         "repo-tests-p2-154",
         "repo-tests-p2-155",
         "trace-e2e-p13-112",
-        "trace-e2e-p14-120"
+        "trace-e2e-p14-120",
+        "repo-perftests-p1-010",
+        "repo-perftests-p1-026",
+        "repo-perftests-p1-027",
+        "repo-perftests-p1-028",
+        "repo-perftests-p1-083",
+        "repo-perftests-p1-084"
       ],
       "status": "out-of-scope",
       "delta": "new",
       "deltaNote": "",
       "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-001",
+      "statement": "Journey pages keep the real service's URL paths whatever path Design Release 2.1 uses: the live-animals set at /live-animals, a notification's overview at /live-animals/notifications/{reference}, and each page at /live-animals/notifications/{reference}/{slug} with today's slugs (origin, commodities, consignment-details, commodities/identification, import-reason, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents, addresses, cph-number, consignment/contact/select, notification-view). The prototype's flat paths (/reason-for-import, /arrival-details, /upload-documents, /roles-and-addresses, /notification-hub, /review-notification and the rest) are not copied, and every flow change is specified and tested by the page, heading and destination it reaches, not by a literal path.",
+      "why": "Sam's 9 October ruling says the prototype never decides URL paths, no increment changes an existing real path to match it, and acceptance criteria assert pages, headings and destinations rather than paths (c-journey-flow-001).",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-066",
+        "ruling-sam-2026-10-09-p1-072",
+        "ruling-sam-2026-10-09-p1-073",
+        "ruling-sam-2026-10-09-p1-075",
+        "ruling-sam-2026-10-09-p1-076",
+        "ruling-sam-2026-10-09-p1-077",
+        "ruling-sam-2026-10-09-p1-078",
+        "ruling-sam-2026-10-09-p1-088",
+        "repo-frontend-p1-084",
+        "repo-frontend-p1-085",
+        "repo-tests-p1-003",
+        "repo-tests-p2-121",
+        "repo-tests-p2-125",
+        "repo-tests-p2-143",
+        "trace-animals-fit-p1-035",
+        "trace-animals-fit-p1-073",
+        "trace-e2e-p13-005",
+        "repo-perftests-p1-001",
+        "repo-perftests-p1-002",
+        "repo-perftests-p1-003",
+        "repo-perftests-p1-009",
+        "repo-perftests-p1-011",
+        "repo-perftests-p1-012"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p1-085, trace-animals-fit-p1-073 and repo-perftests-p1-011: the live-animals set already serves its dashboard at /live-animals, the overview at /notifications/{reference} and every page at /notifications/{reference}/{slug}.",
+      "conflicts": [
+        "c-journey-flow-001"
+      ]
+    },
+    {
+      "id": "req-journey-flow-002",
+      "statement": "The germinal products set (mounted at /germinal-products, its pages at /germinal-products/notifications/{reference}/{slug} with the live-animals slugs) follows the same Design Release 2.1 step order, opening run, return rules, shared journey buttons and status strip as the live-animals set, taken from copies of the live-animals pages once they have changed, except that the additional details, CPH number and permanent address steps never apply: the run goes from identification (when it applies) straight to arrival details, 'Roles and addresses' has no CPH or permanent address row, and the overview has no 'Additional details' row. The certified-for answer is set to 'Germinal products' when the draft is created, so nothing asks it.",
+      "why": "Sam's 9 October ruling makes germinal products a sibling set of live animals built by duplicating the live-animals feature pages, with its own journey, flow and obligations, and leaves out the additional details, CPH number and permanent address pages; Design Release 2.1 likewise gives germinal products no additional details page. Today only the live-animals set exists.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-006",
+        "ruling-sam-2026-10-09-p1-007",
+        "ruling-sam-2026-10-09-p1-008",
+        "ruling-sam-2026-10-09-p1-009",
+        "ruling-sam-2026-10-09-p1-010",
+        "ruling-sam-2026-10-09-p1-011",
+        "ruling-sam-2026-10-09-p1-013",
+        "ruling-sam-2026-10-09-p1-014",
+        "ruling-sam-2026-10-09-p1-016",
+        "ruling-sam-2026-10-09-p1-017",
+        "ruling-sam-2026-10-09-p1-018",
+        "ruling-sam-2026-10-09-p1-019",
+        "ruling-sam-2026-10-09-p1-086",
+        "prototype-dr2-1-specs-p7-147",
+        "prototype-dr2-1-source-p1-056",
+        "trace-prototype-dr2-1-p12-198",
+        "repo-frontend-p1-084",
+        "repo-perftests-p1-004"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the animals frontend mounts only the live-animals set (repo-frontend-p1-084), and live animals is the only notification type it serves (repo-perftests-p1-004).",
+      "conflicts": [
+        "c-journey-flow-001"
+      ]
+    },
+    {
+      "id": "req-journey-flow-003",
+      "statement": "A germinal products notification for bovine semen (Netherlands, a net weight and packages, Frozen, Internal market for Breeding, donor identification entered once for the species, Dover by Road with transit through Belgium, a consignee chosen in roles and addresses) can be walked in the germinal set from create to submitted, and the tests repo proves it with a spec in the existing animals Playwright project under tests/animals/e2e/germinal-products, checking the review shows the answers given.",
+      "why": "Design Release 2.1 proves this journey end to end, and Sam's 9 October ruling puts the germinal set's end-to-end, accessibility and security specs in the animals Playwright project, with no new project. No germinal journey exists or is tested today.",
+      "claims": [
+        "prototype-dr2-1-specs-p4-072",
+        "prototype-dr2-1-specs-p7-204",
+        "prototype-dr2-1-specs-p7-203",
+        "prototype-dr2-1-specs-p7-148",
+        "ruling-sam-2026-10-09-p1-062",
+        "ruling-sam-2026-10-09-p1-063",
+        "ruling-sam-2026-10-09-p1-110",
+        "repo-tests-p1-166",
+        "repo-tests-p1-184"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the tests repo's only full UI journey is a live-animals cattle consignment (repo-tests-p1-166), and every page spec drives the live-animals UI (repo-tests-p1-184).",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-004",
+      "statement": "A germinal products notification gets the same kind of reference as a live-animals one when it is created, GBN-AG followed by the two-digit year and six characters, and shows it in the status strip from the first page; no GBN-GP reference is minted.",
+      "why": "Design Release 2.1 gives every new notification, germinal products included, a GBN-AG-26- reference, and Sam's 9 October ruling keeps GBN-AG references for germinal notifications and treats GBN-GP as demonstration data.",
+      "claims": [
+        "prototype-dr2-1-specs-p7-124",
+        "ruling-sam-2026-10-09-p1-027",
+        "ruling-sam-2026-10-09-p1-028",
+        "repo-frontend-p2-009",
+        "trace-e2e-p13-004",
+        "repo-tests-p2-115"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today only live-animals notifications exist; each is minted a GBN-AG-YY-XXXXXX reference at creation (repo-frontend-p2-009, trace-e2e-p13-004, repo-tests-p2-115).",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-005",
+      "statement": "Each set opens only notifications of its own category: a germinal products notification is never shown or changed through the live-animals set's pages, nor a live-animals notification through the germinal set's pages. Each set records its category on the notification when it creates the draft, and a notification with no recorded category counts as live animals.",
+      "why": "Sam's 9 October ruling keeps one category per set and has the frontend's cross-set guard read the category stored on the notification record, so a notification can only be worked in the set that owns it.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-023",
+        "ruling-sam-2026-10-09-p1-029",
+        "ruling-sam-2026-10-09-p1-030",
+        "ruling-sam-2026-10-09-p1-031",
+        "repo-frontend-p1-092",
+        "repo-frontend-p1-134"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the entry guard checks only whether a notification has an opening run or entered answers (repo-frontend-p1-092, repo-frontend-p1-134); with one set there is no category to check.",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-006",
+      "statement": "The k6 performance suite keeps driving a live-animals draft through the journey after the step-order and return changes: it creates the draft from the set's create path, saves each step by its slug, reopens and resaves answered pages, and every save still lands on a page that renders, with no redirect loop and no staleAction redirect.",
+      "why": "The performance suite requests the journey's pages directly and fails a step whose save does not land on a rendering page; the flow changes alter where saves land (the contact address, the overview, the review page) but each destination still renders.",
+      "claims": [
+        "repo-perftests-p1-006",
+        "repo-perftests-p1-007",
+        "repo-perftests-p1-014",
+        "repo-perftests-p1-015",
+        "repo-perftests-p1-064-m1",
+        "repo-perftests-p1-078",
+        "ruling-sam-2026-10-09-p1-200"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-perftests-p1-014 and repo-perftests-p1-015: the suite already saves origin, commodities, consignment details, identification, import reason, additional details, documents, addresses, CPH number, port of entry, transit countries, transporters and contact by slug and checks each save renders; the flow changes only move where saves land between pages that render. The move of the set root's notification list (ruling-sam-2026-10-09-p1-199) is the notification list's to carry.",
+      "conflicts": []
     }
   ],
   "conflicts": [
     {
-      "id": "c-journey-flow-001",
+      "id": "c-202",
       "about": "Whether the reason for import is asked before or after commodity details in the opening run",
       "positions": [
         {
@@ -1228,14 +1195,22 @@
           "source": "repo:frontend",
           "says": "The documented opening run order puts consignment details before reason for import.",
           "claim": "repo-frontend-p2-126"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype decides look and feel, which includes question order.",
+          "claim": "ruling-sam-2026-10-09-p1-064"
         }
       ],
       "resolution": "precedence",
-      "outcome": "Design Release 2.1 outranks the real frontend and no DR1 judgement or real constraint covers the order: the reason for import moves before commodity details. The frontend's run order (and its documentation) is set aside.",
-      "overruled": ["repo-frontend-p1-110", "repo-frontend-p2-126"]
+      "outcome": "Design Release 2.1 outranks the real frontend on question order, which Sam's 9 October ruling counts as look and feel the prototype decides, and no DR1 judgement or real constraint covers it: the reason for import moves before commodity details. The frontend's run order (and its documentation) is set aside.",
+      "overruled": [
+        "repo-frontend-p1-110",
+        "repo-frontend-p2-126"
+      ]
     },
     {
-      "id": "c-journey-flow-002",
+      "id": "c-203",
       "about": "Whether the CPH number page is a step of the journey after roles and addresses",
       "positions": [
         {
@@ -1251,10 +1226,12 @@
       ],
       "resolution": "precedence",
       "outcome": "Design Release 2.1 outranks the real frontend and nothing overrides it: 'Save and continue' on roles and addresses goes to the contact address, and the CPH number is reached only from its row on roles and addresses.",
-      "overruled": ["repo-frontend-p1-117"]
+      "overruled": [
+        "repo-frontend-p1-117"
+      ]
     },
     {
-      "id": "c-journey-flow-003",
+      "id": "c-204",
       "about": "Whether a page opened from the overview chains on through its section or returns to the overview",
       "positions": [
         {
@@ -1271,14 +1248,22 @@
           "source": "repo:frontend",
           "says": "Once the task list has been shown, saving moves through its own section and returns to the task list at the section's end.",
           "claim": "repo-frontend-p2-129"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "A page opened from its overview task returns to the overview on Save and continue (req-1615).",
+          "claim": "ruling-sam-2026-10-09-p1-196"
         }
       ],
       "resolution": "precedence",
-      "outcome": "Design Release 2.1 outranks the real frontend and no DR1 judgement or real constraint covers section chaining: a page opened from the overview returns to the overview on save. Every chained-to page has its own overview row, so nothing becomes unreachable.",
-      "overruled": ["repo-frontend-p1-178", "repo-frontend-p2-129"]
+      "outcome": "Design Release 2.1 and Sam's 9 October ruling both outrank the real frontend, and no DR1 judgement or real constraint covers section chaining: a page opened from the overview returns to the overview on save, and the criterion that roles and addresses opened from the overview runs on to the CPH number is removed. Every chained-to page has its own overview row, so nothing becomes unreachable.",
+      "overruled": [
+        "repo-frontend-p1-178",
+        "repo-frontend-p2-129"
+      ]
     },
     {
-      "id": "c-journey-flow-004",
+      "id": "c-205",
       "about": "Where the opening run ends when the notification is still incomplete",
       "positions": [
         {
@@ -1299,10 +1284,13 @@
       ],
       "resolution": "precedence",
       "outcome": "Design Release 2.1 outranks the real frontend: the run always ends on the review page, which already names what is outstanding. The frontend's divert-to-overview rule is set aside; its rule that a run with no open later step ends on the overview (repo-frontend-p1-113) still holds and is not overruled.",
-      "overruled": ["repo-frontend-p1-112", "repo-frontend-p2-130"]
+      "overruled": [
+        "repo-frontend-p1-112",
+        "repo-frontend-p2-130"
+      ]
     },
     {
-      "id": "c-journey-flow-005",
+      "id": "c-206",
       "about": "Where a journey page's Back link goes",
       "positions": [
         {
@@ -1317,11 +1305,11 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "Design Release 2.1 outranks today's behaviour: Back follows the page's context and otherwise the previous journey page. trace-animals-fit-p1-083 is not overruled because it also records that change-mode pages keep their return controls, which stays true.",
+      "outcome": "Design Release 2.1 outranks today's behaviour: Back follows the page's context and otherwise the previous journey page, with the context taken from the service's own state rather than URL markers (c-journey-flow-003). trace-animals-fit-p1-083 is not overruled because it also records that change-mode pages keep their return controls, which stays true.",
       "overruled": []
     },
     {
-      "id": "c-journey-flow-006",
+      "id": "c-207",
       "about": "Whether the origin of the import page offers 'Save and return to overview' and 'Cancel and return to overview'",
       "positions": [
         {
@@ -1352,10 +1340,13 @@
       ],
       "resolution": "precedence",
       "outcome": "DR1 already judged this difference (inc-161 rule (b), inc-013 rejected, which named the origin page among those the design gave one button), and the ruling makes a DR1 judgement on the same difference outrank the prototype: the origin page keeps all three controls.",
-      "overruled": ["prototype-dr2-1-specs-p7-144", "prototype-dr2-1-specs-p7-145"]
+      "overruled": [
+        "prototype-dr2-1-specs-p7-144",
+        "prototype-dr2-1-specs-p7-145"
+      ]
     },
     {
-      "id": "c-journey-flow-007",
+      "id": "c-208",
       "about": "Whether the party pickers, CPH number page and permanent address page offer return-to-hub controls",
       "positions": [
         {
@@ -1380,11 +1371,11 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "DR1 rule (b) judged exactly this difference for the CPH number page and the party pickers, and the permanent address page is likewise reached from another page: they end with the primary button alone. trace-prototype-dr2-1-p13-027 is not overruled because it also backs the contact address page's wording (c-journey-flow-008), which is overview-linked and keeps its controls.",
+      "outcome": "DR1 rule (b) judged exactly this difference for the CPH number page and the party pickers, and the permanent address page is likewise reached from another page: they end with the primary button alone. trace-prototype-dr2-1-p13-027 is not overruled because it also backs the contact address page's wording (c-209), which is overview-linked and keeps its controls.",
       "overruled": []
     },
     {
-      "id": "c-journey-flow-008",
+      "id": "c-209",
       "about": "Whether the contact address page's return controls say 'hub' or 'overview'",
       "positions": [
         {
@@ -1405,11 +1396,13 @@
       ],
       "resolution": "precedence",
       "outcome": "Design Release 2.1 outranks the frontend's own copy rule, and that rule is not a DR1 judgement departing from the prototype (DR1's inc-006 renamed hub to overview because DR1's design said overview). The contact address page reads 'Save and return to hub' and 'Cancel and return to hub'.",
-      "overruled": ["repo-frontend-p1-076"]
+      "overruled": [
+        "repo-frontend-p1-076"
+      ]
     },
     {
-      "id": "c-journey-flow-009",
-      "about": "Which controls the party pickers and CPH number page show while a notification is being amended",
+      "id": "c-210",
+      "about": "Which controls the party pickers, the CPH number page and the permanent address page show while a notification is being amended",
       "positions": [
         {
           "source": "prototype:dr2-1-source",
@@ -1422,13 +1415,12 @@
           "claim": "document-dr1-parity-notes-p1-057"
         }
       ],
-      "resolution": "question",
-      "outcome": "DR1 rule (b) predates amend mode and judged only the return-to-overview controls, so it does not say whether these pages may carry Design Release 2.1's amend controls; neither source ranks the two readings for these pages.",
-      "question": "While a notification is being amended, should the party pickers and CPH number page show Design Release 2.1's 'Save and return' and 'Save and continue', or keep rule (b)'s single primary button?",
-      "default": "Overview-linked pages get Design Release 2.1's full amend ending; the party pickers and CPH number page show 'Save and return' (primary, to the review page) and 'Save and continue' (secondary) only, without the link-styled 'Save and return to overview', so rule (b)'s ban on return-to-overview controls on these pages holds while an amending trader can still get back to review."
+      "resolution": "precedence",
+      "outcome": "While a notification is being amended, overview-linked pages get Design Release 2.1's full amend ending; the party pickers, the CPH number page and the permanent address page show 'Save and return' (primary, to the review page) and 'Save and continue' (secondary) only, without the link-styled 'Save and return to overview'. DR1 rule (b) is a judgement on where return-to-overview controls go, and the prototype itself answers that both ways in amend (the contact address page drops the hub button, the CPH page keeps it), the same split DR1 already ruled on, so rule (b) keeps the hub control off these pages; the review and continue buttons exist only in amend, DR1 never judged them, so the prototype default adds them. Outside amend these pages keep rule (b)'s primary button alone. Each position holds in part, so no claim is set aside whole.",
+      "overruled": []
     },
     {
-      "id": "c-journey-flow-010",
+      "id": "c-211",
       "about": "Whether 'Save and return to overview' skips a page's checks",
       "positions": [
         {
@@ -1442,10 +1434,117 @@
           "claim": "ruling-sam-2026-10-07-p1-010"
         }
       ],
-      "resolution": "question",
-      "outcome": "Design Release 2.1 saves most pages on 'Save and return to overview' with no checks at all, which the real service cannot do as written because it stores no invalid value; read one way the hub save skips every check, read the other way it skips only the checks for missing answers.",
-      "question": "Should 'Save and return to overview' save a page whose answers fail their format rules, or only let missing answers through?",
-      "default": "On origin, what are you importing, main reason for import, identification, additional details, arrival details, transit countries, transporter, upload documents and roles and addresses, 'Save and return to overview' saves every answer given and returns to the overview even when a hard stop is unanswered, but an answer that fails its own format rule (such as an impossible date or a malformed region code) is refused with its error. Consignment details, the CPH number page and the contact address page check their answers before saving, as Design Release 2.1 does."
+      "resolution": "precedence",
+      "outcome": "On origin, what are you importing, main reason for import, identification, additional details, arrival details, transit countries, transporter, upload documents and roles and addresses, 'Save and return to overview' saves every answer given and returns to the overview even when a required answer is missing, as Design Release 2.1 does (the backend accepts any field missing or empty). An answer that fails its own format rule, such as an impossible date or a malformed region code, is refused with its error, because the real service cannot store a value that does not fit its field: a real persistence and validation constraint the prototype cannot express, which the ruling says overrides it. Consignment details, the CPH number page and the contact address page check their answers before saving, as Design Release 2.1 does.",
+      "overruled": [
+        "prototype-dr2-1-specs-p7-202"
+      ]
+    },
+    {
+      "id": "c-journey-flow-001",
+      "about": "Whether journey pages take Design Release 2.1's flat URL paths or keep the real service's paths",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "No increment changes an existing real URL path or code structure to match the prototype.",
+          "claim": "ruling-sam-2026-10-09-p1-072"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype's flat germinal paths and ?category= routing are not copied into the germinal set.",
+          "claim": "ruling-sam-2026-10-09-p1-012"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Journey pages sit at flat paths such as /reason-for-import, /arrival-details, /upload-documents, /roles-and-addresses, /notification-hub and /review-notification.",
+          "claim": "prototype-dr2-1-source-p1-011"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "Under the set's mount, a notification's overview is at /notifications/{journeyId} and each page at /notifications/{journeyId}/{slug}.",
+          "claim": "repo-frontend-p1-085"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Sam's 9 October ruling outranks the prototype and says the prototype never decides URL paths: every set keeps the real path shape (/<set>/notifications/{reference}/{slug}) and today's slugs, and the germinal set takes the same shape under /germinal-products. The prototype's flat journey paths are set aside.",
+      "overruled": [
+        "prototype-dr2-1-source-p1-011"
+      ]
+    },
+    {
+      "id": "c-journey-flow-002",
+      "about": "Whether the journey buttons submit the prototype's action field (continue, hub, review, add-another) or the real service's own fields",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The amend controls keep their content with no action=review|continue|hub field; exit=hub and ?change=1 stay.",
+          "claim": "ruling-sam-2026-10-09-p1-089"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "'Save and continue' sends action=continue and 'Save and return to overview' sends action=hub.",
+          "claim": "prototype-dr2-1-specs-p1-104"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "Journey pages submit through buttons named action whose values are continue, hub and add-another.",
+          "claim": "prototype-dr2-1-specs-p2-005"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "Journey buttons are named action, with continue, hub, add-another or save:<species> as the value.",
+          "claim": "prototype-dr2-1-specs-p4-034"
+        },
+        {
+          "source": "trace:animals-fit",
+          "says": "The secondary 'Save and return to overview' button submits exit=hub.",
+          "claim": "trace-animals-fit-p1-050"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Sam's 9 October ruling outranks the prototype and makes form field names architecture the prototype does not decide: the buttons keep the real service's fields (exit=hub, ?change=1) while their wording, order and destinations follow Design Release 2.1. The prototype's action field naming is set aside; prototype-dr2-1-source-p1-068 is not overruled because it also records that hub and review are soft saves that leave the linear flow, which stays true.",
+      "overruled": [
+        "prototype-dr2-1-specs-p1-104",
+        "prototype-dr2-1-specs-p2-005",
+        "prototype-dr2-1-specs-p4-034"
+      ]
+    },
+    {
+      "id": "c-journey-flow-003",
+      "about": "Whether the service marks a page as reached from the overview or from the review page with from=hub and from=review URL markers",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "No ?from=hub marker is added; only the live flow's fallback changes so overview-opened pages return to the overview.",
+          "claim": "ruling-sam-2026-10-09-p1-198"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "?change=1 stays as the review page's change context.",
+          "claim": "ruling-sam-2026-10-09-p1-089"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A page is treated as reached from the overview when its query or form carries from=hub.",
+          "claim": "prototype-dr2-1-source-p1-047"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A page is treated as reached from the review page when its query or form carries from=review.",
+          "claim": "prototype-dr2-1-source-p1-048"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "A page opened with ?change=1 keeps that flag on its own links, and its save returns to the review page.",
+          "claim": "repo-frontend-p1-077"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Sam's 9 October ruling outranks the prototype: the overview and review contexts are told apart by the real service's own state, the opening run and ?change=1, and no from=hub or from=review marker is added. The behaviour the prototype hangs on those markers (return to the overview, return to review, Back to the overview) is still built, through prototype-dr2-1-source-p1-071 and p1-052, which are not overruled.",
+      "overruled": [
+        "prototype-dr2-1-source-p1-047",
+        "prototype-dr2-1-source-p1-048"
+      ]
     }
   ]
 }

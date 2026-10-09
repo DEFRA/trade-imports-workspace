@@ -2,26 +2,9 @@
   "area": "party-address-add-and-edit",
   "requirements": [
     {
-      "id": "req-party-address-add-and-edit-001",
-      "statement": "Each of the five role pickers (place of origin, consignor or exporter, consignee, importer, place of destination) offers an 'Add a new address' link that starts adding an address for that role.",
-      "why": "A trader whose address is not yet saved must be able to add it without abandoning the notification.",
-      "claims": [
-        "trace-prototype-dr2-1-p7-001",
-        "prototype-dr2-1-specs-p3-057",
-        "repo-frontend-p9-133",
-        "trace-e2e-p8-091",
-        "trace-e2e-p9-013",
-        "repo-tests-p5-027"
-      ],
-      "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "Every role picker already offers 'Add a new address' (trace-e2e-p9-013, trace-e2e-p8-091, repo-frontend-p9-133). Where the link leads is c-party-address-add-and-edit-001.",
-      "conflicts": ["c-party-address-add-and-edit-001"]
-    },
-    {
-      "id": "req-party-address-add-and-edit-002",
-      "statement": "The add-address page is served inside the live-animals journey at /<role path>/add-address, and saves the new address into the organisation's address book without the trader leaving the animals service.",
-      "why": "Design Release 2.1 keeps the trader inside the notification while adding an address; today they cross to the INS frontend and sign in there.",
+      "id": "req-629",
+      "statement": "Out of scope: an add-address page served inside the live-animals journey at /<role path>/add-address that saves into the address book without the trader leaving the animals service.",
+      "why": "Where the add page is served and which service writes the address book is cross-service behaviour the single-app prototype cannot express, so the INS frontend stays the address book's only writer, reached through the journey handshake; the animals frontend serves no /<role>/add-address page and its address-book service stays read-only (c-106).",
       "claims": [
         "prototype-dr2-1-source-p8-077",
         "prototype-dr2-1-source-p8-078",
@@ -30,17 +13,21 @@
         "repo-frontend-p9-133",
         "trace-e2e-p9-080",
         "trace-e2e-p9-081",
-        "trace-e2e-p9-055-m1"
+        "trace-e2e-p9-055-m1",
+        "ruling-sam-2026-10-09-p1-066",
+        "ruling-sam-2026-10-09-p1-126"
       ],
-      "status": "question",
+      "status": "out-of-scope",
       "delta": "change",
       "deltaNote": "Today 'Add a new address' links out to the INS frontend's /address-book/add (repo-frontend-p9-133, trace-e2e-p9-013), whose page sits in the INS layout (trace-e2e-p9-055-m1); the journey's own create page was retired and answers 404 (trace-e2e-p9-080).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-003",
+      "id": "req-630",
       "statement": "The 'Add a new address' link to the INS address book carries journey-type 'gbn-ag', the notification reference, the role's fulfilment id (its obligation id) and a fresh handshake token, which the INS add page keeps as hidden fields and sends back unchanged; a role with no fulfilment mapping, or the frontend in stub mode, shows no add link.",
-      "why": "The handshake is how the INS address book knows which notification and role to return the new address to.",
+      "why": "The handshake is how the INS address book knows which notification and role to return the new address to; it stays because the INS frontend remains the address book's only writer (c-106).",
       "claims": [
         "repo-frontend-p9-134",
         "repo-frontend-p9-135",
@@ -54,13 +41,15 @@
         "trace-e2e-p9-079",
         "repo-frontend-p9-194"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Built today in ins-handshake.js (repo-frontend-p9-134, repo-frontend-p9-136) and seen end to end (trace-e2e-p9-014, trace-e2e-p9-015, trace-e2e-p9-070-m1). Kept under c-party-address-add-and-edit-001's default; retired if the add page moves into the journey.",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "deltaNote": "Built today in ins-handshake.js (repo-frontend-p9-134, repo-frontend-p9-136) and seen end to end (trace-e2e-p9-014, trace-e2e-p9-015, trace-e2e-p9-070-m1).",
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-004",
+      "id": "req-631",
       "statement": "The journey's address-return route accepts a return only when its fulfilment id names a role ('Unknown fulfilment' otherwise) and its handshake token matches the single-use token remembered in a cookie for that role ('Invalid handshake' otherwise, including a missing token), and looks the returned address id up in the signed-in organisation's own address book.",
       "why": "Stops a forged or replayed return from writing another organisation's address, or any address, into a notification.",
       "claims": [
@@ -75,13 +64,15 @@
         "trace-e2e-p9-070",
         "trace-e2e-p9-078"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Built today in address-return/controller.js (repo-frontend-p9-140, repo-frontend-p9-142, repo-frontend-p9-144). Kept under c-party-address-add-and-edit-001's default.",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "deltaNote": "Built today in address-return/controller.js (repo-frontend-p9-140, repo-frontend-p9-142, repo-frontend-p9-144).",
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-005",
+      "id": "req-632",
       "statement": "When a return cannot be completed, the trader goes back to the role's picker: an address that is not found or is deleted shows 'The address could not be found in your address book. Select another address or try adding it again.', and an address book that cannot be reached, or a save that fails, shows 'The address book could not be reached. Your answers on this page have been saved. Try again in a few minutes.'",
       "why": "A failed return must leave the trader somewhere they can carry on, with a reason they can act on.",
       "claims": [
@@ -94,28 +85,32 @@
         "repo-frontend-p9-145-m1",
         "repo-frontend-p9-196"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Built today (repo-frontend-p9-145, repo-frontend-p9-146, repo-frontend-p9-150, repo-frontend-p9-151). Kept under c-party-address-add-and-edit-001's default.",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "deltaNote": "Built today (repo-frontend-p9-145, repo-frontend-p9-146, repo-frontend-p9-150, repo-frontend-p9-151).",
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-006",
+      "id": "req-633",
       "statement": "A trader with no INS session who follows 'Add a new address' signs in through Defra ID first and then lands on the INS add page with the handshake intact.",
-      "why": "The INS frontend owns its own session; crossing to it must not lose which notification and role the address is for.",
+      "why": "The INS frontend owns its own session and stays the address book's only writer (c-106); crossing to it must not lose which notification and role the address is for.",
       "claims": [
         "trace-e2e-p9-052",
         "trace-e2e-p9-053",
         "trace-e2e-p9-053-m1",
         "trace-e2e-p9-054"
       ],
-      "status": "question",
+      "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Seen today end to end (trace-e2e-p9-052). Needed only while the add page stays in the INS frontend (c-party-address-add-and-edit-001).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "deltaNote": "Seen today end to end (trace-e2e-p9-052).",
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-007",
+      "id": "req-634",
       "statement": "The add-address page reached from the journey is headed 'Add address and contact details', with the browser title 'Add address and contact details - Import notification service - GOV.UK'.",
       "why": "Design Release 2.1's heading says the page collects contact details as well as the address.",
       "claims": [
@@ -129,10 +124,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the INS add page reached from the journey is headed 'Add address details' (trace-e2e-p9-055, repo-tests-p5-027).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-008",
+      "id": "req-635",
       "statement": "The add-address page shows the caption 'Add new address' above its heading.",
       "why": "Design Release 2.1 captions the page.",
       "claims": [
@@ -144,10 +141,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today's INS add page has no caption (trace-e2e-p9-055).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-009",
+      "id": "req-636",
       "statement": "The add-address page shows the notification's status block, a 'Draft' tag and the notification reference, as the other journey pages do.",
       "why": "Design Release 2.1 keeps the trader oriented in their notification while they add an address.",
       "claims": [
@@ -158,10 +157,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today's INS add page sits in the INS layout with Address book marked in its navigation, and no notification status (trace-e2e-p9-055-m1).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-010",
+      "id": "req-637",
       "statement": "The add-address page has a Back link to the picker of the role the address is being added for.",
       "why": "Design Release 2.1 gives the trader a way back to the page they came from.",
       "claims": [
@@ -173,10 +174,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today's INS add page reached from the journey has no back link (trace-e2e-p9-055).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-011",
+      "id": "req-638",
       "statement": "The add-address page's first section heading is 'Address'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -187,10 +190,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the heading is 'Enter address details' (trace-e2e-p9-057).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-012",
+      "id": "req-639",
       "statement": "The add-address page's second section heading is 'Contact details'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -201,10 +206,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the heading is 'Enter contact details' (trace-e2e-p9-057).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-013",
+      "id": "req-640",
       "statement": "The add-address page's name field is labelled 'Name or organisation'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -216,10 +223,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the label is 'Name or organisation name' (trace-e2e-p9-058).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-014",
+      "id": "req-641",
       "statement": "The add-address page keeps the labels 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code' and 'Country' (a select), and address line 2 may be left blank.",
       "why": "These labels already match Design Release 2.1.",
       "claims": [
@@ -238,10 +247,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today's INS add page already carries these labels (trace-e2e-p9-059, trace-e2e-p9-060, trace-e2e-p9-061, trace-e2e-p9-063, trace-e2e-p9-064).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-015",
+      "id": "req-642",
       "statement": "The add-address page has no County field.",
       "why": "Design Release 2.1's add form asks for no county.",
       "claims": [
@@ -252,39 +263,54 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's INS add page offers 'County (optional)' (trace-e2e-p9-062). The address book record keeps its optional county, left empty.",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-016",
+      "id": "req-643",
       "statement": "On the place of origin and consignor add-address pages the Country select's first option reads 'Select one'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
         "prototype-dr2-1-source-p8-084",
-        "trace-prototype-dr2-1-p7-028",
         "trace-e2e-p9-064"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the first option reads 'Select a country' (trace-e2e-p9-064).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-017",
-      "statement": "The manual-entry Country select offers Design Release 2.1's 42 countries: the EU member states, their outermost regions (such as Azores, Canary Islands, Ceuta), the Crown Dependencies, Republic of Ireland and United Kingdom.",
-      "why": "Design Release 2.1 lets an origin or consignor address sit in a region or territory the real list does not hold.",
+      "id": "req-644",
+      "statement": "The manual-entry Country select on the add-address page offers the countries reference-data serves from MDM (its unfiltered country list), never a list typed or edited in code; where that content differs from Design Release 2.1's 42 entries (such as the EU outermost regions and the Crown Dependencies), the difference is MDM's content to change, and the page's tests take country names and counts from the captured reference-data fixture, not a hand-typed list.",
+      "why": "No reference list waits on MDM integration: countries already come from real MDM through trade-imports-reference-data (the stub locally and in CDP dev, real MDM in CDP test), and who owns list content is still DR1's MDM judgement (ruling 2026-10-09, c-107).",
       "claims": [
-        "trace-prototype-dr2-1-p7-028",
+        "ruling-sam-2026-10-09-p1-129",
+        "ruling-sam-2026-10-09-p1-130",
+        "ruling-sam-2026-10-09-p1-131",
+        "ruling-sam-2026-10-09-p1-132",
+        "ruling-sam-2026-10-09-p1-140",
+        "ruling-sam-2026-10-09-p1-141",
+        "ruling-sam-2026-10-09-p1-143",
+        "ruling-sam-2026-10-09-p1-144",
+        "ruling-sam-2026-10-09-p1-149",
+        "ruling-sam-2026-10-09-p1-162",
+        "document-dr1-parity-notes-p1-037",
         "prototype-dr2-1-specs-p3-061",
         "trace-e2e-p9-064"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the list holds 32 sovereign states, United Kingdom first then EU and EFTA countries (trace-e2e-p9-064).",
-      "conflicts": ["c-party-address-add-and-edit-002", "c-party-address-add-and-edit-001"],
-      "blockedBy": "The MDM master reference-data integration supplies the country list (DR1 ruling, Rhys 2026-09-07); the hard-coded frontend list is not edited before then."
+      "deltaNote": "Today the INS add page's select shows the 32 sovereign states the local stub serves (trace-e2e-p9-064); once the stub tidy-up row regenerates the fixture from MDM the unfiltered list holds 249 locally (ruling-sam-2026-10-09-p1-162), so the add page's tests move to the recaptured names and counts. No list is edited in code, and the row depends on the stub tidy-up (ruling-sam-2026-10-09-p1-149).",
+      "conflicts": [
+        "c-107",
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-018",
+      "id": "req-645",
       "statement": "Under 'Contact details' the add-address page asks for 'Email address' then 'Phone number', with the phone hint 'For international numbers include the country code'.",
       "why": "These fields and their order already match Design Release 2.1.",
       "claims": [
@@ -298,11 +324,13 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today's INS add page asks for Email address then Phone number with the same hint (trace-e2e-p9-065, trace-e2e-p9-066).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-019",
-      "statement": "Place of origin and consignor addresses are entered by hand for any country, with every field shown at once; consignee, importer and place of destination addresses are UK addresses, whose Country select holds only 'United Kingdom', preselected, and whose saved country is always United Kingdom.",
+      "id": "req-646",
+      "statement": "Place of origin and consignor addresses are entered by hand for any country, with every field shown at once; consignee, importer and place of destination addresses are UK addresses, whose Country select holds only 'United Kingdom', preselected, and whose saved country is always United Kingdom, both on the manual entry built now and on the search pages once address search is built.",
       "why": "Design Release 2.1 splits the roles: origin-side parties can be anywhere, destination-side parties are in Great Britain.",
       "claims": [
         "prototype-dr2-1-source-p8-081",
@@ -315,31 +343,43 @@
         "prototype-dr2-1-specs-p3-078",
         "prototype-dr2-1-specs-p3-079",
         "prototype-dr2-1-specs-p3-080",
-        "trace-e2e-p9-064"
+        "trace-e2e-p9-064",
+        "ruling-sam-2026-10-09-p1-064",
+        "ruling-sam-2026-10-09-p1-182"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the INS add page is the same for every role, with the full 32-country select (trace-e2e-p9-064).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-020",
-      "statement": "The consignee, importer and place of destination add-address pages start with a UK address search labelled 'Search for an address', placeholder 'Start typing...', with browser autocomplete turned off.",
+      "id": "req-647",
+      "statement": "Every add-address page that searches (the consignee, importer and place of destination pages reached from the journey, and the address book's 'Destination, Consignee or Importer' and 'Branch' add-details step) starts with a UK address search: a text field labelled 'Search for an address', placeholder 'Start typing...', browser autocomplete turned off, and a search icon button whose accessible name is 'Search'.",
       "why": "Design Release 2.1 finds UK addresses by search rather than typing them in.",
       "claims": [
         "prototype-dr2-1-source-p8-086",
+        "prototype-dr2-1-specs-p3-069",
         "trace-prototype-dr2-1-p7-042",
         "trace-prototype-dr2-1-p7-043",
-        "prototype-dr2-1-specs-p3-069"
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "No address search exists today: the INS add page is typed in by hand (trace-e2e-p9-058).",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-021",
+      "id": "req-648",
       "statement": "Typing in the address search lists matching UK addresses as the trader types, under 'Address search results', each a button showing the organisation name and the full one-line address with the typed text in bold; Northern Ireland addresses are not offered.",
       "why": "Design Release 2.1's search behaviour.",
       "claims": [
@@ -348,27 +388,45 @@
         "trace-prototype-dr2-1-p7-046",
         "trace-prototype-dr2-1-p7-053",
         "trace-prototype-dr2-1-p7-063",
-        "prototype-dr2-1-specs-p3-073"
+        "prototype-dr2-1-specs-p3-073",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-022",
+      "id": "req-649",
       "statement": "The address search announces its result count to screen readers through a polite live region, such as '1 result available'.",
       "why": "Screen reader users must hear that results have appeared.",
-      "claims": ["trace-prototype-dr2-1-p7-047"],
+      "claims": [
+        "trace-prototype-dr2-1-p7-047",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
+      ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-023",
+      "id": "req-650",
       "statement": "Picking a search result hides the search box, reveals the address form and fills name, address line 1, address line 2, town or city and postcode with country United Kingdom, all still editable; email address and phone number stay empty for the trader to complete; any earlier error messages stay until the next submit.",
       "why": "Design Release 2.1's pick behaviour.",
       "claims": [
@@ -378,85 +436,129 @@
         "trace-prototype-dr2-1-p7-050",
         "trace-prototype-dr2-1-p7-048-m1",
         "trace-prototype-dr2-1-p7-052",
-        "prototype-dr2-1-specs-p3-074"
+        "prototype-dr2-1-specs-p3-074",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-024",
+      "id": "req-651",
       "statement": "Picking a search result never drops part of the address the lookup returned: a locality (such as Kirkby in 'Depot road, Kirkby, Liverpool') is kept in the filled form.",
       "why": "The prototype loses the locality because its form has no field for it; a saved address missing part of itself is a real data constraint the prototype cannot express.",
-      "claims": ["trace-prototype-dr2-1-p7-048-m2"],
+      "claims": [
+        "trace-prototype-dr2-1-p7-048-m2",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
+      ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": [],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-025",
-      "statement": "Below the address search, an 'Enter address manually' control reveals the address and contact fields without a search.",
+      "id": "req-652",
+      "statement": "Below the address search, an 'Enter address manually' link-styled button reveals the address and contact fields without picking a result.",
       "why": "A trader whose address the search does not find must still be able to add it.",
       "claims": [
         "prototype-dr2-1-source-p8-088",
-        "trace-prototype-dr2-1-p7-045"
+        "trace-prototype-dr2-1-p7-045",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-026",
+      "id": "req-653",
       "statement": "On the search pages the address fields and the 'What else should this address be used for?' checkboxes stay hidden until the trader picks a result or chooses to enter the address manually, and are shown again after a failed submit when anything was entered or picked.",
       "why": "Design Release 2.1 reveals the form only once there is an address to complete.",
       "claims": [
         "prototype-dr2-1-source-p8-091",
         "trace-prototype-dr2-1-p7-042-m1",
-        "prototype-dr2-1-specs-p3-070"
+        "prototype-dr2-1-specs-p3-070",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-027",
+      "id": "req-654",
       "statement": "Submitting a search page before picking or entering anything shows the six field errors in order ('Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'), with no country error and no error of the search's own, and reveals the fields so each error summary link reaches a visible field.",
       "why": "Design Release 2.1's messages; the prototype's summary links point at hidden fields, which the GOV.UK error summary pattern does not allow.",
       "claims": [
         "prototype-dr2-1-source-p8-099",
         "trace-prototype-dr2-1-p7-051",
-        "prototype-dr2-1-specs-p3-071"
+        "prototype-dr2-1-specs-p3-071",
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-179",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-181"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-004", "c-party-address-add-and-edit-001"],
-      "blockedBy": "Access to a real UK address lookup service (such as the Ordnance Survey Places API) for the service: the prototype filters a generated fixture list and no lookup service exists in the target repos."
+      "conflicts": [
+        "c-106",
+        "c-109",
+        "c-178",
+        "c-217"
+      ],
+      "blockedBy": "The INS backend's address lookup becomes a real feature: today only the EUDPA-390 spike exists, gated to dev and local on a standalone page and not wired in. Once it lands the address search area is re-distilled (ruling 2026-10-09)."
     },
     {
-      "id": "req-party-address-add-and-edit-028",
+      "id": "req-655",
       "statement": "The add-address page asks 'What else should this address be used for?' as a checkbox fieldset.",
       "why": "Design Release 2.1 lets one new address be saved for more roles than the one it was added from.",
       "claims": [
         "prototype-dr2-1-source-p8-092",
         "trace-prototype-dr2-1-p7-015",
-        "prototype-dr2-1-specs-p3-062"
+        "prototype-dr2-1-specs-p3-062",
+        "ruling-sam-2026-10-09-p1-115"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today's INS add page has no such question (trace-e2e-p9-058 to trace-e2e-p9-067).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-029",
+      "id": "req-656",
       "statement": "The uses question's hint reads 'This address is being added as a <Role> address. Select any other roles or addresses this address should be used for.', naming the role's own label (Place of origin, Consignor, Consignee, Importer or Place of destination) and using 'an' before Importer.",
       "why": "Design Release 2.1 copy; it tells the trader the role they came from is already implied.",
       "claims": [
@@ -471,10 +573,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-030",
+      "id": "req-657",
       "statement": "The uses checkboxes offer only the other roles on the same side, each labelled with the role name alone: place of origin offers 'Consignor'; consignor offers 'Place of origin'; consignee offers 'Importer' and 'Place of destination'; importer offers 'Consignee' and 'Place of destination'; place of destination offers 'Consignee' and 'Importer'.",
       "why": "Design Release 2.1 never lets an origin-side address be marked for a destination-side role, or the other way round.",
       "claims": [
@@ -494,10 +598,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-031",
+      "id": "req-658",
       "statement": "No uses checkbox is preselected, ticking none raises no error, a value not offered for the role is discarded, and the ticked uses are kept when the page is shown again with errors.",
       "why": "The role the trader came from is implied; the extra uses are optional.",
       "claims": [
@@ -509,26 +615,32 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-032",
-      "statement": "An address added from the journey is saved in the address book carrying the role it was added for plus every use ticked, so the address book record holds its roles.",
-      "why": "Design Release 2.1 saves the address with its types; today's record has no field to hold them, so the address book's persistence changes.",
+      "id": "req-659",
+      "statement": "An address added from the journey is saved in the address book carrying the role it was added for plus every use ticked, so the address book record holds its roles, in a field shape the address book service designs.",
+      "why": "Design Release 2.1 saves the address with its types, and ruling 2026-10-09 keeps address uses and roles because a kept question must persist and DR1 asked for role-filtered pickers; today's record has no field to hold them, so the address book's persistence changes.",
       "claims": [
         "prototype-dr2-1-source-p8-110",
         "prototype-dr2-1-source-p8-114",
         "trace-e2e-p8-012",
         "trace-prototype-dr2-1-p7-061",
-        "prototype-dr2-1-specs-p3-113"
+        "prototype-dr2-1-specs-p3-113",
+        "ruling-sam-2026-10-09-p1-115",
+        "ruling-sam-2026-10-09-p1-116"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today an address book record holds id, name, address fields, countryCode, phone, email, organisationId, deleted and timestamps, with no role or type (trace-e2e-p8-012).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-033",
+      "id": "req-660",
       "statement": "On the add-address page a blank name shows 'Enter a name or organisation name', linked to the name field.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -542,10 +654,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's address book rules, which the journey copies, say 'Enter a name' (repo-frontend-p9-105, repo-frontend-p9-106); the INS add page's messages were never driven (trace-e2e-p9-069).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-034",
+      "id": "req-661",
       "statement": "On the add-address page a blank address line 1 shows 'Enter address line 1'.",
       "why": "Design Release 2.1 copy, already used today.",
       "claims": [
@@ -556,10 +670,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "The address book rules already say 'Enter address line 1' (repo-frontend-p9-108).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-035",
+      "id": "req-662",
       "statement": "On the add-address page a blank town or city shows 'Enter a town or city'.",
       "why": "Design Release 2.1 copy, already used today.",
       "claims": [
@@ -570,10 +686,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "The address book rules already say 'Enter a town or city' (repo-frontend-p9-111).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-036",
+      "id": "req-663",
       "statement": "On the add-address page a blank postcode shows 'Enter a postcode or Zip code'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -584,10 +702,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's address book rules say 'Enter a postcode' (repo-frontend-p9-114).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-037",
+      "id": "req-664",
       "statement": "On the add-address page no country chosen shows 'Select a country'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -598,10 +718,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's address book rules say 'Enter a country' (repo-frontend-p9-116).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-038",
+      "id": "req-665",
       "statement": "On the add-address page email address is required, and a blank one shows 'Enter an email address'.",
       "why": "Design Release 2.1 copy, already used today.",
       "claims": [
@@ -612,10 +734,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "The address book rules already require email with 'Enter an email address' (repo-frontend-p9-119).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-039",
+      "id": "req-666",
       "statement": "On the add-address page phone number is required, and a blank one shows 'Enter a phone number'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -626,10 +750,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's address book rules say 'Enter a telephone number' (repo-frontend-p9-117).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-040",
+      "id": "req-667",
       "statement": "A failed submit of the add-address page shows an error summary titled 'There is a problem' listing every error in field order (seven on a blank manual page), each repeated inline with a visually hidden 'Error:' prefix and the field in its GOV.UK error style, and keeps everything the trader entered.",
       "why": "The GOV.UK error pattern, which Design Release 2.1 and today's address forms share.",
       "claims": [
@@ -642,10 +768,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today's address forms already use this pattern (trace-e2e-p8-054, repo-tests-p5-067).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-041",
+      "id": "req-668",
       "statement": "The add-address page keeps the address book's length and format checks beyond the required-field checks: name and address lines 255 characters or fewer, town or city and county 100, postcode 12, phone 20, email 254 and in a valid format, each with today's message (such as 'Postcode must be 12 characters or fewer' and 'Enter an email address in the correct format').",
       "why": "The address book stores and validates these limits; a real validation constraint the prototype cannot express overrides its required-only checks.",
       "claims": [
@@ -667,10 +795,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "The address book rules already carry these checks and messages (repo-frontend-p9-105, repo-frontend-p9-115, repo-frontend-p9-120; trace-e2e-p8-049, trace-e2e-p8-050).",
-      "conflicts": ["c-party-address-add-and-edit-003"]
+      "conflicts": [
+        "c-108"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-042",
+      "id": "req-669",
       "statement": "A refused add-address submit answers HTTP 400 and prefixes the browser title with 'Error: '.",
       "why": "The GOV.UK error pattern tells assistive technology the page holds errors; today's address forms already do it.",
       "claims": [
@@ -681,10 +811,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today's address forms answer 400 with an 'Error: ' title (repo-frontend-p9-124, trace-e2e-p8-047-m1, trace-animals-fit-p15-062).",
-      "conflicts": ["c-party-address-add-and-edit-004"]
+      "conflicts": [
+        "c-109"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-043",
+      "id": "req-670",
       "statement": "The add-address page's fields carry browser autocomplete hints: organization for the name, address-line1, address-line2, address-level2 for town or city, postal-code, email and tel.",
       "why": "GOV.UK and WCAG 1.3.5 ask personal-data inputs to identify their purpose; the prototype leaves them out.",
       "claims": [
@@ -701,10 +833,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today's INS add page sets autocomplete only on the email field (trace-e2e-p9-065); the journey's edit page already sets them all (repo-frontend-p9-103-m1).",
-      "conflicts": ["c-party-address-add-and-edit-004"]
+      "conflicts": [
+        "c-109"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-044",
+      "id": "req-671",
       "statement": "The add-address page's primary button reads 'Save and select'.",
       "why": "Design Release 2.1 copy.",
       "claims": [
@@ -716,10 +850,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the primary button reads 'Save and continue' (trace-e2e-p9-067).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-045",
+      "id": "req-672",
       "statement": "'Save and select' saves the new address to the address book, puts a copy of it on the notification for the role it was added for, and returns the trader to the Consignment addresses page, where the role shows the address with a 'Change' link.",
       "why": "Design Release 2.1 finishes the role in one step.",
       "claims": [
@@ -743,10 +879,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today saving returns the trader to the role's picker with the new address preselected ('Selected address: <name>'), and they press Save and continue to reach the hub (trace-e2e-p9-071, trace-e2e-p9-073, repo-tests-p5-029, repo-tests-p5-030).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-046",
+      "id": "req-673",
       "statement": "A secondary 'Save and return to address page' button saves the new address to the address book without selecting it, and returns the trader to the role's picker, where the new address is listed first.",
       "why": "Design Release 2.1 lets the trader add an address and still choose among the book.",
       "claims": [
@@ -763,10 +901,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today the only secondary action is 'Cancel and return to address page' (trace-e2e-p9-067).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-047",
+      "id": "req-674",
       "statement": "After either save, the page the trader lands on shows a success banner titled 'Success' reading '<Name> address added to your address book'.",
       "why": "Design Release 2.1 confirms the address went into the address book.",
       "claims": [
@@ -777,10 +917,12 @@
       "status": "adopted",
       "delta": "new",
       "deltaNote": "Today the picker shows only the 'Selected address: <name>' inset, no banner (trace-e2e-p9-072).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-048",
+      "id": "req-675",
       "statement": "The add-address page offers a 'Cancel and return to hub' link to the notification's hub, which saves nothing.",
       "why": "Design Release 2.1 copy and destination.",
       "claims": [
@@ -796,10 +938,12 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today a secondary 'Cancel and return to address page' button returns the trader to the role's picker, saving nothing (trace-e2e-p9-075, trace-e2e-p9-076, repo-tests-p5-031).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-049",
+      "id": "req-676",
       "statement": "An address added from the journey is saved into the signed-in organisation's address book with its email and phone, and is then listed in the address book and in every role picker.",
       "why": "Design Release 2.1 and today agree that a journey-added address joins the shared book.",
       "claims": [
@@ -810,10 +954,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today the INS save creates the record in the organisation's book and the picker count rises (trace-e2e-p8-011, trace-e2e-p9-074).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-050",
+      "id": "req-677",
       "statement": "The add-address page is built from GOV.UK Frontend components (input, select, checkboxes, hint, error summary, notification banner, buttons, back link, width classes); the address search is the one component outside the toolbox, because GOV.UK Frontend has none.",
       "why": "The prototype's app-* field and heading classes are its own implementation, not a difference a trader sees.",
       "claims": [
@@ -825,10 +971,12 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Today's INS add page uses only GOV.UK Frontend components (trace-e2e-p9-068).",
-      "conflicts": ["c-party-address-add-and-edit-001"]
+      "conflicts": [
+        "c-106"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-051",
+      "id": "req-678",
       "statement": "The add-address round trip (both saves and cancel) is proven end to end from every role picker, not only the consignor's.",
       "why": "Today only the consignor picker's round trip is proven, only on the compose stack, and no fit spec covers it.",
       "claims": [
@@ -843,7 +991,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-052",
+      "id": "req-679",
       "statement": "A picked or added address is copied onto the notification, not linked: renaming, moving or deleting the address book record later leaves the draft's copy as it was, with no error, and the picker then neither preselects nor offers a deleted record.",
       "why": "A notification must hold the address it was made with; Design Release 2.1 also stores a copy on the section.",
       "claims": [
@@ -868,8 +1016,8 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-053",
-      "statement": "The review page shows each copied address as a block, name in bold then each non-empty field on its own line, with the country by name (GB shows 'United Kingdom'), under the 'Roles and addresses' and 'Contact address for this consignment' cards.",
+      "id": "req-680",
+      "statement": "On the review page each consignment party and the contact address read back as the name followed by the address lines and country (GB shown as 'United Kingdom'), each on its own line, without the telephone number or email address.",
       "why": "The trader checks the copy the notification holds before submitting.",
       "claims": [
         "repo-tests-p5-040",
@@ -879,12 +1027,12 @@
         "trace-e2e-p8-018"
       ],
       "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "Proven today (repo-tests-p5-040, trace-e2e-p8-004, trace-e2e-p8-005).",
+      "delta": "change",
+      "deltaNote": "Today the review shows each copied address as a block, name in bold then each non-empty field on its own line, telephone and email included, under the 'Roles and addresses' and 'Contact address for this consignment' cards.",
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-054",
+      "id": "req-681",
       "statement": "Each role and the consignment contact has its own page for editing the copy the notification holds: place-of-origin/edit, consignors/edit, consignees/edit, importers/edit, destinations/edit and consignment/contact/edit, reached from the hub's and review page's 'Edit details' links.",
       "why": "The address book accepts records that break the notification's address rules, so a notification needs a way to correct its own copy without touching the book: a real validation and cross-service constraint the prototype cannot express.",
       "claims": [
@@ -897,11 +1045,11 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Built and proven today (repo-frontend-p9-091, repo-tests-p5-053, trace-e2e-p8-031). Design Release 2.1 shows no such page in this area; it is kept because rule-breaking copies need it (req-party-address-add-and-edit-067).",
+      "deltaNote": "Built and proven today (repo-frontend-p9-091, repo-tests-p5-053, trace-e2e-p8-031). Design Release 2.1 shows no such page in this area; it is kept because rule-breaking copies need it (req-694).",
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-055",
+      "id": "req-682",
       "statement": "The edit page is headed 'Edit address details', captioned with the role ('Consignor or exporter', 'Place of origin', 'Consignee', 'Importer', 'Place of destination' or 'Contact address for consignment'), titled 'Edit address details - Import notification service - GOV.UK', below the notification's journey strip.",
       "why": "Today's edit page copy.",
       "claims": [
@@ -921,7 +1069,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-056",
+      "id": "req-683",
       "statement": "The edit page explains 'Changes apply to this notification only. Your address book is not changed.'",
       "why": "The trader must know the edit does not reach the book.",
       "claims": [
@@ -936,8 +1084,8 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-057",
-      "statement": "The edit page asks for 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code' (width 10), 'Country' (a plain select, 'Select a country' then United Kingdom and 31 European countries by ISO code), 'Phone number' (hint 'For international numbers include the country code') and 'Email address'; only address line 2 and county are optional.",
+      "id": "req-684",
+      "statement": "The edit page asks for 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code' (width 10), 'Country' (a plain select, 'Select a country' then the address book's country list by ISO code, as reference-data serves it), 'Phone number' (hint 'For international numbers include the country code') and 'Email address'; only address line 2 and county are optional.",
       "why": "Today's edit page fields.",
       "claims": [
         "repo-frontend-p9-094",
@@ -963,7 +1111,9 @@
         "trace-e2e-p8-041-m1",
         "trace-e2e-p8-042",
         "trace-e2e-p8-043",
-        "trace-e2e-p8-044"
+        "trace-e2e-p8-044",
+        "ruling-sam-2026-10-09-p1-131",
+        "ruling-sam-2026-10-09-p1-132"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -971,7 +1121,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-058",
+      "id": "req-685",
       "statement": "The edit page's buttons are 'Save changes' and a secondary 'Cancel'.",
       "why": "Today's edit page copy.",
       "claims": [
@@ -985,7 +1135,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-059",
+      "id": "req-686",
       "statement": "The edit page opens pre-filled with every field of the notification's copy, the country select set to its code; before any address is picked for the role it sends the trader to the role's picker and saves nothing.",
       "why": "There is nothing to edit until a copy exists.",
       "claims": [
@@ -1002,7 +1152,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-060",
+      "id": "req-687",
       "statement": "The edit page applies the address book's rules and messages: 'Enter a name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode', 'Enter a country' (blank or unlisted), 'Enter a telephone number', 'Enter an email address', plus the length and email-format checks.",
       "why": "The copy must meet the same rules the address book sets, so a corrected copy is valid.",
       "claims": [
@@ -1031,7 +1181,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-061",
+      "id": "req-688",
       "statement": "A refused edit answers 400, re-renders 'Edit address details' with the error summary and an error on each field, keeps what was typed (the country select resets to 'Select a country' for an unlisted value) and saves nothing; browser validation is off.",
       "why": "A refused edit must leave the notification's copy as it was.",
       "claims": [
@@ -1050,7 +1200,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-062",
+      "id": "req-689",
       "statement": "A valid edit replaces only this notification's copy of the role: the address book record and any other notification holding a copy of it are unchanged, the picker no longer preselects the source record, and no banner is shown.",
       "why": "The copy belongs to the notification.",
       "claims": [
@@ -1078,7 +1228,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-063",
+      "id": "req-690",
       "statement": "Save, Cancel and Back on the edit page return to where the edit was started, named by its return parameter from a closed list (the addresses hub, the review page or the contact picker), falling back to the role's own return page and keeping change context; Cancel discards what was typed.",
       "why": "The trader comes back to the page they left.",
       "claims": [
@@ -1103,27 +1253,31 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-064",
+      "id": "req-691",
       "statement": "If saving an edit fails with a recoverable backend error, the edit page re-renders with status 500 and the recoverable-error message, and the held copy is unchanged.",
       "why": "A failed save must not lose or corrupt the copy.",
-      "claims": ["repo-frontend-p9-130"],
+      "claims": [
+        "repo-frontend-p9-130"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Built today (repo-frontend-p9-130).",
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-065",
+      "id": "req-692",
       "statement": "The edit page has Welsh copy ('Golygu manylion cyfeiriad', 'Cadw’r newidiadau', 'Canslo'), marked as a machine draft not yet reviewed by a translator.",
       "why": "Today's Welsh copy, which needs Welsh Language Standards sign-off before it ships to users.",
-      "claims": ["repo-frontend-p9-132"],
+      "claims": [
+        "repo-frontend-p9-132"
+      ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Present today (repo-frontend-p9-132).",
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-066",
+      "id": "req-693",
       "statement": "The edit page is built only from GOV.UK Frontend components and has no axe violations against WCAG 2.2 AA.",
       "why": "Accessibility.",
       "claims": [
@@ -1137,7 +1291,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-067",
+      "id": "req-694",
       "statement": "A copy is checked against the notification's address rules: the address book accepts a record the rules refuse (such as a country name instead of a listed code), the picker lets the trader pick it, and its edit form then opens with no country selected.",
       "why": "The address book only checks a country is present, so the notification must catch a copy that breaks its rules.",
       "claims": [
@@ -1154,8 +1308,8 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-068",
-      "statement": "A copy that breaks the rules is named on the review page in an error summary 'There is a problem' as 'Correct the address details for the <role>', linked to that role's edit page with return=notification-view, repeated inside the role's row above the copy, with the title prefixed 'Error: '.",
+      "id": "req-695",
+      "statement": "The review keeps today's validation errors that Design Release 2.1 cannot show: an answered party whose copied address breaks the address-book rules is named in a 'There is a problem' error summary ('Correct the address details for the <role>', 'Correct the contact address details for this consignment') linked to that party's edit page with return=notification-view and repeated inside the role's row, a stored answer that is no longer valid is named on its card, these come before the unfinished-card entries, and either stops Continue.",
       "why": "The trader must see which copy to correct and get straight to it.",
       "claims": [
         "repo-tests-p5-046",
@@ -1165,15 +1319,18 @@
         "trace-e2e-p8-015-m1",
         "trace-e2e-p8-016",
         "trace-e2e-p8-017",
-        "trace-e2e-p8-019"
+        "trace-e2e-p8-019",
+        "ruling-sam-2026-10-07-p1-010"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "Proven today (repo-tests-p5-046, repo-tests-p5-050, trace-e2e-p8-015, trace-e2e-p8-016).",
-      "conflicts": []
+      "conflicts": [
+        "c-139"
+      ]
     },
     {
-      "id": "req-party-address-add-and-edit-069",
+      "id": "req-696",
       "statement": "While a copy breaks the rules, Continue on the review page is refused (400, same error summary) and a direct declaration submit is refused and sent back to the review page.",
       "why": "A notification with an invalid party address must not be submitted.",
       "claims": [
@@ -1189,7 +1346,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-070",
+      "id": "req-697",
       "statement": "Correcting the copy on its edit page and saving returns to the review page with the error gone, after which the trader can continue to the Declaration and submit to 'Import notification submitted'.",
       "why": "Correction must unblock submission.",
       "claims": [
@@ -1206,7 +1363,7 @@
       "conflicts": []
     },
     {
-      "id": "req-party-address-add-and-edit-071",
+      "id": "req-698",
       "statement": "Once a notification is submitted its copied addresses are frozen: renaming, moving or deleting the address book record changes neither the submitted view (status 'Submitted', no Change or Edit details links) nor an amendment, neither shows an error, and cancelling the amendment restores the submitted copy.",
       "why": "A submitted notification is a record of what was declared.",
       "claims": [
@@ -1230,11 +1387,54 @@
       "delta": "exists",
       "deltaNote": "Proven today (repo-tests-p5-082, repo-tests-p5-085, trace-e2e-p8-081, trace-e2e-p8-084).",
       "conflicts": []
+    },
+    {
+      "id": "req-party-address-add-and-edit-001",
+      "statement": "Until address search is built, the consignee, importer and place of destination add-address pages open with the address and contact fields and the 'What else should this address be used for?' checkboxes shown at once, with no search box and no 'Enter address manually' control, so a trader can add any of those addresses by hand now.",
+      "why": "Ruling 2026-10-09 blocks address search on the address lookup becoming a real feature but builds manual address entry now; a destination-side page that hid its fields behind a search that does not exist would leave no way to add the address.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-178",
+        "ruling-sam-2026-10-09-p1-180",
+        "ruling-sam-2026-10-09-p1-182",
+        "prototype-dr2-1-source-p8-082",
+        "trace-prototype-dr2-1-p7-042",
+        "trace-e2e-p9-058",
+        "trace-e2e-p9-067"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Today's INS add page already shows every field at once for every role, with no search (trace-e2e-p9-058 to trace-e2e-p9-067); the uses checkboxes it gains are req-655.",
+      "conflicts": [
+        "c-106",
+        "c-217"
+      ]
+    },
+    {
+      "id": "req-party-address-add-and-edit-002",
+      "statement": "A trader adding an address from a germinal products notification's party picker crosses to the INS address book by the same handshake, and saving or cancelling there returns them to that germinal products notification in the germinal set, never to a live-animals one.",
+      "why": "Germinal products is a sibling set with its own journey, routes and cookies, and its notifications keep GBN-AG references; ruling 2026-10-09 puts the address-book return entry for the germinal set in the INS themes, proven in the ins Playwright project.",
+      "claims": [
+        "ruling-sam-2026-10-09-p1-006",
+        "ruling-sam-2026-10-09-p1-009",
+        "ruling-sam-2026-10-09-p1-014",
+        "ruling-sam-2026-10-09-p1-027",
+        "ruling-sam-2026-10-09-p1-061",
+        "repo-frontend-p9-134",
+        "repo-frontend-p9-139",
+        "trace-e2e-p9-014",
+        "trace-e2e-p9-070"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the handshake carries journey-type 'gbn-ag' and the INS address book returns to the live-animals journey's address-return route (trace-e2e-p9-014, trace-e2e-p9-070); no germinal set exists yet.",
+      "conflicts": [
+        "c-106"
+      ]
     }
   ],
   "conflicts": [
     {
-      "id": "c-party-address-add-and-edit-001",
+      "id": "c-106",
       "about": "Where the journey's add-address page lives: inside the animals journey (Design Release 2.1) or on the INS frontend's address book reached by today's handshake.",
       "positions": [
         {
@@ -1281,15 +1481,42 @@
           "source": "trace:e2e",
           "says": "The animals journey no longer serves its own create-address page; the old route answers 404.",
           "claim": "trace-e2e-p9-080"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Outside Design Release 2.1, a section's add-address page redirects to the address book's add page with the section named in from.",
+          "claim": "prototype-dr2-1-source-p8-078"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The INS address book returns the trader to the journey's address-return page with the fulfilment id, address id and handshake token.",
+          "claim": "repo-frontend-p9-139"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype never decides architecture: the split into sets, journeys and services, URL paths or code structure.",
+          "claim": "ruling-sam-2026-10-09-p1-066"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "c-106 is not architecture and is unchanged by the ruling.",
+          "claim": "ruling-sam-2026-10-09-p1-126"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "INS-side germinal work, including the address-book return entry, stays in the INS themes and is proven in the ins Playwright project.",
+          "claim": "ruling-sam-2026-10-09-p1-061"
         }
       ],
-      "resolution": "question",
-      "outcome": "Neither precedence nor a ruling settles it. The prototype wins by default, but it cannot express cross-service behaviour, and the real services deliberately made the INS frontend the address book's only writer and retired the journey's own create page; DR1 itself left this exact choice to a person. Its 2026-09-04 block was a deferral while the address work (now landed as the handshake) settled, not a judgement on the difference. Every copy, field, button and behaviour requirement for the add page is adopted either way; only where it is built, and whether the handshake survives, waits on this.",
-      "question": "Should the journey's add-address page be served by the animals frontend at /<role>/add-address and write to the address book itself, as Design Release 2.1 shows, or stay on the INS frontend's address book reached through today's handshake?",
-      "default": "Keep today's handshake and the INS frontend as the address book's only writer: 'Add a new address' still crosses to the INS frontend's /address-book/add, and when that page carries the journey handshake it shows Design Release 2.1's add-address page (caption, heading, status block, sections, fields, role split, other uses, buttons, messages, banner) and returns through the journey's /address-return to the page each button names ('Save and select' commits the copy and lands on the Consignment addresses page, 'Save and return to address page' lands on the picker unselected, 'Cancel and return to hub' saves nothing). The INS add page reached from the address book itself is unchanged by this. Same on the compose stack and in CDP; in the animals frontend's stub mode (the fit suite), where no INS frontend runs, the pickers keep showing no add link."
+      "resolution": "precedence",
+      "outcome": "Keep today's handshake and the INS frontend as the address book's only writer, because where the add page is served and which service writes the address book is cross-service behaviour the prototype cannot express (ruling 2026-10-07 claim 10), and ruling 2026-10-09 leaves this conflict unchanged (claim 126) and confirms the prototype never decides which service serves a page (claim 66). The page itself follows Design Release 2.1: 'Add a new address' still crosses to the INS frontend's /address-book/add, and when that page carries the journey handshake it shows Design Release 2.1's add-address page (caption, heading, status block, sections, fields, role split, other uses, buttons, messages, banner) and returns through the journey's address-return route to the page each button names ('Save and select' commits the copy and lands on the Consignment addresses page, 'Save and return to address page' lands on the picker unselected, 'Cancel and return to hub' saves nothing). In journey mode the INS add page skips 'Choose an address type' and opens the 'Add address and contact details' step for the type the role implies, with the role's use ticked; outside a journey the address book's own add follows Design Release 2.1 in full. A germinal products notification uses the same handshake, with its own INS return entry built in the INS themes (ruling 2026-10-09 claim 61). The search parts of the page wait on the address lookup becoming a real feature; until then the consignee, importer and place of destination pages open on manual entry. Same on the compose stack and in CDP; in the animals frontend's stub mode (the fit suite), where no INS frontend runs, the pickers keep showing no add link. The animals frontend serves no /<role>/add-address page and its address-book service stays read-only.",
+      "overruled": [
+        "prototype-dr2-1-source-p8-077",
+        "document-dr1-parity-notes-p1-025"
+      ]
     },
     {
-      "id": "c-party-address-add-and-edit-002",
+      "id": "c-107",
       "about": "The manual-entry Country list: Design Release 2.1's 42 countries, regions and territories against today's 32 sovereign states.",
       "positions": [
         {
@@ -1316,13 +1543,37 @@
           "source": "trace:e2e",
           "says": "Today's Country select offers 32 sovereign states.",
           "claim": "trace-e2e-p9-064"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "No reference list waits on MDM integration; every list is built now against reference-data as it is, and its content is what MDM serves.",
+          "claim": "ruling-sam-2026-10-09-p1-129"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Where a list's content differs from Design Release 2.1, that is MDM's content to change, never a reason to block a row or to edit a list in code.",
+          "claim": "ruling-sam-2026-10-09-p1-132"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The block is taken off the requirements behind c-107, which rested on DR1's MDM judgement.",
+          "claim": "ruling-sam-2026-10-09-p1-133"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The INS Country select is reference-data's unfiltered /countries list.",
+          "claim": "ruling-sam-2026-10-09-p1-143"
         }
       ],
       "resolution": "precedence",
-      "outcome": "DR1 judged this same difference (the real country list holding only sovereign states where the design offers regions and territories, union inc-081): list content waits for MDM. Following the ruling, the 42-entry list is adopted but blocked on the MDM integration rather than built into the hard-coded list now. Nothing is overruled: the prototype's list still says what the list should hold once MDM supplies it, and the 'Select one' placeholder (not list content) is built now."
+      "outcome": "The later ruling (2026-10-09) ranks first and withdraws the MDM block this conflict once applied: req-644 is built now, unblocked, against reference-data as it is. The select offers what MDM serves; Design Release 2.1's 42-entry list is not built, because a list whose content differs from the design is MDM's to change, never edited in code. DR1's MDM judgement still stands for who owns list content (ruling 2026-10-09 claim 134), so document-dr1-parity-notes-p1-037 is not overruled; only its deferral rule (p1-038) is. The 'Select one' placeholder is not list content and is built (req-643).",
+      "overruled": [
+        "document-dr1-parity-notes-p1-038",
+        "trace-prototype-dr2-1-p7-028"
+      ]
     },
     {
-      "id": "c-party-address-add-and-edit-003",
+      "id": "c-108",
       "about": "Whether the add-address page checks only that required fields are filled (Design Release 2.1) or also keeps the address book's length and email-format checks (today).",
       "positions": [
         {
@@ -1347,12 +1598,13 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The ruling ranks first and names validation as a real constraint the prototype cannot express: the address book stores and checks these limits, so the add page keeps today's length and email-format checks and messages alongside Design Release 2.1's required-field messages. The prototype's required-only rule is set aside."
-    ,
-      "overruled": ["prototype-dr2-1-source-p8-107"]
+      "outcome": "The ruling ranks first and names validation as a real constraint the prototype cannot express: the address book stores and checks these limits, so the add page keeps today's length and email-format checks and messages alongside Design Release 2.1's required-field messages. The prototype's required-only rule is set aside.",
+      "overruled": [
+        "prototype-dr2-1-source-p8-107"
+      ]
     },
     {
-      "id": "c-party-address-add-and-edit-004",
+      "id": "c-109",
       "about": "Whether the add-address page follows the GOV.UK accessibility patterns the prototype leaves out: the 'Error: ' title prefix and 400 status on a refused submit, autocomplete hints on personal-data fields, and error summary links that reach a visible field.",
       "positions": [
         {
@@ -1388,7 +1640,10 @@
       ],
       "resolution": "precedence",
       "outcome": "The ruling ranks first: how validation errors are reported, and what assistive technology needs from a form, are real constraints (GOV.UK error pattern, WCAG 2.2 AA under the public sector accessibility regulations) that a session-only prototype is not held to and does not express. The add page keeps the 'Error: ' prefix, the 400 status and autocomplete hints, and reveals the fields on the search pages so summary links reach them. The prototype's plain error title and missing autocomplete are set aside. trace-prototype-dr2-1-p7-051 is not overruled: its six messages and their order still stand; only its hidden-field links are departed from.",
-      "overruled": ["trace-prototype-dr2-1-p7-051-m1", "trace-prototype-dr2-1-p7-014"]
+      "overruled": [
+        "trace-prototype-dr2-1-p7-051-m1",
+        "trace-prototype-dr2-1-p7-014"
+      ]
     }
   ]
 }

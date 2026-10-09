@@ -3,109 +3,135 @@
   "rows": [
     {
       "title": "Ask 'What are you importing?' before a notification is created",
-      "detail": "Starting a new notification from the all-types dashboard in the INS front door asks the Design Release 2.1 notification type question first, before any draft exists. Live animals carries on to the animals frontend's existing start, which creates the GBN-AG draft and lands on origin; Plants for planting, Potatoes (seed and ware) and Wood products carry on to the start of the high-risk plants journey in trade-imports-plants-frontend. Germinal products is left off the list because no real service takes it. Abandoning the question leaves no empty draft behind. The origin page's Back link then follows where the user came from: the type question, the live-animals category dashboard, or the overview.",
+      "detail": "Starting a new notification from the all-types dashboard in the INS front door asks the Design Release 2.1 notification type question first, before any draft exists. Live animals carries on to the animals frontend's existing live-animals start, which creates the GBN-AG draft and lands on origin. Germinal products, offered second under the 9 October ruling, carries on to the start of the germinal products set, the live-animals set's sibling in the animals frontend mounted at /germinal-products; the ruling lets this link land before the set itself is built. Plants for planting, Potatoes (seed and ware) and Wood products carry on to the start of the high-risk plants journey in trade-imports-plants-frontend. Abandoning the question leaves no empty draft behind.",
       "acceptanceCriteria": [
         "Starting a new notification from the all-types dashboard shows the question 'What are you importing?' instead of going straight to an origin page, and no draft notification is created at that point: the dashboard's notification list gains no new entry while the question is open or after the user leaves it with Back (prototype:dr2-1-source app/routes.js:11112-11114; trace:prototype-dr2-1 T1; trace:e2e T01 call@286; conflicts:c-007)",
         "The notification type page has the browser title 'What are you importing? - Import notification service - GOV.UK' and the heading 'What are you importing?' as the radios' fieldset legend (h1), with the caption 'About the consignment' inside the heading (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:7,39; trace:prototype-dr2-1 T1 action 16)",
-        "The question offers radios in this order, with no hint text on the group or any option and none pre-selected: Live animals; Plants for planting; Potatoes (seed and ware); Wood products. Germinal products (semen, ova, embryos) is not offered (prototype:dr2-1-source app/routes.js:125-138; trace:prototype-dr2-1 T1 action 16; conflicts:c-007)",
+        "The question offers radios in this order, with no hint text on the group or any option and none pre-selected: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products (prototype:dr2-1-source app/routes.js:125-131; trace:prototype-dr2-1 T1 action 16; ruling:sam-2026-10-09 claim 10; conflicts:c-007)",
         "Choosing Live animals and pressing Continue creates a new live-animals draft and lands on its 'Origin of the import' page, which shows the Draft tag and a new GBN-AG reference (prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:65; trace:prototype-dr2-1 T1 action 44; conflicts:c-007)",
+        "Choosing Germinal products (semen, ova, embryos) and pressing Continue sends the user from the INS front door to the germinal products set's start under /germinal-products in the animals frontend, and no live-animals notification is created: the dashboard's notification list gains no live-animals entry (ruling:sam-2026-10-09 claims 1, 10 and 11; conflicts:c-007)",
         "Choosing Plants for planting, Potatoes (seed and ware) or Wood products and pressing Continue lands on the start of the high-risk plants journey in the plants service, and no live-animals notification is created (conflicts:c-007)",
-        "Pressing Continue with nothing chosen re-shows the page with an error summary titled 'There is a problem' listing 'Select what you are importing', linked to the first radio (#notificationType), and the same message shown inline on the radio group (prototype:dr2-1-source app/routes.js:151-160; trace:prototype-dr2-1 T1 action 30; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:53-57)",
+        "Pressing Continue with nothing chosen re-shows the page with an error summary titled 'There is a problem' listing 'Select what you are importing', linked to the first radio, the same message shown inline on the radio group, and the browser title prefixed 'Error: ' (prototype:dr2-1-source app/routes.js:151-160; trace:prototype-dr2-1 T1 action 30; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:53-57; conflicts:c-006)",
         "The page ends with a single 'Continue' button: there is no 'Save and return to overview' button and no cancel link (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:48-53; trace:prototype-dr2-1 T1 action 16)",
         "The page's Back link goes to the all-types dashboard, and the service navigation highlights Dashboard (prototype:dr2-1-source app/routes.js:10606-10608; trace:prototype-dr2-1 T1 action 15)",
-        "The page shows no Draft strip and no notification reference (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:23-57; trace:prototype-dr2-1 T1 action 16 against action 44)",
-        "The origin page's Back link goes to the notification type question when the notification was started from it, to the live-animals dashboard when the notification was started from that dashboard's own create button, and to the notification overview when the origin page was opened from the overview (prototype:dr2-1-source app/routes.js:10586-10600; trace:prototype-dr2-1 T3 action 10, T6 action 20; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:74,105; conflicts:c-011)",
-        "With Welsh chosen, every string on the notification type page (title, caption, heading, the four options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)"
+        "The page shows no Draft strip and no notification reference; the origin page reached after choosing Live animals shows both (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:23-57; trace:prototype-dr2-1 T1 action 16 against action 44; conflicts:c-007)",
+        "With Welsh chosen, every string on the notification type page (title, caption, heading, the five options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)"
       ],
-      "requirements": ["req-001", "req-002", "req-003", "req-004", "req-005", "req-006", "req-007", "req-013"],
+      "requirements": ["req-001", "req-002", "req-003", "req-004", "req-005", "req-006", "req-007"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:125-160, 10586-10625, 11112-11114; app/views/design-release-2.1/notification-type.html" },
-        { "source": "trace:prototype-dr2-1", "ref": "T1 actions 15-44; T3 action 10; T6 action 20; TRACE C actions 8-16" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/about-the-consignment.fit.spec.js:36-74, 105" },
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:125-160, 10606-10625, 11112-11114; app/views/design-release-2.1/notification-type.html" },
+        { "source": "trace:prototype-dr2-1", "ref": "T1 actions 15-44; TRACE C actions 8-16" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/about-the-consignment.fit.spec.js:36-74" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 1, 10, 11 (p1-006, p1-008, p1-048, p1-052, p1-053)" },
         { "source": "trace:e2e", "ref": "T01 call@286-288" },
-        { "source": "trace:animals-fit", "ref": "origin-f-79392 POST /live-animals/notifications; origin-f-d6990; origin-f-750ee" },
-        { "source": "repo:frontend", "ref": "features/origin/controller.js:41-47; features/origin/copy/copy.cy.js" },
-        { "source": "repo:insfrontend", "ref": "features/dashboard (empty-state start to /live-animals); config tradeImportsPlantsFrontend.baseUrl" }
+        { "source": "trace:animals-fit", "ref": "origin-f-79392 POST /live-animals/notifications; origin-f-d6990" },
+        { "source": "repo:frontend", "ref": "features/origin/controller.js:41-47; features/origin/copy/copy.cy.js" }
       ],
       "repos": ["frontend", "insfrontend", "tests"],
       "kind": "feat",
+      "theme": "type-question-and-templates",
+      "dependsOn": ["inc-128"],
       "status": "todo",
-      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token) and how the plants types hand over to the plants service, and the origin Back link's 'where the user came from' signal. The re-selection row, template creation's type question and the dashboard's 'Create new' button all copy this pattern.",
+      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. The re-selection row, template creation's type question, the INS germinal list's Create new and the dashboard's 'Create new' button all copy this pattern.",
       "openQuestions": [],
-      "notes": "Combines the type-page slices (question copy, options, validation, single Continue, Back link and navigation, no draft before a type) with the origin Back link (req-013), because the Back link to the type question can only be observed through the new start and both are reviewed on the same two pages. Merge order is frontend, insfrontend, tests: the animals frontend's start entry and Back-link signal must be live before the INS page sends users to them. The template branches of req-013 (Back to /templates/create while creating a template, and to the template review while editing one) are not written here because no real service has templates yet; they are carried by the templates area's requirements (req-1325 and the template-edit ones) and become observable with those rows. Per conflicts:c-006 the page keeps the 'Error: ' title prefix in its error state, as every real page does. The all-types dashboard's 'Create new' button itself (c-147) is the dashboard-home area's change; this row repoints whatever start control the dashboard has at the time to the type question. The Welsh criterion carries req-057's duty for the strings this row adds; req-057 itself sits in the origin row that finishes the page.",
+      "notes": [
+        "Rewrites inc-148 to the 9 October ruling: Germinal products is now the second option (ruling claim 10 sets aside the old criterion 3 that left it off) and continues to the germinal products set's start, which the ruling (claim 11) lets land before the germinal theme builds the set. The criterion observes the handover to /germinal-products, never the germinal origin page, so it holds before the set exists; the germinal set's own create row proves the landing.",
+        "req-013 (the live-animals origin Back link) moves out of this row into the re-selection row (inc-150): its template-review branch can only be observed once template editing exists, and keeping it here would hold the whole start behind the templates rows. The ruling (claim 13) split req-013 into a live half (req-013) and a germinal half (req-1740, germinal theme).",
+        "Merge order frontend, insfrontend, tests: the animals frontend's start entry must accept a start from the INS page before the INS page sends users to it. Per conflicts:c-006 the page keeps the 'Error: ' title prefix in its error state. The all-types dashboard's 'Create new' button itself (c-147) is the dashboard-home area's change; this row repoints whatever start control the dashboard has at the time to the type question. The Welsh criterion carries req-057's duty for the strings this row adds; req-057 itself sits in the origin row that finishes the page."
+      ],
       "touches": [
         "insfrontend:src/server/app/features/notification-type",
-        "tests:tests/ins/e2e/features/notification-type"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "tests:tests/ins/e2e",
+        "tests:tests/animals/e2e/pages/origin.spec.ts"
       ],
       "shared": [
-        "insfrontend:src/server/app/features/index.js",
         "insfrontend:src/server/app/features/dashboard",
-        "insfrontend:src/server/app/shared/paths.js",
-        "insfrontend:src/server/app/shared/layout.njk",
-        "insfrontend:src/config/config.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
-        "tests:tests/animals/e2e/pages/origin.spec.ts",
-        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts"
+        "insfrontend:src/server/app/features/index.js",
+        "insfrontend:src/server/app/shared/copy.cy.js",
+        "frontend:src/server/app/sets/live-animals/set.js"
       ],
-      "existingRow": null
+      "existingRow": "inc-148"
     },
     {
-      "title": "Return to the type question from an existing live-animals notification",
-      "detail": "Once a live-animals notification exists, going back from its origin page to the notification type question shows Live animals already chosen. Keeping Live animals returns to the same notification. Choosing a different type clears every commodity and species chosen on that notification, so the type and commodity choices never disagree, and carries on to the start of the service that takes the new type. No non-live-animals type runs through the live-animals pages.",
+      "title": "Origin's Back link follows where the notification started, and the type question picks the notification back up",
+      "detail": "The live-animals origin page's Back link follows where the user came from: the type question for a notification started from it, the live animals notifications list for one started there, the overview when opened from the overview, and the template review while a live-animals template is being edited. Going back to the type question shows the notification's own type already chosen. Keeping that type returns to the same notification with no new draft. Choosing a different type starts a new notification of that type in its own set or service, and nothing is changed or cleared on the notification left behind (9 October ruling, c-219).",
       "acceptanceCriteria": [
-        "On a live-animals notification started from the type question, pressing Back on its origin page shows the 'What are you importing?' question with Live animals already selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)",
-        "Pressing Continue with Live animals still chosen returns to that same notification's origin page, showing the same reference, and every commodity and species already chosen on it is kept (prototype:dr2-1-source app/routes.js:11153-11155, 11163-11168)",
-        "Choosing a different type (for example Plants for planting) and pressing Continue lands on the start of the high-risk plants journey, and the live-animals notification, reopened from the dashboard, has no commodity or species chosen (prototype:dr2-1-source app/routes.js:11153-11155; conflicts:c-007)",
-        "Starting afresh from the all-types dashboard still shows the question with nothing pre-selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)"
+        "On a live-animals notification started from the type question, the origin page's Back link goes to the 'What are you importing?' question, which shows Live animals already selected (prototype:dr2-1-source app/routes.js:10586-10600, 10609; trace:prototype-dr2-1 T3 action 10; conflicts:c-011, c-219)",
+        "On a live-animals notification started from the live animals notifications list's own create button, the origin page's Back link goes to that list (prototype:dr2-1-source app/routes.js:10586-10600; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:105; conflicts:c-011)",
+        "Opened from the notification overview, the origin page's Back link goes to the overview (prototype:dr2-1-source app/routes.js:488-498; trace:prototype-dr2-1 T6 action 20; conflicts:c-011)",
+        "Opened from the template review while a saved live-animals template is being edited, the origin page's Back link goes to that template's review (prototype:dr2-1-source app/routes.js:10636, 488-498; conflicts:c-011)",
+        "Pressing Continue on the type question with Live animals still chosen returns to that same notification's origin page with the same reference, and the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11163-11168; conflicts:c-219)",
+        "Choosing Plants for planting instead and pressing Continue lands on the start of the high-risk plants journey; the live-animals notification, reopened from the dashboard, still has the same reference, Draft status and every answer it had, commodities and species included (ruling:sam-2026-10-09 claim 12; conflicts:c-007, c-219)",
+        "Choosing Germinal products (semen, ova, embryos) instead and pressing Continue sends the user to the germinal products set's start under /germinal-products, and the live-animals notification left behind keeps every answer it had (ruling:sam-2026-10-09 claims 11 and 12; conflicts:c-219)",
+        "Starting afresh from the all-types dashboard still shows the type question with nothing pre-selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)"
       ],
-      "requirements": ["req-008"],
+      "requirements": ["req-008", "req-013"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:195-213, 10609, 11153-11168" }
+        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:457-461, 488-498, 10586-10609, 10636, 11163-11168" },
+        { "source": "trace:prototype-dr2-1", "ref": "T3 action 10; T6 action 20" },
+        { "source": "prototype:dr2-1-specs", "ref": "e2e/about-the-consignment.fit.spec.js:74, 105" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 6, 11, 12, 13 (p1-029, p1-053, p1-054, p1-055, p1-056, p1-057)" },
+        { "source": "repo:frontend", "ref": "features/origin/controller.js:41-47" }
       ],
       "repos": ["frontend", "insfrontend", "tests"],
       "kind": "feat",
+      "theme": "type-question-and-templates",
+      "dependsOn": ["inc-148", "inc-171"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Depends on the row covering req-001 (the type question and the origin Back link to it must exist first); the combiner sets dependsOn. Kept apart from that row because it adds a cross-service write (clearing the live-animals notification's commodity and species answers when another type is chosen) that the first row does not need, and that row is already eleven criteria. Decision: c-007 limits re-selection to a notification that already exists and to the live-animals journey, so 'a different type' means one that hands over to the plants service; the live-animals notification is kept, with its commodities cleared, as the prototype does, rather than deleted. Frontend merges before insfrontend: the animals frontend must accept the existing notification's context and clear its commodities before the INS page relies on it.",
+      "notes": [
+        "Rewrites inc-150 to the 9 October ruling (c-219): changing type no longer clears the live-animals notification's commodities and species; it starts the new type's own notification and leaves the old one untouched. The old criteria that cleared commodities are withdrawn with the overruled claims prototype-dr2-1-source-p2-022 and -p2-015.",
+        "Combines req-013 (the origin Back link, live half only per ruling claim 13; the germinal half is req-1740 in the germinal theme) with req-008: returning to the type question can only be observed through the origin Back link, and both are reviewed on the same two pages. Depends on inc-148 (the type question) and on inc-171, the row that makes Back links follow a template review (req-1616), so the template-edit branch of req-013 is observable when this lands. That pushes this row after the templates rows; the start itself (inc-148) is not held up.",
+        "The type pre-selected is the notification's stored category, absent meaning live animals (ruling claim 6), so a live-animals notification needs no backend change. The same mechanism serves the germinal set's origin Back link (req-1740), whose row proves Germinal products pre-selected once the set exists; that half is not written here because the germinal set lands in the last wave. Merge order frontend, insfrontend, tests: the origin Back link must carry the notification to the INS page before the INS page relies on it."
+      ],
       "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
         "insfrontend:src/server/app/features/notification-type",
-        "tests:tests/ins/e2e/features/notification-type"
+        "tests:tests/ins/e2e",
+        "tests:tests/animals/e2e/pages/origin.spec.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow.js"
       ],
-      "existingRow": null
+      "existingRow": "inc-150"
     },
     {
-      "title": "Start template creation from the notification type question",
-      "detail": "Creating a template starts from the same 'What are you importing?' question. In template mode its Back link returns to the templates list, and choosing a type stores it on a new Draft template and goes to the template name page instead of the origin page, so no notification is created.",
+      "title": "Template creation's type question offers live animals and germinal products and leads to the template name",
+      "detail": "When the user is creating a template, the notification type question's Back link goes to the templates list and the service navigation highlights Templates. Choosing a type stores it on the template as a draft and goes on to the template name page instead of an origin page. Template mode offers only the types whose service stores templates, Live animals and Germinal products (9 October ruling, c-220).",
       "acceptanceCriteria": [
-        "Starting a new template from Manage templates shows the 'What are you importing?' question, whose Back link goes to Manage templates and whose service navigation highlights Templates (prototype:dr2-1-source app/routes.js:10606-10608; trace:prototype-dr2-1 T15 action 68)",
-        "Choosing a type and pressing Continue goes to the template name page ('Enter template name'), not the origin page, and no draft notification is created: the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11157-11161; prototype:dr2-1-specs p6-053; conflicts:c-007)",
-        "The template saved from that start holds the chosen type as a Draft (prototype:dr2-1-source app/routes.js:11157-11161)"
+        "Starting a new template shows the 'What are you importing?' question with only two radios, in this order and none pre-selected: Live animals; Germinal products (semen, ova, embryos). Plants for planting, Potatoes (seed and ware) and Wood products are not offered (ruling:sam-2026-10-09 claim 24; conflicts:c-220)",
+        "In template creation the type question's Back link goes to the templates list, and the service navigation highlights Templates (prototype:dr2-1-source app/routes.js:10606-10608; conflicts:c-007)",
+        "Choosing Live animals or Germinal products and pressing Continue goes to the template name page, not an origin page, and no draft notification is created: the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11157-11161; conflicts:c-220)",
+        "Going back from the template name page to the type question shows the type chosen for that template already selected (prototype:dr2-1-source app/routes.js:11157-11161)"
       ],
       "requirements": ["req-010"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:10606-10608, 11157-11161" },
-        { "source": "prototype:dr2-1-specs", "ref": "templates spec (claim prototype-dr2-1-specs-p6-053)" },
-        { "source": "trace:prototype-dr2-1", "ref": "template creation trace (claim trace-prototype-dr2-1-p15-068)" }
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 10, 24 (p1-051, p1-127, p1-128)" }
       ],
-      "repos": ["insfrontend", "tests"],
+      "repos": ["backend", "frontend", "insfrontend", "tests"],
       "kind": "feat",
+      "theme": "type-question-and-templates",
+      "dependsOn": ["inc-151", "inc-148"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Observable only once the templates area's rows have built Manage templates, its 'Create new template' button (req-1293) and the template name page (req-1316), and once the row covering req-001 has built the type question; the combiner sets dependsOn on all of them. The templates area's req-1314 describes the same page in template mode (same options, no 'Template' caption yet, the usual error): combiner, merge this row into that one, since building them apart repeats the same page, set-up and review, and take that row's repos (template storage lives wherever the templates rows put it). The repos written here are only the type question's own.",
+      "notes": [
+        "req-010 already sits in inc-154 ('Start a template: notification type, template name and origin in template mode'), which also holds the templates area's req-1313, req-1314 and req-1316 to req-1325. Drafted here as this area's part of that row; the combiner merges it back into inc-154 and keeps that id. The criteria overlap req-1314 (only Live animals and Germinal products, Back to Manage templates) on purpose: both say the same thing, and the combiner keeps one wording.",
+        "Rewritten to the 9 October ruling: template mode offers only Live animals and Germinal products (c-220); the prototype's full option list in template mode is not followed. Templates carry their type (ruling claim 10), so the template store keeps the chosen type; the germinal template's own pages come with the germinal theme.",
+        "Repos in merge order: backend (the template store holds the type), frontend (the template name page), insfrontend (the type page's template mode), tests. No templates code exists in either repo yet: the shared paths named here are where the templates rows (inc-151 onwards) will put it, and the combiner should take inc-151's touches as authoritative."
+      ],
       "touches": [
-        "insfrontend:src/server/app/features/notification-type"
+        "insfrontend:src/server/app/features/notification-type",
+        "tests:tests/ins/e2e"
       ],
       "shared": [
-        "insfrontend:src/server/app/shared/layout.njk"
+        "frontend:src/server/app/templates",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/templates"
       ],
-      "existingRow": null
+      "existingRow": "inc-154"
     },
     {
       "title": "Country of origin becomes a search box",
@@ -131,24 +157,67 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
+      "theme": "origin-page",
+      "dependsOn": [],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the six country-control changes (hint, placeholder, no open-on-focus, search icon, contains-matching with bold, announcements): one control, one page, one review. The type-ahead component is shared with port of entry and transit countries (arrival-and-transit area), so the change is scoped to the country of origin instance unless the combiner finds those rows want the same behaviour, in which case the shared component change belongs to the foundation theme. The page changes visually, so this row's ladder refreshes the origin page's visual baseline too; req-058 (the final baseline) sits in the region code row that finishes the page.",
+      "notes": [
+        "Unchanged from inc-009: its requirements and conflicts did not move in this re-distil. Combines the six country-control changes (hint, placeholder, no open-on-focus, search icon, contains-matching with bold, announcements): one control, one page, one review.",
+        "The type-ahead component is shared with port of entry and transit countries (arrival-and-transit area, which c-006 also sends to Design Release 2.1's behaviour with JavaScript), so the component change is listed as shared: the combiner puts it in the foundation theme if those rows want the same behaviour, otherwise this row scopes it to the country of origin instance. The page changes visually, so this row's ladder refreshes the origin page's visual baseline too; req-058 (the final baseline) sits in the region code row that finishes the page. The germinal products set copies the origin page after this row lands (ruling claim 2)."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+        "tests:tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts",
+        "tests:tests/animals/e2e/pages/origin.spec.ts"
+      ],
+      "shared": [
+        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
+        "frontend:src/client/stylesheets/components"
+      ],
+      "existingRow": "inc-009"
+    },
+    {
+      "title": "Country of origin list labels subdivisions with their parent country",
+      "detail": "Places in the country of origin list that are subdivisions of a country show as '<territory> (<parent>)', for example 'Canary Islands (Spain)', and the list is sorted by the label shown. Which places appear, their names and the stored code stay what MDM serves through the reference data service. This follows the open question's default (c-221), which matches what the 9 October ruling does for the destination select and transit country search.",
+      "acceptanceCriteria": [
+        "In the country of origin list, every place MDM serves as a subdivision of a country shows as '<subdivision name> (<parent country name>)', for example 'Canary Islands (Spain)', with or without JavaScript, and typing 'spain' in the search box lists Canary Islands (Spain) as well as Spain (trace:prototype-dr2-1 T2 action 17; trace:e2e T01 call@298; conflicts:c-221)",
+        "The country of origin list is sorted alphabetically by the label shown, so 'Canary Islands (Spain)' sits among the C entries (trace:prototype-dr2-1 T2 action 17; conflicts:c-221)",
+        "Choosing a subdivision still saves its code (ES-CN for the Canary Islands), and reopening the origin page shows 'Canary Islands (Spain)' in the box with the region code prefix ES (repo:frontend features/origin/validate.js:22-24, 148-152; conflicts:c-002, c-221)",
+        "The list holds the same places as the reference data service serves for the GBNAG_SPS_EX block, no more and no fewer (repo:referencedata GET /countries; conflicts:c-001)"
+      ],
+      "requirements": ["req-030"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "T2 action 17 (trace-prototype-dr2-1-p2-040-m1)" },
+        { "source": "trace:e2e", "ref": "T01 call@298 (trace-e2e-p4-014)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "p1-136, p1-139" },
+        { "source": "repo:frontend", "ref": "services/countries; features/origin/validate.js:148-152" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "theme": "origin-page",
+      "dependsOn": [],
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [
+        "c-221: Should the country of origin list label its subdivisions '<territory> (<parent>)', as the 9 October ruling does for the destination select and transit country search, or keep MDM's plain subdivision names? Default, which this row builds: label them '<territory> (<parent>)' and sort by the shown label, on the origin page of both sets; which places appear and their names stay what MDM serves, and the stored value stays the code."
+      ],
+      "notes": [
+        "New row for req-030, which this re-distil raised as a question (c-221) with a default. Kept apart from the country search box row because it carries an open question the others do not, so a different answer changes only this row. Labels are presentation built in the frontend from the parent and subdivision names reference data already serves; the list's content stays MDM's (c-001, ruling 9 October), so no reference-data or stub change. Observable on every stack: the local stub and CDP dev serve nine subdivisions, and CDP test's real MDM serves its own. The germinal products set's origin page copies this behaviour when it copies the page.",
+        "The destination select and transit country search labels (ruling p1-136, p1-139) are other areas' rows; if the combiner finds they share the same label builder, that builder belongs in the foundation theme."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
         "tests:tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts"
       ],
       "shared": [
-        "frontend:src/client/javascripts/components/accessible-autocomplete.js",
-        "frontend:src/client/stylesheets/components/_index.scss",
-        "tests:tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots"
+        "frontend:src/server/app/services/countries"
       ],
       "existingRow": null
     },
     {
       "title": "Region of origin code, internal reference hint and the finished origin page",
-      "detail": "The region of origin code question takes Design Release 2.1's hint, caps the box at 5 characters in the browser, and with JavaScript writes the country prefix live as the user picks a country, showing an empty prefix slot until then; without JavaScript the server-side prefix stays as DR1 shipped it. Answering No clears a saved code. The origin task is complete only when the country and the region question are answered and, under Yes, a code is held. The internal reference hint drops its 58-character sentence (the server still enforces the limit). Every new or changed string on the type and origin pages has Welsh, and the origin page's stored visual baseline is updated to the finished page.",
+      "detail": "The region of origin code question takes Design Release 2.1's hint, caps the box at 5 characters in the browser, and with JavaScript writes the country prefix live as the user picks a country, showing an empty prefix slot until then; without JavaScript the server-side prefix stays as DR1 shipped it. Answering No clears a saved code. The origin task is complete only when the country and the region question are answered and, under Yes, a code is held. The internal reference hint drops its 58-character sentence (the server still enforces the limit). Every new or changed string on the origin page has Welsh, and the origin page's stored visual baseline is updated to the finished page.",
       "acceptanceCriteria": [
         "The region of origin code question's hint reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' (prototype:dr2-1-source app/views/design-release-2.1/origin-of-the-import.html:133-135; trace:prototype-dr2-1 T1 action 44; conflicts:c-010)",
         "The region code box stops typing at 5 characters and has autocomplete and spellcheck turned off; a longer code still gets the server's existing error (prototype:dr2-1-source app/views/partials/region-of-origin-code-input.html:19-29; trace:prototype-dr2-1 T1 action 44; conflicts:c-010)",
@@ -158,7 +227,7 @@
         "Changing a saved Yes answer with code FR-75 to No and saving clears the code: the review page shows 'Not applicable' for the region of origin code, and choosing Yes again shows an empty code box (prototype:dr2-1-source app/routes.js:11196-11201; trace:prototype-dr2-1 TRACE H action 165; conflicts:c-010)",
         "The overview's 'Where is this consignment coming from?' task reads 'Complete' only when a country is chosen and the region of origin code question is answered: a country saved with the region question unanswered does not read 'Complete', a country with No reads 'Complete', and a country with Yes and a code reads 'Complete' (prototype:dr2-1-source app/routes.js:402-415; trace:animals-fit origin-c-706f0, origin-f-750ee call@3749)",
         "The internal reference hint reads 'Enter any internal reference you want to use to identify this consignment, or leave blank.', with no 'It can be up to 58 characters.' sentence; a reference over 58 characters still gets the server's error naming the limit (prototype:dr2-1-source app/views/design-release-2.1/origin-of-the-import.html:155-169; trace:prototype-dr2-1 T1 action 44; conflicts:c-011)",
-        "With Welsh chosen, every new or changed string on the type and origin pages (the type page copy, the country placeholder and search texts, the region hint and the internal reference hint) shows its Welsh counterpart, and no removed hint (the country hint, the 58-character sentence) is left in the Welsh copy (repo:frontend features/origin/copy/copy.cy.js:1-3)",
+        "With Welsh chosen, every new or changed string on the origin page (the country placeholder and search texts, the region hint and the internal reference hint) shows its Welsh counterpart, and no removed hint (the country hint, the 58-character sentence) is left in the Welsh copy (repo:frontend features/origin/copy/copy.cy.js:1-3)",
         "The end-to-end suite's full-page visual baseline of the origin page shows the changed page (no country hint, the search box with its placeholder and icon, the new region hint and the shorter internal reference hint), and the visual check passes against it (trace:e2e T16 expect@50, screencast page@da77b720)"
       ],
       "requirements": ["req-034", "req-036", "req-038", "req-040", "req-041", "req-046", "req-049", "req-057", "req-058"],
@@ -172,23 +241,26 @@
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
+      "theme": "origin-page",
+      "dependsOn": ["inc-009"],
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the region code slices (hint, maxlength, live prefix, empty prefix slot, No clears the code), the origin task's completeness rule, the internal reference hint, the Welsh sweep and the visual baseline: all change the same origin page and its one baseline, so building them apart repeats the page, ladder and baseline refresh. Depends on the country search box row (req-015 to req-020): the live prefix follows the country picked in that control (DR1 inc-079 tied the live prefix to the country control), and the baseline must show the finished page. The combiner sets dependsOn. Completeness: Yes without a code cannot be saved through the page (the page holds the trader with 'Enter the region of origin code'), so the 'Yes needs a code' half of req-034 is guarded by the page's existing validation and the criterion observes the reachable cases; the builder still adds the rule to the origin obligation so a stored Yes with no code is never Complete. req-057's Welsh duty is also written into the type-question and country rows for the strings they add; it is listed here, where the last strings land.",
+      "notes": [
+        "Kept as inc-010. Combines the region code slices (hint, maxlength, live prefix, empty prefix slot, No clears the code), the origin task's completeness rule, the internal reference hint, the Welsh sweep and the visual baseline: all change the same origin page and its one baseline. Depends on the country search box row (inc-009): the live prefix follows the country picked in that control (DR1 inc-079 tied the live prefix to the country control), and the baseline must show the finished page. If the combiner orders the subdivision label row (req-030) before this one, the baseline also shows it; otherwise that row refreshes the baseline itself.",
+        "Completeness: Yes without a code cannot be saved through the page (the page holds the trader with 'Enter the region of origin code'), so the 'Yes needs a code' half of req-034 is guarded by the page's existing validation and the criterion observes the reachable cases; the builder still adds the rule to the origin obligation so a stored Yes with no code is never Complete.",
+        "req-057 covers the type and origin pages. The type page lives in the INS front door, so its Welsh is written as a criterion of the type question row (inc-148), which builds in that repo; this row's Welsh criterion covers the origin page strings, and req-057 sits here where the last of them land. The Welsh criterion was narrowed from the earlier 'type and origin pages' because this row does not build in the INS front door."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
-        "frontend:src/server/app/sets/live-animals/obligations/sections/origin.js",
-        "tests:tests/animals/e2e/pages/origin.spec.ts",
-        "tests:tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots"
+        "frontend:src/server/app/sets/live-animals/obligations",
+        "tests:tests/animals/e2e/visual/origin-of-import.visual.spec.ts",
+        "tests:tests/animals/e2e/pages/origin.spec.ts"
       ],
       "shared": [
-        "frontend:src/client/javascripts/application.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model",
-        "insfrontend:src/server/app/features/notification-type"
+        "frontend:src/client/javascripts/application.js"
       ],
-      "existingRow": null
+      "existingRow": "inc-010"
     }
   ],
   "unobservable": []

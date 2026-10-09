@@ -3,7 +3,7 @@
   "rows": [
     {
       "title": "Roles and addresses page: intro, warning, Consignor name, named add links and full addresses",
-      "detail": "Brings the roles and addresses page's words and rows in line with Design Release 2.1 inside the summary list DR1 kept (c-087). The page gains an intro paragraph, the fraud warning loses its full stop, the consignor party is called 'Consignor' rather than 'Consignor or exporter', every empty row offers a link that names what it adds instead of a bare 'Add', and an answered row shows the whole chosen address, not just the name, so a trader can check every address without opening each picker. Every new or changed string carries a Welsh machine draft.",
+      "detail": "Brings the live-animals roles and addresses page's words and rows in line with Design Release 2.1 inside the summary list DR1 kept (c-087). The page gains an intro paragraph, the fraud warning loses its full stop, the consignor party is called 'Consignor' rather than 'Consignor or exporter', every empty row offers a link that names what it adds instead of a bare 'Add', and an answered row shows the whole chosen address, not just the name, so a trader can check every address without opening each picker. Every new or changed string carries a Welsh machine draft.",
       "acceptanceCriteria": [
         "Under the heading 'Consignment addresses' the page shows the paragraph 'Add all the addresses that are involved in the consignment.' (prototype:dr2-1-source prototype-dr2-1-source-p8-004; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-004; prototype:dr2-1-specs prototype-dr2-1-specs-p3-004)",
         "The warning reads 'Providing a false address is an act of fraud' with no closing full stop, and its Welsh text has no closing full stop either (prototype:dr2-1-source prototype-dr2-1-source-p8-005; prototype:dr2-1-specs prototype-dr2-1-specs-p3-005; document:dr1-parity-backlog document-dr1-parity-backlog-p6-036)",
@@ -21,7 +21,7 @@
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-004 to p6-052, p13-094 to p13-101" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-004 to p3-027, p3-046" },
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p6-025 to p6-038" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-007, p9-011, p9-017, p9-022, p9-029, p9-030, p9-034, p9-089, p9-090" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-002, p9-007, p9-008, p9-011, p9-017, p9-022, p9-029, p9-030, p9-034, p9-089, p9-090" },
         { "source": "repo:tests", "ref": "repo-tests-p5-006, repo-tests-p1-084" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-007, p14-016, p14-023, p14-030, p14-062" },
         { "source": "trace:e2e", "ref": "trace-e2e-p8-062, p8-064, p8-066, p9-005" }
@@ -30,109 +30,26 @@
       "kind": "feat",
       "status": "todo",
       "gate": null,
+      "dependsOn": [],
       "openQuestions": [],
-      "notes": "Combines four thin slices that all change the roles and addresses page's copy and rows (intro and warning; Consignor rename; named add links; full address on answered rows), because each repeats the same page, copy files and tests for little gain apart. The summary list stays (c-087); the prototype's headed sections are set aside. c-103: the id, route and address-book role of the consignor stay as they are, and the overview task hint 'Consignor or Exporter, ...' stays. c-089: the visually hidden suffix on the add link goes, as the link now names the party. req-619 (Welsh for every new or changed string) sits here and every other row of this area keeps the same rule. The tests repo's page object and specs that name 'Consignor or exporter' and the 'Add' link change with it (repo-tests-p5-006, repo-tests-p1-084).",
+      "notes": "Unchanged from the existing row: no requirement behind it moved. Combines four thin slices that all change the roles and addresses page's copy and rows (intro and warning; Consignor rename; named add links; full address on answered rows), because each repeats the same page, copy files and tests for little gain apart. The summary list stays (c-087); the prototype's headed sections are set aside. c-103: the id, route and address-book role of the consignor stay as they are, and the overview task hint 'Consignor or Exporter, ...' stays. c-089: the visually hidden suffix on the add link goes, as the link now names the party. req-619 (Welsh for every new or changed string) sits here and every other row of this area keeps the same rule. The tests repo's page object and specs that name 'Consignor or exporter' and the 'Add' link change with it (repo-tests-p5-006, repo-tests-p1-084). The germinal-products set's copy of this page (req-1827) is taken after this row lands, so it inherits these changes.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-inline.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit",
         "tests:page-objects/animals/addresses-page.ts"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
-        "tests:tests/animals/e2e/features/address-book",
-        "tests:flows/animals/journey.ts"
-      ],
-      "existingRow": null
-    },
-    {
-      "title": "Same-as shortcuts on the roles and addresses page",
-      "detail": "Lets a trader fill the consignor from the place of origin, and the importer and place of destination from the consignee, with one button press on the roles and addresses page, as Design Release 2.1 draws. The button copies the source party's record onto the notification as an independent copy, so a later change to the source does not ripple through.",
-      "acceptanceCriteria": [
-        "With a place of origin chosen and no consignor, the Consignor row shows a 'Same as place of origin' button styled as a link beside 'Add a consignor' (prototype:dr2-1-source prototype-dr2-1-source-p8-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-042; prototype:dr2-1-specs prototype-dr2-1-specs-p3-049)",
-        "With a consignee chosen and no importer, the Importer row shows a 'Same as consignee' button styled as a link beside 'Add an importer'; with a consignee chosen and no place of destination, the Place of destination row shows a 'Same as consignee' button beside 'Add a place of destination' (prototype:dr2-1-source prototype-dr2-1-source-p8-034; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-043, trace-prototype-dr2-1-p6-044; prototype:dr2-1-specs prototype-dr2-1-specs-p3-050)",
-        "No same-as button shows while its source party is empty or its target party already has an address, and no other pair of parties offers one (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-049, trace-prototype-dr2-1-p6-050; prototype:dr2-1-source prototype-dr2-1-source-p8-038)",
-        "Pressing a same-as button reloads the roles and addresses page with no success banner, the target row showing the source party's name and full address with a 'Change' link and no same-as button (prototype:dr2-1-source prototype-dr2-1-source-p8-035, prototype-dr2-1-source-p8-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-045 to trace-prototype-dr2-1-p6-048; prototype:dr2-1-specs prototype-dr2-1-specs-p3-051)",
-        "After copying, changing the source party to a different address leaves the copied target party's address as it was (prototype:dr2-1-source prototype-dr2-1-source-p8-037; prototype:dr2-1-specs prototype-dr2-1-specs-p3-052; document:dr1-parity-backlog document-dr1-parity-backlog-p6-021)",
-        "The copy is made even when the source address does not carry the target party's role, and the target party then shows that address (prototype:dr2-1-source prototype-dr2-1-source-p8-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-099)",
-        "The copied party carries the source's name, address lines, country and contact details through to check your answers (prototype:dr2-1-source prototype-dr2-1-source-p8-036; repo:frontend repo-frontend-p9-085, repo-frontend-p9-086)",
-        "The same-as buttons work with JavaScript turned off, and every new string has a Welsh machine-draft counterpart (document:dr1-parity-backlog document-dr1-parity-backlog-p6-023; repo:frontend repo-frontend-p9-089)"
-      ],
-      "requirements": ["req-576", "req-577", "req-578", "req-579", "req-580"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-033 to p8-038" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-042 to p6-050, p6-099, p6-100" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-049 to p3-052" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p6-018 to p6-023" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-085, p9-086" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-019, p14-073" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines the three same-as buttons and their shared show and copy rules: one page form, one copy behaviour, one set of tests. c-100: DR1's collision block does not hold this back. Today the summary list sits outside the page's form (document-dr1-parity-backlog-p6-023), so the buttons need the form around them. Order: build after the roles and addresses page copy row (it asserts the full address and the named add links) and after the role-filtered pickers row (the 'copy even when the target's picker would not offer it' criterion needs role-carrying records). On the compose stack the role-carrying record for that criterion is set-up for a one-page assertion, allowed by the test rules.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-inline.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
-        "tests:page-objects/animals/addresses-page.ts",
         "tests:tests/animals/e2e/features/address-book"
       ],
-      "existingRow": null
-    },
-    {
-      "title": "Which sections the roles and addresses page shows, when its task is complete, and where it continues",
-      "detail": "Makes the roles and addresses page ask for exactly what the consignment needs and say honestly when it is done. The CPH number is left out for two more germinal product codes; a 'Permanent address' section appears for 01061900 consignments with a species that needs one; the task counts as complete only when every shown section is; and 'Save and continue' goes on to the contact address for this consignment page, or to the overview once everything is complete.",
-      "acceptanceCriteria": [
-        "A consignment whose commodity codes are only 05111000, 05119985, 0101 or 01061900 shows no CPH number row; any other consignment shows it (prototype:dr2-1-source prototype-dr2-1-source-p8-011 to prototype-dr2-1-source-p8-015; prototype:dr2-1-specs prototype-dr2-1-specs-p3-018, prototype-dr2-1-specs-p3-025, prototype-dr2-1-specs-p3-026, prototype-dr2-1-specs-p4-036)",
-        "For commodity code 01061900 with at least one selected species that needs a permanent address, the page shows a 'Permanent address' section with the hint 'A permanent address is where an animal:', the bullets 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)', and the link 'Add a permanent address' (prototype:dr2-1-source prototype-dr2-1-source-p8-013, prototype-dr2-1-source-p8-016, prototype-dr2-1-source-p8-030; prototype:dr2-1-specs prototype-dr2-1-specs-p3-019, prototype-dr2-1-specs-p3-022 to prototype-dr2-1-specs-p3-024)",
-        "No other consignment shows the 'Permanent address' section (prototype:dr2-1-specs prototype-dr2-1-specs-p3-019; trace:animals-fit trace-animals-fit-p14-026)",
-        "The overview's 'Roles and addresses' task shows Complete only once every party has an address and, where shown, the CPH number or permanent address is given; with any shown section empty it is not Complete (prototype:dr2-1-source prototype-dr2-1-source-p8-039, prototype-dr2-1-source-p8-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-080)",
-        "'Save and continue' on the roles and addresses page opens the contact address for this consignment page (prototype:dr2-1-source prototype-dr2-1-source-p8-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-039; prototype:dr2-1-specs prototype-dr2-1-specs-p3-048, prototype-dr2-1-specs-p4-040)",
-        "When every overview section is already complete, 'Save and continue' opens the overview instead (prototype:dr2-1-source prototype-dr2-1-source-p8-044; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-124)",
-        "Reached from check your answers to change an answer, 'Save and continue' still returns to check your answers (repo:frontend repo-frontend-p9-026)",
-        "Every new string has a Welsh machine-draft counterpart (repo:frontend repo-frontend-p9-089)"
-      ],
-      "requirements": ["req-574", "req-575", "req-582", "req-584"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-011 to p8-016, p8-030, p8-039 to p8-044" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-026 to p6-031, p6-039, p6-080, p12-122, p12-124, p13-097, p13-098" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-018 to p3-026, p3-048, p4-036, p4-040" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-004, p9-019, p9-026, p9-028, p9-175, p9-178, p9-179" },
-        { "source": "repo:tests", "ref": "repo-tests-p1-086" },
-        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-021 to p14-027, p14-075, p14-076, p14-081" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines the page's section rules (CPH exemptions, permanent address section), task completion and the continue destination: they share the parties obligations, the commodity rules and the journey flow, and are reviewed together as one behaviour. c-091 (two more CPH-exempt codes), c-104 (completion counts every shown section), c-092 (continue goes to the contact address page; the change-context return stands). Where 'Add a permanent address' leads, and the permanent address and contact address pages themselves, belong to the cph-permanent-and-contact area: build this after that area's permanent address page row, so the link and the completion criterion can be observed. The tests repo's page flow expects the CPH number page after this page today (repo-tests-p1-086) and changes with it. This row changes shared code (the parties obligations, the commodities CPH-exempt list, the journey flow) that other areas also touch.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/evaluation.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/obligations/sections/parties.js",
-        "frontend:src/server/app/sets/live-animals/services/commodities",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
-        "tests:flows/animals/journey.ts"
-      ],
-      "existingRow": null
+      "existingRow": "inc-085"
     },
     {
       "title": "Party picker layout: add button, search control, results heading and count, address lines and blank save",
-      "detail": "Brings the five party pickers' layout in line with Design Release 2.1: 'Add a new address' becomes a secondary button beside the heading, the search label is medium and the search runs from an icon button, a 'Select an address' heading and a reworded results count sit above the table, the table sits in one fieldset, each address line takes its own line, and saving with nothing chosen goes back to the roles and addresses page without an error.",
+      "detail": "Brings the five live-animals party pickers' layout in line with Design Release 2.1: 'Add a new address' becomes a secondary button beside the heading, the search label is medium and the search runs from an icon button, a 'Select an address' heading and a reworded results count sit above the table, the table sits in one fieldset, each address line takes its own line, and saving with nothing chosen goes back to the roles and addresses page without an error.",
       "acceptanceCriteria": [
         "On each of the five pickers on the compose stack, 'Add a new address' is a secondary button beside the picker's heading, and no 'Add a new address' link sits under the intro; in stub mode the pickers offer no add control (prototype:dr2-1-source prototype-dr2-1-source-p8-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-054; prototype:dr2-1-specs prototype-dr2-1-specs-p3-029; repo:tests repo-tests-p5-022, repo-tests-p5-024)",
         "The picker's search label 'Search' is styled as a medium heading (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-071)",
@@ -151,7 +68,7 @@
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-054 to p6-078, p6-103, p12-126, p13-102" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-029, p3-036, p3-055" },
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p7-016 to p7-021, p7-053, p7-054" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-051 to p9-061, p9-079, p9-080, p9-181, p9-186" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-051 to p9-061, p9-079, p9-080, p9-089, p9-181, p9-186" },
         { "source": "repo:tests", "ref": "repo-tests-p5-013, p5-022, p5-024" },
         { "source": "trace:e2e", "ref": "trace-e2e-p9-011, p9-018, p9-022, p9-024, p9-027, p9-050" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-037 to p14-054" }
@@ -160,25 +77,23 @@
       "kind": "feat",
       "status": "todo",
       "gate": null,
+      "dependsOn": [],
       "openQuestions": [],
-      "notes": "Combines the picker's presentation slices (add button, search label and icon button, heading, count, fieldset, address lines) with the blank-save change: all change the shared picker template, its copy and the same tests, so building them apart would repeat the set-up five times over. c-093: where 'Add a new address' leads stays as today's INS handshake (c-106, party-address-add-and-edit area); only its look and place change here. c-105/c-094: the icon button submits the form so search still works without JavaScript. c-095: the count moves out of the table caption. c-098: a blank save is no longer an error, but the refusal of a record not in the book stays (req-604). The tests repo's fit and e2e tests that expect the 'Select a <party> from the list' error and the comma-joined address change with it.",
+      "notes": "Unchanged from the existing row. Combines the picker's presentation slices (add button, search label and icon button, heading, count, fieldset, address lines) with the blank-save change: all change the shared picker template, its copy and the same tests, so building them apart would repeat the set-up five times over. c-093: where 'Add a new address' leads stays as today's INS handshake (c-106, party-address-add-and-edit area); only its look and place change here. c-105/c-094: the icon button submits the form so search still works without JavaScript; the search field and action the k6 scripts drive stay as they are (req-1828, exists). c-095: the count moves out of the table caption. c-098: a blank save is no longer an error, but the refusal of a record not in the book stays (req-604). The tests repo's fit and e2e tests that expect the 'Select a <party> from the list' error on a blank save and the comma-joined address change with it.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model",
-        "tests:page-objects/animals/party-picker-page.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker",
+        "tests:page-objects/animals/party-picker-page.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit",
-        "tests:tests/animals/e2e/features/address-book"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit"
       ],
-      "existingRow": null
+      "existingRow": "inc-086"
     },
     {
       "title": "Role-filtered party pickers on one page with a live filter",
-      "detail": "Gives every address-book record one or more roles and makes each party picker offer only the organisation's addresses for its role, all on one page, filtered as the trader types. The address book stores the roles and lists one role's addresses unpaginated; the animals frontend asks for the picker's role. Records saved before roles existed are offered on every picker until given a role, so nobody loses an address on a guess. Stub mode gets roles on its canned records so it filters too. Because each page is now one role's addresses, pagination and the 'Selected address' inset go.",
+      "detail": "Gives every address-book record one or more roles and makes each live-animals party picker offer only the organisation's addresses for its role, all on one page, filtered as the trader types. The address book stores the roles and lists one role's addresses unpaginated; the animals frontend asks for the picker's role. Records saved before roles existed are offered on every picker until given a role, so nobody loses an address on a guess. Stub mode gets roles on its canned records so it filters too. Because each page is now one role's addresses, pagination and the 'Selected address' inset go.",
       "acceptanceCriteria": [
         "On the compose stack, an address saved with only the consignee role appears on the consignee picker and not on the place of origin, consignor, importer or place of destination pickers (prototype:dr2-1-source prototype-dr2-1-source-p8-063; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-070, trace-prototype-dr2-1-p6-098; document:dr1-parity-backlog document-dr1-parity-backlog-p6-047)",
         "An address saved with the exporter role appears on the consignor picker; there is no separate exporter picker (prototype:dr2-1-source prototype-dr2-1-source-p8-064, prototype-dr2-1-source-p8-137)",
@@ -205,30 +120,72 @@
       "repos": ["addressbook", "frontend", "tests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at role filtering on the compose stack and in stub mode before the rows that rest on it build: a role-carrying record appears only on its roles' pickers, a record with no role appears on all five, the list is one page, and the live filter and the no-JavaScript search both narrow it. The same-as row and the place of origin country search build on this.",
+      "gate": "Look at role filtering on the compose stack and in stub mode before the rows that rest on it build: a role-carrying record appears only on its roles' pickers, a record with no role appears on all five, the list is one page, and the live filter and the no-JavaScript search both narrow it. The same-as row, the place of origin country search and the germinal set's copy of the pickers build on this.",
+      "dependsOn": ["inc-059"],
       "openQuestions": [],
-      "notes": "Combines role filtering (address book roles and role-scoped list, the animals frontend asking by role, untyped fallback, stub roles) with one-page listing, the live filter and dropping the 'Selected address' inset, because c-094 rules they land together: one page is only sensible once it is one role's addresses, and the inset only existed to carry a selection across pages. c-100: DR1's typed-record block is lifted; the typed record is built here in trade-imports-address-book. c-101: untyped records show on every picker until given a role, in the compose stack and CDP alike, never filtered on a guess. The animals frontend's address-book service stays read-only (c-106). Giving a record its roles through the INS address book's add and edit pages belongs to the address-book-add-and-edit and party-address-add-and-edit areas; on the compose stack the role-carrying records these criteria use are set-up for a one-page assertion through the address book, which the test rules allow, so this row does not wait for those pages. The tests repo's pagination and later-page-selection tests (repo-tests-p5-013, p5-018, p5-020) change with it.",
+      "notes": "Unchanged from the existing row apart from the gate naming the germinal copy. Combines role filtering (address book roles and role-scoped list, the animals frontend asking by role, untyped fallback, stub roles) with one-page listing, the live filter and dropping the 'Selected address' inset, because c-094 rules they land together: one page is only sensible once it is one role's addresses, and the inset only existed to carry a selection across pages. c-100: DR1's typed-record block is lifted; the typed record is built here in trade-imports-address-book. c-101: untyped records show on every picker until given a role, in the compose stack and CDP alike, never filtered on a guess. The animals frontend's address-book service stays read-only (c-106). Giving a record its roles through the INS address book's add and edit pages belongs to the address-book-add-and-edit and party-address-add-and-edit areas; on the compose stack the role-carrying records these criteria use are set-up for a one-page assertion through the address book, which the test rules allow, so this row does not wait for those pages. The picker's search must still answer a 255-character term (req-1828, exists, driven by the k6 scripts). The tests repo's pagination and later-page-selection tests (repo-tests-p5-013, p5-018, p5-020) change with it.",
       "touches": [
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/service",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java",
         "frontend:src/server/app/services/address-book",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/pagination",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/selection.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/request-params.js",
-        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker",
+        "tests:tests/domain/shared/fixtures/e2e-address-book.ts"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit",
-        "frontend:src/client",
-        "tests:page-objects/animals/party-picker-page.ts"
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java",
+        "frontend:src/client/javascripts",
+        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-087"
+    },
+    {
+      "title": "Same-as shortcuts on the roles and addresses page",
+      "detail": "Lets a trader fill the consignor from the place of origin, and the importer and place of destination from the consignee, with one button press on the live-animals roles and addresses page, as Design Release 2.1 draws. The button copies the source party's record onto the notification as an independent copy, so a later change to the source does not ripple through.",
+      "acceptanceCriteria": [
+        "With a place of origin chosen and no consignor, the Consignor row shows a 'Same as place of origin' button styled as a link beside 'Add a consignor' (prototype:dr2-1-source prototype-dr2-1-source-p8-033; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-042; prototype:dr2-1-specs prototype-dr2-1-specs-p3-049)",
+        "With a consignee chosen and no importer, the Importer row shows a 'Same as consignee' button styled as a link beside 'Add an importer'; with a consignee chosen and no place of destination, the Place of destination row shows a 'Same as consignee' button beside 'Add a place of destination' (prototype:dr2-1-source prototype-dr2-1-source-p8-034; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-043, trace-prototype-dr2-1-p6-044; prototype:dr2-1-specs prototype-dr2-1-specs-p3-050)",
+        "No same-as button shows while its source party is empty or its target party already has an address, and no other pair of parties offers one (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-049, trace-prototype-dr2-1-p6-050; prototype:dr2-1-source prototype-dr2-1-source-p8-038)",
+        "Pressing a same-as button reloads the roles and addresses page with no success banner, the target row showing the source party's name and full address with a 'Change' link and no same-as button (prototype:dr2-1-source prototype-dr2-1-source-p8-035, prototype-dr2-1-source-p8-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-045 to trace-prototype-dr2-1-p6-048; prototype:dr2-1-specs prototype-dr2-1-specs-p3-051)",
+        "After copying, changing the source party to a different address leaves the copied target party's address as it was (prototype:dr2-1-source prototype-dr2-1-source-p8-037; prototype:dr2-1-specs prototype-dr2-1-specs-p3-052; document:dr1-parity-backlog document-dr1-parity-backlog-p6-021)",
+        "The copy is made even when the source address does not carry the target party's role, and the target party then shows that address (prototype:dr2-1-source prototype-dr2-1-source-p8-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-099)",
+        "The copied party carries the source's name, address lines, country and contact details through to check your answers (prototype:dr2-1-source prototype-dr2-1-source-p8-036; repo:frontend repo-frontend-p9-085, repo-frontend-p9-086)",
+        "The same-as buttons work with JavaScript turned off, and every new string has a Welsh machine-draft counterpart (document:dr1-parity-backlog document-dr1-parity-backlog-p6-023; repo:frontend repo-frontend-p9-089)"
+      ],
+      "requirements": ["req-576", "req-577", "req-578", "req-579", "req-580"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-033 to p8-038" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-042 to p6-050, p6-099, p6-100" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-049 to p3-052" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p6-018 to p6-023" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-085, p9-086, p9-089" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-019, p14-073" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "dependsOn": ["inc-085", "inc-087"],
+      "openQuestions": [],
+      "notes": "Unchanged from the existing row. Combines the three same-as buttons and their shared show and copy rules: one page form, one copy behaviour, one set of tests. c-100: DR1's collision block does not hold this back. Today the summary list sits outside the page's form (document-dr1-parity-backlog-p6-023), so the buttons need the form around them. The prototype's same-as-<source>:<role> action value is not adopted (req-1829, out of scope): the button posts the real service's own fields. Order: build after the roles and addresses page copy row (it asserts the full address and the named add links) and after the role-filtered pickers row (the 'copy even when the target's picker would not offer it' criterion needs role-carrying records). On the compose stack the role-carrying record for that criterion is set-up for a one-page assertion, allowed by the test rules.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/frozen-parties.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit",
+        "tests:page-objects/animals/addresses-page.ts",
+        "tests:tests/animals/e2e/features/address-book"
+      ],
+      "existingRow": "inc-088"
     },
     {
       "title": "Place of origin picker searches by country",
-      "detail": "Gives the place of origin picker the country search Design Release 2.1 draws: its own label, hint and placeholder, and a country autocomplete that keeps the rows in the chosen country. Without JavaScript, submitting a country narrows the list on the server.",
+      "detail": "Gives the live-animals place of origin picker the country search Design Release 2.1 draws: its own label, hint and placeholder, and a country autocomplete that keeps the rows in the chosen country. Without JavaScript, submitting a country narrows the list on the server.",
       "acceptanceCriteria": [
         "The place of origin picker's search is labelled 'Enter a country' (prototype:dr2-1-source prototype-dr2-1-source-p8-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-072; prototype:dr2-1-specs prototype-dr2-1-specs-p3-035)",
         "Its hint reads 'Enter each country that the consignment will travel through' (prototype:dr2-1-source prototype-dr2-1-source-p8-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-127, trace-prototype-dr2-1-p13-103)",
@@ -243,30 +200,29 @@
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-072, p6-073, p6-079-m1, p6-096, p6-101, p12-127, p13-103" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-035" },
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p7-054" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-053, p9-055" }
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-053, p9-055, p9-089" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
+      "dependsOn": ["inc-086", "inc-087"],
       "openQuestions": [],
-      "notes": "Combines the place of origin picker's label, hint, placeholder and country filter: one picker, one search control. c-102: adopted as the prototype draws it, though the hint reads like transit-country copy; no DR1 judgement or constraint overrides it. Order: build after the role-filtered pickers row, whose live filter and one-page list this country filter builds on, and after the picker layout row, which reshapes the search control.",
+      "notes": "Unchanged from the existing row. Combines the place of origin picker's label, hint, placeholder and country filter: one picker, one search control. c-102: adopted as the prototype draws it, though the hint reads like transit-country copy; no DR1 judgement or constraint overrides it. The search keeps the real service's field name (req-1829 out of scope, req-1828 exists). Order: build after the role-filtered pickers row, whose live filter and one-page list this country filter builds on, and after the picker layout row, which reshapes the search control.",
       "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker"
       ],
       "shared": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/fit",
-        "frontend:src/client",
-        "tests:tests/animals/e2e/features/address-book",
-        "tests:page-objects/animals/party-picker-page.ts"
+        "frontend:src/client/javascripts",
+        "tests:page-objects/animals/party-picker-page.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-089"
     },
     {
       "title": "Picker 'View' link to the INS address book and back",
-      "detail": "Replaces each picker row's in-place 'View details' expander with a 'View' link that opens the address in the INS address book, and makes the INS address book bring the trader back to the same picker. The INS frontend stays the one place an address is shown in full.",
+      "detail": "Replaces each live-animals picker row's in-place 'View details' expander with a 'View' link that opens the address in the INS address book, and makes the INS address book bring the trader back to the same picker. The INS frontend stays the one place an address is shown in full.",
       "acceptanceCriteria": [
         "Each picker row ends with a 'View' link, and there is no 'View details' expander (prototype:dr2-1-source prototype-dr2-1-source-p8-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-060)",
         "On the compose stack, following 'View' opens that address in the INS address book, and its back control returns the trader to the same party picker of the same notification (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-061; prototype:dr2-1-source prototype-dr2-1-source-p8-062)",
@@ -276,7 +232,7 @@
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-062" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-060, p6-061" },
-        { "source": "repo:frontend", "ref": "repo-frontend-p9-062, p9-063" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-062, p9-063, p9-089" },
         { "source": "repo:tests", "ref": "repo-tests-p5-014" },
         { "source": "trace:e2e", "ref": "trace-e2e-p9-025, p9-026" },
         { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-043, p15-024, p15-025" }
@@ -285,16 +241,104 @@
       "kind": "feat",
       "status": "todo",
       "gate": null,
+      "dependsOn": ["inc-086", "inc-066"],
       "openQuestions": [],
-      "notes": "Kept apart: it is the area's only change to the INS frontend and carries a cross-service return path the others do not. c-097: the prototype wins; the INS frontend must honour the return path, and the tests repo's in-place expander test (repo-tests-p5-014) changes with it. In stub mode, where no INS frontend runs, the fit suite observes the link's presence only; where it leads is observed on the compose stack. The builder should accept only a return path inside the animals journey, as the INS add handshake already does (journey-registry), so the link is no open redirect; this is a safeguard, not a source requirement, so it is left out of the acceptance criteria.",
+      "notes": "Unchanged from the existing row. Kept apart: it is the area's only change to the INS frontend and carries a cross-service return path the others do not. c-097: the prototype wins; the INS frontend must honour the return path, and the tests repo's in-place expander test (repo-tests-p5-014) changes with it. In stub mode, where no INS frontend runs, the fit suite observes the link's presence only; where it leads is observed on the compose stack. The builder should accept only a return path inside the animals journey, as the INS add handshake already does (journey-registry), so the link is no open redirect; this is a safeguard, not a source requirement, so it is left out of the acceptance criteria. The return to a germinal products picker is the germinal row's and req-1831's concern, not this row's.",
       "touches": [
         "insfrontend:src/server/app/features/address-book/view",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/_address-picker.njk"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
         "insfrontend:src/server/app/features/address-book/journey-registry.js",
-        "tests:tests/animals/e2e/features/address-book",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
+        "tests:page-objects/animals/party-picker-page.ts",
+        "tests:tests/animals/e2e/features/address-book/addresses-picker.spec.ts"
+      ],
+      "existingRow": "inc-090"
+    },
+    {
+      "title": "Which sections the roles and addresses page shows, when its task is complete, and where it continues",
+      "detail": "Makes the live-animals roles and addresses page ask for exactly what the consignment needs and say honestly when it is done. A 'Permanent address' section appears for 01061900 consignments with a species that needs one; the task counts as complete only when every shown section is; and 'Save and continue' goes on to the contact address for this consignment page in the opening run, or to the overview once everything is complete or when the page was opened from its overview task. The CPH number exemptions stay as they are today: ruling sam-2026-10-09 moves the germinal codes into their own set (req-1826) rather than adding them to the live-animals exemption list.",
+      "acceptanceCriteria": [
+        "For commodity code 01061900 with at least one selected species that needs a permanent address, the page shows a 'Permanent address' section with the hint 'A permanent address is where an animal:', the bullets 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)', and the link 'Add a permanent address' (prototype:dr2-1-source prototype-dr2-1-source-p8-013, prototype-dr2-1-source-p8-016, prototype-dr2-1-source-p8-030; prototype:dr2-1-specs prototype-dr2-1-specs-p3-019, prototype-dr2-1-specs-p3-022 to prototype-dr2-1-specs-p3-024)",
+        "No other consignment shows the 'Permanent address' section (prototype:dr2-1-specs prototype-dr2-1-specs-p3-019; trace:animals-fit trace-animals-fit-p14-026)",
+        "The overview's 'Roles and addresses' task shows Complete only once every party has an address and, where shown, the CPH number or permanent address is given; with any shown section empty it is not Complete (prototype:dr2-1-source prototype-dr2-1-source-p8-039, prototype-dr2-1-source-p8-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-080)",
+        "On a new notification's opening run, 'Save and continue' on the roles and addresses page opens the contact address for this consignment page, not the CPH number page (prototype:dr2-1-source prototype-dr2-1-source-p8-043; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-039; prototype:dr2-1-specs prototype-dr2-1-specs-p3-048, prototype-dr2-1-specs-p4-040)",
+        "On the opening run, when every overview section is already complete, 'Save and continue' opens the overview instead (prototype:dr2-1-source prototype-dr2-1-source-p8-044; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-124)",
+        "Opened from its overview task, the roles and addresses page returns to the overview on 'Save and continue' and does not run on to the CPH number page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196)",
+        "Reached from check your answers to change an answer, 'Save and continue' still returns to check your answers (repo:frontend repo-frontend-p9-026)",
+        "Every new string has a Welsh machine-draft counterpart (repo:frontend repo-frontend-p9-089)"
+      ],
+      "requirements": ["req-575", "req-582", "req-584"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-013, p8-016, p8-030, p8-039 to p8-044" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p6-026 to p6-031, p6-039, p6-080, p12-124, p13-097, p13-098" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p3-019 to p3-024, p3-048, p4-040" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-196" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-004, p9-026, p9-028, p9-089, p9-175, p9-178, p9-179" },
+        { "source": "repo:tests", "ref": "repo-tests-p1-086" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-021 to p14-026, p14-075, p14-076, p14-081" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "dependsOn": ["inc-001", "inc-002", "inc-054", "inc-091", "inc-094"],
+      "openQuestions": [],
+      "notes": "Rewritten on this re-distil. req-574 leaves the row: ruling sam-2026-10-09 split it, its live half (exempt only 0101 and 01061900) is now adopted as exists, and its germinal half is req-1826 in the germinal products roles and addresses row; the criterion naming 05111000 and 05119985 is withdrawn (c-091's new outcome). req-582 now carries the overview return (req-1615, c-204, c-092). Combines the page's permanent address section, task completion and the continue destination: they share the parties obligations and the journey flow, and are reviewed together as one behaviour. c-104 (completion counts every shown section), c-092 (opening-run continue goes to the contact address page; the change-context return stands). Order: inc-001 builds the opening-run step order (req-1611, req-1612) and inc-002 the overview return (req-1615) in the journey flow; this row builds on them and proves them from this page rather than building the flow change twice. Where 'Add a permanent address' leads, and the permanent address and contact address pages themselves, belong to other rows (inc-054, inc-094); the CPH number page is inc-091's. The tests repo's page flow expects the CPH number page after this page today (repo-tests-p1-086) and changes with it. This row changes shared code (the parties obligations, the journey flow) that other areas also touch.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/evaluation.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/page.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/template.njk",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/parties.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/copy",
+        "frontend:src/server/app/sets/live-animals/obligations/sections/parties.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "tests:page-objects/animals/addresses-page.ts"
+      ],
+      "existingRow": "inc-096"
+    },
+    {
+      "title": "Germinal products roles and addresses page and party pickers",
+      "detail": "Gives the germinal products set its own roles and addresses page and its own five party pickers, copied from the live-animals addresses feature once this area's rows have built it, as ruling sam-2026-10-09 directs (germinal products is a sibling set of duplicated feature pages). The copy behaves as the live-animals page and pickers do, with the same words and hints, except that a germinal consignment is only ever asked for the five consignment addresses: the set has no CPH number and no permanent address section, and serves no CPH number or permanent address page. A trader importing germinal products can then record every party of the consignment within the germinal notification.",
+      "acceptanceCriteria": [
+        "From a germinal products notification's overview, the 'Roles and addresses' task opens a 'Consignment addresses' page with the caption 'Consignment parties', the paragraph 'Add all the addresses that are involved in the consignment.' and the warning 'Providing a false address is an act of fraud', within that germinal products notification (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-006, ruling-sam-2026-10-09-p1-014; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-122)",
+        "For every germinal commodity the page shows exactly five sections, in this order: Place of origin, Consignor, Consignee, Importer, Place of destination; it shows no CPH number section and no 'Permanent address' section (prototype:dr2-1-source prototype-dr2-1-source-p8-014; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-122; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018, ruling-sam-2026-10-09-p1-057)",
+        "The germinal products set offers no CPH number page and no permanent address page: nothing on its pages links to one, and opening either page's address under a germinal products notification shows 'Page not found' (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018)",
+        "Each section's hint reads as on the live-animals page, word for word, including Place of origin 'The address where the animals begin their journey to Great Britain' and Place of destination 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.' (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-122-m1; repo:frontend repo-frontend-p9-046)",
+        "Each empty row's link ('Add a place of origin', 'Add a consignor', 'Add a consignee', 'Add an importer', 'Add a place of destination') opens the germinal set's own picker for that party; choosing an address there and pressing 'Save and continue' returns to the germinal page, which shows the full address with a 'Change' link, and the address is saved on the germinal products notification only (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-009, ruling-sam-2026-10-09-p1-011; repo:frontend repo-frontend-p9-001)",
+        "The germinal pickers offer the same addresses for each role, the same search, live filter, place of origin country search, 'View' link, results count and blank-save behaviour as the live-animals pickers; 'Add a new address' shows as a secondary button beside the heading on the compose stack and is left out in stub mode (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-013, ruling-sam-2026-10-09-p1-014)",
+        "The germinal page offers the same-as buttons ('Same as place of origin' on Consignor; 'Same as consignee' on Importer and Place of destination) under the same rules as the live-animals page (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014)",
+        "The germinal overview's 'Roles and addresses' task shows Complete once all five parties have an address, with no CPH number or permanent address asked for (prototype:dr2-1-source prototype-dr2-1-source-p8-014; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-017, ruling-sam-2026-10-09-p1-018)",
+        "In Welsh the germinal page and pickers show the same Welsh text as the live-animals ones, and they have no serious or critical accessibility violations (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-014; repo:frontend repo-frontend-p9-002, repo-frontend-p9-089)"
+      ],
+      "requirements": ["req-1826", "req-1827"],
+      "sources": [
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-001, p1-006, p1-009, p1-011, p1-013, p1-014, p1-015, p1-017, p1-018, p1-057, p1-058, p1-110" },
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p8-014" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p12-122, p12-122-m1" },
+        { "source": "repo:frontend", "ref": "repo-frontend-p9-001, p9-002, p9-019, p9-046, p9-089" },
+        { "source": "trace:animals-fit", "ref": "trace-animals-fit-p14-027" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "dependsOn": ["inc-085", "inc-086", "inc-087", "inc-088", "inc-089", "inc-090", "inc-096"],
+      "openQuestions": [],
+      "notes": "New on this re-distil, from Sam's 9 October ruling and the germinals data fields source. Combines req-1826 (the germinal half of req-574: five sections only, no CPH number or permanent address) and req-1827 (the germinal set's own copy of the page and pickers), because they are one page and one copy: building the copy without its section rule would show a CPH row the set cannot answer. Ruling sam-2026-10-09 (p1-014) says each germinal page is copied after this programme has built its live twin, so this row depends on every live-animals row of this area. It also depends on the germinal products set's own mount, journey, flow and overview (req-1898, ruling p1-006) in another area, which this draft cannot name by id: the combiner adds that dependency. Ruling p1-058 puts the germinal set in one theme, germinal-products, in the last wave: this row belongs there, not in consignment-parties. Where 'Add a new address' leads from a germinal picker, and the INS address book's return to the germinal set, are req-1831's (INS themes, proven in the ins Playwright project); this row observes only the button. The 'Roles and addresses' overview row with its hint is req-1840 (overview area); the completion criterion here is the page's own rule (req-584 in the copy) observed through that row. The full germinal walk-through spec is req-1899's. The routes and form fields stay the real service's, with the live-animals slugs (req-1828 exists, req-1829 out of scope). Same behaviour in stub mode and on the compose stack, as for the live-animals pickers.",
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/addresses",
+        "frontend:src/server/app/sets/germinal-products/obligations/sections/parties.js",
+        "tests:tests/animals/e2e/germinal-products/addresses"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
+        "frontend:src/server/app/sets/germinal-products/set.js",
+        "frontend:src/server/app/services/address-book",
+        "tests:page-objects/animals/addresses-page.ts",
         "tests:page-objects/animals/party-picker-page.ts"
       ],
       "existingRow": null

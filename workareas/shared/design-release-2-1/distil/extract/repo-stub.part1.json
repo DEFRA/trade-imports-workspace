@@ -1,0 +1,387 @@
+{
+  "source": "repo:stub",
+  "structure": "Part 1, Address lookup simulator. Read in full: src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java (163 lines: one GET endpoint, a bearer check, a switch over reserved search terms, a 401 body, a three-address fixture and a no-results fixture), src/test/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorControllerTest.java (194 lines, 14 MockMvc tests), the EUDPA-390 block of src/main/resources/application.yml (lines 106 to 119: sts-simulator settings, out of scope, and address-lookup-simulator.expected-audience), README.md (72 lines: latency profiles and fault injection for trade-token and mdm only; it never mentions the address lookup simulator) and docs/repos/trade-imports-stub.md in the workspace (no mention of address, lookup or simulator). Covered: the endpoint path and its postcode and find parameters with postcode precedence, the 400 when neither is sent, every reserved term (SW1A 1AA, ZZ1 1ZZ, QQ1 1QQ, XX1 1XX, YY1 1YY, TT1 1TT, Buckingham Palace, Downing Street) and the default no-results answer, the three fixture addresses field by field and the header, the recorded reasons for the fixture shape and for not modelling find, the bearer check in general terms with its 401 body, the expected-audience setting, and every test. Gaps recorded: no documentation of the simulator in the README or the workspace repo page, the truncation and find fixtures the class comment defers to iteration 2, and no fixture for a non-London, Welsh, Scottish or Northern Irish postcode.",
+  "claims": [
+    {
+      "id": "repo-stub-p1-001",
+      "statement": "The stub simulates the DEFRA address lookup gateway's address search at GET /simulator/address-lookup/v2.1/addresses.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/stubs/federated/AddressLookupSimulatorController.java:41",
+      "quote": "@GetMapping(\"/simulator/address-lookup/v2.1/addresses\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-002",
+      "statement": "The simulator stands in for the address lookup gateway that the INS backend calls, as part of the EUDPA-390 address lookup spike.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:106; AddressLookupSimulatorController.java:21",
+      "quote": "# EUDPA-390 address lookup spike — the three federated-credential simulators (plan Step 6).",
+      "confidence": "verbatim",
+      "note": "The caller being ins-backend is stated in the application.yml comment at line 115: \"The audience ins-backend's Entra token request resolves to\"."
+    },
+    {
+      "id": "repo-stub-p1-003",
+      "statement": "The search accepts two optional query parameters: postcode and find (free text).",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:44-45",
+      "quote": "@RequestParam(required = false) String postcode,\n        @RequestParam(required = false) String find",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-004",
+      "statement": "When both postcode and find are sent, postcode is used and find is ignored.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:55",
+      "quote": "String term = postcode != null ? postcode : find;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-005",
+      "statement": "A postcode and a find term are matched the same way, against the same reserved terms: the simulator deliberately does not model what find really matches (a postcode, building name or number, street or town), leaving that to the real gateway in dev.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:51-54",
+      "quote": "Deliberately identical for both parameters. What find really matches — a postcode, a building name or number, a street, a town — is a question only the real gateway can answer, and a simulator that guessed would look like an answer. Local runs prove the plumbing carries the parameter through; dev settles the behaviour.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-006",
+      "statement": "When neither postcode nor find is sent, the simulator answers 400 with a JSON body whose message is \"Either postcode or find is required\".",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:56-58",
+      "quote": ".body(\"{ \\\"statusCode\\\": 400, \\\"message\\\": \\\"Either postcode or find is required\\\" }\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-007",
+      "statement": "Reserved terms are matched exactly, case and spacing included, so a postcode sent in lower case or without its space (for example sw1a 1aa or SW1A1AA) does not hit a fixture and gets the no-results answer.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:60-76",
+      "quote": "return switch (term) {\n            case \"SW1A 1AA\" -> jsonOk(THREE_ADDRESSES_FIXTURE);",
+      "confidence": "inferred",
+      "note": "Inferred from the Java string switch, which compares exactly, and the default branch returning NO_RESULTS_FIXTURE. Whether callers normalise the postcode before sending it is outside this source."
+    },
+    {
+      "id": "repo-stub-p1-008",
+      "statement": "Searching for postcode SW1A 1AA returns 200 with a JSON body holding the three fixture addresses.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:61",
+      "quote": "case \"SW1A 1AA\" -> jsonOk(THREE_ADDRESSES_FIXTURE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-009",
+      "statement": "Searching for postcode ZZ1 1ZZ returns 204 No Content with no body: the reserved no-results postcode.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:62",
+      "quote": "case \"ZZ1 1ZZ\" -> ResponseEntity.noContent().build();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-010",
+      "statement": "Searching for postcode QQ1 1QQ returns 400 with a JSON body whose message is \"Requested postcode is not valid\": the reserved invalid postcode.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:63-64",
+      "quote": ".body(\"{\\\"statusCode\\\":400,\\\"message\\\":\\\"Requested postcode is not valid\\\"}\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-011",
+      "statement": "Searching for postcode XX1 1XX returns 503 with a JSON body whose message is \"Service Unavailable\": the reserved throttled or unavailable postcode.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:65-66",
+      "quote": ".body(\"{\\\"statusCode\\\":503,\\\"message\\\":\\\"Service Unavailable\\\"}\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-012",
+      "statement": "Searching for postcode YY1 1YY returns 200 with an HTML body (\"Bad Gateway\") instead of JSON: the reserved proxy-error postcode.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:67",
+      "quote": "case \"YY1 1YY\" -> ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(\"<html><body>Bad Gateway</body></html>\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-013",
+      "statement": "Searching for postcode TT1 1TT waits 15 seconds, then returns 200 with the three fixture addresses: the reserved slow-response postcode.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:68, 79-86",
+      "quote": "Thread.sleep(15_000);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-014",
+      "statement": "The free-text terms \"Buckingham Palace\" and \"Downing Street\" each return 200 with the three fixture addresses, so the find search can be demonstrated locally.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:69-74",
+      "quote": "case \"Buckingham Palace\", \"Downing Street\" -> jsonOk(THREE_ADDRESSES_FIXTURE);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-015",
+      "statement": "A result for a reserved free-text term says nothing about whether the same search would return results from the real gateway: the free-text terms are fixtures, not a model of find.",
+      "kind": "constraint",
+      "ref": "AddressLookupSimulatorController.java:69-73",
+      "quote": "These are reserved terms like the postcodes above, NOT a model of what find matches — that is the question the spike exists to answer, and only the real gateway can. A search here returning results says nothing about whether the same search would return results in dev.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-016",
+      "statement": "Every other postcode or free-text term returns 200 with a JSON body holding no results: header totalResults \"0\" and an empty results list.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:75, 160-162",
+      "quote": "{ \"header\": { \"totalResults\": \"0\" }, \"results\": [] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-017",
+      "statement": "Every successful JSON answer has a header object with totalResults, given as a string (\"3\" or \"0\"), and a results list.",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:151-152, 161",
+      "quote": "\"header\": { \"totalResults\": \"3\" },\n          \"results\": [",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-018",
+      "statement": "Each address result has the fields addressLine, subBuildingName, buildingName, buildingNumber, street, town, postcode, country, uprn, match, matchDescription and language, and no county field.",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:153-155",
+      "quote": "{ \"addressLine\": \"1 DOWNING STREET, LONDON, SW1A 1AA\", \"subBuildingName\": null, \"buildingName\": null, \"buildingNumber\": \"1\", \"street\": \"DOWNING STREET\", \"town\": \"LONDON\", \"postcode\": \"SW1A 1AA\", \"country\": \"ENGLAND\", \"uprn\": \"100023336902\", \"match\": \"1\", \"matchDescription\": \"EXACT\", \"language\": \"EN\" }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-019",
+      "statement": "Address values are all upper case, country is free text (\"ENGLAND\") rather than an ISO code, and match, uprn and buildingNumber are strings.",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:142-144",
+      "quote": "everything upper case, {@code country} free text rather than an ISO code, no county field, {@code match} a string, and counts as strings.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-020",
+      "statement": "The first fixture address is Buckingham Palace: addressLine \"BUCKINGHAM PALACE, LONDON, SW1A 1AA\", subBuildingName \"BUCKINGHAM PALACE\", buildingName, buildingNumber and street all null, town \"LONDON\", postcode \"SW1A 1AA\", country \"ENGLAND\", uprn \"100023336901\", match \"1\", matchDescription \"EXACT\", language \"EN\".",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:153",
+      "quote": "{ \"addressLine\": \"BUCKINGHAM PALACE, LONDON, SW1A 1AA\", \"subBuildingName\": \"BUCKINGHAM PALACE\", \"buildingName\": null, \"buildingNumber\": null, \"street\": null, \"town\": \"LONDON\", \"postcode\": \"SW1A 1AA\", \"country\": \"ENGLAND\", \"uprn\": \"100023336901\", \"match\": \"1\", \"matchDescription\": \"EXACT\", \"language\": \"EN\" }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-021",
+      "statement": "The second fixture address is 1 Downing Street: addressLine \"1 DOWNING STREET, LONDON, SW1A 1AA\", subBuildingName and buildingName null, buildingNumber \"1\", street \"DOWNING STREET\", town \"LONDON\", postcode \"SW1A 1AA\", country \"ENGLAND\", uprn \"100023336902\", match \"1\", matchDescription \"EXACT\", language \"EN\".",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:154",
+      "quote": "{ \"addressLine\": \"1 DOWNING STREET, LONDON, SW1A 1AA\", \"subBuildingName\": null, \"buildingName\": null, \"buildingNumber\": \"1\", \"street\": \"DOWNING STREET\", \"town\": \"LONDON\", \"postcode\": \"SW1A 1AA\", \"country\": \"ENGLAND\", \"uprn\": \"100023336902\", \"match\": \"1\", \"matchDescription\": \"EXACT\", \"language\": \"EN\" }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-022",
+      "statement": "The third fixture address is Unit 1, Downing House: addressLine \"UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA\", subBuildingName \"UNIT 1\", buildingName \"DOWNING HOUSE\", buildingNumber null, street \"DOWNING STREET\", town \"LONDON\", postcode \"SW1A 1AA\", country \"ENGLAND\", uprn \"100023336903\", match \"1\", matchDescription \"EXACT\", language \"EN\".",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:155",
+      "quote": "{ \"addressLine\": \"UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA\", \"subBuildingName\": \"UNIT 1\", \"buildingName\": \"DOWNING HOUSE\", \"buildingNumber\": null, \"street\": \"DOWNING STREET\", \"town\": \"LONDON\", \"postcode\": \"SW1A 1AA\", \"country\": \"ENGLAND\", \"uprn\": \"100023336903\", \"match\": \"1\", \"matchDescription\": \"EXACT\", \"language\": \"EN\" }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-023",
+      "statement": "All three fixture addresses share postcode SW1A 1AA and town LONDON, whichever reserved term returned them, including the free-text terms.",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:61, 68, 74, 153-155",
+      "quote": "\"town\": \"LONDON\", \"postcode\": \"SW1A 1AA\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-024",
+      "statement": "The fixtures follow the real gateway's dev response of 17 September 2026, not the published v2.1 specification.",
+      "kind": "constraint",
+      "ref": "AddressLookupSimulatorController.java:141-142",
+      "quote": "Shaped like the real dev response of 2026-09-17, not like the published v2.1 specification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-025",
+      "statement": "The three fixture addresses are the three ways a name lands in a result (the whole name in subBuildingName; a building number and street; a sub-building, building name and street), chosen because they make composing address line 1 awkward; the Buckingham Palace case is the one dev actually returned.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:144-147",
+      "quote": "The three results are the three ways a name lands, which is what makes composing address line 1 awkward — the first is the Buckingham Palace case dev actually returned, where {@code subBuildingName} carries the whole name and {@code buildingName}, {@code buildingNumber} and {@code street} are all null.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-026",
+      "statement": "Every search requires a bearer token: the simulator checks the authorisation scheme, the token's signature, its audience and its expiry before answering any search, the way a real resource server would.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:21-23, 46-49, 92-128",
+      "quote": "Checks the bearer token the way a real resource server would — signature, audience, expiry — before serving the reserved-postcode fixtures",
+      "confidence": "verbatim",
+      "note": "Described in general terms only, as the brief requires."
+    },
+    {
+      "id": "repo-stub-p1-027",
+      "statement": "A search with a missing or invalid bearer token is refused with 401 and the JSON body { \"statusCode\": 401, \"message\": \"Unauthorized. Access token is missing or invalid.\" }, word for word what the real gateway returned in dev on 17 September 2026.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:130-139",
+      "quote": ".body(\"{ \\\"statusCode\\\": 401, \\\"message\\\": \\\"Unauthorized. Access token is missing or invalid.\\\" }\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-028",
+      "statement": "The 401 answer carries no WWW-Authenticate header, matching the real gateway.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:133-134",
+      "quote": "The gateway sends no {@code WWW-Authenticate} header with it, and neither does this.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-029",
+      "statement": "The bearer check runs before the search terms are looked at, so an unauthorised request gets 401 even when it sends no search term or a reserved term.",
+      "kind": "rule",
+      "ref": "AddressLookupSimulatorController.java:46-49",
+      "quote": "ResponseEntity<String> rejection = validateBearer(authorization);\n        if (rejection != null) {\n            return rejection;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-030",
+      "statement": "The audience the simulator expects is set by address-lookup-simulator.expected-audience, overridable with ADDRESS_LOOKUP_SIMULATOR_EXPECTED_AUDIENCE, and must match the INS backend's local and stack Scope value exactly, api:// prefix included.",
+      "kind": "constraint",
+      "ref": "src/main/resources/application.yml:114-119",
+      "quote": "# The audience ins-backend's Entra token request resolves to once /.default is stripped — must\n  # match the local/stack \"Scope\" value in the EUDPA-390 plan exactly, api:// prefix included.",
+      "confidence": "verbatim",
+      "note": "The default value is a placeholder identifier, not a secret, and is not repeated here."
+    },
+    {
+      "id": "repo-stub-p1-031",
+      "statement": "The simulator, like the real gateway in dev, accepts only the api:// form of the audience and refuses a token whose audience is the bare identifier.",
+      "kind": "rule",
+      "ref": "src/main/resources/application.yml:117-118",
+      "quote": "# The real gateway policy in dev wants the api:// form and rejects the bare GUID, so this does\n  # too: a simulator that accepted either would not have caught the 401 the spike hit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-032",
+      "statement": "Test addresses_shouldReturnThreeFixtureAddresses_forTheDefaultPostcode proves SW1A 1AA returns 200 JSON with totalResults \"3\" and DOWNING STREET in the body.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:41-50 addresses_shouldReturnThreeFixtureAddresses_forTheDefaultPostcode",
+      "quote": ".andExpect(content().string(containsString(\"\\\"totalResults\\\": \\\"3\\\"\")))\n            .andExpect(content().string(containsString(\"DOWNING STREET\")));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-033",
+      "statement": "Test addresses_shouldReturnAddressesShapedLikeTheRealApi proves the result carries subBuildingName BUCKINGHAM PALACE, country ENGLAND, match as the string \"1\", and no county.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:52-63 addresses_shouldReturnAddressesShapedLikeTheRealApi",
+      "quote": "// The divergences from the published specification that dev confirmed on 2026-09-17.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-034",
+      "statement": "Test addresses_shouldReject_whenTheBearerAudienceIsTheBareGuidRatherThanTheApiUri proves a bare-identifier audience gets 401 with the exact gateway body and no WWW-Authenticate header.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:65-79 addresses_shouldReject_whenTheBearerAudienceIsTheBareGuidRatherThanTheApiUri",
+      "quote": "// The exact mismatch the spike hit in dev: the scope requested as the bare GUID produces\n        // this audience, and the gateway policy wants the api:// form.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-035",
+      "statement": "The missing WWW-Authenticate header on the gateway's 401 means a caller cannot rely on Spring's own authorisation failure handler to evict a stale token.",
+      "kind": "constraint",
+      "ref": "AddressLookupSimulatorControllerTest.java:76-78",
+      "quote": "// The real gateway sends none, which is why Spring's own authorization failure handler\n            // cannot be used to evict a stale token (plan, iteration 1 gaps).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-036",
+      "statement": "Test addresses_shouldServeTheReservedFreeTextTerms_soFindCanBeDemonstrated proves find=Buckingham Palace returns 200 with BUCKINGHAM PALACE in the body.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:81-88 addresses_shouldServeTheReservedFreeTextTerms_soFindCanBeDemonstrated",
+      "quote": ".param(\"find\", \"Buckingham Palace\"))\n            .andExpect(status().isOk())\n            .andExpect(content().string(containsString(\"BUCKINGHAM PALACE\")));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-037",
+      "statement": "Test addresses_shouldReturnNoResults_forFreeTextThatIsNotReserved proves a partial free-text term (find=Buckingham) returns 200 with totalResults \"0\".",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:90-98 addresses_shouldReturnNoResults_forFreeTextThatIsNotReserved",
+      "quote": "// The reserved terms are fixtures, not a model of what find matches.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-038",
+      "statement": "Test addresses_shouldReturn400_whenNeitherPostcodeNorFindIsGiven proves a search with no term returns 400 with \"Either postcode or find is required\".",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:100-106 addresses_shouldReturn400_whenNeitherPostcodeNorFindIsGiven",
+      "quote": ".andExpect(content().string(containsString(\"Either postcode or find is required\")));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-039",
+      "statement": "Test addresses_shouldReturn204_forTheReservedNoResultsPostcode proves ZZ1 1ZZ returns 204.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:108-114 addresses_shouldReturn204_forTheReservedNoResultsPostcode",
+      "quote": ".param(\"postcode\", \"ZZ1 1ZZ\"))\n            .andExpect(status().isNoContent());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-040",
+      "statement": "Test addresses_shouldReturnARejectedPostcode400_forTheReservedInvalidPostcode proves QQ1 1QQ returns 400 with \"Requested postcode\" in the body.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:116-123 addresses_shouldReturnARejectedPostcode400_forTheReservedInvalidPostcode",
+      "quote": ".andExpect(content().string(containsString(\"Requested postcode\")));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-041",
+      "statement": "Test addresses_shouldReturn503_forTheReservedThrottledPostcode proves XX1 1XX returns 503.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:125-131 addresses_shouldReturn503_forTheReservedThrottledPostcode",
+      "quote": ".param(\"postcode\", \"XX1 1XX\"))\n            .andExpect(status().isServiceUnavailable());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-042",
+      "statement": "Test addresses_shouldReturnNonJsonHtml_forTheReservedProxyErrorPostcode proves YY1 1YY returns 200 with an HTML content type.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:133-140 addresses_shouldReturnNonJsonHtml_forTheReservedProxyErrorPostcode",
+      "quote": ".andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-043",
+      "statement": "Tests addresses_shouldReject_whenNoBearerPresent, addresses_shouldReject_whenTheBearerAudienceIsWrong, addresses_shouldReject_whenTheBearerHasExpired and addresses_shouldReject_whenTheBearerSignatureIsWrong prove a search is refused with 401 when the bearer is missing, has the wrong audience, has expired or is signed with the wrong key.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java:142-181",
+      "quote": "void addresses_shouldReject_whenNoBearerPresent() throws Exception {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-stub-p1-044",
+      "statement": "No test proves the TT1 1TT 15-second delayed answer, the XX1 1XX and YY1 1YY bodies, the Downing Street free-text term, or that postcode wins when both postcode and find are sent.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorControllerTest.java (all 14 tests read)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-stub-p1-045",
+      "statement": "The simulator has no fixtures for truncated result sets or for find-specific matching; the class comment defers them to iteration 2.",
+      "kind": "behaviour",
+      "ref": "AddressLookupSimulatorController.java:23-25",
+      "quote": "Only the fixtures iteration 1 needs are wired here; {@code find} and the truncation/find fixtures are iteration 2.",
+      "confidence": "inferred",
+      "note": "Inferred as still unbuilt: the switch at lines 60-76 has no truncation fixture, though the reserved free-text terms show find is partly wired."
+    },
+    {
+      "id": "repo-stub-p1-046",
+      "statement": "The stub has no fixture address outside London or outside England (no Welsh, Scottish or Northern Irish address and no language other than EN), so an address lookup page cannot be exercised locally with such an address.",
+      "kind": "data",
+      "ref": "AddressLookupSimulatorController.java:149-162",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-stub-p1-047",
+      "statement": "Neither the stub's README nor the workspace's docs/repos/trade-imports-stub.md documents the address lookup simulator, its path or its reserved postcodes; they are recorded only in the code.",
+      "kind": "non-functional",
+      "ref": "README.md (72 lines, latency and fault sections name only trade-token and mdm); docs/repos/trade-imports-stub.md (grep for address, lookup, simulator: no match)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

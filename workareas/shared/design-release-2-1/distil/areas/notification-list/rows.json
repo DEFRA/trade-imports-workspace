@@ -3,85 +3,103 @@
   "rows": [
     {
       "title": "The live animals list moves to the INS frontend, scoped to the trader's organisation",
-      "detail": "Design Release 2.1 serves the category notification lists in the same service as the overall home. Following Rhys's DR1 judgement that the animals dashboard is temporary and moves to the INS front door (c-159), the INS frontend serves the live animals list at /live-animals from the INS backend read model, and the animals frontend's own dashboard at its set root sends the trader there. The page takes Design Release 2.1's frame: the 'Dashboard' title and caption, the 'Live animals' heading, a Back link to the home, 'Create new' and 'Use template' buttons in place of today's start form, the 'Notifications' heading, and cards labelled for screen readers. Persistence and authentication are real constraints, so the list shows only the signed-in trader's organisation's notifications and the list API refuses a caller that names no organisation. Every new string ships with a Welsh machine draft. This row sets the page, the cross-service hop and the scoping every later list row builds on.",
+      "detail": "Following Rhys's DR1 judgement that the animals dashboard is temporary and moves to the INS front door (c-159, kept by the 2026-10-09 ruling for that judgement alone), the INS frontend serves the live animals notification list, in its own path shape, from the INS backend read model, and the live-animals set root in the animals frontend stops rendering a list and sends the trader there. The page takes Design Release 2.1's frame: the 'Dashboard' title and caption, the 'Live animals' heading, a Back link to the overall home, a 'Create new' link that starts a live animals notification in place of today's draft-creating start form, a 'Use template' button, the 'Notifications' heading and cards named for screen readers. Persistence and authentication are real constraints, so the list shows only the signed-in trader's organisation's notifications and the list API refuses a caller that names no organisation. The k6 journey script, which reads the list from the set root today, follows the move (ruling p1-199). Every new string ships with a Welsh machine draft. This row sets the page, the cross-service hop and the scoping every later list row builds on.",
       "acceptanceCriteria": [
-        "A signed-in trader opening /live-animals on the INS frontend sees the live animals list with the browser title 'Dashboard - Import notification service - GOV.UK', the caption 'Dashboard' and the h1 'Live animals'. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-021; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-038; prototype:dr2-1-specs prototype-dr2-1-specs-p5-032)",
-        "Opening the animals frontend's live animals set root (/live-animals on the animals frontend) redirects the trader to the INS frontend's /live-animals list; the animals frontend no longer renders a dashboard of its own. (document:dr1-parity-notes document-dr1-parity-notes-p1-014; repo:backend repo-backend-p3-018; conflict c-159)",
-        "A notification started in the live-animals journey appears as a card on the INS frontend's live animals list, read from the INS backend read model. (prototype:dr2-1-source prototype-dr2-1-source-p13-015; repo:insbackend repo-insbackend-p1-027; conflict c-159)",
-        "The list page has a 'Back' link to the service home at /. (prototype:dr2-1-source prototype-dr2-1-source-p13-019; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-039; prototype:dr2-1-specs prototype-dr2-1-specs-p5-034)",
-        "The heading is followed directly by a primary 'Create new' button linking to create-notification?category=live-animals and a secondary 'Use template' button linking to the templates page with no category; there is no introductory paragraph, no Messages link and no 'Start a new notification' button. (prototype:dr2-1-source prototype-dr2-1-source-p13-022, prototype-dr2-1-source-p13-023; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-038-m1, trace-prototype-dr2-1-p1-040, trace-prototype-dr2-1-p1-041; prototype:dr2-1-specs prototype-dr2-1-specs-p5-035)",
-        "The notification cards sit under the h2 'Notifications'; the h2 'Your notifications' is gone. (prototype:dr2-1-source prototype-dr2-1-source-p13-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-045)",
+        "A signed-in trader opening the INS frontend's live animals list sees the browser title 'Dashboard - Import notification service - GOV.UK', the caption 'Dashboard' and the h1 'Live animals'. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-021, prototype-dr2-1-source-p13-100; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-038; prototype:dr2-1-specs prototype-dr2-1-specs-p5-032, prototype-dr2-1-specs-p5-033)",
+        "Opening the live-animals set root on the animals frontend sends the trader to the INS frontend's live animals list; the animals frontend no longer renders a notification list of its own. (document:dr1-parity-notes document-dr1-parity-notes-p1-014; repo:backend repo-backend-p3-018; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-034, ruling-sam-2026-10-09-p1-113; conflict c-159)",
+        "A notification started in the live-animals journey appears as a card on the INS frontend's live animals list, read from the INS backend read model. (prototype:dr2-1-source prototype-dr2-1-source-p13-015; repo:insbackend repo-insbackend-p1-024, repo-insbackend-p1-027; conflict c-159)",
+        "The list page has a 'Back' link to the overall home. (prototype:dr2-1-source prototype-dr2-1-source-p13-019; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-039; prototype:dr2-1-specs prototype-dr2-1-specs-p5-034)",
+        "The heading is followed directly by a primary 'Create new' button and a secondary 'Use template' button; there is no introductory paragraph, no Messages link and no 'Start a new notification' button. (prototype:dr2-1-source prototype-dr2-1-source-p13-022, prototype-dr2-1-source-p13-023; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-038-m1, trace-prototype-dr2-1-p1-040, trace-prototype-dr2-1-p1-041)",
+        "'Create new' is a link: loading the list or following the link creates no draft by itself, and going on from it starts a new live animals notification in the live-animals set. (prototype:dr2-1-source prototype-dr2-1-source-p13-022; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-102; repo:frontend repo-frontend-p3-005, repo-frontend-p3-006; conflict c-251)",
+        "'Use template' takes the trader to the templates page, with no category. (prototype:dr2-1-source prototype-dr2-1-source-p13-023; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-041, trace-prototype-dr2-1-p1-079)",
+        "The notification cards sit under the h2 'Notifications'; the h2 'Your notifications' is gone from the list. (prototype:dr2-1-source prototype-dr2-1-source-p13-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-045; repo:frontend repo-frontend-p3-008)",
         "Each card has the notification's reference as its h3 and is announced to screen readers as 'Notification <reference>'. (prototype:dr2-1-source prototype-dr2-1-source-p13-046; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-064, trace-prototype-dr2-1-p1-122)",
         "Each card still offers its status-driven actions, each named for screen readers with ' notification <reference>', and each still works from the INS frontend: a draft offers Resume, 'Copy as new' and Delete; a submitted notification View, Amend, 'Copy as new' and Delete; a notification being amended Resume, 'Copy as new', 'Cancel amendment' and Delete. (document:dr1-parity-notes document-dr1-parity-notes-p1-011; document:dr1-parity-backlog document-dr1-parity-backlog-p3-040; conflict c-160)",
         "Signed in for one organisation, the trader sees only that organisation's notifications: a notification started under another organisation never appears on the list; the list API answers a request that does not say which organisation it acts for with a refusal, not a list. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010; repo:insbackend repo-insbackend-p1-068, repo-insbackend-p1-069, repo-insbackend-p1-070; repo:backend repo-backend-p3-003)",
+        "The k6 journey script gets its crumb for creating a notification from the create journey, and searches for a notification by reference and checks a submitted notification is listed on the INS frontend's live animals list, with no request to the live-animals set root expecting a list; the journey run passes its checks against the stack. (repo:perftests repo-perftests-p1-005, repo-perftests-p1-068, repo-perftests-p1-069, repo-perftests-p2-045; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-199)",
         "With Welsh chosen, every string on the list page shows its Welsh version, and each Welsh string is marked as a machine draft that ships only once a translator signs it off under the Welsh Language Standards. (repo:frontend repo-frontend-p3-068, repo-frontend-p3-069, repo-frontend-p3-070)"
       ],
-      "requirements": ["req-1032", "req-1033", "req-1034", "req-1035", "req-1037", "req-1038", "req-1041", "req-1070", "req-1090", "req-1096"],
+      "requirements": ["req-1032", "req-1033", "req-1034", "req-1035", "req-1037", "req-1038", "req-1041", "req-1070", "req-1090", "req-1096", "req-1852"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js renderDashboardPage; dashboard view (prototype-dr2-1-source-p13-015 to p13-026, p13-046)" },
-        { "source": "trace:prototype-dr2-1", "ref": "category dashboards live animals (trace-prototype-dr2-1-p1-038 to p1-045, p1-064, p1-122)" },
-        { "source": "prototype:dr2-1-specs", "ref": "e2e/dashboard.fit.spec.js (prototype-dr2-1-specs-p5-032 to p5-035)" },
+        { "source": "prototype:dr2-1-source", "ref": "dashboard view (prototype-dr2-1-source-p13-015, p13-019, p13-021 to p13-023, p13-026, p13-046, p13-100)" },
+        { "source": "trace:prototype-dr2-1", "ref": "category dashboards live animals (trace-prototype-dr2-1-p1-038 to p1-045, p1-064, p1-079, p1-122)" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-032 to p5-034" },
         { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-011, p1-014" },
-        { "source": "document:dr1-parity-backlog", "ref": "inc-030 (document-dr1-parity-backlog-p3-040)" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-040" },
         { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "repo:insbackend", "ref": "AggregatedNotificationController (repo-insbackend-p1-027, p1-068 to p1-070)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-034, p1-102, p1-113, p1-199" },
+        { "source": "repo:insbackend", "ref": "AggregatedNotificationController (repo-insbackend-p1-024, p1-027, p1-068 to p1-070)" },
         { "source": "repo:backend", "ref": "NotificationController list (repo-backend-p3-003, p3-018)" },
-        { "source": "repo:frontend", "ref": "features/dashboard copy and controller (repo-frontend-p3-068 to p3-070)" }
+        { "source": "repo:frontend", "ref": "live-animals dashboard feature (repo-frontend-p3-005, p3-006, p3-008, p3-068 to p3-070)" },
+        { "source": "repo:perftests", "ref": "k6 live-animals journey (repo-perftests-p1-005, p1-068, p1-069, p2-045)" }
       ],
-      "repos": ["insbackend", "insfrontend", "frontend", "tests"],
+      "repos": ["insbackend", "insfrontend", "frontend", "tests", "perftests"],
       "kind": "feat",
       "status": "todo",
-      "gate": "Look at the INS frontend's live animals list page frame, the hop from the animals frontend's set root, the card actions working across services, and the organisation scoping of the read model, before the tabs, search, filters and pagination rows copy them.",
+      "gate": "Look at the INS frontend's live animals list page frame, the hop from the animals frontend's set root, the Create new destination, the card actions working across services, and the organisation scoping of the read model, before the cards, tabs, search, filters and pagination rows copy them.",
       "openQuestions": [
+        "Where 'Create new' lands before the type question (the templates area's 'What are you importing?' row) exists. Default: the link goes to the live-animals set's existing create entry with the live animals category, which creates the live animals draft as today's start does; once the type question lands it sits in front, carrying the category. The INS frontend and the live-animals set name the address and parameter (ruling p1-066, p1-102).",
         "How the card actions (Resume, View, Amend, Copy as new, Cancel amendment, Delete) reach the animals frontend from the INS frontend. Default: the INS frontend links and posts to the animals frontend's existing action routes on its own host, and those actions return the trader to the INS frontend list; the manage-notifications area owns what each action does."
       ],
-      "notes": "Combines the page-frame slices (title, caption, h1, Back, Create new, Use template, 'Notifications' heading, card label) with the service move and organisation scoping: they share one new page and one review, and every later list row depends on that page existing. Welsh (req-1090) sits here because this row creates the list's copy files; every later list row keeps adding Welsh machine drafts for its strings (suggest an envelope invariant). The animals backend's GET /notifications is left unchanged until nothing calls it (c-159). DR1's deferred dashboard rows do not hold any of this back (c-167). Already met and kept, so not listed: the search keeps its text (req-1047), the card's status-driven actions (req-1084), no serious axe violations or sideways scroll (req-1091), deleted notifications never listed (req-1094), a new notification appears within seconds (req-1095), the read model filled from queued events (req-1097), 400/500 problem responses (req-1104). The 'Your notifications' breadcrumb label on the animals frontend's delete and cancel-amendment pages belongs to manage-notifications.",
+      "notes": [
+        "Combines the page-frame slices (title, caption, h1, Back, Create new, Use template, 'Notifications' heading, card label) with the service move, the organisation scoping and the k6 script's move: they share one new page and one review, and every later list row depends on that page existing. req-1852 (k6) is in no area in areas.json; the 2026-10-09 ruling p1-199 puts the performance-tests repo in this row because it moves a route the k6 scripts use, so it is drafted here.",
+        "Welsh (req-1090) sits here because this row creates the list's copy; every later list row keeps adding Welsh machine drafts for its strings (suggest an envelope invariant).",
+        "Rewritten to the 2026-10-09 ruling: criteria name pages and destinations, never literal paths or query strings (p1-075); Create new goes to the start of the create journey with the category, not create-notification?category= (p1-102, c-251).",
+        "The animals backend's GET /notifications is left unchanged until nothing calls it (c-159). DR1's deferred dashboard rows do not hold any of this back (c-167). The germinal products set root's hand-on to its INS list (req-1851) belongs to the germinal set, not this row.",
+        "Already met and kept, so not listed: the search keeps its text (req-1047), the card's status-driven actions (req-1084), no serious axe violations or sideways scroll (req-1091), deleted notifications never listed (req-1094), a new notification appears within seconds (req-1095), the read model filled from queued events (req-1097), 400/500 problem responses (req-1104). The 'Your notifications' breadcrumb label on the animals frontend's delete and cancel-amendment pages belongs to manage-notifications."
+      ],
+      "dependsOn": [],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
+        "insfrontend:src/server/app/services/ins-backend",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/dashboard",
+        "tests:page-objects/ins/notification-list-page.ts",
         "tests:tests/ins/e2e/features/notification-list",
-        "tests:page-objects/ins/notification-list-page.ts"
+        "tests:page-objects/animals/dashboard-page.ts",
+        "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts",
+        "tests:tests/animals/a11y/notification-dashboard-views.spec.ts",
+        "tests:tests/animals/a11y/notification-dashboard-viewports.spec.ts",
+        "tests:tests/animals/security/frontend-dashboard-params.spec.ts",
+        "perftests:src/k6/live-animals.js",
+        "perftests:src/k6/pages.js",
+        "perftests:src/config/journey-endpoints.js"
       ],
       "shared": [
+        "insfrontend:src/server/app/features/index.js",
         "insfrontend:src/server/app/shared/paths.js",
         "insfrontend:src/server/app/shared/copy.en.js",
         "insfrontend:src/server/app/shared/copy.cy.js",
-        "insfrontend:src/server/app/shared/layout.njk",
-        "insfrontend:src/server/app/services/ins-backend",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
-        "frontend:src/server/app/shared/paths.js",
+        "insbackend:src/main/resources",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
-        "tests:page-objects/animals/dashboard-page.ts",
-        "tests:flows/animals/seeded-journey.ts",
-        "tests:tests/animals/e2e/pages/notification-dashboard.spec.ts"
+        "tests:tests/ins/e2e/features/notification-dashboard-navigation.spec.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-129"
     },
     {
       "title": "Notification cards show Design Release 2.1's facts and status styles",
-      "detail": "Each card on the list shows the facts Design Release 2.1 shows, in its two rows and with its labels: commodity, arrival date written in full, consignee and notification status, then the number of animals, origin and consignor. A fact not yet answered reads 'Not applicable' instead of a blank. Date created and date submitted go. Drafts and action-required notifications carry tags while Submitted is plain styled text; a notification being amended keeps today's yellow 'Amending' tag (c-165). The read model gains the facts it lacks today (category, consignee, consignor, quantity, origin country name) and the list API returns them.",
+      "detail": "Each card on the list shows the facts Design Release 2.1 shows, in its two rows and with its labels: commodity, arrival date written in full, consignee and notification status, then the number of animals, origin and consignor. A fact not yet answered reads 'Not applicable' instead of a blank. Date created and date submitted go. Drafts and action-required notifications carry tags while Submitted is plain styled text; a notification being amended keeps today's yellow 'Amending' tag (c-165). The INS read model gains the facts it lacks today (category, consignee, consignor, quantity, origin country name), takes each notification's category from its events with none meaning live animals, and the list API returns them.",
       "acceptanceCriteria": [
         "A card shows its facts in two rows: 'Commodity', 'Arrival date', 'Consignee' and 'Notification status', then 'Number of animals', 'Origin' and 'Consignor'. (prototype:dr2-1-source prototype-dr2-1-source-p13-053, prototype-dr2-1-source-p13-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-065, trace-prototype-dr2-1-p1-070)",
-        "The arrival date is labelled 'Arrival date' (not 'Arrival at destination') and the status 'Notification status' (not 'Status'). (prototype:dr2-1-source prototype-dr2-1-source-p13-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-065)",
-        "A card on a live animals notification shows 'Number of animals' with the notification's own count of animals. (prototype:dr2-1-source prototype-dr2-1-source-p13-054, prototype-dr2-1-source-p13-058; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-082; prototype:dr2-1-specs prototype-dr2-1-specs-p5-064)",
-        "A card shows no 'Date created' and no 'Date submitted'. (prototype:dr2-1-source prototype-dr2-1-source-p13-102)",
+        "The arrival date is labelled 'Arrival date', not 'Arrival at destination'. (prototype:dr2-1-source prototype-dr2-1-source-p13-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-065)",
+        "The status is labelled 'Notification status', not 'Status'. (prototype:dr2-1-source prototype-dr2-1-source-p13-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-065)",
+        "A live animals notification's card shows 'Number of animals' with the notification's own count of animals. (prototype:dr2-1-source prototype-dr2-1-source-p13-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-082)",
+        "A card shows no 'Date created' and no 'Date submitted'. (prototype:dr2-1-source prototype-dr2-1-source-p13-102; trace:e2e trace-e2e-p3-032, trace-e2e-p3-033)",
         "The arrival date is written as the day, the full month name and the year, such as '21 June 2026'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-066; conflict c-164)",
-        "A card whose notification has no commodity, no arrival date or no number of animals yet shows 'Not applicable' for that fact. (prototype:dr2-1-source prototype-dr2-1-source-p13-056, prototype-dr2-1-source-p13-058, prototype-dr2-1-source-p13-101)",
-        "The card's Commodity is the notification's commodity name, its Origin the origin country's name (not its code), and its Consignee and Consignor the names of the parties chosen on the notification. (prototype:dr2-1-source prototype-dr2-1-source-p13-056; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-083; prototype:dr2-1-specs prototype-dr2-1-specs-p5-063; repo:insbackend repo-insbackend-p1-038)",
+        "A card whose notification has no commodity, no arrival date or no number of animals yet shows 'Not applicable' for that fact instead of a blank value. (prototype:dr2-1-source prototype-dr2-1-source-p13-056, prototype-dr2-1-source-p13-058, prototype-dr2-1-source-p13-101)",
+        "The card's Commodity is the commodity name the trader chose on the notification, its Origin the origin country's name (not its code), and its Consignee and Consignor the names of the parties chosen on the notification. (prototype:dr2-1-source prototype-dr2-1-source-p13-056; repo:insbackend repo-insbackend-p1-017, repo-insbackend-p1-018, repo-insbackend-p1-038)",
         "A draft's status is a 'Draft' tag, a notification being amended keeps its yellow 'Amending' tag, and a submitted notification's status is the plain styled text 'Submitted', not a tag. (prototype:dr2-1-source prototype-dr2-1-source-p13-061, prototype-dr2-1-source-p13-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-068; conflict c-165)",
-        "A submitted notification that needs action from the trader (still missing a required document, or with required animal identifiers incomplete) shows its status as an 'Action required' tag. (prototype:dr2-1-source prototype-dr2-1-source-p13-061; conflict c-149)",
-        "The INS backend's list response gives, for each notification, its reference number, status, category, commodity name, arrival date, origin country name, consignee name, consignor name and number of animals or packages, a missing fact as empty. (repo:insbackend repo-insbackend-p1-021, repo-insbackend-p1-038; repo:backend repo-backend-p3-015, repo-backend-p3-016, repo-backend-p3-017)"
+        "A submitted notification that needs action from the trader (still missing a required document, or with no animal identifier where one is required) shows its status as an 'Action required' tag. (prototype:dr2-1-source prototype-dr2-1-source-p13-061; conflict c-149)",
+        "The INS backend's list response gives, for each notification, its reference number, status, category, commodity name, arrival date, origin country name, consignee name, consignor name and number of animals or packages, a missing fact as empty; a notification whose events carry no category is given the category live animals. (repo:insbackend repo-insbackend-p1-002, repo-insbackend-p1-021, repo-insbackend-p1-038; repo:backend repo-backend-p3-015, repo-backend-p3-016, repo-backend-p3-017; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-033)"
       ],
-      "requirements": ["req-1071", "req-1072", "req-1073", "req-1074", "req-1075", "req-1076", "req-1077", "req-1078", "req-1079", "req-1098"],
+      "requirements": ["req-1071", "req-1072", "req-1073", "req-1074", "req-1075", "req-1076", "req-1077", "req-1078", "req-1079", "req-1098", "req-1855"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "dashboard-notification-card partial (prototype-dr2-1-source-p13-053 to p13-062, p13-101, p13-102)" },
-        { "source": "trace:prototype-dr2-1", "ref": "notification cards (trace-prototype-dr2-1-p1-065 to p1-070, p1-082, p1-083)" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-063, p5-064" },
-        { "source": "repo:insbackend", "ref": "AggregatedNotification and NotificationUpsertService (repo-insbackend-p1-021, p1-038)" },
+        { "source": "trace:prototype-dr2-1", "ref": "notification cards (trace-prototype-dr2-1-p1-065 to p1-070, p1-082)" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p3-032, p3-033" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-033" },
+        { "source": "repo:insbackend", "ref": "AggregatedNotification and NotificationUpsertService (repo-insbackend-p1-002, p1-017, p1-018, p1-021, p1-038)" },
         { "source": "repo:backend", "ref": "NotificationView list item (repo-backend-p3-015 to p3-017)" }
       ],
       "repos": ["backend", "insbackend", "insfrontend", "tests"],
@@ -89,103 +107,123 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the card label, layout, date format, placeholder, status-style and read-model-facts slices: they all change the same card and the same read-model record, so building them apart would repeat the event mapping and the card review. The animals backend is in repos only in case the published notification event lacks a fact the card needs (such as the number of animals or the category); the plan checks the event first. The 'Action required' tag criterion relies on the action-needed derivation the dashboard-home area builds (req-988, c-149); the combiner should make this row depend on that row, or move the criterion's proof there. The germinal products halves of req-1074 ('Number of packages') and req-1078 ('Cattle, Semen') and the 'Completed' half of req-1079 cannot be observed yet; see this draft's unobservable list. The 'Inspection' fact is req-1083, in the blocked row.",
+      "notes": [
+        "Combines the card label, layout, date format, placeholder, status-style and read-model-facts slices: they all change the same card and the same read-model record, so building them apart would repeat the event mapping and the card review.",
+        "req-1855 (the read model records the category from the events, none meaning live animals) is in no area in areas.json; it is drafted here because this row adds the category to the read model and its list response. The category on the event itself is the notification-record area's (req-1884, req-1885); until it is published, every notification reads as live animals, which this row's criteria assert.",
+        "The animals backend is in repos only in case the published notification event lacks a fact the card needs (such as the number of animals); the plan checks the event first.",
+        "The 'Action required' tag relies on the action-needed derivation the dashboard-home area builds (req-988, c-149), so this row depends on that row (inc-132).",
+        "Covers req-1074 as 'Number of animals', req-1078 as the live animals commodity name, and req-1079 as Draft, Amending, Submitted and Action required. Their germinal halves (req-1737, req-1738) wait in the germinal cards row; the 'Completed' style (req-1739) and the 'Inspection' fact (req-1083) wait in the blocked outcomes row."
+      ],
+      "dependsOn": ["inc-129", "inc-132"],
       "touches": [
-        "insfrontend:src/server/app/features/notification-list",
+        "insfrontend:src/server/app/features/notification-list/view-model",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java",
-        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag",
-        "insfrontend:src/server/app/services/ins-backend",
-        "insfrontend:src/server/app/shared/copy.cy.js"
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationSqsListener.java",
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-130"
     },
     {
       "title": "The list has 'In progress', 'Draft' and 'Completed' tabs",
-      "detail": "Design Release 2.1 splits the list into three tabs, each a link that loads the page. 'In progress' holds submitted, action-required and amending notifications and shows its count; 'Draft' holds drafts; 'Completed' holds completed ones. Each tab's cards sit under an h3 naming it. The list API gains the category and tab filters and the In progress count.",
+      "detail": "Design Release 2.1 splits the list into three tabs, each a link that loads the page. 'In progress' holds submitted, action-required and amending notifications and shows its count; 'Draft' holds drafts; 'Completed' holds completed ones. Each tab's cards sit under an h3 naming it. The list API gains the category and tab filters and the In progress count; the animals backend's list gains no category filter. The INS service names the tab parameter and its values (ruling p1-091, c-251).",
       "acceptanceCriteria": [
-        "The list has three tabs, 'In progress', 'Draft' and 'Completed', each a link that loads the page: 'In progress' the list path, 'Draft' ?tab=drafts and 'Completed' ?tab=completed; a missing or unknown tab shows 'In progress'. (prototype:dr2-1-source prototype-dr2-1-source-p13-037, prototype-dr2-1-source-p13-038; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-061; prototype:dr2-1-specs prototype-dr2-1-specs-p5-042, prototype-dr2-1-specs-p5-054)",
-        "A tab link carries no search, sort or filter, so following a tab drops them. (prototype:dr2-1-source prototype-dr2-1-source-p13-038-m1; prototype:dr2-1-specs prototype-dr2-1-specs-p5-056)",
-        "'In progress' lists the organisation's submitted and action-required notifications and its notifications being amended, each amending one with its yellow 'Amending' tag and Resume, 'Copy as new', 'Cancel amendment' and Delete; it lists no draft. (prototype:dr2-1-source prototype-dr2-1-source-p13-039; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-073; conflict c-165)",
+        "The list has three tabs, 'In progress', 'Draft' and 'Completed', each a link that loads the page with that tab chosen; 'In progress' is the list with no tab chosen, and a missing or unknown tab shows 'In progress'. (prototype:dr2-1-source prototype-dr2-1-source-p13-037, prototype-dr2-1-source-p13-038; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-061; prototype:dr2-1-specs prototype-dr2-1-specs-p5-042; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-066; conflict c-251)",
+        "Following a tab drops the search, sort and filters: the chosen tab shows its notifications unfiltered, in the default order. (prototype:dr2-1-source prototype-dr2-1-source-p13-038-m1; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-081)",
+        "'In progress' lists the organisation's submitted and action-required notifications and its notifications being amended, each amending one with its yellow 'Amending' tag and Resume, 'Copy as new', 'Cancel amendment' and Delete; it lists no draft. (prototype:dr2-1-source prototype-dr2-1-source-p13-039; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-073; repo:frontend repo-frontend-p3-046; conflict c-165)",
         "'Draft' lists only drafts, and 'Completed' lists no draft, submitted or amending notification. (prototype:dr2-1-source prototype-dr2-1-source-p13-039; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-075)",
         "Only 'In progress' shows a count, in bold brackets, such as 'In progress (2)', counting the notifications that tab lists; 'Draft' and 'Completed' show no count, even when selected. (prototype:dr2-1-source prototype-dr2-1-source-p13-037; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-062; prototype:dr2-1-specs prototype-dr2-1-specs-p5-043)",
         "Under the tabs the cards sit under an h3 naming the tab: 'Notifications in progress', 'Draft notifications' or 'Completed notifications'. (prototype:dr2-1-source prototype-dr2-1-source-p13-040; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-063; prototype:dr2-1-specs prototype-dr2-1-specs-p5-044, prototype-dr2-1-specs-p5-055, prototype-dr2-1-specs-p5-057)",
-        "The list API filters by category and by tab (the in-progress statuses, drafts, or completed) and reports how many notifications the 'In progress' tab holds for that category. (repo:insbackend repo-insbackend-p1-021, repo-insbackend-p1-044, repo-insbackend-p1-045)"
+        "The INS backend's list API filters by category and by tab (the in-progress statuses, drafts, or completed) and reports how many notifications the 'In progress' tab holds for that category. (repo:insbackend repo-insbackend-p1-021, repo-insbackend-p1-044, repo-insbackend-p1-045; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-034)"
       ],
       "requirements": ["req-1058", "req-1059", "req-1060", "req-1061", "req-1062", "req-1099"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "dashboard tabs (prototype-dr2-1-source-p13-037 to p13-040)" },
-        { "source": "trace:prototype-dr2-1", "ref": "tabs (trace-prototype-dr2-1-p1-061 to p1-063, p1-073, p1-075)" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-042 to p5-044, p5-054 to p5-057" },
+        { "source": "trace:prototype-dr2-1", "ref": "tabs (trace-prototype-dr2-1-p1-061 to p1-063, p1-073, p1-075, p1-081)" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-042 to p5-044, p5-055, p5-057" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-034, p1-066" },
         { "source": "repo:frontend", "ref": "amending card (repo-frontend-p3-046)" },
-        { "source": "repo:insbackend", "ref": "list query parameters (repo-insbackend-p1-044, p1-045)" }
+        { "source": "repo:insbackend", "ref": "list query parameters (repo-insbackend-p1-021, p1-044, p1-045)" }
       ],
       "repos": ["insbackend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the tab links, tab membership, amending placement, count, h3 and API tab-filter slices: one tab control over one query. The category filter lands here, with the tab filter, because the category is first in the read model from the card-facts row; req-1093 (each list only its category) is proven with the germinal products list. Completed notifications cannot exist until the authorities' outcome feed (req-1082, blocked row), so the Completed tab is proven empty of everything else.",
+      "notes": [
+        "Combines the tab links, tab membership, amending placement, count, h3 and API tab-filter slices: one tab control over one query. The category filter lands here, with the tab filter, because the category is first in the read model from the card-facts row.",
+        "Rewritten to the 2026-10-09 ruling: the tab parameter's name and values are the INS service's, so no criterion names ?tab=drafts or ?tab=completed (p1-075, p1-091; c-251).",
+        "Completed notifications cannot exist until the authorities' outcome feed (req-1082, blocked row), so the Completed tab is proven empty of everything else."
+      ],
+      "dependsOn": ["inc-130"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
-        "insfrontend:src/server/app/services/ins-backend",
-        "insfrontend:src/server/app/shared/copy.cy.js"
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-135"
     },
     {
       "title": "Search and sort become one form that really searches and sorts",
-      "detail": "Design Release 2.1 puts search, sort and the additional filters in one column above the tabs, submitted by one icon-only search button, with a 'Search by' field whose hint names what it searches. Because the real service can query stored notifications (c-162), the search really matches any part of the reference, commodity, consignee or consignor, ignoring case, and the three sorts really order the list. Following DR1's judgement on inc-031 (c-161), the list is always sorted and has no 'Select one' option. The separate sort form and its 'Update sort' button go.",
+      "detail": "Design Release 2.1 puts search, sort and the additional filters in one column above the tabs, submitted by one icon-only search button, with a 'Search by' field whose hint names what it searches. Because the real service can query stored notifications (c-162), the search really matches any part of the reference, commodity, consignee or consignor, ignoring case, and the three sorts really order the list, with a tie-breaker so paging is stable. Following DR1's judgement (c-161), the list is always sorted and has no 'Select one' option. The separate sort form and its 'Update sort' button go.",
       "acceptanceCriteria": [
-        "The search and sort sit in one column above the tabs inside the 'Notifications' section; there is no 'Filter notifications' heading and no filter column beside the results. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-045; conflict c-167)",
-        "The search field is labelled 'Search by' and has the hint 'Keyword, notification number, commodity, consignee or consignor'. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-046; prototype:dr2-1-specs prototype-dr2-1-specs-p5-039, prototype-dr2-1-specs-p5-040)",
-        "The search is submitted by an icon-only button showing a magnifying glass, announced to screen readers as 'Search', and submits to the server, so a trader without JavaScript searches the same way. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-047; conflict c-006)",
+        "The search and sort sit in one column above the tabs inside the 'Notifications' section; there is no 'Filter notifications' heading and no filter column beside the results. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-045; repo:frontend repo-frontend-p3-009, repo-frontend-p3-010; conflict c-167)",
+        "The search field is labelled 'Search by'. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-046; prototype:dr2-1-specs prototype-dr2-1-specs-p5-039)",
+        "The search field has the hint 'Keyword, notification number, commodity, consignee or consignor'. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-046; prototype:dr2-1-specs prototype-dr2-1-specs-p5-040)",
+        "The search is submitted by an icon-only button showing a magnifying glass, announced to screen readers as 'Search', and submits to the server, so a trader without JavaScript searches the same way. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-047)",
         "Searching any part of a notification's reference number, commodity, consignee or consignor, in any case and with spaces around it, lists every notification of the organisation that contains it, paged like any other list; searching text none contains lists none. (prototype:dr2-1-source prototype-dr2-1-source-p13-027; ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010; repo:insbackend repo-insbackend-p1-059; conflict c-162)",
-        "Search, sort and the other list controls are one GET form to the list's own path, submitted by the search button, carrying the current tab (unless 'In progress') and the current page (when above 1), so the result stays on that tab. (prototype:dr2-1-source prototype-dr2-1-source-p13-026, prototype-dr2-1-source-p13-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-049, trace-prototype-dr2-1-p1-050; prototype:dr2-1-specs prototype-dr2-1-specs-p5-058)",
+        "Search, sort and the other list controls are one GET form to the list's own page, submitted by the search button, carrying the current tab (unless 'In progress') and the current page (when above 1), so the result stays on that tab. (prototype:dr2-1-source prototype-dr2-1-source-p13-026, prototype-dr2-1-source-p13-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-049, trace-prototype-dr2-1-p1-050; prototype:dr2-1-specs prototype-dr2-1-specs-p5-058)",
         "The sort select is labelled 'Sort by:' and offers exactly 'Newest first', 'Oldest first' and 'Arrival date', in that order, with no 'Select one' option. (prototype:dr2-1-source prototype-dr2-1-source-p13-028; document:dr1-parity-backlog document-dr1-parity-backlog-p3-045; conflict c-161)",
-        "'Newest first' and 'Oldest first' order the cards by when each notification was created, 'Arrival date' by arrival date newest first, and with no sort chosen the cards are in arrival date order, newest first, with 'Arrival date' selected. (prototype:dr2-1-source prototype-dr2-1-source-p13-028; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-053; document:dr1-parity-notes document-dr1-parity-notes-p1-012; conflict c-161, c-162)",
+        "'Newest first' and 'Oldest first' order the cards by when each notification was created, 'Arrival date' by arrival date newest first, and with no sort chosen the cards are in arrival date order, newest first, with 'Arrival date' selected. (prototype:dr2-1-source prototype-dr2-1-source-p13-028; prototype:dr2-1-specs prototype-dr2-1-specs-p5-060; document:dr1-parity-notes document-dr1-parity-notes-p1-012; conflict c-161, c-162)",
         "Paging through a sorted list never shows a notification twice or leaves one out, even when several share the same created or arrival date. (repo:insbackend repo-insbackend-p1-046, repo-insbackend-p1-047; repo:backend repo-backend-p3-006)",
         "There is no 'Update sort' button: the search button applies the chosen sort, and the chosen sort stays selected after the page reloads. (prototype:dr2-1-source prototype-dr2-1-source-p13-028, prototype-dr2-1-source-p13-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-051)"
       ],
       "requirements": ["req-1042", "req-1043", "req-1044", "req-1045", "req-1046", "req-1048", "req-1049", "req-1050", "req-1051", "req-1052", "req-1100", "req-1102"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "dashboard search and sort form (prototype-dr2-1-source-p13-026 to p13-028, p13-036)" },
-        { "source": "trace:prototype-dr2-1", "ref": "search and sort (trace-prototype-dr2-1-p1-045 to p1-053)" },
+        { "source": "trace:prototype-dr2-1", "ref": "search and sort (trace-prototype-dr2-1-p1-045 to p1-051)" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-039, p5-040, p5-058, p5-060" },
-        { "source": "document:dr1-parity-backlog", "ref": "inc-031 (document-dr1-parity-backlog-p3-045)" },
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-045" },
         { "source": "document:dr1-parity-notes", "ref": "document-dr1-parity-notes-p1-012" },
         { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
-        { "source": "repo:insbackend", "ref": "AggregatedNotificationSort and query (repo-insbackend-p1-046 to p1-066)" }
+        { "source": "repo:insbackend", "ref": "AggregatedNotificationSort and query (repo-insbackend-p1-046 to p1-066)" },
+        { "source": "repo:frontend", "ref": "today's two-column layout (repo-frontend-p3-009, p3-010)" }
       ],
       "repos": ["insbackend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the layout, search field copy, icon button, real search, single form, sort label, sort options, real sort and no-'Update sort' slices: they are one form over one query, and the search button that submits the sort is the same control as the search. Already met and kept: the field keeps its text and a blank search lists everything (req-1047). The additional filters join this form in the next row. The prototype's inert search and sort (c-162) and its unselected 'Select one' (c-161) are not built.",
+      "notes": [
+        "Combines the layout, search field copy, icon button, real search, single form, sort label, sort options, real sort and no-'Update sort' slices: they are one form over one query, and the search button that submits the sort is the same control as the search. The search parameter's name is the INS service's (ruling p1-066).",
+        "Already met and kept: the field keeps its text and a blank search lists everything (req-1047). The additional filters join this form in the next row. The prototype's inert search and sort (c-162) and its unselected 'Select one' (c-161) are not built."
+      ],
+      "dependsOn": ["inc-135"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationSort.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationRepository.java",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationController.java",
-        "tests:tests/ins/e2e/features/notification-list"
+        "tests:tests/ins/e2e/features/notification-list",
+        "tests:tests/animals/e2e/features/notification-dashboard-sort.spec.ts",
+        "tests:tests/animals/e2e/features/notification-dashboard-search.spec.ts"
       ],
       "shared": [
-        "insfrontend:src/server/app/services/ins-backend",
-        "insfrontend:src/server/app/shared/copy.cy.js",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java"
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-136"
     },
     {
       "title": "The list has 'Additional filters' for arrival date, date range and status",
@@ -195,7 +233,7 @@
         "A 'By arrival date' column offers small radios 'Today', 'Tomorrow' and 'Next 7 days' (the legend visually hidden, the same words shown as its heading); choosing one lists only notifications arriving in that range, and the choice stays checked. (prototype:dr2-1-source prototype-dr2-1-source-p13-031; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-055, trace-prototype-dr2-1-p1-060; prototype:dr2-1-specs prototype-dr2-1-specs-p5-050; conflict c-162)",
         "A 'By date range' column has the hint 'For example, 27/3/2026' and two MOJ date pickers, 'Start date' and 'End date', each with a 'Choose date' calendar opening on the current month with weeks starting on Monday; the list shows only notifications arriving between the two dates, and the entered dates are kept. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-056, trace-prototype-dr2-1-p1-057, trace-prototype-dr2-1-p1-121; prototype:dr2-1-specs prototype-dr2-1-specs-p5-051, prototype-dr2-1-specs-p5-052; conflict c-162)",
         "A start date alone lists notifications arriving on or after it, and an end date alone those arriving on or before it. (repo:insbackend repo-insbackend-p1-044, repo-insbackend-p1-045; conflict c-162)",
-        "When the start date cannot be read as a date the list shows a GOV.UK error summary and an inline error 'Enter a real start date'; for the end date 'Enter a real end date'; when the end date is before the start date 'End date must be the same as or after the start date'. In each case 'Additional filters' is open, the entered text stays in the pickers, and the list is shown without the date-range filter. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010; conflict c-166)",
+        "When the start date cannot be read as a date the list shows a GOV.UK error summary and an inline error 'Enter a real start date'; for the end date 'Enter a real end date'; when the end date is before the start date 'End date must be the same as or after the start date'. In each case 'Additional filters' is open, the entered text stays in the pickers, and the list is shown without the date-range filter. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010; trace:e2e trace-e2e-p2-047; conflict c-166)",
         "A 'Status' select offers exactly 'Select one', 'Action required', 'Submitted' and 'Completed'; choosing a status lists only notifications in it, and the choice stays selected. (prototype:dr2-1-source prototype-dr2-1-source-p13-035; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-058; prototype:dr2-1-specs prototype-dr2-1-specs-p5-053; conflict c-162)",
         "The filters apply together with the search, the sort and the current tab, all submitted by the search button. (prototype:dr2-1-source prototype-dr2-1-source-p13-036; conflict c-162)"
       ],
@@ -205,6 +243,7 @@
         { "source": "trace:prototype-dr2-1", "ref": "additional filters (trace-prototype-dr2-1-p1-054 to p1-060, p1-121)" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-049 to p5-053" },
         { "source": "ruling:sam-2026-10-07", "ref": "ruling-sam-2026-10-07-p1-010" },
+        { "source": "trace:e2e", "ref": "trace-e2e-p2-047" },
         { "source": "repo:insbackend", "ref": "list query parameters (repo-insbackend-p1-044, p1-045)" }
       ],
       "repos": ["insbackend", "insfrontend", "tests"],
@@ -212,7 +251,12 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the collapsible section, the three filter columns, the date validation and the API filters: one section of one form over one query. The INS frontend has no MOJ frontend package today (the animals frontend has @ministryofjustice/frontend 11.1.0); adding it, and its build entries, is part of this row and a shared build-config change. The 'Action required' status option lists what the dashboard-home area's action-needed derivation marks (req-988), and 'Completed' lists nothing until the authorities' outcome feed exists (req-1082, blocked row); both options render and filter now. The prototype's lack of date validation is overruled (c-166).",
+      "notes": [
+        "Combines the collapsible section, the three filter columns, the date validation and the API filters: one section of one form over one query.",
+        "The INS frontend has no MOJ frontend package today (the animals frontend has @ministryofjustice/frontend); adding it, and its build entries, is part of this row and a shared build-config change.",
+        "The 'Action required' status option lists what the dashboard-home area's action-needed derivation marks (req-988), and 'Completed' lists nothing until the authorities' outcome feed exists (req-1082, blocked row); both options render and filter now. The prototype's lack of date validation is overruled (c-166)."
+      ],
+      "dependsOn": ["inc-136"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
         "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
@@ -221,13 +265,11 @@
       ],
       "shared": [
         "insfrontend:package.json",
-        "insfrontend:webpack.config.js",
-        "insfrontend:src/client",
-        "insfrontend:src/server/app/services/ins-backend",
-        "insfrontend:src/server/app/shared/copy.cy.js",
-        "insfrontend:src/server/app/shared/error-summary.njk"
+        "insfrontend:src/client/javascripts/application.js",
+        "insfrontend:src/client/stylesheets/application.scss",
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-137"
     },
     {
       "title": "The list pages 8 at a time with numbered pages and no results line or empty messages",
@@ -240,7 +282,7 @@
         "The list shows no results count: no 'Showing 1 Result', 'Showing S to E of T Results', 'Showing N of T Results' or 'No Results' line. (prototype:dr2-1-source prototype-dr2-1-source-p13-044; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-077; conflict c-167)",
         "A search or filter that matches nothing shows an empty list with no message; 'No notifications found' is gone. (prototype:dr2-1-source prototype-dr2-1-source-p13-045)",
         "A tab with no notifications shows an empty list with no message; 'You have not started any notifications in this session.' is gone. (prototype:dr2-1-source prototype-dr2-1-source-p13-045)",
-        "The list API serves 8 notifications a page, numbered from 1, and reports the page, size, number of elements, total elements and total pages. (repo:insbackend repo-insbackend-p1-028, repo-insbackend-p1-033, repo-insbackend-p1-034)"
+        "The INS backend's list API serves 8 notifications a page, numbered from 1, and reports the page, size, number of elements, total elements and total pages. (repo:insbackend repo-insbackend-p1-028, repo-insbackend-p1-033, repo-insbackend-p1-034)"
       ],
       "requirements": ["req-1063", "req-1064", "req-1065", "req-1066", "req-1067", "req-1068", "req-1069", "req-1103"],
       "sources": [
@@ -255,30 +297,34 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines page size, numbered pagination, out-of-range pages, page links keeping the list's state, and the three removed lines: they all sit below the cards and are proven with the same multi-page fixture. Depends on the search-and-sort and additional-filters rows, since page links must carry what they add. The prototype's page links dropping the search and filters are overruled (c-163). Already met and kept: a page below 1 answers 400 from the API (req-1104); the INS frontend maps a bad page to the nearest real page before asking.",
+      "notes": [
+        "Combines page size, numbered pagination, out-of-range pages, page links keeping the list's state, and the three removed lines: they all sit below the cards and are proven with the same multi-page fixture. Depends on the search-and-sort and additional-filters rows, since page links must carry what they add.",
+        "The prototype's page links dropping the search and filters are overruled (c-163). Already met and kept: a page below 1 answers 400 from the API (req-1104); the INS frontend maps a bad page to the nearest real page before asking."
+      ],
+      "dependsOn": ["inc-136", "inc-137"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
-        "insbackend:src/main/resources/application.yml",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
-        "tests:tests/ins/e2e/features/notification-list"
+        "insbackend:src/main/resources",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationPageResponse.java",
+        "tests:tests/ins/e2e/features/notification-list",
+        "tests:tests/animals/e2e/pages/notification-dashboard-pagination.spec.ts"
       ],
       "shared": [
-        "insfrontend:src/server/app/services/ins-backend",
-        "insfrontend:src/server/app/shared/copy.cy.js"
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-138"
     },
     {
       "title": "The list's Summary shows 'Action needed' and 'Status updated' glance cards",
-      "detail": "Design Release 2.1 opens each category list with a Summary of two glance cards linking to the category's drill-downs. Persistence is a real constraint (c-148), so the Action needed count is the real number of the organisation's notifications in this category that the Action needed drill-down lists, worked out as c-149 rules.",
+      "detail": "Design Release 2.1 opens each category list with a Summary of two glance cards linking to the category's drill-downs. Persistence is a real constraint (c-148), so the Action needed count is the real number of the organisation's notifications in this category that the Action needed drill-down lists, worked out as c-149 rules. The Status updated count waits for the authorities' outcomes (req-1735, blocked row).",
       "acceptanceCriteria": [
-        "The list has an h2 'Summary' with an 'Action needed' glance card reading 'Tasks requiring your attention' with a 'View tasks' link to /actions?category=live-animals. (prototype:dr2-1-source prototype-dr2-1-source-p13-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-042, trace-prototype-dr2-1-p1-043; prototype:dr2-1-specs prototype-dr2-1-specs-p5-036, prototype-dr2-1-specs-p5-037)",
-        "The Summary has a 'Status updated' glance card reading 'Changes in the past 24 hours' with a 'View updates' link to /changes?category=live-animals. (prototype:dr2-1-source prototype-dr2-1-source-p13-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-044; prototype:dr2-1-specs prototype-dr2-1-specs-p5-038)",
-        "The 'Action needed' card shows the number of the organisation's live animals notifications showing the 'Action required' tag, the same number of notifications its 'View tasks' link lists; a submitted notification missing its health certificate raises it by one, and attaching the document lowers it again. (prototype:dr2-1-source prototype-dr2-1-source-p13-025; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-123; conflict c-148, c-149)"
+        "The list has an h2 'Summary' with an 'Action needed' glance card reading 'Tasks requiring your attention' and a 'View tasks' link that opens the Action needed page showing only live animals notifications. (prototype:dr2-1-source prototype-dr2-1-source-p13-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-042, trace-prototype-dr2-1-p1-043; prototype:dr2-1-specs prototype-dr2-1-specs-p5-036, prototype-dr2-1-specs-p5-037)",
+        "The Summary has a 'Status updated' glance card reading 'Changes in the past 24 hours' and a 'View updates' link that opens the Status updated page showing only live animals notifications. (prototype:dr2-1-source prototype-dr2-1-source-p13-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-044; prototype:dr2-1-specs prototype-dr2-1-specs-p5-038)",
+        "The 'Action needed' card shows the number of the organisation's live animals notifications showing the 'Action required' tag, the same number of notifications its 'View tasks' link lists; a submitted notification missing its health certificate raises it by one, and attaching the document lowers it again. (prototype:dr2-1-source prototype-dr2-1-source-p13-025, prototype-dr2-1-source-p13-069; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-123; document:dr1-parity-backlog document-dr1-parity-backlog-p3-031; conflict c-148, c-149)"
       ],
       "requirements": ["req-1039", "req-1040"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "dashboard summary (prototype-dr2-1-source-p13-024, p13-025)" },
+        { "source": "prototype:dr2-1-source", "ref": "dashboard summary (prototype-dr2-1-source-p13-024, p13-025, p13-069)" },
         { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p1-042 to p1-044, p1-123" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-036 to p5-038" },
         { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-031" }
@@ -288,137 +334,181 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the Summary section and its live count: one section, one count query. The count depends on the action-needed derivation the dashboard-home area builds in the animals backend and the INS read model (req-988, c-149); the combiner should make this row depend on that row and reuse the home's glance-card component rather than build a second one. The 'Delayed' exclusion in req-1040 has nothing to exclude until the authorities' outcome feed exists (blocked row). The Status updated card carries no count in this requirement. DR2.1's fixed glance numbers are overruled (c-148).",
+      "notes": [
+        "Combines the Summary section and its live count: one section, one count query. The count depends on the action-needed derivation the dashboard-home area builds in the animals backend and the INS read model (req-988, c-149), and reuses the home's glance-card component rather than building a second one, so it depends on those rows (inc-132, inc-134).",
+        "Rewritten to the 2026-10-09 ruling: the links are asserted by the page they open and its category, not by /actions?category= or /changes?category= (p1-075). The 'View updates' destination is the Status updated drill-down, itself blocked (inc-143); until it exists the link's destination is still asserted by where it points, and the combiner should check whether this criterion must wait with inc-143.",
+        "The 'Delayed' exclusion in req-1040 has nothing to exclude until the authorities' outcome feed exists (blocked row). DR2.1's fixed glance numbers are overruled (c-148)."
+      ],
+      "dependsOn": ["inc-129", "inc-132", "inc-134"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
-        "insfrontend:src/server/app/shared",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotificationQueryService.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java"
+        "insfrontend:src/server/app/features/dashboard",
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-139"
     },
     {
-      "title": "The list's success banner is titled 'Success' and shown once",
-      "detail": "Design Release 2.1 shows a success notification banner titled 'Success' carrying the action's message when an action returns the trader to the list. Today the banner is titled for the action and shows whenever the address carries ?deleted=1 or ?copied=1. The message is held for the trader and shown once instead. The banner still stays until the trader leaves or reloads the page (c-006).",
+      "title": "The list's success banner is titled 'Success'",
+      "detail": "Design Release 2.1 shows one success notification banner titled 'Success' carrying the action's message when an action returns the trader to the list. Today the banners are titled for the action ('Notification deleted', and a 'Notification copied' banner that is never reached). The 2026-10-09 ruling keeps the action's flag on the redirect, such as a delete's, rather than a message held for the trader and shown once (c-252), so only the banner's look changes. The banner still stays until the trader leaves or reloads the page (c-006).",
       "acceptanceCriteria": [
-        "After deleting a notification from its card, the trader is back on the live animals list, which shows a GOV.UK success notification banner with role alert, titled 'Success', carrying the message 'The notification has been deleted.' (repo:frontend repo-frontend-p3-062, repo-frontend-p3-064; trace:prototype-dr2-1 trace-prototype-dr2-1-p14-115)",
-        "Reloading the list, or opening it again, after the banner has shown does not show it again. (trace:prototype-dr2-1 trace-prototype-dr2-1-p14-114)",
-        "Opening the list with ?deleted=1 or ?copied=1 in its address shows no banner. (repo:frontend repo-frontend-p3-062, repo-frontend-p3-063)"
+        "When an action sends the trader back to the live animals list with its success flag on the redirect, such as a delete from a card, the list shows a GOV.UK success notification banner with role alert, titled 'Success', carrying that action's message. (prototype:dr2-1-source prototype-dr2-1-source-p13-020; repo:frontend repo-frontend-p3-062, repo-frontend-p3-064, repo-frontend-p3-136; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-085; conflict c-252)",
+        "No list banner is titled 'Notification deleted' or 'Notification copied'. (repo:frontend repo-frontend-p3-063, repo-frontend-p3-065)",
+        "Opening the list with no action's success flag shows no success banner. (repo:frontend repo-frontend-p3-062)"
       ],
-      "requirements": ["req-1086", "req-1087"],
+      "requirements": ["req-1086"],
       "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-020" },
         { "source": "repo:frontend", "ref": "dashboard banners (repo-frontend-p3-062 to p3-065, p3-136)" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p14-114, p14-115" }
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-085, p1-101" }
       ],
       "repos": ["frontend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [
-        "How a message from an action run in the animals frontend reaches the INS frontend list once, when the two frontends keep separate sessions. Default: the animals frontend hands the INS frontend a single-use message reference on the redirect, which the INS frontend reads once and which shows nothing on any later visit; the plan settles the mechanism and says so."
+        "Which page a delete returns the trader to, once the list lives on the INS frontend. Default: the delete keeps its redirect with its success flag (ruling p1-101), now to the INS frontend's live animals list, which shows the 'Success' banner; the manage-notifications area owns the delete's landing and its message text, and this row only titles and shows the banner wherever that redirect lands on the list."
       ],
-      "notes": "Combines the banner's title and its show-once behaviour: one banner. Kept as they are (already met): the banner does not dismiss itself (req-1088, c-006), and the stale-action and 'There is a problem' banners (req-1089), which must still show on the INS frontend list after the move. The prototype's 5-second auto-dismiss is overruled (c-006). Which actions return to the list, and the action routes themselves, belong to manage-notifications; the combiner should order this row after that area's delete row if it moves the delete's redirect.",
+      "notes": [
+        "Rewritten to the 2026-10-09 ruling: req-1087 (a held, show-once message) is out of scope and its two criteria are dropped (p1-085); the flag on the redirect stays (p1-101, c-252). The row now covers only req-1086.",
+        "Kept as they are (already met): the banner does not dismiss itself (req-1088, c-006), and the stale-action and 'There is a problem' banners (req-1089), which must still show on the INS frontend list after the move. The animals frontend is in repos because the delete's redirect to the list starts there.",
+        "manage-notifications' inc-126 still says the delete lands on the overall dashboard with no 'deleted' marker; the 2026-10-09 ruling p1-101 keeps ?deleted=1, so the combiner should reconcile this row's landing with that area's rewrite of inc-126."
+      ],
+      "dependsOn": ["inc-129", "inc-126"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/notification-actions",
-        "insfrontend:src/server/app/shared/copy.cy.js"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/delete-notification",
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-140"
     },
     {
-      "title": "A germinal products list at /germinal-products",
-      "detail": "Design Release 2.1 has a second category list for germinal products, the same page pointed at its own path and category. Each category list shows only its own category's notifications.",
+      "title": "A germinal products notification list on the INS frontend",
+      "detail": "Design Release 2.1 gives each category of animal notification its own list, and the 2026-10-09 ruling builds the germinal products list (p1-050). The INS frontend serves it in its own path shape, as the same page pointed at its own address and category, and its 'Create new' starts a germinal products notification in the germinal products set. That link may land before the germinal set itself is built (p1-053). The list shows only germinal products notifications, so a live animals notification never appears on it.",
       "acceptanceCriteria": [
-        "Opening /germinal-products on the INS frontend shows a list titled 'Dashboard - Import notification service - GOV.UK' with the caption 'Dashboard', the h1 'Germinal products' and a 'Back' link to /. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-021; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-078; prototype:dr2-1-specs prototype-dr2-1-specs-p5-061)",
-        "Its 'Create new' button links to create-notification?category=germinal-products, and its 'Use template' button to the templates page. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-079)",
-        "Its Summary has 'View tasks' linking to /actions?category=germinal-products and 'View updates' to /changes?category=germinal-products, and its 'Action needed' count counts only germinal products notifications. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-080)",
-        "Its search, sort, additional filters, tabs and page links all point at /germinal-products. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-081; prototype:dr2-1-specs prototype-dr2-1-specs-p5-062)",
-        "A live animals notification never appears on the germinal products list, in its search results or in its 'In progress' count. (prototype:dr2-1-source prototype-dr2-1-source-p13-017; repo:insbackend repo-insbackend-p1-021)"
+        "A signed-in trader opening the INS frontend's germinal products list sees the browser title 'Dashboard - Import notification service - GOV.UK', the caption 'Dashboard', the h1 'Germinal products' and a 'Back' link to the overall home. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-021; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-078; prototype:dr2-1-specs prototype-dr2-1-specs-p5-061)",
+        "Its 'Create new' button links to the start of the germinal products set's create journey, carrying the germinal products category, and creates no draft by being followed from the list; its 'Use template' button takes the trader to the templates page. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-079; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-049, ruling-sam-2026-10-09-p1-053, ruling-sam-2026-10-09-p1-102; conflict c-251)",
+        "Its Summary's 'View tasks' opens the Action needed page and 'View updates' the Status updated page, each showing only germinal products notifications, and its 'Action needed' count counts only germinal products notifications. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-080)",
+        "Its search, sort, additional filters, tabs and page links all keep the trader on the germinal products list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-081, trace-prototype-dr2-1-p1-087)",
+        "The germinal products list shows only germinal products notifications: with the organisation's live animals notifications on the live animals list, none of them appears on the germinal products list, in its search results or in its 'In progress' count. (prototype:dr2-1-source prototype-dr2-1-source-p13-017; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-033, ruling-sam-2026-10-09-p1-050; repo:insbackend repo-insbackend-p1-021)"
       ],
-      "requirements": ["req-1092", "req-1093"],
+      "requirements": ["req-1092", "req-1736"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-015, p13-017, p13-021" },
         { "source": "trace:prototype-dr2-1", "ref": "germinal products list (trace-prototype-dr2-1-p1-078 to p1-081, p1-087)" },
-        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-061, p5-062" },
-        { "source": "repo:insbackend", "ref": "repo-insbackend-p1-021, p1-025" }
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-061" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-033, p1-049, p1-050, p1-053, p1-061, p1-102" },
+        { "source": "repo:insbackend", "ref": "repo-insbackend-p1-021" }
       ],
       "repos": ["insbackend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the germinal products page and the category separation: the separation is proven by the second list. Built last among the list rows because it reuses every list feature pointed at a second path. No service creates a germinal products notification in this programme (the blocker on req-979), so the list is proven empty of live animals notifications; that a germinal products notification appears only here, with 'Number of packages' and 'Cattle, Semen' on its card, is in this draft's unobservable list.",
+      "notes": [
+        "Combines the germinal products page and its category separation: the separation is proven by the second list. Built after the list rows because it reuses every list feature pointed at a second address. Proven in the ins Playwright project (ruling p1-061).",
+        "Requirement swap against the previous backlog: this row now covers req-1736 (the germinal list shows only germinal notifications), which a live animals notification proves today; req-1093 (the live list never shows a germinal notification) moves to the germinal cards row, because only a real germinal products notification can prove it.",
+        "Rewritten to the 2026-10-09 ruling: no literal /germinal-products, create-notification?category= or /actions?category= in any criterion (p1-075, p1-102; c-251). The germinal set root's hand-on to this list (req-1851) belongs to the germinal set."
+      ],
+      "dependsOn": ["inc-135", "inc-138", "inc-139"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
         "insfrontend:src/server/app/shared/paths.js",
-        "insfrontend:src/server/app/shared/copy.cy.js"
+        "insfrontend:src/server/app/features/index.js",
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-141"
+    },
+    {
+      "title": "Germinal products notifications on their own list and cards",
+      "detail": "Design Release 2.1 lists germinal products notifications only on the germinal products list, counts them in packages and names the commodity by species and product type. The 2026-10-09 ruling builds the germinal cards (p1-050), so this no longer waits on a decision; it waits only for germinal products notifications to exist and reach the INS read model with their category, species, product type and package count, which the germinal products set and the notification record build.",
+      "acceptanceCriteria": [
+        "A germinal products notification appears on the germinal products list and never on the live animals list, in its search results or in its 'In progress' count. (prototype:dr2-1-source prototype-dr2-1-source-p13-015, prototype-dr2-1-source-p13-017; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-033)",
+        "A germinal products notification's card shows its quantity as 'Number of packages', from the notification's package count. (prototype:dr2-1-source prototype-dr2-1-source-p13-058; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-082; prototype:dr2-1-specs prototype-dr2-1-specs-p5-064)",
+        "A germinal products notification's card names the commodity as the species then the product type, separated by a comma, such as 'Cattle, Semen'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p1-083; prototype:dr2-1-specs prototype-dr2-1-specs-p5-063)",
+        "A germinal products notification with no package count or no commodity yet shows 'Not applicable' for that fact. (prototype:dr2-1-source prototype-dr2-1-source-p13-058, prototype-dr2-1-source-p13-101)"
+      ],
+      "requirements": ["req-1093", "req-1737", "req-1738"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "prototype-dr2-1-source-p13-015, p13-017, p13-058, p13-101" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p1-082, p1-083" },
+        { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-063, p5-064" },
+        { "source": "ruling:sam-2026-10-09", "ref": "ruling-sam-2026-10-09-p1-033, p1-050, p1-061" },
+        { "source": "repo:insbackend", "ref": "repo-insbackend-p1-021, p1-025" }
+      ],
+      "repos": ["backend", "insbackend", "insfrontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Unblocked by ruling:sam-2026-10-09 p1-050, which builds the germinal list and cards and lifts the blocker on req-1736, req-1737 and req-1738; the row moves from blocked to todo.",
+        "Ordering need for the combiner: this row cannot be observed until a germinal products notification reaches the INS read model with its category (req-1856, req-1884, req-1885) and its species, product type and package count (the germinal set's commodity rows). Make it depend on whichever rows first create such a notification. If those sit only in the last-wave germinal-products theme, either the test sets up a germinal products notification through the animals backend's create API with the germinal category (a one-page set-up, once the backend stores it), or this row waits for that theme; avoid a theme cycle with ins-dashboard.",
+        "Covers req-1093 (the live list never shows a germinal notification), moved here from the germinal list row because only a real germinal products notification proves it. The animals backend is in repos only in case the published event lacks the package count or product type; the plan checks the event first. INS-side germinal work stays in the INS themes and is proven in the ins Playwright project (ruling p1-061)."
+      ],
+      "dependsOn": ["inc-130", "inc-141"],
+      "touches": [
+        "insfrontend:src/server/app/features/notification-list/view-model",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java",
+        "tests:tests/ins/e2e/features/notification-list"
+      ],
+      "shared": [
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+        "tests:page-objects/ins/notification-list-page.ts"
+      ],
+      "existingRow": "inc-172"
     },
     {
       "title": "Cards show the authorities' outcomes: delayed, completed, inspection and their actions",
-      "detail": "Design Release 2.1's cards show outcomes only the authorities' case system decides: a 'Delayed' error card with its reason, the 'Completed' status in the Completed tab, an 'Inspection' fact with a 'Required' tag, and 'Copy as new' then 'View' on cards in those statuses (c-160). No such outcome reaches the service today.",
+      "detail": "Design Release 2.1's cards show outcomes only the authorities' case system decides: a 'Delayed' error card with its reason, the 'Completed' status as plain text in the Completed tab, an 'Inspection' fact with a 'Required' tag, and 'Copy as new' then 'View' on cards in those statuses (c-160), plus a live Status updated count. No such outcome reaches the service today.",
       "acceptanceCriteria": [
-        "A delayed notification shows a 'Delayed' tag on an error card with the reason for the delay; the text 'Error message' never appears. (prototype:dr2-1-source prototype-dr2-1-source-p13-065, prototype-dr2-1-source-p13-052)",
-        "A notification the authorities have finished with shows the status 'Completed' as plain styled text and is listed in the 'Completed' tab. (prototype:dr2-1-source prototype-dr2-1-source-p13-061; document:dr1-parity-backlog document-dr1-parity-backlog-p3-032)",
+        "A delayed notification shows a 'Delayed' tag on an error card with the reason for the delay; the text 'Error message' never appears. (prototype:dr2-1-source prototype-dr2-1-source-p13-052, prototype-dr2-1-source-p13-065)",
+        "A notification the authorities have finished with shows the status 'Completed' as plain styled text, not a tag, and is listed in the 'Completed' tab. (prototype:dr2-1-source prototype-dr2-1-source-p13-061; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-068; document:dr1-parity-backlog document-dr1-parity-backlog-p3-032; repo:insbackend repo-insbackend-p1-023)",
         "A notification chosen for inspection shows an extra 'Inspection' fact with a 'Required' tag at the end of the card's second row. (prototype:dr2-1-source prototype-dr2-1-source-p13-054; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-069)",
-        "A card in an action-required-by-the-authorities, delayed or completed status offers 'Copy as new' then 'View', View opening the notification's review page. (prototype:dr2-1-source prototype-dr2-1-source-p13-047, prototype-dr2-1-source-p13-048, prototype-dr2-1-source-p13-049; prototype:dr2-1-specs prototype-dr2-1-specs-p5-048; conflict c-160)"
+        "A card in an action-required-by-the-authorities, delayed or completed status offers 'Copy as new' then 'View', View opening the notification's review page. (prototype:dr2-1-source prototype-dr2-1-source-p13-047, prototype-dr2-1-source-p13-048, prototype-dr2-1-source-p13-049; prototype:dr2-1-specs prototype-dr2-1-specs-p5-048; conflict c-160)",
+        "The list's 'Status updated' glance card shows the number of the category's notifications whose status changed in the past 24 hours, matching the Status updated list its link opens. (prototype:dr2-1-source prototype-dr2-1-source-p13-025, prototype-dr2-1-source-p13-069; trace:prototype-dr2-1 trace-prototype-dr2-1-p1-123; conflict c-148)"
       ],
-      "requirements": ["req-1081", "req-1082", "req-1083", "req-1085"],
+      "requirements": ["req-1081", "req-1082", "req-1083", "req-1085", "req-1735", "req-1739"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "dashboard card statuses and actions (prototype-dr2-1-source-p13-047 to p13-049, p13-052, p13-054, p13-061, p13-065)" },
-        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p1-069" },
+        { "source": "prototype:dr2-1-source", "ref": "dashboard card statuses and actions (prototype-dr2-1-source-p13-025, p13-047 to p13-049, p13-052, p13-054, p13-061, p13-065, p13-069)" },
+        { "source": "trace:prototype-dr2-1", "ref": "trace-prototype-dr2-1-p1-068, p1-069, p1-123" },
         { "source": "prototype:dr2-1-specs", "ref": "prototype-dr2-1-specs-p5-048" },
-        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-032" }
+        { "source": "document:dr1-parity-backlog", "ref": "document-dr1-parity-backlog-p3-031, p3-032" },
+        { "source": "repo:insbackend", "ref": "repo-insbackend-p1-023" }
       ],
       "repos": ["insbackend", "insfrontend", "tests"],
       "kind": "feat",
       "status": "blocked",
       "gate": null,
       "openQuestions": [
-        "Blocked: the authorities' case system (PIMS Dynamics) must send post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record. Who: the PIMS Dynamics integration owners must provide that outcome feed; until they do, no notification reaches these statuses and none of this can be built or observed."
+        "Blocked: the authorities' case system (PIMS Dynamics) must send post-submission outcomes (action required with its reason, inspection required, delayed, completed) back to the notification record. Who: the PIMS Dynamics integration owners must provide that outcome feed; until they do, no notification reaches these statuses and none of this can be built or observed. Ruling:sam-2026-10-09 p1-099 and p1-100 keep the completed status blocked on a real source of completion without naming it."
       ],
-      "notes": "Keeps every requirement the PIMS outcome feed blocks apart, so the list rows build now. Once the feed exists, the read model takes the outcomes and the card, tabs, status filter and Summary count pick them up.",
+      "notes": [
+        "Keeps every requirement the PIMS outcome feed blocks apart, so the list rows build now. Once the feed exists, the read model takes the outcomes and the card, tabs, status filter and Summary count pick them up.",
+        "req-1735 (a live Status updated count) and req-1739 ('Completed' as plain styled text) carry the same blocker and wait here."
+      ],
+      "dependsOn": ["inc-130", "inc-135", "inc-139"],
       "touches": [
         "insfrontend:src/server/app/features/notification-list",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification",
         "tests:tests/ins/e2e/features/notification-list"
       ],
       "shared": [
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/AggregatedNotification.java",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/notification/NotificationUpsertService.java"
+        "tests:page-objects/ins/notification-list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-142"
     }
   ],
-  "unobservable": [
-    {
-      "requirement": "req-1093",
-      "environment": "every environment (FIT and the local and CDP stacks)",
-      "why": "Its germinal products half (the germinal products list shows germinal products notifications, and only there) needs a germinal products notification, and no service in this programme creates one: the same blocker the reconciler recorded on req-979. The row covers only the observable half, that live animals notifications never appear on the germinal products list."
-    },
-    {
-      "requirement": "req-1074",
-      "environment": "every environment",
-      "why": "'Number of packages' shows only on a germinal products notification's card, and no service creates one (req-979's blocker). The row covers 'Number of animals' on live animals cards."
-    },
-    {
-      "requirement": "req-1078",
-      "environment": "every environment",
-      "why": "The germinal products commodity 'species, product type' (such as 'Cattle, Semen') shows only on a germinal products notification's card, and no service creates one (req-979's blocker). The row covers the live animals commodity name."
-    },
-    {
-      "requirement": "req-1079",
-      "environment": "every environment",
-      "why": "Its 'Completed' half (Completed as plain styled text) needs a completed notification, which only the authorities' outcome feed can produce (the blocker on req-1082). The row covers Draft, Amending, Submitted and Action required; the Completed style is also asserted in the blocked outcomes row."
-    }
-  ]
+  "unobservable": []
 }

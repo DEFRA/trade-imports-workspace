@@ -3,165 +3,216 @@
   "rows": [
     {
       "title": "Hub regions for assistive technology and the 'Main import reason' row",
-      "detail": "Screen-reader users move around the Overview page by region, as Design Release 2.1 marks it up: each commodity total card and each part of the task list becomes a named region. The third task in section 1 is renamed 'Main import reason', in English and Welsh, to match Design Release 2.1. Everything else on the hub stays as it is.",
+      "detail": "Screen-reader users move around the live-animals Overview page by region, as Design Release 2.1 marks it up: each commodity total card, the 'Your commodities' block, the task list and each numbered section becomes a named region. The task list stays the GOV.UK Task list, so each task still reads its status and hint. The third task in section 1 is renamed 'Main import reason', in English and Welsh, to match Design Release 2.1.",
       "acceptanceCriteria": [
-        "On the Overview page the 'Animals' card is a region named 'Animals summary' and the 'Packages/boxes' card is a region named 'Packages summary' (trace:prototype-dr2-1 journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37)",
+        "On the live-animals Overview page the 'Animals' card is a region named 'Animals summary' and the 'Packages/boxes' card is a region named 'Packages summary' (trace:prototype-dr2-1 journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37)",
         "The 'Your commodities' block is a region named 'Your commodities', and the task list is a region named 'Notification tasklist' (trace:prototype-dr2-1 journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37)",
         "Each numbered task section is a region named by its own heading, for example '1. About the consignment' and '6. Contact address' (trace:prototype-dr2-1 journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37)",
-        "Each task still reads its status and hint to a screen reader moving by links, as it does today (ruling:sam-2026-10-07 §real constraints override the prototype; trace:animals-fit hub task list)",
+        "Each task still reads its status, and 'Roles and addresses' its hint, to a screen reader moving by links (ruling:sam-2026-10-09 claim 6 stands for look and feel; trace:animals-fit hub task list aria-describedby)",
         "The third row of section 1 reads 'Main import reason' (prototype:dr2-1-source app/views/design-release-2.1/notification-hub.html section 1; prototype:dr2-1-specs hub task names)",
         "With Welsh chosen, the same row shows the Welsh for 'Main import reason', no longer the Welsh for 'Main reason for import' (repo:frontend features/hub/copy/copy.cy.js; prototype:dr2-1-source notification-hub.html section 1)",
-        "The Overview page with nothing but the origin answered, and with commodity totals entered, has no serious or critical WCAG 2.2 A or AA accessibility violations (repo:frontend hub.fit.spec.js axe checks)"
+        "The Overview page with only the origin answered, and with commodity totals entered, has no serious or critical WCAG 2 A or AA accessibility violations once the regions are added (repo:frontend features/hub/hub.fit.spec.js axe checks)"
       ],
-      "requirements": ["req-notification-hub-015", "req-notification-hub-018"],
+      "requirements": ["req-791", "req-794"],
       "sources": [
         { "source": "trace:prototype-dr2-1", "ref": "journeys--the-notification-hub-a-fresh-notification-lists-every-task-as-to-do action 37" },
         { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/notification-hub.html" },
         { "source": "prototype:dr2-1-specs", "ref": "hub task names" },
         { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub" },
-        { "source": "ruling:sam-2026-10-07", "ref": "real constraints override the prototype" }
+        { "source": "trace:animals-fit", "ref": "hub task list; hub import reason row" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 6 (look and feel), c-129" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines two slices on the same page, the same copy files and the same ladder: the hub's named regions (req-notification-hub-015) and the row rename (req-notification-hub-018). The task list stays the GOV.UK Task list (conflict c-notification-hub-003: the ruling keeps its accessible markup); the regions wrap it, they do not replace it. The Kilograms card's region name is written in the germinal products row, since that card does not exist until germinal products do. The rename is the hub row only: whether the review page or the import reason page's caption also change belongs to the areas that own them. Existing end-to-end specs that read 'Main reason for import' from the hub change with this row.",
+      "notes": [
+        "Combines two slices on the same page, the same copy files and the same ladder: the live hub's named regions (req-791) and the row rename (req-794). c-129 keeps the GOV.UK Task list; the regions wrap it, they do not replace it.",
+        "The germinal hub's regions ('Packages summary', 'Gross weight summary') are req-1837, in the germinal hub row, which copies this hub once this row lands.",
+        "The rename is the hub row only: the review page and the import reason page's own captions belong to the areas that own them. Existing end-to-end and accessibility specs that read 'Main reason for import' from the hub change with this row."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub",
         "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
       ],
       "shared": [
         "tests:tests/animals/e2e/features/reason-purpose-scope.spec.ts",
-        "tests:tests/animals/a11y"
+        "tests:tests/animals/e2e/features/additional-details-scope.spec.ts",
+        "tests:tests/animals/a11y/notification-journey-initial-state.spec.ts",
+        "tests:tests/animals/a11y/notification-journey-filled-state.spec.ts",
+        "tests:tests/animals/a11y/notification-journey-conditional-pages.spec.ts",
+        "tests:tests/animals/security/frontend-conditional-pages.spec.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-098"
     },
     {
-      "title": "A task opened from the hub returns to the hub when saved",
-      "detail": "In Design Release 2.1 a trader who opens a task from the Overview page comes back to the Overview once that task's own pages are saved, and chooses what to do next. Today 'Save and continue' carries them on through the rest of the task group first, for example from the main reason for import into Additional details, and from Arrival details into transit countries and transport. Pages inside one task, such as roles and addresses then the CPH number, still run on to each other.",
+      "title": "The live-animals Transit countries task shows only when transit countries are required",
+      "detail": "Design Release 2.1 decides from the notification whether transit countries are owed, and shows the Transit countries task only then. Today the live-animals Overview shows the task once arrival details are saved, even with no commodity chosen. The rule that says when transit countries are required belongs to the arrival and transit area; this row makes the live-animals Overview follow it. The germinal set's Transit countries task is its own requirement, built in the germinal hub row.",
       "acceptanceCriteria": [
-        "Opening 'Main import reason' from the Overview page and selecting 'Save and continue' saves the answer and returns to the Overview page, not to Additional details (prototype:dr2-1-source app/routes.js:6509-6592; trace:prototype-dr2-1 p11 hub tasks return to the hub; trace:animals-fit hub import reason run)",
-        "Opening 'Arrival details' from the Overview page and selecting 'Save and continue' saves the answer and returns to the Overview page, not to Transit countries or Transport details (trace:prototype-dr2-1 p13 arrival details returns to the hub; trace:e2e hub arrival details run)",
-        "Opening 'Commodity details' from the Overview page and selecting 'Save and continue' saves the numbers and returns to the Overview page, not to the main import reason (prototype:dr2-1-specs hub task return; trace:animals-fit hub commodity details run)",
-        "Opening 'Roles and addresses' from the Overview page still runs from the addresses page on to the CPH number page when the notification needs one, and returns to the Overview page after the CPH number is saved (repo:frontend flow/task-rows.js roles and addresses row; trace:animals-fit hub roles and addresses run)",
-        "After returning, the task just saved reads 'Complete' on the Overview page when its answers pass their pages' rules (prototype:dr2-1-specs hub task return; repo:frontend features/hub/controller.js:72-73)",
-        "A new notification's first pass, started from the dashboard rather than the Overview page, still carries the trader from the origin page through each task in turn as it does today (repo:frontend flow/run.js opening run; trace:e2e new notification run)"
-      ],
-      "requirements": ["req-notification-hub-032"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/routes.js:6509-6592" },
-        { "source": "prototype:dr2-1-specs", "ref": "hub task return" },
-        { "source": "trace:prototype-dr2-1", "ref": "hub tasks return to the hub" },
-        { "source": "trace:animals-fit", "ref": "hub task runs" },
-        { "source": "trace:e2e", "ref": "hub arrival details run" },
-        { "source": "repo:frontend", "ref": "src/server/app/flow/navigation.js; sets/live-animals/journeys/linear/flow" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": "Check the return-to-Overview behaviour on every task row before any other row builds on it: each task opened from the Overview page must come back to it after its own pages, and the opening pass from the dashboard must be unchanged. Other areas' rows that add pages to a task inherit this rule.",
-      "openQuestions": [],
-      "notes": "One slice: the return rule is one change to how the next page is chosen after a save from the hub, with one ladder. Today's end-to-end and fit tests assert the old run-on behaviour (trace:e2e arrival details run, trace:animals-fit import reason run) and change with this row. The change is to the shared next-page rule, so it sits with the journey flow code other areas' rows also touch.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details"
-      ],
-      "shared": [
-        "frontend:src/server/app/flow/navigation.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
-        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts",
-        "tests:tests/animals/e2e/pages/import-reason.spec.ts"
-      ],
-      "existingRow": null
-    },
-    {
-      "title": "The hub for a germinal products notification",
-      "detail": "Germinal products are counted by packages and weight, not by animals. When a notification holds only germinal products, the Overview page shows the packages card and a net weight card in kilograms in place of the animals card, and leaves out the Additional details task, which asks about animal certification and unweaned animals that germinal products do not have.",
-      "acceptanceCriteria": [
-        "With only germinal products chosen, 'Your commodities' shows the 'Packages/boxes' card and a card labelled 'Kilograms' with the caption 'Total weight of packages in this consignment', and no 'Animals' card (prototype:dr2-1-source app/views/design-release-2.1/notification-hub.html:30-49; trace:prototype-dr2-1 TRACE G action 142)",
-        "The 'Kilograms' card reads '0' before any weight is entered (prototype:dr2-1-source app/routes.js:6501)",
-        "The 'Kilograms' card shows a whole-number total as entered, for example '12', and any other total rounded to 3 decimal places, for example '2.5' for 2.5 (prototype:dr2-1-source app/routes.js:6501 and 4462-4472)",
-        "The 'Kilograms' card is a region named 'Kilograms summary', like the 'Packages summary' card beside it (trace:prototype-dr2-1 journeys--the-notification-hub action 37)",
-        "With only germinal products chosen, section 2 does not show 'Additional details' (prototype:dr2-1-source notification-hub section 2; trace:prototype-dr2-1 TRACE G action 142)",
-        "With live animals chosen, the hub still shows the 'Animals' and 'Packages/boxes' cards and the 'Additional details' task (trace:animals-fit hub commodity totals; trace:e2e hub section 2)"
-      ],
-      "requirements": ["req-notification-hub-012", "req-notification-hub-013", "req-notification-hub-022"],
-      "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/notification-hub.html:30-49; app/routes.js:6467, 6501, 4462-4472" },
-        { "source": "trace:prototype-dr2-1", "ref": "TRACE G action 142; journeys--the-notification-hub action 37" },
-        { "source": "trace:animals-fit", "ref": "hub commodity totals" },
-        { "source": "trace:e2e", "ref": "hub section 2" }
-      ],
-      "repos": ["frontend", "tests"],
-      "kind": "feat",
-      "status": "todo",
-      "gate": null,
-      "openQuestions": [],
-      "notes": "Combines three slices that all turn on the same fact, a notification holding only germinal products, and share its set-up: the swapped cards (req-notification-hub-012), the weight display rule (req-notification-hub-013) and dropping Additional details (req-notification-hub-022). Depends on the commodities area's row that lets a trader choose germinal products and enter their net weight: none of these criteria can be seen until it lands, so the combiner should add that dependency. The region name 'Kilograms summary' is this drafter's call: req-notification-hub-015 asks only for 'a matching label', and this follows the 'Animals summary' and 'Packages summary' pattern.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
-      ],
-      "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
-        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts",
-        "tests:tests/animals/e2e/features/additional-details-scope.spec.ts"
-      ],
-      "existingRow": null
-    },
-    {
-      "title": "The Transit countries task shows only when transit countries are required",
-      "detail": "Design Release 2.1 decides from the notification whether transit countries are owed, and shows the Transit countries task only then. Today the task appears once arrival details are saved, even with no commodity chosen. The rule that says when transit countries are required belongs to the arrival and transit area; this row makes the Overview page follow it.",
-      "acceptanceCriteria": [
-        "With poultry chosen, section 3 shows 'Transit countries' between 'Arrival details' and 'Transport details' (prototype:dr2-1-source app/routes.js:6552-6556; trace:prototype-dr2-1 p13 poultry hub)",
-        "With germinal products chosen, section 3 shows 'Transit countries' between 'Arrival details' and 'Transport details' (trace:prototype-dr2-1 TRACE G action 142)",
+        "With poultry chosen, section 3 of the live-animals Overview shows 'Transit countries' between 'Arrival details' and 'Transport details' (prototype:dr2-1-source app/routes.js:6552-6556; trace:prototype-dr2-1 p13 poultry hub)",
         "With pet cats chosen, section 3 does not show 'Transit countries', whether or not arrival details are saved (trace:prototype-dr2-1 p13 pet cats hub; prototype:dr2-1-source app/routes.js:6552-6556)",
         "With no commodity chosen and arrival details saved, section 3 does not show 'Transit countries' (trace:animals-fit hub arrival details before a commodity; prototype:dr2-1-source app/routes.js:6552-6556)",
         "Where shown, 'Transit countries' reads 'To do' until at least one transit country is selected, then 'Complete' (prototype:dr2-1-source app/routes.js:6552-6556)"
       ],
-      "requirements": ["req-notification-hub-024"],
+      "requirements": ["req-800"],
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:6552-6556" },
-        { "source": "trace:prototype-dr2-1", "ref": "TRACE G action 142; p13 hub transit countries" },
+        { "source": "trace:prototype-dr2-1", "ref": "p13 hub transit countries" },
         { "source": "trace:animals-fit", "ref": "hub transit countries row" },
-        { "source": "repo:frontend", "ref": "flow/task-rows.js:75" }
+        { "source": "trace:e2e", "ref": "hub section 3" },
+        { "source": "repo:frontend", "ref": "flow/task-rows.js:75" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 13 (live and germinal halves split)" }
       ],
       "repos": ["frontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Kept apart from the germinal products row: most of it (poultry, pet cats, no commodity) can be seen without germinal products, and it rests on another area's rule. Depends on the arrival-and-transit area's row that defines when transit countries are required; the combiner should either add that dependency or merge this row into that one, since both change when the transit countries task applies. The germinal products criterion needs the commodities area's germinal products row too.",
+      "notes": [
+        "Rewritten to the live half only: ruling:sam-2026-10-09 claim 13 split req-800, and the germinal half (req-1839) moves to the germinal hub row, so the germinal criterion inc-100 carried is taken out.",
+        "Depends on inc-028, the arrival-and-transit row that defines when transit countries are required; the combiner may merge this row into that one, since both change when the transit countries task applies."
+      ],
       "touches": [
-        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries"
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "tests:tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-100"
     },
     {
-      "title": "The hub while a template is being created",
-      "detail": "Design Release 2.1 reuses the Overview page to build a template. While a template is being created the page says so: a 'Template' tag and the template's name in place of the status and reference, a 'Template tasklist' heading, no Documents section, and buttons that lead to the template review and back to the templates list.",
+      "title": "The Overview for a germinal products notification",
+      "detail": "Each germinal products notification gets its own Overview page in the germinal products set, a copy of the live-animals Overview taken once this programme has built it, plus the germinal differences. Germinal products are counted by packages and weight, not by animals, so the Overview shows a packages card and a gross weight card in kilograms in place of the animals card. The weight card totals the total gross weight the trader entered for each species, as the V4 germinal data fields and the 9 October ruling hold it. Screen-reader users get the same named regions as on the live-animals Overview, with the weight card named for gross weight, and the Transit countries task shows when transit countries are required, as Design Release 2.1 shows for germinal products.",
       "acceptanceCriteria": [
-        "While a template is being created, the status line above the heading shows the tag 'Template' and the template's name, and no notification reference (prototype:dr2-1-source app/views/partials/design-release-2.1/notification-status.html:2)",
-        "While a template is being created, the task list is headed 'Template tasklist' (prototype:dr2-1-source notification-hub template heading)",
-        "While a template is being created, there is no Documents section or 'Upload documents' task, and the sections after it read '4. Consignment parties' and '5. Contact address' (prototype:dr2-1-source notification-hub template sections)",
-        "While a template is being created, the primary button reads 'Review template' and opens the template's review page (prototype:dr2-1-source app/routes.js:6475-6480)",
-        "While a template is being created, the secondary button reads 'Return to manage templates' and opens Manage templates (prototype:dr2-1-source app/routes.js:6489-6493)",
-        "For a notification, the Overview page still shows its status and reference, 'Notification tasklist', six sections, 'Review and submit' and 'Return to dashboard' (repo:frontend features/hub copy and template; trace:animals-fit hub buttons)"
+        "A germinal products notification has its own Overview page under /germinal-products/notifications/, keyed by the notification as the live-animals Overview is, with the 'Overview' heading, the notification's status tag and reference above it, the 'Notification tasklist' and the 'Review and submit' and 'Return to dashboard' buttons (ruling:sam-2026-10-09 claims 1, 2 and 66; repo:frontend features/hub/controller.js:177)",
+        "On the germinal products Overview, 'Your commodities' shows the 'Packages/boxes' card and a card labelled 'Kilograms' with the caption 'Total weight of packages in this consignment', and no 'Animals' card (prototype:dr2-1-source app/views/design-release-2.1/notification-hub.html:30-49; trace:prototype-dr2-1 TRACE G action 142)",
+        "The 'Packages/boxes' card totals the number of packages entered across the chosen germinal species (trace:prototype-dr2-1 TRACE G action 142; repo:frontend features/hub/controller.js commodity totals)",
+        "The 'Kilograms' card reads '0' before any total gross weight is entered, and when every chosen species' total gross weight is left blank (prototype:dr2-1-source app/routes.js:6501; confluence:6497338582 total gross weight optional)",
+        "The 'Kilograms' card totals the total gross weight entered across the chosen germinal species, showing a whole-number total as entered, for example '12' for 5 and 7, and any other total rounded to 3 decimal places, for example '2.5' for 1.25 and 1.25 (prototype:dr2-1-source app/routes.js:6501 and 4462-4472; ruling:sam-2026-10-09 claim 3)",
+        "On the germinal products Overview the 'Packages/boxes' card is a region named 'Packages summary' and the 'Kilograms' card a region named 'Gross weight summary', and the 'Your commodities' block, the task list and each numbered section are regions named by their own heading (trace:prototype-dr2-1 journeys--the-notification-hub action 37; prototype:dr2-1-source notification-hub.html:30-49)",
+        "When transit countries are required for the germinal products notification, section 3 shows 'Transit countries' between 'Arrival details' and 'Transport details', reading 'To do' until at least one transit country is selected, then 'Complete' (prototype:dr2-1-source app/routes.js:6552-6556; trace:prototype-dr2-1 p12 germinal hub)",
+        "The live-animals Overview still shows the 'Animals' and 'Packages/boxes' cards and no 'Kilograms' card (trace:animals-fit hub commodity totals)",
+        "The germinal products Overview with zero totals, and with packages and weights entered, has no serious or critical WCAG 2 A or AA accessibility violations (repo:frontend features/hub/hub.fit.spec.js axe checks)"
       ],
-      "requirements": [
-        "req-notification-hub-038",
-        "req-notification-hub-039",
-        "req-notification-hub-040",
-        "req-notification-hub-041",
-        "req-notification-hub-042"
-      ],
+      "requirements": ["req-788", "req-789", "req-1836", "req-1837", "req-1839"],
       "sources": [
-        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/notification-status.html:2; app/routes.js:6475-6493; notification-hub template heading and sections" },
+        { "source": "prototype:dr2-1-source", "ref": "app/views/design-release-2.1/notification-hub.html:30-49; app/routes.js:6467, 6501, 4462-4472, 6552-6556" },
+        { "source": "trace:prototype-dr2-1", "ref": "TRACE G action 142; journeys--the-notification-hub action 37; p12 germinal hub" },
+        { "source": "confluence:6497338582", "ref": "Live Animals Germinals Data Fields V4: total gross weight in kilograms" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 1, 2, 3, 13 and 66" },
+        { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub" },
+        { "source": "trace:animals-fit", "ref": "hub commodity totals" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the germinal hub copy (req-1836) with its differences: the swapped cards (req-788), the gross weight display rule (req-789), the germinal regions (req-1837) and the germinal Transit countries task (req-1839). One page copy, one set-up (a germinal products notification with species chosen), one review. req-1836, req-1837 and req-1839 are in no area in areas.json; this drafter places them here because they are this page, and the germinal-products area's draft asks the combiner to put the germinal hub copy with this row.",
+        "req-798 is taken out: it is now the live half only and adopted as exists (ruling:sam-2026-10-09 claim 13). The germinal set leaving out 'Additional details' is req-181, in the germinal-products area's row 'The germinal set has no Additional details step, and a germinal species counts as identified once it has one identifier', which depends on this copy.",
+        "c-022 (ruled): the weight is a gross weight held per species line, as a decimal; the earlier 'net weight' wording and the 'Kilograms summary' region name are replaced by 'Gross weight summary' (req-1837, c-244).",
+        "The germinal Commodity details Complete rule (req-1763) sits with the commodities area's germinal Commodity details row (inc-017), which this row depends on for the stored weight and packages.",
+        "Depends on: the germinal-products area's first row 'A germinal products notification starts in its own set, with its own draft, category and origin page' (no id yet; the combiner adds it); inc-017 (germinal weight and packages stored); inc-098 and inc-100 (the live hub's regions and transit rule, which the copy is taken after, per req-1836). The germinal Transit countries criterion also needs the arrival-and-transit rule for germinal products (inc-028 or its germinal half).",
+        "Theme: ruling:sam-2026-10-09 claim 58 puts the germinal set's code in the germinal-products theme in the last wave; this row only touches the germinal set's own folder, so the combiner should move it there from overview-and-review."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/features/hub",
+        "tests:tests/animals/e2e/germinal-products",
+        "tests:tests/animals/a11y/germinal-products"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/germinal-products/journeys/linear/flow",
+        "tests:page-objects/germinal-products"
+      ],
+      "existingRow": "inc-099"
+    },
+    {
+      "title": "A task opened from the Overview returns to the Overview when saved",
+      "detail": "In Design Release 2.1 a task opened from the Overview comes back to the Overview when saved, so the trader chooses what to do next. Today, from the Overview, 'Save and continue' moves on through the rest of the section first. The 9 October ruling builds this by changing only the live flow's fallback, with nothing added to the row links or the forms.",
+      "acceptanceCriteria": [
+        "Opening 'Main import reason' from the Overview and selecting 'Save and continue' saves the answer and returns to the Overview, not to 'Additional details' (trace:prototype-dr2-1 p11 hub tasks return to the hub; trace:animals-fit hub import reason run)",
+        "Opening 'Arrival details' from the Overview and selecting 'Save and continue' saves the answer and returns to the Overview, not to 'Transit countries' or 'Transport details' (trace:prototype-dr2-1 p12 arrival details returns to the hub; trace:e2e hub arrival details run)",
+        "Opening 'Roles and addresses' from the Overview and selecting 'Save and continue' on the addresses page returns to the Overview, not to the CPH number page (trace:e2e hub roles and addresses run; ruling:sam-2026-10-09 claims 196 to 198)",
+        "The Overview's row links and the task pages' forms are unchanged by this row: the return is decided by the flow alone (ruling:sam-2026-10-09 claim 198)",
+        "A new notification's first pass, before the Overview has been reached, still carries the trader from the origin page through each task in turn (repo:frontend flow/run.js opening run; trace:e2e new notification run)"
+      ],
+      "requirements": ["req-808"],
+      "sources": [
+        { "source": "trace:prototype-dr2-1", "ref": "p11 hub tasks return to the hub; p12 TRACE G" },
+        { "source": "prototype:dr2-1-specs", "ref": "hub task return" },
+        { "source": "trace:animals-fit", "ref": "hub import reason, arrival and addresses runs" },
+        { "source": "trace:e2e", "ref": "hub re-entry runs" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claims 196 to 198" },
+        { "source": "repo:frontend", "ref": "flow/run.js; features/hub/controller.js:90" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "inc-002 already holds req-808 merged with req-1615 (the same fallback change, which the ruling names). Drafted here so the area covers req-808; the combiner keeps inc-002's id and text, adding only what these criteria add (the addresses page and the unchanged links).",
+        "c-243 (ruled): the return is built by the live flow's fallback, with no marker on the links or forms."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/run.js"
+      ],
+      "shared": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+        "tests:tests/animals/e2e/features/reason-purpose-scope.spec.ts",
+        "tests:tests/animals/e2e/features/additional-details-scope.spec.ts"
+      ],
+      "existingRow": "inc-002"
+    },
+    {
+      "title": "The Overview's status line offers 'Cancel amend' during an amendment",
+      "detail": "Design Release 2.1's shared status line shows a 'Cancel amend' button on every page that includes it while a submitted notification is being amended. The Overview's missing dialog in the prototype is an omission, so the real Overview offers the same cancel-amendment confirmation the review page uses.",
+      "acceptanceCriteria": [
+        "While a submitted notification is being amended, the Overview's status line shows the 'Amend' tag, the reference and a link-style 'Cancel amend' button (prototype:dr2-1-source app/views/partials/design-release-2.1/notification-status.html:10-14)",
+        "'Cancel amend' on the Overview opens the same cancel-amendment confirmation the review page uses (prototype:dr2-1-source notification-status.html:10-14; conflicts:c-127)",
+        "A draft notification's Overview shows the 'Draft' tag and reference and no 'Cancel amend' (repo:frontend features/hub/controller.js:168; trace:animals-fit hub status strip)"
+      ],
+      "requirements": ["req-782"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/notification-status.html:10-14" },
+        { "source": "repo:frontend", "ref": "features/hub/controller.js:168; shared/layout.njk" },
+        { "source": "trace:animals-fit", "ref": "hub status strip" }
+      ],
+      "repos": ["frontend", "tests"],
+      "kind": "feat",
+      "status": "todo",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "inc-122 already holds req-782 with the amend status bar on every page (req-1397, req-1398): the Overview's 'Cancel amend' is that same bar. Drafted here so the area covers req-782; the combiner keeps inc-122's id and adds only the draft-Overview guard criterion. Depends on inc-121, the cancel-amendment dialog it opens."
+      ],
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
+      ],
+      "shared": [
+        "frontend:src/server/app/shared/layout.njk",
+        "frontend:src/server/app/shared/kit.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/cancel-amend"
+      ],
+      "existingRow": "inc-122"
+    },
+    {
+      "title": "The Overview while a template is being created",
+      "detail": "Design Release 2.1 reuses the Overview to build a template and labels it as one: a 'Template' tag and the template's name, a 'Template tasklist' with no Documents section, and buttons to review the template or go back to Manage templates. A notification's Overview is unchanged.",
+      "acceptanceCriteria": [
+        "While a template is being created, the Overview's status tag reads 'Template' and the template's name shows beside it in place of a notification reference (prototype:dr2-1-source app/views/partials/design-release-2.1/notification-status.html:2)",
+        "The task list is headed 'Template tasklist' (prototype:dr2-1-source app/routes.js:6502)",
+        "There is no Documents section, and the sections after it read '4. Consignment parties' and '5. Contact address' (prototype:dr2-1-source app/routes.js:6469, 6564-6588; ruling:sam-2026-10-09)",
+        "The primary button reads 'Review template' and opens the template's review page (prototype:dr2-1-source app/routes.js:6475-6480)",
+        "The secondary button reads 'Return to manage templates' and goes to the templates list (prototype:dr2-1-source app/routes.js:6489-6493)",
+        "For a notification, the Overview still shows its status and reference, 'Notification tasklist', six sections, 'Review and submit' and 'Return to dashboard' (repo:frontend features/hub copy and template; trace:animals-fit hub buttons)"
+      ],
+      "requirements": ["req-814", "req-815", "req-816", "req-817", "req-818"],
+      "sources": [
+        { "source": "prototype:dr2-1-source", "ref": "app/views/partials/design-release-2.1/notification-status.html:2; app/routes.js:6469-6502, 6564-6588" },
         { "source": "repo:frontend", "ref": "src/server/app/sets/live-animals/journeys/linear/features/hub" },
         { "source": "trace:animals-fit", "ref": "hub buttons" }
       ],
@@ -170,22 +221,19 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines five slices that share one set-up, a template being created, on one page. None can be seen until the templates area's rows land: Manage templates, 'Create new template' and the template name page (req-templates-001, -003, -023 to -033), and the template review page this row's 'Review template' button opens (req-templates-045). The templates area restates the same hub behaviour as req-templates-038, -039, -040 and -043; the combiner should merge this row into the templates area's template task list row rather than build it twice, keeping both areas' requirement ids in one row.",
+      "notes": [
+        "inc-155 already holds req-814 to req-818 with the templates area's task list requirements: the same set-up, a template being created. Drafted here so the area covers them; the combiner keeps inc-155's id and text, which already carry every criterion here.",
+        "req-819 (a 'Save template' button straight from the Overview) is out of scope and not built: every template creation gets 'Review template'.",
+        "Depends on inc-154 (starting a template) and inc-098 (the same hub template and copy)."
+      ],
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/hub"
       ],
       "shared": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js"
+        "frontend:src/server/app/shared/layout.njk"
       ],
-      "existingRow": null
+      "existingRow": "inc-155"
     }
   ],
-  "unobservable": [
-    {
-      "requirement": "req-notification-hub-011",
-      "environment": "every environment (local stack and CDP)",
-      "why": "The change is that a negative, zero or non-numeric count adds nothing to the Animals and Packages/boxes totals. No trader can enter such a count: the commodity details page refuses any number of animals or packages below 1 (repo:frontend features/commodities/consignment-details/fields.js), and a template is seeded from those same checked answers. The rest of the requirement (summing every line, '0' before any line) already holds. Only a notification written to the backend outside the service could show the difference, which is not something a user, operator or reviewer observes. The reconciler should decide whether this is already met as far as anyone can see, or name how such a count can reach the hub."
-    }
-  ]
+  "unobservable": []
 }

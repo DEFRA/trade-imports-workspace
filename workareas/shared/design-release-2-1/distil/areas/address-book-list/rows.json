@@ -35,21 +35,22 @@
       "touches": [
         "insfrontend:src/server/app/features/address-book/list",
         "insfrontend:src/server/app/features/address-book/view-model",
-        "insfrontend:src/server/app/features/address-book/success-banner.js",
         "insfrontend:src/client/javascripts/address-book-success-banner.js",
-        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
         "tests:page-objects/ins/address-book/list-page.ts"
       ],
       "shared": [
         "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/success-banner.js",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
         "insfrontend:src/client/javascripts/application.js",
+        "insfrontend:src/client/stylesheets/application.scss",
         "tests:tests/ins/e2e/features/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-063"
     },
     {
       "title": "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
-      "detail": "The address book pages take Design Release 2.1's page titles, with the GOV.UK suffix and a hyphen separator. The view page leaves out an empty address line 2 or county, labels county 'County (optional)', styles Edit as a secondary button beside Delete, and sends a user who opens a dead address link (unknown, malformed, another organisation's or deleted) back to the list instead of showing a 404 page.",
+      "detail": "The address book pages take Design Release 2.1's page titles, with the GOV.UK suffix and a hyphen separator. The view page leaves out an empty address line 2 or county, labels county 'County (optional)', styles Edit as a secondary button beside Delete, and sends a user who opens a dead address link (unknown, malformed, another organisation's or deleted) to the view page's back link instead of showing a 404 page.",
       "acceptanceCriteria": [
         "The page titles read 'Address book - Import notification service - GOV.UK' on the list, '<address name> - Import notification service - GOV.UK' on the view page and 'Delete this address? - Import notification service - GOV.UK' on the delete page, in place of today's pipe-separated titles. (trace:prototype-dr2-1 list-categories-pagination-and-filters action 9, entry-view-edit-and-save action 13, entry-delete-confirm action 8; prototype:dr2-1-specs e2e/address-book.fit.spec.js:23-24,163,205-206)",
         "The view page shows the 'Address line 2 (optional)' row after Address line 1 only when the address has a line 2, and the county row after Town or city only when it has a county; neither shows blank. (prototype:dr2-1-source app/routes.js:9449-9466)",
@@ -62,7 +63,7 @@
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:9437-9530; app/views/address-book-view.html" },
         { "source": "trace:prototype-dr2-1", "ref": "address-book--an-address-book-entry-view-edit-and-save.zip action 13" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:163-179" },
-        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view (repo-insfrontend-p2-033 to p2-051)" },
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view (repo-insfrontend-p2-033 to p2-036, p2-043 to p2-051)" },
         { "source": "repo:tests", "ref": "page-objects/ins/address-book/view-page.ts (repo-tests-p5-108)" }
       ],
       "repos": ["insfrontend", "tests"],
@@ -73,17 +74,18 @@
       "notes": "Combines the view-page slices (req-1161, 1162, 1164, 1168), which share one controller, template and fit spec. req-1110 (titles for the list, view and delete pages) rides here because it is one copy change to the shared page-title pattern and the view page is its biggest part; it touches the list and delete controllers' title only. req-1168 sends a dead link to the view page's back link: until the return-path row lands that is always the list, and that row extends it to an honoured return. The not-live checks live in the shared address-id params and stored-address helpers, which the add-and-edit area's edit page also uses.",
       "touches": [
         "insfrontend:src/server/app/features/address-book/view",
-        "insfrontend:src/server/app/features/address-book/fit/view.fit.spec.js",
         "tests:page-objects/ins/address-book/view-page.ts"
       ],
       "shared": [
+        "insfrontend:src/server/app/features/address-book/list",
+        "insfrontend:src/server/app/features/address-book/delete",
         "insfrontend:src/server/app/features/address-book/copy",
         "insfrontend:src/server/app/features/address-book/address-id-params.js",
         "insfrontend:src/server/app/features/address-book/stored-address.js",
-        "insfrontend:src/server/app/features/address-book/list/list.controller.js",
-        "insfrontend:src/server/app/features/address-book/delete/delete.controller.js"
+        "insfrontend:src/server/app/features/address-book/fit/view.fit.spec.js",
+        "tests:tests/ins/e2e/features/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-064"
     },
     {
       "title": "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
@@ -114,7 +116,6 @@
       "notes": "Combines every delete-page slice (req-1169, 1175 to 1180) with the delete banner wording (req-1148), which is the page's outcome. They share one controller, template, fit spec and E2E page object. The delete stays a soft delete through the address book API, which already tombstones and has no restore, so the warning is true. The redirect for a dead link goes to the list until the return-path row extends it to an honoured return. The tests repo's delete page object reads 'Yes, delete this address' today and changes with this row.",
       "touches": [
         "insfrontend:src/server/app/features/address-book/delete",
-        "insfrontend:src/server/app/features/address-book/fit/delete.fit.spec.js",
         "tests:page-objects/ins/address-book/delete-page.ts",
         "tests:tests/ins/e2e/features/address-book/address-book-delete.spec.ts"
       ],
@@ -122,19 +123,21 @@
         "insfrontend:src/server/app/features/address-book/copy",
         "insfrontend:src/server/app/features/address-book/success-banner.js",
         "insfrontend:src/server/app/features/address-book/address-id-params.js",
-        "insfrontend:src/server/app/features/address-book/stored-address.js"
+        "insfrontend:src/server/app/features/address-book/stored-address.js",
+        "insfrontend:src/server/app/features/address-book/fit/delete.fit.spec.js"
       ],
-      "existingRow": null
+      "existingRow": "inc-065"
     },
     {
       "title": "View and delete pages return the user to where they opened the address from, including an animals journey page",
-      "detail": "A user who opens an address from somewhere other than the list, such as an animals journey page, goes back there. The view and delete pages honour a return query: an INS path, or an absolute URL on exactly the configured animals frontend origin. Anything else falls back to the list (view page) or the view page (delete page). This replaces today's always-back-to-the-list behaviour.",
+      "detail": "A user who opens an address from somewhere other than the list, such as a live-animals or germinal products journey page in the animals frontend, goes back there. The view and delete pages honour a return query: an INS path, or an absolute URL on exactly the configured animals frontend origin. Anything else falls back to the list (view page) or the view page (delete page). The return parameter's name is the INS service's to choose.",
       "acceptanceCriteria": [
-        "Opening the view page with a return that starts with a single /, such as ?return=/dashboard, makes its Back link go to that page, and its Edit and Delete links carry the same return on. (prototype:dr2-1-source app/views/address-book-view.html:18-21, app/routes.js:9322-9345)",
+        "Opening the view page with a return that starts with a single /, such as the dashboard's path, makes its Back link go to that page, and its Edit and Delete links carry the same return on. (prototype:dr2-1-source app/views/address-book-view.html:18-21, app/routes.js:9322-9345; ruling:sam-2026-10-09 claim 21)",
         "On the delete page reached that way, Back and 'No, cancel' go to the view page still carrying the return. (prototype:dr2-1-source delete-confirmation.html:20, app/routes.js:9304-9310)",
         "After 'Yes, delete' the user lands on the return page, unless it is one of the deleted address's own pages, when they land on the address book list. (prototype:dr2-1-source app/routes.js:12031,12039)",
-        "Locally, on the compose stack and in CDP, a return that is an absolute URL whose origin exactly equals that environment's animals frontend base URL is honoured: opening an address with a return to an animals journey page and pressing Back lands on that animals page. (prototype:dr2-1-source app/routes.js:9322-9345; repo:tests tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6-23)",
-        "Any other return (another origin, one starting with //, or one not starting with /) is ignored: the view page's Back goes to the address book list and the delete page's Back and 'No, cancel' go to the view page. (prototype:dr2-1-source app/routes.js:9322-9345)",
+        "Locally, on the compose stack and in CDP, a return that is an absolute URL whose origin exactly equals that environment's animals frontend base URL is honoured: opening an address with a return to a live-animals journey page and pressing Back lands on that page. (prototype:dr2-1-source app/routes.js:9322-9345; repo:tests tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6-23)",
+        "Locally, on the compose stack and in CDP, a return to a germinal products page on that same animals frontend origin is honoured the same way, so Back lands on that germinal products page. (ruling:sam-2026-10-09 claim 1; prototype:dr2-1-source app/routes.js:9322-9345)",
+        "Any other return (another origin, one starting with //, or one not starting with /) is ignored: the view page's Back goes to the address book list and the delete page's Back and 'No, cancel' go to the view page. (prototype:dr2-1-source app/routes.js:9322-9345; ruling:sam-2026-10-09 claim 21)",
         "In the INS frontend's stub mode only returns that start with a single / are honoured; an absolute animals frontend URL falls back as any other return does. (prototype:dr2-1-source app/routes.js:9322-9345)",
         "A dead view or delete link carrying an honoured return lands on that return rather than the list. (prototype:dr2-1-source app/routes.js:9516-9530,12034-12039)"
       ],
@@ -142,39 +145,38 @@
       "sources": [
         { "source": "prototype:dr2-1-source", "ref": "app/routes.js:9304-9345,9516-9540,12028-12040" },
         { "source": "repo:tests", "ref": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts:6-23 (repo-tests-p5-001)" },
-        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view/view.controller.js:58; delete/delete.controller.js:45-49" }
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/delete/delete.controller.js:45-49 (repo-insfrontend-p2-061)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 1 (germinal products set); claim 21 (return parameter name is the service's, allow-list stays)" }
       ],
       "repos": ["insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Kept apart from the view and delete rows because it carries a cross-origin, per-environment rule (c-170) the copy changes do not, and its own security review: the allow-list is exactly the animals frontend origin, never any origin, and never the plants frontend. Depends on the view-page row and the delete-page row (it changes the Back, Edit, Delete, 'No, cancel' and dead-link behaviour those rows settle). The INS config already holds the animals frontend base URL (tradeImportsAnimalsFrontend.baseUrl), so no new setting is expected. The last criterion completes req-1168 and req-1169's 'back link' fallback once a return exists.",
-      "dependsOnRows": [
-        "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
-        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner"
-      ],
+      "notes": "Kept apart from the view and delete rows because it carries a cross-origin, per-environment rule (c-170) the copy changes do not, and its own security review: the allow-list is exactly the animals frontend origin, never any origin, and never the plants frontend. Sam's 9 October ruling leaves the return parameter's name to the INS service and keeps the allow-list, so no criterion names the parameter. Germinal products is a set inside the animals frontend (ruling claim 1), so its pages share the allowed origin; the germinal criterion needs no germinal page to link into the book, only a return URL on that origin. Depends on the view-page row and the delete-page row (it changes the Back, Edit, Delete, 'No, cancel' and dead-link behaviour those rows settle). The INS config already holds the animals frontend base URL (tradeImportsAnimalsFrontend.baseUrl), so no new setting is expected. The last criterion completes req-1168 and req-1169's 'back link' fallback once a return exists.",
       "touches": [
         "insfrontend:src/server/app/features/address-book/view",
         "insfrontend:src/server/app/features/address-book/delete",
-        "tests:tests/ins/e2e/features/address-book"
+        "tests:tests/animals/e2e/features/address-book/address-book-navigation.spec.ts"
       ],
       "shared": [
-        "insfrontend:src/config/config.js",
-        "insfrontend:src/server/app/shared/kit.js",
-        "tests:tests/animals/e2e/features/address-book"
+        "insfrontend:src/server/app/features/address-book/address-id-params.js",
+        "insfrontend:src/server/app/features/address-book/fit/view.fit.spec.js",
+        "insfrontend:src/server/app/features/address-book/fit/delete.fit.spec.js",
+        "tests:page-objects/ins/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-066",
+      "dependsOn": ["inc-064", "inc-065"]
     },
     {
       "title": "Address book list split into four category tabs with a Type column",
       "detail": "The list is split by what each address is used for: four tabs, 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', each a link with its own panel heading. An address shows on every tab whose category holds one of its types, so the address book API learns to return one category's addresses. Non-transporter tabs gain a Type column with the address's type labels. The tests repo's shared address book fixtures carry a type so they land on the right tab and the journeys still find them.",
       "acceptanceCriteria": [
-        "The list shows four tabs in this order: 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', each a link to /address-book?category=origin-and-consignor, destination-consignee-importer, transporter or branch, with the selected one marked. (prototype:dr2-1-source app/data/address-book.js:21-57, app/views/address-book.html:147-160; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:30-31)",
+        "The list shows four tabs in this order: 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch'; each is a link that opens the address book list on that tab, and the selected one is marked. (prototype:dr2-1-source app/data/address-book.js:21-57, app/views/address-book.html:147-160; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:30-31; ruling:sam-2026-10-09 claim 21)",
         "Each tab panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' or 'Branch addresses'. (prototype:dr2-1-source app/views/address-book.html:163; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 18,42,51,60)",
-        "With no category in the URL, or an unknown one, the list opens on the Origin and Consignor tab. (prototype:dr2-1-source app/routes.js:9948-9951; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20)",
-        "An address shows on every tab whose category holds one of its types: Origin and Consignor holds place of origin, consignor, consignor or exporter and exporter; Destination, Consignee and Importer holds consignee, importer, place of destination, contact and packer; Branch holds branch addresses. An address held as both place of origin and consignee shows on both tabs, and the Transporter tab shows none of these addresses. (prototype:dr2-1-source app/data/address-book.js:21-57,89-97; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 20,33)",
-        "The address book list API, asked for a category, returns only the caller's organisation's live addresses with a type in that category, paged as before. (prototype:dr2-1-source app/data/address-book.js:21-57; repo:addressbook OperatorController list endpoint)",
+        "Opening the address book with no tab chosen, or an unknown one, shows the Origin and Consignor tab selected. (prototype:dr2-1-source app/routes.js:9948-9951; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; ruling:sam-2026-10-09 claim 21)",
+        "An address shows on every tab whose category holds one of its types: Origin and Consignor holds place of origin, consignor, consignor or exporter and exporter; Destination, Consignee and Importer holds consignee, importer, place of destination, contact and packer; Branch holds branch addresses. An address held as both place of origin and consignee shows on both tabs, and the Transporter tab shows none of these addresses. (prototype:dr2-1-source app/data/address-book.js:21-57,89-97; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 20,33; ruling:sam-2026-10-09 claim 22)",
+        "The address book list API, asked for one category, returns only the caller's organisation's live addresses with a type in that category, paged as before. (prototype:dr2-1-source app/data/address-book.js:21-57; repo:addressbook OperatorController list endpoint, repo-addressbook-p3-046)",
         "On every tab except Transporter the table's columns are Name, Type, Address and Country, then an action column whose header 'Action' is visually hidden. (prototype:dr2-1-source app/views/address-book.html:170,175-182; trace:prototype-dr2-1 list-categories-pagination-and-filters action 20; prototype:dr2-1-specs e2e/address-book.fit.spec.js:35)",
         "The Type column shows the address's type labels joined by ', ', using 'Place of origin', 'Consignor' (for consignor, consignor or exporter and exporter), 'Consignee', 'Importer', 'Place of destination', 'Transporter', 'Branch', 'Contact address' and 'Packer', such as 'Place of origin, Consignor'. (prototype:dr2-1-source app/data/address-book.js:7-19,133-134; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 20,33,60)",
         "The tests repo's shared address book fixtures each carry an address type, so each shows on its category's tab and the animals journeys' party pickers still find them; the pre-run reconcile reports a fixture with a missing or different type as drift and puts it right. (repo:tests domain/shared/fixtures/e2e-address-book.ts:5-166)"
@@ -184,42 +186,44 @@
         { "source": "prototype:dr2-1-source", "ref": "app/data/address-book.js:7-134; app/views/address-book.html:147-182; app/routes.js:9948-9997" },
         { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip actions 18-60" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:30-35" },
-        { "source": "repo:addressbook", "ref": "OperatorController/OperatorService list (repo-addressbook-p3-046, p3-027)" },
+        { "source": "repo:addressbook", "ref": "OperatorController/OperatorRepository list (repo-addressbook-p3-046, p3-027)" },
         { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/list; src/server/app/services/address-book (repo-insfrontend-p2-016, p2-068, p2-070)" },
-        { "source": "repo:tests", "ref": "domain/shared/fixtures/e2e-address-book.ts (repo-tests-p5-095, p5-117 to p5-121)" }
+        { "source": "repo:tests", "ref": "domain/shared/fixtures/e2e-address-book.ts (repo-tests-p5-095, p5-117 to p5-121)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 21 (tab parameter and values are the INS service's); claim 22 (record shape is the address book service's)" }
       ],
       "repos": ["addressbook", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": "Look at the category tabs, the category-to-type mapping and the list API's category filter before the Type filter, search and Transporter-tab rows build on them.",
       "openQuestions": [],
-      "notes": "Combines the tab slices (req-1123, 1124, 1125, 1126), the Type column (req-1134, 1139) and the typed fixtures (req-1187): all rest on the same new category filter and the same list template, and the fixtures must be typed in the same change or the E2E specs that find them break. Real ordering need on another area: the address book record must carry its types first, which is the address-book-add-and-edit area's row for req-1256 (the record and API carry the address's uses); the combiner should set that dependency. The Transporter tab's positive content (transporter entries listed there) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands; here the Transporter tab is observed holding none of the other addresses. The tab links' search-keeping and Type-dropping (req-1127) are in the Type-filter row. The in-memory stub learns the category filter here as far as the fit suite needs; req-1185 is closed by the search row. Gate set because the following three rows copy this pattern.",
-      "dependsOnOtherAreas": ["address-book-add-and-edit: the row covering req-1256 (address record and API carry its uses)"],
+      "notes": "Combines the tab slices (req-1123, 1124, 1125, 1126), the Type column (req-1134, 1139) and the typed fixtures (req-1187): all rest on the same new category filter and the same list template, and the fixtures must be typed in the same change or the E2E specs that find them break. Sam's 9 October ruling (c-253) leaves the tab parameter's name and values to the INS service, so the criteria assert the tab shown, never a query string; the search parameter keeps q. How the record and the API carry type and category is the address book service's design (ruling claim 22). Real ordering need on another area: the address book record must carry its types first, which is the address-book-add-and-edit area's row for req-1256 (inc-059). The Transporter tab's positive content (transporter entries listed there) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands; here the Transporter tab is observed holding none of the other addresses. The tab links' search-keeping and Type-dropping (req-1127) are in the Type-filter row. The in-memory stub learns the category filter here as far as the fit suite needs; req-1185 is closed by the search row. The k6 performance suite's 'Perf Test Holding' lookup and post-delete check read the list (repo-perftests-p2-039, p2-038); the builder checks the address it adds lands on a tab the suite opens, and says so if the suite needs a follow-up. Gate set because the following three rows copy this pattern.",
       "touches": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "addressbook:docs",
         "insfrontend:src/server/app/features/address-book/list",
         "insfrontend:src/server/app/features/address-book/view-model",
-        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
-        "tests:domain/shared/fixtures/e2e-address-book.ts",
-        "tests:page-objects/ins/address-book/list-page.ts"
+        "tests:domain/shared/fixtures/e2e-address-book.ts"
       ],
       "shared": [
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
-        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/services/address-book/client.js",
+        "insfrontend:src/server/app/services/address-book/stub.js",
         "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
         "tests:adapters/http/address-book-api-client.ts",
-        "tests:tests/ins/e2e/features/address-book"
+        "tests:page-objects/ins/address-book/list-page.ts"
       ],
-      "existingRow": null
+      "existingRow": "inc-067",
+      "dependsOn": ["inc-059"]
     },
     {
       "title": "Type filter within a category tab, with tab and pagination links that keep the user's filters",
-      "detail": "Inside the 'Filter addresses' disclosure a 'Type' select narrows the current tab to one type, across the whole category rather than just the page. Tab links keep the search but drop the Type, which is per category, and pagination keeps the category, search and Type.",
+      "detail": "Inside the 'Filter addresses' disclosure a 'Type' select narrows the current tab to one type, across the whole category rather than just the page. Tab links keep the search but drop the Type, which is per category, and pagination keeps the tab, search and Type.",
       "acceptanceCriteria": [
         "The 'Filter addresses' disclosure holds a select labelled 'Type' whose first option is 'Select one' (no value), then the current tab's options only: 'Place of Origin' and 'Consignor' on Origin and Consignor; 'Consignee', 'Importer' and 'Place of Destination' on Destination, Consignee and Importer; 'Commercial' and 'Private' on Transporter; 'Branch Address' on Branch. (prototype:dr2-1-source app/views/address-book.html:83-96, app/routes.js:9193-9225; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 21,42,51,60; prototype:dr2-1-specs e2e/address-book.fit.spec.js:36)",
-        "Choosing a Type keeps, across the whole category and not only the current page, the organisation's live addresses one of whose types equals the choice, and drops the rest. (prototype:dr2-1-source app/routes.js:9227-9241; repo:addressbook list API, repo-addressbook-p3-046)",
-        "The filter form carries the selected category, so filtering stays on the current tab. (prototype:dr2-1-source app/views/address-book.html:50-53)",
-        "Each tab link goes to page 1 of that category, keeps the current search and drops the Type. (prototype:dr2-1-source app/routes.js:9991-9994)",
-        "Pagination links keep the category, search and Type, and add a page number only for pages after the first. (prototype:dr2-1-source app/routes.js:9124-9147)"
+        "Choosing a Type keeps, across the whole category and not only the current page, the organisation's live addresses one of whose types equals the choice, and drops the rest. (prototype:dr2-1-source app/routes.js:9227-9241; repo:addressbook list API, repo-addressbook-p3-046; ruling:sam-2026-10-09 claim 22)",
+        "Filtering keeps the user on the tab they are on: the tab stays selected after a search or Type choice is submitted. (prototype:dr2-1-source app/views/address-book.html:50-53)",
+        "Each tab link opens page 1 of that tab, keeps the current search and drops the Type. (prototype:dr2-1-source app/routes.js:9991-9994)",
+        "Pagination links keep the tab, search and Type, and add a page number only for pages after the first. (prototype:dr2-1-source app/routes.js:9124-9147)"
       ],
       "requirements": ["req-1127", "req-1129", "req-1130", "req-1143"],
       "sources": [
@@ -227,28 +231,30 @@
         { "source": "trace:prototype-dr2-1", "ref": "address-book--address-book-list-categories-pagination-and-filters.zip actions 21-60" },
         { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:36" },
         { "source": "repo:addressbook", "ref": "list API filters (repo-addressbook-p3-027, p3-046)" },
-        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view-model/list.js; services/address-book/client.js (repo-insfrontend-p2-022, p2-068)" }
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/view-model/list.js; services/address-book/client.js (repo-insfrontend-p2-022, p2-068)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 21 (parameter names are the INS service's); claim 22 (server-side filters kept)" }
       ],
       "repos": ["addressbook", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the Type select and its matching (req-1129, 1130) with the links that carry or drop it (req-1127, 1143): one filter, one form, one set of links. Kept apart from the tabs row so that row stays reviewable and its gate lands first. req-1130's transporter half (a transporter matches on its transporter type, Commercial or Private) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands. The type filter runs in the address book API (c-169), organisation-scoped and without deleted addresses. Depends on the category-tabs row.",
-      "dependsOnRows": ["Address book list split into four category tabs with a Type column"],
+      "notes": "Combines the Type select and its matching (req-1129, 1130) with the links that carry or drop it (req-1127, 1143): one filter, one form, one set of links. Kept apart from the tabs row so that row stays reviewable and its gate lands first. req-1130's transporter half (a transporter matches on its transporter type, Commercial or Private) is observed in the Transporter-tab row, because transporter entries only exist once the transporters area's req-463 lands. The type filter runs in the address book API (c-169, kept by Sam's 9 October ruling), organisation-scoped and without deleted addresses. The tab and type parameters' names are the INS service's (c-253), so no criterion names them. Depends on the category-tabs row.",
       "touches": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
         "insfrontend:src/server/app/features/address-book/list",
-        "insfrontend:src/server/app/features/address-book/view-model",
-        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
-        "tests:page-objects/ins/address-book/list-page.ts"
+        "insfrontend:src/server/app/features/address-book/view-model"
       ],
       "shared": [
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
-        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/services/address-book/client.js",
+        "insfrontend:src/server/app/services/address-book/stub.js",
         "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:page-objects/ins/address-book/list-page.ts",
         "tests:tests/ins/e2e/features/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-068",
+      "dependsOn": ["inc-067"]
     },
     {
       "title": "Search the whole row, 8 addresses a page and live filtering as the user types",
@@ -256,12 +262,12 @@
       "acceptanceCriteria": [
         "Search matches the trimmed text, ignoring case and anywhere inside a word, against an address's name, type labels, address line 1, address line 2, town or city, county, postcode and country name, so 'ballymore' finds an address whose line 2 is 'Ballymore Road' and 'france' finds the addresses in France; a blank search is no search. (prototype:dr2-1-source app/routes.js:9721-9726,9945-9972, app/data/address-book.js:159-197; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 73-75; prototype:dr2-1-specs e2e/address-book.fit.spec.js:64-67)",
         "Locally, on the compose stack and in CDP the list shows 8 addresses a page, with no page-size parameter on the request: the address book service's server-side page size is 8. (prototype:dr2-1-source app/data/address-book.js:412; trace:prototype-dr2-1 list-categories-pagination-and-filters actions 19,33; prototype:dr2-1-specs e2e/address-book.fit.spec.js:34)",
-        "With JavaScript off, pressing Enter in the search field, or choosing a Type and pressing Enter, submits a GET to /address-book carrying the category, search and Type, and the list shows that category's matches across all its pages. (prototype:dr2-1-source app/views/address-book.html:50-139; trace:prototype-dr2-1 list-categories-pagination-and-filters page 1 filter form)",
-        "With JavaScript on, typing in the search field or changing Type re-requests the list after a short pause and replaces the table, the results line and the pagination without a full page reload; there is no apply button. (trace:prototype-dr2-1 list-categories-pagination-and-filters actions 73-75; prototype:dr2-1-specs e2e/address-book.fit.spec.js:64-67)",
+        "With JavaScript off, pressing Enter in the search field, or choosing a Type and pressing Enter, reloads the address book list on the same tab with that search and Type applied, and the list shows that tab's matches across all its pages. (prototype:dr2-1-source app/views/address-book.html:50-139; ruling:sam-2026-10-09 claim 21)",
+        "With JavaScript on, typing in the search field or changing Type re-requests the list after a short pause and replaces the table, the results line and the pagination without a full page reload; there is no apply button. (trace:prototype-dr2-1 list-categories-pagination-and-filters actions 73-75; prototype:dr2-1-specs e2e/address-book.fit.spec.js:64-67; ruling:sam-2026-10-09 claim 22)",
         "While a search or Type filter is active the results line counts the matches, such as 'Showing 1-2 of 2', and pagination shows only when the matches run past one page of 8; with JavaScript both update as the list is re-requested. (trace:prototype-dr2-1 list-categories-pagination-and-filters action 75)",
         "A page number below 1 or not a number shows page 1, and a page number beyond the last page shows the last page's addresses rather than an empty table. (prototype:dr2-1-source app/routes.js:9953,9975-9976)",
-        "In the INS frontend's stub mode the list behaves the same: 8 a page, filtered by search, category and Type, and a deleted address reads back as deleted rather than vanishing. (repo:insfrontend src/server/app/services/address-book/stub.js)",
-        "The E2E specs reach every address book page through the list's own links (list, category tab, search, View, Delete, 'No, cancel', 'Yes, delete') rather than by URL, and cover the empty and no-match state. (repo:tests tests/ins/e2e/features/address-book; repo:insfrontend src/server/app/features/address-book/fit/list.fit.spec.js)"
+        "In the INS frontend's stub mode the list behaves the same: 8 a page, filtered by search, tab and Type, and a deleted address reads back as deleted rather than vanishing. (repo:insfrontend src/server/app/services/address-book/stub.js, repo-insfrontend-p2-078 to p2-081)",
+        "The E2E specs reach every address book page through the list's own links (list, category tab, search, View, Delete, 'No, cancel', 'Yes, delete') rather than by URL, and cover the empty and no-match state. (repo:tests tests/ins/e2e/features/address-book, repo-tests-p5-109-m1; repo:insfrontend repo-insfrontend-p2-106)"
       ],
       "requirements": ["req-1119", "req-1121", "req-1122", "req-1141", "req-1144", "req-1185", "req-1188"],
       "sources": [
@@ -270,35 +276,32 @@
         { "source": "prototype:dr2-1-specs", "ref": "e2e/address-book.fit.spec.js:34,64-67" },
         { "source": "repo:addressbook", "ref": "list q fields and page-size setting (repo-addressbook-p3-009 to p3-063)" },
         { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/list; src/server/app/services/address-book/stub.js (repo-insfrontend-p2-008 to p2-024, p2-075 to p2-081)" },
-        { "source": "repo:tests", "ref": "tests/ins/e2e/features/address-book (repo-tests-p5-102, p5-109-m1)" }
+        { "source": "repo:tests", "ref": "tests/ins/e2e/features/address-book (repo-tests-p5-102, p5-109-m1)" },
+        { "source": "ruling:sam-2026-10-09", "ref": "claim 21 (search parameter keeps q; tab parameter is the INS service's); claim 22 (server-side filters kept)" }
       ],
       "repos": ["addressbook", "insfrontend", "tests"],
       "kind": "feat",
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Combines the server-side search widening (req-1119), the live filter (req-1121, 1122, settled by c-169: search on the server, the prototype's live behaviour on top, never the whole category held in the page), the page size of 8 (req-1141, c-168: the server setting changes, ruling cv-025 keeps it off the request), the page clamp (req-1144), the stub (req-1185) and the E2E walk-through (req-1188). They share the list API query, the list controller, the stub and the specs. Kept apart from the Type-filter row so neither is too big to review. The search over a transporter's approval number is observed in the Transporter-tab row. Depends on the Type-filter row (the form carries category and Type) and the delete-page row (the E2E walk-through presses 'No, cancel' and 'Yes, delete'). Page size: set address-book.list.page-size to 8 in the service's own configuration so every environment gets it; if CDP's app config overrides it, that change is drafted for Sam to commit, never written by the loop.",
-      "dependsOnRows": [
-        "Type filter within a category tab, with tab and pagination links that keep the user's filters",
-        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
-        "Address book list: Design Release 2.1 intro, filter disclosure, search control, table cells, empty state and a banner that stays"
-      ],
+      "notes": "Combines the server-side search widening (req-1119), the live filter (req-1121, 1122: c-169 and Sam's 9 October ruling keep search and filtering on the server with the prototype's live behaviour on top), the page size of 8 (req-1141, c-168: the server setting changes, ruling cv-025 keeps it off the request), the page clamp (req-1144), the stub (req-1185) and the E2E walk-through (req-1188). They share the list API query, the list controller, the stub and the specs. Kept apart from the Type-filter row so neither is too big to review. The search parameter keeps today's q; the tab parameter is the INS service's to name (c-253). The search over a transporter's approval number is observed in the Transporter-tab row. Depends on the Type-filter row (the form carries tab and Type) and the delete-page row (the E2E walk-through presses 'No, cancel' and 'Yes, delete'). Page size: set address-book.list.page-size to 8 in the service's own configuration so every environment gets it; if CDP's app config overrides it, that change is drafted for Sam to commit, never written by the loop. The k6 suite's worst-case search models today's searched fields (repo-perftests-p2-023, p2-024); the performance-tests repo is left out of this row because the behaviour does not need it, and the builder notes whether the worst case should follow the widened fields.",
       "touches": [
-        "addressbook:src/main/resources/application.yml",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
+        "addressbook:src/main/resources",
         "insfrontend:src/server/app/features/address-book/list",
-        "insfrontend:src/server/app/features/address-book/view-model",
-        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "insfrontend:src/server/app/services/address-book/stub.js",
         "insfrontend:src/client/javascripts/address-book-filter.js",
-        "tests:tests/ins/e2e/features/address-book",
-        "tests:page-objects/ins/address-book"
+        "tests:tests/ins/e2e/features/address-book/address-book.spec.ts"
       ],
       "shared": [
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
-        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/services/address-book/client.js",
+        "insfrontend:src/server/app/features/address-book/view-model",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
         "insfrontend:src/client/javascripts/application.js",
-        "tests:adapters/http/address-book-api-client.ts"
+        "tests:page-objects/ins/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-069",
+      "dependsOn": ["inc-068", "inc-065"]
     },
     {
       "title": "Transporter tab: transporters listed with approval number and type, filtered and searched",
@@ -320,34 +323,34 @@
       "status": "todo",
       "gate": null,
       "openQuestions": [],
-      "notes": "Holds req-1135 and the transporter halves of req-1125 (Transporter holds transporters), req-1130 (a transporter matches on its transporter type) and req-1119 (search covers the approval number), whose rows sit in the tabs, Type-filter and search rows. Kept apart because transporter entries only exist in the address book once the transporters area's row for req-463 lands (saving a transporter added from the address book adds it as a transporter entry); the combiner should set that dependency. Depends on the search row (and so on the tabs and Type-filter rows). Where transporter entries are stored is that row's call; this row lists them.",
-      "dependsOnRows": ["Search the whole row, 8 addresses a page and live filtering as the user types"],
-      "dependsOnOtherAreas": ["transporters: the row covering req-463 (a transporter added from the address book becomes a transporter entry)"],
+      "notes": "Holds req-1135 and the transporter halves of req-1125 (Transporter holds transporters), req-1130 (a transporter matches on its transporter type) and req-1119 (search covers the approval number), whose rows sit in the tabs, Type-filter and search rows. Kept apart because transporter entries only exist in the address book once the transporters area's row for req-463 lands (inc-074: saving a transporter added from the address book adds it as a transporter entry). Depends on the search row (and so on the tabs and Type-filter rows). Where transporter entries are stored is that row's call; this row lists them.",
       "touches": [
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
         "insfrontend:src/server/app/features/address-book/list",
-        "insfrontend:src/server/app/features/address-book/view-model",
-        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
-        "tests:page-objects/ins/address-book/list-page.ts"
+        "insfrontend:src/server/app/features/address-book/view-model"
       ],
       "shared": [
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/address",
-        "insfrontend:src/server/app/services/address-book",
+        "insfrontend:src/server/app/services/address-book/client.js",
+        "insfrontend:src/server/app/services/address-book/stub.js",
         "insfrontend:src/server/app/features/address-book/copy",
+        "insfrontend:src/server/app/features/address-book/fit/list.fit.spec.js",
+        "tests:page-objects/ins/address-book/list-page.ts",
         "tests:tests/ins/e2e/features/address-book"
       ],
-      "existingRow": null
+      "existingRow": "inc-075",
+      "dependsOn": ["inc-069", "inc-074"]
     },
     {
       "title": "Welsh for the redesigned address book list, view and delete pages",
       "detail": "Every new or changed English string on the address book list, view and delete pages has a Welsh counterpart, marked as an unreviewed machine draft until it has Welsh Language Standards sign-off, so a Welsh user sees the same Design Release 2.1 page rather than today's.",
       "acceptanceCriteria": [
-        "With Welsh selected, the list, view and delete pages show a Welsh string for every piece of copy the Design Release 2.1 rows added or changed (intro, 'Filter addresses', 'Search', the placeholder, tab names and headings, column headers, Type labels and options, 'Delete this address?', 'Confirm that you want to delete this address.', 'This action cannot be undone.', 'Yes, delete', 'No, cancel', the banners and the page titles), and no English string is left. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js)",
-        "Today's Welsh strings for the replaced copy, such as 'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.', 'Chwilio cyfeiriadau' and 'Dileu cyfeiriad', no longer show. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js:4-70)",
-        "Each new Welsh string is visibly marked, where the Welsh copy is kept, as an unreviewed machine draft awaiting Welsh Language Standards sign-off. (repo:insfrontend src/server/app/features/address-book/copy/copy.cy.js:1)"
+        "With Welsh selected, the list, view and delete pages show a Welsh string for every piece of copy the Design Release 2.1 rows added or changed (intro, 'Filter addresses', 'Search', the placeholder, tab names and headings, column headers, Type labels and options, 'Delete this address?', 'Confirm that you want to delete this address.', 'This action cannot be undone.', 'Yes, delete', 'No, cancel', the banners and the page titles), and no English string is left. (repo:insfrontend src/server/app/features/address-book/copy, repo-insfrontend-p2-098)",
+        "Today's Welsh strings for the replaced copy, such as 'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.', 'Chwilio cyfeiriadau' and 'Dileu cyfeiriad', no longer show. (repo:insfrontend src/server/app/features/address-book/copy, repo-insfrontend-p2-099 to p2-105)",
+        "Each new Welsh string is visibly marked, where the Welsh copy is kept, as an unreviewed machine draft awaiting Welsh Language Standards sign-off. (repo:insfrontend src/server/app/features/address-book/copy, repo-insfrontend-p2-098)"
       ],
       "requirements": ["req-1186"],
       "sources": [
-        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/copy/copy.cy.js (repo-insfrontend-p2-098 to p2-105)" }
+        { "source": "repo:insfrontend", "ref": "src/server/app/features/address-book/copy (repo-insfrontend-p2-098 to p2-105)" }
       ],
       "repos": ["insfrontend"],
       "kind": "feat",
@@ -355,21 +358,12 @@
       "gate": null,
       "openQuestions": [],
       "notes": "A requirement sits in one row, and req-1186 spans the copy every other row in this area changes, so it is the last row and checks the whole set. Builders of the earlier rows add a Welsh machine draft beside each English string they add, so the Welsh page never falls back to English for long; this row completes and verifies it. Depends on every other row in this area.",
-      "dependsOnRows": [
-        "Address book list: Design Release 2.1 intro, filter disclosure, search control, table cells, empty state and a banner that stays",
-        "View an address: GOV.UK page titles, optional rows only when filled, a secondary Edit button and no 404 for a dead link",
-        "Delete an address: Design Release 2.1 confirmation page, 'No, cancel' link, a stale delete as a no-op and the new banner",
-        "View and delete pages return the user to where they opened the address from, including an animals journey page",
-        "Address book list split into four category tabs with a Type column",
-        "Type filter within a category tab, with tab and pagination links that keep the user's filters",
-        "Search the whole row, 8 addresses a page and live filtering as the user types",
-        "Transporter tab: transporters listed with approval number and type, filtered and searched"
-      ],
-      "touches": [],
-      "shared": [
+      "touches": [
         "insfrontend:src/server/app/features/address-book/copy"
       ],
-      "existingRow": null
+      "shared": [],
+      "existingRow": "inc-083",
+      "dependsOn": ["inc-066", "inc-075"]
     }
   ],
   "unobservable": []

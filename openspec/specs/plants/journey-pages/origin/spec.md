@@ -41,7 +41,7 @@ The system MUST offer the country of origin as a searchable field that filters t
 
 ### Requirement: The country field offers a placeholder and every origin country the service primes, and submits a country code
 **ID**: REQ-PLANTS-ORIGIN-003
-The system MUST offer a placeholder inviting the user to select a country ahead of every origin country the service primes, and MUST submit the chosen country's code rather than the text typed into the search field.
+The system MUST offer a placeholder inviting the user to select a country ahead of every origin country the service primes, and MUST submit the chosen country's code rather than the text typed into the search field, taking those countries and their names from the reference data service's SPS origin block, in the order it serves them.
 
 #### Scenario: The country list holds a placeholder ahead of the primed origin countries
 **ID**: SCN-PLANTS-ORIGIN-003-A
@@ -54,6 +54,12 @@ The system MUST offer a placeholder inviting the user to select a country ahead 
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** they choose a country and save the page
 - **THEN** the country's code is what the notification keeps, not the text typed into the search field
+
+#### Scenario: The country list holds the reference data service's SPS origin countries, in its order
+**ID**: SCN-PLANTS-ORIGIN-003-C
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the country list is read in full
+- **THEN** besides the placeholder it holds exactly the countries the reference data service serves for the SPS origin block, by their served names, in the order it serves them
 
 ### Requirement: A search matching no country says so
 **ID**: REQ-PLANTS-ORIGIN-004

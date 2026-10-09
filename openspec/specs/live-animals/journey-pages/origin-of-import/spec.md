@@ -34,19 +34,25 @@ The system MUST offer the country of origin as a searchable field that filters t
 
 ### Requirement: The country field offers the origin countries the service accepts, and submits a country code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder and the thirty-one origin countries the service accepts, and MUST submit the chosen country's code rather than the text the user typed.
+The system MUST offer a placeholder and the origin countries and territories the service accepts, and MUST submit the chosen country's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, listed by name.
 
 #### Scenario: The country list holds a placeholder and the accepted origin countries
 **ID**: SCN-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** its first entry invites the user to select a country, and it holds thirty-one origin countries besides
+- **THEN** its first entry invites the user to select a country, and the origin countries and territories follow it
 
 #### Scenario: Choosing a country submits and keeps its code
 **ID**: SCN-ORIGIN-003-B
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** they choose a country and save the page
 - **THEN** the country's code is what the notification keeps, not the text typed into the search field
+
+#### Scenario: The country list holds the reference data service's origin countries and their territories, by name
+**ID**: SCN-ORIGIN-003-C
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the country list is read in full
+- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
 
 ### Requirement: The country field offers its whole list on focus, before anything is typed
 **ID**: REQ-ORIGIN-004

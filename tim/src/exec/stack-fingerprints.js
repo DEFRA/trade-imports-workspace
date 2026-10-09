@@ -36,14 +36,20 @@ const mountedPaths = (repoPath, volumes, overlayDir) =>
     .filter(isInside)
 
 /**
+ * The overlay key naming the services whose answers a service keeps in memory,
+ * so it must restart whenever one of them is rebuilt or restarted.
+ */
+export const REFRESH_WITH_KEY = 'x-refresh-with'
+
+/**
  * The services the dev overlay builds from a local folder, read from
- * docker/stack/dev.compose.yml: each one's repo folder and the paths inside
- * it that are bind-mounted into the running container. A change under a
- * mounted path reaches the container by hot reload; anything else is baked
- * into the image when it is built.
+ * docker/stack/dev.compose.yml: each one's repo folder, the paths inside it
+ * that are bind-mounted into the running container, and the services named
+ * under `x-refresh-with`. A change under a mounted path reaches the container
+ * by hot reload; anything else is baked into the image when it is built.
  *
  * @param {string} workspaceRoot
- * @returns {{service: string, repo: string, path: string, mounted: string[]}[]} Empty when the workspace has no dev overlay
+ * @returns {{service: string, repo: string, path: string, mounted: string[], refreshWith: string[]}[]} Empty when the workspace has no dev overlay
  */
 export const devServices = (workspaceRoot) => {
   const overlayPath = join(workspaceRoot, DEV_OVERLAY_PATH)
@@ -58,7 +64,8 @@ export const devServices = (workspaceRoot) => {
         service,
         repo: basename(path),
         path,
-        mounted: mountedPaths(path, definition.volumes, overlayDir)
+        mounted: mountedPaths(path, definition.volumes, overlayDir),
+        refreshWith: definition[REFRESH_WITH_KEY] ?? []
       }
     })
 }
@@ -226,18 +233,34 @@ export const refreshDecision = (recorded, current) => {
   return recorded.source === current.source ? 'leave' : 'restart'
 }
 
+const followsAnyOf = (upstreams, refreshed) =>
+  upstreams.some((upstream) => refreshed.includes(upstream))
+
 /**
  * Which dev services to rebuild, restart or leave, comparing the
  * fingerprints a lease recorded with the working tree's now.
  *
+ * A service whose own fingerprints are unchanged is still restarted when a
+ * service it names in `refreshWith` is rebuilt or restarted, so it drops the
+ * answers it kept from that service. Only one step is followed.
+ *
  * @param {Record<string, object>|undefined} recorded
  * @param {Record<string, object>} current
+ * @param {Record<string, string[]>} [refreshWith] - Each service's `x-refresh-with` list
  * @returns {{rebuild: string[], restart: string[], leave: string[]}}
  */
-export const planRefresh = (recorded, current) => {
+export const planRefresh = (recorded, current, refreshWith = {}) => {
   const plan = { rebuild: [], restart: [], leave: [] }
   for (const [service, fingerprints] of Object.entries(current)) {
     plan[refreshDecision(recorded?.[service], fingerprints)].push(service)
   }
-  return plan
+  const refreshed = [...plan.rebuild, ...plan.restart]
+  const followers = plan.leave.filter((service) =>
+    followsAnyOf(refreshWith[service] ?? [], refreshed)
+  )
+  return {
+    rebuild: plan.rebuild,
+    restart: [...plan.restart, ...followers],
+    leave: plan.leave.filter((service) => !followers.includes(service))
+  }
 }

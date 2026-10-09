@@ -88,9 +88,18 @@ describe('devServices', () => {
         service: 'trade-imports-stub',
         repo: 'trade-imports-stub',
         path: join(realWorkspaceRoot, 'repos', 'trade-imports-stub'),
-        mounted: ['src']
+        mounted: ['src'],
+        refreshWith: []
       }
     })
+  })
+
+  test("reads that reference-data refreshes with the stub, whose MDM answers it caches", () => {
+    const referenceData = devServices(realWorkspaceRoot).find(
+      ({ service }) => service === 'trade-imports-reference-data'
+    )
+
+    expect(referenceData.refreshWith).toEqual(['trade-imports-stub'])
   })
 
   test('leaves out a service the overlay does not build, and a mount outside the repo', () => {
@@ -109,6 +118,8 @@ describe('devServices', () => {
         '      - A=1',
         '  api:',
         '    build: ../../repos/api',
+        '    x-refresh-with:',
+        '      - web',
         ''
       ].join('\n')
     )
@@ -118,13 +129,15 @@ describe('devServices', () => {
         service: 'web',
         repo: 'web',
         path: join(root, 'repos', 'web'),
-        mounted: ['src']
+        mounted: ['src'],
+        refreshWith: []
       },
       {
         service: 'api',
         repo: 'api',
         path: join(root, 'repos', 'api'),
-        mounted: []
+        mounted: [],
+        refreshWith: ['web']
       }
     ])
   })
@@ -311,6 +324,38 @@ describe('planRefresh', () => {
         api: { build: 'b', source: 's' }
       })
     ).toEqual({ rebuild: ['web', 'api'], restart: [], leave: [] })
+  })
+
+  test('restarts an unchanged service when a service it refreshes with is rebuilt or restarted', () => {
+    const unchanged = { build: 'b', source: 's' }
+
+    expect([
+      planRefresh(
+        { stub: unchanged, refdata: unchanged, web: unchanged },
+        { stub: { build: 'x', source: 's' }, refdata: unchanged, web: unchanged },
+        { refdata: ['stub'] }
+      ),
+      planRefresh(
+        { stub: unchanged, refdata: unchanged },
+        { stub: { build: 'b', source: 'x' }, refdata: unchanged },
+        { refdata: ['stub'] }
+      )
+    ]).toEqual([
+      { rebuild: ['stub'], restart: ['refdata'], leave: ['web'] },
+      { rebuild: [], restart: ['stub', 'refdata'], leave: [] }
+    ])
+  })
+
+  test('leaves a service that refreshes with an upstream that is itself left alone', () => {
+    const unchanged = { build: 'b', source: 's' }
+
+    expect(
+      planRefresh(
+        { stub: unchanged, refdata: unchanged },
+        { stub: unchanged, refdata: unchanged },
+        { refdata: ['stub'] }
+      )
+    ).toEqual({ rebuild: [], restart: [], leave: ['stub', 'refdata'] })
   })
 })
 

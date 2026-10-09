@@ -250,7 +250,13 @@ with commits of its own is left as it is. A failure names its step and its exact
    takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
    which starts the stack from local source. The stack stays up across every
    increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. No stage takes or gives back a
+   reuses it and rebuilds only what changed. A service that caches another
+   service's answers names it under `x-refresh-with` in
+   `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
+   service is rebuilt or restarted. Reference-data names the stub, because it
+   keeps the stub's MDM countries and ports for an hour, and without the restart
+   a stub fixture change would not reach the E2E rung. Add the key to any
+   service that caches another one's answers. No stage takes or gives back a
    lease, or starts or stops the stack. A plan may name a check that needs the
    stack, marked "needs the workspace stack"; the stage that runs it uses the
    stack as it is. The integration proof is still the gate's E2E rung. After the

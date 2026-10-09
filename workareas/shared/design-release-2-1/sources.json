@@ -1,6 +1,6 @@
 {
   "programme": "design-release-2-1",
-  "goal": "Bring the real GB notification services (the GBN-AG animals notification in both its live-animals and germinal-products types, its dashboard, templates and address book) up to Design Release 2.1 of the GB notification service prototype, so that wherever a real service differs from Design Release 2.1 it changes to match it, except where a DR1 judgement on that same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it.",
+  "goal": "Bring the real GB notification services (the GBN-AG animals notification as two sibling sets in the animals frontend, live-animals and germinal-products, its dashboard, templates and address book) up to Design Release 2.1 of the GB notification service prototype in look and feel: content, wording, layout, components and question order. Wherever a real service differs from Design Release 2.1 in look and feel it changes to match, except where a DR1 judgement on that same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it. Architecture (sets, journeys, services, URL paths, data shapes, code structure) stays the real services'.",
   "repos": {
     "frontend": "repos/trade-imports-animals-frontend",
     "backend": "repos/trade-imports-animals-backend",
@@ -9,11 +9,13 @@
     "addressbook": "repos/trade-imports-address-book",
     "referencedata": "repos/trade-imports-reference-data",
     "stub": "repos/trade-imports-stub",
-    "tests": "repos/trade-imports-ins-tests"
+    "tests": "repos/trade-imports-ins-tests",
+    "perftests": "repos/trade-imports-performance-tests"
   },
-  "reposWhy": "Design Release 2.1 covers the GBN-AG animals notification journey, live animals and germinal products (animals frontend and backend), the address lookup stub that answers its address searches locally (stub), the notifications dashboard and address book (owned by the INS front door, its read model in ins-backend, and the address-book system of record), and the reference lists the journey reads (reference-data); the tests repo holds every service's end-to-end suite.",
+  "reposWhy": "Design Release 2.1 covers the GBN-AG animals notification journey, live animals and germinal products as sibling sets (animals frontend and backend), the address lookup stub that answers its address searches locally and the MDM country and port fixtures the stub tidy-up regenerates (stub), the notifications dashboard and address book (owned by the INS front door, its read model in ins-backend, and the address-book system of record), and the reference lists the journey reads, including the port traffic type that orders the port list (reference-data); the tests repo holds every service's end-to-end suite; the k6 performance suite (perftests) uses the live-animals set root, which stops rendering the notification list when the list moves to the INS front door (inc-129).",
   "themes": "Group increments into themes drawn from the evidence, with boundaries set by the code each theme touches (repo and folder), so each theme can be built in parallel on a separate machine without pull requests that conflict with another theme's.",
   "precedence": [
+    "ruling:sam-2026-10-09",
     "ruling:sam-2026-10-07",
     "document:dr1-parity-notes",
     "document:dr1-parity-backlog",
@@ -28,17 +30,25 @@
     "repo:frontend",
     "repo:insfrontend",
     "repo:tests",
+    "repo:perftests",
     "trace:animals-fit",
     "trace:ins-fit",
     "trace:e2e"
   ],
   "sources": [
     {
+      "id": "ruling:sam-2026-10-09",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-09.md",
+      "scope": "whole file",
+      "role": "the owner's decisions: outranks every other source. The prototype decides look and feel only (content, wording, layout, components, question order); it never decides architecture (sets, journeys, services, URL paths, field names, data-model shape, code structure). Germinal products is a sibling set of live-animals in the animals frontend. Reference lists never wait on MDM integration; address search waits on the address lookup becoming a real feature."
+    },
+    {
       "id": "ruling:sam-2026-10-07",
       "kind": "ruling",
       "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-07.md",
       "scope": "whole file",
-      "role": "the owner's decisions: outranks every other source. It sets how the rest are weighed: the prototype wins by default over what the real services do today; only a DR1 judgement on the same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it."
+      "role": "the owner's decisions, as narrowed by ruling:sam-2026-10-09: on look and feel the prototype wins by default over what the real services do today; only a DR1 judgement on the same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it. The prototype never decides architecture."
     },
     {
       "id": "document:dr1-parity-notes",
@@ -107,7 +117,7 @@
       "id": "repo:stub",
       "kind": "repo",
       "locator": "repos/trade-imports-stub",
-      "scope": "the address lookup stub the INS backend calls on the local stack and in the fit suites: the searches it answers, the addresses it returns and their postcodes",
+      "scope": "the address lookup stub the INS backend calls on the local stack and in the fit suites: the searches it answers, the addresses it returns and their postcodes; and the MDM stub reference-data calls (stubs/mdm, responses/countriesResponse.json, responses/portsOfEntryResponse.json, FileUtilsTest): the countries and ports it returns, their fields, and how it handles the blocks parameter",
       "role": "what exists today and what has already been ruled"
     },
     {
@@ -130,6 +140,13 @@
       "locator": "repos/trade-imports-ins-tests",
       "scope": "tests/animals and tests/ins: the specs, page objects and test data for the live-animals journey, the dashboard and the address book",
       "role": "what is already proven end to end"
+    },
+    {
+      "id": "repo:perftests",
+      "kind": "repo",
+      "locator": "repos/trade-imports-performance-tests",
+      "scope": "src/k6: the animals frontend and INS front-door routes the k6 scripts request (the live-animals set root, the notification journey pages and the dashboard)",
+      "role": "what exists today and what has already been ruled"
     },
     {
       "id": "trace:animals-fit",

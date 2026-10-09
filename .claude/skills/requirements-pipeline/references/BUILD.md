@@ -680,7 +680,10 @@ tim backlog split <workarea> --theme <theme id> --write --json
 The theme's backlog lands at `<workarea>/themes/<theme id>/backlog.json`, as the full split writes it, and its rows
 leave the parent `backlog.json` altogether. The parent keeps a pointer in `splitOff`, so re-distils do not draft
 them again. The command lists each dependency it rewired: a parent row that waited on a moved row now waits on it in
-the split backlog, and a moved row that waited on a parent row waits on it in the parent.
+the split backlog, a moved row that waited on a parent row waits on it in the parent, and a theme split off before
+that waited on a row this split moved now waits on it in its new workarea. When `tim backlog check` on the parent
+says a theme split off early waits on a row the parent no longer has, run
+`tim backlog split <workarea> --relink --write --json`, then commit and push the split backlogs it changed.
 
 - **Build it like any split theme.** Commit and push the workspace changes, pull them on the second machine, and
   launch the loop with `workarea` set to `<workarea>/themes/<theme id>` and `repos` from that backlog's envelope. To

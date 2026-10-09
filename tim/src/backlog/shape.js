@@ -2,6 +2,7 @@ import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
 import { followRef } from './schema-ref.js'
+import { splitOffOf } from './split-off.js'
 import {
   externalDependenciesDone,
   externalDependencyProblems,
@@ -307,10 +308,23 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
   if (cycle) problems.push(`A dependsOn cycle: ${cycle.join(' → ')}.`)
   problems.push(...themeProblems(backlog))
   if (readWorkareaBacklog) {
-    problems.push(...externalDependencyProblems(backlog, readWorkareaBacklog))
+    problems.push(
+      ...externalDependencyProblems(backlog, readWorkareaBacklog),
+      ...splitOffDependencyProblems(backlog, readWorkareaBacklog)
+    )
   }
   return { problems, counts: countByStatus(rows), total: rows.length }
 }
+
+const splitOffDependencyProblems = (backlog, readWorkareaBacklog) =>
+  splitOffOf(backlog).flatMap((pointer) => {
+    const splitBacklog = readWorkareaBacklog(pointer.workarea)
+    if (!splitBacklog) return []
+    return externalDependencyProblems(splitBacklog, readWorkareaBacklog).map(
+      (problem) =>
+        `In ${pointer.workarea}, split off early: ${problem} If another early split moved that row, run tim backlog split --relink to point at its new workarea.`
+    )
+  })
 
 const NO_OTHER_BACKLOGS = () => null
 

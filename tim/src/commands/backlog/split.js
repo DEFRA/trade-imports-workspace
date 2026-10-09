@@ -9,6 +9,7 @@ import {
   THEMES_FOLDER,
   THEMES_INDEX,
   defaultBranchPrefix,
+  planRelink,
   planSplit,
   planSplitOff
 } from '../../backlog/split.js'
@@ -36,6 +37,7 @@ const themeIdSchema = z
 
 const splitOptsSchema = z.object({
   write: z.boolean().optional().default(false),
+  relink: z.boolean().optional().default(false),
   theme: z.array(themeIdSchema).optional().default([]),
   branchPrefix: z
     .string()
@@ -51,15 +53,22 @@ const splitOptsSchema = z.object({
  * Validate `tim backlog split`'s options before the backlog is read.
  *
  * @param {object} opts
- * @returns {{write: boolean, theme: string[], branchPrefix: string|undefined}}
+ * @returns {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined}}
  * @throws {TimError} USAGE
  */
 export const parseSplitOpts = (opts) => {
   const parsed = parseOptions(splitOptsSchema, {
     write: opts.write,
+    relink: opts.relink,
     theme: opts.theme,
     branchPrefix: opts.branchPrefix
   })
+  if (parsed.relink && parsed.theme.length) {
+    throw new TimError(
+      'USAGE',
+      'Give --relink on its own. Splitting a theme off with --theme already relinks the themes split off before it.'
+    )
+  }
   return { ...parsed, theme: [...new Set(parsed.theme)] }
 }
 
@@ -164,8 +173,9 @@ const runSplitOff = ({
   if (plan.problems.length) {
     throw refuse(plan.problems, 'with the split already on disk')
   }
+  const everySplit = [...plan.splits, ...plan.relinkedSplits]
   const reader = overlayReader({
-    splits: plan.splits,
+    splits: everySplit,
     workarea,
     backlog: plan.backlog,
     readFromDisk
@@ -177,7 +187,7 @@ const runSplitOff = ({
     throw refuse(leftProblems, `in the backlog ${path} would keep`)
   }
   const problems = splitProblems({
-    splits: plan.splits,
+    splits: everySplit,
     schema,
     readWorkareaBacklog: reader
   })
@@ -187,7 +197,7 @@ const runSplitOff = ({
   const changedPaths = plannedFiles(
     [
       { path, value: plan.backlog },
-      ...plan.splits.map((split) => ({
+      ...everySplit.map((split) => ({
         path: splitPathOf(split),
         value: split.backlog
       })),
@@ -208,8 +218,54 @@ const runSplitOff = ({
       removed: split.removed,
       changed: changedPaths.has(splitPathOf(split))
     })),
+    relinked: relinkedFilesOf(plan.relinkedSplits, splitPathOf, changedPaths),
     rewired: plan.rewired,
     landingOrder: plan.index.landingOrder
+  }
+}
+
+const relinkedFilesOf = (relinks, pathOf, changedPaths) =>
+  relinks.map((relink) => ({
+    workarea: relink.workarea,
+    path: pathOf(relink),
+    rows: relink.relinked,
+    changed: changedPaths.has(pathOf(relink))
+  }))
+
+const runRelink = ({
+  workspaceRoot,
+  workarea,
+  path,
+  schema,
+  backlog,
+  readFromDisk,
+  options
+}) => {
+  const relinks = planRelink({
+    backlog,
+    workarea,
+    readWorkareaBacklog: readFromDisk
+  })
+  const reader = overlayReader({
+    splits: relinks,
+    workarea,
+    backlog,
+    readFromDisk
+  })
+  const problems = [
+    ...checkBacklog(backlog, schema, { readWorkareaBacklog: reader }).problems,
+    ...splitProblems({ splits: relinks, schema, readWorkareaBacklog: reader })
+  ]
+  if (problems.length) throw refuse(problems, 'after relinking')
+  const pathOf = (relink) => backlogPathFor(workspaceRoot, relink.workarea)
+  const changedPaths = plannedFiles(
+    relinks.map((relink) => ({ path: pathOf(relink), value: relink.backlog })),
+    options.write
+  )
+  return {
+    path,
+    written: options.write,
+    relinked: relinkedFilesOf(relinks, pathOf, changedPaths)
   }
 }
 
@@ -223,10 +279,14 @@ const runSplitOff = ({
  * the parent keeps a pointer to it in `splitOff`. The rest of the parent
  * stays as it is, to be ruled on and distilled again.
  *
+ * With `relink`, splits nothing: it points every theme split off early that
+ * waits on a row a later early split moved out of the parent at that row's
+ * new workarea.
+ *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.workarea
- * @param {{write: boolean, theme: string[], branchPrefix: string|undefined}} args.options
+ * @param {{write: boolean, relink: boolean, theme: string[], branchPrefix: string|undefined}} args.options
  * @param {() => Date} [args.now] - The clock a split-off pointer's time is read from
  * @returns {object} What was, or would be, written
  * @throws {TimError} USAGE when the backlog has no themes or is itself a split, or a theme cannot be split off; LINT when it, or a split, is out of shape
@@ -243,6 +303,17 @@ export const runSplit = ({
   const backlog = readJsonFile(path)
   requireThemedParent(backlog, workarea)
   const readFromDisk = workareaBacklogReader(workspaceRoot)
+  if (options.relink) {
+    return runRelink({
+      workspaceRoot,
+      workarea,
+      path,
+      schema,
+      backlog,
+      readFromDisk,
+      options
+    })
+  }
 
   const parentProblems = checkBacklog(backlog, schema, {
     readWorkareaBacklog: readFromDisk
@@ -397,14 +468,45 @@ const renderSplitOff = (result) =>
       'Rows that moved that wait for a row in another backlog:',
       'No row that moved waits for a row in another backlog.'
     ),
+    ...describeRelinks(result.rewired.relinked),
     writeLine(
-      [{ changed: result.changed }, result.index, ...result.splitOff],
+      [
+        { changed: result.changed },
+        result.index,
+        ...result.splitOff,
+        ...result.relinked
+      ],
       result.written
     )
   ].join('\n')
 
-const renderSplit = (result) =>
-  result.rewired ? renderSplitOff(result) : renderFullSplit(result)
+const describeRelinks = (relinked) =>
+  relinked.length
+    ? [
+        'Rows that now wait for a row where an early split moved it:',
+        ...relinked.map(
+          (entry) =>
+            `  ${entry.id} waits for ${entry.dependsOn} in ${entry.workarea}`
+        )
+      ]
+    : []
+
+const renderRelink = (result) => {
+  const rows = result.relinked.flatMap((file) => file.rows)
+  if (!rows.length) {
+    return 'No theme split off early waits on a row another split has moved.'
+  }
+  return [
+    ...describeRelinks(rows),
+    writeLine(result.relinked, result.written)
+  ].join('\n')
+}
+
+const renderSplit = (result) => {
+  if (result.rewired) return renderSplitOff(result)
+  if (result.relinked) return renderRelink(result)
+  return renderFullSplit(result)
+}
 
 const collect = (value, previous) => previous.concat([value])
 
@@ -422,10 +524,15 @@ export const register = (backlog, { timVersion }) => {
         '  tim backlog split shared/my-programme --branch-prefix feat/EUDPA-123-plants --write\n' +
         '  tim backlog split shared/my-programme --theme origin-pages --json\n' +
         '  tim backlog split shared/my-programme --theme origin-pages --write --json\n' +
+        '  tim backlog split shared/my-programme --relink --write --json\n' +
         'Exits 1, writing nothing, when the backlog or any split backlog is out of shape.\n' +
         'Exits 2 when --theme names a theme the backlog does not have, or one already split off.'
     )
     .option('--write', 'Write the split backlogs and themes.json')
+    .option(
+      '--relink',
+      'Split nothing. Point each theme split off early at the new workarea of any row it waits on that a later early split moved'
+    )
     .option(
       '--theme <id>',
       'Split only this theme off, early, and take it and its rows out of the main backlog. Give it more than once for more than one theme',

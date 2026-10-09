@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   defaultBranchPrefix,
+  planRelink,
   planSplit,
   planSplitOff,
   themeWorkareaOf
@@ -426,9 +427,123 @@ describe('planSplitOff', () => {
             dependsOn: 'inc-002',
             workarea: 'shared/hrp/themes/origin'
           }
-        ]
+        ],
+        relinked: []
       }
     ])
+  })
+
+  describe('after another theme was split off early', () => {
+    const COMMODITY = 'shared/hrp/themes/commodity'
+    const ORIGIN = 'shared/hrp/themes/origin'
+
+    const commodityFirst = () => splitOff({ themeIds: ['commodity'] })
+
+    const originNext = (first) =>
+      splitOff({
+        backlog: first.backlog,
+        themeIds: ['origin'],
+        onDisk: { [COMMODITY]: first.splits[0].backlog }
+      })
+
+    test('points the earlier theme at the new home of a row it waits on', () => {
+      const result = originNext(commodityFirst())
+
+      expect([
+        result.relinkedSplits.map((split) => split.workarea),
+        rowOf(result.relinkedSplits[0].backlog, 'inc-003').externalDependsOn,
+        result.rewired.relinked
+      ]).toEqual([
+        [COMMODITY],
+        [{ workarea: ORIGIN, id: 'inc-002' }],
+        [{ id: 'inc-003', dependsOn: 'inc-002', workarea: ORIGIN }]
+      ])
+    })
+
+    test('leaves the earlier theme alone when nothing it waits on moves', () => {
+      const first = commodityFirst()
+
+      const result = splitOff({
+        backlog: first.backlog,
+        themeIds: ['documents'],
+        onDisk: { [COMMODITY]: first.splits[0].backlog }
+      })
+
+      expect([result.relinkedSplits, result.rewired.relinked]).toEqual([[], []])
+    })
+  })
+
+  describe('planRelink', () => {
+    const COMMODITY = 'shared/hrp/themes/commodity'
+    const ORIGIN = 'shared/hrp/themes/origin'
+
+    const bothSplitOff = () => {
+      const first = planSplitOff({
+        backlog: themedBacklog(),
+        workarea: WORKAREA,
+        themeIds: ['commodity'],
+        branchPrefix: PREFIX,
+        readWorkareaBacklog: nothingOnDisk,
+        previousIndex: null,
+        fingerprints: null,
+        at: '2026-10-09T12:00:00.000Z'
+      })
+      const second = planSplitOff({
+        backlog: first.backlog,
+        workarea: WORKAREA,
+        themeIds: ['origin'],
+        branchPrefix: PREFIX,
+        readWorkareaBacklog: nothingOnDisk,
+        previousIndex: null,
+        fingerprints: null,
+        at: '2026-10-09T13:00:00.000Z'
+      })
+      return { parent: second.backlog, staleCommodity: first.splits[0].backlog }
+    }
+
+    test('repairs a wait left pointing at the parent by an earlier split', () => {
+      const { parent, staleCommodity } = bothSplitOff()
+
+      const relinks = planRelink({
+        backlog: parent,
+        workarea: WORKAREA,
+        readWorkareaBacklog: (workarea) =>
+          workarea === COMMODITY ? staleCommodity : null
+      })
+
+      expect(
+        relinks.map(({ workarea, backlog, relinked }) => [
+          workarea,
+          rowOf(backlog, 'inc-003').externalDependsOn,
+          relinked
+        ])
+      ).toEqual([
+        [
+          COMMODITY,
+          [{ workarea: ORIGIN, id: 'inc-002' }],
+          [{ id: 'inc-003', dependsOn: 'inc-002', workarea: ORIGIN }]
+        ]
+      ])
+    })
+
+    test('finds nothing to change once every wait points at its row', () => {
+      const { parent, staleCommodity } = bothSplitOff()
+      const [repaired] = planRelink({
+        backlog: parent,
+        workarea: WORKAREA,
+        readWorkareaBacklog: (workarea) =>
+          workarea === COMMODITY ? staleCommodity : null
+      })
+
+      expect(
+        planRelink({
+          backlog: parent,
+          workarea: WORKAREA,
+          readWorkareaBacklog: (workarea) =>
+            workarea === COMMODITY ? repaired.backlog : null
+        })
+      ).toEqual([])
+    })
   })
 
   test('keeps every other theme in the index, and marks the one split off', () => {

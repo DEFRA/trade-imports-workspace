@@ -450,6 +450,81 @@ const mergedIndexOf = ({
   }
 }
 
+const homesOfSplitOffRows = (backlog) =>
+  new Map(
+    splitOffOf(backlog).flatMap((pointer) =>
+      asList(pointer.increments).map((id) => [id, pointer.workarea])
+    )
+  )
+
+/**
+ * Every split-off theme's backlog that waits on a row its parent no longer
+ * holds because a later split moved it, pointed at the row's new home.
+ *
+ * A theme split off early waits on rows still in the parent through an
+ * `externalDependsOn` on the parent's workarea. When a later split moves one
+ * of those rows to its own theme, that dependency names a row the parent no
+ * longer has, so it never becomes buildable. This finds each such dependency
+ * through the parent's `splitOff` pointers and names the workarea the row
+ * moved to.
+ *
+ * @param {object} args
+ * @param {object} args.backlog - The parent backlog, with every pointer
+ * @param {string} args.workarea - The parent workarea, normalised
+ * @param {(workarea: string) => object|null} args.readWorkareaBacklog - Reads each split-off backlog
+ * @returns {{workarea: string, backlog: object, relinked: {id: string, dependsOn: string, workarea: string}[]}[]} Only the backlogs that change
+ */
+export const planRelink = ({ backlog, workarea, readWorkareaBacklog }) => {
+  const parentIds = new Set(rowsOf(backlog).map((row) => row.id))
+  const homeOf = homesOfSplitOffRows(backlog)
+  const isStale = (entry) =>
+    entry?.workarea === workarea &&
+    !parentIds.has(entry.id) &&
+    homeOf.has(entry.id)
+  return splitOffOf(backlog).flatMap((pointer) => {
+    const splitBacklog = readWorkareaBacklog(pointer.workarea)
+    if (!splitBacklog) return []
+    const relinked = rowsOf(splitBacklog).flatMap((row) =>
+      asList(row.externalDependsOn)
+        .filter(isStale)
+        .map((entry) => ({
+          id: row.id,
+          dependsOn: entry.id,
+          workarea: homeOf.get(entry.id)
+        }))
+    )
+    if (!relinked.length) return []
+    const relinkEntry = (entry) =>
+      isStale(entry) ? { ...entry, workarea: homeOf.get(entry.id) } : entry
+    return [
+      {
+        workarea: pointer.workarea,
+        relinked,
+        backlog: {
+          ...splitBacklog,
+          increments: rowsOf(splitBacklog).map((row) =>
+            row.externalDependsOn === undefined
+              ? row
+              : {
+                  ...row,
+                  externalDependsOn: asList(row.externalDependsOn).map(
+                    relinkEntry
+                  )
+                }
+          )
+        }
+      }
+    ]
+  })
+}
+
+const withRelinkedSplits = (splits, relinkedByWorkarea) =>
+  splits.map((split) =>
+    relinkedByWorkarea.has(split.workarea)
+      ? { ...split, backlog: relinkedByWorkarea.get(split.workarea).backlog }
+      : split
+  )
+
 /**
  * Plan splitting one or more themes off a themed backlog early, while the
  * rest of it is still being ruled on and distilled. Writes nothing.
@@ -465,6 +540,9 @@ const mergedIndexOf = ({
  * `externalDependsOn` on that theme's split workarea. A moved row that
  * depended on a row still in the parent gets one on the parent's workarea:
  * `tim backlog next` follows it to that row's theme split once there is one.
+ * A theme split off before, or a theme splitting off now, that waits on a
+ * row another early split has moved out of the parent is pointed at that
+ * row's new workarea ({@link planRelink}).
  *
  * @param {object} args
  * @param {object} args.backlog - The parent backlog, already checked, with `themes`
@@ -475,7 +553,7 @@ const mergedIndexOf = ({
  * @param {object|null} args.previousIndex - The themes.json already on disk, if any
  * @param {Record<string, string>|null} args.fingerprints - Each requirement's fingerprint, or null with no requirements.json
  * @param {string} args.at - When the themes are split off, as an ISO 8601 time
- * @returns {{splits: object[], backlog: object, pointers: object[], index: object, rewired: {left: {id: string, dependsOn: string, workarea: string}[], moved: {id: string, dependsOn: string, workarea: string}[]}, problems: string[]}}
+ * @returns {{splits: object[], relinkedSplits: object[], backlog: object, pointers: object[], index: object, rewired: {left: {id: string, dependsOn: string, workarea: string}[], moved: {id: string, dependsOn: string, workarea: string}[], relinked: {id: string, dependsOn: string, workarea: string}[]}, problems: string[]}}
  * @throws {TimError} USAGE when a theme is not in the backlog, or is already split off
  */
 export const planSplitOff = ({
@@ -532,8 +610,23 @@ export const planSplitOff = ({
     splitOff: [...splitOffOf(backlog), ...pointers],
     increments: left.map((row) => rewiredRowOf({ row, isMoved, targetOf }))
   }
+  const plannedSplits = new Map(
+    splits.map((split) => [split.workarea, split.backlog])
+  )
+  const relinks = planRelink({
+    backlog: remaining,
+    workarea,
+    readWorkareaBacklog: (other) =>
+      plannedSplits.get(other) ?? readWorkareaBacklog(other)
+  })
+  const relinkedByWorkarea = new Map(
+    relinks.map((relink) => [relink.workarea, relink])
+  )
   return {
-    splits,
+    splits: withRelinkedSplits(splits, relinkedByWorkarea),
+    relinkedSplits: relinks.filter(
+      (relink) => !plannedSplits.has(relink.workarea)
+    ),
     backlog: remaining,
     pointers,
     index: mergedIndexOf({
@@ -558,7 +651,8 @@ export const planSplitOff = ({
         rows: rows.filter((row) => moving.has(row.theme)),
         isCrossing: (row, id) => themeOfRow.get(id) !== row.theme,
         targetOf
-      })
+      }),
+      relinked: relinks.flatMap((relink) => relink.relinked)
     },
     problems: movedBuiltRowProblems({
       backlog,

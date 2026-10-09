@@ -390,7 +390,8 @@ describe('tim backlog split --theme', () => {
 
     expect(envelopeOf(run).result.rewired).toEqual({
       left: [],
-      moved: [{ id: 'inc-005', dependsOn: 'inc-006', workarea: WORKAREA }]
+      moved: [{ id: 'inc-005', dependsOn: 'inc-006', workarea: WORKAREA }],
+      relinked: []
     })
   })
 
@@ -519,12 +520,104 @@ describe('parseSplitOpts', () => {
   })
 
   test('is a dry run unless told to write', () => {
-    expect(parseSplitOpts({})).toEqual({ write: false, theme: [] })
+    expect(parseSplitOpts({})).toEqual({
+      write: false,
+      relink: false,
+      theme: []
+    })
+  })
+
+  test('refuses --relink with --theme', () => {
+    expect(() => parseSplitOpts({ relink: true, theme: ['origin'] })).toThrow(
+      'Give --relink on its own. Splitting a theme off with --theme already relinks the themes split off before it.'
+    )
   })
 
   test('refuses a branch prefix with a space', () => {
     expect(() => parseSplitOpts({ branchPrefix: 'feat/my plants' })).toThrow(
       '--branch-prefix must be a branch name with no spaces, such as feat/EUDPA-123-plants.'
     )
+  })
+})
+
+describe('tim backlog split, a second early split', () => {
+  const waitsOfCommodityRow = () =>
+    readJson(pathOf(themeWorkarea('commodity'))).increments.find(
+      (row) => row.id === 'inc-003'
+    ).externalDependsOn
+
+  const splitCommodityThenOrigin = async () => {
+    await runTim(['split', WORKAREA, '--theme', 'commodity', '--write'])
+    const commodityBefore = readJson(pathOf(themeWorkarea('commodity')))
+    const run = await runTim([
+      'split',
+      WORKAREA,
+      '--theme',
+      'origin',
+      '--write'
+    ])
+    return { commodityBefore, run }
+  }
+
+  test('points the theme split off first at the row the second one moved', async () => {
+    const { run } = await splitCommodityThenOrigin()
+
+    expect([
+      envelopeOf(run).result.rewired.relinked,
+      waitsOfCommodityRow()
+    ]).toEqual([
+      [
+        {
+          id: 'inc-003',
+          dependsOn: 'inc-002',
+          workarea: themeWorkarea('origin')
+        }
+      ],
+      [{ workarea: themeWorkarea('origin'), id: 'inc-002' }]
+    ])
+  })
+
+  test('flags a wait an earlier split left on the main backlog', async () => {
+    const { commodityBefore } = await splitCommodityThenOrigin()
+    writeJson(pathOf(themeWorkarea('commodity')), commodityBefore)
+
+    const run = await runTim(['check', WORKAREA])
+
+    expect(run.stdout).toContain(
+      'In shared/hrp/themes/commodity, split off early: inc-003 depends on inc-002 in shared/hrp, which is not in that backlog.'
+    )
+  })
+
+  test('--relink repairs that wait, and writes only with --write', async () => {
+    const { commodityBefore } = await splitCommodityThenOrigin()
+    writeJson(pathOf(themeWorkarea('commodity')), commodityBefore)
+
+    const dryRun = await runTim(['split', WORKAREA, '--relink'])
+    const waitsAfterDryRun = waitsOfCommodityRow()
+    await runTim(['split', WORKAREA, '--relink', '--write'])
+
+    expect([
+      envelopeOf(dryRun).result.relinked.map(({ workarea, rows }) => [
+        workarea,
+        rows
+      ]),
+      waitsAfterDryRun,
+      waitsOfCommodityRow()
+    ]).toEqual([
+      [
+        [
+          themeWorkarea('commodity'),
+          [
+            {
+              id: 'inc-003',
+              dependsOn: 'inc-002',
+              workarea: themeWorkarea('origin')
+            }
+          ]
+        ]
+      ],
+      [{ workarea: WORKAREA, id: 'inc-002' }],
+      [{ workarea: themeWorkarea('origin'), id: 'inc-002' }]
+    ])
   })
 })

@@ -426,6 +426,32 @@ describe('checkBacklog', () => {
       ])
     })
 
+    test("follows a theme split off early into its own backlog's waits", () => {
+      const parent = {
+        ...backlogOf(row()),
+        splitOff: [
+          { theme: 'commodity', workarea: 'shared/hrp/themes/commodity' }
+        ]
+      }
+      const backlogs = {
+        'shared/hrp': parent,
+        'shared/hrp/themes/commodity': backlogOf(
+          row({
+            id: 'inc-003',
+            externalDependsOn: [{ workarea: 'shared/hrp', id: 'inc-002' }]
+          })
+        )
+      }
+
+      const { problems } = checkAgainst(parent, schema, {
+        readWorkareaBacklog: (workarea) => backlogs[workarea] ?? null
+      })
+
+      expect(problems).toContain(
+        'In shared/hrp/themes/commodity, split off early: inc-003 depends on inc-002 in shared/hrp, which is not in that backlog. If another early split moved that row, run tim backlog split --relink to point at its new workarea.'
+      )
+    })
+
     test('refuses one with no id', () => {
       const stray = backlogOf(
         row({ externalDependsOn: [{ workarea: 'shared/hrp' }] })

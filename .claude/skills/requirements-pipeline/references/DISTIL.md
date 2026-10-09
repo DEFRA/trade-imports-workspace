@@ -442,7 +442,17 @@ rewired, in plain words:
 
 - a row left in the main backlog that depended on a moved row now has an `externalDependsOn` on the split backlog;
 - a moved row that depended on a row still in the main backlog has an `externalDependsOn` on the main backlog.
-  `tim backlog next` follows it to that row's own theme split once that theme is split too.
+  `tim backlog next` follows it to that row's own theme split once that theme is split too;
+- a theme split off before that waits on a row this split moves is pointed at the row's new workarea (`relinked`),
+  because the main backlog no longer has the row.
+
+A theme split off by a version of tim without that last step can still wait on the main backlog for a row a later
+split moved. `tim backlog check` on the main backlog names each such wait. Point them at the right workarea with:
+
+```bash
+tim backlog split <workarea> --relink --json           # which waits would move
+tim backlog split <workarea> --relink --write --json   # move them
+```
 
 It refuses, writing nothing, a theme already split off, a theme the backlog does not have, or a result that fails
 `tim backlog check`.

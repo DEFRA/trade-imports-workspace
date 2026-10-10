@@ -247,7 +247,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "each page's heading is awaited in order from origin to the review, then every task reads Complete and the notification is submitted" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "each page's heading is awaited in order from origin to the review, then every task reads Complete and the notification is submitted" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "full", "notes": "horse by sea: origin → what you are importing → reason (temporary admission) → commodity details → identification → additional details → arrival → transporter → documents → roles and addresses → contact → review, each heading awaited in turn" }
           ]
         },
         {
@@ -257,9 +258,10 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "partial", "notes": "re-read this pass: still present and still about a gated-out step, but it collapses the whole tail rather than stepping over one page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should carry a consignment with nothing to identify on to additional details mid-run", "strength": "full", "notes": "the scenario exactly: identification is out of scope for this consignment, so the run steps over it to the next step that is in scope" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass a zero-record identification Save-and-finish through to additional details mid-run", "strength": "full", "notes": "the same skip reached by finishing the page with no records rather than by never being offered it" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass a zero-record identification Save-and-finish through to additional details mid-run", "strength": "full", "notes": "the same skip reached by finishing the page with no records rather than by never being offered it" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "incidental only: Vessel takes transit countries out of scope and the walk awaits the transporter heading straight after arrival details, but no assertion names the skip or checks that the transit-countries page is absent" }
           ],
-          "notes": "Unit-only: no FIT/E2E deliberately leaves an opening-sequence step out of scope mid-run and asserts the skip on the page itself."
+          "notes": "Unit tests in opening-run.test.js pin the skip. The horse-by-sea e2e walks the transit-countries skip (Vessel) incidentally, arrival details straight to the transporter, but does not assert it by name, so no FIT/E2E is a full witness yet."
         },
         {
           "id": "SCN-FLOW-007-C",

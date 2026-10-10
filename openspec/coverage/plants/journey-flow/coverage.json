@@ -81,8 +81,8 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-003",
-      "name": "Continuing from any page moves to the next still in scope, and finishing a section returns to Overview",
-      "coverage": "full",
+      "name": "Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-003-A",
@@ -135,6 +135,122 @@
               "test": "Should redirect to the overview, the page after the run\u2019s last step",
               "strength": "full",
               "notes": "outside active run, origin Continue \u2192 hub"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-C",
+          "name": "Arrival details opened from Overview returns to Overview, not the place of destination",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "arrival details opened from the overview returns to the overview, not the place of destination",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should carry arrival status on to the arrival details, the next page of its task",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the arrival details to the overview, not on to the place of destination",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-D",
+          "name": "A task of more than one page moves through its own pages first",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "'What are you importing?' opened from the overview moves through its own pages before returning to the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should carry the entry question on to the commodities list, the next page of its task",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the commodities list to the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-E",
+          "name": "Consignor opened from Overview returns to Overview, not identification numbers",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/parties.spec.ts",
+              "test": "consignor opened from the overview returns to the overview on Save and continue, not to identification numbers",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js",
+              "test": "opened from the overview, saves the chosen address and returns to the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the consignor to the overview rather than on to identification numbers, a task of its own",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-F",
+          "name": "Nothing marks a page as opened from Overview",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "arrival details opened from the overview returns to the overview, not the place of destination",
+              "strength": "partial",
+              "notes": "asserts the row link and the landing address; no other task is checked"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "'What are you importing?' opened from the overview moves through its own pages before returning to the overview",
+              "strength": "partial",
+              "notes": "asserts the row link and the landing address; no other task is checked"
             }
           ]
         }

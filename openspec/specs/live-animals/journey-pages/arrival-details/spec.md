@@ -19,7 +19,7 @@ The system MUST ask the user for the port of entry, the means of transport, the 
 
 ### Requirement: The port field offers every port before typing, and filters by name or code
 **ID**: REQ-ARRIVAL-002
-The system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name, and MUST list the ports the reference data service serves, in the order it serves them.
+The system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
 
 #### Scenario: Opening the port field offers the full list
 **ID**: SCN-ARRIVAL-002-A
@@ -44,6 +44,13 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the port list is read in full
 - **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
+
+#### Scenario: Ports are listed airports first, then seaports, then rail ports, each A to Z by name
+**ID**: SCN-ARRIVAL-002-E
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the port list is read in full
+- **THEN** every airport comes before every seaport, and every seaport before every rail port
+- **AND** within each group the ports run A to Z by name, a name in capitals sorting among the names that start with the same letter, and a name with a non-breaking or doubled space sorting where the same name with single spaces would
 
 ### Requirement: Choosing a port submits and keeps its code
 **ID**: REQ-ARRIVAL-003

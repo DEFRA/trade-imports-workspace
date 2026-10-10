@@ -41,13 +41,27 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 
 ### Requirement: The port of exit is chosen from the same list as the port of entry
 **ID**: REQ-IMPORT-REASON-004
-The system MUST offer the same list of ports for the port of exit, which this page asks for under the reasons that call for it, as it offers for the port of entry.
+The system MUST offer, for the port of exit under each reason that asks it, the same ports as the port of entry, in the same order, after the placeholder "Select port of exit", each reading "<port name> - <port code>", and MUST save the chosen port's code and show it as chosen when the page is reopened.
 
 #### Scenario: The port of exit offers the port of entry's list
 **ID**: SCN-IMPORT-REASON-004-A
 - **GIVEN** the reason for importing calls for a port of exit
 - **WHEN** the user answers it
 - **THEN** the ports offered are those offered for the port of entry
+
+#### Scenario: Each port of exit reads its name, a dash and its code, in the port of entry's order
+**ID**: SCN-IMPORT-REASON-004-B
+- **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
+- **WHEN** the port of exit list is read in full
+- **THEN** after the placeholder "Select port of exit" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
+- **AND** each reads "<port name> - <port code>", for example "Aberdeen Harbour - GB ABD"
+
+#### Scenario: A chosen port of exit is kept and offered back
+**ID**: SCN-IMPORT-REASON-004-C
+- **GIVEN** the user has chosen "Transit"
+- **WHEN** they choose a port of exit, answer the destination country and save and continue
+- **THEN** no error is shown
+- **AND** when they reopen the page that port of exit is shown as chosen
 
 ### Requirement: A reason needing more than the purpose question reveals its own questions inline, under that reason
 **ID**: REQ-IMPORT-REASON-005

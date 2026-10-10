@@ -47,7 +47,7 @@ The system MUST ask a potatoes notification for the expected time of arrival and
 
 ### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-003
-The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code, and MUST list every port the reference data service serves, in the order it serves them.
+The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
 
 #### Scenario: Choosing a port shows its name and code and is kept on return
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-A
@@ -61,6 +61,13 @@ The system MUST let the user find a proposed place of landing by typing a port's
 - **GIVEN** a potatoes notification is on the arrival details page
 - **WHEN** the place-of-landing list is read in full
 - **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
+
+#### Scenario: Places of landing are listed airports first, then seaports, then rail ports, each A to Z by name
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-C
+- **GIVEN** a potatoes notification is on the arrival details page
+- **WHEN** the place-of-landing list is read in full
+- **THEN** every airport comes before every seaport, and every seaport before every rail port
+- **AND** within each group the ports run A to Z by name ignoring letter case, with non-breaking and doubled spaces read as single spaces
 
 ### Requirement: A complete set of answers for the notification's state is accepted
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-004

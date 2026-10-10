@@ -63,7 +63,29 @@
           "name": "The port of exit offers the port of entry's list",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list labelled '<name> - <code>' and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-004-B",
+          "name": "Each port of exit reads its name, a dash and its code, in the port of entry's order",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list offers every port as its name and code, airports first, then seaports, then rail ports, each A to Z by name ignoring letter case", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer each served port as '<name> - <code>' valued by its code, in the order reference data serves them", "strength": "partial", "notes": "label and served order, real mode" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-004-C",
+          "name": "A chosen port of exit is kept and offered back",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "a port of exit chosen under transit saves its code and is shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a reason and its reveal in one submit, and offers the answers back", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer a stored port of exit to both reveals that ask for it", "strength": "partial", "notes": "GET prefill only" }
           ]
         }
       ]

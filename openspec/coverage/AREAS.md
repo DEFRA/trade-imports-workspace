@@ -15,6 +15,7 @@ Codes carry their namespace's prefix: none inside `live-animals/`, `PLANTS-` ins
 | ins/authentication | INS-AUTH |
 | ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
+| ins/notification-type | INS-NTYPE |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |

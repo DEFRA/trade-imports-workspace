@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status.
+The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status, and where a new notification starts.
 
 ## Requirements
 
@@ -48,3 +48,20 @@ The system MUST let the user search the dashboard by complete notification refer
 - **GIVEN** the user searches for a reference number that matches no notification
 - **WHEN** the search runs
 - **THEN** a "No notifications found" message is shown
+
+### Requirement: The dashboard always offers a way to start a new notification, opening the notification type question
+**ID**: REQ-INS-DASH-004
+The system MUST offer "Start a new notification" on the dashboard whether or not any notifications are listed, and MUST open the "What are you importing?" question (`ins/notification-type`) when the user chooses it, before any notification exists.
+
+#### Scenario: Starting from a dashboard that lists notifications asks what is being imported
+**ID**: SCN-INS-DASH-004-A
+- **GIVEN** notifications are listed on the dashboard
+- **WHEN** the user chooses "Start a new notification"
+- **THEN** the question "What are you importing?" is shown
+
+#### Scenario: Starting from an empty dashboard asks the same question
+**ID**: SCN-INS-DASH-004-B
+- **GIVEN** the organisation has no notifications
+- **WHEN** the dashboard is shown
+- **THEN** "Start a new notification" is still offered
+- **AND** choosing it shows the question "What are you importing?"

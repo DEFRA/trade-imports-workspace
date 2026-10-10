@@ -172,6 +172,14 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "commodity details: when the number of animals is blank, keeps its checks and stays on the page", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should hold the page on a blank count when Save and return to overview is pressed, saving nothing", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-FLOW-004-F",
+          "name": "While amending, the page ends as the amend ending describes",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "a page opened from Overview while amending ends with Save and return, Save and continue and a link-styled Save and return to overview, with no cancel link, and Back goes to Overview", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -403,6 +411,60 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "a detour page outside the transporter area, so the rule is shown to hold beyond that one feature" }
           ],
           "notes": "All three transporter add-detour pages now assert the rule, and cph-number shows it holding outside that feature area."
+        }
+      ]
+    },
+    {
+      "id": "REQ-FLOW-013",
+      "name": "While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-FLOW-013-A",
+          "name": "A page opened from Overview while amending ends with the three amend controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "a page opened from Overview while amending ends with Save and return, Save and continue and a link-styled Save and return to overview, with no cancel link, and Back goes to Overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end an overview-linked page with Save and return, Save and continue and a link-styled Save and return to overview, in that order", "strength": "full", "notes": "the macro's amend ending; the page-by-page opt-in is proved by the e2e" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-013-B",
+          "name": "Save and return from a Change link goes back to the review showing the changed answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Save and return from a Change link goes back to the amend review showing the changed answer, posting change=1 and no action field", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should return an amend's Save and return to the review and send its Save and continue onwards", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-013-C",
+          "name": "Save and continue while amending goes on, not back to the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Save and continue while amending goes on as it does outside an amendment, not back to the review", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should return an amend's Save and return to the review and send its Save and continue onwards", "strength": "full", "notes": "the same case posts without the change flag and asserts Overview" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-013-D",
+          "name": "The CPH number page, the address pickers and the contact address page offer two controls while amending",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "the CPH number page, a party picker and the contact address page end with Save and return and Save and continue only, and Save and return goes to the amend review", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the review on Save and return, ahead of the addresses hub, when amending with both return and change", "strength": "partial", "notes": "CPH Save and return only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return a chosen party to the review from a Change link", "strength": "partial", "notes": "picker Save and return only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should drop the overview exit on a picker while amending", "strength": "partial", "notes": "the two-control macro ending" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-013-E",
+          "name": "Outside an amendment the CPH number page keeps its primary action alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page keeps its single primary button", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }
+          ]
         }
       ]
     }

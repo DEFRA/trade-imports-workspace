@@ -76,7 +76,7 @@ Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made fro
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
-The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, and MUST still refuse an answer that breaks its own rule with that answer's error and save nothing.
+The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, and MUST still refuse an answer that breaks its own rule with that answer's error and save nothing. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-PLANTS-FLOW-004-A
@@ -214,7 +214,7 @@ The system MUST, after sending the user to the commodity-type page because the j
 
 ### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
 **ID**: REQ-PLANTS-FLOW-012
-The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: A page reached via a detour offers only its primary action
 **ID**: SCN-PLANTS-FLOW-012-A
@@ -232,3 +232,30 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 - **WHEN** they continue without adding a line, or add a line and return through the list
 - **THEN** commodity-details is reached only via the list, not as its own opening-sequence step after the list
 - **AND** finishing the list continues the opening sequence to origin (or the next in-scope step), not into a separate commodity-details spine step
+
+### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
+**ID**: REQ-PLANTS-FLOW-014
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+
+#### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
+**ID**: SCN-PLANTS-FLOW-014-A
+- **GIVEN** a notification being amended
+- **WHEN** the user opens Identification numbers from Overview
+- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview", and no "Cancel and return to overview"
+- **WHEN** they change the producer number and select "Save and return"
+- **THEN** the review is shown with the new producer number
+
+#### Scenario: Save and continue while amending goes to the next page of the task
+**ID**: SCN-PLANTS-FLOW-014-B
+- **GIVEN** a plants-for-planting notification being amended
+- **WHEN** the user selects "Save and continue" on Arrival status
+- **THEN** Arrival details is shown, whose Back link goes to Overview
+- **WHEN** they select "Save and return to overview" on Arrival details
+- **THEN** Overview is shown
+
+#### Scenario: The address pickers offer two controls while amending, and Save and return goes back to the review
+**ID**: SCN-PLANTS-FLOW-014-C
+- **GIVEN** a notification being amended
+- **WHEN** the user opens the consignor or exporter, place of destination or consignment contact picker
+- **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
+- **AND** "Save and return" on the consignor or exporter picker returns to the review

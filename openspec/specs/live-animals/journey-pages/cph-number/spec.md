@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached only from its row on the consignment addresses page — never a step of the opening sequence — so it ends with its primary action alone (`live-animals/journey-flow`'s REQ-FLOW-012).
+Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached only from its row on the consignment addresses page — never a step of the opening sequence — so it ends with its primary action alone (`live-animals/journey-flow`'s REQ-FLOW-012), and with "Save and return" and "Save and continue" while the notification is being amended (REQ-FLOW-013).
 
 ## Requirements
 
@@ -119,7 +119,7 @@ The system MUST return the user to the consignment addresses page when they foll
 
 ### Requirement: Saving the CPH number returns to the consignment addresses page
 **ID**: REQ-CPH-007
-The system MUST return the user to the consignment addresses page after they save the CPH number, whether or not an opening sequence is under way.
+The system MUST return the user to the consignment addresses page after they save the CPH number, whether or not an opening sequence is under way. While the notification is being amended, "Save and return" returns to the review instead (REQ-FLOW-013).
 
 #### Scenario: Saving from its row returns to the consignment addresses page, showing the number
 **ID**: SCN-CPH-007-A

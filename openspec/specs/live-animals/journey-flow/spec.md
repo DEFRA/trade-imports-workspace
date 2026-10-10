@@ -84,7 +84,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, whose answers are checked before saving either way.
+Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, which are checked before saving either way.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -120,6 +120,12 @@ The system MUST let the user leave a page the hub links to directly either by di
 - **THEN** they stay on the page, which shows "Enter the number of animals"
 - **AND** nothing is saved
 
+#### Scenario: While amending, the page ends as the amend ending describes
+**ID**: SCN-FLOW-004-F
+- **GIVEN** a notification being amended
+- **WHEN** the user opens a page the hub links to directly
+- **THEN** it ends as REQ-FLOW-013 describes, with "Save and return" and no "Cancel and return to overview"
+
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-FLOW-005
 The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification, and MUST otherwise pass over it.
@@ -132,11 +138,11 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 
 ### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST show check your answers whatever the notification still owes, naming what is outstanding, and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft and naming nothing while it is being amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010), and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A
-- **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional
+- **GIVEN** a draft notification with a task row that is neither fulfilled, not applicable, nor optional
 - **WHEN** the user continues from check your answers
 - **THEN** they stay on check your answers, which names what is outstanding
 - **AND** the declaration is not opened
@@ -260,10 +266,48 @@ The system MUST NOT resume the opening sequence for a journey the user was redir
 
 ### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
 **ID**: REQ-FLOW-012
-The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
 
 #### Scenario: A page reached via a detour offers only its primary action
 **ID**: SCN-FLOW-012-A
 - **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row
 - **WHEN** the page is shown
 - **THEN** only its primary save-and-continue action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
+
+### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
+**ID**: REQ-FLOW-013
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+
+#### Scenario: A page opened from Overview while amending ends with the three amend controls
+**ID**: SCN-FLOW-013-A
+- **GIVEN** a notification being amended
+- **WHEN** the user opens Arrival details from Overview
+- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview"
+- **AND** no "Cancel and return to overview" is offered
+- **AND** its Back link goes to Overview
+
+#### Scenario: Save and return from a Change link goes back to the review showing the changed answer
+**ID**: SCN-FLOW-013-B
+- **GIVEN** the review of a notification being amended
+- **WHEN** the user follows "Change import details", changes the internal reference and selects "Save and return"
+- **THEN** the review is shown with the new internal reference
+- **AND** the origin page's Back link went to Overview, not the review
+
+#### Scenario: Save and continue while amending goes on, not back to the review
+**ID**: SCN-FLOW-013-C
+- **GIVEN** the origin page opened from the review's Change link while amending
+- **WHEN** the user selects "Save and continue"
+- **THEN** Overview is shown, not the review
+
+#### Scenario: The CPH number page, the address pickers and the contact address page offer two controls while amending
+**ID**: SCN-FLOW-013-D
+- **GIVEN** a notification being amended
+- **WHEN** the user opens the CPH number page, an address picker or the contact address page
+- **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
+- **AND** "Save and return" on the CPH number page and on an address picker returns to the review
+
+#### Scenario: Outside an amendment the CPH number page keeps its primary action alone
+**ID**: SCN-FLOW-013-E
+- **GIVEN** a draft notification
+- **WHEN** the user opens the CPH number page
+- **THEN** only "Save and continue" is offered

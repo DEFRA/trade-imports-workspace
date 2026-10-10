@@ -107,7 +107,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "origin → Germany and commodity quantity → 300 both return to CYA" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, a question page opened from a Change link on the review returns to the review showing the change", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" }
           ]
         }
       ]
@@ -241,7 +242,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-012",
-      "name": "An unfinished notification names every outstanding task",
+      "name": "An unfinished draft names every outstanding task",
       "coverage": "full",
       "scenarios": [
         {
@@ -260,6 +261,31 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete notification, naming what is outstanding", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-013",
+      "name": "An amendment that is not yet ready holds Continue without an error",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-013-A",
+          "name": "An incomplete amendment's review shows no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on an incomplete amend review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-013-B",
+          "name": "Continuing from an incomplete amendment stays on check-your-answers without an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep an incomplete amend on the review without an error", "strength": "full", "notes": "" }
           ]
         }
       ]

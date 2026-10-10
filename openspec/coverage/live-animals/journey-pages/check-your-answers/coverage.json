@@ -118,7 +118,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "a Change link opens the answering page with change context and the save returns to check your answers with the new value", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Change link threads context and returns to the same review after saving", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Change link threads context and returns to the same review after saving", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" }
           ]
         }
       ]
@@ -159,7 +160,7 @@
     },
     {
       "id": "REQ-CYA-007",
-      "name": "A notification that is not yet ready is refused on the review page, named card by card",
+      "name": "A draft notification that is not yet ready is refused on the review page, named card by card",
       "coverage": "full",
       "scenarios": [
         {
@@ -221,6 +222,40 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "copies the submitted notification to a new draft", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-010",
+      "name": "An amendment that is not yet ready holds Continue without an error",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-010-A",
+          "name": "An incomplete amendment's review shows no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-010-B",
+          "name": "Continuing from an incomplete amendment stays on the review without an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep an incomplete amend on the review without an error", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-010-C",
+          "name": "Continuing from an amendment whose arrival date breaks its rule stays on the review without an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep an amend whose arrival date is more than 6 months ahead on the review without an error", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error when the arrival date is more than 6 months ahead", "strength": "full", "notes": "" }
           ]
         }
       ]

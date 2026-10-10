@@ -66,7 +66,7 @@ The system MUST show "Not provided" against any field or party role that has not
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page.
+The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
 
 #### Scenario: Editing an answer via Change returns to check-your-answers with the new value
 **ID**: SCN-PLANTS-CYA-005-A
@@ -162,9 +162,9 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 - **THEN** a banner explains the notification was made outside the required timing
 - **AND** an on-time submission shows no such banner
 
-### Requirement: An unfinished notification names every outstanding task
+### Requirement: An unfinished draft names every outstanding task
 **ID**: REQ-PLANTS-CYA-012
-The system MUST show check-your-answers for a notification that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
+The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
 
 #### Scenario: Viewing an unfinished notification names each outstanding task
 **ID**: SCN-PLANTS-CYA-012-A
@@ -178,4 +178,22 @@ The system MUST show check-your-answers for a notification that is not yet compl
 - **GIVEN** a draft notification with a task still to complete is open on check-your-answers
 - **WHEN** the user continues
 - **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
+- **AND** the declaration is not opened
+
+### Requirement: An amendment that is not yet ready holds Continue without an error
+**ID**: REQ-PLANTS-CYA-013
+While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message against any card or role, and MUST keep the user on check-your-answers, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+
+#### Scenario: An incomplete amendment's review shows no error
+**ID**: SCN-PLANTS-CYA-013-A
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user opens check-your-answers
+- **THEN** no error summary and no error message is shown
+
+#### Scenario: Continuing from an incomplete amendment stays on check-your-answers without an error
+**ID**: SCN-PLANTS-CYA-013-B
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user continues
+- **THEN** they stay on check-your-answers with no error summary or error message
+- **AND** the notification is still being amended
 - **AND** the declaration is not opened

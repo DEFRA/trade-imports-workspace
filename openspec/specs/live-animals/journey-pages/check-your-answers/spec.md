@@ -71,7 +71,7 @@ The system MUST return the user to Overview when they follow the back link from 
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-CYA-004
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page.
+The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
 
 #### Scenario: Editing an answer via Change returns to check-your-answers with the new value
 **ID**: SCN-CYA-004-A
@@ -100,9 +100,9 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **WHEN** the user continues
 - **THEN** the declaration page opens
 
-### Requirement: A notification that is not yet ready is refused on the review page, named card by card
+### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
-The system MUST refuse to continue from the review while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card. Each summary entry MUST link to the card it names, and that card MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, not only once the user has tried to continue, and following a refused attempt MUST move focus to it.
+The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card, each entry linking to its card, which MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
 
 #### Scenario: An unfinished review names every outstanding card and links to it
 **ID**: SCN-CYA-007-A
@@ -137,3 +137,29 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
+
+### Requirement: An amendment that is not yet ready holds Continue without an error
+**ID**: REQ-CYA-010
+While a notification is being amended, the system MUST show the review with no error summary and no error message against any card or role, and MUST keep the user on the review, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+
+#### Scenario: An incomplete amendment's review shows no error
+**ID**: SCN-CYA-010-A
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user opens the review
+- **THEN** no error summary and no error message is shown
+
+#### Scenario: Continuing from an incomplete amendment stays on the review without an error
+**ID**: SCN-CYA-010-B
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user continues
+- **THEN** they stay on the review with no error summary or error message
+- **AND** the notification is still being amended
+- **AND** the declaration is not opened
+
+#### Scenario: Continuing from an amendment whose arrival date breaks its rule stays on the review without an error
+**ID**: SCN-CYA-010-C
+- **GIVEN** a notification being amended whose arrival date at port has been changed to more than 6 months ahead
+- **WHEN** the user continues on the review
+- **THEN** they stay on the review with no error summary or error message
+- **AND** the notification is still being amended
+- **AND** the declaration is not opened

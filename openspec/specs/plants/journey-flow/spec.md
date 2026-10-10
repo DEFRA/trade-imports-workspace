@@ -76,7 +76,7 @@ Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made fro
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
-The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way.
+The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, and MUST still refuse an answer that breaks its own rule with that answer's error and save nothing.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-PLANTS-FLOW-004-A
@@ -89,6 +89,20 @@ The system MUST let the user leave a page the hub links to directly either by di
 - **GIVEN** the user has typed into a field on a task page
 - **WHEN** they select "Save and return to overview"
 - **THEN** they return to Overview, and re-opening the task page shows the committed input
+
+#### Scenario: Save and return to overview saves a blank arrival details page
+**ID**: SCN-PLANTS-FLOW-004-C
+- **GIVEN** a potatoes notification is on the arrival details with nothing answered
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview with no error shown
+- **AND** the arrival task row does not read "Completed"
+
+#### Scenario: A time not on the 24-hour clock is refused on save and return
+**ID**: SCN-PLANTS-FLOW-004-D
+- **GIVEN** a potatoes notification is on the arrival details with a time that is not on the 24-hour clock
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they stay on the page, which shows "Enter a real time, like 14:30"
+- **AND** nothing is saved
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-PLANTS-FLOW-005

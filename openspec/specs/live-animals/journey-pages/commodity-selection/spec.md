@@ -110,15 +110,22 @@ The system MUST report how many species have been chosen and name them, and MUST
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
-### Requirement: Saving without choosing a commodity is rejected
+### Requirement: Saving and continuing without choosing a commodity is rejected
 **ID**: REQ-COMMODITY-SELECT-009
-The system MUST refuse to save the commodity selection page when nothing has been chosen, showing an error summary that names what is needed.
+The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing an error summary that names what is needed, and MUST NOT refuse the page for that on save and return to overview.
 
 #### Scenario: Saving with nothing chosen shows an error summary
 **ID**: SCN-COMMODITY-SELECT-009-A
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and continue
 - **THEN** an error summary headed "There is a problem" is shown, telling the user to select a commodity
+
+#### Scenario: Save and return to overview with nothing chosen returns to Overview without an error
+**ID**: SCN-COMMODITY-SELECT-009-B
+- **GIVEN** the user is on the commodity selection page with nothing chosen
+- **WHEN** they save and return to overview
+- **THEN** they return to Overview with no error shown
+- **AND** the commodity selection task does not read "Complete"
 
 ### Requirement: A notification must carry at least one commodity line
 **ID**: REQ-COMMODITY-SELECT-010

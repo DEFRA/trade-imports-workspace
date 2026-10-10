@@ -199,6 +199,25 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "a page opened from Overview while amending ends with Save and return, Save and continue and a link-styled Save and return to overview, with no cancel and return link in the page ending, and Back goes to Overview", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-FLOW-004-G",
+          "name": "Arrival details saved and returned without a means of transport keeps the other answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "arrival details: when no means of transport is chosen, saves the other answers and leaves the task not complete", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "save and return to overview with no means of transport keeps the other answers and leaves arrival details not complete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should save the other answers and go to the overview on Save and return to overview with no means of transport", "strength": "partial", "notes": "asserts the save and redirect, not the task status" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-004-H",
+          "name": "Transit countries saved and returned keeps the countries listed",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "transit countries: saves the countries listed and goes to the overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should save the listed countries and go to the overview on Save and return to overview", "strength": "partial", "notes": "asserts the save and redirect, not the task status" }
+          ]
         }
       ]
     },
@@ -258,7 +277,7 @@
     {
       "id": "REQ-FLOW-007",
       "name": "A notification created in this session runs an opening sequence covering the whole journey, ending on check your answers",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-007-A",
@@ -355,6 +374,16 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should carry additional details on to the arrival details mid-run rather than ending on the hub", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle notification from What are you importing to Arrival details in Design Release 2.1 order, the main import reason and Additional details each going Back to the page before them, and returns both to the overview once opened from it", "strength": "full", "notes": "identification branch, then arrival details" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "carries a consignment with nothing to identify from Commodity details straight to Additional details, whose Back link then returns to Commodity details", "strength": "full", "notes": "the branch with nothing to identify" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-007-J",
+          "name": "Arrival details goes on to transit countries only for rail or road",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transit countries mid-run, and to the overview outside the run", "strength": "partial", "notes": "Road half" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transporter list mid-run for a consignment by sea", "strength": "partial", "notes": "Sea half" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "partial", "notes": "Air leg only" }
           ]
         }
       ]

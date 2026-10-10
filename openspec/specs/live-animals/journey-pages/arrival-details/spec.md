@@ -94,14 +94,23 @@ The system MUST accept the arrival details once every required answer is given, 
 
 ### Requirement: Saving without a means of transport is refused
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, showing an error summary and the error "Select the means of transport to the port of entry" against the means of transport question, and saving nothing.
+The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question, which is shown in its error style; the page's title MUST start 'Error: ' and the other answers entered MUST be shown back.
 
 #### Scenario: Saving with no means of transport shows an error on that question
 **ID**: SCN-ARRIVAL-006-A
 - **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown, with "Select the means of transport to the port of entry" linked to the means of transport question
+- **THEN** an error summary headed "There is a problem" is shown, with "Select a means of transport to the port of entry" linked to the means of transport question
+- **AND** the message is shown above the means of transport question, which is shown in its error style
+- **AND** the page title starts "Error: "
 - **AND** they remain on the arrival details page
+
+#### Scenario: The other answers are shown back and nothing is saved
+**ID**: SCN-ARRIVAL-006-B
+- **GIVEN** the user has chosen a port of entry and an arrival date but no means of transport
+- **WHEN** they save and continue
+- **THEN** the port of entry and arrival date are still shown on the page
+- **AND** when they leave and return to the page on the same notification, neither answer was saved
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007

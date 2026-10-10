@@ -138,6 +138,21 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **WHEN** the user opens a page the hub links to directly
 - **THEN** it ends as REQ-FLOW-013 describes, with "Save and return" and no "Cancel and return to overview"
 
+#### Scenario: Arrival details saved and returned without a means of transport keeps the other answers
+**ID**: SCN-FLOW-004-G
+- **GIVEN** the Arrival details page with a port of entry chosen and no means of transport
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview with no error shown
+- **AND** the Arrival details task does not read "Complete"
+- **AND** re-opening the page shows the port of entry chosen
+
+#### Scenario: Transit countries saved and returned keeps the countries listed
+**ID**: SCN-FLOW-004-H
+- **GIVEN** the Transit countries page with France and Belgium added
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview
+- **AND** re-opening the page lists France and Belgium
+
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-FLOW-005
 The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification, and MUST otherwise pass over it.
@@ -237,6 +252,14 @@ The system MUST walk a newly created notification through an opening sequence co
 - **THEN** additional details is shown, without identification details
 - **WHEN** they save additional details
 - **THEN** arrival details is shown
+
+#### Scenario: Arrival details goes on to transit countries only for rail or road
+**ID**: SCN-FLOW-007-J
+- **GIVEN** the user is in the opening sequence on arrival details
+- **WHEN** they save it with Rail or Road chosen
+- **THEN** transit countries is shown
+- **WHEN** instead they save it with Air or Sea chosen
+- **THEN** the transporter list is shown
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

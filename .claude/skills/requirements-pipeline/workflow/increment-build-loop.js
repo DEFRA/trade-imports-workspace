@@ -947,7 +947,8 @@ const RUN_HOLDER = RUN_ID
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
   `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)}`
-const MAX_GATE_WAITS = 9
+// A one-repo-at-a-time gate over five repos runs well past an hour and a half.
+const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `A LONG GATE. A gate across several repos often runs longer than one Bash call allows. When the tool reports
   that a gate command exceeded its timeout and was MOVED TO THE BACKGROUND, the gate is still running and nothing is
   wrong: never kill it, never run it again, and never call it red. Wait for it instead, with ONE FOREGROUND Bash call,

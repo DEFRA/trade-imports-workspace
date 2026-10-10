@@ -120,15 +120,21 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to Overview when they follow the back link from commodity details, the page the hub task row links straight to.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main reason for import that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
-- **GIVEN** the user is on the commodity details page
+- **GIVEN** the opening sequence has ended and the user opened commodity details from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept
+**ID**: SCN-COMMODITY-DETAILS-009-B
+- **GIVEN** the user is in the opening sequence and reached commodity details from main reason for import
+- **WHEN** they follow the back link
+- **THEN** "What are you importing?" is shown, with the species they chose still chosen
 
 ### Requirement: The error summary lists errors by question
 **ID**: REQ-COMMODITY-DETAILS-010
@@ -140,3 +146,13 @@ The system MUST list every number of animals error in the error summary before a
 - **WHEN** they save and continue
 - **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species
 - **AND** each error links to its own field
+
+### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
+**ID**: REQ-COMMODITY-DETAILS-011
+Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+
+#### Scenario: The opening sequence offers all three controls
+**ID**: SCN-COMMODITY-DETAILS-011-A
+- **GIVEN** the user is in the opening sequence on commodity details
+- **WHEN** the page is shown
+- **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"

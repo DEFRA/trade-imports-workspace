@@ -82,6 +82,12 @@ The system MUST, outside the opening sequence and outside a change made from che
 - **WHEN** the user answers it so its answers pass the page's rules and saves and continues
 - **THEN** Overview shows that task as Complete
 
+#### Scenario: Commodity details opened from Overview returns to Overview rather than going on to identification details
+**ID**: SCN-FLOW-003-H
+- **GIVEN** the opening sequence has ended and the user opens commodity details from its task on Overview
+- **WHEN** they save and continue
+- **THEN** Overview is shown, not identification details
+
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
 Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, which are checked before saving either way.
@@ -207,6 +213,14 @@ The system MUST walk a newly created notification through an opening sequence co
 - **GIVEN** the user is in the opening sequence with tasks outstanding
 - **WHEN** they save the contact address
 - **THEN** check your answers is shown, naming every unfinished card
+
+#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
+**ID**: SCN-FLOW-007-H
+- **GIVEN** the user is in the opening sequence on commodity details, reached from main reason for import
+- **WHEN** they save valid counts for a species that needs identifiers
+- **THEN** identification details is shown
+- **WHEN** instead no chosen species needs identifiers
+- **THEN** additional details is shown
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

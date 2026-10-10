@@ -89,15 +89,21 @@ The system MUST keep every species the user has chosen, whichever search brought
 - **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to the origin of the import in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to Overview when they follow the back link from the commodity selection page.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, and to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A
-- **GIVEN** the user is on the commodity selection page
+- **GIVEN** the opening sequence has ended and the user opened what are you importing from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens origin of the import
+**ID**: SCN-COMMODITY-SELECT-007-B
+- **GIVEN** the user is in the opening sequence and has saved origin of the import
+- **WHEN** they follow the back link from what are you importing
+- **THEN** the origin of the import page is shown
 
 ### Requirement: The tally counts what has been chosen and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
@@ -163,3 +169,13 @@ The system MUST show the inset "You must submit a separate notification for ever
 - **WHEN** the page loads
 - **THEN** the inset reads "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC."
 - **AND** the search hint reads "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus)." with no sentence about a minimum number of characters
+
+### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
+**ID**: REQ-COMMODITY-SELECT-012
+Outside an amendment the system MUST end the commodity selection page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+
+#### Scenario: The opening sequence offers all three controls
+**ID**: SCN-COMMODITY-SELECT-012-A
+- **GIVEN** the user is in the opening sequence on what are you importing
+- **WHEN** the page is shown
+- **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"

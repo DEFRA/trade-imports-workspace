@@ -405,6 +405,8 @@ const runE2e = async (rungs, context) => {
       stack: NO_E2E_STACK
     }
   }
+  // A laptop that cannot rebuild the stack beside layer one waits for it.
+  if (context.stackAfterLocal) await context.localDone
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const stack = {
@@ -555,6 +557,7 @@ export const runGate = async ({
     leasePath,
     env,
     parallelRepos: gates.parallelRepos,
+    stackAfterLocal: gates.stackAfterLocal === true,
     held: null
   }
 

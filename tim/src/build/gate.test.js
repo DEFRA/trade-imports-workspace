@@ -37,13 +37,13 @@ const stackCallsPath = () => join(root, 'stack-calls')
 // scripts and a `docker` that share one state file: run-stack.sh marks the
 // stack up, stop-stack.sh marks it down, and `docker ps` lists a container
 // while it is up. Every stack script call is recorded.
-const workspaceWith = ({ gates, repos, parallelRepos }) => {
+const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
   mkdirSync(dirname(join(root, GATES_PATH)), { recursive: true })
   writeFileSync(
     join(root, GATES_PATH),
-    JSON.stringify({ parallelRepos, repos: gates })
+    JSON.stringify({ parallelRepos, stackAfterLocal, repos: gates })
   )
   for (const [folder, scripts] of Object.entries(repos)) {
     const dir = join(root, 'repos', folder)
@@ -768,6 +768,32 @@ describe('runGate — running repos at the same time', () => {
         'end-beta',
         'start-gamma',
         'end-gamma'
+      ])
+    },
+    CONCURRENCY_TIMEOUT_MS
+  )
+
+  test(
+    'starts the stack only once layer one has finished when gates.json sets stackAfterLocal',
+    async () => {
+      const fixture = withE2e({ 'test:docker-compose': 'echo e2e' })
+      const env = workspaceWith({
+        ...fixture,
+        stackAfterLocal: true,
+        repos: {
+          ...fixture.repos,
+          frontend: {
+            test: `sleep 0.3; ${appendTo('stack-calls', 'unit-done')}`
+          }
+        }
+      })
+
+      await gate(env, { phase: 'all' })
+
+      expect(stackCalls()).toEqual([
+        'unit-done',
+        'run-stack.sh -d',
+        'stop-stack.sh'
       ])
     },
     CONCURRENCY_TIMEOUT_MS

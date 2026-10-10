@@ -122,6 +122,7 @@ export const gatesSchema = z
   .object({
     $comment: z.string().optional(),
     parallelRepos: z.number().int().positive().optional(),
+    stackAfterLocal: z.boolean().optional(),
     repos: z.record(z.string().min(1), repoGatesSchema)
   })
   .strict()

@@ -203,28 +203,50 @@ const runInOrder = async (rungs, runOne) => {
   return runs
 }
 
+const runChain = async (chain, runOne) => {
+  const runs = await runInOrder(
+    chain.map(({ rung }) => rung),
+    runOne
+  )
+  return runs.map((run, index) => ({
+    ...run,
+    position: chain[index].position
+  }))
+}
+
+// At most `limit` chains at once: each worker takes the next chain in plan
+// order as soon as its last one finishes.
+const runChainsAtMost = async (chains, runOne, limit) => {
+  const queue = [...chains]
+  const worker = async () => {
+    const finished = []
+    while (queue.length > 0) {
+      finished.push(...(await runChain(queue.shift(), runOne)))
+    }
+    return finished
+  }
+  const workers = Array.from({ length: Math.min(limit, chains.length) }, worker)
+  return (await Promise.all(workers)).flat()
+}
+
 // Each repo's rungs run in plan order, one after another: a repo's FIT
 // builds its frontend into the same folder its unit rungs read, so they
-// never overlap. Different repos run at the same time. Results come back in
-// plan order, whatever order they finished in.
-const runEachRepoAtOnce = async (rungs, runOne) => {
+// never overlap. Different repos run at the same time, at most
+// `parallelRepos` of them when gates.json sets it, because five repos' FIT
+// suites and `mvn verify` at once beside the stack starve a laptop until
+// their own timeouts fire. Results come back in plan order, whatever order
+// they finished in.
+const runEachRepoAtOnce = async (rungs, runOne, parallelRepos) => {
   const positioned = rungs.map((rung, position) => ({ rung, position }))
   const chains = Object.values(
     Object.groupBy(positioned, ({ rung }) => rung.repo)
   )
-  const finished = await Promise.all(
-    chains.map(async (chain) => {
-      const runs = await runInOrder(
-        chain.map(({ rung }) => rung),
-        runOne
-      )
-      return runs.map((run, index) => ({
-        ...run,
-        position: chain[index].position
-      }))
-    })
+  const finished = await runChainsAtMost(
+    chains,
+    runOne,
+    parallelRepos ?? chains.length
   )
-  return finished.flat().sort((left, right) => left.position - right.position)
+  return finished.sort((left, right) => left.position - right.position)
 }
 
 const elapsedSince = (startedAt) => Math.round(performance.now() - startedAt)
@@ -438,7 +460,8 @@ const runSerially = async (plan, context) => {
 const runInLayers = async (plan, context) => {
   const layerOne = runEachRepoAtOnce(
     plan.filter((rung) => rung.phase !== 'e2e'),
-    (rung) => runLocalRung(rung, context)
+    (rung) => runLocalRung(rung, context),
+    context.parallelRepos
   ).then((local) => ({ local, localEndedAt: performance.now() }))
   const [{ local, localEndedAt }, e2e] = await Promise.all([
     layerOne,
@@ -531,6 +554,7 @@ export const runGate = async ({
     holder,
     leasePath,
     env,
+    parallelRepos: gates.parallelRepos,
     held: null
   }
 

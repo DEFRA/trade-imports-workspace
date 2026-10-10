@@ -121,6 +121,7 @@ const duplicateNames = (rungs) =>
 export const gatesSchema = z
   .object({
     $comment: z.string().optional(),
+    parallelRepos: z.number().int().positive().optional(),
     repos: z.record(z.string().min(1), repoGatesSchema)
   })
   .strict()

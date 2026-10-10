@@ -24,9 +24,9 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "partial", "notes": "proves the scenario's AND clause — the type question is not offered before the combined list — but not the three-step order itself" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "partial", "notes": "re-read this pass: asserts sectionEntry('transport') resolves to /port-of-entry, so arrival details is the section's first step — the first of the three, not the order" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should end the transport section at the transporter list, whatever type the answers reach", "strength": "partial", "notes": "pins the list as the section's last step, whichever transporter type is answered — the third of the three" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and routes overland transport to transit countries", "strength": "partial", "notes": "pins the arrival → transit hop, the middle of the three" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transit countries mid-run, and to the overview outside the run", "strength": "partial", "notes": "pins the arrival → transit hop in the opening sequence, the middle of the three" }
           ],
-          "notes": "Covered in pieces rather than end to end: first step (dispatch), arrival → transit (fit), last step (dispatch), and the type-not-before-list clause (fit). No single test walks arrival → transit → transporter-list as one sequence and asserts that three-step order, which is why every link is partial and the scenario stays partial."
+          "notes": "Covered in pieces rather than end to end: first step (dispatch), arrival → transit (unit), last step (dispatch), and the type-not-before-list clause (fit). No single test walks arrival → transit → transporter-list as one sequence and asserts that three-step order, which is why every link is partial and the scenario stays partial."
         }
       ]
     },
@@ -49,17 +49,16 @@
     },
     {
       "id": "REQ-FLOW-003",
-      "name": "Continuing from any page moves to the next still in scope, and finishing a section returns to Overview",
+      "name": "Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-003-A",
-          "name": "Continuing skips a page that is not in scope",
+          "name": "Continuing moves on only to a later page of the same task",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "Airplane arrival continues past transit to transporter type" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "Private type skips commercial select" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should enter a section at its first gated-in page", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should hand the CPH number back to roles and addresses, the next page of the same task", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should hand the CPH number back to the roles and addresses, mid-run and outside it", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -70,6 +69,56 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter selection saves and persists", "strength": "full", "notes": "select save lands on Overview URL" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to the identification surface mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "commercial select save → Overview" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-C",
+          "name": "A page opened from its Overview task returns to Overview rather than running on into the next task",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/overview-task-return.spec.ts", "test": "each task opened from the overview returns to the overview on Save and continue, at its opening-run address, and reads Complete", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should return What are you importing? to the hub rather than on to the commodity details", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should return the main reason for import to the hub rather than on to the additional details", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should return the arrival details to the hub rather than on to the transit countries", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should return the transit countries to the hub rather than on to the transporter list", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send What are you importing? on to the main reason for import mid-run, and to the overview outside the run", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the main reason for import to the overview, not on to the additional details", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transit countries mid-run, and to the overview outside the run", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport", "strength": "partial", "notes": "the arrival save lands on the overview; the other three tasks are proved by the links above" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-D",
+          "name": "Roles and addresses opened from Overview returns to Overview, even for a consignment that needs a CPH number",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/overview-task-return.spec.ts", "test": "roles and addresses opened from the overview returns to the overview, not the CPH number page, for a consignment that needs one", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send roles and addresses to the overview outside the run, even for a consignment that needs a CPH number", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should return the roles and addresses to the hub, the last page of its task", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-E",
+          "name": "A page opened from Overview has the same address as in the opening sequence",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/overview-task-return.spec.ts", "test": "each task opened from the overview returns to the overview on Save and continue, at its opening-run address, and reads Complete", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-F",
+          "name": "Upload documents keeps its add-another round trip before returning to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/overview-task-return.spec.ts", "test": "each task opened from the overview returns to the overview on Save and continue, at its opening-run address, and reads Complete", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-G",
+          "name": "A task saved from Overview reads Complete on return",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/overview-task-return.spec.ts", "test": "each task opened from the overview returns to the overview on Save and continue, at its opening-run address, and reads Complete", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -193,7 +242,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the search page to import reason once a line exists", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send import reason on to the consignment details, whichever reason is given", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send What are you importing? on to the main reason for import mid-run, and to the commodity details outside the run", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send What are you importing? on to the main reason for import mid-run, and to the overview outside the run", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "entry guards and the page-owned opening spine carry a fresh notification on past the additional details", "strength": "full", "notes": "species save shows Main reason for import, whose save shows Commodity details" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "" }
           ]

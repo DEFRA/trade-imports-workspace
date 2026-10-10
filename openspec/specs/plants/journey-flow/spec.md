@@ -32,9 +32,9 @@ The system MUST treat the journey's flow sections and the Overview page's task r
 - **WHEN** the user opens it
 - **THEN** it covers the commodity-type page, the commodities list and the commodity-details entry sub-page together, even though the flow places the entry sub-page in a section of its own
 
-### Requirement: Continuing from any page moves to the next still in scope, and finishing a section returns to Overview
+### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
 **ID**: REQ-PLANTS-FLOW-003
-The system MUST take the user, on continuing from a page, to the next page in that section whose conditions are met, skipping any that are not. Once no page remains in the section, the system MUST return them to Overview, unless a newly created notification is still in its opening sequence — that sequence continues to the next in-scope step (REQ-PLANTS-FLOW-007).
+Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made from check your answers, the system MUST take the user, on continuing from a page, to the next page of that section in the same Overview task whose conditions are met, skipping any that are not, and MUST otherwise return them to Overview. It MUST add no marker to a page's address, link or form to tell such a save.
 
 #### Scenario: Continuing skips a page that is not in scope
 **ID**: SCN-PLANTS-FLOW-003-A
@@ -47,6 +47,32 @@ The system MUST take the user, on continuing from a page, to the next page in th
 - **GIVEN** the user is on the last page of a section that is still in scope, and the opening sequence has finished
 - **WHEN** they save and continue
 - **THEN** they return to Overview rather than continuing into another section
+
+#### Scenario: Arrival details opened from Overview returns to Overview, not the place of destination
+**ID**: SCN-PLANTS-FLOW-003-C
+- **GIVEN** the opening sequence has ended and the arrival task opened from Overview
+- **WHEN** the user saves arrival status and then arrival details
+- **THEN** arrival details follows arrival status, and saving arrival details shows Overview, not the place of destination
+
+#### Scenario: A task of more than one page moves through its own pages first
+**ID**: SCN-PLANTS-FLOW-003-D
+- **GIVEN** the opening sequence has ended
+- **WHEN** the user opens what are you importing from Overview and saves the commodity type
+- **THEN** the commodities list is shown
+- **WHEN** they continue from it
+- **THEN** Overview is shown
+
+#### Scenario: Consignor opened from Overview returns to Overview, not identification numbers
+**ID**: SCN-PLANTS-FLOW-003-E
+- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor or exporter task opened from Overview
+- **WHEN** the user chooses an address and saves and continues
+- **THEN** Overview is shown, not identification numbers, which has its own task
+
+#### Scenario: Nothing marks a page as opened from Overview
+**ID**: SCN-PLANTS-FLOW-003-F
+- **GIVEN** Overview
+- **WHEN** the user opens a task
+- **THEN** the page's address is the one the opening sequence uses, with nothing added to it or to the link
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004

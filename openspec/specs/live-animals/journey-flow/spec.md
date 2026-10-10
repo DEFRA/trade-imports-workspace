@@ -18,7 +18,7 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 
 #### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B
-- **GIVEN** a user is working through the transport section
+- **GIVEN** a user is working through the transport section in the opening sequence
 - **WHEN** they continue from each page in turn
 - **THEN** they are offered arrival details, transited countries and the combined transporter list, in that order, skipping any that is not in scope
 - **AND** the transporter type question and the two type-specific forms are not offered as steps of this section — they are reached only via "Add a transporter" from the combined list
@@ -33,21 +33,54 @@ The system MUST treat the journey's flow sections and the Overview page's task r
 - **WHEN** the user opens it
 - **THEN** it covers the transporter type, the approved transporter search and the private transporter details together, though the flow offers none of the three as a step of its own — they are spokes off the transporter list, belonging to no section
 
-### Requirement: Continuing from any page moves to the next still in scope, and finishing a section returns to Overview
+### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
 **ID**: REQ-FLOW-003
-The system MUST take the user, on continuing from a page, to the next page in that section whose conditions are met, skipping any that are not, and MUST return them to Overview once no page remains in the section.
+The system MUST, outside the opening sequence and outside a change made from check your answers, take the user, on continuing from a page, to the next page of that section that belongs to the same Overview task and whose conditions are met, skipping any that are not, and MUST otherwise return them to Overview — never on into a page another Overview task opens. The system MUST add no marker to a page's address, link or form to tell such a save.
 
-#### Scenario: Continuing skips a page that is not in scope
+#### Scenario: Continuing moves on only to a later page of the same task
 **ID**: SCN-FLOW-003-A
-- **GIVEN** the user is on a page whose section holds a later page that is not in scope for this notification
+- **GIVEN** the user is on a page whose Overview task holds a later page of the same section — the CPH number page, opened other than from its row
 - **WHEN** they save and continue
-- **THEN** they are taken past the page that is not in scope, to the next one that is
+- **THEN** they are taken to the consignment addresses page, the next page of that task
 
 #### Scenario: Finishing the last page of a section returns to Overview
 **ID**: SCN-FLOW-003-B
 - **GIVEN** the user is on the last page of a section that is still in scope
 - **WHEN** they save and continue
 - **THEN** they return to Overview rather than continuing into another section
+
+#### Scenario: A page opened from its Overview task returns to Overview rather than running on into the next task
+**ID**: SCN-FLOW-003-C
+- **GIVEN** the opening sequence has ended and the user opens what are you importing, main reason for import, arrival details or transit countries from its task on Overview
+- **WHEN** they save and continue
+- **THEN** Overview is shown, not commodity details, additional details, transit countries or the transporter list
+
+#### Scenario: Roles and addresses opened from Overview returns to Overview, even for a consignment that needs a CPH number
+**ID**: SCN-FLOW-003-D
+- **GIVEN** a consignment that needs a CPH number and roles and addresses opened from its task on Overview
+- **WHEN** the user saves and continues
+- **THEN** Overview is shown, not the CPH number page
+
+#### Scenario: A page opened from Overview has the same address as in the opening sequence
+**ID**: SCN-FLOW-003-E
+- **GIVEN** Overview
+- **WHEN** the user opens any task
+- **THEN** the page's address is the one the opening sequence uses, with nothing added to it or to the link to mark that it came from Overview
+- **AND** saving and continuing returns to Overview
+
+#### Scenario: Upload documents keeps its add-another round trip before returning to Overview
+**ID**: SCN-FLOW-003-F
+- **GIVEN** upload documents opened from Overview
+- **WHEN** the user adds a document with "Save and add another"
+- **THEN** they stay on upload documents with the document listed
+- **WHEN** they save and continue
+- **THEN** Overview is shown
+
+#### Scenario: A task saved from Overview reads Complete on return
+**ID**: SCN-FLOW-003-G
+- **GIVEN** a task opened from Overview
+- **WHEN** the user answers it so its answers pass the page's rules and saves and continues
+- **THEN** Overview shows that task as Complete
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004

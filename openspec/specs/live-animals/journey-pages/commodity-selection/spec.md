@@ -85,7 +85,7 @@ The system MUST keep every species the user has chosen, whichever search brought
 #### Scenario: Saved species are ordered canonically, not by the order they were chosen
 **ID**: SCN-COMMODITY-SELECT-006-B
 - **GIVEN** the user chooses three species in a search order that does not match their canonical order
-- **WHEN** they save and continue to commodity details
+- **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
 ### Requirement: The back link returns to Overview

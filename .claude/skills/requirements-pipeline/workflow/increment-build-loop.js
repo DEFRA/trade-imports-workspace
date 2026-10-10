@@ -4116,7 +4116,12 @@ ${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
   run every leg, not just the one your increment was aimed at.
 - For a red E2E rung, read \`test-results/*/error-context.md\` in the tests repo rather than grepping the rung's log.
   Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that recover on retry —
-  a green rung with retried journey specs IS a pass, but say so explicitly.
+  a green rung whose only retries are those IS a pass, but say so explicitly. That exception covers nothing else. A
+  spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair: the
+  journey it drives no longer fits its time budget, and every row that lengthens the journey makes it worse until a
+  later baseline goes red. Read the trace's request timings first. If this increment made a request slow, fix the
+  code. If the spec simply drives more of the journey than its budget holds, give it \`test.slow()\` as the tests
+  repo's other full-journey specs do, and never cut a step or an assertion to make it fit.
 - A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
   start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
   \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.

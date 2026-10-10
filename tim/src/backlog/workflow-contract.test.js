@@ -1483,6 +1483,18 @@ describe('increment-build-loop', () => {
           )
         })
 
+        test('tells the ladder a timed-out spec is a failure to repair, even when its retry passed', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            'a green rung whose only retries are those IS a pass, but say so explicitly. That exception covers nothing else.'
+          )
+          expect(prompt).toContain(
+            'spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair'
+          )
+          expect(prompt).toContain('never cut a step or an assertion to make it fit.')
+        })
+
         test('tells the ladder to validate the spec write again', async () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 

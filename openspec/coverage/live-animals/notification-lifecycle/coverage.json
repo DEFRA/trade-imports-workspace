@@ -13,7 +13,7 @@
           "name": "A full lifecycle walk moves the notification through each status in turn",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "full", "notes": "API statuses Draft → Submitted → Amend → Submitted → Deleted; fulfilment view mirrors each step. Does not assert the user-facing Amending label (covered under 006/008)." }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "full", "notes": "API statuses Draft → Submitted → Amend → Submitted → Deleted; fulfilment view mirrors each step. Does not assert the user-facing Amend label (covered under 006/008)." }
           ]
         },
         {
@@ -110,9 +110,9 @@
           "name": "Starting an amendment opens Overview with editing enabled",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "full", "notes": "Overview heading with Amending strip" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept", "strength": "full", "notes": "amend from dashboard lands with Amending on Overview" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "amending notification renders resume and cancel-amend actions", "strength": "partial", "notes": "clicks Amend and asserts Overview before returning to the dashboard; does not assert Amending on Overview itself" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "full", "notes": "Overview heading with Amend strip" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "full", "notes": "amend from dashboard lands with Amend on Overview" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "amending notification renders resume and cancel-amend actions", "strength": "partial", "notes": "clicks Amend and asserts Overview before returning to the dashboard; does not assert the Amend tag on Overview itself" }
           ]
         }
       ]
@@ -127,7 +127,7 @@
           "name": "An edited answer survives resubmission",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept", "strength": "full", "notes": "Belgium kept; no Change links; dashboard Amend offered again" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "full", "notes": "Belgium kept; no Change links; dashboard Amend offered again" }
           ]
         }
       ]
@@ -139,10 +139,13 @@
       "scenarios": [
         {
           "id": "SCN-LIFECYCLE-008-A",
-          "name": "A Cancel amendment option is offered while amending",
+          "name": "A Cancel amend option is offered while amending",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Cancel amendment link while the notification is amending", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Cancel amend link while the notification is amending", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Amend status bar with Cancel amend on Overview, a question page and the review", "strength": "full", "notes": "Amend tag, reference and Cancel amend on each of the three pages" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders confirmation copy, actions and review back link", "strength": "partial", "notes": "the beforeEach amendAndOpenCancel asserts the Amend tag and Cancel amend link on the hub and the origin question page before opening the confirmation from the review" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should offer Cancel amend on the hub while amending", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -150,8 +153,10 @@
           "name": "Choosing to cancel asks for confirmation before discarding anything",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "opens the confirmation page when Cancel amendment is selected", "strength": "partial", "notes": "discard copy plus confirm/reject; does not assert the back link to check-your-answers" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders confirmation copy, actions and review back link", "strength": "full", "notes": "body, confirm/No, Back href to notification-view (check-your-answers)" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "opens the confirmation page when Cancel amend is selected", "strength": "partial", "notes": "discard copy plus confirm/reject; does not assert the back link to check-your-answers" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Cancel amend on the Overview opens the cancel-amendment confirmation page", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders confirmation copy, actions and review back link", "strength": "full", "notes": "body, confirm/No, Back href to notification-view (check-your-answers)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend on a question page opens the confirmation page", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -159,8 +164,8 @@
           "name": "Declining the confirmation keeps the amendment in progress",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "No returns to the notification view with the amendment still in progress", "strength": "full", "notes": "Amending, Cancel amendment, Change link intact" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No keeps the amendment and its changed value", "strength": "full", "notes": "DiscardMe99 still shown" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "No returns to the notification view with the amendment still in progress", "strength": "full", "notes": "Amend, Cancel amend, Change link intact" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No keeps the amendment and its changed value", "strength": "full", "notes": "Amend tag, Cancel amend link and DiscardMe99 still shown" }
           ]
         },
         {
@@ -170,6 +175,34 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "banner, Submitted, France restored, no Change links" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and shows its banner", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-008-E",
+          "name": "Cancel amend on a question page opens the confirmation page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Cancel amend on a question page opens the confirmation page and Go back keeps the amendment", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend on a question page opens the confirmation page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-008-F",
+          "name": "Cancel amend works without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "the status bar Cancel amend on a question page restores the submitted answers", "strength": "full", "notes": "JavaScript off; Submitted, no Cancel amend, original answer restored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the status bar Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-008-G",
+          "name": "A draft offers no Cancel amend",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-strip.spec.ts", "test": "the Draft tag and GBN-AG reference show from the entry page onwards, and not on the dashboard", "strength": "full", "notes": "no Cancel amend on the draft question page or Overview" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the draft status and the notification reference before any answer is saved", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should offer no Cancel amend on a draft, submitted or deleted journey", "strength": "full", "notes": "" }
           ]
         }
       ]

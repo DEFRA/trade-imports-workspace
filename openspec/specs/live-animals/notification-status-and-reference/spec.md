@@ -8,13 +8,13 @@ Which notification the user is working on and what state it is in, shown on ever
 
 ### Requirement: Every page of a notification shows what state it is in
 **ID**: REQ-STATUS-REF-001
-The system MUST show the notification's current state on every page of its journey, and MUST distinguish the states by colour: blue for Draft, green for Submitted, yellow for Amending, and grey for Deleted.
+The system MUST show the notification's current state on every page of its journey, and MUST distinguish the states by colour: blue for Draft, green for Submitted, yellow for Amend, and grey for Deleted.
 
 #### Scenario: Each state is shown, and distinguished by colour
 **ID**: SCN-STATUS-REF-001-A
 - **GIVEN** a notification in any of its states
 - **WHEN** the user views a page of it
-- **THEN** a draft notification is shown as "Draft" in blue, a submitted one as "Submitted" in green, one being amended as "Amending" in yellow, and a deleted one as "Deleted" in grey
+- **THEN** a draft notification is shown as "Draft" in blue, a submitted one as "Submitted" in green, one being amended as "Amend" in yellow, and a deleted one as "Deleted" in grey
 
 ### Requirement: Every page of a notification shows its reference number, from the moment it is created
 **ID**: REQ-STATUS-REF-002

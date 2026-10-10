@@ -71,7 +71,7 @@ The system MUST offer resume and delete on a draft notification's card without o
 **ID**: SCN-PLANTS-DASH-004-C
 - **GIVEN** an amendment has been started on a submitted notification
 - **WHEN** the user searches the dashboard for its reference number
-- **THEN** its card shows an "Amending" status, offering resume and cancel-amendment actions
+- **THEN** its card shows an "Amend" status, offering resume and cancel-amendment actions
 
 ### Requirement: The notification list is paged twenty at a time
 **ID**: REQ-PLANTS-DASH-005

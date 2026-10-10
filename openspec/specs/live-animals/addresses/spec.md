@@ -8,7 +8,7 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit, or remove an address book record from within the notification journey itself — wherever an address is chosen, and by URL as well as by control — and MUST NOT serve its own create-address page. Maintaining the book MUST only be possible in the address book's own service; editing an address copied onto the notification (REQ-ADDR-014) changes the notification's copy, never the record. Outside stub mode, the journey MAY offer a control that hands the user off to the address book's own add-address page, guarded by a single-use handshake token, and MUST return the user to the picker with the newly added address already selected once they save it there, or to the picker unchanged if they cancel.
+The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; editing a copied address (REQ-ADDR-014) changes only the notification's copy. Outside stub mode the journey MAY hand the user off to the address book's own add-address page, and MUST return them to the picker with the address they saved there already selected, or unchanged if they cancel.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
@@ -73,7 +73,7 @@ The system MUST copy the chosen address-book record onto the notification when t
 
 ### Requirement: A copied address can be edited on the notification without changing the address book
 **ID**: REQ-ADDR-014
-The system MUST let the user edit the details of an address copied onto the notification, for each consignment role and the consignment contact, wherever that address is shown with its actions — the consignment addresses page, the consignment contact page and the check-your-answers view. Each copied address MUST offer both choosing a different address from the book and editing its details on this notification. An edit MUST change only this notification — never the address book or any other notification — and MUST apply the address book's own field rules and error messages: name, address line 1, town or city, postcode, country, telephone and email required; address line 2 and county optional; the address book's length limits; an email in the correct format; a country from the list.
+The system MUST let the user edit an address copied onto the notification, for each consignment role and the consignment contact, wherever it is shown with its actions, alongside choosing a different address from the book. An edit MUST change only this notification and MUST apply the address book's field rules and messages: name, address line 1, town or city, postcode, country, telephone and email required; its length limits; a correctly formatted email; a country from the list.
 
 #### Scenario: Editing a copied address changes only this notification
 **ID**: SCN-ADDR-014-A

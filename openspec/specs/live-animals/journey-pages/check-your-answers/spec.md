@@ -43,7 +43,7 @@ The system MUST group the page under the same six numbered section headings the 
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
-The system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose copied address breaks the address book's rules (REQ-ADDR-005).
+The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
 
 #### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
 **ID**: SCN-CYA-002-A

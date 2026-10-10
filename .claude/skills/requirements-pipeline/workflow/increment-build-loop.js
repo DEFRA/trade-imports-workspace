@@ -1613,6 +1613,37 @@ const withStackHeld = (schema) => ({
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
 })
 
+const LEASE_OWNER_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'holder', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: "tim's `ok`" },
+    holder: { type: ['string', 'null'], description: "result.lease.holder, copied; null when result.lease is null" },
+    summary: { type: 'string' }
+  }
+}
+
+// A stage's stackHeld is its own reading of tim, and a stage has filled it in
+// with `holder: null, detail: "not held"` while the lease was still this run's
+// — turning a red baseline into a stack-held stop. The script asks the lease
+// file itself before it believes one.
+const confirmStackHeld = async (id, stage, held) => {
+  if (!held) return null
+  const owner = await agent(
+    `Report who holds the workspace stack's lease. Run exactly one command and read it:
+\`tim docker lease status --workspace ${TILDE} --json\`
+Return ok as tim's \`ok\`, holder as \`result.lease.holder\` (null when \`result.lease\` is null), and a one-line summary.
+${RUN_WITH_BASH}
+Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
+    light({ label: `${id} ${stage} lease check`, phase: 'Baseline', schema: LEASE_OWNER_SCHEMA })
+  )
+  if (owner?.ok && owner.holder === RUN_HOLDER) {
+    log(`${id}: the ${stage} stage reported the stack held (${held.detail}), but the lease is still this run's — ignoring that report`)
+    return null
+  }
+  return held
+}
+
 // The CI fixer's schema is the increment schema plus a channel for a PR it had
 // to open in a repo the increment did not start with — a frontend change whose
 // fix lands in the tests repo, typically. Without somewhere to report that, a
@@ -3485,10 +3516,11 @@ Return the structured output only.`,
 
   // A stack somebody else holds is not a red tree: nothing about this
   // increment's code has been tested, and a human rules on the holder.
-  if (baseline?.stackHeld) {
-    const detail = stackHeldDetail(id, 'baseline', baseline.stackHeld)
+  const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
+  if (baselineHeld) {
+    const detail = stackHeldDetail(id, 'baseline', baselineHeld)
     log(`${id}: STACK HELD at the baseline — ${detail}`)
-    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baseline.stackHeld.holder, detail })
+    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baselineHeld.holder, detail })
     stopped = { reason: 'stack-held', detail }
     break
   }
@@ -3641,8 +3673,9 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     stopped = { reason: 'stack-held', detail }
   }
 
-  if (impl?.stackHeld) {
-    await stopForHeldStack('implement', 'Implement', impl.stackHeld)
+  const implHeld = await confirmStackHeld(id, 'implement', impl?.stackHeld)
+  if (implHeld) {
+    await stopForHeldStack('implement', 'Implement', implHeld)
     break
   }
 
@@ -3853,9 +3886,13 @@ ${specReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0 ? WOR
     break
   }
 
-  const heldReview = reviewed.results.find((result) => result?.stackHeld)
-  if (heldReview) {
-    await stopForHeldStack('consistency', 'Review', heldReview.stackHeld)
+  const reviewHeld = await confirmStackHeld(
+    id,
+    'consistency',
+    reviewed.results.find((result) => result?.stackHeld)?.stackHeld
+  )
+  if (reviewHeld) {
+    await stopForHeldStack('consistency', 'Review', reviewHeld)
     break
   }
 
@@ -4037,8 +4074,9 @@ and whatever got it green in notes. The ladder runs after you and is given your 
 Return the structured output only.`,
         code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
       )
-      if (fixResult?.stackHeld) {
-        await stopForHeldStack('fix', 'Fix', fixResult.stackHeld)
+      const fixHeld = await confirmStackHeld(id, 'fix', fixResult?.stackHeld)
+      if (fixHeld) {
+        await stopForHeldStack('fix', 'Fix', fixHeld)
         break
       }
     }
@@ -4138,8 +4176,9 @@ Return the structured output only.`,
   // -----------------------------------------------------------------------
   phase('Land')
 
-  if (ladder?.stackHeld) {
-    await stopForHeldStack('ladder', 'Ladder', ladder.stackHeld)
+  const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
+  if (ladderHeld) {
+    await stopForHeldStack('ladder', 'Ladder', ladderHeld)
     break
   }
 

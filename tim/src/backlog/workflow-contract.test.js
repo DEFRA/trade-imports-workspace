@@ -1714,6 +1714,10 @@ describe('increment-build-loop', () => {
           stackHeld
         })
         const KEPT = { ok: true, summary: 'wip commit pushed' }
+        const leaseHeldBy = (holder) => ({ ok: true, holder, summary: `lease held by ${holder}` })
+        const LEASE_ELSEWHERE = leaseHeldBy('ibl-20260930T170000Z')
+        const LEASE_GONE = leaseHeldBy(null)
+        const LEASE_STILL_OURS = leaseHeldBy(RUN_ID)
 
         const runToLadderWith = (...answers) =>
           runFrom(
@@ -1727,7 +1731,7 @@ describe('increment-build-loop', () => {
           )
 
         test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
 
           expect({
             stopped: run.result.stopped,
@@ -1742,13 +1746,13 @@ describe('increment-build-loop', () => {
         })
 
         test('still gives back the run’s own lease after a stage found the stack held', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
 
           expect(run.agents.at(-1).options.label).toBe(RELEASE_LABEL)
         })
 
         test('names the holder in the increment’s result', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
 
           expect(run.result.increments[0]).toMatchObject({
             id: 'inc-900',
@@ -1759,7 +1763,7 @@ describe('increment-build-loop', () => {
         })
 
         test('stops with stack-held for a stack that no lease names', async () => {
-          const run = await runToLadderWith(heldLadder(UNLEASED), KEPT)
+          const run = await runToLadderWith(heldLadder(UNLEASED), LEASE_GONE, KEPT)
 
           expect(run.result.stopped).toEqual({
             reason: 'stack-held',
@@ -1768,13 +1772,16 @@ describe('increment-build-loop', () => {
         })
 
         test('stops at the baseline with stack-held and nothing to preserve', async () => {
-          const run = await runFrom({
-            ok: true,
-            green: false,
-            rungs: [],
-            summary: 'the stack is held',
-            stackHeld: OTHER_RUN
-          })
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'the stack is held',
+              stackHeld: OTHER_RUN
+            },
+            LEASE_ELSEWHERE
+          )
 
           expect({
             increments: run.result.increments,
@@ -1789,7 +1796,25 @@ describe('increment-build-loop', () => {
                 detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z". ${OTHER_RUN.detail}`
               }
             ],
-            last: 'inc-900 baseline'
+            last: 'inc-900 baseline lease check'
+          })
+        })
+
+        test('treats a red baseline as baseline-red when it reports the stack held but the lease is still the run’s', async () => {
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'Baseline is RED: trade-imports-ins-tests e2e failed',
+              stackHeld: { holder: null, detail: 'not held' }
+            },
+            LEASE_STILL_OURS
+          )
+
+          expect(run.result.stopped).toEqual({
+            reason: 'baseline-red',
+            detail: 'inc-900: Baseline is RED: trade-imports-ins-tests e2e failed'
           })
         })
 
@@ -1801,6 +1826,7 @@ describe('increment-build-loop', () => {
             NO_FINDINGS,
             NO_FINDINGS,
             { findings: [], stackHeld: OTHER_RUN },
+            LEASE_ELSEWHERE,
             KEPT
           )
 

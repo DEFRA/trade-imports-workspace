@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details".
+Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". Only the means of transport must be chosen before the page goes on; the other answers can be left for later.
 
 ## Requirements
 
@@ -90,15 +90,16 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page empty is rejected
+### Requirement: Saving without a means of transport is refused
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse to save the arrival details page when nothing has been answered, showing an error summary.
+The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, showing an error summary and the error "Select the means of transport to the port of entry" against the means of transport question, and saving nothing.
 
-#### Scenario: Saving with nothing answered shows an error summary
+#### Scenario: Saving with no means of transport shows an error on that question
 **ID**: SCN-ARRIVAL-006-A
-- **GIVEN** the user is on the arrival details page with nothing answered
+- **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown
+- **THEN** an error summary headed "There is a problem" is shown, with "Select the means of transport to the port of entry" linked to the means of transport question
+- **AND** they remain on the arrival details page
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
@@ -184,3 +185,13 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: Only the means of transport is needed to continue
+**ID**: REQ-ARRIVAL-011
+The system MUST let the user save and continue once a means of transport is chosen, even with the arrival date, port of entry, transport identification and transport document reference left blank.
+
+#### Scenario: A means of transport alone lets the page go on
+**ID**: SCN-ARRIVAL-011-A
+- **GIVEN** the user has chosen a means of transport and left the arrival date, port of entry, transport identification and document reference blank
+- **WHEN** they save and continue
+- **THEN** the next page is shown and no error summary is shown

@@ -130,15 +130,17 @@
     },
     {
       "id": "REQ-ARRIVAL-006",
-      "name": "Saving the page empty is rejected",
+      "name": "Saving without a means of transport is refused",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ARRIVAL-006-A",
-          "name": "Saving with nothing answered shows an error summary",
+          "name": "Saving with no means of transport shows an error on that question",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when no means of transport is chosen, refuses the save with an error on the means of transport", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: an empty save links to and focuses the means of transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and continue with no means of transport, naming the means of transport question and saving nothing", "strength": "partial", "notes": "asserts the field error and that nothing is saved; not the summary heading or link" }
           ]
         }
       ]
@@ -248,6 +250,24 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "arrival back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-011",
+      "name": "Only the means of transport is needed to continue",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-011-A",
+          "name": "A means of transport alone lets the page go on",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when only the means of transport is chosen, goes on to the next page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "each save chooses the means alone" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "continues to the overview with only a means of transport chosen", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should go on with only a means of transport chosen, the other arrival answers left blank", "strength": "full", "notes": "" }
           ]
         }
       ]

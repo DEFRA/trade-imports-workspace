@@ -156,3 +156,25 @@ Outside an amendment the system MUST end the commodity details page with "Save a
 - **GIVEN** the user is in the opening sequence on commodity details
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: The page holds until every species asked for a number of packages has one
+**ID**: REQ-COMMODITY-DETAILS-012
+The system MUST refuse to save, by "Save and continue" or by "Save and return to overview", while a species whose commodity calls for a number of packages has none, showing "Enter the number of packages" linked to that species' field. It MUST save a species whose commodity does not call for one without a number of packages.
+
+#### Scenario: A blank number of packages is refused on the species that asks for it
+**ID**: SCN-COMMODITY-DETAILS-012-A
+- **GIVEN** a species whose commodity calls for a number of packages, with its number of animals entered
+- **WHEN** they save and continue with its number of packages blank
+- **THEN** the save is blocked, with "Enter the number of packages" linking to and focusing that species' field
+
+#### Scenario: A species not asked for a number of packages saves without one
+**ID**: SCN-COMMODITY-DETAILS-012-B
+- **GIVEN** a species whose commodity does not call for a number of packages
+- **WHEN** they enter its number of animals and save and continue
+- **THEN** no number of packages is asked, and the answers are saved with no error summary
+
+#### Scenario: Save and return to overview also holds on a blank number of packages
+**ID**: SCN-COMMODITY-DETAILS-012-C
+- **GIVEN** a species whose commodity calls for a number of packages, with it left blank
+- **WHEN** they select "Save and return to overview"
+- **THEN** they stay on the page, which shows "Enter the number of packages", and nothing is saved

@@ -966,9 +966,18 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``
+        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json\``
       )
       expect(prompt).not.toContain('--phase e2e')
+    })
+
+    test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        '`tim build gate-wait <the --result file of that command> --workspace ~/ws --json`'
+      )
+      expect(prompt).not.toContain('or that hits the Bash timeout, is RED')
     })
 
     test('tells the baseline to hand back a stack somebody else holds rather than work round it', async () => {
@@ -1183,7 +1192,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}"\``
+          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -1200,10 +1209,10 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}"\``
+          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}"\``
+          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
@@ -1492,7 +1501,9 @@ describe('increment-build-loop', () => {
           expect(prompt).toContain(
             'spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair'
           )
-          expect(prompt).toContain('never cut a step or an assertion to make it fit.')
+          expect(prompt).toContain(
+            'never cut a step or an assertion to make it fit.'
+          )
         })
 
         test('tells the ladder to validate the spec write again', async () => {
@@ -1514,7 +1525,8 @@ describe('increment-build-loop', () => {
         describe('a spec failure that predates the row, in a capability it writes', () => {
           const WHOLE_CAPABILITY =
             "a failure in a\n   capability this row writes is this row's to fix even where it predates the row"
-          const NEVER_LEFT = 'never report such a failure as pre-existing and leave it.'
+          const NEVER_LEFT =
+            'never report such a failure as pre-existing and leave it.'
 
           test('is the implementor’s to fix', async () => {
             const prompt = promptOf(
@@ -1527,7 +1539,10 @@ describe('increment-build-loop', () => {
           })
 
           test('is the fixer’s to fix', async () => {
-            const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
+            const prompt = promptOf(
+              await runThroughFixToLadder(),
+              'inc-900 fix'
+            )
 
             expect(prompt).toContain(WHOLE_CAPABILITY)
             expect(prompt).toContain(NEVER_LEFT)
@@ -1843,9 +1858,16 @@ describe('increment-build-loop', () => {
             acquire: forbidsLeaseCommands(promptOf(run, ACQUIRE_LABEL)),
             release: forbidsLeaseCommands(promptOf(run, RELEASE_LABEL)),
             otherGuardedStages: run.agents
-              .filter(({ options, prompt }) => !isRunLease(options.label) && prompt.includes('GUARD RAILS'))
+              .filter(
+                ({ options, prompt }) =>
+                  !isRunLease(options.label) && prompt.includes('GUARD RAILS')
+              )
               .every(({ prompt }) => forbidsLeaseCommands(prompt))
-          }).toEqual({ acquire: false, release: false, otherGuardedStages: true })
+          }).toEqual({
+            acquire: false,
+            release: false,
+            otherGuardedStages: true
+          })
         })
 
         test('tells the lease taker its lease command is the one stack command it runs', async () => {
@@ -1861,7 +1883,10 @@ describe('increment-build-loop', () => {
 
           expect(
             run.agents
-              .filter(({ prompt }) => !prompt.includes('The Bash tool is loaded in every stage'))
+              .filter(
+                ({ prompt }) =>
+                  !prompt.includes('The Bash tool is loaded in every stage')
+              )
               .map(({ options }) => options.label)
           ).toEqual([])
         })
@@ -2953,8 +2978,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )

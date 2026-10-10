@@ -941,8 +941,22 @@ const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 // ---------------------------------------------------------------------------
 const RUN_HOLDER = RUN_ID
 
+// A whole gate across several repos outlasts the Bash tool's 600s ceiling, so
+// every gate also writes its result to a file that `tim build gate-wait` reads
+// once the call that started it has been moved to the background.
+const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"`
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)}`
+const MAX_GATE_WAITS = 9
+const GATE_WAIT_RULE = `A LONG GATE. A gate across several repos often runs longer than one Bash call allows. When the tool reports
+  that a gate command exceeded its timeout and was MOVED TO THE BACKGROUND, the gate is still running and nothing is
+  wrong: never kill it, never run it again, and never call it red. Wait for it instead, with ONE FOREGROUND Bash call,
+  \`timeout\` 600000:
+  \`tim build gate-wait <the --result file of that command> --workspace ${TILDE} --json\`
+  It prints the gate's own JSON line, exactly as the gate would have, once the gate finishes. If it prints
+  \`GATE_STILL_RUNNING\` instead, make the same call again, up to ${MAX_GATE_WAITS} times. Only a gate that has still
+  written no result after the last of them is RED, reported as "the gate did not finish". Never use
+  run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
 const gateCommandList = (phases, logs) =>
   phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
 
@@ -964,7 +978,8 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
   \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
   It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
   it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
-  an \`errors[]\` entry and no \`result\`), or that hits the Bash timeout, is RED: report its error verbatim.
+  an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
+- ${GATE_WAIT_RULE}
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
   there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
@@ -990,7 +1005,9 @@ yourself. Never run the gate's E2E phase, never start or stop the workspace stac
 repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 ${gateCommandList(phases, gateLogs(id, stage))}
-Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
+Each prints one JSON line; a red rung names its \`log\` — read that file once.
+${GATE_WAIT_RULE}
+To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
 never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A gate command whose
 \`result.stack.held\` is not null found the stack in somebody else's hands: ${STACK_HELD_LINE}`

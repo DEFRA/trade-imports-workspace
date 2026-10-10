@@ -6,6 +6,11 @@ import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { runBuildBranch } from '../../build/branch.js'
 import { runGate, GATE_PHASES } from '../../build/gate.js'
+import {
+  clearGateResult,
+  waitForGateResult,
+  writeGateResult
+} from '../../build/gate-result.js'
 import { registerRuns } from './runs.js'
 import { registerStart } from './start.js'
 
@@ -41,6 +46,7 @@ const gateOptionsSchema = z.object({
     message: `--phase must be one of: ${GATE_PHASES.join(', ')}.`
   }),
   logs: z.string().trim().min(1).optional(),
+  result: z.string().trim().min(1).optional(),
   holder: z
     .string()
     .trim()
@@ -50,6 +56,18 @@ const gateOptionsSchema = z.object({
     )
     .optional(),
   serial: z.boolean()
+})
+
+// Under the Bash tool's 600-second ceiling, so one wait always returns by itself.
+const DEFAULT_WAIT_SECONDS = 540
+const MAX_WAIT_SECONDS = 590
+
+const gateWaitOptionsSchema = z.object({
+  result: z.string().trim().min(1, 'Name the result file the gate writes.'),
+  seconds: z.coerce
+    .number({ message: '--seconds must be a number.' })
+    .positive('--seconds must be more than 0.')
+    .max(MAX_WAIT_SECONDS, `--seconds must be ${MAX_WAIT_SECONDS} or fewer.`)
 })
 
 const describeBranchRepo = ({
@@ -266,6 +284,10 @@ const registerGate = (build, timVersion) =>
       'Who the gate takes the workspace stack lease as for its E2E phase: a build run passes its run id, so the gate reuses the run’s stack (default: this gate run)'
     )
     .option(
+      '--result <file>',
+      'Also write the JSON result to this file when the gate finishes, passed or not, so `tim build gate-wait` can pick it up if whatever started the gate stopped waiting'
+    )
+    .option(
       '--serial',
       'Run one rung at a time: every unit rung, then every FIT rung, then E2E (to compare against the default)',
       false
@@ -275,18 +297,21 @@ const registerGate = (build, timVersion) =>
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs'
+      '\nExamples:\n  tim build gate shared/my-programme --phase unit --json\n  tim build gate shared/my-programme --phase e2e --holder "ibl-20261001T150000Z" --json\n  tim build gate shared/my-programme --serial --json\n  tim build gate shared/my-programme --logs /tmp/gate-logs\n  tim build gate shared/my-programme --json --result /tmp/gate-logs/gate-result.json'
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
+      const resultPath = opts.result ? resolve(opts.result) : null
       try {
         const parsed = parseOptions(gateOptionsSchema, {
           workarea,
           phase: opts.phase,
           logs: opts.logs,
+          result: opts.result,
           holder: opts.holder,
           serial: opts.serial === true
         })
+        if (resultPath) clearGateResult(resultPath)
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
         })
@@ -298,12 +323,80 @@ const registerGate = (build, timVersion) =>
           logsDir: parsed.logs ? resolve(parsed.logs) : undefined,
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
+        const envelope = gateEnvelope(outcome, timVersion)
+        if (resultPath) writeGateResult(resultPath, envelope)
         emit(
-          globalOpts.json
-            ? JSON.stringify(gateEnvelope(outcome, timVersion))
-            : renderGateText(outcome)
+          globalOpts.json ? JSON.stringify(envelope) : renderGateText(outcome)
         )
         process.exit(outcome.green ? OK : ERROR)
+      } catch (error) {
+        if (resultPath) {
+          writeGateResult(
+            resultPath,
+            jsonEnvelope({
+              ok: false,
+              error: errorPayloadFor(error),
+              timVersion
+            })
+          )
+        }
+        reportError(error, globalOpts.json, timVersion)
+      }
+    })
+
+const stillRunningEnvelope = (resultPath, seconds, timVersion) =>
+  jsonEnvelope({
+    ok: false,
+    error: {
+      code: 'GATE_STILL_RUNNING',
+      message: `The gate has not written ${resultPath} after ${seconds} seconds, so it is still running. Run the same wait again.`
+    },
+    timVersion
+  })
+
+const renderWaitText = (printed) =>
+  printed.result
+    ? renderGateText(printed.result)
+    : printed.errors.map(({ message }) => message).join('\n')
+
+const registerGateWait = (build, timVersion) =>
+  build
+    .command('gate-wait')
+    .argument(
+      '<result>',
+      'The result file a `tim build gate --result` run writes'
+    )
+    .option(
+      '--seconds <n>',
+      `How long to wait before giving up for now, at most ${MAX_WAIT_SECONDS}`,
+      String(DEFAULT_WAIT_SECONDS)
+    )
+    .description(
+      "Wait for a gate started with --result to finish, then print its result and exit as the gate did: 0 when every rung passed, 1 otherwise. A gate still running when the wait ends prints a GATE_STILL_RUNNING error and exits 1: run the same wait again. Each wait ends inside the Bash tool's 600-second limit, so you can wait on a longer gate in slices."
+    )
+    .addHelpText(
+      'after',
+      '\nExample:\n  tim build gate-wait /tmp/gate-logs/gate-result.json --json'
+    )
+    .action(async function gateWaitAction(result, opts) {
+      const globalOpts = this.optsWithGlobals()
+      try {
+        const parsed = parseOptions(gateWaitOptionsSchema, {
+          result,
+          seconds: opts.seconds
+        })
+        const resultPath = resolve(parsed.result)
+        const envelope = await waitForGateResult({
+          resultPath,
+          seconds: parsed.seconds
+        })
+        const printed =
+          envelope ??
+          stillRunningEnvelope(resultPath, parsed.seconds, timVersion)
+        emit(
+          globalOpts.json ? JSON.stringify(printed) : renderWaitText(printed)
+        )
+        process.exit(printed.ok ? OK : ERROR)
       } catch (error) {
         reportError(error, globalOpts.json, timVersion)
       }
@@ -318,5 +411,6 @@ export const register = (program, { timVersion }) => {
   registerStart(build, timVersion)
   registerBranch(build, timVersion)
   registerGate(build, timVersion)
+  registerGateWait(build, timVersion)
   registerRuns(build, timVersion)
 }

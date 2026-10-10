@@ -1,0 +1,770 @@
+{
+  "programme": "design-release-2-1-commodities-and-reason",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "perftests": {
+      "path": "repos/trade-imports-performance-tests",
+      "github": "DEFRA/trade-imports-performance-tests"
+    }
+  },
+  "theme": "commodities-and-reason",
+  "branch": "feat/EUDPA-693-design-release-2-1-commodities-and-reason",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 2,
+    "landsAfter": [
+      "journey-foundation"
+    ]
+  },
+  "touches": [
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/search",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/copy",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/import-reason",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/additional-details",
+    "frontend:src/server/app/sets/live-animals/services/commodities",
+    "frontend:src/server/app/sets/live-animals/obligations/sections/commodities",
+    "frontend:src/server/app/sets/live-animals/obligations/sections/arrival.js",
+    "frontend:src/server/app/sets/live-animals/obligations/sections/import-reason.js",
+    "perftests:src/config/test-data.js",
+    "perftests:src/k6/live-animals.js",
+    "tests:page-objects/animals/commodity-selection-page.ts",
+    "tests:page-objects/animals/consignment-details-page.ts",
+    "tests:page-objects/animals/import-reason-page.ts",
+    "tests:page-objects/animals/additional-details-page.ts",
+    "tests:tests/animals/e2e/pages/commodities.spec.ts",
+    "tests:tests/animals/e2e/pages/consignment-details.spec.ts",
+    "tests:tests/animals/e2e/pages/import-reason.spec.ts",
+    "tests:tests/animals/e2e/pages/additional-details.spec.ts",
+    "tests:tests/animals/e2e/features/reason-purpose-scope.spec.ts",
+    "tests:tests/animals/e2e/features/additional-details-scope.spec.ts",
+    "tests:tests/animals/e2e/journeys/poultry-rail-transit.spec.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-011",
+      "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1",
+      "detail": "The two live-animals commodity pages keep today's frame, today's server-side search behind its Search button and today's catalogue, and change what they say and how they save to Design Release 2.1's. The commodity page gets the ITAHC inset text, the live-animals search hint (common name, code or Latin name, with no 3-character sentence) and the Trade Tariff link's '(opens in a new tab)' on its own line. Its 'Select a commodity' error always sits on the search field, whether or not results are listed; 'Save and return to overview' saves the selection as it stands without checking it; and a selection made only of 01061900 species clears the unweaned animals answer, because that question is not asked for them. Commodity details gets the caption 'Description of the goods', a Species column in the Selected commodities table listing the Latin names chosen under each commodity, and an error summary that lists its errors by question, every number of animals error before any number of packages error. Every changed or added English string gets its Welsh counterpart, marked as a machine draft, so the Welsh pages do not fall behind.",
+      "acceptanceCriteria": [
+        "The commodity page's inset text reads 'You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.' (prototype:dr2-1-source prototype-dr2-1-source-p2-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-005; prototype:dr2-1-specs prototype-dr2-1-specs-p1-043; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-011)",
+        "On a live-animals notification the commodity search hint reads 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).', with no 'Enter at least 3 characters.' sentence. (prototype:dr2-1-source prototype-dr2-1-source-p2-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-007; prototype:dr2-1-specs prototype-dr2-1-specs-p1-045; document:dr1-parity-backlog document-dr1-parity-backlog-p5-006; c-013)",
+        "In the 'Help with commodity codes' details, '(opens in a new tab)' sits on its own line after 'Trade Tariff tool' and is still part of that link's accessible name. (prototype:dr2-1-source prototype-dr2-1-source-p2-088; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-014)",
+        "Pressing Save and continue on the commodity page with nothing chosen shows 'Select a commodity' in the error summary and inline on the search field, between its label and hint, and the summary link goes to the search field, both before and after a search has listed results. (prototype:dr2-1-source prototype-dr2-1-source-p2-090; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-019, trace-prototype-dr2-1-p3-020, trace-prototype-dr2-1-p3-021, trace-prototype-dr2-1-p3-022; prototype:dr2-1-specs prototype-dr2-1-specs-p1-051, prototype-dr2-1-specs-p1-052; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-007)",
+        "'Save and return to overview' on the commodity page shows no error, saves the selection as it stands (an empty one included) and goes to the overview, where 'What are you importing?' shows 'To do' when nothing is chosen. (prototype:dr2-1-source prototype-dr2-1-source-p2-099; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-047, trace-prototype-dr2-1-p3-048; prototype:dr2-1-specs prototype-dr2-1-specs-p1-064, prototype-dr2-1-specs-p1-065; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-007; c-211)",
+        "With an answer saved to the unweaned animals question, changing the commodity choice so that every selected species is under 01061900 (such as Cat or Dog) and saving it clears that answer, so check answers no longer shows it. (prototype:dr2-1-source prototype-dr2-1-source-p2-098; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-007)",
+        "The Commodity details page's caption reads 'Description of the goods'. (prototype:dr2-1-source prototype-dr2-1-source-p3-003; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-003; prototype:dr2-1-specs prototype-dr2-1-specs-p2-016; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-011)",
+        "The Selected commodities table on Commodity details has the columns 'Commodity code', 'Common name' and 'Species', and each row's Species cell lists the Latin names of the species chosen under it, such as '0102 | Cow | Bos taurus' on today's catalogue. (prototype:dr2-1-source prototype-dr2-1-source-p3-008, prototype-dr2-1-source-p3-009; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-005; prototype:dr2-1-specs prototype-dr2-1-specs-p2-017; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-012)",
+        "On a live-animals notification, pressing Save and continue on Commodity details with two species each missing both answers lists the error summary by question: the number of animals error for every species first, then the number of packages error for every species, each linking to its own field. (prototype:dr2-1-source prototype-dr2-1-source-p3-042; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-024, ruling-sam-2026-10-09-p1-057; trace:animals-fit trace-animals-fit-p9-053)",
+        "Every English string this row changes or adds has a Welsh counterpart on the Welsh pages, marked as a machine draft for translator review. (repo:frontend repo-frontend-p5-044, repo-frontend-p5-044-m1, repo-frontend-p5-045; document:dr1-parity-backlog document-dr1-parity-backlog-p5-003)",
+        "Both pages still have no serious or critical axe violations under the wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa tags. (trace:animals-fit trace-animals-fit-p8-057, trace-animals-fit-p9-073)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-073, -p2-076, -p2-088, -p2-090, -p2-098, -p2-099, -p3-003, -p3-008, -p3-009, -p3-042"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p3-005, -p3-007, -p3-014, -p3-019 to -p3-022, -p3-047, -p3-048, -p5-003, -p5-005"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-043, -p1-045, -p1-051, -p1-052, -p1-064, -p1-065, -p2-016, -p2-017"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p5-003, -p5-006"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-024, -p1-057"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-007, -p2-011, -p2-012"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p5-005, -p5-030, -p5-032, -p5-032-m1, -p5-033, -p5-033-m1, -p5-044, -p5-044-m1, -p5-045, -p5-050, -p5-070"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p8-007, -p8-009, -p8-015, -p8-044 to -p8-050, -p8-057, -p9-003, -p9-010, -p9-053, -p9-073"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-051"
+        }
+      ],
+      "requirements": [
+        "req-067",
+        "req-068",
+        "req-071",
+        "req-085",
+        "req-088",
+        "req-102",
+        "req-103",
+        "req-105",
+        "req-114",
+        "req-128"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the commodity-page copy slice (req-067, -068, -071), the Commodity details caption and table slice (req-103, -105), the live-animals error-order slice (req-114) and the Welsh rule (req-128) with the three commodity-page save slices that ruling 2026-10-09 afternoon (ruling-sam-2026-10-09-pm-p2-007) moved here from the blocked search-results row: the 'Select a commodity' error on the search field (req-085), the soft Save and return to overview (req-088, c-211 ruled) and clearing the unweaned answer (req-102). None of them is catalogue or search work, so they go ahead on today's data (ruling-sam-2026-10-09-pm-p2-010, -p2-011, -p2-012) while the catalogue and search rows wait on MDM. All sit in the same commodities feature folder, the same Welsh pass and the same two page specs, so one review; 11 criteria is one over the guide, kept together because ruling-sam-2026-10-09-pm-p2-007 and -p2-011 name this row. Examples use today's 'Cow' name: the Cattle rename waits on MDM with the catalogue row. The 3-character search minimum itself stays (c-012); only the hint sentence goes. The unweaned answer belongs to the additional details page; this row only clears it on save, so additional-details is listed as shared. The tests repo's commodities and consignment-details page specs assert today's inset, hint and error placement and change with them. req-114 is the live-animals half only; the germinal order (req-1762) is the germinal set's own row."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-012",
+      "title": "Live-animal commodity catalogue matches Design Release 2.1, once commodities come from MDM",
+      "detail": "Design Release 2.1's live-animal catalogue: 0102 named 'Cattle' with 11 species, Horse with Donkey and Mule, 'Domestic cat' and 'Domestic dog', Ferret and Other live mammals on 01061900, Ornamental fish in place of Fish, and the poultry, livestock, rabbit, camel, ostrich, parrot, reptile and bee commodities. DR2.1's misspelt horse names and its duplicated 'Other mammal' entry are corrected rather than copied, because the species text reaches the receiving service as the scientific name. The number of packages question follows the new list, and the k6 performance suite's commodity search moves from 'Cow' to a term the new catalogue matches. Ruling 2026-10-09 afternoon records this as work but blocks it until commodities come from MDM through trade-imports-reference-data, which serves no commodity list today; the area is re-distilled then, and the repos it builds in may change with that.",
+      "acceptanceCriteria": [
+        "Searching finds Pig (0103), Sheep (010410), Goat (010420), Chicken (010511), Turkey (010512), Duck (010513), Goose (010514), Guinea fowl (010515), Rabbit (010614), Camel (010613), Ostrich (010633), Parrot (010632), Reptile (010620) and Bees (01064100), each with DR2.1's species. (prototype:dr2-1-source prototype-dr2-1-source-p2-112, prototype-dr2-1-source-p2-119, prototype-dr2-1-source-p2-125, prototype-dr2-1-source-p2-132; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-033; prototype:dr2-1-specs prototype-dr2-1-specs-p4-009)",
+        "Commodity code 0102 is named 'Cattle', not 'Cow', in the result headers, the selected panel, the Selected commodities table and the Commodity details headings. (prototype:dr2-1-source prototype-dr2-1-source-p2-110; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-024, trace-prototype-dr2-1-p5-006, trace-prototype-dr2-1-p5-010; prototype:dr2-1-specs prototype-dr2-1-specs-p2-017, prototype-dr2-1-specs-p2-020)",
+        "Cattle (0102) offers 11 species: African buffalo (Syncerus spp.), Banteng (Novibos spp), Bison (Bison spp), Bison bison (Bison bison), Buffalo (Bubalus spp (including Anoa)), Cattle (Bos spp), Domestic cattle (Bos taurus), Gaur (Bibos spp.), Musk ox (Ovibos spp), Water buffalo (Bubalus bubalis) and Yak (Poephagus spp.). (prototype:dr2-1-source prototype-dr2-1-source-p2-134; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-026, trace-prototype-dr2-1-p3-027)",
+        "Horse (0101) offers three species: Donkey (Equus asinus), Horse (Equus caballus) and Mule (Eq caballus*asinus). (prototype:dr2-1-source prototype-dr2-1-source-p2-111; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-031; prototype:dr2-1-specs prototype-dr2-1-specs-p1-063; c-014)",
+        "Cat (01061900) offers 'Domestic cat (Felis catus)' and Dog (01061900) offers 'Domestic dog (Canis familiaris)', and their Commodity details rows read 'Domestic cat' and 'Domestic dog'. (prototype:dr2-1-source prototype-dr2-1-source-p2-120, prototype-dr2-1-source-p2-121; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-021, trace-prototype-dr2-1-p13-042; document:dr1-parity-backlog document-dr1-parity-backlog-p5-012; c-020)",
+        "Ferret (01061900) offers 'Ferret (Mustela putorius furo)' and is treated like Cat and Dog as needing a permanent address; Other live mammals (01061900) offers DR2.1's species with their common names, from Impala (Aepyceros spp.) to Xenarthran (Xenarthra), with a single 'Other Mammalia' (Other mammal) entry, and does not need a permanent address. (prototype:dr2-1-source prototype-dr2-1-source-p2-122, prototype-dr2-1-source-p2-123, prototype-dr2-1-source-p2-124, prototype-dr2-1-source-p2-135, prototype-dr2-1-source-p2-137; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-031; c-014)",
+        "Ornamental fish (030111) offers Cyprinidae, Poeciliidae and Cichlidae, and Fish (0301) with Atlantic salmon (Salmo salar) is no longer offered. (prototype:dr2-1-source prototype-dr2-1-source-p2-131)",
+        "Apart from the horse's 'Equus caballus', the mule's 'Eq caballus*asinus' and the single 'Other Mammalia' entry, every species name, common name and code reads exactly as DR2.1 gives it. (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-025, trace-prototype-dr2-1-p5-025; c-014)",
+        "Commodity details asks 'Number of packages (when required)', hinted 'Such as crates, bags or boxes', for Cattle, Horse, Pig, Sheep, Goat, Cat, Dog, Ferret and Other live mammals species, and not for Chicken, Turkey, Duck, Goose, Guinea fowl, Rabbit, Camel, Ostrich, Parrot, Reptile, Bees or Ornamental fish. (prototype:dr2-1-source prototype-dr2-1-source-p3-026, prototype-dr2-1-source-p3-027; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-012, trace-prototype-dr2-1-p5-014; prototype:dr2-1-specs prototype-dr2-1-specs-p2-022)",
+        "Every new or renamed English commodity and species name has its Welsh counterpart, marked as a machine draft. (repo:frontend repo-frontend-p5-044)",
+        "The k6 performance suite's live-animals walk, run against the local stack, searches commodities for a term the new catalogue matches, such as 'Cattle', instead of 'Cow', and passes every check it makes on the commodity page. (prototype:dr2-1-source prototype-dr2-1-source-p2-110; ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-002; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-005; c-225)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests",
+        "perftests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-109 to -p2-132, -p2-134, -p2-135, -p2-137, -p3-026, -p3-027"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p3-024, -p3-026, -p3-027, -p3-031, -p3-033, -p5-006, -p5-010, -p5-012, -p5-014, -p5-025, -p12-025, -p13-021, -p13-042"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-063, -p2-017, -p2-020, -p2-022, -p4-009"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p5-010 to -p5-013"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-002 (c-225)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-001, -p2-003, -p2-005, -p2-025 (c-278)"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "repo-referencedata-p1-089"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p5-044, -p5-064, -p5-065"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-042 to -p1-046, -p1-055"
+        }
+      ],
+      "requirements": [
+        "req-094",
+        "req-095",
+        "req-096",
+        "req-097",
+        "req-098",
+        "req-099",
+        "req-100",
+        "req-101",
+        "req-112",
+        "req-1919"
+      ],
+      "openQuestions": [
+        "Blocked until commodities come from MDM: whoever owns the MDM integration must make the MDM commodity list reach the animals frontend through trade-imports-reference-data (which serves no commodity or species list today), and the commodity catalogue and search area is then re-distilled (ruling 2026-10-09 afternoon, ruling-sam-2026-10-09-pm-p2-001, -p2-003, -p2-005; c-278)."
+      ],
+      "notes": [
+        "Combines the catalogue slices (req-094 to -101) with the package-question list (req-112), because the package question is driven by the catalogue's own per-commodity flag, and with the k6 search-term change (req-1919), because c-225 puts the suite's change in the row that renames 0102. All are blocked on the same MDM wait (ruling-sam-2026-10-09-pm-p2-005, c-278), so they stay apart from the rows that build now. c-014 (ruled): DR2.1's misspelt horse names and second 'Other mammalia' are corrected, because the species text is what the backend sends downstream as the GBN-AG scientific name. c-020 (ruled): DR2.1's Domestic cat and Domestic dog names win. req-1754 (the germinal lines leaving the live-animals catalogue) is not here: ruling-sam-2026-10-09-pm-p2-018 moves it to the germinal set's go-ahead row. The earlier backlog's two near-identical k6 criteria are merged into one. The repos and touches will likely change on re-distil, since the list is expected to come through trade-imports-reference-data."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-001"
+        }
+      ]
+    },
+    {
+      "id": "inc-013",
+      "title": "Commodity search results sorted and bolded, and a selected panel of removable species chips, once commodities come from MDM",
+      "detail": "The server-rendered commodity page lists results alphabetically with the matched text in bold, and shows what has been chosen as one bold commodity line followed by a chip per species, by Latin name, each with its own remove button, so a trader can drop one choice without clearing everything. Ruling 2026-10-09 afternoon blocks these four until commodities come from MDM, then re-distils them. The rest of the old row (the error on the search field, the soft Save and return, clearing the unweaned answer) moved to the commodity wording row and goes ahead.",
+      "acceptanceCriteria": [
+        "Search results list commodities alphabetically by commodity name, and the species under each alphabetically by their label ('common name (Latin name)', or 'commodity name (Latin name)' where a species has no common name). (prototype:dr2-1-source prototype-dr2-1-source-p2-084, prototype-dr2-1-source-p2-109; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-026)",
+        "The text that matched the query is shown in bold in the commodity header and the species labels, such as 'Domestic **cattle** (Bos taurus)' for 'cattle'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p3-024, trace-prototype-dr2-1-p3-028)",
+        "The selected panel lists each chosen commodity as a bold 'Commodity (code):' line followed by one chip per chosen species showing its Latin name, such as 'Cattle (0102):' then 'Bos taurus'. (trace:prototype-dr2-1 trace-prototype-dr2-1-p3-035, trace-prototype-dr2-1-p3-041, trace-prototype-dr2-1-p13-023; prototype:dr2-1-specs prototype-dr2-1-specs-p1-056)",
+        "Each chip has a remove button whose accessible name is 'Remove <Latin name>', such as 'Remove Bos taurus', which takes that one species out of the selection and leaves the others chosen. (trace:prototype-dr2-1 trace-prototype-dr2-1-p3-036, trace-prototype-dr2-1-p3-074, trace-prototype-dr2-1-p13-023; prototype:dr2-1-specs prototype-dr2-1-specs-p1-060)",
+        "Without JavaScript the Search button, its results, the chips' remove buttons and Clear all all work by posting the page. (trace:animals-fit trace-animals-fit-p8-010; prototype:dr2-1-specs prototype-dr2-1-specs-p1-060; c-012)",
+        "Every new English string, such as the 'Remove' accessible name, has its Welsh counterpart, marked as a machine draft. (repo:frontend repo-frontend-p5-044)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-084, -p2-109"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p3-024, -p3-026, -p3-028, -p3-035, -p3-036, -p3-041, -p3-074, -p13-023"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-056, -p1-060"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-001, -p2-003, -p2-006 (c-278)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p5-015, -p5-022, -p5-024, -p5-044"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p8-010, -p8-021, -p8-022, -p8-032, -p8-039, -p8-053"
+        }
+      ],
+      "requirements": [
+        "req-075",
+        "req-076",
+        "req-080",
+        "req-081"
+      ],
+      "openQuestions": [
+        "Blocked until commodities come from MDM: whoever owns the MDM integration must make the MDM commodity list reach the animals frontend through trade-imports-reference-data, and the commodity catalogue and search area is then re-distilled (ruling 2026-10-09 afternoon, ruling-sam-2026-10-09-pm-p2-001, -p2-003, -p2-006; c-278)."
+      ],
+      "notes": [
+        "Combines the result-list slice (req-075, -076) with the selected-panel slice (req-080, -081): the same server-rendered page and view model, one review. Blocked on MDM by ruling-sam-2026-10-09-pm-p2-006; req-085, -088 and -102 moved to the commodity wording row by ruling-sam-2026-10-09-pm-p2-007 and go ahead. The chip and remove-button markup set here is what the as-you-type search row reuses, so that row depends on this one. The 'Cattle' examples assume the catalogue rename, which is blocked on the same thing."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-015",
+      "title": "Commodity pages chain as journey steps around the main import reason",
+      "detail": "Design Release 2.1 makes the two commodity pages steps of the journey rather than an overview task that returns to the overview. The commodity page's back link goes to origin and Save and continue goes on to the main import reason; Commodity details comes after the main import reason, its back link goes to the commodity page, and Save and continue goes on to identification, additional or arrival details, whichever applies first. Opened from its overview task, each page still returns to the overview. The k6 performance suite's live-animals walk visits the main import reason between the two commodity pages in the same change, so the suite keeps running.",
+      "acceptanceCriteria": [
+        "The commodity page's back link goes to the origin of the import page. (prototype:dr2-1-source prototype-dr2-1-source-p2-074; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-018, trace-prototype-dr2-1-p12-026; prototype:dr2-1-specs prototype-dr2-1-specs-p1-048; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-011)",
+        "After a valid choice on the commodity page, Save and continue goes to the main import reason page; opened from the overview it returns to the overview instead, and opened from check answers it returns to check answers. (prototype:dr2-1-source prototype-dr2-1-source-p2-100; trace:prototype-dr2-1 trace-prototype-dr2-1-p3-052; prototype:dr2-1-specs prototype-dr2-1-specs-p1-066; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196; c-015)",
+        "Walking the journey from the start, Commodity details comes after the main import reason page and before identification, additional and arrival details. (prototype:dr2-1-source prototype-dr2-1-source-p3-051; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-001; prototype:dr2-1-specs prototype-dr2-1-specs-p2-013, prototype-dr2-1-specs-p2-014)",
+        "The Commodity details page's back link goes to the commodity page ('What are you importing?'). (prototype:dr2-1-source prototype-dr2-1-source-p3-004, prototype-dr2-1-source-p3-005; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-009, trace-prototype-dr2-1-p12-055; prototype:dr2-1-specs prototype-dr2-1-specs-p2-024)",
+        "Reached in the journey from the main import reason page, a valid Save and continue on Commodity details goes to Identification details when any chosen species needs identifiers, otherwise to Additional details when that page applies, otherwise to the arrival details; opened from its overview task it returns to the overview. (prototype:dr2-1-source prototype-dr2-1-source-p3-049; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-022, trace-prototype-dr2-1-p13-047; prototype:dr2-1-specs prototype-dr2-1-specs-p2-027; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196)",
+        "Both pages still end with 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview', and opening Commodity details with no commodity on the notification still sends the trader to the commodity page. (prototype:dr2-1-source prototype-dr2-1-source-p3-047; document:dr1-parity-notes document-dr1-parity-notes-p1-055; c-016; c-018)",
+        "The k6 performance suite's live-animals walk, run against the local stack, visits the main import reason page between the commodity page and Commodity details and passes every check it makes on each page. (prototype:dr2-1-source prototype-dr2-1-source-p3-051; ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-002; repo:perftests repo-perftests-p1-024; c-225)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests",
+        "perftests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-074, -p2-100, -p3-004, -p3-005, -p3-047, -p3-049, -p3-051"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p3-018, -p3-052, -p5-001, -p5-009, -p5-022, -p12-026, -p12-055, -p13-047"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-048, -p1-066, -p2-013, -p2-014, -p2-024, -p2-027"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "ref": "document-dr1-parity-notes-p1-055 (c-016)"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-002 (c-225)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-196 (c-015)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-011"
+        },
+        {
+          "source": "repo:perftests",
+          "ref": "repo-perftests-p1-024"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-049, -p1-059"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p8-037, -p8-043, -p9-001, -p9-007, -p9-008, -p9-035"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p5-030, -p5-034, -p5-035, -p5-053"
+        }
+      ],
+      "requirements": [
+        "req-087",
+        "req-089",
+        "req-108",
+        "req-117",
+        "req-118",
+        "req-1761"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged in substance; ruling 2026-10-09 afternoon (ruling-sam-2026-10-09-pm-p2-011) confirms the commodity pages' place in the journey goes ahead on today's data. Combines the back-link slices (req-089, -108) with the next-step slices (req-087, -117, -118) and the k6 step-list slice (req-1761): the same journey flow change, observed only together, and the suite breaks the moment the order changes. c-015 (ruled): Design Release 2.1's chaining wins; opened from its overview task a page returns to the overview (ruling-sam-2026-10-09-p1-196). c-016: both pages keep the three return controls. c-018: the no-commodity redirect stays. c-225 (ruled): the performance suite changes in each increment whose change breaks one of its k6 scripts, on that increment's branch name; its 'Cow' search changes with the blocked catalogue row (req-1919), not here. Where Commodity details goes after a change from check answers is req-119's, which the type-question-and-templates branch holds; this row does not change it. The main import reason page already exists; the reason-and-additional-details rows change its copy, not its place. Depends on inc-001 (journey-foundation), which reorders the opening run's step list in the shared flow; this row makes the pages' own back links and next steps agree. The tests repo's journey flow walks the new order."
+      ],
+      "gate": "Walk the journey from origin to arrival details: this row moves Commodity details after the main import reason, and every row that walks the journey from here on rests on that order.",
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-001"
+        }
+      ]
+    },
+    {
+      "id": "inc-018",
+      "title": "Hard stops: means of transport on arrival details and number of packages on commodity details",
+      "detail": "Design Release 2.1 makes the means of transport the only hard stop on 'Arrival details', because it decides whether transit countries apply; the other arrival answers can be left for later. Sam's 9 October afternoon ruling makes this animals only: plants' arrival details keeps its own rules. On commodity details the number of packages becomes a hard stop, alongside the number of animals, on each line that asks for it.",
+      "acceptanceCriteria": [
+        "On the live-animals 'Arrival details', 'Save and continue' with no means of transport chosen is refused with an error on the means of transport question. (prototype:dr2-1-specs COVERAGE.md:162 p7-129)",
+        "On the live-animals 'Arrival details', 'Save and continue' with a means of transport chosen and the arrival date, port of entry, transport identification and transport document reference blank goes on to the next page. (prototype:dr2-1-specs COVERAGE.md:158 p7-140)",
+        "The high-risk plants arrival details page keeps today's checks on 'Continue'. (ruling:sam-2026-10-09-pm p3-063)",
+        "On 'Commodity details', 'Save and continue' with a line that asks for a number of packages left without one is refused with an error on that line's number of packages. (prototype:dr2-1-specs COVERAGE.md:162 p7-139)",
+        "On 'Commodity details', a line that does not ask for a number of packages can be saved without one. (prototype:dr2-1-specs COVERAGE.md:162; repo:frontend p2-063)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "COVERAGE.md:158, 162; p7-129, p7-139, p7-140"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "obligations/sections/commodities/lines.js; obligations/sections/arrival.js (p2-063)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "tests/animals/e2e/features/transit-means-scope.spec.ts; port-of-entry-select.spec.ts (p2-030, p2-074, p2-157)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p3-063 (arrival details' own rules are animals only)"
+        }
+      ],
+      "requirements": [
+        "req-1642",
+        "req-1643"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines two hard-stop slices (req-1642 arrival, req-1643 packages): both change which answers are required to proceed, in the obligations rather than the page content, and are reviewed together. Which species ask for a number of packages is req-112 (another area); this row only makes the question required where it is asked. Existing tests that say arrival details is enforced as a whole page (transit-means-scope) change with it.",
+        "req-1642 now names the germinal products set as well as live animals. The germinal arrival page is a copy of the live-animals page taken after it changes, so the germinal half is observed in the germinal journey row (inc-182), which this area's draft for req-1898 carries as a criterion; the combiner should add inc-018 to inc-182's dependsOn so the copy is taken after this row lands.",
+        "The plants criterion is a guard against mirroring, added because ruling p3-063 settles that plants keeps its own arrival rules; plantsfrontend is not in this row's repos, as nothing there changes.",
+        "Re-distil: existing row inc-018."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-019",
+      "title": "End-to-end proof: poultry by rail in transit",
+      "detail": "Design Release 2.1 proves a poultry-by-rail journey end to end, with transit countries and no identification step. Today poultry cannot be chosen: the commodity list holds five stub commodities, and Sam's 9 October afternoon ruling makes poultry wait for the MDM commodity catalogue. This row proves the whole journey once Chicken can be chosen.",
+      "acceptanceCriteria": [
+        "The tests repo walks a poultry-by-rail notification from create to 'Import notification submitted': origin Germany, Chicken (010511) Gallus domesticus, 'Transit' with an exit port and the Republic of Ireland as destination country, arrival by rail with a transport identification, transit through Belgium and France, a transporter and a CPH number. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p4-069; trace:prototype-dr2-1 p13-002, p13-182)",
+        "In that walk no 'Identification details' page is shown and the overview has no 'Identification details' task. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p2-011)",
+        "In that walk, every task on the overview reads 'Complete' before the review is opened, and the review shows Germany, Transit, Belgium and the chosen transporter. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250; trace:prototype-dr2-1 p13-194, p13-195)"
+      ],
+      "dependsOn": [
+        "inc-012"
+      ],
+      "theme": "commodities-and-reason",
+      "status": "blocked",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:237-250 (poultry by rail); p2-011, p4-069"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p13-002, p13-182, p13-194, p13-195"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "services/commodities/stub.js (p2-082, p2-112)"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "p1-169"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p2-001, p2-005, p2-022, p2-025 (commodities from MDM)"
+        }
+      ],
+      "requirements": [
+        "req-1656"
+      ],
+      "openQuestions": [
+        "Blocked: poultry is only in the MDM commodity catalogue, so MDM must supply commodities (and the commodity catalogue row, inc-012, must take them from MDM) before Chicken (010511) can be chosen and this walk can run. Who acts: the MDM team supplies the commodity data; the row unblocks when the catalogue row lands with poultry in it."
+      ],
+      "notes": [
+        "One slice (req-1656), blocked by its requirement's blockedBy (commodities must come from MDM).",
+        "Depends on the commodity catalogue row (inc-012) and the opening-run step-order row. Tests only because the frontend change it needs is the catalogue row's.",
+        "Re-distil: existing row inc-019, unchanged."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-001"
+        }
+      ]
+    },
+    {
+      "id": "inc-020",
+      "title": "Main import reason and additional details copy matches Design Release 2.1",
+      "detail": "Design Release 2.1 renames the reason page 'Main import reason', opens its destination country and port of exit selects on 'Select one' with no divider line, and rewords the certification hint on the additional details page. The 9 October afternoon ruling keeps the reason page's selects as plain selects in this programme. The review keeps the reason answers under 'Main import reason' and the additional details answers as 'Certified for' and 'Includes unweaned animals'. Traders see the same names on the pages and on the review, in English and Welsh.",
+      "acceptanceCriteria": [
+        "The main import reason page's h1 reads 'Main import reason' and its browser title reads 'Main import reason - Import notification service - GOV.UK'; 'Main reason for import' no longer appears on the page (prototype:dr2-1-source prototype-dr2-1-source-p4-001; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-002; prototype:dr2-1-specs prototype-dr2-1-specs-p1-067)",
+        "Every 'Destination country' select on the reason page starts with an empty option reading 'Select one', selected when nothing is chosen, followed straight by the places with no divider line (prototype:dr2-1-source prototype-dr2-1-source-p4-042; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-030; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-041)",
+        "Every 'Port of exit' select on the reason page starts with an empty option reading 'Select one', selected when nothing is chosen, followed straight by the ports with no divider line (prototype:dr2-1-source prototype-dr2-1-source-p4-045; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-041)",
+        "Where a reason page select already offers type-ahead search when this row is built, its empty state reads 'Select one' wherever that field can show a placeholder (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-042)",
+        "The certification question on the additional details page is hinted 'You can find this information on the ITAHC.' (prototype:dr2-1-source prototype-dr2-1-source-p3-061; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-090; prototype:dr2-1-specs prototype-dr2-1-specs-p2-066)",
+        "The review shows the reason answers under 'Main import reason', with the internal market purpose labelled 'Purpose in the market' and, for Temporary admission horses, 'Exit date' and 'Port of exit' rows (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-042, trace-prototype-dr2-1-p12-046)",
+        "The review shows the additional details answers as 'Certified for' and, where the unweaned question was asked, 'Includes unweaned animals' (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-077)",
+        "With the language set to Welsh, the reason page's heading and title, both select placeholders and the certification hint show Welsh text in place of the old wording, not English (prototype:dr2-1-source prototype-dr2-1-source-p4-001; repo:frontend repo-frontend-p7-003)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p4-001, p4-042, p4-045, p3-061"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p4-002, p4-030, p4-034, p5-090, p12-042, p12-046, p12-077"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-067, p2-066"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-040, p1-041, p1-042"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-003, p7-035, p7-037, p7-087"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-067"
+        }
+      ],
+      "requirements": [
+        "req-131",
+        "req-145",
+        "req-148",
+        "req-173",
+        "req-183",
+        "req-184"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Combines the heading slice (req-131), the two select placeholder slices (req-145, req-148), the certification hint (req-173) and the review labels (req-183, req-184): all copy on the same two pages and their review rows, reviewed in one sitting. c-029, c-032, c-033 and c-034: the prototype wins by default.",
+        "Rewritten for ruling:sam-2026-10-09-pm (claims p1-040 to p1-042): the reason page's selects stay plain selects in this programme; the transhipment destination country is not in EUDPA-635 and goes to deferred.md for a follow-on ticket; if EUDPA-635 has already put type-ahead on a transit or temporary admission field when this row builds, 'Select one' is carried as far as that component can show it.",
+        "Today 'Purpose in the market', 'Exit date', 'Port of exit', 'Certified for' and 'Includes unweaned animals' are already the review's labels; only the 'Main reason for import' heading of the review's reason block changes, which lives in the review's shared copy. The combiner should merge req-183 and req-184 into the review area's label row if it keeps them apart from this one. The tests repo's import reason page object and spec assert 'Main reason for import' today (repo-tests-p1-067) and change with it."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-021",
+      "title": "Reason and additional details sit in Design Release 2.1's journey order",
+      "detail": "Design Release 2.1 follows the main import reason with Commodity details, and places Additional details in the commodity section after Identification details (or Commodity details when no identifiers are needed), going on to Arrival details. Both pages' Back links go to the page before them in the journey instead of always to the overview. Opened from the overview, each page still returns to the overview.",
+      "acceptanceCriteria": [
+        "In the linear journey, 'Save and continue' on a valid main import reason page goes to Commodity details (prototype:dr2-1-source prototype-dr2-1-source-p4-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-033)",
+        "The main import reason page's Back link goes to What are you importing in the linear journey (prototype:dr2-1-source prototype-dr2-1-source-p4-007; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-007; prototype:dr2-1-specs prototype-dr2-1-specs-p1-075)",
+        "Opened from the overview, the main import reason page's Back link and its 'Save and continue' both go to the overview (prototype:dr2-1-source prototype-dr2-1-source-p4-008, prototype-dr2-1-source-p4-061; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196)",
+        "In the linear journey the additional details page is reached from Identification details when a selected species needs identifiers, and from Commodity details otherwise, never straight from the main import reason page (prototype:dr2-1-source prototype-dr2-1-source-p3-059; prototype:dr2-1-specs prototype-dr2-1-specs-p2-070)",
+        "In the linear journey, 'Save and continue' on the additional details page goes to Arrival details; opened from the overview it returns to the overview (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-093; prototype:dr2-1-specs prototype-dr2-1-specs-p2-071; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-196)",
+        "The additional details page's Back link goes to Identification details when any selected species needs identifiers, and to Commodity details otherwise (prototype:dr2-1-source prototype-dr2-1-source-p3-073; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-094, trace-prototype-dr2-1-p5-096; prototype:dr2-1-specs prototype-dr2-1-specs-p2-069)",
+        "A cattle notification walked from the start through the linear journey visits, in order, What are you importing, Main import reason, Commodity details, Identification details, Additional details and Arrival details (prototype:dr2-1-specs prototype-dr2-1-specs-p2-070; trace:e2e trace-e2e-p5-061)"
+      ],
+      "dependsOn": [
+        "inc-015"
+      ],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p4-007, p4-008, p4-057, p4-060, p4-061, p3-059, p3-073"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p4-007, p4-033, p5-093, p5-094, p5-096, p12-080"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-075, p2-069, p2-070, p2-071"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-196"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-002, p7-055, p7-065, p7-083, p7-101, p7-107"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-075"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p5-061, trace-e2e-p5-070"
+        }
+      ],
+      "requirements": [
+        "req-163",
+        "req-164",
+        "req-178",
+        "req-179"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged from the existing row. Combines the reason page's Back and next slices (req-163, req-164) with the additional details page's Back and position slices (req-178, req-179): they are one reorder of the same journey run and its section membership, so building them apart would repeat the flow change and its ladder. The prototype wins c-030, c-031, c-036 and c-037 by default; ruling:sam-2026-10-09 claim p1-196 confirms an overview-opened page returns to the overview.",
+        "Moving Additional details out of the reason's section and after Identification changes the journey's shared flow and run; the commodities area's rows change the same order from the commodity side, and the journey-flow area may own the shared run. Today's fit tests pin both Back links to the overview (repo-frontend-p7-065, repo-frontend-p7-107) and the tests repo's journey flow goes reason then Additional details (repo-tests-p1-075); both change with this row. Depends on inc-001 (the opening run's order) and inc-015 (the commodity pages as journey steps)."
+      ],
+      "gate": "Walk the linear journey from What are you importing to Arrival details for a cattle and a horses-only notification, and check both Back links, before rows that rely on the new order build.",
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-001"
+        }
+      ]
+    },
+    {
+      "id": "inc-022",
+      "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does",
+      "detail": "Design Release 2.1 judges the main import reason task on the reason's own answers, with Additional details its own task. 'Save and return to overview' saves what is valid and returns to the overview without the page's required-answer checks, so a trader can leave part-way through. An answer that breaks its own format rule, such as an impossible exit date, is still refused, because the service cannot store it.",
+      "acceptanceCriteria": [
+        "With an allowed reason and its valid follow-ups saved (Internal market with a purpose; Transhipment or onward travel with a listed country; Transit with a listed port and country; Temporary admission horses with a real exit date and a listed port; Re-entry alone), the overview shows the main import reason task as complete while Additional details is still unanswered (prototype:dr2-1-source prototype-dr2-1-source-p4-080, prototype-dr2-1-source-p4-081)",
+        "With no reason saved, the overview does not show the main import reason task as complete (prototype:dr2-1-source prototype-dr2-1-source-p4-081)",
+        "'Save and return to overview' on the main import reason page with Transit chosen and no port of exit shows no error, goes to the overview, and the reason page then shows Transit chosen with the destination country given (prototype:dr2-1-source prototype-dr2-1-source-p4-075, prototype-dr2-1-source-p4-076; trace:prototype-dr2-1 trace-prototype-dr2-1-p4-051)",
+        "'Save and return to overview' after changing the reason from Internal market to Transit clears the saved internal market purpose: the reason page shows no purpose when Internal market is chosen again (prototype:dr2-1-source prototype-dr2-1-source-p4-077)",
+        "'Save and return to overview' with no reason chosen leaves every earlier saved reason answer as it was (prototype:dr2-1-source prototype-dr2-1-source-p4-079)",
+        "'Save and return to overview' with Temporary admission horses chosen and an exit date that is not a real calendar date, such as 31/2/2026, is refused with the exit date's own error and stays on the page (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-010)",
+        "When amending, the main import reason page's 'Save and return' action saves the same way and goes to the review page (prototype:dr2-1-source prototype-dr2-1-source-p4-075)",
+        "'Save and return to overview' on the additional details page with both questions unanswered shows no error, goes to the overview, and keeps any earlier answer to each question (prototype:dr2-1-source prototype-dr2-1-source-p3-071)"
+      ],
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p4-075, p4-076, p4-077, p4-079, p4-080, p4-081, p3-071"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p4-051"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-112, trace-e2e-p4-116"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p7-054, p7-079, p12-068"
+        }
+      ],
+      "requirements": [
+        "req-166",
+        "req-168",
+        "req-180"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged from the existing row. Combines the completion slice (req-168; c-038: the prototype wins, the reason task no longer waits for Additional details) with the two soft-save slices (req-166, req-180): all three are the save and status behaviour of the same two pages, observed on the overview.",
+        "c-211 settles 'Save and return to overview': it saves without the required-answer checks, but an answer failing its own format rule, such as an impossible date, is still refused (ruling:sam-2026-10-07). No today source shows what 'Save and return to overview' does on these pages (trace-animals-fit-p7-079, trace-animals-fit-p12-068): the builder reads the shared save actions and changes only what differs. Kept apart from the journey-order row because it changes no route. Depends on inc-003, the shared soft-save foundation."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-003"
+        }
+      ]
+    },
+    {
+      "id": "inc-023",
+      "title": "Unweaned question is asked for cattle and pigs",
+      "detail": "Design Release 2.1 asks 'Does the consignment contain any unweaned animals?' of every commodity that carries unweaned options, which is cattle and pig. Today only cattle are asked, and the cattle half already holds. Pig is not in today's five-commodity live-animal catalogue, so this waits with the MDM commodity catalogue that adds it: once pigs can be chosen, a consignment with any pig is asked too; every other commodity still is not.",
+      "acceptanceCriteria": [
+        "A notification with a pig commodity selected sees 'Does the consignment contain any unweaned animals?' on the additional details page (prototype:dr2-1-source prototype-dr2-1-source-p3-064; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-095; prototype:dr2-1-specs prototype-dr2-1-specs-p2-072)",
+        "A notification with cattle selected still sees the unweaned question (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-075)",
+        "A notification whose commodities are only horses, cats, dogs, poultry or fish sees the certification question and no unweaned question (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-099, trace-prototype-dr2-1-p13-059)",
+        "The review shows 'Includes unweaned animals' for a pig notification once the question is answered (trace:prototype-dr2-1 trace-prototype-dr2-1-p12-077)"
+      ],
+      "dependsOn": [
+        "inc-012"
+      ],
+      "theme": "commodities-and-reason",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p3-064"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-095, p5-099, p12-075, p13-059"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p2-072"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-025, p2-026"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p7-095, p7-096, p7-108"
+        }
+      ],
+      "requirements": [
+        "req-175"
+      ],
+      "openQuestions": [
+        "Blocked on the MDM commodity integration: the live-animal catalogue that adds pig comes from MDM, and none of today's five commodities is a pig (ruling:sam-2026-10-09-pm claims p2-025, p2-026). Whoever lands the MDM commodity catalogue (with inc-012) unblocks this row; the area is re-distilled when it lands."
+      ],
+      "notes": [
+        "Was todo; now blocked by ruling:sam-2026-10-09-pm (claim p2-025), which has inc-023 wait with the commodity catalogue. Kept apart so the rest of the reason and additional details rows build now. The prototype wins c-035 by default. The unweaned list lives with the commodity catalogue, which the commodities area also changes. Depends on inc-012."
+      ],
+      "gate": null
+    }
+  ]
+}

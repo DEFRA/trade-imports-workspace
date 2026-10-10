@@ -1,0 +1,275 @@
+{
+  "programme": "design-release-2-1-origin-page",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    },
+    "plantsfrontend": {
+      "path": "repos/trade-imports-plants-frontend",
+      "github": "DEFRA/trade-imports-plants-frontend"
+    }
+  },
+  "theme": "origin-page",
+  "branch": "feat/EUDPA-695-design-release-2-1-origin-page",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 2,
+    "landsAfter": [
+      "reference-lists"
+    ]
+  },
+  "touches": [
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/origin",
+    "frontend:src/server/app/sets/live-animals/obligations/sections/origin.js",
+    "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/origin",
+    "tests:tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts",
+    "tests:tests/animals/e2e/pages/origin.spec.ts",
+    "tests:tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots",
+    "tests:page-objects/plants/origin-page.ts",
+    "tests:tests/plants/e2e/features/origin.spec.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-009",
+      "title": "Country of origin: no hint and a 'Search for a country' placeholder, in animals and plants",
+      "detail": "The 9 October afternoon ruling builds the built-now half of the country of origin control. The hint 'Start typing to search for a country.' goes (it also misleads users without JavaScript, who get a plain select), and the type-ahead box shows the placeholder 'Search for a country' while empty. It changes the live-animals origin page and, in the same increment, the high-risk plants frontend's origin page. The control stays the real frontend's accessible autocomplete over a native select: opening on focus, matching, the arrow and its own announcements stay as the component is configured. Plants keeps its own country list, guidance and errors. The germinal products set copies the live-animals origin page and so takes this when it is built.",
+      "acceptanceCriteria": [
+        "On the live-animals origin page, the 'Country of origin' question shows no hint text, with or without JavaScript (prototype:dr2-1-source prototype-dr2-1-source-p2-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-010, p1-013; repo:frontend repo-frontend-p4-075; conflicts:c-009)",
+        "On the live-animals origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (prototype:dr2-1-source prototype-dr2-1-source-p2-032; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-031; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-013; repo:frontend repo-frontend-p4-076; conflicts:c-006, c-009)",
+        "On the high-risk plants origin page, the 'Country of origin' question shows no hint text, with or without JavaScript, and keeps its own list, guidance and errors (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-031, p3-033; repo:plantsfrontend repo-plantsfrontend-p5-005, p5-006; conflicts:c-009)",
+        "On the high-risk plants origin page, with JavaScript, the empty country box shows the placeholder 'Search for a country'; without JavaScript the native select still begins with its blank 'Select a country' option (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-031; repo:plantsfrontend repo-plantsfrontend-p5-007, p5-008; conflicts:c-009)",
+        "On both pages the control is still labelled 'Country of origin', choosing a country still saves it and shows it again when the page is reopened, and without JavaScript the native select still saves the chosen country (conflicts:c-006; repo:frontend repo-frontend-p4-082; repo:plantsfrontend repo-plantsfrontend-p5-010)",
+        "With Welsh chosen, the placeholder shows its Welsh counterpart on both pages, and the removed country hint is no longer shown in Welsh either (repo:frontend repo-frontend-p4-117; repo:plantsfrontend repo-plantsfrontend-p5-028, p5-029, p5-030)"
+      ],
+      "dependsOn": [],
+      "theme": "origin-page",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-032, p2-034"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p2-031"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-010, p1-013, p3-031, p3-033"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p4-075, p4-076, p4-082, p4-117"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p5-005 to p5-010, p5-028 to p5-030"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-009, p4-061"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p5-010, p5-014, p6-003, p6-037"
+        }
+      ],
+      "requirements": [
+        "req-015",
+        "req-016"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Keeps inc-009. Requirements unchanged; provenance re-cited to the afternoon ruling's current claim ids (p1-010, p1-013, p3-031, p3-033) and plants' Welsh claims (p5-028 to p5-030).",
+        "Combines the hint and the placeholder, in animals and plants: one control, one review, and the ruling says plants changes in the same increment. The germinal set's origin page is a copy of the live-animals page built in the germinal theme, so the germinal half of 'both animals sets' is observed there: this row's criteria hold before the germinal set exists.",
+        "The placeholder may need a new option on the shared accessible-autocomplete component in each frontend (today it reads its config from the select's data attributes), so the component is listed as shared.",
+        "The page changes visually; the origin page's full-page baseline (req-058) is refreshed in the region code row that finishes the page."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-010",
+      "title": "Region of origin code, internal reference hint and the finished origin page",
+      "detail": "The region of origin code question takes Design Release 2.1's hint and caps the box at 5 characters in the browser, with autocomplete and spellcheck off. Answering No clears a saved code. A code typed under Yes with no country chosen is kept on the page but not saved until a country gives it its prefix. The origin task is complete only when the country and the region question are answered and, under Yes, a code is held. The internal reference hint drops its 58-character sentence (the server still enforces the limit). Every new or changed string on the origin page has Welsh, and the origin page's stored visual baseline is updated to the finished page. The prefix stays server-side as DR1 shipped it; the live prefix waits on design.",
+      "acceptanceCriteria": [
+        "The region of origin code question's hint reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' (prototype:dr2-1-source prototype-dr2-1-source-p2-042; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-042; prototype:dr2-1-specs prototype-dr2-1-specs-p1-021; conflicts:c-010)",
+        "The region code box stops typing at 5 characters and has autocomplete and spellcheck turned off; a longer code submitted without the browser's cap still gets the server's existing error (prototype:dr2-1-source prototype-dr2-1-source-p2-046; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-047; trace:animals-fit trace-animals-fit-p5-023; conflicts:c-010)",
+        "Changing a saved Yes answer with code FR-75 to No and saving clears the code: the review page shows 'Not applicable' for the region of origin code, and choosing Yes again shows an empty code box (prototype:dr2-1-source prototype-dr2-1-source-p2-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p12-014, p13-017; trace:animals-fit trace-animals-fit-p5-047, p5-048, p5-049; conflicts:c-010)",
+        "Answering Yes and typing a region code with no country chosen keeps the typed code on the page, but saves no region of origin code until a country is chosen to give it its prefix (prototype:dr2-1-source prototype-dr2-1-source-p2-056; trace:e2e trace-e2e-p4-034; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-056)",
+        "The overview's origin task reads 'Complete' only when a country is chosen and the region of origin code question is answered: a country saved with the region question unanswered does not read 'Complete', a country with No reads 'Complete', and a country with Yes and a code reads 'Complete' (prototype:dr2-1-source prototype-dr2-1-source-p2-069; trace:animals-fit trace-animals-fit-p5-053, p5-054, p5-055; repo:frontend repo-frontend-p4-114)",
+        "The internal reference hint reads 'Enter any internal reference you want to use to identify this consignment, or leave blank.', with no 'It can be up to 58 characters.' sentence; a reference over 58 characters still gets the server's error naming the limit (prototype:dr2-1-source prototype-dr2-1-source-p2-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p2-063; prototype:dr2-1-specs prototype-dr2-1-specs-p1-023; conflicts:c-011)",
+        "With Welsh chosen, the region hint and the internal reference hint show their Welsh counterparts, and no removed text (the country hint, the 58-character sentence) is left in the origin page's Welsh copy (repo:frontend repo-frontend-p4-117)",
+        "The end-to-end suite's full-page visual baseline of the origin page shows the changed page (no country hint, the country box with its placeholder, the new region hint and the shorter internal reference hint), and the visual check passes against it (trace:e2e trace-e2e-p4-060, p4-061, p4-133)"
+      ],
+      "dependsOn": [
+        "inc-009"
+      ],
+      "theme": "origin-page",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p2-042, p2-046, p2-055, p2-056, p2-062, p2-069"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p1-021, p1-023"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p2-042, p2-047, p2-063, p12-014, p13-015, p13-017"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p1-056"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p4-089, p4-093, p4-097, p4-098, p4-100, p4-114, p4-117"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "repo-plantsfrontend-p5-028, p5-029, p5-030"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p5-019, p5-023, p5-028, p5-047 to p5-049, p5-053 to p5-055"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-026, p4-034, p4-043, p4-053, p4-060, p4-061, p4-127, p4-133"
+        }
+      ],
+      "requirements": [
+        "req-034",
+        "req-036",
+        "req-038",
+        "req-046",
+        "req-049",
+        "req-057",
+        "req-058",
+        "req-1743"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Keeps inc-010. Requirements unchanged; provenance re-cited to the afternoon ruling's current claim id for req-1743 (p1-056). The live prefix (req-040) and the empty prefix slot (req-041) stay in their own waiting-on-design row (design question 2).",
+        "Combines the region code slices (hint, maxlength, No clears the code, a code with no country), the origin task's completeness rule, the internal reference hint, the Welsh sweep and the visual baseline: all change the same origin page and its one baseline. Depends on the hint-and-placeholder row (inc-009) so the baseline shows the finished page. If the combiner orders the subdivision label row (req-030) before this one, the baseline also shows it; otherwise that row refreshes the baseline itself.",
+        "Completeness: Yes without a code cannot be saved through the page (the page holds the trader with 'Enter the region of origin code'), so the criterion observes the reachable cases; the builder still adds the rule to the origin obligation so a stored Yes with no code is never Complete.",
+        "req-057 covers the type and origin pages in animals and the country hint and placeholder in plants. The type page lives in the INS frontend's notification-type folder, which the split-off type-question-and-templates theme owns, so the type page's Welsh is built there with req-001 to req-007; the placeholder's and removed hint's Welsh in both frontends is a criterion of inc-009. req-057 sits here, where the last origin strings land, rather than in splitOff, because its remaining work is all on the origin page."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-175",
+      "title": "Country of origin list labels subdivisions with their parent country",
+      "detail": "Places in the country of origin list that are subdivisions of a country show as '<territory> (<parent>)', for example 'Canary Islands (Spain)', and the list is sorted by the label shown. Which places appear, their names and the stored code stay what MDM serves through the reference data service. c-221 settles it: the label is look and feel, where the prototype wins, and it matches what the 9 October ruling does for the destination select and transit country search.",
+      "acceptanceCriteria": [
+        "In the live-animals country of origin list, every place the reference data service serves as a subdivision of a country shows as '<subdivision name> (<parent country name>)', for example 'Canary Islands (Spain)', with or without JavaScript (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-136, p1-139; conflicts:c-221)",
+        "The country of origin list is sorted alphabetically by the label shown, so 'Canary Islands (Spain)' sits among the C entries (trace:prototype-dr2-1 trace-prototype-dr2-1-p2-040-m1; conflicts:c-221)",
+        "Choosing a subdivision still saves its code (ES-CN for the Canary Islands), and reopening the origin page shows 'Canary Islands (Spain)' in the box with the region code prefix ES (trace:e2e trace-e2e-p4-021; conflicts:c-221)",
+        "The list holds the same places as the reference data service serves for the GBNAG_SPS_EX block, no more and no fewer (repo:referencedata GET /countries; trace:animals-fit trace-animals-fit-p6-004; conflicts:c-001)"
+      ],
+      "dependsOn": [],
+      "theme": "origin-page",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p2-040-m1"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-136, p1-139"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-021"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p6-004"
+        },
+        {
+          "source": "repo:referencedata",
+          "ref": "GET /countries"
+        }
+      ],
+      "requirements": [
+        "req-030"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Keeps inc-175; requirement unchanged. c-221 is settled by precedence, so the row builds the settled outcome. The old criterion's 'typing spain lists Canary Islands (Spain)' clause is dropped: how typed text matches follows the component as configured (c-009), and req-019's mid-name matching is out of scope.",
+        "Depends on the stub countries tidy-up (inc-173), which changes the places the list holds and so the names and counts its checks assert. Labels are presentation built in the frontend from the parent and subdivision names reference data already serves; the list's content stays MDM's (c-001), so no reference-data or stub change. Observable on every stack: the tidied stub serves MDM's subdivisions locally and in CDP dev, and real MDM serves its own in CDP test.",
+        "The germinal set's origin page copies this behaviour when it copies the page. The destination select and transit country search labels are other areas' rows; if the combiner finds they share one label builder, that builder belongs in the reference-lists theme."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/reference-lists",
+          "id": "inc-173"
+        }
+      ]
+    }
+  ]
+}

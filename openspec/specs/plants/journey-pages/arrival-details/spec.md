@@ -53,20 +53,21 @@ The system MUST ask a potatoes notification for the expected time of arrival and
 
 ### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-003
-The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST show the chosen port as its name and code together, and MUST submit and keep the port's code, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
+The system MUST let the user find a proposed place of landing by typing a port's name or code, MUST offer each port reading "<port name> - <port code>", MUST show the chosen port in the search field the same way, MUST submit and keep the port's code, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
 
 #### Scenario: Choosing a port shows its name and code and is kept on return
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-A
 - **GIVEN** a potatoes notification is on the arrival details
 - **WHEN** they choose a port, complete the page and save it
-- **THEN** the port field shows that port's name and code together
+- **THEN** the port field shows that port as "<port name> - <port code>", for example "Port of Dover - GB DVR"
 - **AND** returning to the page still holds that choice
+- **AND** the port's code is what the notification keeps
 
 #### Scenario: Every port the reference data service serves is offered as a place of landing, in its order
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-B
 - **GIVEN** a potatoes notification is on the arrival details page
 - **WHEN** the place-of-landing list is read in full
-- **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
+- **THEN** it holds every port the reference data service serves, each reading "<port name> - <port code>", in the order the service serves them
 
 #### Scenario: Places of landing are listed airports first, then seaports, then rail ports, each A to Z by name
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-003-C
@@ -214,3 +215,14 @@ The system MUST set every question on the arrival details page in the GOV.UK med
 - **GIVEN** a plants or wood notification on arrival details
 - **WHEN** the page loads
 - **THEN** its arrival date question is set in the medium label size
+
+### Requirement: The place-of-landing field works without client-side JavaScript
+**ID**: REQ-PLANTS-ARRIVAL-DETAILS-013
+The system MUST keep an ordinary, labelled port list underneath the searchable place-of-landing field, so a user without JavaScript can still choose a port, MUST have each port in it read "<port name> - <port code>", and MUST save the chosen port's code.
+
+#### Scenario: A potatoes notification chooses its place of landing from an ordinary list
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-013-A
+- **GIVEN** a potatoes notification is on the arrival details without JavaScript
+- **WHEN** they choose a port from the ordinary list, complete the page and save it
+- **THEN** the list is labelled as the place of landing question and each port reads "<port name> - <port code>"
+- **AND** returning to the page still holds that port's code

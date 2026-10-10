@@ -43,7 +43,7 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 **ID**: SCN-ARRIVAL-002-D
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the port list is read in full
-- **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
+- **THEN** it holds every port the reference data service serves, each reading "<port name> - <port code>", for example "Port of Dover - GB DVR", in the order the service serves them
 
 #### Scenario: Ports are listed airports first, then seaports, then rail ports, each A to Z by name
 **ID**: SCN-ARRIVAL-002-E
@@ -54,7 +54,7 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 
 ### Requirement: Choosing a port submits and keeps its code
 **ID**: REQ-ARRIVAL-003
-The system MUST submit the chosen port's code rather than the text the user typed, and MUST still hold that code when the user returns to the page.
+The system MUST submit the chosen port's code rather than the text the user typed, MUST show the chosen port in the search field as "<port name> - <port code>", and MUST still hold that code when the user returns to the page.
 
 #### Scenario: The chosen port's code is what the notification keeps
 **ID**: SCN-ARRIVAL-003-A
@@ -68,17 +68,19 @@ The system MUST submit the chosen port's code rather than the text the user type
 **ID**: SCN-ARRIVAL-003-B
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they choose a port
-- **THEN** the search field shows that port's name followed by its code
+- **THEN** the search field shows that port as "<port name> - <port code>", for example "Port of Dover - GB DVR"
 
 ### Requirement: The port field works without client-side JavaScript
 **ID**: REQ-ARRIVAL-004
-The system MUST keep an ordinary port list underneath the searchable field, so a user without JavaScript can still choose a port, and MUST have that underlying list carry the code the page submits.
+The system MUST keep an ordinary, labelled port list underneath the searchable field, so a user without JavaScript can still choose a port, MUST have each port in that list read "<port name> - <port code>", and MUST have that underlying list carry the code the page submits.
 
 #### Scenario: An ordinary port list remains available beneath the searchable field
 **ID**: SCN-ARRIVAL-004-A
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the page is examined without relying on the searchable field
 - **THEN** an ordinary port list is present, carrying the code that is submitted
+- **AND** the list is labelled as the port of entry question
+- **AND** each port in it reads "<port name> - <port code>"
 
 ### Requirement: A complete set of arrival details is accepted
 **ID**: REQ-ARRIVAL-005

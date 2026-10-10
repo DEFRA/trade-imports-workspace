@@ -14,7 +14,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page asks for one country at a time and starts with an empty list", "strength": "full", "notes": "asserts search field, hint, Add button, no table, no empty-state sentence, no limit message" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the transit type-ahead offers every captured country behind a search placeholder", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the transit type-ahead offers every captured country and territory, territories named with their country, in alphabetical order behind a search placeholder", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "filters the country list by what the user types (AC1)", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "renders the country search and an empty list", "strength": "full", "notes": "asserts no table and no empty-state sentence" }
           ]
@@ -97,6 +97,7 @@
           "name": "An out-of-list or tampered entry is refused and never rendered back",
           "coverage": "full",
           "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should refuse $name, keep the search box on the page and commit nothing", "strength": "partial", "notes": "view model; includes an unknown subdivision code" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: out-of-list country links to and focuses the search box", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit validation: a tampered country code is never reflected as markup", "strength": "full", "notes": "XSS-shaped payload; confirms no injection as well as the fromList rejection" }
           ]
@@ -209,6 +210,52 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "a transit form submitted after the means changes to Air saves no countries and goes to the overview", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should save no countries and go to the overview on Save and continue when the means of transport is $name", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-009",
+      "name": "The search offers the origin countries and their territories, each territory named with its country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-009-A",
+          "name": "The search offers the origin countries and their territories in alphabetical order",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/transit-country-list.spec.ts", "test": "the transit country search offers the origin countries and their territories, each territory named with its country, in alphabetical order", "strength": "full", "notes": "compose stack only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the transit type-ahead offers every captured country and territory, territories named with their country, in alphabetical order behind a search placeholder", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-009-B",
+          "name": "Each territory is named with its country, with or without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the transit type-ahead offers every captured country and territory, territories named with their country, in alphabetical order behind a search placeholder", "strength": "full", "notes": "with JavaScript, on the select the type-ahead reads" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "the native select offers territories under their country-named labels, and one added is saved and listed again", "strength": "full", "notes": "without JavaScript" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should name each subdivision in the search list with its parent country", "strength": "partial", "notes": "view model" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-010",
+      "name": "An added territory is listed, saved and listed again under its country-named label",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-010-A",
+          "name": "A territory is listed, saved and shown again under the same name",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "a territory is listed as \"<territory> (<country>)\", saved by its code, and listed again under that name when the page is reopened", "strength": "full", "notes": "with JavaScript" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "without JavaScript, a territory is listed as \"<territory> (<country>)\", saved by its code, and listed again under that name", "strength": "full", "notes": "without JavaScript" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "a territory is listed under its country-named label, saves its code and is listed again under that name on return", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should add a subdivision under its parent-named label and announce it", "strength": "partial", "notes": "view model" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should commit a subdivision code and continue", "strength": "partial", "notes": "view model" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should read a stored subdivision back under its parent-named label, with no error", "strength": "partial", "notes": "view model" }
           ]
         }
       ]

@@ -176,3 +176,13 @@ While a notification is being amended, the system MUST show the review with no e
 - **THEN** they stay on the review with no error summary or error message
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
+
+### Requirement: A transited territory is named with its country on the review
+**ID**: REQ-CYA-011
+The system MUST show each transited country on the review's Transit countries card by the name the transited countries page lists it under, naming a territory "<territory> (<country>)".
+
+#### Scenario: A transited territory reads with its country
+**ID**: SCN-CYA-011-A
+- **GIVEN** the notification's transited countries include a territory
+- **WHEN** the review page is shown
+- **THEN** the Transit countries card names it "<territory> (<country>)", for example "Canary Islands (Spain)"

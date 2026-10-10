@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks which countries the consignment travels through on its way, adding them one at a time to a list rather than choosing from a fixed group. The page is titled "Which countries will the consignment travel through?". Its browser title is "Transit countries - Import notification service - GOV.UK". It is asked only when the means of transport to the port of entry is rail or road.
+Asks which countries the consignment travels through on its way, adding them one at a time to a list, from the countries and territories the reference data service serves, rather than choosing from a fixed group. The page is titled "Which countries will the consignment travel through?". Its browser title is "Transit countries - Import notification service - GOV.UK". It is asked only when the means of transport to the port of entry is rail or road.
 
 ## Requirements
 
@@ -54,7 +54,7 @@ The system MUST accept the transited countries page being saved with none added,
 
 ### Requirement: Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached
 **ID**: REQ-TRANSIT-COUNTRIES-004
-The system MUST refuse to add a country when the search field is left blank, when the entry is not one of the offered countries, or when it has already been added, in each case naming the reason and linking to and focusing the search field. The system MUST NOT render a rejected entry back as an added row, whatever it contains.
+The system MUST refuse to add a country when the search field is left blank, when the entry is not one of the offered countries or territories, or when it has already been added, in each case naming the reason and linking to and focusing the search field. The system MUST NOT render a rejected entry back as an added row, whatever it contains.
 
 #### Scenario: Pressing Add with nothing chosen is refused
 **ID**: SCN-TRANSIT-COUNTRIES-004-A
@@ -71,7 +71,7 @@ The system MUST refuse to add a country when the search field is left blank, whe
 
 #### Scenario: An out-of-list or tampered entry is refused and never rendered back
 **ID**: SCN-TRANSIT-COUNTRIES-004-C
-- **GIVEN** a country code that is not one of the offered options, however it was submitted
+- **GIVEN** a country or territory code that is not one of the offered options, however it was submitted
 - **WHEN** the page responds
 - **THEN** an error tells the user to select a country from the list, linking to and focusing the search field
 - **AND** the rejected value is not added to the list or rendered back onto the page as markup
@@ -149,3 +149,30 @@ The system MUST send a user who opens the transited countries page to Overview w
 - **WHEN** the user saves and continues
 - **THEN** Overview is shown
 - **AND** no transited countries were saved
+
+### Requirement: The search offers the origin countries and their territories, each territory named with its country
+**ID**: REQ-TRANSIT-COUNTRIES-009
+The system MUST offer in the transited country search, after the placeholder "Search for a country", the countries and territories the reference data service serves for the country of origin, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name, with or without JavaScript.
+
+#### Scenario: The search offers the origin countries and their territories in alphabetical order
+**ID**: SCN-TRANSIT-COUNTRIES-009-A
+- **GIVEN** the user is on the transited countries page
+- **WHEN** the search list is read in full
+- **THEN** after the placeholder "Search for a country" it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order
+
+#### Scenario: Each territory is named with its country, with or without JavaScript
+**ID**: SCN-TRANSIT-COUNTRIES-009-B
+- **GIVEN** the transited countries search, with or without JavaScript
+- **WHEN** a territory is read
+- **THEN** it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+### Requirement: An added territory is listed, saved and listed again under its country-named label
+**ID**: REQ-TRANSIT-COUNTRIES-010
+The system MUST list an added territory as "<territory> (<country>)", MUST save its code when the user saves and continues, and MUST list it again under the same name when the page is reopened.
+
+#### Scenario: A territory is listed, saved and shown again under the same name
+**ID**: SCN-TRANSIT-COUNTRIES-010-A
+- **GIVEN** the user is on the transited countries page
+- **WHEN** they add a territory and save and continue
+- **THEN** no error is shown
+- **AND** when they reopen the page the territory is listed as "<territory> (<country>)"

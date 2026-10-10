@@ -1,0 +1,78 @@
+{
+  "capability": "ins/page-titles",
+  "areaCode": "INS-PAGE-TITLE",
+  "specFile": "openspec/specs/ins/page-titles/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-PAGE-TITLE-001",
+      "name": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-A",
+          "name": "A page's title reads page name, service name, GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "titles the address book page the same way", "strength": "full", "notes": "asserts the rendered document title on the address book page in the browser" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should join the page name, the service name and GOV.UK with hyphens", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the address book follows the same title pattern", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-B",
+          "name": "The parts are not separated by a pipe",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should not separate the title with a pipe", "strength": "full", "notes": "the negative that pins the separator" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the home is titled Dashboard - Import notification service - GOV.UK", "strength": "partial", "notes": "asserts no pipe on the home only" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-C",
+          "name": "The home is titled Dashboard - Import notification service - GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the home is titled Dashboard - Import notification service - GOV.UK", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "titles the home Dashboard, then the service name and GOV.UK, joined by hyphens", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should join the page name, the service name and GOV.UK with hyphens", "strength": "full", "notes": "renders with the page title Dashboard" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-PAGE-TITLE-002",
+      "name": "A page showing errors opens its whole title with an error prefix",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-PAGE-TITLE-002-A",
+          "name": "The error prefix opens the title while errors are shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "puts the error prefix in front of the whole title when the page shows errors", "strength": "full", "notes": "drives a real validation failure on the add address page" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should keep the error prefix in front of the whole title", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "a page showing errors opens its title with Error:", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "POST with invalid data re-renders form with errors", "strength": "partial", "notes": "asserts the prefixed title on the add address validation failure" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-PAGE-TITLE-003",
+      "name": "An error page's title follows the same pattern",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-PAGE-TITLE-003-A",
+          "name": "A page that does not exist is titled Page not found - Import notification service - GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "an error page follows the same title pattern", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "titles an error page the same way", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/common/helpers/errors.test.js", "test": "Should provide expected Not Found page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -106,7 +106,7 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 
 #### Scenario: Save and return to overview saves a page with a required answer missing
 **ID**: SCN-FLOW-004-C
-- **GIVEN** the Main reason for import page with "Transit" chosen and its port of exit and destination country left blank
+- **GIVEN** the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
 - **WHEN** the user selects "Save and return to overview"
 - **THEN** they return to Overview with no error shown
 - **AND** the Main reason for import task does not read "Complete"

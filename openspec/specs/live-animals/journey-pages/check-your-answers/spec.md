@@ -41,6 +41,13 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** they view check-your-answers
 - **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
 
+#### Scenario: The reason and additional details answers read under their own names
+**ID**: SCN-CYA-001-F
+- **GIVEN** a notification with its import reason and additional details answered
+- **WHEN** the user views the review
+- **THEN** the reason answers stand under the subsection heading "Main import reason", with the internal market purpose labelled "Purpose in the market" and, for Temporary admission horses, "Exit date" and "Port of exit" rows
+- **AND** the additional details answers read "Certified for" and, where the unweaned question was asked, "Includes unweaned animals"
+
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
 The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).

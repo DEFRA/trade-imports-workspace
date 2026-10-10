@@ -49,19 +49,27 @@ The system MUST let the user search the dashboard by complete notification refer
 - **WHEN** the search runs
 - **THEN** a "No notifications found" message is shown
 
-### Requirement: The dashboard always offers a way to start a new notification, opening the notification type question
+### Requirement: The dashboard always offers Create new, opening the notification type question
 **ID**: REQ-INS-DASH-004
-The system MUST offer "Start a new notification" on the dashboard whether or not any notifications are listed, and MUST open the "What are you importing?" question (`ins/notification-type`) when the user chooses it, before any notification exists.
+The system MUST offer a "Create new" button under the dashboard heading, above the reference search and the notifications list, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing), and MUST NOT offer "Start a new notification". Choosing "Create new" MUST open the "What are you importing?" question (`ins/notification-type`) with no option selected, before any notification exists.
 
 #### Scenario: Starting from a dashboard that lists notifications asks what is being imported
 **ID**: SCN-INS-DASH-004-A
 - **GIVEN** notifications are listed on the dashboard
-- **WHEN** the user chooses "Start a new notification"
+- **WHEN** the user chooses "Create new"
 - **THEN** the question "What are you importing?" is shown
+- **AND** no option is selected and the second option is Germinal products (semen, ova, embryos)
 
 #### Scenario: Starting from an empty dashboard asks the same question
 **ID**: SCN-INS-DASH-004-B
 - **GIVEN** the organisation has no notifications
 - **WHEN** the dashboard is shown
-- **THEN** "Start a new notification" is still offered
+- **THEN** "Create new" is still offered
+- **AND** choosing it shows the question "What are you importing?"
+
+#### Scenario: Create new is still offered after a search that matches nothing
+**ID**: SCN-INS-DASH-004-C
+- **GIVEN** the user searches for a reference number that matches no notification
+- **WHEN** the "No notifications found" message is shown
+- **THEN** "Create new" is still offered
 - **AND** choosing it shows the question "What are you importing?"

@@ -267,6 +267,29 @@ describe('tim build gate', () => {
     )
   })
 
+  test('replaces an earlier result in its logs folder even without --result', async () => {
+    seedGateRepo({ test: 'echo tested' })
+    const logs = join(root, 'logs')
+    const resultPath = join(logs, 'gate-result-unit.json')
+    mkdirSync(logs, { recursive: true })
+    writeFileSync(resultPath, JSON.stringify({ ok: false, stale: true }))
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--logs',
+      logs
+    ])
+
+    expect(JSON.parse(readFileSync(resultPath, 'utf8'))).toEqual(
+      envelopeOf(run)
+    )
+  })
+
   test('writes an error to the --result file when the gate cannot start', async () => {
     seedWorkspace(['frontend'])
     const resultPath = join(root, 'logs', 'gate-result.json')

@@ -972,6 +972,7 @@ lint, typecheck, unit tests, \`mvn verify\`, FIT and the local-stack E2E suite â
 \`gate-<repo>-<rung>.log\` under the --logs folder. Every gate command names this run's lease holder,
 \`${RUN_HOLDER}\`: the workspace stack is already up under that lease, and the gate's E2E phase uses it as it is,
 rebuilding only what changed. The gate refuses a stack leased to anybody else or up with no lease at all. So:
+- Run every gate command exactly as written, character for character: never drop, add or reorder a flag.
 - Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
 - Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
   leave it as it is.

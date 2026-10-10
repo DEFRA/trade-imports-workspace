@@ -1,11 +1,11 @@
-import { resolve } from 'node:path'
 import { z } from 'zod'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, ERROR } from '../../constants/exitCodes.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
 import { runBuildBranch } from '../../build/branch.js'
-import { runGate, GATE_PHASES } from '../../build/gate.js'
+import { join, resolve } from 'node:path'
+import { runGate, GATE_PHASES, defaultLogsDir } from '../../build/gate.js'
 import {
   clearGateResult,
   waitForGateResult,
@@ -57,6 +57,11 @@ const gateOptionsSchema = z.object({
     .optional(),
   serial: z.boolean()
 })
+
+// Every gate writes its result, so a waiter never reads one an earlier gate
+// left in the same folder: a caller that forgets --result still gets one.
+const defaultResultPath = (logsDir, phase) =>
+  join(logsDir, `gate-result-${phase}.json`)
 
 // Under the Bash tool's 600-second ceiling, so one wait always returns by itself.
 const DEFAULT_WAIT_SECONDS = 540
@@ -285,7 +290,7 @@ const registerGate = (build, timVersion) =>
     )
     .option(
       '--result <file>',
-      'Also write the JSON result to this file when the gate finishes, passed or not, so `tim build gate-wait` can pick it up if whatever started the gate stopped waiting'
+      'Where the gate writes its JSON result when it finishes, passed or not, for `tim build gate-wait` to pick up (default: gate-result-<phase>.json in the logs folder). The gate removes any earlier result there first'
     )
     .option(
       '--serial',
@@ -301,7 +306,7 @@ const registerGate = (build, timVersion) =>
     )
     .action(async function gateAction(workarea, opts) {
       const globalOpts = this.optsWithGlobals()
-      const resultPath = opts.result ? resolve(opts.result) : null
+      let resultPath = null
       try {
         const parsed = parseOptions(gateOptionsSchema, {
           workarea,
@@ -311,16 +316,22 @@ const registerGate = (build, timVersion) =>
           holder: opts.holder,
           serial: opts.serial === true
         })
-        if (resultPath) clearGateResult(resultPath)
         const workspaceRoot = resolveWorkspaceRoot({
           explicit: globalOpts.workspace
         })
+        const logsDir = parsed.logs
+          ? resolve(parsed.logs)
+          : defaultLogsDir(workspaceRoot, parsed.workarea)
+        resultPath = parsed.result
+          ? resolve(parsed.result)
+          : defaultResultPath(logsDir, parsed.phase)
+        clearGateResult(resultPath)
         const outcome = await runGate({
           workspaceRoot,
           workarea: parsed.workarea,
           phase: parsed.phase,
           serial: parsed.serial,
-          logsDir: parsed.logs ? resolve(parsed.logs) : undefined,
+          logsDir,
           ...(parsed.holder ? { holder: parsed.holder } : {})
         })
         const envelope = gateEnvelope(outcome, timVersion)

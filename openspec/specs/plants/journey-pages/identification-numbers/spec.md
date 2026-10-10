@@ -50,7 +50,7 @@ The system MUST accept valid values for the fields on offer, trimming leading an
 
 ### Requirement: Mandatory fields, length and consignment syntax are enforced
 **ID**: REQ-PLANTS-IDENT-NUMBERS-003
-The system MUST refuse to save when a mandatory field on offer is blank or longer than 58 characters, MUST refuse a consignment number longer than 58 characters or containing characters other than letters, numbers and underscores, and MUST focus the named field when the user follows the resulting error.
+The system MUST refuse to save and continue when a mandatory field on offer is blank, MUST NOT refuse the page for a blank mandatory field on save and return to overview, MUST refuse on either save control a field longer than 58 characters and a consignment number containing characters other than letters, numbers and underscores, and MUST focus the named field when the user follows the resulting error.
 
 #### Scenario: A blank mandatory field is refused and its error focuses the field
 **ID**: SCN-PLANTS-IDENT-NUMBERS-003-A
@@ -69,6 +69,12 @@ The system MUST refuse to save when a mandatory field on offer is blank or longe
 - **GIVEN** the user enters a consignment number containing characters other than letters, numbers or underscores
 - **WHEN** they save and continue and follow the error
 - **THEN** the consignment number field is focused
+
+#### Scenario: Save and return to overview with a mandatory field blank reaches Overview without an error
+**ID**: SCN-PLANTS-IDENT-NUMBERS-003-D
+- **GIVEN** the user is on identification numbers with a mandatory field on offer
+- **WHEN** they leave that field blank and save and return to overview
+- **THEN** they return to Overview with no error shown
 
 ### Requirement: Save-and-return saves; cancel discards later edits; back returns to Overview
 **ID**: REQ-PLANTS-IDENT-NUMBERS-004

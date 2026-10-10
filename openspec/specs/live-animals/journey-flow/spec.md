@@ -84,7 +84,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way.
+The system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved, or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing the page for a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, whose answers are checked before saving either way.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -97,6 +97,28 @@ The system MUST let the user leave a page the hub links to directly either by di
 - **GIVEN** the user has typed into a field on a task page
 - **WHEN** they select "Save and return to overview"
 - **THEN** they return to Overview, and re-opening the task page shows the committed input
+
+#### Scenario: Save and return to overview saves a page with a required answer missing
+**ID**: SCN-FLOW-004-C
+- **GIVEN** the Main reason for import page with "Transit" chosen and its port of exit and destination country left blank
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview with no error shown
+- **AND** the Main reason for import task does not read "Complete"
+- **AND** re-opening the page shows "Transit" chosen
+
+#### Scenario: An answer that breaks its own rule is refused on save and return
+**ID**: SCN-FLOW-004-D
+- **GIVEN** the Arrival details page with an arrival date that names no day
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they stay on the page, which shows "Enter a real arrival date"
+- **AND** nothing is saved
+
+#### Scenario: Commodity details keeps its checks on save and return
+**ID**: SCN-FLOW-004-E
+- **GIVEN** the Commodity details page with the number of animals left blank
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they stay on the page, which shows "Enter the number of animals"
+- **AND** nothing is saved
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-FLOW-005

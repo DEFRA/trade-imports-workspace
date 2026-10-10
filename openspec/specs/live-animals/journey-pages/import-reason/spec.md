@@ -85,9 +85,9 @@ The system MUST reveal Transit's own questions — the port of exit, then the de
 - **WHEN** they choose "Temporary admission of horses"
 - **THEN** the exit date and then the port of exit are asked for inline, under that option
 
-### Requirement: An incompletely answered reveal is rejected without closing it, keeping what was already answered
+### Requirement: An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered
 **ID**: REQ-IMPORT-REASON-006
-The system MUST refuse to save a reason whose revealed questions are only partly answered, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.
+The system MUST refuse to save and continue from a reason whose revealed questions are only partly answered, MUST NOT refuse the page for that on save and return to overview, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.
 
 #### Scenario: Answering only the port of exit under Transit is rejected, keeping the port and the reveal open
 **ID**: SCN-IMPORT-REASON-006-A
@@ -95,6 +95,13 @@ The system MUST refuse to save a reason whose revealed questions are only partly
 - **WHEN** they save and continue
 - **THEN** an error focuses the destination country, with the reveal still open
 - **AND** the port of exit they already answered is still held
+
+#### Scenario: Save and return to overview saves a partly answered reveal and returns to Overview
+**ID**: SCN-IMPORT-REASON-006-B
+- **GIVEN** the user has chosen "Transit" and left the port of exit and the destination country blank
+- **WHEN** they save and return to overview
+- **THEN** they return to Overview with no error shown
+- **AND** re-opening the page shows "Transit" still chosen
 
 ### Requirement: An invalid submitted reason is refused without preserving it
 **ID**: REQ-IMPORT-REASON-007

@@ -85,9 +85,9 @@ The system MUST accept the arrival details once every answer the notification ow
 - **WHEN** they answer the arrival date and save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving the page empty is refused
+### Requirement: Saving and continuing with the page empty is refused
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-005
-The system MUST refuse to save the arrival details when the required answers for the notification's state are missing, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error.
+The system MUST refuse to save and continue from the arrival details when the required answers for the notification's state are missing, showing an error summary that names each missing answer, and MUST focus the date field when the user follows the date error. It MUST NOT refuse the page for a missing answer on save and return to overview.
 
 #### Scenario: A blank potato page names the date, time and place of landing
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-A
@@ -103,9 +103,16 @@ The system MUST refuse to save the arrival details when the required answers for
 - **WHEN** they save and continue
 - **THEN** an error summary names the missing arrival date
 
+#### Scenario: Save and return to overview saves a blank page and leaves the arrival row incomplete
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-005-C
+- **GIVEN** a potatoes notification is on the arrival details with nothing answered
+- **WHEN** they save and return to overview
+- **THEN** they return to Overview with no error shown
+- **AND** the arrival task row does not read "Completed"
+
 ### Requirement: An impossible date is rejected with its own error, distinct from a missing date
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-006
-The system MUST refuse a date that does not exist on the calendar with an error naming that the date is invalid, not that it is missing, and MUST preserve the value typed and the page's other answers.
+The system MUST refuse a date that does not exist on the calendar with an error naming that the date is invalid, not that it is missing, on either save control, and MUST preserve the value typed and the page's other answers.
 
 #### Scenario: A date that names no day is refused and kept
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-006-A
@@ -117,7 +124,7 @@ The system MUST refuse a date that does not exist on the calendar with an error 
 
 ### Requirement: A future date is refused once the consignment has already arrived
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-007
-The system MUST refuse an arrival date after today when the consignment has already arrived, with an error saying the date cannot be in the future, and MUST NOT apply that future-date refusal when the consignment has not yet arrived or the notification is for potatoes.
+The system MUST refuse an arrival date after today when the consignment has already arrived, with an error saying the date cannot be in the future, on either save control, and MUST NOT apply that future-date refusal when the consignment has not yet arrived or the notification is for potatoes.
 
 #### Scenario: A future date is refused for an already-arrived consignment
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-007-A
@@ -127,7 +134,7 @@ The system MUST refuse an arrival date after today when the consignment has alre
 
 ### Requirement: An invalid place of landing is rejected
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-008
-The system MUST refuse a proposed place of landing that is not one of the ports the service holds, showing an error against that field.
+The system MUST refuse a proposed place of landing that is not one of the ports the service holds, on either save control, showing an error against that field.
 
 #### Scenario: A port the service does not hold is refused
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-008-A
@@ -137,7 +144,7 @@ The system MUST refuse a proposed place of landing that is not one of the ports 
 
 ### Requirement: An invalid time is rejected, focusing the time field
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-009
-The system MUST refuse an expected time of arrival that is not on the 24-hour clock, and MUST focus the time field when the user follows the error.
+The system MUST refuse an expected time of arrival that is not on the 24-hour clock on either save control, and MUST focus the time field when the user follows the error.
 
 #### Scenario: A time not on the 24-hour clock is refused
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-009-A

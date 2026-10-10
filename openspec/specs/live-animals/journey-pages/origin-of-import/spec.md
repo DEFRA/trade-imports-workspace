@@ -125,7 +125,7 @@ The system MUST let the user give an optional internal reference for the notific
 
 ### Requirement: The region of origin code has a maximum length of five characters
 **ID**: REQ-ORIGIN-010
-The system MUST reject a region of origin code longer than five characters, with an error naming the limit, and MUST preserve the value typed.
+The system MUST reject a region of origin code longer than five characters on either save control, with an error naming the limit, and MUST preserve the value typed.
 
 #### Scenario: An over-length region code is rejected with the value preserved
 **ID**: SCN-ORIGIN-010-A
@@ -135,9 +135,16 @@ The system MUST reject a region of origin code longer than five characters, with
 - **AND** the field is focused, still holding the value typed
 - **AND** the chosen country and the answer to whether a region code is required are still held
 
-### Requirement: Answering that a region code is required but leaving it empty is rejected
+#### Scenario: An over-length region code is refused on save and return to overview
+**ID**: SCN-ORIGIN-010-B
+- **GIVEN** the user has answered that a region code is required
+- **WHEN** they type a region code longer than five characters and save and return to overview
+- **THEN** they remain on the origin of the import page with an error naming the region code's limit
+- **AND** the over-length code is not saved
+
+### Requirement: Answering that a region code is required but leaving it empty is rejected on save and continue
 **ID**: REQ-ORIGIN-011
-The system MUST refuse to save the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
+The system MUST refuse to save and continue from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field, and MUST NOT refuse the page for that on save and return to overview.
 
 #### Scenario: An empty region code is rejected when one is required
 **ID**: SCN-ORIGIN-011-A
@@ -145,6 +152,14 @@ The system MUST refuse to save the origin page when the user has answered that a
 - **WHEN** they leave the region code empty and save and continue
 - **THEN** they remain on the origin of the import page
 - **AND** an error focuses the region code field, with the chosen country and the required answer still held
+
+#### Scenario: Save and return to overview saves "Yes" with the code left blank, leaving the origin task to do
+**ID**: SCN-ORIGIN-011-B
+- **GIVEN** the user has chosen a country and answered that a region code is required
+- **WHEN** they leave the region code empty and save and return to overview
+- **THEN** they return to Overview with no error shown
+- **AND** the origin task does not read "Complete"
+- **AND** re-opening the page shows the required answer still held as "Yes"
 
 ### Requirement: Once a region code is required, the chosen country's code is shown as a fixed prefix beside the region code field
 **ID**: REQ-ORIGIN-012

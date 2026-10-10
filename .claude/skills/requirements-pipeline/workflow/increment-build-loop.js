@@ -479,6 +479,12 @@ const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
 
+// A light-tier lease taker twice reported a result without calling any tool,
+// saying Bash was not loaded. It always is, so every prompt that runs commands
+// says so, guard rails or not.
+const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
+  command you have not run, and never report Bash or any tool as missing without first calling it.`
+
 // ---------------------------------------------------------------------------
 // Workspace root. A workflow script has no filesystem and no environment, so it
 // cannot see $HOME — an agent resolves the root and everything else hangs off
@@ -520,7 +526,8 @@ Set canonical:true only if candidate 1 worked; if it did not, say so in your sum
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
-No Grep/Glob tools. One command per Bash call.`,
+No Grep/Glob tools. One command per Bash call.
+${RUN_WITH_BASH}`,
   light({ label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA })
 )
 
@@ -1229,7 +1236,7 @@ const acquireRunLease = () =>
   agent(
     `You are the LEASE TAKER for build run ${RUN_ID}. You take the workspace stack's lease for the whole run, before
 its first increment. That is your whole job.
-${guardrails()}
+${leaseGuardrails('acquire')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
@@ -1245,7 +1252,7 @@ const releaseRunLease = () =>
   agent(
     `You are the LEASE RELEASER for build run ${RUN_ID}. The run has ended, and you give back the workspace stack's
 lease it held as \`${RUN_HOLDER}\`. That is your whole job.
-${guardrails()}
+${leaseGuardrails('release')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease release --holder "${RUN_HOLDER}" --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
@@ -1271,13 +1278,24 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
 // ins-performance-testing inc-001 also left the perftests repo's own stand-in
 // container running: its `docker compose run` checks started the services in
 // their `depends_on` and nothing took them down.
-const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
-  once and gives it back once; no stage does either unless its task below is exactly that. Never start, stop, restart
-  or rebuild it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\`
-  or \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
-- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
+const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
   \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
   project down. Leave nothing running that you started.`
+
+const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
+  once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
+  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
+  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
+${OTHER_COMPOSE_GUARD}`
+
+// The lease stages' own rule. Given the general one, which forbids the very
+// command their task names, a Haiku lease taker twice returned without running
+// anything and blamed a Bash tool it had (journey-foundation, 9 Oct 2026).
+const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
+  \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
+  you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
+  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+${OTHER_COMPOSE_GUARD}`
 
 const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against the
 stack the run already holds, as THE WORKSPACE STACK below says.`
@@ -1347,8 +1365,9 @@ none does, add a small test or npm script that makes it to the plan's own work (
 or the performance-tests repo) and name that as the check. To prove a script runs, run the npm script that calls it.
 To vary a script's behaviour, use an npm script or a flag the script takes, never a variable prefix.`
 
-const BASE_GUARDRAILS = `
+const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
+${RUN_WITH_BASH}
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
 - In Bash ALWAYS use tilde paths \`${TILDE}/...\` — a literal /Users/... path in Bash is DENIED.
@@ -1362,14 +1381,18 @@ ${DENIED_FORMS_LINE}
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
-${STACK_GUARD}
+${stackGuard}
 ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
 
+const BASE_GUARDRAILS = baseGuardrails(STACK_GUARD)
+
 // Every stage of an increment that builds in the workspace repo is told how
 // that repo differs from the others.
 const guardrails = () => `${BASE_GUARDRAILS}${workspaceRepoRule()}`
+
+const leaseGuardrails = (verb) => `${baseGuardrails(leaseStackGuard(verb))}${workspaceRepoRule()}`
 
 // How every stage pushes, and why it looks paranoid.
 //
@@ -2313,7 +2336,8 @@ two commands, one Bash call each, and read their output:
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
-else. No Grep/Glob tools, tilde paths only.`,
+else. No Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
 
@@ -2386,7 +2410,8 @@ Read \`result.next\` and nothing else:
 If the command exits non-zero or prints no JSON, return ok:false quoting exactly what it said. Do NOT choose an
 increment yourself, do NOT read the backlog, and do NOT judge whether the one tim named looks ready: buildability
 is status and dependencies, which tim has already applied.
-One Bash call, no Grep/Glob tools, tilde paths only.`,
+One Bash call, no Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
 
@@ -4778,7 +4803,8 @@ Return the structured output only.`,
 \`jq -r '.increments[] | select(.id=="${id}") | .gate' ${BACKLOG_TILDE}\`
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
 in summary.
-Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
+Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
     light({ label: `${id} gate check`, phase: 'Done', schema: incrementSchema })
   )
 

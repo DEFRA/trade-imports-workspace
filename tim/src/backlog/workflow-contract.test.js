@@ -1792,6 +1792,38 @@ describe('increment-build-loop', () => {
           )
         })
 
+        test('lets only the lease taker and the releaser run a lease command', async () => {
+          const forbidsLeaseCommands = (prompt) =>
+            prompt.includes('no `tim docker lease acquire` or `release`')
+          const run = await runFrom(null)
+
+          expect({
+            acquire: forbidsLeaseCommands(promptOf(run, ACQUIRE_LABEL)),
+            release: forbidsLeaseCommands(promptOf(run, RELEASE_LABEL)),
+            otherGuardedStages: run.agents
+              .filter(({ options, prompt }) => !isRunLease(options.label) && prompt.includes('GUARD RAILS'))
+              .every(({ prompt }) => forbidsLeaseCommands(prompt))
+          }).toEqual({ acquire: false, release: false, otherGuardedStages: true })
+        })
+
+        test('tells the lease taker its lease command is the one stack command it runs', async () => {
+          const run = await runFrom(null)
+
+          expect(promptOf(run, ACQUIRE_LABEL)).toContain(
+            `your task below is to take its lease for this run, as\n  \`${RUN_ID}\`, with \`tim docker lease acquire\`. Run that command exactly as given`
+          )
+        })
+
+        test('tells every agent of the run to run its commands with Bash, never to report one it has not run', async () => {
+          const run = await runFrom(null)
+
+          expect(
+            run.agents
+              .filter(({ prompt }) => !prompt.includes('The Bash tool is loaded in every stage'))
+              .map(({ options }) => options.label)
+          ).toEqual([])
+        })
+
         test('gives the lease back once, as the run, after the run stops', async () => {
           const run = await runFrom(null)
 

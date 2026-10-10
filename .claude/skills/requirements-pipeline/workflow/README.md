@@ -590,6 +590,13 @@ so a resumed run keeps it.
    `tim docker lease release --holder "<run id>"`, which takes the stack down and clears the
    lease. If that fails, the run's `stopped.detail` says so and gives the command.
 
+The lease taker and the releaser get their own stack rule in their guard rails: it names
+their lease command as the one stack command they run. Every other stage's guard rails forbid
+`tim docker lease acquire` and `release`. Given that general rule, a Haiku lease taker twice
+returned without running anything and said Bash was not loaded (journey-foundation, 9 October
+2026). So every agent prompt also says Bash is loaded, and never to report a command it has
+not run.
+
 `acquire` starts a stack that is down and records its container ids in the lease. It reuses a
 stack the same holder leases only when that start finished and the containers are still the
 ones it recorded; a start of its own that died part-way is taken down and started again. It

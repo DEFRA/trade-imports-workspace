@@ -69,15 +69,39 @@
     },
     {
       "id": "REQ-ADDL-DETAILS-004",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to the page before it in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDL-DETAILS-004-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "set-up visits the overview, so the run has ended" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should point Additional details' Back link at Identification details mid-run when a chosen commodity needs identifiers, and at the overview outside the run", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle notification from What are you importing to Arrival details in Design Release 2.1 order, the main import reason and Additional details each going Back to the page before them, and returns both to the overview once opened from it", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-004-B",
+          "name": "In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to Identification details when a chosen commodity needs identifiers", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should point Additional details' Back link at Identification details mid-run when a chosen commodity needs identifiers, and at the overview outside the run", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should name Identification details as Additional details' Back link when a chosen commodity needs identifiers", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle notification from What are you importing to Arrival details in Design Release 2.1 order, the main import reason and Additional details each going Back to the page before them, and returns both to the overview once opened from it", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-004-C",
+          "name": "In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to Commodity details when nothing chosen needs identifiers", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should point Additional details' Back link at Commodity details mid-run when nothing chosen needs identifiers", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should name Commodity details as Additional details' Back link when no chosen commodity needs identifiers", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "carries a consignment with nothing to identify from Commodity details straight to Additional details, whose Back link then returns to Commodity details", "strength": "full", "notes": "" }
           ]
         }
       ]

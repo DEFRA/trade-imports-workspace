@@ -51,15 +51,27 @@ The system MUST refuse to save an invalid answer to either question, link the re
 - **THEN** the save is refused, an error links to and focuses the unweaned question, with nothing shown as chosen there
 - **AND** the certification question still shows the purpose already chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to the page before it in the opening sequence, and to Overview otherwise
 **ID**: REQ-ADDL-DETAILS-004
-The system MUST return the user to Overview when they follow the back link from the additional details page.
+The system MUST return the user, when they follow the back link from the additional details page during the opening sequence, to identification details when any chosen commodity needs identifiers and to commodity details otherwise, and MUST return them to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-ADDL-DETAILS-004-A
-- **GIVEN** the user is on the additional details page
+- **GIVEN** the opening sequence has ended and the user opened additional details from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers
+**ID**: SCN-ADDL-DETAILS-004-B
+- **GIVEN** the user is in the opening sequence with cattle chosen and reached additional details from identification details
+- **WHEN** they follow the back link
+- **THEN** identification details is shown
+
+#### Scenario: In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers
+**ID**: SCN-ADDL-DETAILS-004-C
+- **GIVEN** the user is in the opening sequence with only Atlantic salmon chosen and reached additional details from commodity details
+- **WHEN** they follow the back link
+- **THEN** commodity details is shown
 
 ### Requirement: The unweaned question is asked only when the consignment's commodities call for it
 **ID**: REQ-ADDL-DETAILS-005

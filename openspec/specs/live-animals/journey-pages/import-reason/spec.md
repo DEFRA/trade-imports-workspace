@@ -113,15 +113,21 @@ The system MUST refuse to save when the submitted import reason is not one of th
 - **WHEN** they submit a reason that is not one of the available options and save
 - **THEN** the save is refused, an error links to and focuses the reason question, with no reason shown as chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-IMPORT-REASON-008
-The system MUST return the user to Overview when they follow the back link from the import reason page.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-IMPORT-REASON-008-A
-- **GIVEN** the user is on the import reason page
+- **GIVEN** the opening sequence has ended and the user opened main import reason from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens what are you importing
+**ID**: SCN-IMPORT-REASON-008-B
+- **GIVEN** the user is in the opening sequence and reached main import reason from what are you importing
+- **WHEN** they follow the back link
+- **THEN** "What are you importing?" is shown
 
 ### Requirement: The destination country is chosen from the origin countries and their territories, each territory named with its country
 **ID**: REQ-IMPORT-REASON-009

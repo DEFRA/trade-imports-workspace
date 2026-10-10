@@ -14,7 +14,7 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification is being worked on
 - **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
+- **THEN** they run in this order: the dashboard; origin of the import; what are you importing, main import reason and commodity details; identification details; additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
 
 #### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B
@@ -87,6 +87,12 @@ The system MUST, outside the opening sequence and outside a change made from che
 - **GIVEN** the opening sequence has ended and the user opens commodity details from its task on Overview
 - **WHEN** they save and continue
 - **THEN** Overview is shown, not identification details
+
+#### Scenario: Main import reason and additional details opened from Overview return to Overview
+**ID**: SCN-FLOW-003-I
+- **GIVEN** the opening sequence has ended and the user opens main reason for import or additional details from its task on Overview
+- **WHEN** they save and continue
+- **THEN** Overview is shown, not commodity details or arrival details
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
@@ -221,6 +227,16 @@ The system MUST walk a newly created notification through an opening sequence co
 - **THEN** identification details is shown
 - **WHEN** instead no chosen species needs identifiers
 - **THEN** additional details is shown
+
+#### Scenario: Additional details follows identification details or commodity details, never the main import reason, and goes on to arrival details
+**ID**: SCN-FLOW-007-I
+- **GIVEN** the user is in the opening sequence
+- **WHEN** they save commodity details for a consignment with a species that needs identifiers and then save identification details
+- **THEN** additional details is shown
+- **WHEN** instead no chosen species needs identifiers and they save commodity details
+- **THEN** additional details is shown, without identification details
+- **WHEN** they save additional details
+- **THEN** arrival details is shown
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

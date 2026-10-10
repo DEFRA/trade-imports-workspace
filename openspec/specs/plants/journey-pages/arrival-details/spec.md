@@ -36,7 +36,7 @@ The system MUST ask for the arrival date under one of three labels: "Expected da
 
 ### Requirement: A potatoes notification also asks for the time and the place of landing
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-002
-The system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field.
+The system MUST ask a potatoes notification for the expected time of arrival and the proposed place of landing alongside the date, and MUST offer the place of landing as a searchable port field, hinted "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code."
 
 #### Scenario: Potatoes see the time and the searchable place of landing
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-A
@@ -44,6 +44,12 @@ The system MUST ask a potatoes notification for the expected time of arrival and
 - **WHEN** the page loads
 - **THEN** it asks for the expected time of arrival and the proposed place of landing
 - **AND** the place of landing is a searchable field
+
+#### Scenario: The place of landing is hinted as the animals port of entry is
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-002-B
+- **GIVEN** a potatoes notification is on the arrival details
+- **WHEN** the page loads
+- **THEN** the place of landing hint reads "Select where the potatoes will enter Great Britain. Start typing to search by port or airport name or code."
 
 ### Requirement: The place-of-landing field offers ports by name or code and shows the chosen port as name and code together
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-003
@@ -192,3 +198,19 @@ The system MUST show the Overview arrival task row as completed once the arrival
 - **GIVEN** a potatoes notification has saved its date, time and place of landing
 - **WHEN** the user opens Overview
 - **THEN** the arrival task row reads completed
+
+### Requirement: Every arrival question is set in the medium label size
+**ID**: REQ-PLANTS-ARRIVAL-DETAILS-012
+The system MUST set every question on the arrival details page in the GOV.UK medium label size: the arrival date in whichever of its three wordings the notification's state chooses, and, for potatoes, the expected time of arrival and the proposed place of landing.
+
+#### Scenario: A potatoes notification's arrival questions read at medium size
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-012-A
+- **GIVEN** a potatoes notification on arrival details
+- **WHEN** the page loads
+- **THEN** the expected date of arrival, expected time of arrival and proposed place of landing questions are each set in the medium label size
+
+#### Scenario: A plants or wood notification's date question reads at medium size
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-012-B
+- **GIVEN** a plants or wood notification on arrival details
+- **WHEN** the page loads
+- **THEN** its arrival date question is set in the medium label size

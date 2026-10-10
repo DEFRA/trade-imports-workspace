@@ -195,3 +195,51 @@ The system MUST let the user save and continue once a means of transport is chos
 - **GIVEN** the user has chosen a means of transport and left the arrival date, port of entry, transport identification and document reference blank
 - **WHEN** they save and continue
 - **THEN** the next page is shown and no error summary is shown
+
+### Requirement: The port search is hinted and shows a placeholder
+**ID**: REQ-ARRIVAL-012
+The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen.
+
+#### Scenario: The port search reads as Design Release 2.1 words it
+**ID**: SCN-ARRIVAL-012-A
+- **GIVEN** the user is on the arrival details page with no port chosen
+- **WHEN** the page loads
+- **THEN** the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
+- **AND** the port search shows "Select a port"
+
+### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code
+**ID**: REQ-ARRIVAL-013
+The system MUST offer the means of transport as "Air", "Rail", "Road" and "Sea", in that order, after "Select one", and MUST keep the choice in the notification as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively.
+
+#### Scenario: The means of transport options read Air, Rail, Road and Sea
+**ID**: SCN-ARRIVAL-013-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the means of transport options read "Select one", "Air", "Rail", "Road", "Sea" in that order
+
+#### Scenario: Each option is kept as the code other services read
+**ID**: SCN-ARRIVAL-013-B
+- **GIVEN** the user is on the arrival details page
+- **WHEN** they choose Air, Rail, Road or Sea and save
+- **THEN** the notification keeps AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively
+
+### Requirement: The transport identification hint opens "Enter one of the following:"
+**ID**: REQ-ARRIVAL-014
+The system MUST open the transport identification hint with "Enter one of the following:" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).
+
+#### Scenario: The transport identification hint leads with its instruction
+**ID**: SCN-ARRIVAL-014-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the transport identification hint opens with "Enter one of the following:"
+- **AND** it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)
+
+### Requirement: Each arrival question is set in the medium label size
+**ID**: REQ-ARRIVAL-015
+The system MUST set each of the five arrival questions (arrival date, port of entry, means of transport, transport identification and transport document reference) in the GOV.UK medium label size.
+
+#### Scenario: The arrival questions read at medium size
+**ID**: SCN-ARRIVAL-015-A
+- **GIVEN** a user on the arrival details page
+- **WHEN** the page loads
+- **THEN** the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size

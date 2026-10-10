@@ -197,3 +197,45 @@ The system MUST start every destination country and port of exit select on the p
 - **WHEN** the port of exit list is read
 - **THEN** its first option reads "Select one" and is selected
 - **AND** the next option is the first port, with no divider line between
+
+### Requirement: Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format
+**ID**: REQ-IMPORT-REASON-013
+The system MUST, on Save and return to overview — and, while amending, on Save and return — save the reason and whatever of its questions were answered without refusing the page for an unanswered question, MUST clear the answers of a reason no longer chosen, MUST leave every saved reason answer as it was when no reason is chosen, whichever save is used (Save and continue included), and MUST still refuse an exit date that is not a real date with "Enter a real date".
+
+#### Scenario: Transit without a port of exit saves and keeps the country
+**ID**: SCN-IMPORT-REASON-013-A
+- **GIVEN** the user has chosen "Transit" and given a destination country but no port of exit
+- **WHEN** they save and return to overview
+- **THEN** no error is shown and Overview is shown
+- **AND** when they reopen the page, Transit is chosen with the destination country given
+
+#### Scenario: Changing the reason clears the saved purpose
+**ID**: SCN-IMPORT-REASON-013-B
+- **GIVEN** the user has saved "Internal market" with a purpose
+- **WHEN** they change the reason to "Transit" and save and return to overview
+- **THEN** choosing "Internal market" again shows no purpose chosen
+
+#### Scenario: No reason chosen keeps every earlier answer
+**ID**: SCN-IMPORT-REASON-013-C
+- **GIVEN** the user has saved a reason and its answers
+- **WHEN** they save and return to overview with no reason chosen
+- **THEN** every earlier saved reason answer is kept
+
+#### Scenario: Save and continue with no reason chosen keeps every earlier answer
+**ID**: SCN-IMPORT-REASON-013-F
+- **GIVEN** the user has saved a reason and its answers
+- **WHEN** they choose Save and continue with no reason chosen
+- **THEN** every earlier saved reason answer is unchanged
+
+#### Scenario: An exit date that is not a real date is refused
+**ID**: SCN-IMPORT-REASON-013-D
+- **GIVEN** the user has chosen "Temporary admission horses" and entered the exit date 31/2/2026
+- **WHEN** they save and return to overview
+- **THEN** the page stays open and the exit date shows "Enter a real date"
+- **AND** nothing is saved
+
+#### Scenario: While amending, Save and return with transit and no port of exit opens the review
+**ID**: SCN-IMPORT-REASON-013-E
+- **GIVEN** the user is amending and has chosen "Transit" with a destination country but no port of exit
+- **WHEN** they use Save and return
+- **THEN** no error is shown and the review page is shown

@@ -104,3 +104,20 @@ The system MUST show every task row as a bare link with a status, except Roles a
 - **GIVEN** the user views Overview
 - **WHEN** the task rows are examined
 - **THEN** only the Roles and addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination
+
+### Requirement: Main reason for import completes on the reason's own answers, apart from Additional details
+**ID**: REQ-OVERVIEW-008
+The system MUST mark the Main reason for import task Complete once an allowed reason and the questions it opens are saved — Internal market with a purpose; Transhipment or onward travel with a destination country; Transit with a port of exit and a destination country; Temporary admission horses with an exit date and a port of exit; Re-entry alone — whether or not Additional details is answered, and MUST NOT mark it Complete while no reason is saved.
+
+#### Scenario: The reason task completes while Additional details is still to do
+**ID**: SCN-OVERVIEW-008-A
+- **GIVEN** an allowed reason and its questions are saved and Additional details is unanswered
+- **WHEN** the user views Overview
+- **THEN** Main reason for import reads Complete
+- **AND** Additional details reads To do
+
+#### Scenario: The reason task is not complete with no reason saved
+**ID**: SCN-OVERVIEW-008-B
+- **GIVEN** no reason is saved
+- **WHEN** the user views Overview
+- **THEN** Main reason for import reads To do

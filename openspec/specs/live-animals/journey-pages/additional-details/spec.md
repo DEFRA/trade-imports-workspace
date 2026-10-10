@@ -93,3 +93,21 @@ The system MUST hint the certification question "You can find this information o
 - **GIVEN** the user is on the additional details page
 - **WHEN** the page loads
 - **THEN** the question asking what the animals are certified for is hinted "You can find this information on the ITAHC."
+
+### Requirement: Saving with nothing answered saves without an error and keeps earlier answers
+**ID**: REQ-ADDL-DETAILS-007
+The system MUST, whichever save is used (Save and return to overview or Save and continue), with both questions unanswered show no error, move the user on, and keep any answer previously saved to each question, so a blank answer never clears a stored one.
+
+#### Scenario: Saving and returning with both questions unanswered keeps the earlier answers
+**ID**: SCN-ADDL-DETAILS-007-A
+- **GIVEN** the user has earlier saved both answers
+- **WHEN** they submit the page with neither question answered by Save and return to overview
+- **THEN** Overview is shown with no error
+- **AND** reopening the page shows both earlier answers chosen
+
+#### Scenario: Save and continue with both questions unanswered keeps the earlier answers
+**ID**: SCN-ADDL-DETAILS-007-B
+- **GIVEN** the user has earlier saved both answers
+- **WHEN** they submit the page with neither question answered by Save and continue
+- **THEN** no error is shown and the user moves on
+- **AND** both earlier answers are unchanged

@@ -295,6 +295,67 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-013",
+      "name": "Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-013-A",
+          "name": "Transit without a port of exit saves and keeps the country",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import: when transit has a destination country but no port of exit, saves without an error and keeps transit and the country", "strength": "full", "notes": "compose stack only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should keep the transit reason and its destination country when only the port of exit is blank", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-B",
+          "name": "Changing the reason clears the saved purpose",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import: when the reason changes from internal market to transit, clears the saved purpose", "strength": "full", "notes": "compose stack only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should clear the internal market purpose when the reason changes to transit", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-C",
+          "name": "No reason chosen keeps every earlier answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import: when no reason is chosen, keeps every earlier answer", "strength": "full", "notes": "compose stack only; radios cleared in the DOM before the post" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should keep every earlier reason answer when no reason is chosen", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-D",
+          "name": "An exit date that is not a real date is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import: when the exit date is not a real date, refuses the save with the exit date's error and keeps nothing", "strength": "full", "notes": "compose stack only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a date that names no day and save nothing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should still refuse an unreal exit date", "strength": "full", "notes": "while amending" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-E",
+          "name": "While amending, Save and return with transit and no port of exit opens the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main reason for import while amending: Save and return with transit and no port of exit saves without an error and goes to the review", "strength": "full", "notes": "compose stack only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should save transit with no port of exit and go to the review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-013-F",
+          "name": "Save and continue with no reason chosen keeps every earlier answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should keep every earlier reason answer when Save and continue names no reason", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
     }
   ]
 }

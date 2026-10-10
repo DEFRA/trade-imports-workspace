@@ -51,6 +51,7 @@ Codes carry their namespace's prefix: none inside `live-animals/`, `PLANTS-` ins
 | live-animals/notification-events | EVENTS |
 | live-animals/notification-lifecycle | LIFECYCLE |
 | live-animals/notification-status-and-reference | STATUS-REF |
+| live-animals/notification-templates | TEMPLATES |
 | live-animals/service-navigation | NAV |
 | plants/addresses | PLANTS-ADDR |
 | plants/authentication | PLANTS-AUTH |

@@ -1,0 +1,92 @@
+{
+  "capability": "live-animals/notification-templates",
+  "areaCode": "TEMPLATES",
+  "specFile": "openspec/specs/live-animals/notification-templates/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-TEMPLATES-001",
+      "name": "The Manage templates page introduces the user's templates",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-001-A",
+          "name": "A signed-in user opens Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows the Manage templates title, heading and intro line", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows the Manage templates page with its heading, intro line and phase banner, and no Back link", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-001-B",
+          "name": "Manage templates offers no Back link",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "starts with its heading and offers no Back link", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows the Manage templates page with its heading, intro line and phase banner, and no Back link", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-001-C",
+          "name": "Manage templates shows the Alpha phase banner",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows the Alpha phase banner with the service feedback address", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows the Manage templates page with its heading, intro line and phase banner, and no Back link", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-002",
+      "name": "The page lists the user's templates under \"My templates\" with a results count",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-002-A",
+          "name": "A user with no saved templates sees a zero count and an empty list",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows a zero count and no templates under My templates when none are saved", "strength": "full", "notes": "the empty-state clause is pinned by the main holding exactly two govuk-body paragraphs." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows a user who has never saved a template a zero count and no templates", "strength": "full", "notes": "the empty-state clause is pinned by the main holding exactly two govuk-body paragraphs." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should render Manage templates with a zero count and no cards for a user who has saved none", "strength": "partial", "notes": "pins the view model, not the rendered page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-002-B",
+          "name": "Manage templates offers no filter, search, sort or pagination",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "offers no search, filter, sort or pagination", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows a user who has never saved a template a zero count and no templates", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-003",
+      "name": "A user's templates are their own and are kept between sessions",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-003-A",
+          "name": "A user who has never saved a template sees no examples",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldReturnNoTemplates_whenOwnerHasSavedNone", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/manage-templates.spec.ts", "test": "shows a user who has never saved a template a zero count and no templates", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-B",
+          "name": "Only the user's own templates are listed, newest first",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldReturnOnlyTheOwnersTemplates_newestFirst", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should list only the user's own stub templates, newest first", "strength": "partial", "notes": "pins the stub store only." }
+          ]
+        }
+      ]
+    }
+  ]
+}

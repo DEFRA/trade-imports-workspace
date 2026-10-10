@@ -8,7 +8,7 @@ A notification's life from draft through submission, amendment and deletion — 
 
 ### Requirement: A notification moves through a fixed lifecycle as the user acts on it
 **ID**: REQ-LIFECYCLE-001
-The system MUST move a notification through Draft, Submitted, Amend, and Deleted as it is created, submitted, amended, and removed, and MUST treat a repeated delete as idempotent. The state recorded as Amend MUST be shown to the user as "Amending" wherever a notification's state is displayed.
+The system MUST move a notification through Draft, Submitted, Amend, and Deleted as it is created, submitted, amended, and removed, and MUST treat a repeated delete as idempotent. The state recorded as Amend MUST be shown to the user as "Amend" wherever a notification's state is displayed.
 
 #### Scenario: A full lifecycle walk moves the notification through each status in turn
 **ID**: SCN-LIFECYCLE-001-A
@@ -76,13 +76,13 @@ The system MUST NOT offer any way to change a submitted notification's answers u
 
 ### Requirement: Amending a submitted notification re-enters it at Overview
 **ID**: REQ-LIFECYCLE-006
-The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amending".
+The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend".
 
 #### Scenario: Starting an amendment opens Overview with editing enabled
 **ID**: SCN-LIFECYCLE-006-A
 - **GIVEN** a submitted notification exists
 - **WHEN** the user starts an amendment on it from the dashboard
-- **THEN** they land on Overview, with the notification's status shown as "Amending"
+- **THEN** they land on Overview, with the notification's status shown as "Amend"
 
 ### Requirement: Resubmitting an amendment keeps the edited answers and returns the notification to Submitted
 **ID**: REQ-LIFECYCLE-007
@@ -100,16 +100,18 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-LIFECYCLE-008
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-#### Scenario: A Cancel amendment option is offered while amending
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself.
+
+#### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-LIFECYCLE-008-A
 - **GIVEN** a notification is being amended
-- **WHEN** the user views it
-- **THEN** a "Cancel amendment" option is shown alongside its "Amending" status
+- **WHEN** the user views Overview, check-your-answers or any question page
+- **THEN** a status bar above the caption and heading shows "Amend", the reference number and "Cancel amend"
 
 #### Scenario: Choosing to cancel asks for confirmation before discarding anything
 **ID**: SCN-LIFECYCLE-008-B
 - **GIVEN** a notification is being amended
-- **WHEN** the user selects "Cancel amendment"
+- **WHEN** the user selects "Cancel amend"
 - **THEN** a confirmation page explains that changes made since amending began will be discarded and the submitted version restored, with options to confirm or reject
 - **AND** a back link returns to check-your-answers without cancelling anything
 
@@ -117,7 +119,7 @@ The system MUST let the user cancel an in-progress amendment, after confirming, 
 **ID**: SCN-LIFECYCLE-008-C
 - **GIVEN** the user has opened the cancel-amendment confirmation page
 - **WHEN** they decline to cancel
-- **THEN** they return to the notification, still "Amending", with its edits and Change links intact
+- **THEN** they return to the notification, still "Amend", with its edits and Change links intact
 
 #### Scenario: Confirming the cancellation restores the submitted answers
 **ID**: SCN-LIFECYCLE-008-D
@@ -125,3 +127,22 @@ The system MUST let the user cancel an in-progress amendment, after confirming, 
 - **WHEN** they confirm the cancellation
 - **THEN** a message confirms the amendment was cancelled and the submitted version restored
 - **AND** the notification's status shows "Submitted" again, with the changed answer reverted and no Change links shown
+
+#### Scenario: Cancel amend on a question page opens the confirmation page
+**ID**: SCN-LIFECYCLE-008-E
+- **GIVEN** a notification is being amended and the user is on a question page
+- **WHEN** the user selects "Cancel amend" in the status bar
+- **THEN** the cancel-amendment confirmation page opens
+- **AND** declining returns to the notification, still "Amend"
+
+#### Scenario: Cancel amend works without JavaScript
+**ID**: SCN-LIFECYCLE-008-F
+- **GIVEN** JavaScript is off and the notification is being amended
+- **WHEN** the user selects "Cancel amend" on a question page and confirms
+- **THEN** the notification shows "Submitted" with its submitted answers restored
+
+#### Scenario: A draft offers no Cancel amend
+**ID**: SCN-LIFECYCLE-008-G
+- **GIVEN** a draft notification
+- **WHEN** the user views Overview or a question page
+- **THEN** the status bar shows "Draft" and the reference, and no "Cancel amend"

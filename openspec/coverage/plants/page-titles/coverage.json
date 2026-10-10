@@ -1,0 +1,65 @@
+{
+  "capability": "plants/page-titles",
+  "areaCode": "PLANTS-PAGE-TITLE",
+  "specFile": "openspec/specs/plants/page-titles/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PLANTS-PAGE-TITLE-001",
+      "name": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PAGE-TITLE-001-A",
+          "name": "A page's title reads page name, service name, GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js", "test": "reads page name, service name and GOV.UK, joined by hyphens", "strength": "full", "notes": "asserts the rendered document title on the commodity type page" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should join the page name, the service name and GOV.UK with hyphens", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/page-titles.spec.ts", "test": "a journey page is titled page name, service name and GOV.UK, joined by hyphens", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-PAGE-TITLE-001-B",
+          "name": "The parts are not separated by a pipe",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should not separate the title with a pipe", "strength": "full", "notes": "the negative that pins the separator" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/page-titles.spec.ts", "test": "a journey page is titled page name, service name and GOV.UK, joined by hyphens", "strength": "partial", "notes": "asserts no pipe on the commodity type page only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PAGE-TITLE-002",
+      "name": "A page showing errors opens its whole title with an error prefix",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PAGE-TITLE-002-A",
+          "name": "The error prefix opens the title while errors are shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/page-title.fit.spec.js", "test": "puts the error prefix in front of the whole title when the page shows errors", "strength": "full", "notes": "drives a real validation failure on the commodity type page" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should keep the error prefix in front of the whole title", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/page-titles.spec.ts", "test": "a page showing errors opens its title with Error:", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-PAGE-TITLE-003",
+      "name": "An error page's title follows the same pattern",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-PAGE-TITLE-003-A",
+          "name": "A page that does not exist is titled Page not found - Import notification service - GOV.UK",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/common/helpers/errors.test.js", "test": "Should provide expected Not Found page", "strength": "full", "notes": "asserts the rendered title Page not found - Import notification service - GOV.UK" }
+          ]
+        }
+      ]
+    }
+  ]
+}

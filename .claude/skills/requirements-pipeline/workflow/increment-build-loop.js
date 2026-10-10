@@ -1353,9 +1353,13 @@ const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
 
 const firstWordOf = (command) => command.trim().replace(/^`+/, '').trim().split(/\s+/)[0] ?? ''
 
+// `test:fit` serves a frontend on its default port, which the leased stack
+// already holds, so it can never start during a run. `test:fit:ci` is clear.
+const FIT_ON_STACK_PORT = /\brun test:fit(?!:)/
+
 const isDeniedCommand = (command) => {
   const firstWord = firstWordOf(command)
-  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord)
+  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord) || FIT_ON_STACK_PORT.test(command)
 }
 
 const DENIED_FORMS_LINE = `- DENIED, so never run them and never write them into a plan: ${DENIED_PROGRAMS.map((program) => `\`${program}\``).join(', ')}
@@ -1370,6 +1374,10 @@ in a denied form cannot run, so the ladder stops the increment red with nothing 
   - a \`tim\` command;
   - a k6 run through the repo's own npm script, which reads its endpoints itself;
   - \`git -C\`, \`jq\`, \`grep\`, \`ls\` or \`find\` over files.
+The workspace stack is up for every check, and its frontends hold their own ports (3000 for animals, 3003 for plants
+and so on), so a check that starts a frontend on its default port cannot run. A FIT check therefore runs the script
+gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
+\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where

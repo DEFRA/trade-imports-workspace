@@ -529,6 +529,9 @@ increment at `ladder-red` with nothing broken. ins-performance-testing inc-023
   guard rails list as denied (the script's `DENIED_PROGRAMS`)
 - a check that must read a live endpoint names the npm script or test that makes
   that read, or the plan adds a small one to its own work
+- a FIT check runs `test:fit:ci -- <spec file>`, never `test:fit`: the leased stack
+  already holds each frontend's default port, so `test:fit` cannot start its web
+  server (design-release-2-1 arrival-and-transit inc-027)
 
 The planner returns every check command in `checks[]`. The script sends a plan
 that names a denied form back to the planner once, with the commands named, and

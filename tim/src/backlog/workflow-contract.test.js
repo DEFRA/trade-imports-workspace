@@ -1642,6 +1642,31 @@ describe('increment-build-loop', () => {
           expect(replan).not.toContain(`  - \`${NPM_CHECK}\``)
         })
 
+        test('sends back a FIT check that would serve on a port the leased stack already holds', async () => {
+          const STACK_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit -- src/a.fit.spec.js'
+          const CLEAR_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit:ci -- src/a.fit.spec.js'
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(STACK_PORT_FIT, CLEAR_PORT_FIT),
+            planWithChecks(CLEAR_PORT_FIT),
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(replan).toContain(`  - \`${STACK_PORT_FIT}\`\n`)
+          expect(replan).not.toContain(`  - \`${CLEAR_PORT_FIT}\``)
+        })
+
+        test('tells the planner a FIT check runs the gate’s test:fit:ci script', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            '`npm --prefix ~/ws/<repoPath> run test:fit:ci -- <spec file>`. Never `test:fit`.'
+          )
+        })
+
         test('stops with plan-refused, naming the check, when the second plan still names a denied form', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,

@@ -448,7 +448,8 @@ which condition ended the run. Do not trust that report on its own.
 section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
 Step 5 where the row is routed there), and the land stage commits them with the rest. A row that
 changes nothing the spec records reports `Spec sync: none — <reason>`, which the consistency
-reviewer checks. Once a theme's last row lands, the run lints the spec and lists unproven
+reviewer checks. A row owns every capability it writes, whole: a validate or lint failure
+already there before the row is the row's to fix, not to report as pre-existing. Once a theme's last row lands, the run lints the spec and lists unproven
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
 its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
 by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See

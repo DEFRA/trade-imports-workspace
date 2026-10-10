@@ -763,6 +763,15 @@ const SPEC_PREFIXES_BY_REPO_PATH = {
 
 const SPEC_VALIDATE = `${TILDE}/tools/frontend-change/openspec-validate.sh`
 
+// Validate and lint judge a whole capability, so a failure already in one a
+// row writes would otherwise be nobody's: every stage calls it pre-existing and
+// the ladder stops on it.
+const SPEC_WHOLE_CAPABILITY = `Validation and lint judge the WHOLE capability, not only your lines, so a failure in a
+   capability this row writes is this row's to fix even where it predates the row: an over-long requirement, a scenario
+   missing, a lint finding. Fix it in place by ${ABS}/openspec/config.yaml's rules, keeping the behaviour it states:
+   tighten the wording, or move examples and edge cases into scenarios. Never delete or weaken a requirement to make it
+   pass, and never report such a failure as pre-existing and leave it.`
+
 const SPEC_PREFIX_TABLE = `WHICH PREFIX, by repo and set:
 - \`trade-imports-animals-frontend\`: a change under \`sets/live-animals\` → \`live-animals/\`; under \`sets/germinal-products\`
   → \`germinal-products/\`. They are sibling sets: never spec germinal behaviour under \`live-animals/\`, or the reverse,
@@ -812,6 +821,7 @@ ${SPEC_PREFIX_TABLE}
    with \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. Then run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
    prefix you wrote under. Either exiting non-zero means the row is NOT complete: fix the write, or report ok:false
    saying what failed. Never report ok:true over a red validation.
+   ${SPEC_WHOLE_CAPABILITY}
 4. Leave \`openspec/\` uncommitted: the land stage commits it.
 5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
    The consistency reviewer checks that reason and the ladder validates the write again.`
@@ -819,7 +829,8 @@ ${SPEC_PREFIX_TABLE}
 const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
 duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
 and \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
-confirmed gone with \`ls\`, not validated), and put your own \`Spec sync:\` line in notes.`
+confirmed gone with \`ls\`, not validated), and put your own \`Spec sync:\` line in notes.
+${SPEC_WHOLE_CAPABILITY}`
 
 const specSyncPlanSection = () => `   8. Spec sync — every row has one, whatever its repos. Name the prefix each changed behaviour belongs to, by WHICH
       PREFIX below, then each capability under \`${TILDE}/openspec/specs/<prefix>/\` it touches and the requirement and
@@ -868,7 +879,8 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC.
    which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
    once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
    any other: the spec write is this increment's, and a row whose spec does not validate is not complete. A line that
-   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.`
+   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.
+   ${SPEC_WHOLE_CAPABILITY}`
 
 // An increment that builds in the workspace repo carries its spec changes in
 // that repo's own commit, on the increment's branch, like any other file.

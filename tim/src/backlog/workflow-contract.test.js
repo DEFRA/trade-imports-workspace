@@ -1498,6 +1498,36 @@ describe('increment-build-loop', () => {
             'THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps `~/ws/openspec/` in step'
           )
         })
+
+        describe('a spec failure that predates the row, in a capability it writes', () => {
+          const WHOLE_CAPABILITY =
+            "a failure in a\n   capability this row writes is this row's to fix even where it predates the row"
+          const NEVER_LEFT = 'never report such a failure as pre-existing and leave it.'
+
+          test('is the implementor’s to fix', async () => {
+            const prompt = promptOf(
+              await runThroughFixToLadder(),
+              'inc-900 implement'
+            )
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+
+          test('is the fixer’s to fix', async () => {
+            const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+
+          test('is the ladder’s to repair', async () => {
+            const prompt = ladderPrompt(await runThroughFixToLadder())
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+        })
       })
 
       describe('the command forms a plan check may take', () => {

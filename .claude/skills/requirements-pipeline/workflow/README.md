@@ -485,6 +485,13 @@ spec'd where a title, Purpose, requirement or scenario states that wording; a co
 page shows or asks; a layout change when it changes page order, what a page offers or groups, or a caption. Pure
 styling is not.
 
+**A row owns every capability it writes, whole.** `openspec validate --strict` and `tim spec lint` judge the whole
+capability, not the lines a row changed, and the baseline runs neither. So a failure already in a capability the row
+writes, such as an over-long requirement left by an earlier catch-up, would otherwise be nobody's: each stage calls it
+pre-existing and the ladder stops on it. The implement, fix and ladder prompts all say it is the row's to fix in
+place, by `openspec/config.yaml`'s rules, keeping the behaviour the requirement states and never deleting or
+weakening one to pass.
+
 **Once a theme's last row lands, the run checks the spec.** After the gate check, a light agent reads the landed
 row's theme (or a split backlog's own) as one short jq summary: how many rows are `todo`, which ones this run built,
 and the repos of the rest. A line it cannot read is read once more; unread twice, the run stops at `spec-check-red`

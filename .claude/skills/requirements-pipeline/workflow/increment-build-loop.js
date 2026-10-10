@@ -2366,16 +2366,32 @@ const PREFLIGHT_SCHEMA = {
       type: ['array', 'null'],
       items: ENVELOPE_REPO_SCHEMA,
       description: "The backlog envelope's repos exactly as the second command printed them, or null when it printed null"
+    },
+    branchWithoutPr: {
+      type: 'array',
+      items: { type: 'string' },
+      description: `Branch lifecycle only: every repo checked out on ${BASE_BRANCH} with no open pull request for it`
     }
   },
   additionalProperties: false
 }
 
+// A stacked theme branch lives in repos its rows never build, so the stack in
+// CI runs that repo's branch image. A branch image is published only from a
+// pull request: without one, CI falls back to :latest and the theme's E2E goes
+// red on code its base branches already changed.
+const BRANCH_PR_STEP = IS_BRANCH
+  ? `
+3. \`tim workspace status --workspace ${TILDE} --json\`. For every entry of \`result\` whose \`branch\` is
+   \`${BASE_BRANCH}\`, run \`gh pr list --repo DEFRA/<repo> --head ${BASE_BRANCH} --state open --json number\`, with
+   <repo> the entry's \`repo\`. Put every repo whose list prints \`[]\` in branchWithoutPr, and [] when there is none.`
+  : ''
+
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
-two commands, one Bash call each, and read their output:
+commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
@@ -2413,6 +2429,13 @@ const envelopeRepoProblems = (envelopeRepos) => {
           `"${entry.key}" ${entry.requireApproval ? 'needs' : 'does not need'} approval in the envelope and ${REPOS[entry.key].requireApproval ? 'needs' : 'does not need'} it in the args`
       )
   ]
+}
+
+const branchWithoutPr = IS_BRANCH ? (preflight.branchWithoutPr ?? []) : []
+if (branchWithoutPr.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: ${branchWithoutPr.join(', ')} ${branchWithoutPr.length === 1 ? 'is' : 'are'} on ${BASE_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${BASE_BRANCH} in each, then launch again`
+  )
 }
 
 const ENVELOPE_REPOS = preflight.envelopeRepos ?? null

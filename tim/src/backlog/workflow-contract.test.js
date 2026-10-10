@@ -2774,6 +2774,31 @@ describe('increment-build-loop', () => {
         expect(run.error.message).toContain('no readable backlog')
       })
 
+      test('stops before any increment when a repo on the branch has no open pull request to publish its branch image', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            { ok: true, summary: '1', branchWithoutPr: ['trade-imports-stub', 'trade-imports-reference-data'] }
+          ]
+        })
+
+        expect(run.error.message).toBe(
+          `increment-build-loop: trade-imports-stub, trade-imports-reference-data are on ${WORKING_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${WORKING_BRANCH} in each, then launch again`
+        )
+      })
+
+      test('asks the preflight which repos on the branch have no open pull request', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [WORKSPACE_ANSWER, null]
+        })
+
+        expect(run.agents[1].prompt).toContain(
+          `gh pr list --repo DEFRA/<repo> --head ${WORKING_BRANCH} --state open --json number`
+        )
+      })
+
       test('refuses a Jira or approval key that is given a value, naming it', async () => {
         const run = await runLoop(scriptPath, {
           args: { ...BRANCH_ARGS, epic: 'EUDPA-1', requireApproval: false }

@@ -203,3 +203,21 @@ The system MUST refuse to save the origin page when the country entered is not o
 - **WHEN** they save and continue
 - **THEN** an error is shown, linking to and focusing the country field
 - **AND** the field is cleared rather than preserving the invalid entry
+
+### Requirement: The country question carries no hint, and its empty search box invites a search
+**ID**: REQ-ORIGIN-015
+The system MUST ask "Country of origin" with no hint text, with or without JavaScript. With JavaScript the empty search box MUST show the placeholder "Search for a country"; without JavaScript the country list MUST begin with its blank "Select a country" entry.
+
+#### Scenario: With JavaScript, the empty search box shows "Search for a country" and no hint
+**ID**: SCN-ORIGIN-015-A
+- **GIVEN** the user has reached the origin of the import page with JavaScript available and no country chosen
+- **WHEN** the page loads
+- **THEN** the country field, labelled "Country of origin", shows the placeholder "Search for a country"
+- **AND** no hint text is shown for the country question
+
+#### Scenario: Without JavaScript, the country list begins with "Select a country" and no hint
+**ID**: SCN-ORIGIN-015-B
+- **GIVEN** the user has reached the origin of the import page without JavaScript
+- **WHEN** the page loads
+- **THEN** the country list, labelled "Country of origin", begins with its blank "Select a country" entry
+- **AND** no hint text is shown for the country question

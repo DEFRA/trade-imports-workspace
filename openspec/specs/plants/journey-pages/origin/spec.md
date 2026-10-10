@@ -8,7 +8,7 @@ Asks where the consignment comes from. The page is titled "Origin of the import"
 
 ### Requirement: The page asks for the country of origin
 **ID**: REQ-PLANTS-ORIGIN-001
-The system MUST ask the user for the country of origin, offering a searchable country field with a hint to start typing, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.
+The system MUST ask the user for the country of origin, offering a searchable country field labelled "Country of origin" with no hint, and a save-and-continue action, and MUST leave the country unanswered when the page is first opened.
 
 #### Scenario: The page presents its question and controls unanswered
 **ID**: SCN-PLANTS-ORIGIN-001-A
@@ -174,3 +174,21 @@ The system MUST show the Overview origin task row as completed once a country of
 - **GIVEN** the user has chosen a country and saved the origin page
 - **WHEN** they open Overview
 - **THEN** the origin task row reads completed
+
+### Requirement: The country question carries no hint, and its empty search box invites a search
+**ID**: REQ-PLANTS-ORIGIN-012
+The system MUST ask "Country of origin" with no hint text, with or without JavaScript, and MUST keep its own country list, guidance and errors. With JavaScript the empty search box MUST show the placeholder "Search for a country"; without JavaScript the country list MUST begin with its blank "Select a country" entry, and choosing a country there MUST save it.
+
+#### Scenario: With JavaScript, the empty search box shows "Search for a country" and no hint
+**ID**: SCN-PLANTS-ORIGIN-012-A
+- **GIVEN** the user has reached the origin of the import page with JavaScript available and no country chosen
+- **WHEN** the page loads
+- **THEN** the country field, labelled "Country of origin", shows the placeholder "Search for a country"
+- **AND** no hint text is shown for the country question
+
+#### Scenario: Without JavaScript, the country list begins with "Select a country", shows no hint, and saves the chosen country
+**ID**: SCN-PLANTS-ORIGIN-012-B
+- **GIVEN** the user has reached the origin of the import page without JavaScript
+- **WHEN** they read the country list, choose a country from it and save and continue
+- **THEN** the list, labelled "Country of origin", began with its blank "Select a country" entry and no hint text was shown
+- **AND** returning to the page shows that country chosen

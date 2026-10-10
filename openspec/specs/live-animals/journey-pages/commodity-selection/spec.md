@@ -61,13 +61,14 @@ The system MUST group the species a search matches under a heading naming their 
 
 ### Requirement: The page explains what a commodity code is and links out to look one up
 **ID**: REQ-COMMODITY-SELECT-005
-The system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab.
+The system MUST offer the user an explanation of what a commodity code is and where to find one, including a link that opens the Trade Tariff tool in a new tab, reading "Trade Tariff tool" with "(opens in a new tab)" on its own line after it, both part of the link's name.
 
 #### Scenario: The commodity-code help explains the code and links to the Trade Tariff tool
 **ID**: SCN-COMMODITY-SELECT-005-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they open the commodity-code help
 - **THEN** it explains what the code is and offers a link to look one up, which opens the Trade Tariff tool in a new tab
+- **AND** the link reads "Trade Tariff tool" with "(opens in a new tab)" on its own line after it, both part of the link's name
 
 ### Requirement: Species chosen under different searches are all kept, in a canonical order
 **ID**: REQ-COMMODITY-SELECT-006
@@ -112,20 +113,35 @@ The system MUST report how many species have been chosen and name them, and MUST
 
 ### Requirement: Saving and continuing without choosing a commodity is rejected
 **ID**: REQ-COMMODITY-SELECT-009
-The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing an error summary that names what is needed, and MUST NOT refuse the page for that on save and return to overview.
+The system MUST refuse to save and continue from the commodity selection page when nothing has been chosen, showing "Select a commodity" in the error summary and inline on the search field, whether or not results are listed, with the summary link going to the search field. On save and return to overview the system MUST NOT check the choice: it saves the selection as it stands, an empty one included, and the Overview shows the commodity selection task as "To do" when nothing is chosen.
 
 #### Scenario: Saving with nothing chosen shows an error summary
 **ID**: SCN-COMMODITY-SELECT-009-A
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and continue
 - **THEN** an error summary headed "There is a problem" is shown, telling the user to select a commodity
+- **AND** the same error shows inline on the search field, and the summary link goes to the search field
 
 #### Scenario: Save and return to overview with nothing chosen returns to Overview without an error
 **ID**: SCN-COMMODITY-SELECT-009-B
 - **GIVEN** the user is on the commodity selection page with nothing chosen
 - **WHEN** they save and return to overview
 - **THEN** they return to Overview with no error shown
-- **AND** the commodity selection task does not read "Complete"
+- **AND** the commodity selection task reads "To do"
+
+#### Scenario: With results listed, the error still sits on the search field
+**ID**: SCN-COMMODITY-SELECT-009-C
+- **GIVEN** the user has searched, so species are listed, and has chosen none
+- **WHEN** they save and continue
+- **THEN** "Select a commodity" shows in the error summary and inline on the search field, not on the listed species
+- **AND** the summary link goes to the search field
+
+#### Scenario: Save and return to overview after clearing a saved selection empties it
+**ID**: SCN-COMMODITY-SELECT-009-D
+- **GIVEN** the user has a saved selection and clears it on the commodity selection page
+- **WHEN** they save and return to overview
+- **THEN** they return to Overview with no error shown and the commodity selection task reads "To do"
+- **AND** reopening the page shows nothing chosen
 
 ### Requirement: A notification must carry at least one commodity line
 **ID**: REQ-COMMODITY-SELECT-010
@@ -136,3 +152,14 @@ The system MUST require every notification to carry at least one commodity line,
 - **GIVEN** a notification carrying no commodity line
 - **WHEN** the user tries to submit it
 - **THEN** the submission is refused, and the missing commodity line is reported
+
+### Requirement: The page says one notification is needed per ITAHC and how to search
+**ID**: REQ-COMMODITY-SELECT-011
+The system MUST show the inset "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC." and the search hint "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).", with no sentence about a minimum search length.
+
+#### Scenario: The page explains the ITAHC rule and the ways to search
+**ID**: SCN-COMMODITY-SELECT-011-A
+- **GIVEN** the user has reached the commodity selection page
+- **WHEN** the page loads
+- **THEN** the inset reads "You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC."
+- **AND** the search hint reads "You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus)." with no sentence about a minimum number of characters

@@ -30,7 +30,7 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists every chosen species, each removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list every chosen commodity and species in a table naming the commodity's code, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.
+The system MUST list every chosen commodity and species in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.
 
 #### Scenario: The table lists each commodity and species with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
@@ -43,6 +43,13 @@ The system MUST list every chosen commodity and species in a table naming the co
 - **GIVEN** the user has saved counts for two species under different commodities
 - **WHEN** they remove one species
 - **THEN** it no longer appears in the table, and the other species' saved counts are unchanged
+
+#### Scenario: Each row's Species cell lists the Latin names chosen under it
+**ID**: SCN-COMMODITY-DETAILS-003-C
+- **GIVEN** the user has chosen two species under the Cow commodity
+- **WHEN** they view the commodity details page
+- **THEN** the table has the columns "Commodity code", "Common name" and "Species"
+- **AND** the Cow row reads 0102, Cow, and the Latin name of each of the two species
 
 ### Requirement: A number of animals or a number of packages must be a positive whole number
 **ID**: REQ-COMMODITY-DETAILS-004
@@ -122,3 +129,14 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the commodity details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: The error summary lists errors by question
+**ID**: REQ-COMMODITY-DETAILS-010
+The system MUST list every number of animals error in the error summary before any number of packages error, each linking to its own field.
+
+#### Scenario: Two species with blank counts and invalid package counts list both animals errors first
+**ID**: SCN-COMMODITY-DETAILS-010-A
+- **GIVEN** the user has two species on the commodity details page, each missing its number of animals and each with a number of packages that is not a whole number
+- **WHEN** they save and continue
+- **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species
+- **AND** each error links to its own field

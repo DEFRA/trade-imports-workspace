@@ -636,6 +636,53 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
+  describe("keeping the stack's container logs", () => {
+    const e2eRungOf = (outcome) =>
+      outcome.rungs.find((rung) => rung.phase === 'e2e')
+    const stackLogFor = () =>
+      join(
+        root,
+        'workareas',
+        'shared',
+        'programme',
+        'logs',
+        'gate-stack-after-tests-e2e-plants-trade-imports-frontend-1.log'
+      )
+
+    test('writes each container’s log beside a red e2e rung’s, before the stack goes', async () => {
+      const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect({
+        stackLogs: e2eRungOf(outcome).stackLogs,
+        written: existsSync(stackLogFor())
+      }).toEqual({ stackLogs: [stackLogFor()], written: true })
+    })
+
+    test('writes them for a green e2e rung that only passed on a retry', async () => {
+      const env = workspaceWith(
+        withE2e({
+          'test:docker-compose': 'echo "  2 flaky"; echo "  340 passed"'
+        })
+      )
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect(e2eRungOf(outcome).stackLogs).toEqual([stackLogFor()])
+    })
+
+    test('writes none for a clean green e2e rung', async () => {
+      const env = workspaceWith(
+        withE2e({ 'test:docker-compose': 'echo "  340 passed"' })
+      )
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect(e2eRungOf(outcome).stackLogs).toBeUndefined()
+    })
+  })
+
   test('fails the e2e rungs when the stack does not come up, still stops it, and clears the lease', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(join(root, 'up-fails'), '')

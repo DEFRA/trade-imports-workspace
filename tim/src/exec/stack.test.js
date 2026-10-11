@@ -15,6 +15,7 @@ import {
   runStackScriptToLog,
   stackContainers,
   stackContainerIds,
+  writeStackLogs,
   STACK_PROJECT
 } from './stack.js'
 
@@ -141,6 +142,49 @@ describe('stackContainers', () => {
       message:
         "Can't list the workspace stack's containers: Cannot connect to the Docker daemon"
     })
+  })
+})
+
+describe('writeStackLogs', () => {
+  const FAKE_STACK = [
+    'if [ "$1" = "ps" ]; then printf "trade-imports-frontend-1\\ntrade-imports-mongodb-1\\n"; exit 0; fi',
+    'if [ "$1" = "logs" ] && [ "$2" = "--timestamps" ]; then echo "2026-10-11T01:49:12Z log of $3"; exit 0; fi',
+    'exit 1'
+  ].join('\n')
+
+  test("writes each stack container's timestamped log to its own file", async () => {
+    const env = fakeDocker(FAKE_STACK)
+    const logsDir = join(workspace, 'logs')
+
+    const written = await writeStackLogs({ logsDir, prefix: 'gate-stack', env })
+
+    expect(
+      written.map((path) => [
+        path,
+        readFileSync(path, 'utf8').trim().split('\n').at(-1)
+      ])
+    ).toEqual([
+      [
+        join(logsDir, 'gate-stack-trade-imports-frontend-1.log'),
+        '2026-10-11T01:49:12Z log of trade-imports-frontend-1'
+      ],
+      [
+        join(logsDir, 'gate-stack-trade-imports-mongodb-1.log'),
+        '2026-10-11T01:49:12Z log of trade-imports-mongodb-1'
+      ]
+    ])
+  })
+
+  test('writes nothing when the stack has no containers', async () => {
+    const env = fakeDocker('exit 0')
+
+    expect(
+      await writeStackLogs({
+        logsDir: join(workspace, 'logs'),
+        prefix: 'gate-stack',
+        env
+      })
+    ).toEqual([])
   })
 })
 

@@ -1492,7 +1492,9 @@ describe('increment-build-loop', () => {
           expect(prompt).toContain(
             'spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair'
           )
-          expect(prompt).toContain('never cut a step or an assertion to make it fit.')
+          expect(prompt).toContain(
+            'never cut a step or an assertion to make it fit.'
+          )
         })
 
         test('tells the ladder to validate the spec write again', async () => {
@@ -1514,7 +1516,8 @@ describe('increment-build-loop', () => {
         describe('a spec failure that predates the row, in a capability it writes', () => {
           const WHOLE_CAPABILITY =
             "a failure in a\n   capability this row writes is this row's to fix even where it predates the row"
-          const NEVER_LEFT = 'never report such a failure as pre-existing and leave it.'
+          const NEVER_LEFT =
+            'never report such a failure as pre-existing and leave it.'
 
           test('is the implementor’s to fix', async () => {
             const prompt = promptOf(
@@ -1527,7 +1530,10 @@ describe('increment-build-loop', () => {
           })
 
           test('is the fixer’s to fix', async () => {
-            const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
+            const prompt = promptOf(
+              await runThroughFixToLadder(),
+              'inc-900 fix'
+            )
 
             expect(prompt).toContain(WHOLE_CAPABILITY)
             expect(prompt).toContain(NEVER_LEFT)
@@ -1739,7 +1745,11 @@ describe('increment-build-loop', () => {
           stackHeld
         })
         const KEPT = { ok: true, summary: 'wip commit pushed' }
-        const leaseHeldBy = (holder) => ({ ok: true, holder, summary: `lease held by ${holder}` })
+        const leaseHeldBy = (holder) => ({
+          ok: true,
+          holder,
+          summary: `lease held by ${holder}`
+        })
         const LEASE_ELSEWHERE = leaseHeldBy('ibl-20260930T170000Z')
         const LEASE_GONE = leaseHeldBy(null)
         const LEASE_STILL_OURS = leaseHeldBy(RUN_ID)
@@ -1756,7 +1766,11 @@ describe('increment-build-loop', () => {
           )
 
         test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect({
             stopped: run.result.stopped,
@@ -1771,13 +1785,21 @@ describe('increment-build-loop', () => {
         })
 
         test('still gives back the run’s own lease after a stage found the stack held', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.agents.at(-1).options.label).toBe(RELEASE_LABEL)
         })
 
         test('names the holder in the increment’s result', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), LEASE_ELSEWHERE, KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.result.increments[0]).toMatchObject({
             id: 'inc-900',
@@ -1788,7 +1810,11 @@ describe('increment-build-loop', () => {
         })
 
         test('stops with stack-held for a stack that no lease names', async () => {
-          const run = await runToLadderWith(heldLadder(UNLEASED), LEASE_GONE, KEPT)
+          const run = await runToLadderWith(
+            heldLadder(UNLEASED),
+            LEASE_GONE,
+            KEPT
+          )
 
           expect(run.result.stopped).toEqual({
             reason: 'stack-held',
@@ -1839,7 +1865,8 @@ describe('increment-build-loop', () => {
 
           expect(run.result.stopped).toEqual({
             reason: 'baseline-red',
-            detail: 'inc-900: Baseline is RED: trade-imports-ins-tests e2e failed'
+            detail:
+              'inc-900: Baseline is RED: trade-imports-ins-tests e2e failed'
           })
         })
 
@@ -1894,9 +1921,16 @@ describe('increment-build-loop', () => {
             acquire: forbidsLeaseCommands(promptOf(run, ACQUIRE_LABEL)),
             release: forbidsLeaseCommands(promptOf(run, RELEASE_LABEL)),
             otherGuardedStages: run.agents
-              .filter(({ options, prompt }) => !isRunLease(options.label) && prompt.includes('GUARD RAILS'))
+              .filter(
+                ({ options, prompt }) =>
+                  !isRunLease(options.label) && prompt.includes('GUARD RAILS')
+              )
               .every(({ prompt }) => forbidsLeaseCommands(prompt))
-          }).toEqual({ acquire: false, release: false, otherGuardedStages: true })
+          }).toEqual({
+            acquire: false,
+            release: false,
+            otherGuardedStages: true
+          })
         })
 
         test('tells the lease taker its lease command is the one stack command it runs', async () => {
@@ -1912,7 +1946,10 @@ describe('increment-build-loop', () => {
 
           expect(
             run.agents
-              .filter(({ prompt }) => !prompt.includes('The Bash tool is loaded in every stage'))
+              .filter(
+                ({ prompt }) =>
+                  !prompt.includes('The Bash tool is loaded in every stage')
+              )
               .map(({ options }) => options.label)
           ).toEqual([])
         })
@@ -2804,7 +2841,14 @@ describe('increment-build-loop', () => {
           args: BRANCH_ARGS,
           answers: [
             WORKSPACE_ANSWER,
-            { ok: true, summary: '1', branchWithoutPr: ['trade-imports-stub', 'trade-imports-reference-data'] }
+            {
+              ok: true,
+              summary: '1',
+              branchWithoutPr: [
+                'trade-imports-stub',
+                'trade-imports-reference-data'
+              ]
+            }
           ]
         })
 

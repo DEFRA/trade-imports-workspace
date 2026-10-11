@@ -968,7 +968,10 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
   there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
-  \`test-results/*/error-context.md\` in the tests repo as well.`
+  \`test-results/*/error-context.md\` in the tests repo as well.
+- An e2e rung that went red, or passed only on a retry, also carries \`stackLogs\`: each stack container's own log,
+  written before the stack could go. A 500 page, a dropped socket or a test timeout is explained there: read the log of
+  the service the failure points at and name its cause. Never call a failure transient without it.`
 
 const RUN_STACK_RULE = `THE WORKSPACE STACK is already up, leased to this run as \`${RUN_HOLDER}\` for every increment it builds. A
 check that needs it up uses it as it is. Never acquire or release its lease, and never start, stop, restart or rebuild

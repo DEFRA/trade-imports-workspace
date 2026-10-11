@@ -9,6 +9,7 @@ import {
   defaultLeasePath
 } from '../exec/stack-lease.js'
 import { refreshLeasedStack } from '../exec/stack-refresh.js'
+import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
 import { loadGates, planRungs, MVN_VERIFY, PHASES } from './gates.js'
@@ -348,10 +349,38 @@ const inPlanOrder = (rungs, runs) => {
 // The stack can get ready while the unit and FIT rungs run, but no e2e rung
 // starts until they have all finished. The e2e rungs then run one at a
 // time, so an exclusive rung never shares the machine with another rung.
+const FLAKY_COUNT = /^\s+\d+ flaky\s*$/m
+
+const loggedFlaky = (log) => {
+  try {
+    return Boolean(log) && FLAKY_COUNT.test(readFileSync(log, 'utf8'))
+  } catch {
+    return false
+  }
+}
+
+// A red or flaky e2e rung is often explained only by a service's own log: a
+// 500 page, a dropped socket, a container that restarted. The stack, and
+// those logs with it, goes when the lease is given back, so they are written
+// beside the rung's log straight away.
+const withStackLogs = async (result, rung, context) => {
+  if (result.ok && !loggedFlaky(result.log)) return result
+  try {
+    const stackLogs = await writeStackLogs({
+      logsDir: context.logsDir,
+      prefix: `gate-stack-after-${rung.repo}-${rung.name}`,
+      env: context.env
+    })
+    return { ...result, stackLogs }
+  } catch (error) {
+    return { ...result, stackLogs: [], stackLogsError: messageOf(error) }
+  }
+}
+
 const runE2eRungs = async (rungs, context) => {
   await context.localDone
-  const runs = await runInOrder(e2eRunOrder(rungs, context), (rung) =>
-    runRung(rung, context)
+  const runs = await runInOrder(e2eRunOrder(rungs, context), async (rung) =>
+    withStackLogs(await runRung(rung, context), rung, context)
   )
   const ordered = inPlanOrder(rungs, runs)
   return { results: ordered.map(({ result }) => result), runs: ordered }

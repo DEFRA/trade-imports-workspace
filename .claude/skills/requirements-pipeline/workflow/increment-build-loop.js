@@ -1504,8 +1504,17 @@ ${guardrails()}
 ${REPO_RULE}
 EVIDENCE: ${evidence}
 \`${branch}\` is a shared branch with open pull requests. NOTHING from a failed attempt may be committed or pushed to
-it. Your own task below is the one place you ARE told to abort a merge.
+it. Your own task below is the one place you ARE told to abort a merge, and to move \`${branch}\` back with
+\`reset --soft\`.
 TASK:
+0. COMMITS A STAGE MADE. No stage commits: only landing does, and it pushes at once. So a configured repo on \`${branch}\`
+   whose \`git -C ${TILDE}/<repoPath> rev-list --count origin/${branch}..HEAD\` prints more than 0 holds this attempt's
+   work in local commits (overview and review inc-107 left one, and the next run's baseline went red on it). Check
+   EVERY configured repo — ${REPO_KEYS.filter((key) => key !== WORKSPACE_KEY).map((key) => `\`${repoTilde(key)}\``).join(', ')} — even one whose status is clean. For each with a count above 0:
+   \`git -C ${TILDE}/<repoPath> log --oneline origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.txt\`
+   \`git -C ${TILDE}/<repoPath> format-patch --stdout --binary origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.patch\`
+   then \`git -C ${TILDE}/<repoPath> reset --soft origin/${branch}\`, which leaves those commits' changes staged for the steps
+   below to save and stash. Name the commits' SHAs in your note. Never \`reset --hard\`, and never push.
 1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
    \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
    A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
@@ -1525,7 +1534,7 @@ TASK:
 5a. ${SPEC_RULE} If it has changes, stash them:
    \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
    \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
-6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
+6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; local commits <SHAs or none> moved back from <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.

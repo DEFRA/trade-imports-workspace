@@ -732,7 +732,9 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
   build: give it a withheld status, or do it by hand.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
-  in progress and stashes the rest.
+  in progress and stashes the rest. A local commit a stage made against the rules (overview and review inc-107 left
+  one in the tests repo) is saved as `<id>-preserve-<repoKey>.commits.patch`, moved back off the branch with
+  `reset --soft`, and stashed with the rest, so the next run's baseline does not build on it.
 
 It runs on either executor. The Codex briefs take the configured repos, whatever their keys, and a Codex stage is
 told about a merge in progress, a row that changes no backlog repo and a row whose `gatePhases` leave out unit,

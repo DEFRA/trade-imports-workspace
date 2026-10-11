@@ -3432,6 +3432,28 @@ describe('increment-build-loop', () => {
           expect(prompt).toContain('--diff-filter=U')
         })
 
+        test('moves commits a stage made back off the shared branch, saved as a patch, before stashing them', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect({
+            counts: /rev-list --count origin\/\S+\.\.HEAD/.test(prompt),
+            savesPatch:
+              /format-patch --stdout --binary origin\/\S+\.\.HEAD > \S+inc-900-preserve-<repoKey>\.commits\.patch/.test(
+                prompt
+              ),
+            movesBack:
+              /reset --soft origin\/\S+`, which leaves those commits/.test(
+                prompt
+              ),
+            neverHard: prompt.includes('Never `reset --hard`, and never push.')
+          }).toEqual({
+            counts: true,
+            savesPatch: true,
+            movesBack: true,
+            neverHard: true
+          })
+        })
+
         test('stops the run at ladder-red with what the preserve step kept', async () => {
           const run = await runToRedLadder()
 

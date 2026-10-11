@@ -209,3 +209,19 @@ The system MUST show the "Transit countries" task in "3. Transport and arrival" 
 - **GIVEN** a cat is chosen
 - **WHEN** the user views Overview before arrival details are saved, and again after Air is saved
 - **THEN** no "Transit countries" task is shown
+
+### Requirement: Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past
+**ID**: REQ-OVERVIEW-013
+The system MUST measure a saved arrival date against the allowed arrival window each time Overview is viewed, and MUST show "Arrival details" as To do once that date is more than 7 days in the past, however completely the task was answered when it was saved.
+
+#### Scenario: A saved arrival date more than 7 days in the past reads To do
+**ID**: SCN-OVERVIEW-013-A
+- **GIVEN** arrival details were saved complete, and the saved arrival date is now more than 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads To do
+
+#### Scenario: A saved arrival date exactly 7 days in the past still reads Complete
+**ID**: SCN-OVERVIEW-013-B
+- **GIVEN** arrival details were saved complete, and the saved arrival date is exactly 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads Complete

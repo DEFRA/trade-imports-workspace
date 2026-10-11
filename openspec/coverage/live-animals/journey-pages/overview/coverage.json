@@ -279,7 +279,8 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the transit row between arrival and transport details, reading Complete once a country is saved", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: with a commodity chosen and overland arrival details saved, transit countries sits between arrival and transport details as To do", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "Rail: the row reads To do with no country saved" }
           ]
         },
         {
@@ -301,6 +302,30 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should show the conditional transit row only for an overland means of transport", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "a cat consignment travelling by air has no Transit countries task, before or after arrival details are saved", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-013",
+      "name": "Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-013-A",
+          "name": "A saved arrival date more than 7 days in the past reads To do",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should read To do for Arrival details once its saved arrival date is more than 7 days in the past", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/stale-arrival-date.spec.ts", "test": "overview: when the saved arrival date is now more than 7 days in the past, Arrival details reads To do and the page names the date", "strength": "full", "notes": "the date is made stale through the backend after a frontend-seeded draft reads Complete" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-013-B",
+          "name": "A saved arrival date exactly 7 days in the past still reads Complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should read Complete for Arrival details while its saved arrival date is exactly 7 days in the past", "strength": "full", "notes": "" }
           ]
         }
       ]

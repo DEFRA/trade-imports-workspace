@@ -114,7 +114,7 @@ The system MUST refuse Save and continue on the arrival details page while no me
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
-The system MUST confine the arrival date to a window running from one week in the past to six months in the future, MUST offer that window as the range of the date picker, and MUST reject a date typed outside it with an error naming the allowed range, keeping the user on the page and saving nothing.
+The system MUST confine the arrival date to a window from one week back to six months ahead, MUST offer that window as the date picker's range, MUST reject a date typed outside it with an error naming the range (saving nothing), and MUST name a saved arrival date that has since fallen outside the window when the page is reopened, with the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 #### Scenario: The date picker offers only the allowed window
 **ID**: SCN-ARRIVAL-007-A
@@ -150,6 +150,12 @@ The system MUST confine the arrival date to a window running from one week in th
 - **GIVEN** the user has had an arrival date rejected for falling outside the allowed window
 - **WHEN** they leave the page and return to it on the same notification
 - **THEN** the arrival date does not hold the rejected value
+
+#### Scenario: A saved arrival date that has fallen out of the window is named when the page is reopened
+**ID**: SCN-ARRIVAL-007-F
+- **GIVEN** an arrival date was saved and is now more than 7 days in the past
+- **WHEN** the user opens the arrival details page
+- **THEN** an error summary is shown, linking to the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 ### Requirement: The transport identification and document reference are each capped at 58 characters
 **ID**: REQ-ARRIVAL-008

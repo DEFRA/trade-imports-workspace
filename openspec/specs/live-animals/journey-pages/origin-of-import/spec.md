@@ -34,7 +34,7 @@ The system MUST offer the country of origin as a searchable field that filters t
 
 ### Requirement: The country field offers the origin countries the service accepts, and submits a country code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder and the origin countries and territories the service accepts, and MUST submit the chosen country's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, listed by name.
+The system MUST offer a placeholder and the origin countries and territories the service accepts, and MUST submit the chosen country's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.
 
 #### Scenario: The country list holds a placeholder and the accepted origin countries
 **ID**: SCN-ORIGIN-003-A
@@ -52,7 +52,7 @@ The system MUST offer a placeholder and the origin countries and territories the
 **ID**: SCN-ORIGIN-003-C
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
+- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as "<territory> (<country>)", in alphabetical order of the name shown
 
 ### Requirement: The country field offers its whole list on focus, before anything is typed
 **ID**: REQ-ORIGIN-004
@@ -263,3 +263,25 @@ The system MUST keep a region code typed under Yes with no country chosen on the
 - **THEN** the review page shows no region of origin code
 - **WHEN** they return, choose France, type the code again and save and continue
 - **THEN** the review page shows the code with France's prefix
+
+### Requirement: Each territory in the country list is named with its country, and keeps its code
+**ID**: REQ-ORIGIN-018
+The system MUST name every territory in the country of origin list "<territory> (<country>)", for example "Canary Islands (Spain)", with or without JavaScript. It MUST sort the list alphabetically by the name shown. It MUST save a chosen territory by its own code, and on return MUST show it by that name with its country's code as the region code prefix.
+
+#### Scenario: A territory is named with its country, with or without JavaScript
+**ID**: SCN-ORIGIN-018-A
+- **GIVEN** the user is on the origin of the import page, with or without JavaScript
+- **WHEN** the country list is read
+- **THEN** each territory reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+#### Scenario: The list is sorted by the name shown
+**ID**: SCN-ORIGIN-018-B
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the country list is read in full
+- **THEN** it is in alphabetical order of the names shown, so "Canary Islands (Spain)" sits among the C entries
+
+#### Scenario: A chosen territory keeps its code and is shown back with its country's prefix
+**ID**: SCN-ORIGIN-018-C
+- **GIVEN** the user chose "Canary Islands (Spain)", answered that a region code is required, typed a code and saved
+- **WHEN** they return to the origin of the import page
+- **THEN** the country field shows "Canary Islands (Spain)", the notification keeps the territory's code, and the region code field carries Spain's code, ES, as its fixed prefix

@@ -133,16 +133,26 @@
     },
     {
       "id": "REQ-PLANTS-CYA-006",
-      "name": "A draft notification invites submission and withholds post-submission actions",
-      "coverage": "partial",
+      "name": "A draft notification invites submission and offers delete beside Continue",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-006-A",
-          "name": "The draft view invites submission and withholds delete and cancel-amendment",
-          "coverage": "partial",
+          "name": "The draft view invites submission and offers delete beside Continue",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "partial", "notes": "completeNotification asserts Now submit heading and body; does not assert delete/cancelAmend absent" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "partial", "notes": "submitted and amending branches prove delete vs cancelAmend; draft withhold is implied by readOnly false → deleteHref null in controller, not asserted on a draft GET" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Back, Delete notification, Save and return, and Cancel to Overview", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers ends with Continue and a red Delete notification that opens the delete page, keeping Save and return and Cancel", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer delete on a draft's check answers", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-006-B",
+          "name": "Delete notification on a draft opens the delete page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete notification on a draft's check answers opens the delete page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers ends with Continue and a red Delete notification that opens the delete page, keeping Save and return and Cancel", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -199,8 +209,9 @@
           "name": "Cancel amendment is offered only while amending",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: strip cancelAmend href set, deleteHref null" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "partial", "notes": "Amend tag and Cancel amend in the status bar on CYA; delete absence not asserted" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: cancelAmendHref set, deleteHref null, no strip cancelAmend" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Overview offers Cancel amend in the status bar and the review offers it as a button beside Continue, with no delete", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "an amendment's check answers offers Cancel amend beside Continue and no delete", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -286,7 +297,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-013",
-      "name": "An amendment that is not yet ready holds Continue without an error",
+      "name": "An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why",
       "coverage": "full",
       "scenarios": [
         {
@@ -294,17 +305,18 @@
           "name": "An incomplete amendment's review shows no error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "asserts no summary on open" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on an incomplete amend review", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-PLANTS-CYA-013-B",
-          "name": "Continuing from an incomplete amendment stays on check-your-answers without an error",
+          "name": "Continuing from an incomplete amendment is refused, naming what is missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep an incomplete amend on the review without an error", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse an incomplete amend and name what is missing", "strength": "full", "notes": "" }
           ]
         }
       ]

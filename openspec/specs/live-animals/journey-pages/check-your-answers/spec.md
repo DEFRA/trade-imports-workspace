@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting".
 
 ## Requirements
 
@@ -213,16 +213,22 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
 - **THEN** they are back on the review
 
-### Requirement: A draft notification offers submission and none of the post-submission actions
+### Requirement: A draft notification ends with Continue and Delete
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification, offering a continue action, and MUST NOT offer copy-as-new, delete, or cancel-amendment while it is still a draft.
+The system MUST invite the user to submit a draft notification with a continue action, and MUST offer beside it a red "Delete" that opens the notification's delete confirmation. It MUST NOT offer copy-as-new or cancel-amendment while the notification is still a draft.
 
-#### Scenario: The draft view invites submission and withholds the post-submission actions
+#### Scenario: The draft view ends with Continue and a red Delete
 **ID**: SCN-CYA-005-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** it invites them to submit the notification, offering a continue action
-- **AND** no copy-as-new, delete, or cancel-amendment action is offered
+- **THEN** it ends with "Continue" and a red "Delete" beside it
+- **AND** no copy-as-new or cancel-amendment action is offered
+
+#### Scenario: Delete on a draft opens the delete confirmation
+**ID**: SCN-CYA-005-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user selects "Delete"
+- **THEN** the delete confirmation for that notification opens
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
 **ID**: REQ-CYA-006
@@ -324,9 +330,9 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: An amendment that is not yet ready holds Continue without an error
+### Requirement: An amendment's review opens without errors and refuses an incomplete resubmission, saying why
 **ID**: REQ-CYA-010
-While a notification is being amended, the system MUST show the review with no error summary and no error message against any card or role, and MUST keep the user on the review, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+While a notification is being amended, the system MUST open the review with no error summary and no error message against any card or role. When the user continues while any answer is incomplete or breaks its rules, the system MUST keep them on the review, still amending and without opening the declaration, and MUST show the error summary "There is a problem" naming what is missing, with focus on it.
 
 #### Scenario: An incomplete amendment's review shows no error
 **ID**: SCN-CYA-010-A
@@ -334,19 +340,19 @@ While a notification is being amended, the system MUST show the review with no e
 - **WHEN** the user opens the review
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment stays on the review without an error
+#### Scenario: Continuing from an incomplete amendment is refused, naming what is missing
 **ID**: SCN-CYA-010-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on the review with no error summary or error message
+- **THEN** they stay on the review and the error summary names "Complete arrival details"
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-#### Scenario: Continuing from an amendment whose arrival date breaks its rule stays on the review without an error
+#### Scenario: Continuing from an amendment whose arrival date breaks its rule is refused
 **ID**: SCN-CYA-010-C
 - **GIVEN** a notification being amended whose arrival date at port has been changed to more than 6 months ahead
 - **WHEN** the user continues on the review
-- **THEN** they stay on the review with no error summary or error message
+- **THEN** they stay on the review with an error summary naming the arrival details card's problem
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
@@ -359,3 +365,48 @@ The system MUST show each transited country in the review's Transit countries su
 - **GIVEN** the notification's transited countries include a territory
 - **WHEN** the review page is shown
 - **THEN** the Transit countries subsection names it "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+### Requirement: An amendment's review ends with Continue, Cancel amend and Delete
+**ID**: REQ-CYA-013
+While a notification is being amended, the system MUST end the review with "Continue", which goes on to resubmission, a secondary "Cancel amend" button that opens the cancel-amendment confirmation, and a red "Delete" that opens the delete confirmation. The status bar on this page MUST NOT also offer "Cancel amend".
+
+#### Scenario: The amendment review ends with three controls and no status bar Cancel amend
+**ID**: SCN-CYA-013-A
+- **GIVEN** a notification being amended is open on the review
+- **WHEN** the user reads the end of the page
+- **THEN** it ends with "Continue", a secondary "Cancel amend" button and a red "Delete" button
+- **AND** the status bar offers no "Cancel amend"
+
+#### Scenario: Cancel amend opens the cancel-amendment confirmation
+**ID**: SCN-CYA-013-B
+- **GIVEN** a notification being amended is open on the review
+- **WHEN** the user selects "Cancel amend"
+- **THEN** the cancel-amendment confirmation opens
+
+#### Scenario: Delete opens the delete confirmation
+**ID**: SCN-CYA-013-C
+- **GIVEN** a notification being amended is open on the review
+- **WHEN** the user selects "Delete"
+- **THEN** the delete confirmation for that notification opens
+
+### Requirement: An amendment's review says it is re-submitting once an answer changes
+**ID**: REQ-CYA-014
+The system MUST head and title an amendment's review "Review your notification" when it is opened, and "Review before re-submitting" once any notification answer differs from the submitted version. A change to the uploaded documents alone MUST NOT count as a changed answer.
+
+#### Scenario: An unchanged amendment reads Review your notification
+**ID**: SCN-CYA-014-A
+- **GIVEN** a notification being amended with no answer changed
+- **WHEN** the user opens the review
+- **THEN** the page heading and browser title read "Review your notification"
+
+#### Scenario: A changed answer retitles the review
+**ID**: SCN-CYA-014-B
+- **GIVEN** a notification being amended
+- **WHEN** the user changes the internal reference and selects "Save and return"
+- **THEN** the review heading and browser title read "Review before re-submitting"
+
+#### Scenario: Adding a document alone leaves the heading unchanged
+**ID**: SCN-CYA-014-C
+- **GIVEN** a notification being amended
+- **WHEN** the user adds a document and opens the review
+- **THEN** the review heading still reads "Review your notification"

@@ -100,13 +100,14 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-LIFECYCLE-008
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself.
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself and on check-your-answers, which offers its own "Cancel amend" button beside Continue.
 
 #### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-LIFECYCLE-008-A
 - **GIVEN** a notification is being amended
-- **WHEN** the user views Overview, check-your-answers or any question page
+- **WHEN** the user views Overview or any question page
 - **THEN** a status bar above the caption and heading shows "Amend", the reference number and "Cancel amend"
+- **AND** on check-your-answers the status bar shows "Amend" and the reference number, and "Cancel amend" is a button beside Continue
 
 #### Scenario: Choosing to cancel asks for confirmation before discarding anything
 **ID**: SCN-LIFECYCLE-008-B

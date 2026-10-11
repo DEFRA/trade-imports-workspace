@@ -88,16 +88,23 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **WHEN** they follow a Change link for a commodity line, change its quantity and save through the commodities list
 - **THEN** they return to check-your-answers, showing the new quantity
 
-### Requirement: A draft notification invites submission and withholds post-submission actions
+### Requirement: A draft notification invites submission and offers delete beside Continue
 **ID**: REQ-PLANTS-CYA-006
-The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST NOT offer delete or cancel-amendment while it is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
+The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST offer beside it a red "Delete notification" that opens the notification's delete page, keeping "Save and return to overview" and the Cancel link. It MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
 
-#### Scenario: The draft view invites submission and withholds delete and cancel-amendment
+#### Scenario: The draft view invites submission and offers delete beside Continue
 **ID**: SCN-PLANTS-CYA-006-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to continue to the declaration to submit
-- **AND** no delete or cancel-amendment action is offered
+- **AND** a red "Delete notification" stands beside "Continue", with "Save and return to overview" and the Cancel link
+- **AND** no cancel-amendment action is offered
+
+#### Scenario: Delete notification on a draft opens the delete page
+**ID**: SCN-PLANTS-CYA-006-B
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user selects "Delete notification"
+- **THEN** the delete page for that notification opens
 
 ### Requirement: Continuing from a ready draft moves on to the declaration
 **ID**: REQ-PLANTS-CYA-007
@@ -130,13 +137,14 @@ The system MUST show a submitted notification read-only — with no Change links
 
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
-The system MUST offer "Cancel amend" in the status bar of check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
+The system MUST offer "Cancel amend" on check-your-answers while a notification is being amended as a secondary button beside Continue that opens the cancel-amendment confirmation, MUST NOT offer it in the status bar on this page, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: Cancel amendment is offered only while amending
 **ID**: SCN-PLANTS-CYA-009-A
 - **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
-- **THEN** "Cancel amend" is offered in the status bar
+- **THEN** "Cancel amend" is offered as a secondary button beside "Continue"
+- **AND** the status bar offers no "Cancel amend"
 - **AND** no delete action is offered
 
 #### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers
@@ -192,9 +200,9 @@ The system MUST show check-your-answers for a draft that is not yet complete, wi
 - **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
 - **AND** the declaration is not opened
 
-### Requirement: An amendment that is not yet ready holds Continue without an error
+### Requirement: An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why
 **ID**: REQ-PLANTS-CYA-013
-While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message against any card or role, and MUST keep the user on check-your-answers, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+While a notification is being amended, the system MUST open check-your-answers with no error summary and no error message against any card or role. When the user continues while any answer is incomplete or breaks its rules, the system MUST keep them on check-your-answers, still amending and without opening the declaration, and MUST show the error summary naming what is missing.
 
 #### Scenario: An incomplete amendment's review shows no error
 **ID**: SCN-PLANTS-CYA-013-A
@@ -202,10 +210,10 @@ While a notification is being amended, the system MUST show check-your-answers w
 - **WHEN** the user opens check-your-answers
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment stays on check-your-answers without an error
+#### Scenario: Continuing from an incomplete amendment is refused, naming what is missing
 **ID**: SCN-PLANTS-CYA-013-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on check-your-answers with no error summary or error message
+- **THEN** they stay on check-your-answers and the error summary names "Complete arrival details"
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened

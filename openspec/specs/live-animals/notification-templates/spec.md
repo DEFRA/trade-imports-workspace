@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list.
 
 ## Requirements
 
@@ -171,3 +171,72 @@ The system MUST hold a template being created, with its chosen type and name, ap
 - **WHEN** "Origin of the import" is shown for the template
 - **THEN** no notification reference and no Draft tag are shown
 - **AND** the user's draft notifications are the same as before
+
+### Requirement: While a template is being created, the Overview is the template's task list
+**ID**: REQ-TEMPLATES-008
+The template's Overview MUST show the heading "Overview", a grey "Template" tag with the template's name in place of the draft status and reference, the "Your commodities" totals for animals and packages (0 and 0 before any are entered) and the list heading "Template tasklist".
+
+#### Scenario: The template's Overview shows the Template tag and name and the Template tasklist
+**ID**: SCN-TEMPLATES-008-A
+- **GIVEN** the user is creating a template
+- **WHEN** the template's Overview is shown
+- **THEN** the heading "Overview" is shown
+- **AND** a "Template" tag and the template's name are shown in place of the draft status and the notification reference
+- **AND** the "Your commodities" totals read 0 animals and 0 packages
+- **AND** the list is headed "Template tasklist", not "Notification tasklist"
+
+### Requirement: The template's task list has five sections and no documents
+**ID**: REQ-TEMPLATES-009
+The template's task list MUST group the tasks under "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address", with no Documents section and no "Upload documents" task, and nothing on the page MUST link to Upload documents or the declaration.
+
+#### Scenario: The template's task list has five sections and no Documents
+**ID**: SCN-TEMPLATES-009-A
+- **GIVEN** the user is creating a template
+- **WHEN** the template's Overview is shown
+- **THEN** the sections read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address"
+- **AND** no Documents section and no "Upload documents" task is shown
+- **AND** nothing on the page links to Upload documents or the declaration
+
+### Requirement: The template's tasks are the notification's tasks
+**ID**: REQ-TEMPLATES-010
+The template's task list MUST show the notification task list's own tasks, titles and hints for the same answers, each tagged "Complete" in green when answered and "To do" in blue otherwise, and each opening its question page for the template.
+
+#### Scenario: The template's tasks are the notification's tasks, tagged Complete or To do, each opening within the template
+**ID**: SCN-TEMPLATES-010-A
+- **GIVEN** the user is creating a template and has answered Origin of the import and "What are you importing?"
+- **WHEN** the template's Overview is shown
+- **THEN** it lists the tasks the notification task list lists for the same answers, apart from "Upload documents"
+- **AND** the answered tasks are tagged "Complete" and the others "To do"
+- **AND** the "Roles and addresses" task alone carries its hint, as on the notification task list
+- **AND** each task opens its question page for the template
+
+### Requirement: The template's task list ends with Review template and Return to manage templates
+**ID**: REQ-TEMPLATES-011
+The template's task list MUST end with a primary "Review template" button to the template review and a secondary "Return to manage templates" button to Manage templates, and MUST NOT offer "Save template".
+
+#### Scenario: The template's task list ends with Review template and Return to manage templates
+**ID**: SCN-TEMPLATES-011-A
+- **GIVEN** the user is creating a template
+- **WHEN** the template's Overview is shown
+- **THEN** it ends with the primary button "Review template" and the secondary button "Return to manage templates"
+- **AND** "Return to manage templates" opens Manage templates
+- **AND** no "Save template" button is offered
+
+### Requirement: 'What are you importing?' is asked in template mode and returns to the template's task list
+**ID**: REQ-TEMPLATES-012
+While a template is being created, "What are you importing?" MUST show the "Template" tag and the template's name and MUST have a Back link to Origin of the import. It MUST offer "Save and continue", "Save and return to overview" and a "Cancel and return to overview" link to the template's task list, and "Save and continue" MUST return to the template's task list.
+
+#### Scenario: What are you importing? in template mode shows the Template tag, Back to Origin and all three controls
+**ID**: SCN-TEMPLATES-012-A
+- **GIVEN** the user is creating a template and has answered Origin of the import
+- **WHEN** "What are you importing?" is shown
+- **THEN** a "Template" tag and the template's name are shown
+- **AND** the Back link goes to Origin of the import
+- **AND** "Save and continue", "Save and return to overview" and the link "Cancel and return to overview" are offered
+- **AND** the link goes to the template's task list
+
+#### Scenario: Saving What are you importing? returns to the template's task list
+**ID**: SCN-TEMPLATES-012-B
+- **GIVEN** the user is creating a template and has chosen a species on "What are you importing?"
+- **WHEN** they select "Save and continue"
+- **THEN** the template's task list is shown

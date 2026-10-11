@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status, and where a new notification starts.
+The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status, where a new notification starts, and the way into the trader's notification templates.
 
 ## Requirements
 
@@ -73,3 +73,19 @@ The system MUST offer a "Create new" button under the dashboard heading, above t
 - **WHEN** the "No notifications found" message is shown
 - **THEN** "Create new" is still offered
 - **AND** choosing it shows the question "What are you importing?"
+
+### Requirement: The dashboard always offers Use template, opening Manage templates
+**ID**: REQ-INS-DASH-005
+The system MUST offer a secondary "Use template" button beside "Create new", under the dashboard heading, whether the organisation has no notifications, has notifications, or has just searched (including a search that matches nothing). Following "Use template" MUST open the page headed "Manage templates" in the live animals service (`live-animals/notification-templates`).
+
+#### Scenario: Use template is offered beside Create new in every state of the dashboard
+**ID**: SCN-INS-DASH-005-A
+- **GIVEN** the user is signed in
+- **WHEN** the dashboard is shown with notifications, with none, or after a search that matches nothing
+- **THEN** "Use template" is offered beside "Create new"
+
+#### Scenario: Following Use template opens Manage templates
+**ID**: SCN-INS-DASH-005-B
+- **GIVEN** the user is signed in and on the dashboard
+- **WHEN** they follow "Use template"
+- **THEN** the page headed "Manage templates" is shown

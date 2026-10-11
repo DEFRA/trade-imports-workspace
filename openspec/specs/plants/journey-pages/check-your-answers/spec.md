@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers".
+The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers". A submitted notification's read-only view is titled by its reference number instead.
 
 ## Requirements
 
@@ -155,15 +155,21 @@ The system MUST offer "Cancel amend" on check-your-answers while a notification 
 - **AND** a success banner explains the amendment was cancelled
 - **AND** the discarded edit is not shown
 
-### Requirement: A back link and a save-and-return action open Overview
+### Requirement: A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list
 **ID**: REQ-PLANTS-CYA-010
-The system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers.
+The system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers for a draft or an amendment, and MUST take them to the plants notification list when they follow the back link from a submitted notification's read-only view.
 
 #### Scenario: Back and save-and-return open Overview
 **ID**: SCN-PLANTS-CYA-010-A
-- **GIVEN** the user is on check-your-answers
+- **GIVEN** the user is on check-your-answers for a draft
 - **WHEN** they follow the back link, or choose save and return
 - **THEN** Overview is shown
+
+#### Scenario: The submitted view's back link opens the notification list
+**ID**: SCN-PLANTS-CYA-010-B
+- **GIVEN** a submitted notification's read-only view is open
+- **WHEN** the user follows the back link
+- **THEN** the plants notification list is shown
 
 ### Requirement: A draft that would be late shows a warning; a submitted late notification shows a banner
 **ID**: REQ-PLANTS-CYA-011
@@ -217,3 +223,38 @@ While a notification is being amended, the system MUST open check-your-answers w
 - **THEN** they stay on check-your-answers and the error summary names "Complete arrival details"
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
+
+### Requirement: A submitted notification's read-only view is headed by its reference and status, and dated
+**ID**: REQ-PLANTS-CYA-014
+On a submitted notification's read-only view, the system MUST head the page with the notification's reference number in place of "Check your answers", with its status beside it as a tag and no status bar above it, MUST start the browser title with the reference, and MUST show the UK day it was submitted under the heading. A draft or an amendment MUST keep its "Check your answers" heading, title and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag
+**ID**: SCN-PLANTS-CYA-014-A
+- **GIVEN** a notification that has been submitted
+- **WHEN** the user opens its read-only view
+- **THEN** the page heading is the notification's reference number
+- **AND** a "Submitted" tag stands beside it
+- **AND** no status bar is shown
+
+#### Scenario: The submitted view's browser title starts with its reference
+**ID**: SCN-PLANTS-CYA-014-B
+- **GIVEN** a notification that has been submitted
+- **WHEN** the user opens its read-only view
+- **THEN** the browser title starts with the reference, before the service name
+- **AND** a draft's check-your-answers is still titled "Check your answers"
+
+#### Scenario: The submitted view shows the date it was submitted
+**ID**: SCN-PLANTS-CYA-014-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user opens its read-only view
+- **THEN** under the heading it reads "Date submitted: 22 July 2026"
+
+### Requirement: Opening the view of a notification that does not exist goes to the notification list
+**ID**: REQ-PLANTS-CYA-015
+The system MUST send the user to the plants notification list when they open the view of a notification that does not exist.
+
+#### Scenario: An unknown notification's view opens the notification list
+**ID**: SCN-PLANTS-CYA-015-A
+- **GIVEN** no notification has the reference GBN-HRP-00-000000
+- **WHEN** the user opens that notification's view
+- **THEN** the plants notification list is shown

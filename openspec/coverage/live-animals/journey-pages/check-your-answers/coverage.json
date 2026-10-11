@@ -261,7 +261,7 @@
     },
     {
       "id": "REQ-CYA-003",
-      "name": "A back link returns to Overview",
+      "name": "A back link returns to Overview from the review, and to the notification list from a submitted notification's view",
       "coverage": "full",
       "scenarios": [
         {
@@ -269,7 +269,17 @@
           "name": "The back link opens Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review's back link returns to the notification hub", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-B",
+          "name": "The submitted view's back link opens the notification list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point a submitted view's Back link at the live-animals notification list, and a draft's at Overview", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Back on a submitted notification's view goes to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Back goes to the live-animals notification list", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -617,6 +627,63 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-review-heading.spec.ts", "test": "changing only the uploaded documents during an amendment keeps Review your notification", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep Review your notification when only the documents change during an amendment", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/answers-changed.test.js", "test": "Should not count a change to the uploaded documents only", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-015",
+      "name": "A submitted notification's view is headed by its reference and status, and dated",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-015-A",
+          "name": "The submitted view is headed by its reference with a Submitted tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a submitted notification's view with its reference and a Submitted tag, with no status bar", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a Submitted tag and no status bar, and titled by its reference", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page headed by its reference with a Submitted tag and no status bar", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-015-B",
+          "name": "The submitted view is titled by its reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title a submitted view by its reference, and a draft's and an amendment's review Review your notification", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a Submitted tag and no status bar, and titled by its reference", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review's back link returns to the notification hub", "strength": "full", "notes": "asserts the draft review's browser title" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page headed by its reference with a Submitted tag and no status bar", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-015-C",
+          "name": "The submitted view shows the date it was submitted",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should date a submitted notification's view with the UK day it was submitted", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/lib/validate/calendar.test.js", "test": "renders the UK day it happened with the month written out", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the date it was submitted under its header", "strength": "partial", "notes": "format only; the exact day is pinned by the unit test" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the date it was submitted", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-016",
+      "name": "Opening the view of a notification that does not exist goes to the notification list",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-016-A",
+          "name": "An unknown notification's view opens the notification list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should send a notification that cannot be found to the notification list", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should leave a notification it cannot find to the page it asked for", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "opening the view of a notification that does not exist goes to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "an unknown notification's view goes to the live-animals notification list", "strength": "full", "notes": "" }
           ]
         }
       ]

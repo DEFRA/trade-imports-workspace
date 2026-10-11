@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting".
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting". A submitted notification's read-only view is titled by its reference number instead.
 
 ## Requirements
 
@@ -181,15 +181,21 @@ The system MUST draw a blank by its card, not its field: on a card with nothing 
 - **WHEN** the user views the review
 - **THEN** each unanswered role is marked missing, and no role error is raised against it
 
-### Requirement: A back link returns to Overview
+### Requirement: A back link returns to Overview from the review, and to the notification list from a submitted notification's view
 **ID**: REQ-CYA-003
-The system MUST return the user to Overview when they follow the back link from check-your-answers.
+The system MUST return the user to Overview when they follow the back link from the review of a draft or an amendment, and MUST take them to the live-animals notification list when they follow it from a submitted notification's view.
 
 #### Scenario: The back link opens Overview
 **ID**: SCN-CYA-003-A
-- **GIVEN** the user is on check-your-answers
+- **GIVEN** the user is on the review of a draft notification
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The submitted view's back link opens the notification list
+**ID**: SCN-CYA-003-B
+- **GIVEN** the user is on a submitted notification's view
+- **WHEN** they follow the back link
+- **THEN** the live-animals notification list is shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-CYA-004
@@ -410,3 +416,38 @@ The system MUST head and title an amendment's review "Review your notification" 
 - **GIVEN** a notification being amended
 - **WHEN** the user adds a document and opens the review
 - **THEN** the review heading still reads "Review your notification"
+
+### Requirement: A submitted notification's view is headed by its reference and status, and dated
+**ID**: REQ-CYA-015
+On a submitted notification's view, the system MUST head the page with the notification's reference number in place of "Review your notification", with its status beside it as a tag and no status bar above it, MUST title the page by the reference, and MUST show the UK day it was submitted under the heading. The review of a draft or an amendment MUST keep its heading, title (per REQ-CYA-014) and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag
+**ID**: SCN-CYA-015-A
+- **GIVEN** a notification that has been submitted
+- **WHEN** the user opens its view
+- **THEN** the page heading is the notification's reference number
+- **AND** a "Submitted" tag stands beside it
+- **AND** no status bar is shown
+
+#### Scenario: The submitted view is titled by its reference
+**ID**: SCN-CYA-015-B
+- **GIVEN** a notification that has been submitted
+- **WHEN** the user opens its view
+- **THEN** the browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** the review of a draft is still titled "Review your notification"
+
+#### Scenario: The submitted view shows the date it was submitted
+**ID**: SCN-CYA-015-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user opens its view
+- **THEN** under the heading it reads "Date submitted: 22 July 2026"
+
+### Requirement: Opening the view of a notification that does not exist goes to the notification list
+**ID**: REQ-CYA-016
+The system MUST send the user to the live-animals notification list when they open the view of a notification that does not exist.
+
+#### Scenario: An unknown notification's view opens the notification list
+**ID**: SCN-CYA-016-A
+- **GIVEN** no notification has the reference GBN-AG-00-000000
+- **WHEN** the user opens that notification's view
+- **THEN** the live-animals notification list is shown

@@ -115,7 +115,7 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **GIVEN** the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
 - **WHEN** the user selects "Save and return to overview"
 - **THEN** they return to Overview with no error shown
-- **AND** the Main reason for import task does not read "Complete"
+- **AND** the Main import reason task does not read "Complete"
 - **AND** re-opening the page shows "Transit" chosen
 
 #### Scenario: An answer that breaks its own rule is refused on save and return

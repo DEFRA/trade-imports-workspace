@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first.
 
 ## Requirements
 
@@ -71,6 +71,31 @@ Templates MUST be stored by the service and kept between sessions, and the list 
 - **GIVEN** the user has named a template and not yet saved it
 - **WHEN** their templates are listed
 - **THEN** that template is not listed
+
+#### Scenario: Of two templates saved one after the other, the later is listed first
+**ID**: SCN-TEMPLATES-003-D
+- **GIVEN** the user started a template, then started a second, saved the second and then saved the first
+- **WHEN** their templates are listed
+- **THEN** the first-started template is listed above the second
+
+#### Scenario: A saved template is still listed after signing out and back in
+**ID**: SCN-TEMPLATES-003-E
+- **GIVEN** the user has saved a template
+- **WHEN** they sign out, sign back in and open Manage templates
+- **THEN** the template is listed
+
+#### Scenario: Another user neither sees nor opens a user's template
+**ID**: SCN-TEMPLATES-003-F
+- **GIVEN** a user has saved a template
+- **WHEN** another signed-in user opens Manage templates
+- **THEN** the template is not listed
+- **AND** opening the template's address does not show the template
+
+#### Scenario: A saved template is never listed among the user's notifications
+**ID**: SCN-TEMPLATES-003-G
+- **GIVEN** the user has saved a template
+- **WHEN** they open their notification dashboard
+- **THEN** the template is not listed among their notifications
 
 ### Requirement: Manage templates offers Create new template
 **ID**: REQ-TEMPLATES-004
@@ -306,7 +331,7 @@ Each card's Change link MUST open its question page for the template being creat
 
 ### Requirement: Save template saves the template instead of going to the declaration
 **ID**: REQ-TEMPLATES-018
-The template review MUST end with the button "Save template", and selecting it MUST save the template, whatever is answered, and open Manage templates, where the template is now listed. It MUST NOT open the declaration.
+The template review MUST end with the button "Save template", and selecting it MUST save the template, whatever is answered, and open Manage templates, where the template is now listed first and the count of templates is one higher. It MUST NOT open the declaration.
 
 #### Scenario: Save template saves the template and opens Manage templates, which lists it
 **ID**: SCN-TEMPLATES-018-A
@@ -315,3 +340,58 @@ The template review MUST end with the button "Save template", and selecting it M
 - **THEN** Manage templates is shown
 - **AND** the template is listed there
 - **AND** the declaration is not shown
+
+#### Scenario: A part-answered template is saved, listed first and counted
+**ID**: SCN-TEMPLATES-018-B
+- **GIVEN** the user is on the review of a template with only some sections answered
+- **WHEN** they select "Save template"
+- **THEN** Manage templates is shown
+- **AND** the template is the first one listed
+- **AND** the count reads one more than before, such as "Show 1-1 of 1 results" for the user's first template
+
+### Requirement: Saving a template shows a success banner on Manage templates once
+**ID**: REQ-TEMPLATES-019
+After Save template, Manage templates MUST show a GOV.UK success notification banner with the role alert, titled "Success" and headed "<template title> saved to templates". It MUST show only on the first Manage templates after the save, so it is gone on reload, and MUST NOT dismiss itself, with or without JavaScript.
+
+#### Scenario: Manage templates confirms a saved template with a Success banner
+**ID**: SCN-TEMPLATES-019-A
+- **GIVEN** the user has just saved a template named "Weekly cattle"
+- **WHEN** Manage templates is shown
+- **THEN** a success banner with the role alert is shown, titled "Success"
+- **AND** it is headed "Weekly cattle saved to templates"
+
+#### Scenario: The banner is gone on reload
+**ID**: SCN-TEMPLATES-019-B
+- **GIVEN** Manage templates is showing the banner for a template just saved
+- **WHEN** the user reloads the page
+- **THEN** the banner is not shown
+
+#### Scenario: The banner shows without JavaScript
+**ID**: SCN-TEMPLATES-019-C
+- **GIVEN** the user has JavaScript turned off
+- **WHEN** they save a template
+- **THEN** Manage templates shows the Success banner and it stays on the page
+
+### Requirement: A template saved with no name is titled "Untitled template"
+**ID**: REQ-TEMPLATES-020
+A template saved with a blank name MUST be titled "Untitled template" on its card, and the banner MUST read "Untitled template saved to templates".
+
+#### Scenario: A template saved with no name is listed first as Untitled template
+**ID**: SCN-TEMPLATES-020-A
+- **GIVEN** the user named a template with a blank name
+- **WHEN** they save it
+- **THEN** the banner reads "Untitled template saved to templates"
+- **AND** the template is listed first, titled "Untitled template"
+
+### Requirement: Each template is a card with its category, title, View template and Use template
+**ID**: REQ-TEMPLATES-021
+Each template MUST be a card labelled "Template <title>", showing the template's category ("Live animals" or "Germinal products") above its title as a level 3 heading, a "View template" link to the template's page and, beside it, a secondary "Use template" button that submits a form.
+
+#### Scenario: A saved template's card shows its category, title, View template and Use template
+**ID**: SCN-TEMPLATES-021-A
+- **GIVEN** the user has saved a live animals template named "Weekly cattle"
+- **WHEN** Manage templates is shown
+- **THEN** a card labelled "Template Weekly cattle" is shown
+- **AND** it shows the category "Live animals" above the title "Weekly cattle", a level 3 heading
+- **AND** it offers the link "View template" to the template's page
+- **AND** it offers a secondary button "Use template" that submits a form

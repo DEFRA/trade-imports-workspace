@@ -16,6 +16,7 @@ Codes carry their namespace's prefix: none inside `live-animals/`, `PLANTS-` ins
 | ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
 | ins/notification-type | INS-NTYPE |
+| ins/service-navigation | INS-NAV |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |
@@ -80,3 +81,4 @@ Codes carry their namespace's prefix: none inside `live-animals/`, `PLANTS-` ins
 | plants/journey-section-captions | PLANTS-CAPTIONS |
 | plants/notification-dashboard | PLANTS-DASH |
 | plants/notification-lifecycle | PLANTS-LIFECYCLE |
+| plants/service-navigation | PLANTS-NAV |

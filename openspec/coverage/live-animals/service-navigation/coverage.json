@@ -5,16 +5,25 @@
   "requirements": [
     {
       "id": "REQ-NAV-001",
-      "name": "The navigation offers the same four items throughout the service",
+      "name": "The navigation offers the same five items throughout the service",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-NAV-001-A",
-          "name": "The navigation lists its four items on the dashboard",
+          "name": "The navigation lists its five items on the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "offers the four items on the dashboard", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "offers sign-out from the navigation", "strength": "partial", "notes": "pins the sign-out href only; the four-item list is covered by the sibling test. Signed-in identity absence is owned by live-animals/authentication." }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "offers the five items on the dashboard", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/templates-navigation.spec.ts", "test": "offers Dashboard, Templates, Address book, Manage account and Log out, in that order, on the dashboard", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "offers sign-out from the navigation", "strength": "partial", "notes": "pins the sign-out href only; the five-item list is covered by the sibling test. Signed-in identity absence is owned by live-animals/authentication." }
+          ]
+        },
+        {
+          "id": "SCN-NAV-001-B",
+          "name": "A visitor who is not signed in is offered no navigation items",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should carry the service name and no items when there is no user", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -53,6 +62,48 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "reaches the dashboard from inside a notification", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-NAV-004",
+      "name": "The navigation marks Templates as the current section on every templates page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-NAV-004-A",
+          "name": "Templates is marked current on Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "marks Templates as the current section on Manage templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/templates-navigation.spec.ts", "test": "marks Templates, and not Dashboard or Address book, as current on Manage templates", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should mark Templates on Manage templates", "strength": "partial", "notes": "pins the active id, not the rendered page" }
+          ]
+        },
+        {
+          "id": "SCN-NAV-004-B",
+          "name": "Templates is not marked current on the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "does not mark Templates on the dashboard", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/templates-navigation.spec.ts", "test": "marks Dashboard, and not Templates, as current on the dashboard", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-NAV-005",
+      "name": "The Templates item opens Manage templates",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-NAV-005-A",
+          "name": "Following Templates opens Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/service-navigation.fit.spec.js", "test": "reaches Manage templates from the navigation", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/templates-navigation.spec.ts", "test": "opens Manage templates from the Templates item", "strength": "full", "notes": "" }
           ]
         }
       ]

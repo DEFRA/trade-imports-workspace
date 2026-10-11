@@ -41,6 +41,19 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** they view check-your-answers
 - **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
 
+#### Scenario: The reason and additional details answers read under their own names
+**ID**: SCN-CYA-001-F
+- **GIVEN** a notification with its import reason and additional details answered
+- **WHEN** the user views the review
+- **THEN** the reason answers stand under the subsection heading "Main import reason", with the internal market purpose labelled "Purpose in the market" and, for Temporary admission horses, "Exit date" and "Port of exit" rows
+- **AND** the additional details answers read "Certified for" and, where the unweaned question was asked, "Includes unweaned animals"
+
+#### Scenario: The arrival details card names the means of transport as the arrival page offers it
+**ID**: SCN-CYA-001-G
+- **GIVEN** a notification whose means of transport is road
+- **WHEN** the user views the review
+- **THEN** the "Means of transport to the port of entry" row reads "Road"
+
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
 The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
@@ -163,3 +176,13 @@ While a notification is being amended, the system MUST show the review with no e
 - **THEN** they stay on the review with no error summary or error message
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
+
+### Requirement: A transited territory is named with its country on the review
+**ID**: REQ-CYA-011
+The system MUST show each transited country on the review's Transit countries card by the name the transited countries page lists it under, naming a territory "<territory> (<country>)".
+
+#### Scenario: A transited territory reads with its country
+**ID**: SCN-CYA-011-A
+- **GIVEN** the notification's transited countries include a territory
+- **WHEN** the review page is shown
+- **THEN** the Transit countries card names it "<territory> (<country>)", for example "Canary Islands (Spain)"

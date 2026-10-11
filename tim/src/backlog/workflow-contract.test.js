@@ -1657,6 +1657,31 @@ describe('increment-build-loop', () => {
           expect(replan).not.toContain(`  - \`${NPM_CHECK}\``)
         })
 
+        test('sends back a FIT check that would serve on a port the leased stack already holds', async () => {
+          const STACK_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit -- src/a.fit.spec.js'
+          const CLEAR_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit:ci -- src/a.fit.spec.js'
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(STACK_PORT_FIT, CLEAR_PORT_FIT),
+            planWithChecks(CLEAR_PORT_FIT),
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(replan).toContain(`  - \`${STACK_PORT_FIT}\`\n`)
+          expect(replan).not.toContain(`  - \`${CLEAR_PORT_FIT}\``)
+        })
+
+        test('tells the planner a FIT check runs the gate’s test:fit:ci script', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            '`npm --prefix ~/ws/<repoPath> run test:fit:ci -- <spec file>`. Never `test:fit`.'
+          )
+        })
+
         test('stops with plan-refused, naming the check, when the second plan still names a denied form', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
@@ -1729,6 +1754,14 @@ describe('increment-build-loop', () => {
           stackHeld
         })
         const KEPT = { ok: true, summary: 'wip commit pushed' }
+        const leaseHeldBy = (holder) => ({
+          ok: true,
+          holder,
+          summary: `lease held by ${holder}`
+        })
+        const LEASE_ELSEWHERE = leaseHeldBy('ibl-20260930T170000Z')
+        const LEASE_GONE = leaseHeldBy(null)
+        const LEASE_STILL_OURS = leaseHeldBy(RUN_ID)
 
         const runToLadderWith = (...answers) =>
           runFrom(
@@ -1742,7 +1775,11 @@ describe('increment-build-loop', () => {
           )
 
         test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect({
             stopped: run.result.stopped,
@@ -1757,13 +1794,21 @@ describe('increment-build-loop', () => {
         })
 
         test('still gives back the run’s own lease after a stage found the stack held', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.agents.at(-1).options.label).toBe(RELEASE_LABEL)
         })
 
         test('names the holder in the increment’s result', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.result.increments[0]).toMatchObject({
             id: 'inc-900',
@@ -1774,7 +1819,11 @@ describe('increment-build-loop', () => {
         })
 
         test('stops with stack-held for a stack that no lease names', async () => {
-          const run = await runToLadderWith(heldLadder(UNLEASED), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(UNLEASED),
+            LEASE_GONE,
+            KEPT
+          )
 
           expect(run.result.stopped).toEqual({
             reason: 'stack-held',
@@ -1783,13 +1832,16 @@ describe('increment-build-loop', () => {
         })
 
         test('stops at the baseline with stack-held and nothing to preserve', async () => {
-          const run = await runFrom({
-            ok: true,
-            green: false,
-            rungs: [],
-            summary: 'the stack is held',
-            stackHeld: OTHER_RUN
-          })
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'the stack is held',
+              stackHeld: OTHER_RUN
+            },
+            LEASE_ELSEWHERE
+          )
 
           expect({
             increments: run.result.increments,
@@ -1804,7 +1856,26 @@ describe('increment-build-loop', () => {
                 detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z". ${OTHER_RUN.detail}`
               }
             ],
-            last: 'inc-900 baseline'
+            last: 'inc-900 baseline lease check'
+          })
+        })
+
+        test('treats a red baseline as baseline-red when it reports the stack held but the lease is still the run’s', async () => {
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'Baseline is RED: trade-imports-ins-tests e2e failed',
+              stackHeld: { holder: null, detail: 'not held' }
+            },
+            LEASE_STILL_OURS
+          )
+
+          expect(run.result.stopped).toEqual({
+            reason: 'baseline-red',
+            detail:
+              'inc-900: Baseline is RED: trade-imports-ins-tests e2e failed'
           })
         })
 
@@ -1816,6 +1887,7 @@ describe('increment-build-loop', () => {
             NO_FINDINGS,
             NO_FINDINGS,
             { findings: [], stackHeld: OTHER_RUN },
+            LEASE_ELSEWHERE,
             KEPT
           )
 
@@ -2771,6 +2843,38 @@ describe('increment-build-loop', () => {
         })
 
         expect(run.error.message).toContain('no readable backlog')
+      })
+
+      test('stops before any increment when a repo on the branch has no open pull request to publish its branch image', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            {
+              ok: true,
+              summary: '1',
+              branchWithoutPr: [
+                'trade-imports-stub',
+                'trade-imports-reference-data'
+              ]
+            }
+          ]
+        })
+
+        expect(run.error.message).toBe(
+          `increment-build-loop: trade-imports-stub, trade-imports-reference-data are on ${WORKING_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${WORKING_BRANCH} in each, then launch again`
+        )
+      })
+
+      test('asks the preflight which repos on the branch have no open pull request', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [WORKSPACE_ANSWER, null]
+        })
+
+        expect(run.agents[1].prompt).toContain(
+          `gh pr list --repo DEFRA/<repo> --head ${WORKING_BRANCH} --state open --json number`
+        )
       })
 
       test('refuses a Jira or approval key that is given a value, naming it', async () => {

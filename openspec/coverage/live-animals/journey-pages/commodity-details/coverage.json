@@ -58,6 +58,17 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one species row without changing another quantity", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one commodity group without changing another quantity", "strength": "full", "notes": "commodity-level remove for Cow leaves Cat's saved count" }
           ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-003-C",
+          "name": "Each row's Species cell lists the Latin names chosen under it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "lists the selected commodity with its code, common name and species", "strength": "partial", "notes": "proves the Species column with one species per commodity, not two Latin names under one commodity" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "lists both species' Latin names in the commodity's Species cell", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "partial", "notes": "asserts the column headings and the Cow and Cat Species cells; proves the Species column with one species per commodity, not two Latin names under one commodity" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js", "test": "Should list the Latin names of every species chosen under a commodity in its Species cell", "strength": "partial", "notes": "pins the row data, not the rendered cell" }
+          ]
         }
       ]
     },
@@ -156,15 +167,95 @@
     },
     {
       "id": "REQ-COMMODITY-DETAILS-009",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-DETAILS-009-A",
-          "name": "The back link opens Overview",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to the overview the hub task came from", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to the overview the hub task came from", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "chains the commodity pages around the main reason for import, each Back link naming the page before it, and returns them to the overview once opened from it", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should point Commodity details' Back link at the commodity page mid-run, and at the overview outside the run", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-009-B",
+          "name": "In the opening sequence, the back link opens what are you importing, with the choice kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "back link returns to What are you importing? in the opening run, with the choice kept", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should point Commodity details' Back link at the commodity page mid-run, and at the overview outside the run", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should name the commodity page, not the main reason for import, as Commodity details' Back link", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "chains the commodity pages around the main reason for import, each Back link naming the page before it, and returns them to the overview once opened from it", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-010",
+      "name": "The error summary lists errors by question",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-010-A",
+          "name": "Two species with blank counts and invalid package counts list both animals errors first",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "validation: lists every number of animals error before any number of packages error", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: lists every number of animals error before any number of packages error", "strength": "partial", "notes": "order only; hrefs pinned by the unit test and focus by the e2e test" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should list every number of animals error before any number of packages error", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-011",
+      "name": "The page ends with Save and continue, Save and return to overview and Cancel and return to overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-011-A",
+          "name": "The opening sequence offers all three controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "ends with Save and continue, Save and return to overview and Cancel and return to overview in the opening run", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "chains the commodity pages around the main reason for import, each Back link naming the page before it, and returns them to the overview once opened from it", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-DETAILS-012",
+      "name": "The page holds until every species asked for a number of packages has one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-DETAILS-012-A",
+          "name": "A blank number of packages is refused on the species that asks for it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "save and continue: when the number of packages is blank, refuses the save with an error on that line", "strength": "partial", "notes": "does not assert focus" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: a blank number of packages on a line that asks for one holds the page and names it", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should hold the page on a blank number of packages for a line that asks for one, naming that line and saving nothing", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-012-B",
+          "name": "A species not asked for a number of packages saves without one",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "save and continue: saves a line that is not asked for a number of packages without one", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should save a line that is not asked for a number of packages without one", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-012-C",
+          "name": "Save and return to overview also holds on a blank number of packages",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should hold the page on a blank number of packages when Save and return to overview is pressed, saving nothing", "strength": "full", "notes": "" }
           ]
         }
       ]

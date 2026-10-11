@@ -14,7 +14,7 @@ The system MUST order the journey as ten sections, and MUST offer each section's
 **ID**: SCN-FLOW-001-A
 - **GIVEN** a notification is being worked on
 - **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
+- **THEN** they run in this order: the dashboard; origin of the import; what are you importing, main import reason and commodity details; identification details; additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
 
 #### Scenario: The transport section sequences its pages in order
 **ID**: SCN-FLOW-001-B
@@ -82,6 +82,18 @@ The system MUST, outside the opening sequence and outside a change made from che
 - **WHEN** the user answers it so its answers pass the page's rules and saves and continues
 - **THEN** Overview shows that task as Complete
 
+#### Scenario: Commodity details opened from Overview returns to Overview rather than going on to identification details
+**ID**: SCN-FLOW-003-H
+- **GIVEN** the opening sequence has ended and the user opens commodity details from its task on Overview
+- **WHEN** they save and continue
+- **THEN** Overview is shown, not identification details
+
+#### Scenario: Main import reason and additional details opened from Overview return to Overview
+**ID**: SCN-FLOW-003-I
+- **GIVEN** the opening sequence has ended and the user opens main reason for import or additional details from its task on Overview
+- **WHEN** they save and continue
+- **THEN** Overview is shown, not commodity details or arrival details
+
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
 Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly either by discarding anything typed since it was last saved or by committing it, and MUST return to Overview either way. Saving and returning MUST save what was entered without refusing a required answer left blank, MUST still refuse an answer that breaks its own rule with that answer's error and save nothing, and MUST NOT relax Commodity details, which are checked before saving either way.
@@ -100,7 +112,7 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 
 #### Scenario: Save and return to overview saves a page with a required answer missing
 **ID**: SCN-FLOW-004-C
-- **GIVEN** the Main reason for import page with "Transit" chosen and its port of exit and destination country left blank
+- **GIVEN** the Main import reason page with "Transit" chosen and its port of exit and destination country left blank
 - **WHEN** the user selects "Save and return to overview"
 - **THEN** they return to Overview with no error shown
 - **AND** the Main reason for import task does not read "Complete"
@@ -125,6 +137,21 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **GIVEN** a notification being amended
 - **WHEN** the user opens a page the hub links to directly
 - **THEN** it ends as REQ-FLOW-013 describes, with "Save and return" and no "Cancel and return to overview"
+
+#### Scenario: Arrival details saved and returned without a means of transport keeps the other answers
+**ID**: SCN-FLOW-004-G
+- **GIVEN** the Arrival details page with a port of entry chosen and no means of transport
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview with no error shown
+- **AND** the Arrival details task does not read "Complete"
+- **AND** re-opening the page shows the port of entry chosen
+
+#### Scenario: Transit countries saved and returned keeps the countries listed
+**ID**: SCN-FLOW-004-H
+- **GIVEN** the Transit countries page with France and Belgium added
+- **WHEN** the user selects "Save and return to overview"
+- **THEN** they return to Overview
+- **AND** re-opening the page lists France and Belgium
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-FLOW-005
@@ -207,6 +234,32 @@ The system MUST walk a newly created notification through an opening sequence co
 - **GIVEN** the user is in the opening sequence with tasks outstanding
 - **WHEN** they save the contact address
 - **THEN** check your answers is shown, naming every unfinished card
+
+#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
+**ID**: SCN-FLOW-007-H
+- **GIVEN** the user is in the opening sequence on commodity details, reached from main reason for import
+- **WHEN** they save valid counts for a species that needs identifiers
+- **THEN** identification details is shown
+- **WHEN** instead no chosen species needs identifiers
+- **THEN** additional details is shown
+
+#### Scenario: Additional details follows identification details or commodity details, never the main import reason, and goes on to arrival details
+**ID**: SCN-FLOW-007-I
+- **GIVEN** the user is in the opening sequence
+- **WHEN** they save commodity details for a consignment with a species that needs identifiers and then save identification details
+- **THEN** additional details is shown
+- **WHEN** instead no chosen species needs identifiers and they save commodity details
+- **THEN** additional details is shown, without identification details
+- **WHEN** they save additional details
+- **THEN** arrival details is shown
+
+#### Scenario: Arrival details goes on to transit countries only for rail or road
+**ID**: SCN-FLOW-007-J
+- **GIVEN** the user is in the opening sequence on arrival details
+- **WHEN** they save it with Rail or Road chosen
+- **THEN** transit countries is shown
+- **WHEN** instead they save it with Air or Sea chosen
+- **THEN** the transporter list is shown
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-FLOW-008

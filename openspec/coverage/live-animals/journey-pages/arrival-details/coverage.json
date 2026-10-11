@@ -57,7 +57,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-entry-list.spec.ts", "test": "the port of entry list offers every captured port, in the order reference data serves them", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "stub mode against the captured fixture" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "stub mode against the captured fixture" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should supply an empty-value placeholder followed by name-plus-code options (no divider)", "strength": "partial", "notes": "stub list, server side" }
           ]
         },
         {
@@ -81,7 +82,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists all arrival fields and returns to the overview, which offers transit countries for overland transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should mark the saved port as the selected option, labelled with its name and code", "strength": "partial", "notes": "render side only" }
           ]
         },
         {
@@ -89,7 +91,7 @@
           "name": "The chosen port is shown as its name and code together",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "asserts combobox value is 'Aberdeen Harbour (GB ABD)'" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "asserts combobox value is 'Port of Dover - GB DVR'" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "selecting a port shows its name and code and submits the code (AC2)", "strength": "full", "notes": "" }
           ]
         }
@@ -105,7 +107,7 @@
           "name": "An ordinary port list remains available beneath the searchable field",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "native select submits and persists the port code (no-JS fallback)", "strength": "full", "notes": "javaScriptEnabled: false" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "native select submits and persists the port code (no-JS fallback)", "strength": "full", "notes": "javaScriptEnabled: false; asserts the select is labelled and Dover's option reads 'Port of Dover - GB DVR'" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "partial", "notes": "asserts the hidden native select carries the code under JS; does not disable JavaScript" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "asserts the hidden select's option codes match the fixture" }
           ]
@@ -130,15 +132,26 @@
     },
     {
       "id": "REQ-ARRIVAL-006",
-      "name": "Saving the page empty is rejected",
+      "name": "Saving without a means of transport is refused",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ARRIVAL-006-A",
-          "name": "Saving with nothing answered shows an error summary",
+          "name": "Saving with no means of transport shows an error on that question",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "shows an error summary when submitted empty", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when no means of transport is chosen, refuses the save with an error on the means of transport", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: an empty save links to and focuses the means of transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and continue with no means of transport, naming the means of transport question and saving nothing", "strength": "partial", "notes": "asserts the field error and that nothing is saved; not the summary heading or link" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-006-B",
+          "name": "The other answers are shown back and nothing is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when no means of transport is chosen, keeps the other answers and saves nothing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should show the other answers back when the means of transport is missing", "strength": "partial", "notes": "asserts the re-rendered values, not a later visit" }
           ]
         }
       ]
@@ -248,6 +261,99 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "arrival back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-011",
+      "name": "Only the means of transport is needed to continue",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-011-A",
+          "name": "A means of transport alone lets the page go on",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "save and continue: when only the means of transport is chosen, goes on to the next page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "each save chooses the means alone" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "continues to the overview with only a means of transport chosen", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should go on with only a means of transport chosen, the other arrival answers left blank", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-012",
+      "name": "The port search is hinted and shows a placeholder",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-012-A",
+          "name": "The port search reads as Design Release 2.1 words it",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "hints the port search and shows its placeholder", "strength": "full", "notes": "asserts the hint text, the search box placeholder and the native select's empty option" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "sets every question in the medium label size and shows the port placeholder", "strength": "partial", "notes": "placeholder only; label size is witnessed under SCN-ARRIVAL-015-A" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js", "test": "Should word the port search, the means of transport and the identification lead-in as Design Release 2.1 does, in both languages", "strength": "partial", "notes": "pins the copy, not the rendered page" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-013",
+      "name": "Means of transport is offered as Air, Rail, Road and Sea, and kept as its code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-013-A",
+          "name": "The means of transport options read Air, Rail, Road and Sea",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "offers Air, Rail, Road and Sea as the means of transport, in that order", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "full", "notes": "options read from the English copy, in order" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should supply the means of transport as a placeholder followed by every reference code, none selected", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-013-B",
+          "name": "Each option is kept as the code other services read",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should offer %s and save it as %s", "strength": "full", "notes": "one case per option; takes the offered option by its label and checks the code saved" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts", "test": "submitted notification persists the journey answers and reloads read-only", "strength": "partial", "notes": "Road saved as ROAD_VEHICLE only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-014",
+      "name": "The transport identification hint opens \"Enter one of the following:\"",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-014-A",
+          "name": "The transport identification hint leads with its instruction",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "leads the transport identification hint with \"Enter one of the following:\"", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "full", "notes": "lead-in and bullet list read from the English copy" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ARRIVAL-015",
+      "name": "Each arrival question is set in the medium label size",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ARRIVAL-015-A",
+          "name": "The arrival questions read at medium size",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "sets every question in the medium label size and shows the port placeholder", "strength": "full", "notes": "asserts govuk-label--m on all five labels" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "sets every arrival question in the medium label size", "strength": "full", "notes": "asserts govuk-label--m on all five labels" }
           ]
         }
       ]

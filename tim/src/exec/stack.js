@@ -91,6 +91,36 @@ export const stackContainers = ({ env } = {}) => listStack('{{.Names}}', env)
  */
 export const stackContainerIds = ({ env } = {}) => listStack('{{.ID}}', env)
 
+/**
+ * Write every workspace stack container's own log, with timestamps, to
+ * `<logsDir>/<prefix>-<container>.log`. The stack is taken down when its lease
+ * is given back, and its container logs go with it, so a failure that only
+ * the services' logs explain has to be captured before then.
+ *
+ * @param {object} args
+ * @param {string} args.logsDir
+ * @param {string} args.prefix - Start of each file name, such as "gate-stack"
+ * @param {object} [args.env] - Extra environment for docker
+ * @returns {Promise<string[]>} The log files written, one per container
+ * @throws {TimError} as stackContainers does
+ */
+export const writeStackLogs = async ({ logsDir, prefix, env }) => {
+  const containers = await stackContainers({ env })
+  const written = []
+  for (const container of containers) {
+    const { log } = await runToLog(
+      'docker',
+      ['logs', '--timestamps', container],
+      {
+        logPath: join(logsDir, `${prefix}-${container}.log`),
+        env
+      }
+    )
+    written.push(log)
+  }
+  return written
+}
+
 const listStack = async (format, env) => {
   const result = await run(
     'docker',

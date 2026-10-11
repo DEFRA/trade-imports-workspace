@@ -56,6 +56,16 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves a horses-only consignment without an unweaned answer", "strength": "full", "notes": "confirms the page saves through with the question absent, not just hidden" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "horse-only consignment completes Additional details with no unweaned answer; does not assert the question's absence directly" }
           ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-002-C",
+          "name": "Changing the commodities to cats or dogs only clears a saved unweaned answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "a saved unweaned-animals answer is cleared when the commodities change to ones the question is not asked for", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should clear a saved unweaned answer when the new choice holds only 01061900 species", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/engine/mutators.test.js", "test": "Should run the evaluator as the wipe authority: deselecting the last triggering commodity destroys the dependent", "strength": "partial", "notes": "engine-level purge, not the commodity save" }
+          ]
         }
       ]
     },
@@ -71,7 +81,8 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "full", "notes": "Cow and Cat (both on package-count list) show Number of packages fields" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should put numberOfPackages in scope for a line with commodity = 'Cow'", "strength": "full", "notes": "iterates storable package-count entries" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is in scope with reason on a matching line", "strength": "full", "notes": "V4 — numberOfPackages; status optional" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is in scope with reason on a matching line", "strength": "full", "notes": "V4 — numberOfPackages; status mandatory" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should make numberOfPackages a required answer on a line whose commodity is counted in packages", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should save each line's own quantities, packages only where the commodity applies", "strength": "full", "notes": "Fish smuggled numberOfPackages is not persisted — negative half of the requirement, no dedicated scenario" }
           ]
         }

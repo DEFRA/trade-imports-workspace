@@ -8,18 +8,18 @@ What the means of transport brings into play. Only an overland arrival calls for
 
 ### Requirement: Only an overland means of transport calls for the transited countries
 **ID**: REQ-OB-ARRIVAL-001
-The system MUST ask which countries the consignment travels through when the means of transport is railway or road vehicle, as an optional answer the trader may leave empty, and MUST NOT ask for them under any other means.
+The system MUST ask which countries the consignment travels through when the means of transport is Rail or Road, as an optional answer the trader may leave empty, and MUST NOT ask for them under any other means.
 
 #### Scenario: An overland means of transport asks for the transited countries
 **ID**: SCN-OB-ARRIVAL-001-A
 - **GIVEN** the user is answering how the consignment arrives
-- **WHEN** they choose railway or road vehicle as the means of transport
+- **WHEN** they choose Rail or Road as the means of transport
 - **THEN** the countries the consignment travels through are asked for, as an optional answer they may leave empty and still continue
 
 #### Scenario: A means of transport that is not overland does not ask for them
 **ID**: SCN-OB-ARRIVAL-001-B
 - **GIVEN** the user is answering how the consignment arrives
-- **WHEN** they choose a means of transport other than railway or road vehicle
+- **WHEN** they choose a means of transport other than Rail or Road
 - **THEN** the countries the consignment travels through are not asked for, and their task row is not shown
 
 ### Requirement: Changing away from an overland means discards the transited countries

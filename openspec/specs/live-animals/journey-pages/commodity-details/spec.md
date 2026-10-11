@@ -30,7 +30,7 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists every chosen species, each removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list every chosen commodity and species in a table naming the commodity's code, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.
+The system MUST list every chosen commodity and species in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.
 
 #### Scenario: The table lists each commodity and species with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
@@ -43,6 +43,13 @@ The system MUST list every chosen commodity and species in a table naming the co
 - **GIVEN** the user has saved counts for two species under different commodities
 - **WHEN** they remove one species
 - **THEN** it no longer appears in the table, and the other species' saved counts are unchanged
+
+#### Scenario: Each row's Species cell lists the Latin names chosen under it
+**ID**: SCN-COMMODITY-DETAILS-003-C
+- **GIVEN** the user has chosen two species under the Cow commodity
+- **WHEN** they view the commodity details page
+- **THEN** the table has the columns "Commodity code", "Common name" and "Species"
+- **AND** the Cow row reads 0102, Cow, and the Latin name of each of the two species
 
 ### Requirement: A number of animals or a number of packages must be a positive whole number
 **ID**: REQ-COMMODITY-DETAILS-004
@@ -113,12 +120,61 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to Overview when they follow the back link from commodity details, the page the hub task row links straight to.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main reason for import that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
-- **GIVEN** the user is on the commodity details page
+- **GIVEN** the opening sequence has ended and the user opened commodity details from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept
+**ID**: SCN-COMMODITY-DETAILS-009-B
+- **GIVEN** the user is in the opening sequence and reached commodity details from main reason for import
+- **WHEN** they follow the back link
+- **THEN** "What are you importing?" is shown, with the species they chose still chosen
+
+### Requirement: The error summary lists errors by question
+**ID**: REQ-COMMODITY-DETAILS-010
+The system MUST list every number of animals error in the error summary before any number of packages error, each linking to its own field.
+
+#### Scenario: Two species with blank counts and invalid package counts list both animals errors first
+**ID**: SCN-COMMODITY-DETAILS-010-A
+- **GIVEN** the user has two species on the commodity details page, each missing its number of animals and each with a number of packages that is not a whole number
+- **WHEN** they save and continue
+- **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species
+- **AND** each error links to its own field
+
+### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
+**ID**: REQ-COMMODITY-DETAILS-011
+Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+
+#### Scenario: The opening sequence offers all three controls
+**ID**: SCN-COMMODITY-DETAILS-011-A
+- **GIVEN** the user is in the opening sequence on commodity details
+- **WHEN** the page is shown
+- **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: The page holds until every species asked for a number of packages has one
+**ID**: REQ-COMMODITY-DETAILS-012
+The system MUST refuse to save, by "Save and continue" or by "Save and return to overview", while a species whose commodity calls for a number of packages has none, showing "Enter the number of packages" linked to that species' field. It MUST save a species whose commodity does not call for one without a number of packages.
+
+#### Scenario: A blank number of packages is refused on the species that asks for it
+**ID**: SCN-COMMODITY-DETAILS-012-A
+- **GIVEN** a species whose commodity calls for a number of packages, with its number of animals entered
+- **WHEN** they save and continue with its number of packages blank
+- **THEN** the save is blocked, with "Enter the number of packages" linking to and focusing that species' field
+
+#### Scenario: A species not asked for a number of packages saves without one
+**ID**: SCN-COMMODITY-DETAILS-012-B
+- **GIVEN** a species whose commodity does not call for a number of packages
+- **WHEN** they enter its number of animals and save and continue
+- **THEN** no number of packages is asked, and the answers are saved with no error summary
+
+#### Scenario: Save and return to overview also holds on a blank number of packages
+**ID**: SCN-COMMODITY-DETAILS-012-C
+- **GIVEN** a species whose commodity calls for a number of packages, with it left blank
+- **WHEN** they select "Save and return to overview"
+- **THEN** they stay on the page, which shows "Enter the number of packages", and nothing is saved

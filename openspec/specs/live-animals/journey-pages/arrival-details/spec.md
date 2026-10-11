@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details".
+Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". Only the means of transport must be chosen before the page goes on; the other answers can be left for later.
 
 ## Requirements
 
@@ -43,7 +43,7 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 **ID**: SCN-ARRIVAL-002-D
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the port list is read in full
-- **THEN** it holds every port the reference data service serves, each as its name followed by its code, in the order the service serves them
+- **THEN** it holds every port the reference data service serves, each reading "<port name> - <port code>", for example "Port of Dover - GB DVR", in the order the service serves them
 
 #### Scenario: Ports are listed airports first, then seaports, then rail ports, each A to Z by name
 **ID**: SCN-ARRIVAL-002-E
@@ -54,7 +54,7 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 
 ### Requirement: Choosing a port submits and keeps its code
 **ID**: REQ-ARRIVAL-003
-The system MUST submit the chosen port's code rather than the text the user typed, and MUST still hold that code when the user returns to the page.
+The system MUST submit the chosen port's code rather than the text the user typed, MUST show the chosen port in the search field as "<port name> - <port code>", and MUST still hold that code when the user returns to the page.
 
 #### Scenario: The chosen port's code is what the notification keeps
 **ID**: SCN-ARRIVAL-003-A
@@ -68,17 +68,19 @@ The system MUST submit the chosen port's code rather than the text the user type
 **ID**: SCN-ARRIVAL-003-B
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they choose a port
-- **THEN** the search field shows that port's name followed by its code
+- **THEN** the search field shows that port as "<port name> - <port code>", for example "Port of Dover - GB DVR"
 
 ### Requirement: The port field works without client-side JavaScript
 **ID**: REQ-ARRIVAL-004
-The system MUST keep an ordinary port list underneath the searchable field, so a user without JavaScript can still choose a port, and MUST have that underlying list carry the code the page submits.
+The system MUST keep an ordinary, labelled port list underneath the searchable field, so a user without JavaScript can still choose a port, MUST have each port in that list read "<port name> - <port code>", and MUST have that underlying list carry the code the page submits.
 
 #### Scenario: An ordinary port list remains available beneath the searchable field
 **ID**: SCN-ARRIVAL-004-A
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the page is examined without relying on the searchable field
 - **THEN** an ordinary port list is present, carrying the code that is submitted
+- **AND** the list is labelled as the port of entry question
+- **AND** each port in it reads "<port name> - <port code>"
 
 ### Requirement: A complete set of arrival details is accepted
 **ID**: REQ-ARRIVAL-005
@@ -90,15 +92,25 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page empty is rejected
+### Requirement: Saving without a means of transport is refused
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse to save the arrival details page when nothing has been answered, showing an error summary.
+The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question, which is shown in its error style; the page's title MUST start 'Error: ' and the other answers entered MUST be shown back.
 
-#### Scenario: Saving with nothing answered shows an error summary
+#### Scenario: Saving with no means of transport shows an error on that question
 **ID**: SCN-ARRIVAL-006-A
-- **GIVEN** the user is on the arrival details page with nothing answered
+- **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown
+- **THEN** an error summary headed "There is a problem" is shown, with "Select a means of transport to the port of entry" linked to the means of transport question
+- **AND** the message is shown above the means of transport question, which is shown in its error style
+- **AND** the page title starts "Error: "
+- **AND** they remain on the arrival details page
+
+#### Scenario: The other answers are shown back and nothing is saved
+**ID**: SCN-ARRIVAL-006-B
+- **GIVEN** the user has chosen a port of entry and an arrival date but no means of transport
+- **WHEN** they save and continue
+- **THEN** the port of entry and arrival date are still shown on the page
+- **AND** when they leave and return to the page on the same notification, neither answer was saved
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
@@ -184,3 +196,61 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: Only the means of transport is needed to continue
+**ID**: REQ-ARRIVAL-011
+The system MUST let the user save and continue once a means of transport is chosen, even with the arrival date, port of entry, transport identification and transport document reference left blank.
+
+#### Scenario: A means of transport alone lets the page go on
+**ID**: SCN-ARRIVAL-011-A
+- **GIVEN** the user has chosen a means of transport and left the arrival date, port of entry, transport identification and document reference blank
+- **WHEN** they save and continue
+- **THEN** the next page is shown and no error summary is shown
+
+### Requirement: The port search is hinted and shows a placeholder
+**ID**: REQ-ARRIVAL-012
+The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen.
+
+#### Scenario: The port search reads as Design Release 2.1 words it
+**ID**: SCN-ARRIVAL-012-A
+- **GIVEN** the user is on the arrival details page with no port chosen
+- **WHEN** the page loads
+- **THEN** the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
+- **AND** the port search shows "Select a port"
+
+### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code
+**ID**: REQ-ARRIVAL-013
+The system MUST offer the means of transport as "Air", "Rail", "Road" and "Sea", in that order, after "Select one", and MUST keep the choice in the notification as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively.
+
+#### Scenario: The means of transport options read Air, Rail, Road and Sea
+**ID**: SCN-ARRIVAL-013-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the means of transport options read "Select one", "Air", "Rail", "Road", "Sea" in that order
+
+#### Scenario: Each option is kept as the code other services read
+**ID**: SCN-ARRIVAL-013-B
+- **GIVEN** the user is on the arrival details page
+- **WHEN** they choose Air, Rail, Road or Sea and save
+- **THEN** the notification keeps AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively
+
+### Requirement: The transport identification hint opens "Enter one of the following:"
+**ID**: REQ-ARRIVAL-014
+The system MUST open the transport identification hint with "Enter one of the following:" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).
+
+#### Scenario: The transport identification hint leads with its instruction
+**ID**: SCN-ARRIVAL-014-A
+- **GIVEN** the user is on the arrival details page
+- **WHEN** the page loads
+- **THEN** the transport identification hint opens with "Enter one of the following:"
+- **AND** it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)
+
+### Requirement: Each arrival question is set in the medium label size
+**ID**: REQ-ARRIVAL-015
+The system MUST set each of the five arrival questions (arrival date, port of entry, means of transport, transport identification and transport document reference) in the GOV.UK medium label size.
+
+#### Scenario: The arrival questions read at medium size
+**ID**: SCN-ARRIVAL-015-A
+- **GIVEN** a user on the arrival details page
+- **WHEN** the page loads
+- **THEN** the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size

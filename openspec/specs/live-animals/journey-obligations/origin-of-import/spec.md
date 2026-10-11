@@ -2,7 +2,7 @@
 
 ## Purpose
 
-What answering the origin brings into play. The journey's one retain-value gate: the region of origin code always applies, and the answer changes only whether it is mandatory.
+What answering the origin brings into play. The region of origin code always applies; the answer to whether one is required decides whether it is mandatory, and answering that none is required clears a code already given.
 
 ## Requirements
 
@@ -22,12 +22,13 @@ The system MUST always ask for the region of origin code, and MUST make it manda
 - **WHEN** they answer that no region of origin code is required
 - **THEN** the region of origin code is still offered, but the notification can be submitted without it
 
-### Requirement: A region of origin code already given is kept when it becomes optional
+### Requirement: Answering that no region code is required clears a code already given
 **ID**: REQ-OB-ORIGIN-002
-The system MUST keep a region of origin code the user has already given when they change the answer so that it is no longer required, since the code continues to apply and only its status changes.
+The system MUST clear a region of origin code the user has already given when they change the answer so that no region code is required, so the review page shows the code as not applicable and choosing Yes again starts from an empty box.
 
-#### Scenario: The code survives being made optional
+#### Scenario: The code is cleared when the answer changes to No
 **ID**: SCN-OB-ORIGIN-002-A
-- **GIVEN** the user has answered that a region code is required and given the code
-- **WHEN** they change the answer so that no region code is required
-- **THEN** the code they gave is still held, and still shown
+- **GIVEN** the user has chosen France, answered that a region code is required, given the code 75 and saved
+- **WHEN** they change the answer so that no region code is required and save
+- **THEN** the review page shows "Not applicable" for the region of origin code
+- **AND** choosing Yes again on the origin page shows an empty region code box

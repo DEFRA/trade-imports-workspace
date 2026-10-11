@@ -985,7 +985,10 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
   there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
-  \`test-results/*/error-context.md\` in the tests repo as well.`
+  \`test-results/*/error-context.md\` in the tests repo as well.
+- An e2e rung that went red, or passed only on a retry, also carries \`stackLogs\`: each stack container's own log,
+  written before the stack could go. A 500 page, a dropped socket or a test timeout is explained there: read the log of
+  the service the failure points at and name its cause. Never call a failure transient without it.`
 
 const RUN_STACK_RULE = `THE WORKSPACE STACK is already up, leased to this run as \`${RUN_HOLDER}\` for every increment it builds. A
 check that needs it up uses it as it is. Never acquire or release its lease, and never start, stop, restart or rebuild
@@ -1372,9 +1375,13 @@ const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
 
 const firstWordOf = (command) => command.trim().replace(/^`+/, '').trim().split(/\s+/)[0] ?? ''
 
+// `test:fit` serves a frontend on its default port, which the leased stack
+// already holds, so it can never start during a run. `test:fit:ci` is clear.
+const FIT_ON_STACK_PORT = /\brun test:fit(?!:)/
+
 const isDeniedCommand = (command) => {
   const firstWord = firstWordOf(command)
-  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord)
+  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord) || FIT_ON_STACK_PORT.test(command)
 }
 
 const DENIED_FORMS_LINE = `- DENIED, so never run them and never write them into a plan: ${DENIED_PROGRAMS.map((program) => `\`${program}\``).join(', ')}
@@ -1389,6 +1396,10 @@ in a denied form cannot run, so the ladder stops the increment red with nothing 
   - a \`tim\` command;
   - a k6 run through the repo's own npm script, which reads its endpoints itself;
   - \`git -C\`, \`jq\`, \`grep\`, \`ls\` or \`find\` over files.
+The workspace stack is up for every check, and its frontends hold their own ports (3000 for animals, 3003 for plants
+and so on), so a check that starts a frontend on its default port cannot run. A FIT check therefore runs the script
+gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
+\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1631,6 +1642,37 @@ const withStackHeld = (schema) => ({
   ...schema,
   properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
 })
+
+const LEASE_OWNER_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'holder', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: "tim's `ok`" },
+    holder: { type: ['string', 'null'], description: "result.lease.holder, copied; null when result.lease is null" },
+    summary: { type: 'string' }
+  }
+}
+
+// A stage's stackHeld is its own reading of tim, and a stage has filled it in
+// with `holder: null, detail: "not held"` while the lease was still this run's
+// — turning a red baseline into a stack-held stop. The script asks the lease
+// file itself before it believes one.
+const confirmStackHeld = async (id, stage, held) => {
+  if (!held) return null
+  const owner = await agent(
+    `Report who holds the workspace stack's lease. Run exactly one command and read it:
+\`tim docker lease status --workspace ${TILDE} --json\`
+Return ok as tim's \`ok\`, holder as \`result.lease.holder\` (null when \`result.lease\` is null), and a one-line summary.
+${RUN_WITH_BASH}
+Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
+    light({ label: `${id} ${stage} lease check`, phase: 'Baseline', schema: LEASE_OWNER_SCHEMA })
+  )
+  if (owner?.ok && owner.holder === RUN_HOLDER) {
+    log(`${id}: the ${stage} stage reported the stack held (${held.detail}), but the lease is still this run's — ignoring that report`)
+    return null
+  }
+  return held
+}
 
 // The CI fixer's schema is the increment schema plus a channel for a PR it had
 // to open in a repo the increment did not start with — a frontend change whose
@@ -2354,16 +2396,32 @@ const PREFLIGHT_SCHEMA = {
       type: ['array', 'null'],
       items: ENVELOPE_REPO_SCHEMA,
       description: "The backlog envelope's repos exactly as the second command printed them, or null when it printed null"
+    },
+    branchWithoutPr: {
+      type: 'array',
+      items: { type: 'string' },
+      description: `Branch lifecycle only: every repo checked out on ${BASE_BRANCH} with no open pull request for it`
     }
   },
   additionalProperties: false
 }
 
+// A stacked theme branch lives in repos its rows never build, so the stack in
+// CI runs that repo's branch image. A branch image is published only from a
+// pull request: without one, CI falls back to :latest and the theme's E2E goes
+// red on code its base branches already changed.
+const BRANCH_PR_STEP = IS_BRANCH
+  ? `
+3. \`tim workspace status --workspace ${TILDE} --json\`. For every entry of \`result\` whose \`branch\` is
+   \`${BASE_BRANCH}\`, run \`gh pr list --repo DEFRA/<repo> --head ${BASE_BRANCH} --state open --json number\`, with
+   <repo> the entry's \`repo\`. Put every repo whose list prints \`[]\` in branchWithoutPr, and [] when there is none.`
+  : ''
+
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
-two commands, one Bash call each, and read their output:
+commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
@@ -2401,6 +2459,13 @@ const envelopeRepoProblems = (envelopeRepos) => {
           `"${entry.key}" ${entry.requireApproval ? 'needs' : 'does not need'} approval in the envelope and ${REPOS[entry.key].requireApproval ? 'needs' : 'does not need'} it in the args`
       )
   ]
+}
+
+const branchWithoutPr = IS_BRANCH ? (preflight.branchWithoutPr ?? []) : []
+if (branchWithoutPr.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: ${branchWithoutPr.join(', ')} ${branchWithoutPr.length === 1 ? 'is' : 'are'} on ${BASE_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${BASE_BRANCH} in each, then launch again`
+  )
 }
 
 const ENVELOPE_REPOS = preflight.envelopeRepos ?? null
@@ -3504,10 +3569,11 @@ Return the structured output only.`,
 
   // A stack somebody else holds is not a red tree: nothing about this
   // increment's code has been tested, and a human rules on the holder.
-  if (baseline?.stackHeld) {
-    const detail = stackHeldDetail(id, 'baseline', baseline.stackHeld)
+  const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
+  if (baselineHeld) {
+    const detail = stackHeldDetail(id, 'baseline', baselineHeld)
     log(`${id}: STACK HELD at the baseline — ${detail}`)
-    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baseline.stackHeld.holder, detail })
+    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baselineHeld.holder, detail })
     stopped = { reason: 'stack-held', detail }
     break
   }
@@ -3660,8 +3726,9 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     stopped = { reason: 'stack-held', detail }
   }
 
-  if (impl?.stackHeld) {
-    await stopForHeldStack('implement', 'Implement', impl.stackHeld)
+  const implHeld = await confirmStackHeld(id, 'implement', impl?.stackHeld)
+  if (implHeld) {
+    await stopForHeldStack('implement', 'Implement', implHeld)
     break
   }
 
@@ -3872,9 +3939,13 @@ ${specReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0 ? WOR
     break
   }
 
-  const heldReview = reviewed.results.find((result) => result?.stackHeld)
-  if (heldReview) {
-    await stopForHeldStack('consistency', 'Review', heldReview.stackHeld)
+  const reviewHeld = await confirmStackHeld(
+    id,
+    'consistency',
+    reviewed.results.find((result) => result?.stackHeld)?.stackHeld
+  )
+  if (reviewHeld) {
+    await stopForHeldStack('consistency', 'Review', reviewHeld)
     break
   }
 
@@ -4056,8 +4127,9 @@ and whatever got it green in notes. The ladder runs after you and is given your 
 Return the structured output only.`,
         code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
       )
-      if (fixResult?.stackHeld) {
-        await stopForHeldStack('fix', 'Fix', fixResult.stackHeld)
+      const fixHeld = await confirmStackHeld(id, 'fix', fixResult?.stackHeld)
+      if (fixHeld) {
+        await stopForHeldStack('fix', 'Fix', fixHeld)
         break
       }
     }
@@ -4157,8 +4229,9 @@ Return the structured output only.`,
   // -----------------------------------------------------------------------
   phase('Land')
 
-  if (ladder?.stackHeld) {
-    await stopForHeldStack('ladder', 'Ladder', ladder.stackHeld)
+  const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
+  if (ladderHeld) {
+    await stopForHeldStack('ladder', 'Ladder', ladderHeld)
     break
   }
 

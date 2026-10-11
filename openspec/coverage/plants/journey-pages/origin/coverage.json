@@ -13,7 +13,7 @@
           "name": "The page presents its question and controls unanswered",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "renders the caption, the heading, the label and the hint", "strength": "full", "notes": "does not explicitly assert the field is empty on first open; cancel-without-saving later proves empty state after abandon" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "renders the caption, the heading and the label, with no hint", "strength": "full", "notes": "does not explicitly assert the field is empty on first open; cancel-without-saving later proves empty state after abandon" }
           ]
         }
       ]
@@ -100,14 +100,15 @@
     {
       "id": "REQ-PLANTS-ORIGIN-005",
       "name": "The country field works without client-side JavaScript",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ORIGIN-005-A",
           "name": "An ordinary country list remains available beneath the searchable field",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers a placeholder ahead of every country the service primes", "strength": "partial", "notes": "reads the underlying select options; does not assert noscript usability explicitly" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers a placeholder ahead of every country the service primes", "strength": "partial", "notes": "reads the underlying select options; does not assert noscript usability explicitly" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "native select submits and persists the country code", "strength": "full", "notes": "javaScriptEnabled: false" }
           ]
         }
       ]
@@ -251,6 +252,33 @@
               "strength": "full",
               "notes": ""
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-ORIGIN-012",
+      "name": "The country question carries no hint, and its empty search box invites a search",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-ORIGIN-012-A",
+          "name": "With JavaScript, the empty search box shows \"Search for a country\" and no hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "invites a search in the empty box", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "renders the caption, the heading and the label, with no hint", "strength": "full", "notes": "asserts no hint" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "a country picked from the type-ahead is saved and shown again on return", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-012-B",
+          "name": "Without JavaScript, the country list begins with \"Select a country\", shows no hint, and saves the chosen country",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "native select begins with the blank Select a country option and shows no hint", "strength": "full", "notes": "javaScriptEnabled: false" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "native select submits and persists the country code", "strength": "full", "notes": "javaScriptEnabled: false" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "shows no hint, begins with Select a country, and saves the chosen country", "strength": "full", "notes": "javaScriptEnabled: false" }
           ]
         }
       ]

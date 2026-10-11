@@ -67,6 +67,13 @@ The system MUST mark the Templates item as the current section on Manage templat
 - **THEN** Dashboard is marked as the current section
 - **AND** Templates is not
 
+#### Scenario: Templates is marked current while creating a template
+**ID**: SCN-NAV-004-C
+- **GIVEN** the user is creating a template
+- **WHEN** the template name page or "Origin of the import" for the template is shown
+- **THEN** Templates is marked as the current section
+- **AND** Dashboard is not
+
 ### Requirement: The Templates item opens Manage templates
 **ID**: REQ-NAV-005
 The system MUST open the Manage templates page when the user follows the Templates item.

@@ -33,9 +33,9 @@ The system MUST open the page headed "Manage templates" in the live animals jour
 - **WHEN** they follow Templates in the navigation
 - **THEN** the page headed "Manage templates" is shown
 
-### Requirement: The navigation marks Dashboard or Address book as current on its own pages, and never Templates
+### Requirement: The navigation marks Dashboard, Templates or Address book as current on its own pages
 **ID**: REQ-INS-NAV-003
-The system MUST mark Dashboard as the current section on the dashboard and Address book as the current section on the address book and its pages, and MUST NOT mark Templates, since no templates page is part of this service.
+The system MUST mark Dashboard as the current section on the dashboard and Address book as the current section on the address book and its pages, and MUST mark Templates as the current section on the type question while a template is being created. It MUST NOT mark Templates anywhere else in this service, since Manage templates is not part of it.
 
 #### Scenario: Dashboard is marked current on the dashboard and Templates is not
 **ID**: SCN-INS-NAV-003-A
@@ -50,3 +50,10 @@ The system MUST mark Dashboard as the current section on the dashboard and Addre
 - **WHEN** they view the navigation
 - **THEN** Address book is marked as the current section
 - **AND** neither Templates nor Dashboard is
+
+#### Scenario: Templates is marked current while creating a template
+**ID**: SCN-INS-NAV-003-C
+- **GIVEN** the user is on the type question after choosing to create a template
+- **WHEN** they view the navigation
+- **THEN** Templates is marked as the current section
+- **AND** Dashboard is not

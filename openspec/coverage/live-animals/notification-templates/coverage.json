@@ -85,6 +85,165 @@
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldReturnOnlyTheOwnersTemplates_newestFirst", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should list only the user's own stub templates, newest first", "strength": "partial", "notes": "pins the stub store only." }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-C",
+          "name": "A template still being created is not listed",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldNotListAnInProgressTemplate", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should hide a template still being created from the list", "strength": "partial", "notes": "pins the stub store only." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-004",
+      "name": "Manage templates offers Create new template",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-004-A",
+          "name": "Create new template opens the type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Create new template opens the type question in template mode: two unselected options, Continue, Back to Manage templates and Templates current", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "offers a primary Create new template button that opens the type question", "strength": "partial", "notes": "asserts the button and where it links; the type question itself is another service." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-004-B",
+          "name": "Leaving after following the button adds nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "leaving before the name page is posted adds nothing to Manage templates", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-005",
+      "name": "The template name page asks what the template is called",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-005-A",
+          "name": "The template name page shows its title, caption and controls",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "shows its title, caption and heading with no hint", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "offers Save and continue and a Cancel link to Manage templates", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.test.js", "test": "Should show an empty name page headed Enter template name", "strength": "partial", "notes": "pins the view model, not the rendered page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-005-B",
+          "name": "Back goes to the type question when a type has been chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Germinal products: Back from the name page shows Germinal products still selected", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "goes Back to the type question with the type chosen", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.test.js", "test": "Should send Back to the type question with the chosen type", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.test.js", "test": "Should carry a germinal products choice back to the type question", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-005-E",
+          "name": "Back goes to Manage templates when no type has been chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "the name page opened with no type chosen sends Back to Manage templates", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "goes Back to Manage templates when opened with no type", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.test.js", "test": "Should send Back to Manage templates when no type has been chosen", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-005-C",
+          "name": "A blank or padded name moves on to Origin of the import",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a trimmed name moves on to Origin of the import in template mode", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a blank name is accepted with no error", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "moves a blank name on to Origin of the import with no error", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.test.js", "test": "Should store the trimmed name with the chosen type, begin the run and go to origin", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-005-D",
+          "name": "Going back shows the name entered, and a new template starts empty",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a trimmed name moves on to Origin of the import in template mode", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "shows the name again going Back from Origin of the import", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-name/template-name.fit.spec.js", "test": "starts another new template with an empty name", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-006",
+      "name": "A template is answered on the same journey pages, in template mode",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-006-A",
+          "name": "A template page shows the Template tag and the template's name",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a trimmed name moves on to Origin of the import in template mode", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the Template tag and name above the section caption", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should draw a grey Template tag with the template name where a notification shows its reference", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-006-B",
+          "name": "A template asks the same questions as a notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "asks the same questions with the same hints as a notification", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/template-mode.test.js", "test": "Should make every twin a wrapper of a journey route, never a copy of a page", "strength": "full", "notes": "pins that no template-only page exists: every template route runs a journey route's own handler." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-006-C",
+          "name": "A template page refuses a malformed answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "origin in template mode refuses a malformed region code", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "origin in template mode requires the region of origin code when Yes is chosen", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses a region code that is required but empty", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses an internal reference over 58 characters", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-006-D",
+          "name": "A template offers no upload documents or declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a template offers no Upload documents or declaration page", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "offers no documents or review page for a template", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/template-mode.test.js", "test": "Should offer no %s in template mode", "strength": "full", "notes": "run for the documents, review, declaration, confirmation, amend, cancel-amend, copy and delete pages." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the documents page on the way from the transporters to the addresses", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-007",
+      "name": "Starting and naming a template creates no notification",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-007-A",
+          "name": "Naming a template leaves the draft notifications unchanged",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "starting and naming a template creates no notification", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "start_thenGet_returnsTheInProgressTemplateWithItsTypeAndName", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/template-records/template-records.test.js", "test": "Should not offer %s in template mode", "strength": "partial", "notes": "pins that template mode creates no notification record; run for each notification lifecycle operation." }
+          ]
         }
       ]
     }

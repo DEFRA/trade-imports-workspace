@@ -76,3 +76,44 @@ The system MUST, when the user continues with nothing chosen, show the question 
 - **THEN** the page is shown again with an error summary titled "There is a problem" listing "Select what you are importing", linked to the first option
 - **AND** the same message is shown on the options
 - **AND** the browser title starts "Error: "
+
+### Requirement: Creating a template asks what is being imported, offering only the types templates cover
+**ID**: REQ-INS-NTYPE-004
+The system MUST, when the user chooses to create a template, ask the same question under the caption "About the consignment" with only Live animals and Germinal products (semen, ova, embryos), none selected, a single "Continue" button, a Back link to Manage templates and Templates as the current service-navigation item, and MUST NOT show a "Template" caption. It MUST refuse continuing with nothing chosen as REQ-INS-NTYPE-003 does.
+
+#### Scenario: Create new template asks the type question with two options
+**ID**: SCN-INS-NTYPE-004-A
+- **GIVEN** a signed-in user is on Manage templates
+- **WHEN** they select "Create new template"
+- **THEN** "What are you importing?" is shown under the caption "About the consignment"
+- **AND** the options are Live animals and Germinal products (semen, ova, embryos), with none selected
+- **AND** Plants for planting, Potatoes (seed and ware) and Wood products are not offered
+- **AND** the page ends with a single "Continue" button and shows no "Template" caption
+- **AND** Back leads to Manage templates and Templates is the current service-navigation item
+
+#### Scenario: Continuing with nothing chosen is refused
+**ID**: SCN-INS-NTYPE-004-B
+- **GIVEN** the question is shown while creating a template with no option chosen
+- **WHEN** the user selects "Continue"
+- **THEN** the page is shown again with an error summary titled "There is a problem" listing "Select what you are importing", linked to the first option
+- **AND** the browser title starts "Error: "
+
+#### Scenario: Continuing goes to the template name page
+**ID**: SCN-INS-NTYPE-004-C
+- **GIVEN** the question is shown while creating a template
+- **WHEN** the user chooses Live animals or Germinal products (semen, ova, embryos) and continues
+- **THEN** the template name page is shown
+- **AND** no origin page is shown and no draft notification is created
+
+#### Scenario: Coming back from the template name page shows the chosen type selected
+**ID**: SCN-INS-NTYPE-004-D
+- **GIVEN** the user has chosen Live animals and reached the template name page
+- **WHEN** they follow Back
+- **THEN** the question is shown with Live animals selected
+
+#### Scenario: Leaving before naming the template stores nothing
+**ID**: SCN-INS-NTYPE-004-E
+- **GIVEN** the user has chosen to create a template and reached the template name page
+- **WHEN** they leave without saving the name
+- **THEN** Manage templates shows the same count of templates as before
+- **AND** none of the user's draft notifications has changed

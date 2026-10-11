@@ -92,6 +92,59 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-NTYPE-004",
+      "name": "Creating a template asks what is being imported, offering only the types templates cover",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NTYPE-004-A",
+          "name": "Create new template asks the type question with two options",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Create new template opens the type question in template mode: two unselected options, Continue, Back to Manage templates and Templates current", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "offers only live animals and germinal products, unselected, with a single Continue button", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "GET asks the same question and offers only live animals and germinal products, none selected", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-B",
+          "name": "Continuing with nothing chosen is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "continuing with nothing chosen shows the error linked to the first radio", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "refuses Continue with nothing chosen for a template and links the error to the first option", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-C",
+          "name": "Continuing goes to the template name page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Germinal products also goes to the template name page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "POST %s hands over to the template name page", "strength": "full", "notes": "run for Live animals and Germinal products" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-D",
+          "name": "Coming back from the template name page shows the chosen type selected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "GET shows the type already chosen when it is one templates can have", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-E",
+          "name": "Leaving before naming the template stores nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "leaving before the name page is posted adds nothing to Manage templates", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
     }
   ]
 }

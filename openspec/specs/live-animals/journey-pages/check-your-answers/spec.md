@@ -135,6 +135,17 @@ The system MUST group the page under the same six numbered section headings the 
 - **AND** the card's header Change link opens the consignment details page
 - **AND** on an editable review the first row of each block has its own Change link to the consignment details page, while a read-only review has none
 
+#### Scenario: Each species block reads its animals back under Identification details
+**ID**: SCN-CYA-001-Q
+- **GIVEN** a species whose animals' identifiers are saved
+- **WHEN** the user views the review
+- **THEN** its block shows a table headed "Identification details"
+- **AND** the table's first column is "Animal", followed by one column per identifier the commodity asks for, an identifier not given reading "Not applicable"
+- **AND** each row is labelled with the species name and the animal's number, for example "Bos taurus 1"
+- **AND** on an editable review Identification details has its own Change link, which opens the identification page, while a read-only review has none
+- **GIVEN** a species with no identifiers saved
+- **THEN** its block shows no Identification details
+
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
 The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
@@ -245,6 +256,29 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **GIVEN** a notification with no commodity chosen
 - **WHEN** the user views the review
 - **THEN** the same entry links to the "2. Description of the goods" heading
+
+### Requirement: The review of a draft names each species of a multi-species consignment that is still short of its animals
+**ID**: REQ-CYA-012
+Where more than one chosen commodity asks for animal identifiers, the system MUST name in the error summary, straight after commodity details, each such species that has no animal identifier yet: "Enter the number of animals for <species>" while its number of animals is not given, otherwise "Enter at least 1 animal identifier for <species>", the species name in lower case. Each entry MUST link to that species' block, which MUST NOT be marked.
+
+#### Scenario: A species with no count is named by its number of animals
+**ID**: SCN-CYA-012-A
+- **GIVEN** a notification whose cow (Bos taurus) and cat (Felis catus) lines both ask for identifiers, with no numbers saved
+- **WHEN** the user views the review
+- **THEN** the error summary names "Enter the number of animals for bos taurus" and "Enter the number of animals for felis catus", each linking to that species' block
+
+#### Scenario: A counted species with no identifier is named by its identifiers
+**ID**: SCN-CYA-012-B
+- **GIVEN** the same two species with their numbers saved and no identifier saved for either
+- **WHEN** the user views the review
+- **THEN** the error summary names "Enter at least 1 animal identifier for bos taurus" and "Enter at least 1 animal identifier for felis catus", straight after "Complete commodity details", each linking to that species' block
+- **AND** a species with an identifier saved is not named
+
+#### Scenario: A single species asking for identifiers is not named
+**ID**: SCN-CYA-012-C
+- **GIVEN** a notification where only one chosen commodity asks for animal identifiers, with none saved
+- **WHEN** the user views the review
+- **THEN** no "Enter at least 1 animal identifier for" or "Enter the number of animals for" entry is shown
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008

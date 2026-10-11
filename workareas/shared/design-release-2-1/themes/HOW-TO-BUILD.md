@@ -122,8 +122,10 @@ merged, if its theme never changed that repo.
 
   Until they're done, `tim backlog next` skips those rows and the loop builds the rest.
 - **Merge order:** journey foundation and reference lists first, then commodities and import reason, arrival and
-  transit, and origin page, then overview and review.
+  transit, and origin page, then overview and review and templates.
 - **The loop never commits its own backlog writes.** When a theme lands rows another theme waits on, commit and push
   that theme's `backlog.json` on the workspace branch, then pull it on the other machine before its next launch.
-- **The themes build on separate branches.** Templates won't see journey foundation's code until both are merged.
-  The 4 waiting rows build on top of what their branch has.
+- **Templates stacks on the themes its last 4 rows wait for.** Each of those rows has a `merge` field. inc-166 merges
+  the commodities and import reason branch, inc-168 merges the arrival and transit branch, and inc-170 and inc-171
+  merge the journey foundation branch, each before the row builds. Once they land, the templates pull requests also
+  show those themes' code until those themes merge to `main`.

@@ -8,7 +8,7 @@ The page on which a whole notification is read back before submission, and read 
 
 ### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
 **ID**: REQ-CYA-001
-The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST stand every card directly under its numbered section heading, with no subsection heading between them, each card titled one heading level below its section. The six numbered sections MUST NOT be dropped, though which cards stand within one MAY depend on the notification.
+The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST stand every card directly under its section heading, with no subsection heading between them, titled one heading level below it. Which cards stand within a section MAY depend on the notification. The system MUST read each card's rows under the names the scenarios give.
 
 #### Scenario: The review draws all six numbered sections in order
 **ID**: SCN-CYA-001-A
@@ -48,8 +48,8 @@ The system MUST group the page under the same six numbered section headings the 
 **ID**: SCN-CYA-001-F
 - **GIVEN** a notification with its import reason and additional details answered
 - **WHEN** the user views the review
-- **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason", with the internal market purpose labelled "Purpose in the market" and, for Temporary admission horses, "Exit date" and "Port of exit" rows
-- **AND** the additional details answers stand on the card titled "Additional details" and read "Certified for" and, where the unweaned question was asked, "Includes unweaned animals"
+- **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason", with the internal market purpose labelled "Purpose in the market", for Temporary admission horses, "Exit date" and "Port of exit" rows, and for Transit, "Exit border control post" and then "Destination country", with no "Port of exit" row
+- **AND** the additional details answers, when there are any to show, stand on the card titled "Additional details" and read "Certified for" and, where the unweaned question was asked, "Includes unweaned animals"
 
 #### Scenario: The contact address section holds one Contact address card
 **ID**: SCN-CYA-001-H
@@ -62,6 +62,43 @@ The system MUST group the page under the same six numbered section headings the 
 - **GIVEN** a notification whose means of transport is road
 - **WHEN** the user views the review
 - **THEN** the "Means of transport to the port of entry" row reads "Road"
+- **AND** an air arrival reads "Air"
+
+#### Scenario: The Origin of import card reads the region of origin code and no 'required' row
+**ID**: SCN-CYA-001-I
+- **GIVEN** a notification with its origin answered
+- **WHEN** the user views the review
+- **THEN** the Origin of import card shows a "Region of origin code" row and no "Region of origin code required" row
+- **AND** the row reads the code where one was needed, and "Not applicable" where it was not
+
+#### Scenario: Transit countries read inside the Arrival details card
+**ID**: SCN-CYA-001-J
+- **GIVEN** a notification arriving by road or rail with transit countries added
+- **WHEN** the user views the review
+- **THEN** the Arrival details card keys its arrival date "Arrival date at destination"
+- **AND** it holds a "Transit countries" subsection whose row "Countries that the consignment will travel through" lists the countries comma-separated in the order added
+- **AND** that row has its own Change link, which opens the transit countries page
+- **AND** no separate Transit countries card is shown
+
+#### Scenario: The Transport details card always shows the transporter's five rows
+**ID**: SCN-CYA-001-K
+- **GIVEN** a notification on the review
+- **WHEN** the user views the Transport details card
+- **THEN** it shows "Name", "Address", "Country", "Approval number" and "Type", in that order, whether or not a transporter has been chosen
+- **AND** an empty answer reads "Not applicable" on a finished card
+- **AND** "Country" reads the country stored on the transporter's address
+
+#### Scenario: The Additional details card shows only with rows, its Change link only while the page is in the journey
+**ID**: SCN-CYA-001-L
+- **GIVEN** a notification with no additional details rows to show
+- **WHEN** the user views the review
+- **THEN** no Additional details card is shown
+- **GIVEN** a notification with additional details rows and the additional details page in its journey
+- **WHEN** the user views the review
+- **THEN** the Additional details card carries a Change link to that page
+- **GIVEN** a notification with additional details rows but the additional details page not in its journey, or a read-only view
+- **WHEN** the user views the review
+- **THEN** the Additional details card is shown with no Change link
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
@@ -127,6 +164,13 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **GIVEN** a draft notification is open on check-your-answers, with every task ready
 - **WHEN** the user continues
 - **THEN** the declaration page opens
+
+#### Scenario: Transit countries are not owed for submission
+**ID**: SCN-CYA-006-B
+- **GIVEN** a draft arriving by road or rail with every task ready and no transit countries added
+- **WHEN** the user views the review and continues
+- **THEN** no "Complete transit countries" message or transit error is shown
+- **AND** the declaration page opens
 
 ### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
@@ -200,10 +244,10 @@ While a notification is being amended, the system MUST show the review with no e
 
 ### Requirement: A transited territory is named with its country on the review
 **ID**: REQ-CYA-011
-The system MUST show each transited country on the review's Transit countries card by the name the transited countries page lists it under, naming a territory "<territory> (<country>)".
+The system MUST show each transited country in the review's Transit countries subsection of the Arrival details card by the name the transited countries page lists it under, naming a territory "<territory> (<country>)".
 
 #### Scenario: A transited territory reads with its country
 **ID**: SCN-CYA-011-A
 - **GIVEN** the notification's transited countries include a territory
 - **WHEN** the review page is shown
-- **THEN** the Transit countries card names it "<territory> (<country>)", for example "Canary Islands (Spain)"
+- **THEN** the Transit countries subsection names it "<territory> (<country>)", for example "Canary Islands (Spain)"

@@ -191,6 +191,16 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "internal reference validation: saves a reference punctuated the way the user holds it", "strength": "full", "notes": "new test replacing the retired disallowed-characters rejection test — proves hyphens/slashes/spaces/full stops now round-trip unchanged" }
           ]
+        },
+        {
+          "id": "SCN-ORIGIN-009-C",
+          "name": "The internal reference hint invites a reference without stating the limit",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.test.js", "test": "Should leave the internal reference length limit to the error, not the hint", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the region question's health-certificate hint and an internal reference hint with no length limit", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "shows the region of origin code hint and the internal reference hint without its length limit", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -204,7 +214,7 @@
           "name": "An over-length region code is rejected with the value preserved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when over 5 characters, links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when over 5 characters, links to and focuses the preserved value", "strength": "full", "notes": "cap removed before submitting" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should reject a typed part over 5 characters and commit nothing", "strength": "full", "notes": "also proves the country and required-answer are held, matching the scenario's AND clauses" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should reject a typed part over 5 characters even when the answer is No", "strength": "full", "notes": "extra evidence: the limit applies regardless of whether a code is required" }
           ]
@@ -214,7 +224,16 @@
           "name": "An over-length region code is refused on save and return to overview",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "origin of the import: when the region code is longer than five characters, refuses the save and keeps nothing", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "origin of the import: when the region code is longer than five characters, refuses the save and keeps nothing", "strength": "full", "notes": "cap removed before submitting" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-010-C",
+          "name": "Typing stops at five characters",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "the region code box stops typing at five characters, with autocomplete and spellcheck off", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "the region code box stops typing at five characters, with autocomplete and spellcheck off", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -314,6 +333,51 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "native select begins with the blank Select a country option and shows no hint", "strength": "full", "notes": "javaScriptEnabled: false" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "shows no hint, begins with Select a country, and saves the chosen country", "strength": "full", "notes": "javaScriptEnabled: false" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-016",
+      "name": "The region of origin code question points to the health certificate",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-016-A",
+          "name": "The region question's hint names the health certificate",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/copy/copy.test.js", "test": "Should point to the health certificate in the region of origin code question's hint", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows the region question's health-certificate hint and an internal reference hint with no length limit", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "shows the region of origin code hint and the internal reference hint without its length limit", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-017",
+      "name": "A region code typed with no country waits for the country before it is saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-017-A",
+          "name": "The typed code stays on the page when the save is refused for another answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should keep the typed code on the page when the save is refused for another answer", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code with no country: kept on the page, but saved only once a country gives it its prefix", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "a region code typed with no country is kept on the page but saved only once a country gives it its prefix", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-017-B",
+          "name": "No code is saved until a country is chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should save no region code while no country gives it its prefix", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should join the country prefix once the country is filled in later", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code with no country: kept on the page, but saved only once a country gives it its prefix", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "a region code typed with no country is kept on the page but saved only once a country gives it its prefix", "strength": "full", "notes": "" }
           ]
         }
       ]

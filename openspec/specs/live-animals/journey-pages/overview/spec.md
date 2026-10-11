@@ -121,3 +121,25 @@ The system MUST mark the Main reason for import task Complete once an allowed re
 - **GIVEN** no reason is saved
 - **WHEN** the user views Overview
 - **THEN** Main reason for import reads To do
+
+### Requirement: Where is this consignment coming from? completes only once the country and the region code question are answered
+**ID**: REQ-OVERVIEW-009
+The system MUST mark the "Where is this consignment coming from?" task Complete only once a country is chosen and the region of origin code question is answered, with a code given when the answer is Yes, and MUST NOT mark it Complete while either is missing.
+
+#### Scenario: A country with the region question unanswered is not complete
+**ID**: SCN-OVERVIEW-009-A
+- **GIVEN** a country is saved and the region of origin code question is unanswered
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" does not read Complete
+
+#### Scenario: A country with No is complete
+**ID**: SCN-OVERVIEW-009-B
+- **GIVEN** a country is saved and the answer is that no region code is required
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" reads Complete
+
+#### Scenario: A country with Yes and a code is complete
+**ID**: SCN-OVERVIEW-009-C
+- **GIVEN** a country is saved, a region code is required and the code is given
+- **WHEN** the user views Overview
+- **THEN** "Where is this consignment coming from?" reads Complete

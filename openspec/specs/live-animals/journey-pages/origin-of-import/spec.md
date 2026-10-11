@@ -107,7 +107,7 @@ The system MUST accept the origin page being saved with no country chosen, witho
 
 ### Requirement: The page also asks for an optional internal reference, capped at 58 characters
 **ID**: REQ-ORIGIN-009
-The system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters, and MUST preserve the value typed so it can be corrected. The reference MUST accept whatever punctuation the user's own records use, including hyphens, slashes, spaces and full stops.
+The system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters, and MUST preserve the value typed so it can be corrected. The reference MUST accept whatever punctuation the user's own records use, including hyphens, slashes, spaces and full stops. The field's hint MUST read "Enter any internal reference you want to use to identify this consignment, or leave blank." and MUST NOT state the limit, which the error names.
 
 #### Scenario: An over-length internal reference is rejected with the value preserved
 **ID**: SCN-ORIGIN-009-A
@@ -123,14 +123,21 @@ The system MUST let the user give an optional internal reference for the notific
 - **THEN** the reference is saved
 - **AND** returning to the page shows it exactly as typed
 
+#### Scenario: The internal reference hint invites a reference without stating the limit
+**ID**: SCN-ORIGIN-009-C
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the page loads
+- **THEN** the internal reference field's hint reads "Enter any internal reference you want to use to identify this consignment, or leave blank."
+- **AND** no hint states the 58-character limit
+
 ### Requirement: The region of origin code has a maximum length of five characters
 **ID**: REQ-ORIGIN-010
-The system MUST reject a region of origin code longer than five characters on either save control, with an error naming the limit, and MUST preserve the value typed.
+The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, on either save control, with an error naming the limit, preserving the value submitted.
 
 #### Scenario: An over-length region code is rejected with the value preserved
 **ID**: SCN-ORIGIN-010-A
 - **GIVEN** the user has answered that a region code is required
-- **WHEN** they type a region code longer than five characters and save and continue
+- **WHEN** they submit a region code longer than five characters without the box's own cap and save and continue
 - **THEN** an error names the region code's limit
 - **AND** the field is focused, still holding the value typed
 - **AND** the chosen country and the answer to whether a region code is required are still held
@@ -138,9 +145,16 @@ The system MUST reject a region of origin code longer than five characters on ei
 #### Scenario: An over-length region code is refused on save and return to overview
 **ID**: SCN-ORIGIN-010-B
 - **GIVEN** the user has answered that a region code is required
-- **WHEN** they type a region code longer than five characters and save and return to overview
+- **WHEN** they submit a region code longer than five characters without the box's own cap and save and return to overview
 - **THEN** they remain on the origin of the import page with an error naming the region code's limit
 - **AND** the over-length code is not saved
+
+#### Scenario: Typing stops at five characters
+**ID**: SCN-ORIGIN-010-C
+- **GIVEN** the user has answered that a region code is required
+- **WHEN** they type seven characters into the region code box
+- **THEN** the box holds only the first five
+- **AND** the box offers no autocomplete and no spellcheck
 
 ### Requirement: Answering that a region code is required but leaving it empty is rejected on save and continue
 **ID**: REQ-ORIGIN-011
@@ -221,3 +235,31 @@ The system MUST ask "Country of origin" with no hint text, with or without JavaS
 - **WHEN** the page loads
 - **THEN** the country list, labelled "Country of origin", begins with its blank "Select a country" entry
 - **AND** no hint text is shown for the country question
+
+### Requirement: The region of origin code question points to the health certificate
+**ID**: REQ-ORIGIN-016
+The system MUST give the question "Does the consignment have a region of origin code?" the hint "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now."
+
+#### Scenario: The region question's hint names the health certificate
+**ID**: SCN-ORIGIN-016-A
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the page loads
+- **THEN** the region of origin code question's hint reads "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now."
+
+### Requirement: A region code typed with no country waits for the country before it is saved
+**ID**: REQ-ORIGIN-017
+The system MUST keep a region code typed under Yes with no country chosen on the page while the page is shown back, MUST NOT save a region of origin code until a country gives it its prefix, and MUST save the code with that country's prefix once a country is chosen.
+
+#### Scenario: The typed code stays on the page when the save is refused for another answer
+**ID**: SCN-ORIGIN-017-A
+- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
+- **WHEN** they save and continue with another answer the page refuses
+- **THEN** the page shows the error and the region code box still holds the code typed
+
+#### Scenario: No code is saved until a country is chosen
+**ID**: SCN-ORIGIN-017-B
+- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
+- **WHEN** they save and continue
+- **THEN** the review page shows no region of origin code
+- **WHEN** they return, choose France, type the code again and save and continue
+- **THEN** the review page shows the code with France's prefix

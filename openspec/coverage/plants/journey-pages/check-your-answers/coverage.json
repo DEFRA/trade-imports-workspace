@@ -13,7 +13,7 @@
           "name": "Check-your-answers shows the three numbered sections",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "asserts 1. About / 2. Arrival and destination / 3. Consignment parties" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and the contact's address line by line, and Change returns to saved answers", "strength": "full", "notes": "asserts 1. About / 2. Arrival and destination / 3. Consignment parties" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "asserts every copy.sections heading" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "" }
           ]
@@ -40,7 +40,7 @@
           "name": "A potatoes notification omits the consignor card",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "Consignor or exporter card count 0" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and the contact's address line by line, and Change returns to saved answers", "strength": "full", "notes": "Consignor or exporter card count 0" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "consignor heading count 0 on potato seed path" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "cards titles not to contain consignor" }
           ]
@@ -58,16 +58,34 @@
     },
     {
       "id": "REQ-PLANTS-CYA-003",
-      "name": "The contact card shows the selected party's details",
+      "name": "The party cards read the address line by line, with no telephone number or email address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-003-A",
-          "name": "Contact details appear on the Contact card",
+          "name": "The Contact card reads the contact's address line by line",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "name, address, phone, email on Contact card" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows name/address/phone/email" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and the contact's address line by line, and Change returns to saved answers", "strength": "full", "notes": "Contact Address row exact innerText; phone and email absent; terms Name, Address" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "contact rows Name and Address, address lines joined by <br>" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "Contact card terms Name, Address; Address innerText line by line; no email" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-003-B",
+          "name": "The Place of destination card reads the address line by line",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and the contact's address line by line, and Change returns to saved answers", "strength": "full", "notes": "Place of destination Address row exact innerText; terms Name, Address" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render three numbered sections, stored values and indexed Change links without writing", "strength": "full", "notes": "destination card rows Name and Address, address lines joined by <br>" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-003-C",
+          "name": "The Consignor or exporter card has no telephone or email row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the consignor card as name and address lines only for plants", "strength": "full", "notes": "row keys exactly Name, Address; Address html line by line" }
           ]
         }
       ]
@@ -90,7 +108,7 @@
           "name": "A deleted destination reads Not provided on every row",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "four Not provided rows; removed name absent — display half of the test" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "two Not provided rows (Name, Address); removed name absent — display half of the test" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render Not provided for a removed address-book reference", "strength": "full", "notes": "also asserts the party error is present — display clause is every row Not provided" }
           ]
         }
@@ -106,7 +124,7 @@
           "name": "Editing an answer via Change returns to check-your-answers with the new value",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "origin → Germany and commodity quantity → 300 both return to CYA" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and the contact's address line by line, and Change returns to saved answers", "strength": "full", "notes": "origin → Germany and commodity quantity → 300 both return to CYA" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, a question page opened from a Change link on the review returns to the review showing the change", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" }
           ]

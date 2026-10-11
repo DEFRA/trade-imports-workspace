@@ -38,15 +38,27 @@ The system MUST omit the consignor-or-exporter card for a potatoes notification,
 - **WHEN** the user views check-your-answers after submission
 - **THEN** the "Consignor or exporter" card shows that party's name
 
-### Requirement: The contact card shows the selected party's details
+### Requirement: The party cards read the address line by line, with no telephone number or email address
 **ID**: REQ-PLANTS-CYA-003
-The system MUST show the selected consignment contact's name, address, telephone number and email address on the Contact card.
+The system MUST show, on the Place of destination, Consignor or exporter and Contact cards, a "Name" row with the selected party's name and an "Address" row reading each address line on its own line followed by the country on its own line, and MUST NOT show a "Telephone number" or "Email address" row.
 
-#### Scenario: Contact details appear on the Contact card
+#### Scenario: The Contact card reads the contact's address line by line
 **ID**: SCN-PLANTS-CYA-003-A
 - **GIVEN** a notification has a consignment contact selected
 - **WHEN** the user views check-your-answers
-- **THEN** the Contact card shows that party's name, address lines, telephone number and email address
+- **THEN** the Contact card has only "Name" and "Address" rows, the Address row reading each address line on its own line and then the country, and no telephone number or email address is shown
+
+#### Scenario: The Place of destination card reads the address line by line
+**ID**: SCN-PLANTS-CYA-003-B
+- **GIVEN** a notification has a place of destination selected
+- **WHEN** the user views check-your-answers
+- **THEN** the Place of destination card has only "Name" and "Address" rows, the Address row reading each address line on its own line and then the country
+
+#### Scenario: The Consignor or exporter card has no telephone or email row
+**ID**: SCN-PLANTS-CYA-003-C
+- **GIVEN** a plants-for-planting notification has a consignor selected
+- **WHEN** the user views check-your-answers
+- **THEN** the Consignor or exporter card has only "Name" and "Address" rows
 
 ### Requirement: Anything not yet answered, or whose address no longer resolves, is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004

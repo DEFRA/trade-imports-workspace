@@ -67,6 +67,14 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** the user views the review
 - **THEN** "6. Contact address" holds one card titled "Contact address" with a "Contact address" row showing the chosen address
 
+#### Scenario: Each copied address reads back as its name, address lines and country, with no telephone or email
+**ID**: SCN-CYA-001-S
+- **GIVEN** a notification whose consignment roles and contact address hold copied addresses with a telephone number and email address
+- **WHEN** the user views the review
+- **THEN** each role's row in the Addresses card, and the "Contact address" row, reads the name, then each non-empty address line, town or city, county and postcode, then the country, each on its own line
+- **AND** a country of GB reads "United Kingdom"
+- **AND** no telephone number or email address is shown, even for a copy refused for its contact details
+
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
 **ID**: SCN-CYA-001-G
 - **GIVEN** a notification whose means of transport is road

@@ -342,7 +342,7 @@ While a notification is being amended, the system MUST end each page the hub lin
 #### Scenario: Save and return from a Change link goes back to the review showing the changed answer
 **ID**: SCN-FLOW-013-B
 - **GIVEN** the review of a notification being amended
-- **WHEN** the user follows "Change import details", changes the internal reference and selects "Save and return"
+- **WHEN** the user follows "Change origin of import", changes the internal reference and selects "Save and return"
 - **THEN** the review is shown with the new internal reference
 - **AND** the origin page's Back link went to Overview, not the review
 

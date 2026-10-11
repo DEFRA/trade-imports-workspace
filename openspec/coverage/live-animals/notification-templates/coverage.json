@@ -94,6 +94,42 @@
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldNotListAnInProgressTemplate", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should hide a template still being created from the list", "strength": "partial", "notes": "pins the stub store only." }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-D",
+          "name": "Of two templates saved one after the other, the later is listed first",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldListTheLaterSavedTemplateFirst", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should list the template saved later first, whatever order they were started", "strength": "partial", "notes": "pins the stub store only." },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "lists the later of two templates saved one after the other first", "strength": "partial", "notes": "saves each template in the order it was started, so does not separate saved order from created order; the backend IT pins the interleaved case." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "of two templates saved one after the other, the later is listed first", "strength": "partial", "notes": "saves each template in the order it was started, so does not separate saved order from created order; the backend IT pins the interleaved case." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-E",
+          "name": "A saved template is still listed after signing out and back in",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "a saved template is still listed after signing out and back in", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-F",
+          "name": "Another user neither sees nor opens a user's template",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "another user does not see a user's saved template and cannot open it", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "save_shouldReturn404_forAnotherOwnersTemplate", "strength": "partial", "notes": "pins the API, not the page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-G",
+          "name": "A saved template is never listed among the user's notifications",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "a saved template never appears among the user's notifications on the dashboard", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -452,6 +488,86 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/templates/templates.test.js", "test": "Should list a template once it is saved, for its owner only", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "save_thenList_listsTheTemplateWithItsAnswers", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-review.spec.ts", "test": "Save template saves the template and opens Manage templates, where it is listed, instead of the declaration", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-018-B",
+          "name": "A part-answered template is saved, listed first and counted",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "Save template lists the part-answered template first and the count reads Show 1-1 of 1 results", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "Save template saves a part-answered template and lists it first on Manage templates, one more than before", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-019",
+      "name": "Saving a template shows a success banner on Manage templates once",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-019-A",
+          "name": "Manage templates confirms a saved template with a Success banner",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows a Success banner with role alert headed 'Weekly cattle saved to templates', gone on reload", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should show the saved banner once, headed with the template's title", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should save the template and open Manage templates on Save template, refusing nothing", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "after saving, Manage templates shows a Success banner headed '<name> saved to templates', once", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-019-B",
+          "name": "The banner is gone on reload",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows a Success banner with role alert headed 'Weekly cattle saved to templates', gone on reload", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should show the saved banner once, headed with the template's title", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "after saving, Manage templates shows a Success banner headed '<name> saved to templates', once", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-019-C",
+          "name": "The banner shows without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows the Success banner after Save template", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-020",
+      "name": "A template saved with no name is titled \"Untitled template\"",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-020-A",
+          "name": "A template saved with no name is listed first as Untitled template",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "titles a template saved with no name Untitled template, in the banner and on its card", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should title a template saved with no name Untitled template", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should head the banner Untitled template saved to templates for a template saved with no name", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "a template saved with no name is listed first as 'Untitled template' with the banner 'Untitled template saved to templates'", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-021",
+      "name": "Each template is a card with its category, title, View template and Use template",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-021-A",
+          "name": "A saved template's card shows its category, title, View template and Use template",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows each template as a card labelled Template <title> with its category, an H3 title, View template and a Use template button in a POST form", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should card each template with its title, its label, its category and its View and Use template targets", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "each template card is labelled 'Template <title>' with its category, an H3 title, View template and a Use template button in a form", "strength": "full", "notes": "" }
           ]
         }
       ]

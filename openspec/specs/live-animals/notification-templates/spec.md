@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it.
 
 ## Requirements
 
@@ -240,3 +240,78 @@ While a template is being created, "What are you importing?" MUST show the "Temp
 - **GIVEN** the user is creating a template and has chosen a species on "What are you importing?"
 - **WHEN** they select "Save and continue"
 - **THEN** the template's task list is shown
+
+### Requirement: The template review is titled "Review your template" and shows no errors
+**ID**: REQ-TEMPLATES-013
+"Review template" MUST open the review page with the browser title "Review your template - Import notification service - GOV.UK" and the heading "Review your template" under the "Template" tag and the template's name, and MUST show no error summary and no error on any card, however much of the template is answered.
+
+#### Scenario: Review template opens Review your template under the Template tag and name, with no errors
+**ID**: SCN-TEMPLATES-013-A
+- **GIVEN** the user is creating a template and is on its task list
+- **WHEN** they select "Review template"
+- **THEN** the page is titled "Review your template" with the browser title "Review your template - Import notification service - GOV.UK"
+- **AND** a "Template" tag and the template's name are shown
+- **AND** no error summary and no card error is shown
+
+### Requirement: The template review shows the template task list's five sections
+**ID**: REQ-TEMPLATES-014
+The template review MUST show "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address", the template task list's sections, with no uploaded documents section and no "Arrival date at port of entry" row, and MUST read "Not applicable" for every unanswered row.
+
+#### Scenario: The template review shows five sections, no documents or arrival date, and Not applicable for unanswered rows
+**ID**: SCN-TEMPLATES-014-A
+- **GIVEN** the user is creating a template and has answered only some questions
+- **WHEN** they open the template review
+- **THEN** the five sections of the template's task list are shown, in order
+- **AND** no uploaded documents section and no "Arrival date at port of entry" row is shown
+- **AND** every unanswered row reads "Not applicable"
+
+### Requirement: The template review shows the rows the template's commodity asks for
+**ID**: REQ-TEMPLATES-015
+For cattle, the "Additional animal details" card MUST hold "Certified for" and "Includes unweaned animals", the "Roles and addresses" card MUST add "County parish holding (CPH) number", there MUST be no identification details card, and the card under "Main reason for import" MUST hold the single row "Reason for import" while no reason is chosen.
+
+#### Scenario: A cattle template's review shows the cattle rows and one main reason row
+**ID**: SCN-TEMPLATES-015-A
+- **GIVEN** the user is creating a template for cattle
+- **WHEN** they open the template review
+- **THEN** "Additional animal details" holds "Certified for" and "Includes unweaned animals"
+- **AND** "Roles and addresses" holds "County parish holding (CPH) number"
+- **AND** no identification details card is shown
+- **AND** the card under "Main reason for import" holds the single row "Reason for import"
+
+### Requirement: The template review's Back link returns to the template's task list
+**ID**: REQ-TEMPLATES-016
+The template review MUST have a Back link that opens the template's task list.
+
+#### Scenario: Back from the template review opens the template's task list
+**ID**: SCN-TEMPLATES-016-A
+- **GIVEN** the user is on the template review
+- **WHEN** they select the Back link
+- **THEN** the template's task list is shown
+
+### Requirement: The template review's Change links open each question page for the template in progress
+**ID**: REQ-TEMPLATES-017
+Each card's Change link MUST open its question page for the template being created, showing the "Template" tag and the controls that page shows while a template is created: "Save and continue" alone on Origin of the import, and "Save and continue", "Save and return to overview" and "Cancel and return to overview" to the template's task list on the contact address page. A page MUST NOT offer a bare "Save and return" or "Cancel".
+
+#### Scenario: Change opens Origin of the import and the contact address page for the template with their template-creation controls
+**ID**: SCN-TEMPLATES-017-A
+- **GIVEN** the user is on the template review
+- **WHEN** they select "Change" on the import details card
+- **THEN** Origin of the import is shown with the "Template" tag
+- **AND** "Save and continue" is offered without "Save and return to overview"
+- **WHEN** they return to the template review and select "Change" on the contact address card
+- **THEN** the contact address page is shown with the "Template" tag
+- **AND** "Save and continue", "Save and return to overview" and the link "Cancel and return to overview" are offered
+- **AND** the link goes to the template's task list
+- **AND** no bare "Save and return" and no bare "Cancel" is offered
+
+### Requirement: Save template saves the template instead of going to the declaration
+**ID**: REQ-TEMPLATES-018
+The template review MUST end with the button "Save template", and selecting it MUST save the template, whatever is answered, and open Manage templates, where the template is now listed. It MUST NOT open the declaration.
+
+#### Scenario: Save template saves the template and opens Manage templates, which lists it
+**ID**: SCN-TEMPLATES-018-A
+- **GIVEN** the user is on the template review
+- **WHEN** they select "Save template"
+- **THEN** Manage templates is shown
+- **AND** the template is listed there
+- **AND** the declaration is not shown

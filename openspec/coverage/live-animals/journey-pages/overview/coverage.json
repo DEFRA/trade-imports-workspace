@@ -255,6 +255,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-OVERVIEW-012",
+      "name": "The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-012-A",
+          "name": "No commodity chosen means no Transit countries task",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) for an overland means while no commodity is chosen", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should leave the transit row off an overland notification with no commodity chosen", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: with no commodity chosen, saving overland arrival details leaves the transit countries row off", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-012-B",
+          "name": "A chosen commodity travelling by rail or road shows the task in its place",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the transit row between arrival and transport details, reading Complete once a country is saved", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/hub.fit.spec.js", "test": "overview: with a commodity chosen and overland arrival details saved, transit countries sits between arrival and transport details as To do", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-012-C",
+          "name": "The task completes once a country is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the transit row between arrival and transport details, reading Complete once a country is saved", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the Transit countries task stays off the overview until a commodity is chosen, then sits between Arrival details and Transport details as To do", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-012-D",
+          "name": "A consignment travelling by air has no Transit countries task",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should show the conditional transit row only for an overland means of transport", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should be Not applicable (absent) while the means of transport is not overland", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "a cat consignment travelling by air has no Transit countries task, before or after arrival details are saved", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
     }
   ]
 }

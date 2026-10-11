@@ -179,3 +179,33 @@ The system MUST title the third task of "1. About the consignment" "Main import 
 - **WHEN** the user views Overview
 - **THEN** "1. About the consignment" lists "Where is this consignment coming from?", "What are you importing?" and "Main import reason", in that order
 - **AND** "Main reason for import" does not appear
+
+### Requirement: The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details
+**ID**: REQ-OVERVIEW-012
+The system MUST show the "Transit countries" task in "3. Transport and arrival" only once a commodity is chosen and the saved means of transport is Rail or Road, MUST list it after "Arrival details" and before "Transport details", and MUST show it To do until at least one transit country is saved, then Complete.
+
+#### Scenario: No commodity chosen means no Transit countries task
+**ID**: SCN-OVERVIEW-012-A
+- **GIVEN** no commodity is chosen and arrival details are saved with Road
+- **WHEN** the user views Overview
+- **THEN** no "Transit countries" task is shown
+- **AND** the third section lists "Arrival details" then "Transport details"
+
+#### Scenario: A chosen commodity travelling by rail or road shows the task in its place
+**ID**: SCN-OVERVIEW-012-B
+- **GIVEN** a commodity is chosen and Rail or Road is saved as the means of transport
+- **WHEN** the user views Overview
+- **THEN** the third section lists "Arrival details", "Transit countries" and "Transport details", in that order
+- **AND** "Transit countries" reads To do
+
+#### Scenario: The task completes once a country is saved
+**ID**: SCN-OVERVIEW-012-C
+- **GIVEN** a commodity is chosen, Rail or Road is saved and no transit country is saved
+- **WHEN** the user saves at least one transit country and views Overview
+- **THEN** "Transit countries" reads Complete
+
+#### Scenario: A consignment travelling by air has no Transit countries task
+**ID**: SCN-OVERVIEW-012-D
+- **GIVEN** a cat is chosen
+- **WHEN** the user views Overview before arrival details are saved, and again after Air is saved
+- **THEN** no "Transit countries" task is shown

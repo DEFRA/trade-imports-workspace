@@ -23,6 +23,7 @@ The system MUST group the page under the same six numbered section headings the 
 - **THEN** every card's title is a heading one level below its numbered section heading
 - **AND** no subsection heading stands above a card: none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Roles and addresses" or "Contact address for this consignment" appears as a heading
 - **AND** the first card in "1. About the consignment" is titled "Origin of import"
+- **AND** the second card in "1. About the consignment" is titled "What are you importing?"
 
 #### Scenario: The Uploaded documents section stands even when nothing has been uploaded
 **ID**: SCN-CYA-001-E
@@ -100,6 +101,40 @@ The system MUST group the page under the same six numbered section headings the 
 - **WHEN** the user views the review
 - **THEN** the Additional details card is shown with no Change link
 
+#### Scenario: The What are you importing? card reads the commodity selection back
+**ID**: SCN-CYA-001-M
+- **GIVEN** the user has chosen commodities
+- **WHEN** they view the review
+- **THEN** "1. About the consignment" holds "Origin of import", "What are you importing?" and "Main import reason", in that order
+- **AND** the What are you importing? card shows "Commodity code", "Common name" and "Species"
+- **AND** its Change link opens the commodity selection page
+
+#### Scenario: Each commodity's code and name are read once, except where its species are listed individually
+**ID**: SCN-CYA-001-N
+- **GIVEN** the user has chosen two species of Cow and one of Fish
+- **WHEN** they view the review
+- **THEN** "Commodity code" reads "0102, 0301" and "Common name" reads "Cow, Fish"
+- **GIVEN** the user has chosen a cat and a dog, which share commodity code 01061900
+- **WHEN** they view the review
+- **THEN** each species adds its own code and common name, so "Commodity code" reads "01061900, 01061900" and "Common name" reads "Cat, Dog"
+
+#### Scenario: Species names read with every word capitalised
+**ID**: SCN-CYA-001-O
+- **GIVEN** the user has chosen the species Bos taurus
+- **WHEN** they view the review
+- **THEN** the "Species" row and the species block heading both read "Bos Taurus"
+
+#### Scenario: One card per commodity, one block per species
+**ID**: SCN-CYA-001-P
+- **GIVEN** the user has chosen commodities and saved their numbers
+- **WHEN** they view the review
+- **THEN** "2. Description of the goods" holds one card per commodity, titled with the commodity name and its code, for example "Cow (0102)"
+- **AND** inside it stands one block per species, headed with the species name
+- **AND** each block shows "Number of animals" and, where packaging applies, "Number of packages (when required)", reading "Not applicable" when blank
+- **AND** no block shows a "Commodity code", "Common name" or "Species" row
+- **AND** the card's header Change link opens the consignment details page
+- **AND** on an editable review the first row of each block has its own Change link to the consignment details page, while a read-only review has none
+
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
 The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
@@ -174,7 +209,7 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
-The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card, each entry linking to its card, which MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
+The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card, each entry linking to its card, which MUST itself be marked with the same words, except commodity details, which links to the first commodity card and marks none. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
 
 #### Scenario: An unfinished review names every outstanding card and links to it
 **ID**: SCN-CYA-007-A
@@ -194,6 +229,22 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **GIVEN** a new notification on the review with the origin, import reason and additional details still outstanding
 - **WHEN** the user views the page
 - **THEN** the messages, in the error summary and on the card, read "Complete origin of import", "Complete main import reason" and "Complete additional details"
+
+#### Scenario: No commodity chosen marks the What are you importing? card
+**ID**: SCN-CYA-007-D
+- **GIVEN** a new notification on the review with no commodity chosen
+- **WHEN** the user views the page
+- **THEN** the error summary names "Complete what are you importing?", linking to the What are you importing? card, which is marked with the same words
+
+#### Scenario: Unfinished commodity details are named without marking a commodity card
+**ID**: SCN-CYA-007-E
+- **GIVEN** a notification with a commodity chosen but its numbers not saved
+- **WHEN** the user views the review
+- **THEN** the error summary names "Complete commodity details", linking to the first commodity card
+- **AND** no commodity card is marked as in error
+- **GIVEN** a notification with no commodity chosen
+- **WHEN** the user views the review
+- **THEN** the same entry links to the "2. Description of the goods" heading
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008

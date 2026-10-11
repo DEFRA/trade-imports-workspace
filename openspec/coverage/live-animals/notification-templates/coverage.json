@@ -119,7 +119,8 @@
           "name": "Another user neither sees nor opens a user's template",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "another user does not see a user's saved template and cannot open it", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "another user does not see a user's saved template, and opening its address shows their own Manage templates", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "opening another user's template goes to Manage templates", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "save_shouldReturn404_forAnotherOwnersTemplate", "strength": "partial", "notes": "pins the API, not the page." }
           ]
         },
@@ -568,6 +569,123 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows each template as a card labelled Template <title> with its category, an H3 title, View template and a Use template button in a POST form", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should card each template with its title, its label, its category and its View and Use template targets", "strength": "partial", "notes": "pins the view model, not the rendered page." },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "each template card is labelled 'Template <title>' with its category, an H3 title, View template and a Use template button in a form", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-022",
+      "name": "A saved template's page is titled with its name under the caption Templates",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-022-A",
+          "name": "View template opens the template's page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "View template opens the template page titled with its name under the caption Templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "View template opens the template page: caption 'Templates', the name as its heading and browser title", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should render a saved template titled with its name under the Templates caption, with its Back link to Manage templates", "strength": "partial", "notes": "pins the view model, not the rendered page." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should title a template saved with no name Untitled template", "strength": "partial", "notes": "pins the view model, not the rendered page." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-023",
+      "name": "The template's page shows the date it was created",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-023-A",
+          "name": "The page shows the day the template was saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "shows 'Date created:' with the day the template was saved", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "the template page shows 'Date created:' with the day it was saved", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should date the template by the day it was first saved, falling back to the day it was created", "strength": "partial", "notes": "pins the view model, not the rendered page." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-024",
+      "name": "The template's page offers Use template and Delete, and no Edit",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-024-A",
+          "name": "The page offers Use template and Delete but no Edit",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "offers a primary Use template button in a POST form and a red Delete button, and no Edit", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "the template page offers a primary Use template button in a POST form and a red Delete button, and no Edit", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-025",
+      "name": "The template's page goes Back to Manage templates",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-025-A",
+          "name": "Back goes to Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "Back goes to Manage templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "Back on the template page goes to Manage templates", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-026",
+      "name": "The template's page shows its answers in the review's cards",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-026-A",
+          "name": "The answers are listed in five numbered sections with a Change link on each card",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "lists the answers in five numbered sections with a Change link on every card, each opening a page of the template", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "the template page lists the answers in five numbered sections, and each card's Change link opens a page of the template", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-026-B",
+          "name": "A template saved after answering every section shows every saved answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "a template saved after answering every section shows every saved answer", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-027",
+      "name": "A template the user cannot open returns them to Manage templates",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-027-A",
+          "name": "A template that does not exist shows Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "opening a template that does not exist goes to Manage templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "a template that does not exist goes to Manage templates", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should send a missing template to Manage templates", "strength": "partial", "notes": "pins the redirect target, not the rendered page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-027-B",
+          "name": "Another user's template shows Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "opening another user's template goes to Manage templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "another user does not see a user's saved template, and opening its address shows their own Manage templates", "strength": "full", "notes": "" }
           ]
         }
       ]

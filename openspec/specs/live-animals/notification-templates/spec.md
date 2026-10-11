@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first. Once saved, a template has its own page showing its answers in the review's cards, from which it can be used or deleted; a template the user cannot open returns them to Manage templates.
 
 ## Requirements
 
@@ -89,7 +89,7 @@ Templates MUST be stored by the service and kept between sessions, and the list 
 - **GIVEN** a user has saved a template
 - **WHEN** another signed-in user opens Manage templates
 - **THEN** the template is not listed
-- **AND** opening the template's address does not show the template
+- **AND** opening the template's address shows Manage templates, without the template
 
 #### Scenario: A saved template is never listed among the user's notifications
 **ID**: SCN-TEMPLATES-003-G
@@ -395,3 +395,83 @@ Each template MUST be a card labelled "Template <title>", showing the template's
 - **AND** it shows the category "Live animals" above the title "Weekly cattle", a level 3 heading
 - **AND** it offers the link "View template" to the template's page
 - **AND** it offers a secondary button "Use template" that submits a form
+
+### Requirement: A saved template's page is titled with its name under the caption Templates
+**ID**: REQ-TEMPLATES-022
+"View template" MUST open the template's page, headed with the template's title ("Untitled template" when it was saved with no name) under the caption "Templates", with the browser title "<title> - Import notification service - GOV.UK".
+
+#### Scenario: View template opens the template's page
+**ID**: SCN-TEMPLATES-022-A
+- **GIVEN** the user has saved a template named "Weekly cattle"
+- **WHEN** they select "View template" on its card
+- **THEN** the page is headed "Weekly cattle" under the caption "Templates"
+- **AND** the browser title is "Weekly cattle - Import notification service - GOV.UK"
+
+### Requirement: The template's page shows the date it was created
+**ID**: REQ-TEMPLATES-023
+The page MUST show "Date created: <d Month yyyy>" with the day the template was saved.
+
+#### Scenario: The page shows the day the template was saved
+**ID**: SCN-TEMPLATES-023-A
+- **GIVEN** the user saved a template today
+- **WHEN** they open its page
+- **THEN** it shows "Date created:" followed by today's date, written with the month in full
+
+### Requirement: The template's page offers Use template and Delete, and no Edit
+**ID**: REQ-TEMPLATES-024
+The page MUST offer a primary "Use template" button that submits a form and a red warning "Delete" button, and MUST NOT offer an "Edit" button or link.
+
+#### Scenario: The page offers Use template and Delete but no Edit
+**ID**: SCN-TEMPLATES-024-A
+- **GIVEN** the user has opened a saved template's page
+- **WHEN** the page is shown
+- **THEN** it offers a primary button "Use template" that submits a form
+- **AND** it offers a red warning button "Delete"
+- **AND** it offers no "Edit" button or link
+
+### Requirement: The template's page goes Back to Manage templates
+**ID**: REQ-TEMPLATES-025
+The page MUST offer a Back link to Manage templates.
+
+#### Scenario: Back goes to Manage templates
+**ID**: SCN-TEMPLATES-025-A
+- **GIVEN** the user has opened a saved template's page
+- **WHEN** they select Back
+- **THEN** Manage templates is shown
+
+### Requirement: The template's page shows its answers in the review's cards
+**ID**: REQ-TEMPLATES-026
+The page MUST list the template's answers in the notification review's cards, under "1. About the consignment" to "5. Contact address", with no documents section and no arrival date, each card with one Change link that opens that card's question page for the template.
+
+#### Scenario: The answers are listed in five numbered sections with a Change link on each card
+**ID**: SCN-TEMPLATES-026-A
+- **GIVEN** the user has opened a saved template's page
+- **WHEN** the page is shown
+- **THEN** the sections are "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address"
+- **AND** no uploaded documents are shown
+- **AND** every card has a Change link that opens the question page of that card for the template
+
+#### Scenario: A template saved after answering every section shows every saved answer
+**ID**: SCN-TEMPLATES-026-B
+- **GIVEN** the user answered every section of a live animals template and saved it
+- **WHEN** they open its page
+- **THEN** it shows the country and region of origin, internal reference, commodity code, common name and species, the number of animals and packages, the reason for import, the purpose in the market, certified for and unweaned animals
+- **AND** it shows the port of entry, means of transport, transport identification and transport document reference
+- **AND** it shows the transporter's name, address, country, approval number and type, the animal identification details and the CPH number
+- **AND** no arrival date at the port of entry is shown
+
+### Requirement: A template the user cannot open returns them to Manage templates
+**ID**: REQ-TEMPLATES-027
+Opening the page of a template that does not exist, or of another user's template, MUST show Manage templates.
+
+#### Scenario: A template that does not exist shows Manage templates
+**ID**: SCN-TEMPLATES-027-A
+- **GIVEN** no template has the address the user opens
+- **WHEN** they open it
+- **THEN** Manage templates is shown
+
+#### Scenario: Another user's template shows Manage templates
+**ID**: SCN-TEMPLATES-027-B
+- **GIVEN** another user has saved a template
+- **WHEN** the signed-in user opens that template's address
+- **THEN** Manage templates is shown, without the template

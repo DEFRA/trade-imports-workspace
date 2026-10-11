@@ -25,12 +25,21 @@ The system MUST group the page under the same six numbered section headings the 
 - **AND** the first card in "1. About the consignment" is titled "Origin of import"
 - **AND** the second card in "1. About the consignment" is titled "What are you importing?"
 
-#### Scenario: The Uploaded documents section stands even when nothing has been uploaded
+#### Scenario: With nothing uploaded, Uploaded documents holds a single Document 1 card reading Not applicable
 **ID**: SCN-CYA-001-E
 - **GIVEN** a notification with no documents uploaded
 - **WHEN** the user views the review
-- **THEN** the Uploaded documents section and its card are still shown, saying no documents have been added yet
-- **AND** a Change route to the upload documents page is still offered
+- **THEN** "4. Uploaded documents" holds one card, titled "Document 1", whose only row, "Document reference", reads "Not applicable"
+- **AND** the words "You have not added any documents yet." do not appear
+- **AND** the card's header Change link still opens the upload documents page
+
+#### Scenario: Each uploaded document reads back in its own card, naming the attached file
+**ID**: SCN-CYA-001-R
+- **GIVEN** a notification with two documents uploaded
+- **WHEN** the user views the review
+- **THEN** "4. Uploaded documents" holds one card per document, titled "Document 1" and "Document 2" in the order they were added
+- **AND** each card reads "Document reference", "Document type", "Date of issue" and "Attachment", where "Attachment" is the uploaded file's name
+- **AND** each card carries its own header Change link to the upload documents page
 
 #### Scenario: A fully answered notification's check-your-answers reflects every entered value
 **ID**: SCN-CYA-001-C
@@ -189,6 +198,12 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **GIVEN** the user is on the review of a draft
 - **WHEN** they follow the Contact address card's Change link, choose a contact address and save
 - **THEN** the contact address page opens, and after saving they return to the review showing that address
+
+#### Scenario: Changing documents from a document card returns to the review
+**ID**: SCN-CYA-004-C
+- **GIVEN** a notification with a document uploaded
+- **WHEN** the user follows a document card's Change link and continues from the upload documents page
+- **THEN** they are back on the review
 
 ### Requirement: A draft notification offers submission and none of the post-submission actions
 **ID**: REQ-CYA-005

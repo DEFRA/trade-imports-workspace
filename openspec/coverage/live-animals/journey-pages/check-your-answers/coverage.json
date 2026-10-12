@@ -481,18 +481,56 @@
     },
     {
       "id": "REQ-CYA-008",
-      "name": "A submitted notification offers copy-as-new and delete",
-      "coverage": "full",
+      "name": "A submitted notification's view offers Amend this notification, Copy as new and Delete in its header",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-008-A",
           "name": "The submitted view offers the actions open to a submitted notification",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and Delete on the read-only view", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Amend this notification, a secondary Copy as new and a red Delete in its header", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Amend this notification, a secondary Copy as new and a red Delete in its header", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit every Change href for a submitted journey", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should offer Amend this notification beside a secondary Copy as new, and Delete, for a submitted notification", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer Cancel amend as the review's own control while amending, and never in the strip", "strength": "full", "notes": "the submitted arm: no Cancel amend control" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with the last card and offers no way to submit again", "strength": "full", "notes": "asserts no submit/continue action alongside the copy-as-new action" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-008-B",
+          "name": "Amend this notification starts an amendment",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Amend this notification starts the amendment", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Amend this notification starts the amendment", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-008-C",
+          "name": "Delete opens the delete confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete opens the delete confirmation", "strength": "full", "notes": "the SUBMITTED describe's arm" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete in the header opens the delete confirmation", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-008-D",
+          "name": "A draft's review offers no Amend this notification",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable %s journey", "strength": "full", "notes": "a draft and an amendment carry no view header" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a red Delete, and offers neither Copy as new nor Cancel amend", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-008-E",
+          "name": "A submitted notification that cannot be amended offers Copy as new as its primary button",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should make Copy as new the primary action when the notification cannot be amended", "strength": "partial", "notes": "asserts amendHref is null and copyIsPrimary is true, but not that a red Delete follows" }
           ]
         }
       ]
@@ -684,6 +722,40 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should leave a notification it cannot find to the page it asked for", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "opening the view of a notification that does not exist goes to the notification list", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "an unknown notification's view goes to the live-animals notification list", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-017",
+      "name": "A submitted notification's view shows its import reference numbers as text to copy",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-017-A",
+          "name": "The submitted view shows the notification reference and customs document code",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show a submitted notification's import reference numbers", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should give the import reference numbers as the notification reference and customs document code C640", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the import reference numbers as text, with no Copy button", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-017-B",
+          "name": "The import reference numbers read as plain text without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the import reference numbers as plain text, with no Copy button, without JavaScript", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-017-C",
+          "name": "A draft's review shows no import reference numbers",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a red Delete, and offers neither Copy as new nor Cancel amend", "strength": "full", "notes": "" }
           ]
         }
       ]

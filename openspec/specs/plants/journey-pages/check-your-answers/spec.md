@@ -116,9 +116,9 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **WHEN** the user continues
 - **THEN** the declaration page opens
 
-### Requirement: A submitted notification is read-only and offers delete
+### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only — with no Change links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.
+The system MUST show a submitted notification read-only, with no Change links and no continue action. It MUST offer in the header a primary "Amend this notification" button that submits a form, and a red "Delete notification" button that leads to the delete page, not at the foot. It MUST NOT offer "Copy as new", or cancel-amendment while no amendment is in progress. What delete does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: The submitted view is read-only and offers delete
 **ID**: SCN-PLANTS-CYA-008-A
@@ -126,7 +126,7 @@ The system MUST show a submitted notification read-only — with no Change links
 - **WHEN** the user views it
 - **THEN** the status shown is "Submitted"
 - **AND** no Change links and no continue action are offered
-- **AND** a delete action is offered, and no cancel-amendment action is shown
+- **AND** "Amend this notification" and a red "Delete notification" are offered in its header, and no "Copy as new" or cancel-amendment action is shown
 
 #### Scenario: A submitted notification can be deleted from check-your-answers
 **ID**: SCN-PLANTS-CYA-008-B
@@ -134,6 +134,12 @@ The system MUST show a submitted notification read-only — with no Change links
 - **WHEN** the user deletes it and confirms
 - **THEN** they return to the dashboard with the notification no longer listed
 - **AND** a deleted banner is shown
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-PLANTS-CYA-008-C
+- **GIVEN** a submitted notification is open on check-your-answers
+- **WHEN** the user chooses "Amend this notification"
+- **THEN** the notification is being amended
 
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
@@ -258,3 +264,22 @@ The system MUST send the user to the plants notification list when they open the
 - **GIVEN** no notification has the reference GBN-HRP-00-000000
 - **WHEN** the user opens that notification's view
 - **THEN** the plants notification list is shown
+
+### Requirement: A submitted notification's read-only view shows its notification reference as text to copy
+**ID**: REQ-PLANTS-CYA-016
+The system MUST show an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row with the reference, as plain text the user can select with JavaScript on or off. It MUST NOT show a "Customs document code" row or any "Copy" button.
+
+#### Scenario: The submitted view shows its notification reference
+**ID**: SCN-PLANTS-CYA-016-A
+- **GIVEN** a submitted notification is open on check-your-answers
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
+- **AND** it holds a "Notification reference" row reading the notification's reference
+
+#### Scenario: Without JavaScript the reference reads as plain text, with no customs document code and no Copy button
+**ID**: SCN-PLANTS-CYA-016-B
+- **GIVEN** JavaScript is off
+- **WHEN** the user opens a submitted notification's view
+- **THEN** the notification reference is shown as text
+- **AND** no "Customs document code" row is shown
+- **AND** no "Copy" button is shown

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting". A submitted notification's read-only view is titled by its reference number instead.
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting". A submitted notification's read-only view is titled by its reference number instead. A submitted notification's view offers Amend this notification, Copy as new and Delete in its header, and shows its import reference numbers.
 
 ## Requirements
 
@@ -315,16 +315,42 @@ Where more than one chosen commodity asks for animal identifiers, the system MUS
 - **WHEN** the user views the review
 - **THEN** no "Enter at least 1 animal identifier for" or "Enter the number of animals for" entry is shown
 
-### Requirement: A submitted notification offers copy-as-new and delete
+### Requirement: A submitted notification's view offers Amend this notification, Copy as new and Delete in its header
 **ID**: REQ-CYA-008
-The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress, or a submit/continue action to submit it again.
+On a submitted notification's view, the system MUST offer in its header a primary "Amend this notification" button, a "Copy as new" button (the primary button when Amend is not offered) and a red "Delete" button. Amend and Copy as new MUST each submit a form. The view MUST NOT offer cancel-amendment or a submit action, and a draft's review MUST NOT offer Amend.
 
 #### Scenario: The submitted view offers the actions open to a submitted notification
 **ID**: SCN-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** copy-as-new and delete actions are offered, and no cancel-amendment action is shown
+- **THEN** "Amend this notification", "Copy as new" and a red "Delete" are offered in that order, "Copy as new" as a secondary button
+- **AND** no cancel-amendment action is shown
 - **AND** no submit or continue action is shown
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-CYA-008-B
+- **GIVEN** a submitted notification's view
+- **WHEN** the user chooses "Amend this notification"
+- **THEN** the notification is being amended
+
+#### Scenario: Delete opens the delete confirmation
+**ID**: SCN-CYA-008-C
+- **GIVEN** a submitted notification's view
+- **WHEN** the user chooses "Delete"
+- **THEN** the delete confirmation opens
+
+#### Scenario: A draft's review offers no Amend this notification
+**ID**: SCN-CYA-008-D
+- **GIVEN** a draft notification's review
+- **WHEN** the user views it
+- **THEN** no "Amend this notification" button is shown
+
+#### Scenario: A submitted notification that cannot be amended offers Copy as new as its primary button
+**ID**: SCN-CYA-008-E
+- **GIVEN** a submitted notification that cannot be amended is open on check-your-answers
+- **WHEN** the user views it
+- **THEN** no "Amend this notification" button is shown
+- **AND** "Copy as new" is the primary button, followed by a red "Delete"
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009
@@ -451,3 +477,27 @@ The system MUST send the user to the live-animals notification list when they op
 - **GIVEN** no notification has the reference GBN-AG-00-000000
 - **WHEN** the user opens that notification's view
 - **THEN** the live-animals notification list is shown
+
+### Requirement: A submitted notification's view shows its import reference numbers as text to copy
+**ID**: REQ-CYA-017
+On a submitted notification's view, the system MUST show a section headed "Import reference numbers" with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row with the notification's reference and a "Customs document code" row reading "C640". Each value MUST be plain text the user can select and copy with JavaScript on or off, and no "Copy" button is shown.
+
+#### Scenario: The submitted view shows the notification reference and customs document code
+**ID**: SCN-CYA-017-A
+- **GIVEN** a notification that has been submitted
+- **WHEN** the user opens its view
+- **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
+- **AND** it holds a "Notification reference" row reading the notification's reference and a "Customs document code" row reading "C640"
+
+#### Scenario: The import reference numbers read as plain text without JavaScript
+**ID**: SCN-CYA-017-B
+- **GIVEN** JavaScript is off
+- **WHEN** the user opens a submitted notification's view
+- **THEN** both import reference values are shown as text
+- **AND** no "Copy" button is shown
+
+#### Scenario: A draft's review shows no import reference numbers
+**ID**: SCN-CYA-017-C
+- **GIVEN** a draft notification's review
+- **WHEN** the user views it
+- **THEN** no "Import reference numbers" section is shown

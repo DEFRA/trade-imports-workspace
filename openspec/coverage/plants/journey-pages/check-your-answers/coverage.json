@@ -176,7 +176,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-008",
-      "name": "A submitted notification is read-only and offers delete",
+      "name": "A submitted notification is read-only and offers Amend this notification and Delete notification in its header",
       "coverage": "full",
       "scenarios": [
         {
@@ -186,7 +186,10 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; delete offer covered by sibling delete test and unit" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref set; no cancelAmend in the strip" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref null (Delete is in the header); no cancelAmend in the strip" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "header actions" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -195,6 +198,15 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "full", "notes": "Delete → confirm → dashboard deleted banner; card gone — outcome also owned by lifecycle" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-008-C",
+          "name": "Amend this notification starts an amendment",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "the Amend click" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "the Amend click" }
           ]
         }
       ]
@@ -383,6 +395,30 @@
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/entry-guard.test.js", "test": "Should leave a notification it cannot find to the page it asked for", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "opening the view of a notification that does not exist goes to the notification list", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "an unknown notification's view goes to the plants notification list", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-016",
+      "name": "A submitted notification's read-only view shows its notification reference as text to copy",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-016-A",
+          "name": "The submitted view shows its notification reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view shows its notification reference as text, with no customs document code and no Copy button", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "importReferences" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-016-B",
+          "name": "Without JavaScript the reference reads as plain text, with no customs document code and no Copy button",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a submitted notification's view shows its notification reference as plain text without JavaScript, with no customs document code and no Copy button", "strength": "full", "notes": "" }
           ]
         }
       ]

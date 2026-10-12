@@ -19,7 +19,7 @@ Owns:
 Does NOT own:
 - Notification persistence or reference numbers: the plants backend does.
 - Country and port reference data: it reads these from reference-data.
-- Saved addresses: it reads these from the address book.
+- Saved addresses: the address book owns these. The frontend copies a picked address onto the notification, and edits to it change only that copy.
 - Document upload, outbox, event publishing and PIMS routing: explicitly out of scope for the plants alpha.
 - The end-to-end Playwright suite: it lives in `trade-imports-ins-tests` as the `plants` project, alongside `animals`, `animals-admin` and `ins`.
 

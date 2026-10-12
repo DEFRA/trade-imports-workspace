@@ -53,16 +53,18 @@
     },
     {
       "id": "REQ-PLANTS-OB-REVIEW-004",
-      "name": "A previously selected party whose address no longer resolves blocks continue",
+      "name": "A copied address that breaks the address book's rules blocks continue and submit",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-OB-REVIEW-004-A",
-          "name": "A deleted place of destination blocks continue",
+          "name": "A copied address that breaks the rules blocks continue and submit until it is corrected",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "Continue stays on CYA; error summary Select an address for the place of destination" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue for a removed address-book reference", "strength": "full", "notes": "POST 400 with placeOfDestination party error" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a copied address that breaks the address book rules blocks Continue and Submit until it is corrected", "strength": "full", "notes": "country stored as a name: summary error on CYA, Continue stays, declaration submit returns to CYA unsubmitted, error link opens the destination edit, fixing clears it and submits" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue while a copy breaks the address-book rules, linking to its edit page", "strength": "partial", "notes": "CYA half for the contact address: GET and POST summary entry linking to its edit page returning to CYA, POST 400, nothing written" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue for a copy whose country is not in the address book list", "strength": "partial", "notes": "CYA half for the place of destination" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/declaration/controller.test.js", "test": "Should send a copied address that breaks the address-book rules back to check answers, unsubmitted", "strength": "partial", "notes": "declaration half: redirect to CYA, still draft, answers unchanged" }
           ]
         }
       ]

@@ -8,11 +8,11 @@ Asks which address-book record is the consignor or exporter. The page is titled 
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, with save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.
+The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
-- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification
+- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification that is not being amended
 - **WHEN** the page loads
 - **THEN** it shows the parties section caption, the heading "Consignor or exporter", the sender description, and a search box
 - **AND** the three save controls are offered
@@ -29,7 +29,7 @@ The system MUST open this page when the user follows Overview's consignor or exp
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
 
 #### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A
@@ -46,14 +46,14 @@ The system MUST accept a chosen address, continue to identification numbers on s
 
 #### Scenario: Save and return to overview saves without continuing
 **ID**: SCN-PLANTS-CONSIGNOR-003-C
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Cancel and return to overview reaches Overview without saving
 **ID**: SCN-PLANTS-CONSIGNOR-003-D
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen

@@ -22,17 +22,25 @@
     },
     {
       "id": "REQ-PLANTS-CONFIRMATION-002",
-      "name": "The confirmation page is not shown for a notification that has not yet been submitted",
+      "name": "The confirmation page is not shown for a notification that is not currently submitted",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CONFIRMATION-002-A",
-          "name": "Requesting confirmation for an unsubmitted notification redirects to check-your-answers",
+          "name": "Requesting confirmation for an unsubmitted notification opens the declaration",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "returns a draft to check answers instead of showing a receipt", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should return draft to check answers without claiming submission", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should return amend to check answers without claiming submission", "strength": "full", "notes": "the amend arm of the same redirect" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "sends a draft to the declaration instead of showing a receipt", "strength": "full", "notes": "completed draft; URL is declaration and its h1 is visible" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should send draft to the declaration without claiming submission", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "opening the confirmation of a notification not yet submitted goes to the declaration", "strength": "full", "notes": "just-started draft; URL is declaration and its heading is visible" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CONFIRMATION-002-B",
+          "name": "Requesting confirmation while a notification is being amended opens the declaration",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/confirmation/controller.test.js", "test": "Should send amend to the declaration without claiming submission", "strength": "full", "notes": "submit then amend; redirect to declaration and status stays AMEND. Unit only: no fit or e2e requests confirmation during an amendment" }
           ]
         }
       ]

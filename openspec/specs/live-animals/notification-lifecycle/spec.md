@@ -8,19 +8,25 @@ A notification's life from draft through submission, amendment and deletion — 
 
 ### Requirement: A notification moves through a fixed lifecycle as the user acts on it
 **ID**: REQ-LIFECYCLE-001
-The system MUST move a notification through Draft, Submitted, Amend, and Deleted as it is created, submitted, amended, and removed, and MUST treat a repeated delete as idempotent. The state recorded as Amend MUST be shown to the user as "Amend" wherever a notification's state is displayed.
+The system MUST move a notification through Draft, Submitted (or Submitted action required, when it is submitted without its health certificate), Amend, and Deleted as it is created, submitted, amended, and removed, and MUST treat a repeated delete as idempotent. The statuses Draft, Submitted, Amend and Deleted keep their names; new statuses are only ever added. The state recorded as Amend MUST be shown to the user as "Amend" wherever a notification's state is displayed.
 
 #### Scenario: A full lifecycle walk moves the notification through each status in turn
 **ID**: SCN-LIFECYCLE-001-A
 - **GIVEN** a new notification has just been created
 - **WHEN** it is submitted, then an amendment is started on it, then that amendment is cancelled, then it is soft-deleted
-- **THEN** the notification's status is Draft, then Submitted, then Amend, then Submitted again, then Deleted, at each corresponding step
+- **THEN** the notification's status is Draft, then a submitted status, then Amend, then the same submitted status again, then Deleted, at each corresponding step
 
 #### Scenario: Deleting an already-deleted notification is idempotent
 **ID**: SCN-LIFECYCLE-001-B
 - **GIVEN** a notification has already been soft-deleted
 - **WHEN** it is soft-deleted again
 - **THEN** it remains Deleted and the repeat delete does not error
+
+#### Scenario: Cancelling an amendment returns the notification to the status its submission recorded
+**ID**: SCN-LIFECYCLE-001-C
+- **GIVEN** a notification submitted without its health certificate, then amended
+- **WHEN** the amendment is cancelled
+- **THEN** its status is Submitted action required again
 
 ### Requirement: Copying a notification always produces a new, independent draft, carrying the source's answers
 **ID**: REQ-LIFECYCLE-002
@@ -52,7 +58,7 @@ The system MUST record a notification's answers as each is saved, keeping it in 
 
 ### Requirement: A submitted notification keeps every answer entered, and reopens showing them unchanged
 **ID**: REQ-LIFECYCLE-004
-The system MUST keep every section's answers when a notification is submitted, and MUST show the same answers, under a Submitted status, when it is reopened.
+The system MUST keep every section's answers when a notification is submitted, and MUST show the same answers, under its submitted status, when it is reopened.
 
 #### Scenario: A submitted notification's answers are all kept and shown again on reopening
 **ID**: SCN-LIFECYCLE-004-A
@@ -60,23 +66,23 @@ The system MUST keep every section's answers when a notification is submitted, a
 - **WHEN** that notification is looked up as the system holds it
 - **THEN** it carries the same reference number, a submitted status, and every section's answers as entered
 - **WHEN** the user then reopens that notification
-- **THEN** it shows as Submitted, with the same answers
+- **THEN** it shows as Submitted, or Submitted action required when no health certificate was uploaded, with the same answers
 
 ### Requirement: A submitted notification is read-only until an amendment is started
 **ID**: REQ-LIFECYCLE-005
-The system MUST NOT offer any way to change a submitted notification's answers until an amendment has been started on it.
+The system MUST NOT offer any way to change a submitted notification's answers, with or without action required, until an amendment has been started on it.
 
 #### Scenario: A submitted notification shows no change controls
 **ID**: SCN-LIFECYCLE-005-A
 - **GIVEN** a notification has been submitted
 - **WHEN** the user views it
-- **THEN** the status shown is "Submitted"
+- **THEN** the status shown is "Submitted" ("Submitted action required" when no health certificate was uploaded)
 - **AND** no "Change" links are shown against any answer
 - **AND** no option to cancel an amendment is shown
 
 ### Requirement: Amending a submitted notification re-enters it at Overview
 **ID**: REQ-LIFECYCLE-006
-The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend".
+The system MUST let the user start an amendment on a submitted notification, with or without action required, from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend".
 
 #### Scenario: Starting an amendment opens Overview with editing enabled
 **ID**: SCN-LIFECYCLE-006-A
@@ -84,15 +90,21 @@ The system MUST let the user start an amendment on a submitted notification from
 - **WHEN** the user starts an amendment on it from the dashboard
 - **THEN** they land on Overview, with the notification's status shown as "Amend"
 
+#### Scenario: An amendment can be started on a notification still owed its health certificate
+**ID**: SCN-LIFECYCLE-006-B
+- **GIVEN** a notification submitted without its health certificate
+- **WHEN** the user chooses "Continue" on its view
+- **THEN** Overview opens with the notification's status "Amend"
+
 ### Requirement: Resubmitting an amendment keeps the edited answers and returns the notification to Submitted
 **ID**: REQ-LIFECYCLE-007
-The system MUST let the user change an answer while amending, then resubmit through check-your-answers and the declaration, returning the notification to Submitted with the edited answer kept and the dashboard offering to amend it again.
+The system MUST let the user change an answer while amending, then resubmit through check-your-answers and the declaration, returning the notification to Submitted, or to Submitted action required if it is still without its health certificate, the outstanding items worked out afresh, with the edited answer kept and the dashboard offering to amend it again.
 
 #### Scenario: An edited answer survives resubmission
 **ID**: SCN-LIFECYCLE-007-A
 - **GIVEN** the user has started an amendment and is on check-your-answers
 - **WHEN** they change an answer via its Change link and then resubmit through the declaration
-- **THEN** the notification returns to Submitted, showing the edited answer
+- **THEN** the notification returns to a submitted status, showing the edited answer
 - **AND** no Change links are shown any longer
 - **AND** searching the dashboard for the notification shows the option to amend it again
 
@@ -100,13 +112,14 @@ The system MUST let the user change an answer while amending, then resubmit thro
 **ID**: REQ-LIFECYCLE-008
 The system MUST let the user cancel an in-progress amendment, after confirming, restoring the notification to its previously submitted answers and status.
 
-While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself.
+While amending, a status bar above each page's caption and heading MUST offer a "Cancel amend" link to that confirmation, with or without JavaScript, except on the confirmation page itself, on the declaration page, which shows no status bar at all, and on check-your-answers, which offers its own "Cancel amend" button beside Continue.
 
 #### Scenario: A Cancel amend option is offered while amending
 **ID**: SCN-LIFECYCLE-008-A
 - **GIVEN** a notification is being amended
-- **WHEN** the user views Overview, check-your-answers or any question page
+- **WHEN** the user views Overview or any question page
 - **THEN** a status bar above the caption and heading shows "Amend", the reference number and "Cancel amend"
+- **AND** on check-your-answers the status bar shows "Amend" and the reference number, and "Cancel amend" is a button beside Continue
 
 #### Scenario: Choosing to cancel asks for confirmation before discarding anything
 **ID**: SCN-LIFECYCLE-008-B
@@ -126,7 +139,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 - **GIVEN** the user has changed an answer while amending and then opened the cancel-amendment confirmation page
 - **WHEN** they confirm the cancellation
 - **THEN** a message confirms the amendment was cancelled and the submitted version restored
-- **AND** the notification's status shows "Submitted" again, with the changed answer reverted and no Change links shown
+- **AND** the notification's status shows the submitted status it had before the amendment ("Submitted", or "Submitted action required" when it was submitted without its health certificate), with the changed answer reverted and no Change links shown
 
 #### Scenario: Cancel amend on a question page opens the confirmation page
 **ID**: SCN-LIFECYCLE-008-E
@@ -139,7 +152,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 **ID**: SCN-LIFECYCLE-008-F
 - **GIVEN** JavaScript is off and the notification is being amended
 - **WHEN** the user selects "Cancel amend" on a question page and confirms
-- **THEN** the notification shows "Submitted" with its submitted answers restored
+- **THEN** the notification shows the submitted status it had before the amendment ("Submitted", or "Submitted action required" when it was submitted without its health certificate), with its submitted answers restored
 
 #### Scenario: A draft offers no Cancel amend
 **ID**: SCN-LIFECYCLE-008-G

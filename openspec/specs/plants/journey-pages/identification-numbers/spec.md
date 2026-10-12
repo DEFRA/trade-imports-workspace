@@ -8,7 +8,7 @@ Collects the identification numbers a high-risk plants notification owes for its
 
 ### Requirement: The page shows only the identification fields in scope for the commodity type
 **ID**: REQ-PLANTS-IDENT-NUMBERS-001
-The system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.
+The system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: Plants for planting shows supplier and consignment only
 **ID**: SCN-PLANTS-IDENT-NUMBERS-001-A
@@ -78,7 +78,7 @@ The system MUST refuse to save and continue when a mandatory field on offer is b
 
 ### Requirement: Save-and-return saves; cancel discards later edits; back returns to Overview
 **ID**: REQ-PLANTS-IDENT-NUMBERS-004
-The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST return to Overview on the back link.
+The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST return to Overview on the back link. While the notification is being amended, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
 
 #### Scenario: Save and return to overview keeps the values; cancel discards later edits
 **ID**: SCN-PLANTS-IDENT-NUMBERS-004-A

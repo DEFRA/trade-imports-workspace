@@ -5,8 +5,8 @@
   "requirements": [
     {
       "id": "REQ-OB-ORIGIN-001",
-      "name": "Whether a region of origin code is required decides whether the code is mandatory, not whether it is asked for",
-      "coverage": "full",
+      "name": "Whether a region of origin code is required decides whether the code is asked for, and makes it mandatory when it is",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-OB-ORIGIN-001-A",
@@ -20,12 +20,15 @@
         },
         {
           "id": "SCN-OB-ORIGIN-001-B",
-          "name": "Answering that no region code is required leaves it optional",
-          "coverage": "full",
+          "name": "Answering that no region code is required asks for no code",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: No leaves the empty box unasked for", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should let a blank box through when the answer is No", "strength": "full", "notes": "" }
-          ]
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: No leaves the empty box unasked for", "strength": "partial", "notes": "No with an empty box moves on to commodities: the code is not asked for; does not show the code is not saved or that submission goes through" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "answering No clears a saved region code: the review shows Not applicable and Yes shows an empty box", "strength": "partial", "notes": "No keeps no code (review shows Not applicable); starts from a saved code rather than one typed alongside No" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should let a blank box through when the answer is No", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should clear the stored code when the answer changes from Yes to No", "strength": "partial", "notes": "" }
+          ],
+          "notes": "No test submits a notification answered No with no region code."
         }
       ]
     },

@@ -128,7 +128,7 @@ The system MUST treat a place of destination whose address-book record has since
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview destination task row.
+Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview destination task row.
 
 #### Scenario: The page is reachable from the Overview destination row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A
@@ -138,14 +138,14 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 
 #### Scenario: Save and return to overview saves the address without continuing the journey
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-B
-- **GIVEN** the user is on the place of destination page
+- **GIVEN** the user is on the place of destination page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Cancel and return to overview reaches Overview without saving
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-C
-- **GIVEN** the user is on the place of destination page
+- **GIVEN** the user is on the place of destination page of a notification that is not being amended
 - **WHEN** they choose an address and select cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen

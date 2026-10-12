@@ -13,7 +13,7 @@
           "name": "A full lifecycle walk moves the notification through each status in turn",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "full", "notes": "API statuses Draft → Submitted → Amend → Submitted → Deleted; fulfilment view mirrors each step. Does not assert the user-facing Amend label (covered under 006/008)." }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "full", "notes": "API statuses Draft → Submitted action required → Amend → Submitted action required → Deleted (no document is uploaded); fulfilment view mirrors each step. Does not assert the user-facing Amend label (covered under 006/008)." }
           ]
         },
         {
@@ -22,6 +22,16 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "full", "notes": "soft-deletes twice; both return Deleted with no error" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-001-C",
+          "name": "Cancelling an amendment returns the notification to the status its submission recorded",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "the restored status is Submitted action required" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java", "test": "cancelAmend_shouldRestoreSubmittedActionRequired_whenTheSubmissionOwedTheHealthCertificate", "strength": "full", "notes": "integration test through Mongo" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/records/outstanding-items.test.js", "test": "Should restore Submitted action required when an amendment of it is cancelled", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -60,7 +70,7 @@
           "name": "An unfinished notification is recorded as a draft under its own reference number",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the Draft strip with the notification reference", "strength": "full", "notes": "createFullNotification draft reopened on notification-view" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with a blue Draft tag and the date created, and no status bar", "strength": "full", "notes": "draft reopened on notification-view" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "renders the recorded answers in the numbered design sections", "strength": "full", "notes": "France and commodity answers still shown" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "creates, submits, amends, cancels, copies and soft-deletes a notification; fulfilment view reflects each transition; copy no longer dedupes", "strength": "partial", "notes": "proves draft status under the minted reference immediately after create; fulfilments empty so does not prove answers survive" }
           ]
@@ -77,8 +87,9 @@
           "name": "A submitted notification's answers are all kept and shown again on reopening",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page with the Submitted strip and reference", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page headed by its reference with a Submitted tag and no status bar", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "still renders the recorded answers after submission", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts", "test": "submitted notification persists the journey answers and reloads read-only", "strength": "full", "notes": "submits with no document, so it records SUBMITTED_ACTION_REQUIRED and the outstanding HEALTH_CERTIFICATE, then reloads as Submitted action required" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/promoted-notification.spec.ts", "test": "submits a promoted live-animals notification through the hub-owned spine", "strength": "partial", "notes": "proves full UI submit and confirmation reference; does not reopen to assert answers" }
           ]
         }
@@ -87,15 +98,16 @@
     {
       "id": "REQ-LIFECYCLE-005",
       "name": "A submitted notification is read-only until an amendment is started",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-LIFECYCLE-005-A",
           "name": "A submitted notification shows no change controls",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "full", "notes": "Submitted strip; zero Change links" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and Delete on the read-only view", "strength": "full", "notes": "Cancel amendment absent on submitted view" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "partial", "notes": "Submitted action required tag and zero Change links; does not assert Cancel amend absent" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Amend this notification, a secondary Copy as new and a red Delete in its header", "strength": "partial", "notes": "the SUBMITTED describe block (the same title repeats under SUBMITTED ACTION REQUIRED, where it does not check Cancel amend); asserts Cancel amend absent on the submitted view; does not assert the status or Change links" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with an orange Submitted action required tag, read-only, and warns that a health certificate is needed", "strength": "partial", "notes": "SUBMITTED ACTION REQUIRED block; asserts the Submitted action required tag and no Change origin of import link; does not assert Cancel amend absent" }
           ]
         }
       ]
@@ -113,6 +125,15 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "full", "notes": "Overview heading with Amend strip" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "full", "notes": "amend from dashboard lands with Amend on Overview" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "amending notification renders resume and cancel-amend actions", "strength": "partial", "notes": "clicks Amend and asserts Overview before returning to the dashboard; does not assert the Amend tag on Overview itself" }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-006-B",
+          "name": "An amendment can be started on a notification still owed its health certificate",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue starts an amendment and opens Overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java", "test": "amendNotification_shouldSetStatusToAmend_whenSubmittedActionRequired", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -142,8 +163,8 @@
           "name": "A Cancel amend option is offered while amending",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Cancel amend link while the notification is amending", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Amend status bar with Cancel amend on Overview, a question page and the review", "strength": "full", "notes": "Amend tag, reference and Cancel amend on each of the three pages" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "offers Cancel amend as a button on the review and not in its status bar", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "shows the Amend status bar with Cancel amend on Overview, a question page and the review", "strength": "full", "notes": "Amend tag and reference on each of the three pages; Cancel amend in the status bar on Overview and the question page, as a button on the review" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders confirmation copy, actions and review back link", "strength": "partial", "notes": "the beforeEach amendAndOpenCancel asserts the Amend tag and Cancel amend link on the hub and the origin question page before opening the confirmation from the review" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/journey-strip.test.js", "test": "Should offer Cancel amend on the hub while amending", "strength": "full", "notes": "" }
           ]
@@ -173,8 +194,8 @@
           "name": "Confirming the cancellation restores the submitted answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "banner, Submitted, France restored, no Change links" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and shows its banner", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "submitted without a health certificate: banner, Submitted action required, France restored, no Change links" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and shows its banner", "strength": "full", "notes": "submitted with a health certificate: banner, Submitted, changed answer gone, no Change links" }
           ]
         },
         {
@@ -191,8 +212,8 @@
           "name": "Cancel amend works without JavaScript",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "the status bar Cancel amend on a question page restores the submitted answers", "strength": "full", "notes": "JavaScript off; Submitted, no Cancel amend, original answer restored" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the status bar Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "the status bar Cancel amend on a question page restores the submitted answers", "strength": "full", "notes": "JavaScript off; submitted without a health certificate: Submitted action required, no Cancel amend, original answer restored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the status bar Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "partial", "notes": "JavaScript off; asserts Submitted is restored, but changes no answer first, so does not prove answers are restored" }
           ]
         },
         {

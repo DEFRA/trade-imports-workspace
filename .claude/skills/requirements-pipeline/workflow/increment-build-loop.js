@@ -997,7 +997,10 @@ it, run \`tim docker lease status --workspace ${TILDE} --json\` once. Where \`re
 \`${RUN_HOLDER}\`, the stack is no longer this run's: run nothing more that needs it, and return \`stackHeld\` with
 \`holder\` copied from \`result.lease.holder\` (null when there is no lease) and \`detail\` saying whether \`result.up\` is
 true and who, if anybody, holds the lease. Never wait for it, retry, work round it, or take the stack down: the loop
-decides what happens next. Where the lease is still this run's, the check failed for a reason of its own: report it.`
+decides what happens next. Where the lease is still this run's but \`result.up\` is false, the stack went down under
+the run (Docker Desktop quit, say): run nothing more that needs it, and return \`stackDown\` with \`detail\` saying what
+could not reach it. Never start it yourself: the loop takes the lease again and runs this stage once more. Where the
+lease is still this run's and \`result.up\` is true, the check failed for a reason of its own: report it.`
 
 const BUILDER_PHASES = ['unit', 'fit']
 
@@ -1520,8 +1523,17 @@ ${guardrails()}
 ${REPO_RULE}
 EVIDENCE: ${evidence}
 \`${branch}\` is a shared branch with open pull requests. NOTHING from a failed attempt may be committed or pushed to
-it. Your own task below is the one place you ARE told to abort a merge.
+it. Your own task below is the one place you ARE told to abort a merge, and to move \`${branch}\` back with
+\`reset --soft\`.
 TASK:
+0. COMMITS A STAGE MADE. No stage commits: only landing does, and it pushes at once. So a configured repo on \`${branch}\`
+   whose \`git -C ${TILDE}/<repoPath> rev-list --count origin/${branch}..HEAD\` prints more than 0 holds this attempt's
+   work in local commits (overview and review inc-107 left one, and the next run's baseline went red on it). Check
+   EVERY configured repo — ${REPO_KEYS.filter((key) => key !== WORKSPACE_KEY).map((key) => `\`${repoTilde(key)}\``).join(', ')} — even one whose status is clean. For each with a count above 0:
+   \`git -C ${TILDE}/<repoPath> log --oneline origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.txt\`
+   \`git -C ${TILDE}/<repoPath> format-patch --stdout --binary origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.patch\`
+   then \`git -C ${TILDE}/<repoPath> reset --soft origin/${branch}\`, which leaves those commits' changes staged for the steps
+   below to save and stash. Name the commits' SHAs in your note. Never \`reset --hard\`, and never push.
 1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
    \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
    A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
@@ -1541,7 +1553,7 @@ TASK:
 5a. ${SPEC_RULE} If it has changes, stash them:
    \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
    \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
-6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
+6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; local commits <SHAs or none> moved back from <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.
@@ -1635,13 +1647,40 @@ const STACK_HELD_PROPERTY = {
   description: 'ONLY when tim showed the workspace stack in somebody else\'s hands, not this run\'s. Leave it out otherwise'
 }
 
+const STACK_DOWN_PROPERTY = {
+  type: 'object',
+  required: ['detail'],
+  properties: {
+    detail: { type: 'string', description: 'What could not reach the stack, and what tim said' }
+  },
+  additionalProperties: false,
+  description: "ONLY when the lease is still this run's but tim's result.up is false: the stack went down under the run. Leave it out otherwise"
+}
+
 // The stages that may use the workspace stack under the run's lease, and so
-// may find it in somebody else's hands: implement, fix, the consistency
-// reviewer, baseline and ladder.
+// may find it in somebody else's hands, or gone: implement, fix, the
+// consistency reviewer, baseline and ladder.
 const withStackHeld = (schema) => ({
   ...schema,
-  properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
+  properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY, stackDown: STACK_DOWN_PROPERTY }
 })
+
+// Docker Desktop can quit under a run: a Homebrew cask upgrade quits it, then
+// fails at sudo and never reopens it. tim brings Docker back when it finds the
+// daemon gone, so the run takes its own lease again, which starts the stack
+// under it, and runs the stage once more.
+const recoverDownStack = async (id, stage, runStage) => {
+  const first = await runStage()
+  if (!first?.stackDown) return first
+  log(`${id}: the workspace stack went down under the run at ${stage} — ${first.stackDown.detail}. Taking the lease again and running ${stage} once more`)
+  const retaken = await acquireRunLease()
+  if (!retaken?.acquired) {
+    const why = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
+    log(`${id}: could not take the lease again after the stack went down — ${why}`)
+    return first
+  }
+  return runStage()
+}
 
 const LEASE_OWNER_SCHEMA = {
   type: 'object',
@@ -3538,7 +3577,7 @@ while (stopped === null) {
   // -----------------------------------------------------------------------
   phase('Baseline')
 
-  const baseline = await agent(
+  const baseline = await recoverDownStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -3565,7 +3604,7 @@ ${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
-  )
+  ))
 
   // A stack somebody else holds is not a red tree: nothing about this
   // increment's code has been tested, and a human rules on the holder.
@@ -3663,7 +3702,7 @@ ${baselineRungList(baseline)}`
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await agent(
+    : await recoverDownStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
 ${guardrails()}
@@ -3705,7 +3744,7 @@ including anything the increment got wrong and any diagnosis of a red suite you 
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
 ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`${REPO_KEYS[0]}:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
     code({ label: `${id} implement`, phase: 'Implement', schema: withStackHeld(incrementSchema) })
-  )
+  ))
 
   const attempt = { id, ticket, workBranch }
 
@@ -3846,7 +3885,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    agent(
+    recoverDownStack(id, 'consistency', () => agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -3868,7 +3907,7 @@ routed to the right verifier.
 ${RUN_STACK_RULE}
 Return the structured output only.`,
       think({ label: `${id} consistency`, phase: 'Review', schema: withStackHeld(FINDINGS_SCHEMA) })
-    )
+    ))
 
   // Codex reviews at the same granularity as Claude: one run per group applying
   // that group's personas (style + code, code alone for docs), plus one
@@ -4106,7 +4145,7 @@ ${SPEC_SYNC_FIX_LINE}${mergeNote}${workspaceRepoRule()}`,
         break
       }
     } else {
-      fixResult = await agent(
+      fixResult = await recoverDownStack(id, 'fix', () => agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
 ${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
@@ -4126,7 +4165,7 @@ If a rung goes red for a reason that is not your fix — a port held, an environ
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
         code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
-      )
+      ))
       const fixHeld = await confirmStackHeld(id, 'fix', fixResult?.stackHeld)
       if (fixHeld) {
         await stopForHeldStack('fix', 'Fix', fixHeld)
@@ -4153,7 +4192,7 @@ FIXER — ${fixerReport()}`
   // -----------------------------------------------------------------------
   phase('Ladder')
 
-  const ladder = await agent(
+  const ladder = await recoverDownStack(id, 'ladder', () => agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${guardrails()}
 ${readIncrement(id)}
@@ -4222,7 +4261,7 @@ line per red rung or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
-  )
+  ))
 
   // -----------------------------------------------------------------------
   // Land — commit on green, non-destructive rollback on red.

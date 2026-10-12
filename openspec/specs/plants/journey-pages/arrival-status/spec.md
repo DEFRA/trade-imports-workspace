@@ -71,7 +71,7 @@ The system MUST refuse to save and continue from the page when no status has bee
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-STATUS-006
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when the notification is asked the question.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview arrival row
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-006-A

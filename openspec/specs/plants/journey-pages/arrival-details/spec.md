@@ -163,7 +163,7 @@ The system MUST refuse an expected time of arrival that is not on the 24-hour cl
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-010
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when that row opens on the details. Saving the page opened from that task, once the opening sequence has finished, MUST return the user to Overview.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to Overview when they follow the back link, and MUST reach the page from the Overview arrival task row when that row opens on the details. Saving the page opened from that task, once the opening sequence has finished, MUST return the user to Overview. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview arrival row for potatoes
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A

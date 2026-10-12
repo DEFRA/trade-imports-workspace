@@ -264,7 +264,11 @@ with commits of its own is left as it is. A failure names its step and its exact
    stack down. A refused acquire stops the run at `stack-held` before any
    increment; a stack that will not start stops it at `stack-failed`. A stage
    that finds the stack in somebody else's hands returns `stackHeld`, and the
-   run stops at `stack-held` for you to rule on. A stack somebody brought up by
+   run stops at `stack-held` for you to rule on. When Docker Desktop has quit,
+   tim starts it again (`open -a Docker`, up to five minutes) wherever it reads
+   or starts the stack, and a stage that finds the stack gone from under the
+   run's own lease returns `stackDown`: the loop takes the lease again, which
+   brings the stack back, and runs that stage once more. A stack somebody brought up by
    hand, with no lease, counts as somebody else's: it is never reused and never
    taken down, and so does a stack restarted by hand under a lease (its container
    ids no longer match the lease's). The lease file is per machine
@@ -728,7 +732,9 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
   build: give it a withheld status, or do it by hand.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
-  in progress and stashes the rest.
+  in progress and stashes the rest. A local commit a stage made against the rules (overview and review inc-107 left
+  one in the tests repo) is saved as `<id>-preserve-<repoKey>.commits.patch`, moved back off the branch with
+  `reset --soft`, and stashed with the rest, so the next run's baseline does not build on it.
 
 It runs on either executor. The Codex briefs take the configured repos, whatever their keys, and a Codex stage is
 told about a merge in progress, a row that changes no backlog repo and a row whose `gatePhases` leave out unit,

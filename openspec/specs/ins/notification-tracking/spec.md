@@ -16,9 +16,9 @@ The system MUST keep one record per notification once it exists, MUST keep that 
 - **WHEN** the service is asked what it holds for that notification
 - **THEN** one record exists for it, showing a Draft status and reflecting the answers entered so far
 
-#### Scenario: Submitting the notification updates the same record to Submitted
+#### Scenario: Submitting the notification updates the same record to a submitted status
 **ID**: SCN-INS-TRACK-001-B
 - **GIVEN** an in-progress notification is already tracked as Draft
 - **WHEN** the user submits the notification
-- **THEN** that same record updates to show a Submitted status
+- **THEN** that same record updates to show a submitted status: Submitted, or Submitted action required when no health certificate was uploaded
 - **AND** no second record is created for that notification

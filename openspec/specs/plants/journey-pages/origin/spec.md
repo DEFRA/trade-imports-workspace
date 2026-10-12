@@ -127,7 +127,7 @@ The system MUST show the ware-potato origin-scope guidance when the notification
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ORIGIN-009
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, and MUST reach it from the Overview origin task row. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page is reachable from the Overview origin row
 **ID**: SCN-PLANTS-ORIGIN-009-A

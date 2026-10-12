@@ -92,9 +92,9 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving without a means of transport is refused
+### Requirement: Save and continue without a means of transport is refused
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question, which is shown in its error style; the page's title MUST start 'Error: ' and the other answers entered MUST be shown back.
+The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing back the other answers entered, and showing the error 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question. Save and return to overview with no means of transport is not refused; what it saves is specified by `live-animals/journey-flow`.
 
 #### Scenario: Saving with no means of transport shows an error on that question
 **ID**: SCN-ARRIVAL-006-A
@@ -114,7 +114,7 @@ The system MUST refuse Save and continue on the arrival details page while no me
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
-The system MUST confine the arrival date to a window running from one week in the past to six months in the future, MUST offer that window as the range of the date picker, and MUST reject a date typed outside it with an error naming the allowed range, keeping the user on the page and saving nothing.
+The system MUST confine the arrival date to a window from one week back to six months ahead, MUST offer that window as the date picker's range, MUST reject a date typed outside it with an error naming the range (saving nothing), and MUST name a saved arrival date that has since fallen outside the window when the page is reopened, with the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 #### Scenario: The date picker offers only the allowed window
 **ID**: SCN-ARRIVAL-007-A
@@ -150,6 +150,12 @@ The system MUST confine the arrival date to a window running from one week in th
 - **GIVEN** the user has had an arrival date rejected for falling outside the allowed window
 - **WHEN** they leave the page and return to it on the same notification
 - **THEN** the arrival date does not hold the rejected value
+
+#### Scenario: A saved arrival date that has fallen out of the window is named when the page is reopened
+**ID**: SCN-ARRIVAL-007-F
+- **GIVEN** an arrival date was saved and is now more than 7 days in the past
+- **WHEN** the user opens the arrival details page
+- **THEN** an error summary is shown, linking to the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."
 
 ### Requirement: The transport identification and document reference are each capped at 58 characters
 **ID**: REQ-ARRIVAL-008
@@ -209,7 +215,7 @@ The system MUST let the user save and continue once a means of transport is chos
 
 ### Requirement: The port search is hinted and shows a placeholder
 **ID**: REQ-ARRIVAL-012
-The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen.
+The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen, and MUST begin the ordinary port list with a blank "Select a port" entry.
 
 #### Scenario: The port search reads as Design Release 2.1 words it
 **ID**: SCN-ARRIVAL-012-A
@@ -217,6 +223,12 @@ The system MUST hint the port of entry with "Select where the transporter will e
 - **WHEN** the page loads
 - **THEN** the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
 - **AND** the port search shows "Select a port"
+
+#### Scenario: Without JavaScript, the port list begins with "Select a port"
+**ID**: SCN-ARRIVAL-012-B
+- **GIVEN** the user has reached the arrival details page without JavaScript
+- **WHEN** the page loads
+- **THEN** the port of entry list begins with its blank "Select a port" entry
 
 ### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code
 **ID**: REQ-ARRIVAL-013

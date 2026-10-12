@@ -1,7 +1,16 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { run, runStreamed, runToLog } from './exec.js'
+import { ensureDockerRunning, isDaemonUnreachable } from './docker-daemon.js'
 import { TimError } from '../errors.js'
+
+const START_SCRIPT = 'run-stack.sh'
+
+// Starting the stack needs the Docker daemon, so Docker Desktop is brought
+// back first when it has quit.
+const readyForScript = async (script, env) => {
+  if (script === START_SCRIPT) await ensureDockerRunning({ env })
+}
 
 /**
  * Resolve the path to a script in scripts/stack/ under the workspace root.
@@ -25,42 +34,52 @@ export const stackScriptPath = (workspaceRoot, scriptName) => {
 /**
  * Run a script under scripts/stack/ with its stdio inherited so the child
  * controls the terminal (handy for `up` progress, `restart` output etc.).
+ * Starting the stack brings Docker Desktop back first when it has quit.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.script
  * @param {string[]} [args.args]
+ * @param {object} [args.env] - Extra environment for docker and the script
  * @returns {Promise<{exitCode: number, durationMs: number}>}
+ * @throws {TimError} as ensureDockerRunning does, when Docker cannot be brought back to start the stack
  */
-export const runStackScript = ({ workspaceRoot, script, args = [] }) =>
-  runStreamed(stackScriptPath(workspaceRoot, script), args, {
-    cwd: workspaceRoot
-  })
+export const runStackScript = async ({
+  workspaceRoot,
+  script,
+  args = [],
+  env
+}) => {
+  const path = stackScriptPath(workspaceRoot, script)
+  await readyForScript(script, env)
+  return runStreamed(path, args, { cwd: workspaceRoot, env })
+}
 
 /**
  * Run a script under scripts/stack/ with its output written to a log file
  * instead of the terminal — the same scripts `tim docker dev|down` run.
+ * Starting the stack brings Docker Desktop back first when it has quit.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string} args.script
  * @param {string[]} [args.args]
  * @param {string} args.logPath
- * @param {object} [args.env] - Extra environment for the script
+ * @param {object} [args.env] - Extra environment for docker and the script
  * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
+ * @throws {TimError} as ensureDockerRunning does, when Docker cannot be brought back to start the stack
  */
-export const runStackScriptToLog = ({
+export const runStackScriptToLog = async ({
   workspaceRoot,
   script,
   args = [],
   logPath,
   env
-}) =>
-  runToLog(stackScriptPath(workspaceRoot, script), args, {
-    cwd: workspaceRoot,
-    logPath,
-    env
-  })
+}) => {
+  const path = stackScriptPath(workspaceRoot, script)
+  await readyForScript(script, env)
+  return runToLog(path, args, { cwd: workspaceRoot, logPath, env })
+}
 
 // docker/stack/compose.yml's `name:`. Every container the stack starts
 // carries it as its compose project label.
@@ -70,12 +89,13 @@ const nonEmptyLines = (text) =>
   text.split('\n').filter((line) => line.trim().length > 0)
 
 /**
- * The workspace stack's running containers, by name.
+ * The workspace stack's running containers, by name. A Docker Desktop that
+ * has quit is started, and docker asked again once.
  *
  * @param {object} [opts]
  * @param {object} [opts.env] - Extra environment for docker
  * @returns {Promise<string[]>}
- * @throws {TimError} MISSING_DEP when docker is not installed, UNKNOWN when docker cannot list containers
+ * @throws {TimError} MISSING_DEP when docker is not installed, UNKNOWN when docker cannot list containers or Docker cannot be brought back
  */
 export const stackContainers = ({ env } = {}) => listStack('{{.Names}}', env)
 
@@ -121,8 +141,8 @@ export const writeStackLogs = async ({ logsDir, prefix, env }) => {
   return written
 }
 
-const listStack = async (format, env) => {
-  const result = await run(
+const psStack = (format, env) =>
+  run(
     'docker',
     [
       'ps',
@@ -133,6 +153,18 @@ const listStack = async (format, env) => {
     ],
     { env }
   )
+
+// Every lease and gate path reads the stack through here, so a Docker Desktop
+// that quit under a run is brought back here, then asked again once.
+const psStackWithDocker = async (format, env) => {
+  const first = await psStack(format, env)
+  if (first.exitCode === 0 || !isDaemonUnreachable(first.stderr)) return first
+  await ensureDockerRunning({ env })
+  return psStack(format, env)
+}
+
+const listStack = async (format, env) => {
+  const result = await psStackWithDocker(format, env)
   if (result.exitCode !== 0) {
     throw new TimError(
       'UNKNOWN',

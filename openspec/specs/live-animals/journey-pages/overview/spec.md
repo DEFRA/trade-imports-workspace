@@ -105,22 +105,22 @@ The system MUST show every task row as a bare link with a status, except Roles a
 - **WHEN** the task rows are examined
 - **THEN** only the Roles and addresses row carries hint text, naming Consignor or Exporter, Consignee, Importer and Place of Destination
 
-### Requirement: Main reason for import completes on the reason's own answers, apart from Additional details
+### Requirement: Main import reason completes on the reason's own answers, apart from Additional details
 **ID**: REQ-OVERVIEW-008
-The system MUST mark the Main reason for import task Complete once an allowed reason and the questions it opens are saved — Internal market with a purpose; Transhipment or onward travel with a destination country; Transit with a port of exit and a destination country; Temporary admission horses with an exit date and a port of exit; Re-entry alone — whether or not Additional details is answered, and MUST NOT mark it Complete while no reason is saved.
+The system MUST mark the Main import reason task Complete once an allowed reason and the questions it opens are saved — Internal market with a purpose; Transhipment or onward travel with a destination country; Transit with a port of exit and a destination country; Temporary admission horses with an exit date and a port of exit; Re-entry alone — whether or not Additional details is answered, and MUST NOT mark it Complete while no reason is saved.
 
 #### Scenario: The reason task completes while Additional details is still to do
 **ID**: SCN-OVERVIEW-008-A
 - **GIVEN** an allowed reason and its questions are saved and Additional details is unanswered
 - **WHEN** the user views Overview
-- **THEN** Main reason for import reads Complete
+- **THEN** Main import reason reads Complete
 - **AND** Additional details reads To do
 
 #### Scenario: The reason task is not complete with no reason saved
 **ID**: SCN-OVERVIEW-008-B
 - **GIVEN** no reason is saved
 - **WHEN** the user views Overview
-- **THEN** Main reason for import reads To do
+- **THEN** Main import reason reads To do
 
 ### Requirement: Where is this consignment coming from? completes only once the country and the region code question are answered
 **ID**: REQ-OVERVIEW-009
@@ -143,3 +143,85 @@ The system MUST mark the "Where is this consignment coming from?" task Complete 
 - **GIVEN** a country is saved, a region code is required and the code is given
 - **WHEN** the user views Overview
 - **THEN** "Where is this consignment coming from?" reads Complete
+
+### Requirement: Overview marks its commodity summary, the task list and each numbered section as named regions
+**ID**: REQ-OVERVIEW-010
+The system MUST mark the "Your commodities" block, the task list and each numbered section on Overview as regions named by their own heading, MUST mark the animals total card as a region named "Animals summary" and the packages total card as one named "Packages summary", and MUST keep each task link describing its status, and Roles and addresses its hint, to assistive technology.
+
+#### Scenario: The two total cards are named regions
+**ID**: SCN-OVERVIEW-010-A
+- **GIVEN** a new notification has just been started
+- **WHEN** the user views Overview
+- **THEN** the animals total sits in a region named "Animals summary" and the packages total in one named "Packages summary"
+- **AND** both are inside the "Your commodities" region
+
+#### Scenario: The task list and each section are regions named by their heading
+**ID**: SCN-OVERVIEW-010-B
+- **GIVEN** a new notification has just been started
+- **WHEN** the user views Overview
+- **THEN** the task list is a region named "Notification tasklist"
+- **AND** each of the six numbered sections inside it is a region named by its heading, for example "1. About the consignment"
+
+#### Scenario: A task link carries its status, and Roles and addresses its hint
+**ID**: SCN-OVERVIEW-010-C
+- **GIVEN** a new notification has just been started
+- **WHEN** assistive technology reads a task link
+- **THEN** it describes the link with the task's status
+- **AND** the Roles and addresses link is described by its hint and then its status
+
+### Requirement: The third task of About the consignment is Main import reason
+**ID**: REQ-OVERVIEW-011
+The system MUST title the third task of "1. About the consignment" "Main import reason" and MUST NOT show "Main reason for import" on Overview.
+
+#### Scenario: The first section lists Main import reason third
+**ID**: SCN-OVERVIEW-011-A
+- **GIVEN** a new notification has just been started
+- **WHEN** the user views Overview
+- **THEN** "1. About the consignment" lists "Where is this consignment coming from?", "What are you importing?" and "Main import reason", in that order
+- **AND** "Main reason for import" does not appear
+
+### Requirement: The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details
+**ID**: REQ-OVERVIEW-012
+The system MUST show the "Transit countries" task in "3. Transport and arrival" only once a commodity is chosen and the saved means of transport is Rail or Road, MUST list it after "Arrival details" and before "Transport details", and MUST show it To do until at least one transit country is saved, then Complete.
+
+#### Scenario: No commodity chosen means no Transit countries task
+**ID**: SCN-OVERVIEW-012-A
+- **GIVEN** no commodity is chosen and arrival details are saved with Road
+- **WHEN** the user views Overview
+- **THEN** no "Transit countries" task is shown
+- **AND** the third section lists "Arrival details" then "Transport details"
+
+#### Scenario: A chosen commodity travelling by rail or road shows the task in its place
+**ID**: SCN-OVERVIEW-012-B
+- **GIVEN** a commodity is chosen and Rail or Road is saved as the means of transport
+- **WHEN** the user views Overview
+- **THEN** the third section lists "Arrival details", "Transit countries" and "Transport details", in that order
+- **AND** "Transit countries" reads To do
+
+#### Scenario: The task completes once a country is saved
+**ID**: SCN-OVERVIEW-012-C
+- **GIVEN** a commodity is chosen, Rail or Road is saved and no transit country is saved
+- **WHEN** the user saves at least one transit country and views Overview
+- **THEN** "Transit countries" reads Complete
+
+#### Scenario: A consignment travelling by air has no Transit countries task
+**ID**: SCN-OVERVIEW-012-D
+- **GIVEN** a cat is chosen
+- **WHEN** the user views Overview before arrival details are saved, and again after Air is saved
+- **THEN** no "Transit countries" task is shown
+
+### Requirement: Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past
+**ID**: REQ-OVERVIEW-013
+The system MUST measure a saved arrival date against the allowed arrival window each time Overview is viewed, and MUST show "Arrival details" as To do once that date is more than 7 days in the past, however completely the task was answered when it was saved.
+
+#### Scenario: A saved arrival date more than 7 days in the past reads To do
+**ID**: SCN-OVERVIEW-013-A
+- **GIVEN** arrival details were saved complete, and the saved arrival date is now more than 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads To do
+
+#### Scenario: A saved arrival date exactly 7 days in the past still reads Complete
+**ID**: SCN-OVERVIEW-013-B
+- **GIVEN** arrival details were saved complete, and the saved arrival date is exactly 7 days in the past
+- **WHEN** the user views Overview
+- **THEN** "Arrival details" reads Complete

@@ -627,6 +627,18 @@ The script rules on anybody else holding the stack:
   needs the stack. The run stops at `stack-held`, naming the holder, for a human ruling. A
   stop after implement goes through the preserve step like any other.
 
+**When Docker Desktop quits under a run**, the run brings it back. Every tim command that
+reads the stack (`tim docker lease acquire|release|status`, and the gate through them) starts
+Docker Desktop with `open -a Docker` when the daemon does not answer. It waits up to five
+minutes for `docker info` (`TIM_DOCKER_START_WAIT_MS`), logs that it did so on stderr, then
+carries on. Starting the stack (`run-stack.sh`) does the same first. A stage whose check
+cannot reach the stack, and whose lease check finds the lease still the run's but the stack
+down, returns `stackDown`. The script then takes the run's lease again, which starts the
+stack under it, and runs that stage once more, once only. A Homebrew autoupdate is why: its
+`brew upgrade --cask` quits Docker Desktop, then fails at `sudo` with no terminal and never
+reopens it (overview and review, 11 October 2026). Sam's ruling: bring it back when it
+happens.
+
 **A run that dies leaves its lease behind.** The release runs on every way out of the
 script, but not when the `Workflow` run itself is killed, the session ends or the machine
 restarts mid-run. The stack is then still up, leased to the dead run, and the next run

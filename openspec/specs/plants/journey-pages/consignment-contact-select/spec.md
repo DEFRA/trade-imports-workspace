@@ -53,18 +53,18 @@ The system MUST keep a row the user has ticked as they move between pages of res
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address, return the user to Overview with the contact task Completed, and MUST show that address still chosen when the user returns to the page. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save the chosen address without continuing the journey.
+The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. After the opening sequence, save-and-continue MUST reach Overview with the contact task Completed; within it, save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-007). Save-and-return-to-overview MUST save the address without continuing the journey.
 
 #### Scenario: Choosing a contact saves, completes the task, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
-- **GIVEN** the user is on the contact page
+- **GIVEN** the user is on the contact page after the opening sequence has ended
 - **WHEN** they choose an address and save and continue
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Save and return to overview saves the address without continuing
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-B
-- **GIVEN** the user is on the contact page
+- **GIVEN** the user is on the contact page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview with the contact task Completed
 - **AND** returning to the page shows that address still chosen
@@ -75,13 +75,20 @@ The system MUST accept a chosen contact address, return the user to Overview wit
 - **WHEN** the user chooses a different address and saves
 - **THEN** only the new address is shown as chosen
 
+#### Scenario: In the opening sequence, Continue goes to check your answers
+**ID**: SCN-PLANTS-CONTACT-SELECT-002-D
+- **GIVEN** a wood notification in its opening sequence, on the contact page, with arrival details still outstanding
+- **WHEN** the user chooses an address and saves and continues
+- **THEN** check your answers is shown, headed by the notification's reference
+- **AND** its error summary names the outstanding arrival answer
+
 ### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen — on either save-and-continue or save-and-return-to-overview — returning the user to Overview without an error, and MUST leave the contact task not yet started.
+The system MUST allow the page to be saved with no address chosen, on either save-and-continue or save-and-return-to-overview, without an error, and MUST leave the contact task not yet started. Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return the user to Overview. Within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).
 
 #### Scenario: A blank save returns to Overview with the task not yet started
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
-- **GIVEN** the user is on the contact page with no address chosen
+- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen
 - **WHEN** they save and continue or save and return to overview
 - **THEN** they reach Overview with no error summary
 - **AND** the contact task shows not yet started
@@ -100,11 +107,11 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 
 ### Requirement: Cancel discards a new choice; the back link returns to Overview
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-The system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview, and MUST return to Overview when they follow the back link.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST return to Overview when the user follows the back link.
 
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A
-- **GIVEN** a contact address is already saved
+- **GIVEN** a contact address is already saved on a notification that is not being amended
 - **WHEN** the user checks a different address and selects cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows the previously saved address still chosen

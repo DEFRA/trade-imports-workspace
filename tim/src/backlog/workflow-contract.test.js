@@ -1897,6 +1897,77 @@ describe('increment-build-loop', () => {
         })
       })
 
+      describe('when the workspace stack goes down under the run', () => {
+        const DOWN = {
+          detail:
+            'E2E global setup: connect ECONNREFUSED ::1:8089. tim docker lease status: the lease is this run’s, and the stack is down.'
+        }
+        const downBaseline = {
+          ok: true,
+          green: false,
+          rungs: [],
+          summary: 'the stack went down',
+          stackDown: DOWN
+        }
+        const allLabels = (run) =>
+          run.agents.map((entry) => entry.options.label)
+        const timesRan = (run, label) =>
+          allLabels(run).filter((name) => name === label).length
+
+        test('takes the run’s lease again, then runs the stage once more', async () => {
+          const run = await runFrom(downBaseline, BASELINE_ANSWER)
+
+          const firstBaseline = allLabels(run).indexOf('inc-900 baseline')
+          expect(
+            allLabels(run).slice(firstBaseline, firstBaseline + 3)
+          ).toEqual(['inc-900 baseline', ACQUIRE_LABEL, 'inc-900 baseline'])
+        })
+
+        test('carries on with the increment once the stage has run again', async () => {
+          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLAN_ANSWER)
+
+          expect(allLabels(run)).toContain('inc-900 plan')
+        })
+
+        test('runs a stage only once more, however often it finds the stack down', async () => {
+          const run = await runFrom(downBaseline, downBaseline)
+
+          expect({
+            baselines: timesRan(run, 'inc-900 baseline'),
+            stopped: run.result.stopped.reason
+          }).toEqual({ baselines: 2, stopped: 'baseline-red' })
+        })
+
+        test('runs the ladder once more after the stack went down under it', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            {
+              green: false,
+              ran: [],
+              summary: 'the stack went down',
+              stackDown: DOWN
+            }
+          )
+
+          expect(timesRan(run, 'inc-900 ladder')).toBe(2)
+        })
+
+        test('tells every stack stage to report a stack gone from under the run, never to start it', async () => {
+          const run = await runFrom(BASELINE_ANSWER, PLAN_ANSWER)
+
+          expect(
+            promptOf(run, 'inc-900 implement').replace(/\s+/g, ' ')
+          ).toContain(
+            'the stack went down under the run (Docker Desktop quit, say): run nothing more that needs it, and return `stackDown` with `detail` saying what could not reach it. Never start it yourself'
+          )
+        })
+      })
+
       describe('the run’s lease on the workspace stack', () => {
         const runWithLease = (lease, ...answers) =>
           runLoop(scriptPath, {
@@ -3368,6 +3439,28 @@ describe('increment-build-loop', () => {
           )
           expect(prompt).toContain('inc-900-preserve-<repoKey>.staged.patch')
           expect(prompt).toContain('--diff-filter=U')
+        })
+
+        test('moves commits a stage made back off the shared branch, saved as a patch, before stashing them', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect({
+            counts: /rev-list --count origin\/\S+\.\.HEAD/.test(prompt),
+            savesPatch:
+              /format-patch --stdout --binary origin\/\S+\.\.HEAD > \S+inc-900-preserve-<repoKey>\.commits\.patch/.test(
+                prompt
+              ),
+            movesBack:
+              /reset --soft origin\/\S+`, which leaves those commits/.test(
+                prompt
+              ),
+            neverHard: prompt.includes('Never `reset --hard`, and never push.')
+          }).toEqual({
+            counts: true,
+            savesPatch: true,
+            movesBack: true,
+            neverHard: true
+          })
         })
 
         test('stops the run at ladder-red with what the preserve step kept', async () => {

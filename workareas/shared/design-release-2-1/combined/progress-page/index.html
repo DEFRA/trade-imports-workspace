@@ -155,14 +155,14 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
   var D = window.DR21 || { themes: [], blockers: [], questions: [] };
   var themes = D.themes;
   var byId = {};
-  themes.forEach(function (t) { byId[t.id] = t; });
+  themes.forEach(function (t) { t.held = t.held || []; byId[t.id] = t; });
   var blockerOfRow = {};
   D.blockers.forEach(function (b) { b.rows.forEach(function (r) { blockerOfRow[r.id] = b; }); });
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function title(id) { return byId[id] ? byId[id].title : id; }
   var P = D.progress || null;
-  function unfinished(id) { var t = byId[id]; return !t || t.ready.length > 0 || t.blocked.length > 0; }
+  function unfinished(id) { var t = byId[id]; return !t || t.ready.length > 0 || t.blocked.length > 0 || t.held.length > 0; }
   function pendingDeps(t) { return t.dependsOn.filter(unfinished); }
   function canStartNow(t) { return t.ready.length && !pendingDeps(t).length; }
   function questionsFor(id) { return D.questions.filter(function (q) { return q.theme === id; }); }
@@ -170,9 +170,10 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
   // Themes with rows still to build first, those that can start now at the top; then themes with only blocked rows; then fully built themes.
   var readyThemes = themes.filter(function (t) { return t.ready.length; })
     .sort(function (a, b) { return (canStartNow(b) ? 1 : 0) - (canStartNow(a) ? 1 : 0); });
-  var blockedThemes = themes.filter(function (t) { return !t.ready.length && t.blocked.length; });
-  var builtThemes = themes.filter(function (t) { return !t.ready.length && !t.blocked.length; });
-  var order = readyThemes.concat(blockedThemes, builtThemes).map(function (t) { return t.id; });
+  var heldThemes = themes.filter(function (t) { return !t.ready.length && t.held.length; });
+  var blockedThemes = themes.filter(function (t) { return !t.ready.length && !t.held.length && t.blocked.length; });
+  var builtThemes = themes.filter(function (t) { return !t.ready.length && !t.held.length && !t.blocked.length; });
+  var order = readyThemes.concat(heldThemes, blockedThemes, builtThemes).map(function (t) { return t.id; });
   var totalToBuild = themes.reduce(function (a, t) { return a + t.ready.length; }, 0);
   var totalBlocked = themes.reduce(function (a, t) { return a + t.blocked.length; }, 0);
 
@@ -187,6 +188,7 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
       html += '</div>';
     }
     group('To build', readyThemes, function (t) { return t.ready.length + (t.blocked.length ? ' · ' + t.blocked.length + ' blocked' : ''); });
+    group('Held for review', heldThemes, function (t) { return t.held.length; });
     group('Blocked', blockedThemes, function (t) { return t.blocked.length; });
     group('Built', builtThemes, function (t) { return t.done.length; });
     document.getElementById('rail').innerHTML = html;
@@ -198,6 +200,7 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
     if (t.done.length) c += '<span class="chip ready">' + t.done.length + ' built</span>';
     if (t.ready.length) c += '<span class="chip">' + t.ready.length + ' to build</span>';
     if (t.blocked.length) c += '<span class="chip block">' + t.blocked.length + ' blocked</span>';
+    if (t.held.length) c += '<span class="chip warn">' + t.held.length + ' held for review</span>';
     if (t.dropped.length) c += '<span class="chip">' + t.dropped.length + ' dropped</span>';
     var q = questionsFor(t.id).length;
     if (q) c += '<span class="chip warn">' + q + ' to confirm</span>';
@@ -205,7 +208,8 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
   }
 
   function landsAfterText(t) {
-    if (!t.ready.length && !t.blocked.length) return 'Built.';
+    if (!t.ready.length && !t.blocked.length && !t.held.length) return 'Built.';
+    if (!t.ready.length && t.held.length && !t.blocked.length) return 'Held for review.';
     var p = pendingDeps(t);
     if (!p.length) return 'Can start now.';
     return 'Lands after ' + p.map(title).join('; ') + '.';
@@ -222,7 +226,7 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
   }
 
   function rowTitle(r) {
-    return esc(r.title) + ' <span class="id">' + esc(r.id) + '</span>' + (r.stale ? ' <span class="stale">(templates, as of its last push)</span>' : '');
+    return esc(r.title) + ' <span class="id">' + esc(r.id) + '</span>';
   }
 
   function progressSection() {
@@ -235,32 +239,32 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
       '<div class="fact"><b class="ready">' + P.readyCount + '</b><span>ready to build</span></div>' +
       '<div class="fact"><b>' + P.waitingCount + '</b><span>waiting on another row</span></div>' +
       '<div class="fact"><b class="blocked">' + P.blockedCount + '</b><span>blocked</span></div>' +
+      '<div class="fact"><b>' + P.heldCount + '</b><span>held for review</span></div>' +
       '<div class="fact"><b>' + P.droppedCount + '</b><span>dropped (not in the total)</span></div></div>' +
       '<div class="bar" role="img" aria-label="' + im.done + ' of ' + im.total + ' rows implemented"><span style="width:' + im.percent + '%"></span></div>' +
-      '<p class="note">The type question and templates theme is still building on the second laptop. Its counts are as of its last push (' + P.templatesNote.counts.total + ' rows: ' + P.templatesNote.counts.done + ' built, ' + P.templatesNote.counts.dropped + ' dropped). Without it: ' +
-      P.templatesNote.headlineWithoutTemplates.done + ' of ' + P.templatesNote.headlineWithoutTemplates.total + ' (' + P.templatesNote.headlineWithoutTemplates.percent + '%).</p></section>';
+      '<p class="note">' + P.heldCount + ' rows are held, not abandoned: ' + esc(P.heldReason) + '. Held rows stay inside the total until they are built or dropped.</p></section>';
 
     html += '<section class="section" aria-labelledby="theme-h"><header><h2 id="theme-h">Progress by theme</h2><p class="s">Each theme builds on its own branch with its own draft pull requests. Nothing merges to main until Sam has checked the finished theme.</p></header><div class="panel"><div class="table-wrap"><table class="wide"><thead><tr>' +
       '<th scope="col">Theme</th><th scope="col">Ticket</th><th scope="col">Branch</th><th scope="col">Pull requests</th>' +
-      '<th scope="col" class="num">Built</th><th scope="col" class="num">Ready</th><th scope="col" class="num">Waiting</th><th scope="col" class="num">Blocked</th><th scope="col" class="num">Dropped</th>' +
+      '<th scope="col" class="num">Built</th><th scope="col" class="num">Ready</th><th scope="col" class="num">Waiting</th><th scope="col" class="num">Blocked</th><th scope="col" class="num">Held</th><th scope="col" class="num">Dropped</th>' +
       '<th scope="col">State</th><th scope="col">Review</th></tr></thead><tbody>';
-    var sum = { total: 0, done: 0, ready: 0, waiting: 0, blocked: 0, dropped: 0 };
+    var sum = { total: 0, done: 0, ready: 0, waiting: 0, blocked: 0, held: 0, dropped: 0 };
     function add(c) { Object.keys(sum).forEach(function (k) { sum[k] += c[k]; }); }
     P.themes.forEach(function (t) {
       add(t.counts);
       html += '<tr><td><a href="#' + esc(t.id) + '">' + esc(t.title) + '</a></td>' +
         '<td><a href="' + esc(t.ticketUrl) + '" target="_blank" rel="noopener">' + esc(t.ticket) + '</a></td>' +
         '<td class="repo" style="white-space:normal;word-break:break-all">' + esc(t.branch) + '</td><td>' + prLinks(t.prs) + '</td>' +
-        '<td class="num">' + t.counts.done + '</td><td class="num">' + t.counts.ready + '</td><td class="num">' + t.counts.waiting + '</td><td class="num">' + t.counts.blocked + '</td><td class="num">' + t.counts.dropped + '</td>' +
-        '<td>' + (t.stale ? '<span class="stale">' : '<span>') + esc(t.state) + '</span></td><td>' + reviewLinks() + '</td></tr>';
+        '<td class="num">' + t.counts.done + '</td><td class="num">' + t.counts.ready + '</td><td class="num">' + t.counts.waiting + '</td><td class="num">' + t.counts.blocked + '</td><td class="num">' + t.counts.held + '</td><td class="num">' + t.counts.dropped + '</td>' +
+        '<td><span>' + esc(t.state) + '</span></td><td>' + reviewLinks() + '</td></tr>';
     });
     var m = P.mainBacklog;
     add(m);
     html += '<tr><td>Not yet split off</td><td>No ticket yet</td><td class="repo" style="white-space:normal">main backlog</td><td>No pull requests yet</td>' +
-      '<td class="num">' + m.done + '</td><td class="num">' + m.ready + '</td><td class="num">' + m.waiting + '</td><td class="num">' + m.blocked + '</td><td class="num">' + m.dropped + '</td>' +
+      '<td class="num">' + m.done + '</td><td class="num">' + m.ready + '</td><td class="num">' + m.waiting + '</td><td class="num">' + m.blocked + '</td><td class="num">' + m.held + '</td><td class="num">' + m.dropped + '</td>' +
       '<td>' + esc(m.note) + '</td><td>' + reviewLinks() + '</td></tr>';
-    html += '<tr class="total"><td>All rows</td><td></td><td></td><td></td><td class="num">' + sum.done + '</td><td class="num">' + sum.ready + '</td><td class="num">' + sum.waiting + '</td><td class="num">' + sum.blocked + '</td><td class="num">' + sum.dropped + '</td><td>' + sum.total + ' rows</td><td></td></tr>';
-    html += '</tbody></table></div><p class="note">Ready means a row to build whose every dependency is built. Waiting means a row to build that still waits on another row. Blocked rows wait on someone outside the build.</p></div></section>';
+    html += '<tr class="total"><td>All rows</td><td></td><td></td><td></td><td class="num">' + sum.done + '</td><td class="num">' + sum.ready + '</td><td class="num">' + sum.waiting + '</td><td class="num">' + sum.blocked + '</td><td class="num">' + sum.held + '</td><td class="num">' + sum.dropped + '</td><td>' + sum.total + ' rows</td><td></td></tr>';
+    html += '</tbody></table></div><p class="note">Ready means a row to build whose every dependency is built. Waiting means a row to build that still waits on another row. Blocked rows wait on someone outside the build. Held rows are withheld on purpose until the review is done.</p></div></section>';
 
     var c = P.combined;
     html += '<section class="section" aria-labelledby="comb-h"><header><h2 id="comb-h">The combined branch</h2><p class="s">All the themes together on one branch, so the whole release can be reviewed and tested as one.</p></header><div class="panel">' +
@@ -283,6 +287,10 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
       html += '<tr><td>' + rowTitle(r) + '</td><td>' + r.waitsOn.map(function (w) { return esc(w.title) + ' <span class="id">' + esc(w.id) + '</span>'; }).join('<br>') + '</td></tr>';
     });
     html += '</tbody></table></div></details></section>';
+
+    html += '<section class="section" aria-labelledby="held-h"><header><h2 id="held-h">Held for review</h2><p class="s">' + P.heldCount + ' rows. ' + esc(P.heldReason) + '.</p></header><div class="panel"><div class="table-wrap"><table class="mid"><thead><tr><th scope="col">Row</th><th scope="col">Area</th></tr></thead><tbody>';
+    P.heldRows.forEach(function (r) { html += '<tr><td>' + rowTitle(r) + '</td><td><a href="#' + esc(r.theme) + '">' + esc(title(r.theme)) + '</a></td></tr>'; });
+    html += '</tbody></table></div></div></section>';
 
     html += '<section class="section" aria-labelledby="blk-h"><header><h2 id="blk-h">Blocked</h2><p class="s">' + P.blockedCount + ' rows, grouped by what they wait on, with what unblocks each group. They stay in the backlog and are re-distilled once unblocked.</p></header><div class="groups">';
     P.blockedGroups.forEach(function (b) {
@@ -312,7 +320,7 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
     var html = progressSection();
 
     html += '<section class="section" aria-labelledby="areas-h"><header><h2 id="areas-h">Work by area</h2><p class="s">' + totalToBuild + ' rows still to build and ' + totalBlocked + ' blocked, across ' + themes.length + ' areas. Areas that can start now come first. Each area page lists its rows and what each lands after.</p></header><div class="cards">';
-    readyThemes.concat(blockedThemes, builtThemes).forEach(function (t) {
+    readyThemes.concat(heldThemes, blockedThemes, builtThemes).forEach(function (t) {
       html += '<a class="card" href="#' + t.id + '"><p class="h">' + esc(t.title) + '</p>' +
         (t.splitOff ? '<p class="s">Split off to <span class="mono">' + esc(t.splitOff.branch) + '</span></p>' : '') +
         '<p class="s">' + esc(landsAfterText(t)) + '</p><div class="chips">' + chips(t) + '</div></a>';
@@ -373,6 +381,9 @@ footer.end { color: var(--muted); font-size: 0.85rem; }
     }
     if (t.ready.length) {
       html += '<article class="group"><header><h2>Still to build</h2><p class="s">' + t.ready.length + ' rows, in build order.</p></header>' + rowList(t.ready, true) + '</article>';
+    }
+    if (t.held.length) {
+      html += '<article class="group"><header><h2>Held for review</h2><p class="s">' + t.held.length + ' rows. ' + esc(P ? P.heldReason : '') + '.</p></header>' + rowList(t.held, true) + '</article>';
     }
     if (t.dropped.length) {
       html += '<article class="group"><header><h2>Dropped</h2><p class="s">' + t.dropped.length + ' rows, outside the total.</p></header>' + rowList(t.dropped, false) + '</article>';

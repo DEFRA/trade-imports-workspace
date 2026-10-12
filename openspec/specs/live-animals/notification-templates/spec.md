@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first. Once saved, a template has its own page showing its answers in the review's cards, from which it can be used or deleted; a template the user cannot open returns them to Manage templates. A saved template's sections are changed from its page, one at a time, and saving returns to the page with a success banner; a template never holds an arrival date.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first. Once saved, a template has its own page showing its answers in the review's cards, from which it can be used or deleted; a template the user cannot open returns them to Manage templates. A saved template's sections are changed from its page, one at a time, and saving returns to the page with a success banner; a template never holds an arrival date. Using a template starts a new draft notification from the template's answers.
 
 ## Requirements
 
@@ -585,3 +585,109 @@ An arrival date answered on the arrival page while a template is created or chan
 - **WHEN** they enter an arrival date and select "Save and return"
 - **THEN** the template's page shows no arrival date
 - **AND** changing the arrival details again shows the arrival date field empty
+
+### Requirement: Use template starts a new draft notification from the template
+**ID**: REQ-TEMPLATES-032
+Selecting "Use template" on a live animals template's card or on its page MUST create and save a new draft notification with a new reference, MUST open that notification's own task list, MUST name the template nowhere on it and MUST leave the user's other drafts unchanged; it MUST work without JavaScript.
+
+#### Scenario: Use template on a card opens a new draft's Notification tasklist
+**ID**: SCN-TEMPLATES-032-A
+- **GIVEN** the user has saved a live animals template
+- **WHEN** they select "Use template" on its card
+- **THEN** the Overview of a new notification is shown, with the "Notification tasklist" and the status "Draft" and a new reference
+- **AND** its sections are "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties" and "6. Contact address"
+- **AND** it ends with "Review and submit" and "Return to dashboard", which opens the live animals notification list
+- **AND** nothing on it names the template
+
+#### Scenario: Use template on the template's page starts another draft
+**ID**: SCN-TEMPLATES-032-B
+- **GIVEN** the user has used a template and has opened its page
+- **WHEN** they select "Use template"
+- **THEN** the Overview of another new notification is shown with a different reference
+
+#### Scenario: The new notification shows the template's totals
+**ID**: SCN-TEMPLATES-032-C
+- **GIVEN** the user has saved a template with commodity numbers answered
+- **WHEN** they use it
+- **THEN** the notification's Overview shows the template's animal and package totals under "Your commodities"
+
+#### Scenario: The new draft is listed and other drafts are unchanged
+**ID**: SCN-TEMPLATES-032-D
+- **GIVEN** the user has a draft notification and a saved template
+- **WHEN** they use the template
+- **THEN** the dashboard lists the new draft and the earlier one, both with the status "Draft"
+- **AND** the earlier draft's answers and totals are as they were
+
+#### Scenario: Use template works without JavaScript
+**ID**: SCN-TEMPLATES-032-E
+- **GIVEN** the user has JavaScript turned off and has opened a saved template's page
+- **WHEN** they select "Use template"
+- **THEN** the Overview of a new notification is shown with the "Notification tasklist"
+
+### Requirement: A notification started from a template holds the template's answers, without an arrival date or documents
+**ID**: REQ-TEMPLATES-033
+A notification started from a template MUST hold the answers the template holds, except that it MUST hold no arrival date and no documents, and it MUST show no errors when first opened.
+
+#### Scenario: A fully answered template's answers are carried into the notification
+**ID**: SCN-TEMPLATES-033-A
+- **GIVEN** the user has saved a template with every section answered
+- **WHEN** they use it and open the review of the new notification
+- **THEN** it shows the template's country of origin, region of origin, internal reference, commodities, species, numbers of animals and packages, animal identification, reason for import, port of entry, means of transport, transport identification, transport document reference and CPH number
+- **AND** it shows the transporter's name, address, country, approval number and type
+
+#### Scenario: Region of origin is carried as the template holds it
+**ID**: SCN-TEMPLATES-033-G
+- **GIVEN** the user has saved a template that answers whether the consignment has a region of origin code
+- **WHEN** they use it and open 'Where is this consignment coming from?'
+- **THEN** the region of origin answer is 'Yes' with the template's code when the template has one
+- **AND** it is 'No' when the template has none
+
+#### Scenario: No arrival date or documents are carried
+**ID**: SCN-TEMPLATES-033-B
+- **GIVEN** the user has saved a template with every section answered
+- **WHEN** they use it
+- **THEN** "Arrival details" and "Upload documents" read "To do" on the new notification's Overview
+- **AND** the tasks the template answered read "Complete"
+
+#### Scenario: Certified for falls back to Further keeping
+**ID**: SCN-TEMPLATES-033-C
+- **GIVEN** a template's "Certified for" answer is missing or is no longer offered
+- **WHEN** the user uses the template
+- **THEN** "Certified for" on the new notification is "Further keeping"
+
+#### Scenario: The unweaned answer is No when the commodity asks it and the template has none
+**ID**: SCN-TEMPLATES-033-D
+- **GIVEN** a template's commodity asks whether the consignment contains unweaned animals and the template has no answer
+- **WHEN** the user uses the template
+- **THEN** the new notification's answer is "No"
+
+#### Scenario: The purpose is carried only for Internal market
+**ID**: SCN-TEMPLATES-033-E
+- **GIVEN** a template holds a purpose in the internal market
+- **WHEN** the user uses it and the template's reason for import is not "Internal market"
+- **THEN** the new notification holds no purpose
+- **AND** when the reason is "Internal market" the purpose is carried
+
+#### Scenario: The new notification shows no errors when first opened
+**ID**: SCN-TEMPLATES-033-F
+- **GIVEN** the user has saved a template
+- **WHEN** they use it
+- **THEN** the new notification's Overview shows no error summary
+
+### Requirement: A template the user cannot use returns them to Manage templates
+**ID**: REQ-TEMPLATES-034
+Using a template that does not exist, has been deleted or is another user's MUST show Manage templates and MUST create no notification.
+
+#### Scenario: A template that does not exist
+**ID**: SCN-TEMPLATES-034-A
+- **GIVEN** no template has the address the user's "Use template" form posts to
+- **WHEN** the form is submitted
+- **THEN** Manage templates is shown
+- **AND** no notification is created
+
+#### Scenario: Another user's template
+**ID**: SCN-TEMPLATES-034-B
+- **GIVEN** another user has saved a template and the signed-in user has its page open
+- **WHEN** the signed-in user selects "Use template"
+- **THEN** Manage templates is shown, without the template
+- **AND** no notification is created

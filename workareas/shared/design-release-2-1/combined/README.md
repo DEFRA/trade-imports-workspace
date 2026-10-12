@@ -55,6 +55,24 @@ After resolution the merge adds no content over 696; it records reference lists 
 | Lint: animals, plants and INS frontends, tests (and `tsc`), performance tests | Clean |
 | Full E2E (`npm run test:docker-compose`) on a dev-mode stack of this branch, under the stack lease | 433 passed, 7 skipped, 0 failed, 0 flaky |
 
+## Review pages (all read this branch)
+
+| Page | Link | Source here |
+|---|---|---|
+| Business review (BAs, POs, SMEs): every change a user would notice, before and after, with Right / Wrong / Not sure | https://claude.ai/artifact/WWWq8qXCzAHaciTzU8YBGa | `business-review/` |
+| Engineering review: risk-ranked findings, with each engineer's verdict | https://claude.ai/artifact/7bH3vbECyuEax7i6xiwfDA | `engineering-review/` |
+| Progress report: Design Release 2.1 work by theme | https://claude.ai/artifact/FHJCGEJ8jm7zs9mLXT4YBw | `progress-page/` |
+| OpenSpec audit | — | `openspec-audit.md` |
+
+Answers on both review pages live in each page's shared database (`verdicts/<reviewer id>`); read them back with the
+ArtifactData tool.
+
+Screenshots: `business-review/capture/` is a Playwright harness that walks the same data through both sides
+(`SIDE=before|after CLEAN=1 npm run capture --prefix business-review/capture`). Before = published `:latest` images
+(`main`, which has not moved), after = a dev-mode stack of this branch; its first test seeds the address book so both
+sides start equal. PNGs are not committed (`.gitignore`); rebuild the page with `npm run build` then `npm run copy`
+in `business-review/page/build/`.
+
 ## Templates
 
 <!-- updated when laptop 2 has pushed -->

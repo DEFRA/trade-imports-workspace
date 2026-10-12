@@ -1,0 +1,674 @@
+<title>DR2.1 engineering review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #566173;
+  --rule: #d9dee6;
+  --accent: #2f5d8a;
+  --accent-soft: #e4edf6;
+  --warn-ground: #fff7e0;
+  --warn-edge: #c99a1a;
+  --block: #a8452e;
+  --block-soft: #f9e6e1;
+  --done: #2f7a5a;
+  --done-soft: #e3f2ea;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+    --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+    --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #12161d; --surface: #1a2029; --ink: #e6eaf0; --muted: #9aa5b5; --rule: #2c3542;
+  --accent: #8db4dc; --accent-soft: #1f2d3d; --warn-ground: #2b2614; --warn-edge: #d9b347;
+  --block: #ec9a86; --block-soft: #3a221c; --done: #7cc9a6; --done-soft: #1b2e26;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font-body); line-height: 1.55; margin: 0; padding-inline: 16px; padding-block: 0 56px; }
+.wrap { max-width: 1040px; margin-inline: auto; padding-top: 32px; display: grid; gap: 36px; min-width: 0; }
+.wrap > * { min-width: 0; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-size: 2.1rem; font-weight: 600; }
+h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, summary:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible, label:has(input:focus-visible) { outline: 3px solid var(--warn-edge); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-size: 0.88em; }
+.label { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.note { color: var(--muted); font-size: 0.88rem; }
+.lede { font-size: 1.1rem; color: var(--muted); max-width: 70ch; }
+.top { display: grid; gap: 10px; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.93rem; }
+
+.facts { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.fact { display: grid; gap: 2px; }
+.fact b { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact b.high { color: var(--block); }
+.fact span { font-size: 0.8rem; color: var(--muted); }
+
+.section { display: grid; gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; display: grid; gap: 12px; }
+.callout { background: var(--warn-ground); border-left: 4px solid var(--warn-edge); border-radius: 4px; padding: 14px 18px; display: grid; gap: 8px; }
+.callout.block { background: var(--block-soft); border-left-color: var(--block); }
+.callout.ready { background: var(--done-soft); border-left-color: var(--done); }
+.prose { max-width: 74ch; display: grid; gap: 10px; }
+
+.qa { display: grid; gap: 18px; }
+.q { display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 14px; }
+.q:first-child { border-top: 0; padding-top: 0; }
+.q .a { max-width: 74ch; display: grid; gap: 8px; }
+.verdict-line { font-weight: 600; }
+ul.plain { margin: 0; padding-left: 1.2rem; display: grid; gap: 4px; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 0.9rem; }
+
+details > summary { cursor: pointer; font-weight: 500; }
+details.area { border-top: 1px solid var(--rule); padding: 10px 0; }
+details.area p { margin-top: 8px; max-width: 76ch; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+.filters .f { display: grid; gap: 4px; min-width: 0; }
+.filters label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+select, textarea { font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+.filters .check { display: flex; gap: 8px; align-items: center; padding-bottom: 6px; }
+.filters .check label { font-size: 0.93rem; color: var(--ink); font-weight: 500; }
+button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); padding: 6px 12px; font-weight: 500; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.link { border: 0; background: none; padding: 6px 0; text-decoration: underline; }
+
+.cards { display: grid; gap: 16px; }
+.fcard { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; display: grid; gap: 12px; border-left-width: 5px; min-width: 0; }
+.fcard.sev-high { border-left-color: var(--block); }
+.fcard.sev-medium { border-left-color: var(--warn-edge); }
+.fcard.sev-low { border-left-color: var(--muted); }
+.fcard header { display: grid; gap: 8px; }
+.fcard h3 { overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 500; }
+.chip.sev { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface); color: var(--ink); border: 2px solid var(--muted); }
+.chip.sev.high { border: 2px solid var(--block); background: var(--block-soft); color: var(--block); }
+.chip.sev.medium { border: 2px dashed var(--warn-edge); background: var(--warn-ground); }
+.chip.sev.low { border: 2px dotted var(--muted); }
+.chip.rank { font-family: var(--font-mono); background: var(--ground); color: var(--ink); border: 1px solid var(--rule); }
+.where { display: grid; gap: 2px; font-size: 0.88rem; }
+.where a { overflow-wrap: anywhere; font-family: var(--font-mono); font-size: 0.86rem; }
+.where .repo { color: var(--muted); font-family: var(--font-mono); font-size: 0.8rem; }
+.body { display: grid; gap: 10px; max-width: 80ch; }
+.body h4 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+.body p { overflow-wrap: anywhere; }
+.body details { border-top: 1px solid var(--rule); padding-top: 8px; }
+.body details p { margin-top: 6px; }
+
+.vbox { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; gap: 10px; }
+.vbox fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.vbox legend { padding: 0; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opts label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 6px; padding: 6px 12px; cursor: pointer; background: var(--ground); font-size: 0.93rem; }
+.opts input { margin: 0; accent-color: var(--accent); }
+.opts label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.opts label:has(input:disabled) { opacity: 0.6; cursor: not-allowed; }
+.cm { display: grid; gap: 4px; }
+.cm label { font-size: 0.85rem; font-weight: 600; }
+.cm textarea { width: 100%; min-height: 56px; resize: vertical; }
+.cm .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.msg { font-size: 0.88rem; color: var(--muted); }
+.msg.err { color: var(--block); font-weight: 600; }
+.msg.ok { color: var(--done); }
+.tally { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.82rem; }
+.tally span { border: 1px solid var(--rule); border-radius: 4px; padding: 1px 8px; background: var(--ground); font-variant-numeric: tabular-nums; }
+ul.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.9rem; }
+ul.people li { display: grid; gap: 2px; }
+ul.people .vd { font-weight: 600; }
+ul.people .cmt { color: var(--muted); overflow-wrap: anywhere; white-space: pre-wrap; }
+
+.empty { color: var(--muted); }
+footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { .fcard { transition: border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>DR2.1 engineering review</h1>
+    <p class="lede">A risk-ranked review of the Design Release 2.1 combined branch, <span class="mono">feat/NO_JIRA-design-release-2-1-combined</span>, which carries 8 draft PRs. Templates (EUDPA-690) is not merged yet and is reviewed later on this page.</p>
+    <nav class="jump" aria-label="On this page">
+      <a href="#questions">Questions the handover asked</a>
+      <a href="#order">Review order</a>
+      <a href="#findings">Findings</a>
+      <a href="#refuted">Refuted</a>
+      <a href="#how">How it was made</a>
+    </nav>
+  </header>
+
+  <section class="section" aria-labelledby="summary-h">
+    <h2 id="summary-h">Summary</h2>
+    <div class="callout" id="headline"><p>Loading the review…</p></div>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <h2 id="questions-h">Questions the handover asked</h2>
+    <div class="panel qa">
+      <div class="q">
+        <h3>Is the backend fetch timeout and retry needed in CDP?</h3>
+        <div class="a">
+          <p><strong>No.</strong> Every connect timeout in the build's logs is to Docker Desktop's host-gateway address for <span class="mono">host.docker.internal</span>, on ports 8085 (animals backend) and 8091 (plants backend). There is no CDP evidence. No log exists from after the fix either, so whether it fixed anything locally is unproven.</p>
+        </div>
+      </div>
+      <div class="q">
+        <h3>Does it behave behind CDP's <span class="mono">HTTP_PROXY</span>?</h3>
+        <div class="a">
+          <p>It does not bypass the proxy. With <span class="mono">HTTP_PROXY</span> set, backend calls use built-in fetch and the global proxy agent, as before. That also means the 2 second bound never applies in CDP, and the retry fires only if the socket to the proxy itself fails. A backend the proxy cannot reach comes back as a 5xx or a tunnelling error, and neither is retried.</p>
+          <p>In CDP the change is effectively dead code. It also puts CDP on a different fetch and FormData path from every test environment (finding rank 5).</p>
+          <p><strong>Retry safety.</strong> Connect timeout and connection refused happen before any bytes are sent, so a create, submit or upload cannot be duplicated. <span class="mono">ETIMEDOUT</span> is the exception (finding rank 25).</p>
+        </div>
+      </div>
+      <div class="q">
+        <h3>Should it exist?</h3>
+        <div class="a">
+          <p class="verdict-line">Verdict: remove it from production code in both frontends.</p>
+          <ul class="plain">
+            <li>Revert <span class="mono">backendFetch</span> to plain fetch. Delete <span class="mono">test/setup-backend-fetch.js</span>, <span class="mono">backend-fetch.real.test.js</span> and the retry unit tests.</li>
+            <li>Keep <span class="mono">stackWithCauses</span> error logging. It is a real diagnostic gain on its own.</li>
+            <li>If you want a local bound, put it on the global dispatcher behind a stack-only flag. Retry only on connect-refused and connect-timeout, ideally only for idempotent methods, and test it against real sockets.</li>
+          </ul>
+          <p><strong>Verifier's correction.</strong> The retry decision is unit-tested: <span class="mono">backend-fetch.test.js:73-108</span> fails if the retry branch is removed. What no test covers is the 2 second bound and the agent.</p>
+        </div>
+      </div>
+      <div class="q">
+        <h3>FIT global timeout raised from 900s to 1500s: is it hiding flakes?</h3>
+        <div class="a">
+          <p><strong>No.</strong> The suite grew from 455 to 529 tests and from 12.7 to 18.0 minutes, with 0 flaky and 0 retries. The raise absorbs set-up cost: one-page assertions about submitted or amending notifications each drive a full journey in <span class="mono">beforeEach</span>. Main was already using 85% of the 900s budget. See finding rank 6.</p>
+        </div>
+      </div>
+      <div class="q">
+        <h3>Did the flake fixes weaken any assertion?</h3>
+        <div class="a">
+          <ul class="plain">
+            <li><strong>test.slow() additions:</strong> each is a one-line addition with no step or assertion removed. Each task now saves back to the Overview, which adds two page loads per task.</li>
+            <li><strong>Dashboard pagination seeded:</strong> 26 creates now go through the frontend form client instead of 26 button clicks. Every assertion is unchanged, and this is set-up for a one-page assertion, which the rule allows.</li>
+            <li><strong>Address-book beforeEach reorder:</strong> skip first, walk after. Steps and all four assertions per test are identical to main.</li>
+            <li><strong>Date checks widened to accept yesterday: these do hide a real product bug.</strong> The plants frontend runs with <span class="mono">TZ=Europe/London</span> and parses the backend's zone-less date-time as London time. The confirmation, Date submitted and Date created pages show the previous calendar day between 00:00 and 01:00 BST. See finding rank 3.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="q">
+        <h3>Leaked commit <span class="mono">65b6afc</span> on <span class="mono">backup/inc-107-leaked-commit</span></h3>
+        <div class="a">
+          <p>Superseded by <span class="mono">02dd6bc</span>, which landed the same document-card test with alphanumeric references and an existing JPG fixture. Nothing in it is needed. The branch is safe to delete (finding rank 24).</p>
+          <p class="note">Side note: the backend rejects non-alphanumeric document references, but the animals frontend has no matching format rule. A trader typing <span class="mono">UK-123</span> would get a backend 400 rather than a page error. Not yet verified beyond the file-type check running first.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="order" aria-labelledby="order-h">
+    <h2 id="order-h">Review order</h2>
+    <div class="legend" aria-label="Priority legend">
+      <span><strong>Priority 1</strong> outside the frontends</span>
+      <span><strong>Priority 2</strong> frontend shared code</span>
+      <span><strong>Priority 3</strong> feature folders, sampled</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rank</th><th>Area</th><th>Priority</th><th>Findings</th><th>Refuted</th><th>Why this order</th></tr></thead>
+        <tbody id="order-rows"></tbody>
+      </table>
+    </div>
+    <p class="note" id="order-note"></p>
+    <h3>Area summaries</h3>
+    <div id="areas"></div>
+  </section>
+
+  <section class="section" id="findings" aria-labelledby="findings-h">
+    <h2 id="findings-h">Findings, ranked</h2>
+    <div class="callout" id="vnote" role="status">Loading verdicts. The findings below are readable now.</div>
+    <div class="filters" role="group" aria-label="Filter findings">
+      <div class="f"><label for="f-sev">Severity</label>
+        <select id="f-sev"><option value="">All</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+      <div class="f"><label for="f-pri">Priority</label>
+        <select id="f-pri"><option value="">All</option><option value="1">1 Outside the frontends</option><option value="2">2 Frontend shared code</option><option value="3">3 Feature folders</option></select></div>
+      <div class="f"><label for="f-area">Area</label><select id="f-area"><option value="">All</option></select></div>
+      <div class="check"><input type="checkbox" id="f-mine" disabled><label for="f-mine">Not yet reviewed by me</label></div>
+      <button type="button" class="link" id="f-reset">Clear filters</button>
+    </div>
+    <p class="note" id="f-count" aria-live="polite"></p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="section" id="refuted" aria-labelledby="refuted-h">
+    <h2 id="refuted-h">Refuted findings</h2>
+    <details class="panel" id="refuted-box">
+      <summary id="refuted-sum">Refuted findings</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Finding</th><th>Area</th><th>Why it was refuted</th></tr></thead>
+          <tbody id="refuted-rows"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <footer class="end" id="how">
+    <p><strong>How it was made.</strong> 11 Opus reviewers, one per area. One adversarial Opus verifier per area, told to refute by default. A Sonnet pass ranked what survived. 23 agents in all.</p>
+    <p>Source data: <span class="mono">workareas/shared/design-release-2-1/combined/engineering-review/review.json</span> in the trade-imports-workspace repo.</p>
+  </footer>
+</div>
+
+<script src="findings.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.ENG;
+  var BRANCH = 'feat/NO_JIRA-design-release-2-1-combined';
+  var WS_BRANCH = 'feat/NO_JIRA-design-release-2-1';
+  var VERDICTS = [
+    { v: 'fix', label: 'Fix it', short: 'Fix' },
+    { v: 'accept', label: 'Accept the risk', short: 'Accept' },
+    { v: 'not-a-problem', label: 'Not a problem', short: 'Not a problem' },
+    { v: 'not-sure', label: 'Not sure', short: 'Not sure' }
+  ];
+  var PRIORITY_NAMES = { 1: 'Outside the frontends', 2: 'Frontend shared code', 3: 'Feature folders, sampled' };
+
+  function $(id) { return document.getElementById(id); }
+  function h(tag, attrs, kids) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'text') el.textContent = attrs[k];
+      else if (k === 'class') el.className = attrs[k];
+      else el.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+
+  if (!D) {
+    $('headline').textContent = 'The findings data did not load.';
+    return;
+  }
+
+  /* ---------- summary ---------- */
+  $('headline').replaceChildren(h('p', { text: D.headline }));
+  var sev = { high: 0, medium: 0, low: 0 };
+  D.findings.forEach(function (f) { sev[f.severity] = (sev[f.severity] || 0) + 1; });
+  var reported = D.findings.reduce(function (n, f) { return n + f.ranks.length; }, 0);
+  function fact(value, label, cls) {
+    return h('div', { class: 'fact' }, [h('b', { text: String(value), class: cls || '' }), h('span', { text: label })]);
+  }
+  var facts = $('facts');
+  facts.appendChild(fact(sev.high, 'high severity', 'high'));
+  facts.appendChild(fact(sev.medium, 'medium severity'));
+  facts.appendChild(fact(sev.low, 'low severity'));
+  facts.appendChild(fact(D.findings.length, 'finding cards (' + reported + ' reported, duplicates merged)'));
+  facts.appendChild(fact(D.reviewed, 'areas reviewed'));
+  facts.appendChild(fact(D.refuted, 'findings refuted'));
+  var mineFact = h('div', { class: 'fact', id: 'fact-mine', hidden: '' });
+  facts.appendChild(mineFact);
+
+  /* ---------- review order and areas ---------- */
+  var areaByTitle = {};
+  D.areas.forEach(function (a) { areaByTitle[a.title] = a; });
+  var cardCountByArea = {};
+  D.findings.forEach(function (f) { cardCountByArea[f.area] = (cardCountByArea[f.area] || 0) + 1; });
+  var tb = $('order-rows');
+  D.order.forEach(function (o) {
+    var a = areaByTitle[o.area] || {};
+    tb.appendChild(h('tr', null, [
+      h('td', { class: 'num', text: String(o.rank) }),
+      h('td', { text: o.area }),
+      h('td', { class: 'num', text: String(o.priority) }),
+      h('td', { class: 'num', text: String(cardCountByArea[o.area] || 0) }),
+      h('td', { class: 'num', text: String(a.killed || 0) }),
+      h('td', { text: o.why })
+    ]));
+  });
+  var listed = {};
+  D.order.forEach(function (o) { listed[o.area] = true; });
+  var unlisted = D.areas.filter(function (a) { return !listed[a.title]; }).map(function (a) { return a.title; });
+  if (unlisted.length) $('order-note').textContent = 'Reviewed but not in the ranked order, because no finding survived verification: ' + unlisted.join(', ') + '.';
+  var areasEl = $('areas');
+  D.areas.slice().sort(function (a, b) { return a.priority - b.priority; }).forEach(function (a) {
+    areasEl.appendChild(h('details', { class: 'area' }, [
+      h('summary', { text: 'Priority ' + a.priority + ' · ' + a.title + ' · ' + a.survived + ' survived, ' + a.killed + ' refuted' }),
+      h('p', { text: a.summary })
+    ]));
+  });
+
+  /* ---------- finding cards ---------- */
+  function repoList(s) { var m = s.match(/trade-imports-[a-z-]+/g) || []; return m.filter(function (r, i) { return m.indexOf(r) === i; }); }
+  function whereBlock(repoStr, file, line) {
+    var box = h('div', { class: 'where' });
+    repoList(repoStr).forEach(function (r) {
+      var branch = r === 'trade-imports-workspace' ? WS_BRANCH : BRANCH;
+      var url = 'https://github.com/DEFRA/' + r + '/blob/' + branch + '/' + file + '#L' + line;
+      box.appendChild(h('span', { class: 'repo', text: r }));
+      box.appendChild(h('a', { href: url, target: '_blank', rel: 'noopener', text: file + ':' + line }));
+    });
+    return box;
+  }
+  function section(title, text) { return h('div', null, [h('h4', { text: title }), h('p', { text: text })]); }
+
+  function buildCard(f) {
+    var id = f.id;
+    var rankText = f.ranks.length > 1 ? 'Ranks ' + f.ranks.join(' and ') : 'Rank ' + f.rank;
+    var art = h('article', { class: 'fcard sev-' + f.severity, id: 'f-' + id, 'aria-labelledby': 'h-' + id });
+    art.setAttribute('data-sev', f.severity);
+    art.setAttribute('data-pri', String(f.priority));
+    art.setAttribute('data-area', f.area);
+    art.setAttribute('data-id', id);
+    var header = h('header', null, [
+      h('div', { class: 'chips' }, [
+        h('span', { class: 'chip rank', text: rankText }),
+        h('span', { class: 'chip sev ' + f.severity, text: f.severity }),
+        h('span', { class: 'chip', text: 'Priority ' + f.priority }),
+        h('span', { class: 'chip', text: f.area })
+      ]),
+      h('h3', { id: 'h-' + id, text: f.title }),
+      whereBlock(f.repo, f.file, f.line)
+    ]);
+    f.also.forEach(function (o) {
+      header.appendChild(h('p', { class: 'note', text: 'Also reported at rank ' + o.rank + ':' }));
+      header.appendChild(whereBlock(o.repo, o.file, o.line));
+    });
+    var body = h('div', { class: 'body' }, [
+      section("What's wrong", f.what),
+      section('Scenario that breaks it', f.scenario),
+      section('Suggested fix', f.fix),
+      h('details', null, [h('summary', { text: "Verifier's note" }), h('p', { text: f.verifierNote })])
+    ]);
+    f.also.forEach(function (o) {
+      body.appendChild(h('details', null, [
+        h('summary', { text: 'Second report (rank ' + o.rank + ')' }),
+        h('p', { text: o.what }),
+        h('p', { text: 'Scenario: ' + o.scenario }),
+        h('p', { text: 'Fix: ' + o.fix }),
+        h('p', { text: "Verifier's note: " + o.verifierNote })
+      ]));
+    });
+    var vbox = h('div', { class: 'vbox' });
+    var fs = h('fieldset', { id: 'fs-' + id }, [h('legend', { text: 'Your verdict' })]);
+    var opts = h('div', { class: 'opts' });
+    VERDICTS.forEach(function (o) {
+      var inp = h('input', { type: 'radio', name: 'v-' + id, id: 'v-' + id + '-' + o.v, value: o.v, disabled: '' });
+      opts.appendChild(h('label', { for: 'v-' + id + '-' + o.v }, [inp, o.label]));
+    });
+    fs.appendChild(opts);
+    var cm = h('div', { class: 'cm' }, [
+      h('label', { for: 'c-' + id, text: 'Comment (optional)' }),
+      h('textarea', { id: 'c-' + id, rows: '2', disabled: '' }),
+      h('div', { class: 'row' }, [
+        h('button', { type: 'button', id: 'save-' + id, disabled: '', text: 'Save comment' }),
+        h('span', { class: 'msg', id: 'msg-' + id, role: 'status' })
+      ])
+    ]);
+    var all = h('div', { id: 'all-' + id }, [
+      h('div', { class: 'tally', id: 'tally-' + id }),
+      h('ul', { class: 'people', id: 'people-' + id })
+    ]);
+    vbox.appendChild(fs); vbox.appendChild(cm); vbox.appendChild(all);
+    art.appendChild(header); art.appendChild(body); art.appendChild(vbox);
+    return art;
+  }
+  var cardsEl = $('cards');
+  var cardEls = {};
+  D.findings.forEach(function (f) { var c = buildCard(f); cardEls[f.id] = c; cardsEl.appendChild(c); });
+
+  /* ---------- refuted ---------- */
+  $('refuted-sum').textContent = D.killed.length + ' refuted findings (each was reported, then disproved by the verifier)';
+  function firstSentence(s) { var m = s.match(/^.{20,260}?[.!?](\s|$)/); return m ? m[0].trim() : s.slice(0, 240); }
+  var rr = $('refuted-rows');
+  D.killed.forEach(function (k) {
+    var short = firstSentence(k.refutation);
+    var cell = h('td', null, [h('p', { text: short })]);
+    if (short.length < k.refutation.length) cell.appendChild(h('details', null, [h('summary', { text: 'Full refutation' }), h('p', { text: k.refutation })]));
+    rr.appendChild(h('tr', null, [
+      h('td', null, [h('strong', { text: k.title }), h('div', { class: 'note', text: k.severity + ' as first reported' })]),
+      h('td', { text: k.area }),
+      cell
+    ]));
+  });
+
+  /* ---------- filters ---------- */
+  var FKEY = 'dr21-eng-filters';
+  var areaSel = $('f-area');
+  D.order.forEach(function (o) {
+    if (cardCountByArea[o.area]) areaSel.appendChild(h('option', { value: o.area, text: o.area }));
+  });
+  var filt = { sev: '', pri: '', area: '', mine: false };
+  try { var saved = JSON.parse(localStorage.getItem(FKEY) || 'null'); if (saved) filt = Object.assign(filt, saved); } catch (e) { /* storage unavailable */ }
+  $('f-sev').value = filt.sev; $('f-pri').value = filt.pri; areaSel.value = filt.area;
+  if (areaSel.value !== filt.area) { filt.area = ''; areaSel.value = ''; }
+  $('f-mine').checked = !!filt.mine;
+
+  var verdictsByUser = {};   // uid -> { items }
+  var myId = null;
+  var canWrite = false;
+
+  function applyFilters() {
+    var shown = 0;
+    D.findings.forEach(function (f) {
+      var ok = (!filt.sev || f.severity === filt.sev) && (!filt.pri || String(f.priority) === filt.pri) && (!filt.area || f.area === filt.area);
+      if (ok && filt.mine && canWrite) {
+        var mine = verdictsByUser[myId] && verdictsByUser[myId].items && verdictsByUser[myId].items[f.id];
+        if (mine && mine.verdict) ok = false;
+      }
+      cardEls[f.id].hidden = !ok;
+      if (ok) shown++;
+    });
+    $('f-count').textContent = 'Showing ' + shown + ' of ' + D.findings.length + ' findings.';
+  }
+  function onFilter() {
+    filt.sev = $('f-sev').value; filt.pri = $('f-pri').value; filt.area = areaSel.value; filt.mine = $('f-mine').checked;
+    try { localStorage.setItem(FKEY, JSON.stringify(filt)); } catch (e) { /* ignore */ }
+    applyFilters();
+  }
+  ['f-sev', 'f-pri', 'f-area'].forEach(function (i) { $(i).addEventListener('change', onFilter); });
+  $('f-mine').addEventListener('change', onFilter);
+  $('f-reset').addEventListener('click', function () {
+    $('f-sev').value = ''; $('f-pri').value = ''; areaSel.value = ''; $('f-mine').checked = false; onFilter();
+  });
+  applyFilters();
+
+  /* ---------- verdicts ---------- */
+  var db = null, user = null, profiles = {};
+  var dirty = {};
+  var chain = Promise.resolve();
+  var ready = false;
+  var vnote = $('vnote');
+
+  function setMsg(id, text, cls) {
+    var el = $('msg-' + id);
+    el.textContent = text || '';
+    el.className = 'msg' + (cls ? ' ' + cls : '');
+  }
+  function myItem(id) { return verdictsByUser[myId] && verdictsByUser[myId].items && verdictsByUser[myId].items[id]; }
+
+  function describeError(e) {
+    var code = e && e.code ? e.code : 'unknown';
+    if (code === 'invalid_argument') return 'Not saved: you may not have permission to write verdicts on this page (' + code + ').';
+    if (code === 'unavailable') return 'Not saved: the store is unavailable right now. Try again in a moment.';
+    if (code === 'quota_exceeded' || code === 'resource_exhausted') return 'Not saved: a store limit was reached (' + code + ').';
+    if (code === 'revoked') return 'Not saved: your access to this page has changed.';
+    return 'Not saved (' + code + '): ' + ((e && e.message) || 'unknown error');
+  }
+
+  function enqueue(fn) { chain = chain.then(fn, fn); return chain; }
+
+  function writeEntry(id, verdict, comment) {
+    setMsg(id, 'Saving…');
+    return enqueue(function () {
+      var entry = { verdict: verdict, comment: comment, at: new Date().toISOString() };
+      var ref = db.doc('verdicts/' + myId);
+      var exists = !!verdictsByUser[myId];
+      var first = exists ? ref.update({ items: (function () { var o = {}; o[id] = entry; return o; })() })
+                         : ref.set({ items: (function () { var o = {}; o[id] = entry; return o; })() });
+      return first.catch(function (e) {
+        if (exists && e && e.code === 'invalid_argument') {
+          var items = Object.assign({}, (verdictsByUser[myId] && verdictsByUser[myId].items) || {});
+          items[id] = entry;
+          return ref.set({ items: items });
+        }
+        throw e;
+      }).then(function () {
+        dirty[id] = false;
+        setMsg(id, 'Saved', 'ok');
+        var btn = $('save-' + id); if (btn) btn.disabled = true;
+      }).catch(function (e) {
+        setMsg(id, describeError(e), 'err');
+      });
+    });
+  }
+
+  function wireCard(id) {
+    var radios = document.querySelectorAll('input[name="v-' + id + '"]');
+    var ta = $('c-' + id), btn = $('save-' + id);
+    radios.forEach(function (r) {
+      r.addEventListener('change', function () {
+        if (!r.checked || !canWrite) return;
+        var cur = myItem(id);
+        if (cur && cur.verdict === r.value) return;
+        writeEntry(id, r.value, ta.value);
+      });
+    });
+    function saveComment() {
+      if (!canWrite || !dirty[id]) return;
+      var cur = myItem(id);
+      var checked = document.querySelector('input[name="v-' + id + '"]:checked');
+      var verdict = checked ? checked.value : (cur && cur.verdict);
+      if (!verdict) { setMsg(id, 'Choose a verdict first, then save the comment.', 'err'); return; }
+      if (cur && cur.comment === ta.value && cur.verdict === verdict) { dirty[id] = false; btn.disabled = true; return; }
+      writeEntry(id, verdict, ta.value);
+    }
+    ta.addEventListener('input', function () {
+      var cur = myItem(id);
+      dirty[id] = ta.value !== ((cur && cur.comment) || '');
+      btn.disabled = !dirty[id] || !canWrite;
+      if (dirty[id]) setMsg(id, 'Unsaved comment');
+    });
+    ta.addEventListener('blur', saveComment);
+    btn.addEventListener('click', saveComment);
+  }
+  D.findings.forEach(function (f) { wireCard(f.id); });
+
+  function nameFor(uid) {
+    var p = profiles[uid];
+    var n = (p && p.name) || 'Someone';
+    return (uid === myId) ? 'You (' + n + ')' : n;
+  }
+
+  function renderVerdicts() {
+    var mineCount = 0;
+    D.findings.forEach(function (f) {
+      var id = f.id;
+      var counts = { fix: 0, accept: 0, 'not-a-problem': 0, 'not-sure': 0 };
+      var rows = [];
+      Object.keys(verdictsByUser).forEach(function (uid) {
+        var it = verdictsByUser[uid] && verdictsByUser[uid].items && verdictsByUser[uid].items[id];
+        if (it && counts.hasOwnProperty(it.verdict)) { counts[it.verdict]++; rows.push({ uid: uid, it: it }); }
+      });
+      var tally = $('tally-' + id);
+      tally.replaceChildren.apply(tally, VERDICTS.map(function (o) { return h('span', { text: o.short + ' ' + counts[o.v] }); }));
+      rows.sort(function (a, b) { return String(b.it.at).localeCompare(String(a.it.at)); });
+      var ul = $('people-' + id);
+      ul.replaceChildren.apply(ul, rows.map(function (r) {
+        var label = VERDICTS.filter(function (o) { return o.v === r.it.verdict; })[0].label;
+        var li = h('li', null, [h('span', { class: 'vd', text: nameFor(r.uid) + ': ' + label })]);
+        if (r.it.comment) li.appendChild(h('span', { class: 'cmt', text: r.it.comment }));
+        return li;
+      }));
+      if (canWrite) {
+        var mine = myItem(id);
+        if (mine && mine.verdict) mineCount++;
+        document.querySelectorAll('input[name="v-' + id + '"]').forEach(function (r) { r.checked = !!mine && mine.verdict === r.value; });
+        var ta = $('c-' + id);
+        if (!dirty[id] && document.activeElement !== ta) ta.value = (mine && mine.comment) || '';
+      }
+    });
+    if (canWrite) {
+      var fm = $('fact-mine');
+      fm.hidden = false;
+      fm.replaceChildren(h('b', { text: mineCount + ' of ' + D.findings.length }), h('span', { text: 'with your verdict' }));
+    }
+    applyFilters();
+  }
+
+  function setControls(on) {
+    document.querySelectorAll('.vbox input, .vbox textarea').forEach(function (el) { el.disabled = !on; });
+    $('f-mine').disabled = !on;
+    if (!on) document.querySelectorAll('.vbox button').forEach(function (b) { b.disabled = true; });
+  }
+
+  function readOnlyNote(text) {
+    vnote.className = 'callout';
+    vnote.textContent = text;
+    $('f-mine').title = 'Needs a signed-in viewer';
+    document.querySelectorAll('.vbox fieldset, .vbox .cm').forEach(function (el) { el.hidden = true; });
+  }
+
+  function start() {
+    if (!window.claude || typeof window.claude.use !== 'function') {
+      readOnlyNote('Verdicts need a signed-in viewer. You are seeing the findings read-only.');
+      return;
+    }
+    Promise.all([window.claude.use('db'), window.claude.use('user')]).then(function (res) {
+      db = res[0]; user = res[1];
+      if (!db) { readOnlyNote('Verdicts need a signed-in viewer. You are seeing the findings read-only.'); return null; }
+      return (user ? user.id() : Promise.resolve(null)).then(function (id) {
+        myId = id;
+        canWrite = !!(db && user && myId);
+        if (!canWrite) {
+          vnote.className = 'callout';
+          vnote.textContent = 'Verdicts need a signed-in viewer. You can read other people\'s verdicts, but you cannot add your own here.';
+          document.querySelectorAll('.vbox fieldset, .vbox .cm').forEach(function (el) { el.hidden = true; });
+        } else {
+          vnote.className = 'callout ready';
+          vnote.textContent = 'Loading verdicts…';
+        }
+        db.collection('verdicts').onSnapshot(function (snap) {
+          var next = {};
+          snap.docs.forEach(function (d) { next[d.id] = d.data(); });
+          verdictsByUser = next;
+          if (canWrite && !ready) {
+            ready = true;
+            setControls(true);
+            vnote.textContent = 'Choose a verdict on any finding. It saves as soon as you choose. Comments save with the Save comment button or when you leave the box. Everyone with access sees the verdicts.';
+          } else if (!canWrite) {
+            vnote.textContent = 'Verdicts need a signed-in viewer. You can read other people\'s verdicts, but you cannot add your own here.';
+          }
+          renderVerdicts();
+          if (user) {
+            var ids = Object.keys(next);
+            if (ids.length) user.profiles(ids).then(function (p) { profiles = p; renderVerdicts(); });
+          }
+        }, function (err) {
+          vnote.className = 'callout block';
+          vnote.textContent = 'Verdicts could not be loaded (' + ((err && err.code) || 'unknown') + '). The findings are still readable.';
+          document.querySelectorAll('.vbox fieldset, .vbox .cm').forEach(function (el) { el.hidden = true; });
+        });
+      });
+    }).catch(function () {
+      readOnlyNote('Verdicts need a signed-in viewer. You are seeing the findings read-only.');
+    });
+  }
+  start();
+})();
+</script>

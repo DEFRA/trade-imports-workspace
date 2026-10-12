@@ -273,6 +273,24 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/template-mode.test.js", "test": "Should offer no %s in template mode", "strength": "full", "notes": "run for the documents, declaration, confirmation, amend, cancel-amend, copy and delete pages." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the documents page on the way from the transporters to the addresses", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-006-E",
+          "name": "Origin of the import ends with Save and continue alone while a template is created",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "a trimmed name moves on to Origin of the import in template mode", "strength": "partial", "notes": "checks the two overview controls are absent, not that Save and continue is the only control; the FIT counts the submit buttons." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-006-F",
+          "name": "Saving Origin of the import moves on to What are you importing? for the template",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-task-list.spec.ts", "test": "'What are you importing?' in template mode shows the Template tag and name, goes Back to Origin and offers all three controls", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows a saved country again when reopened, and stays in the template on Save and continue", "strength": "partial", "notes": "checks the template's commodities address after Save and continue, not the page shown there." }
+          ]
         }
       ]
     },
@@ -331,7 +349,7 @@
     {
       "id": "REQ-TEMPLATES-010",
       "name": "The template's tasks are the notification's tasks",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-TEMPLATES-010-A",
@@ -342,6 +360,14 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should list the notification's own tasks without Upload documents, each linking under the template", "strength": "partial", "notes": "pins the view model, not the rendered page." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should give the template the notification's row hints, on the roles and addresses row alone", "strength": "partial", "notes": "pins the view model's hint slot, not the rendered page." },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-task-list.spec.ts", "test": "the template's task list has five sections holding the notification's tasks, none for documents, each opening within the template", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-010-B",
+          "name": "A template's Arrival details task is complete without an arrival date",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should not wait on an arrival date in template mode, and still wait on it outside", "strength": "partial", "notes": "pins the task row's status, not the rendered task list; no fit or e2e test opens the template's Overview with arrival details answered." }
           ]
         }
       ]
@@ -440,9 +466,9 @@
           "name": "A cattle template's review shows the cattle rows and one main reason row",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows Certified for, Includes unweaned animals and the CPH number for cattle, and one row under Main reason for import", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows Certified for, Includes unweaned animals and the CPH number for cattle, and one row under Main reason for import", "strength": "partial", "notes": "its identification check looks for a card titled Identification details, which the merged review never draws; the E2E checks the heading." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show Certified for, Includes unweaned animals and the CPH number for cattle, no identifier table, and one row under Main reason for import", "strength": "partial", "notes": "pins the view model, not the rendered page." },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-review.spec.ts", "test": "for cattle the template review shows Certified for, Includes unweaned animals and the CPH number, no identification card, and one Main reason for import row", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-review.spec.ts", "test": "for cattle the template review shows Certified for, Includes unweaned animals and the CPH number, no identification card, and one Main import reason row", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -594,7 +620,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "View template opens the template page titled with its name under the caption Templates", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "View template opens the template page: caption 'Templates', the name as its heading and browser title", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "View template opens the template page: caption 'Templates', the name as its heading and browser title", "strength": "partial", "notes": "does not check that no Template tag or status strip is shown; the FIT does." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should render a saved template titled with its name under the Templates caption, with its Back link to Manage templates", "strength": "partial", "notes": "pins the view model, not the rendered page." },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should title a template saved with no name Untitled template", "strength": "partial", "notes": "pins the view model, not the rendered page." }
           ]
@@ -663,7 +689,7 @@
     {
       "id": "REQ-TEMPLATES-026",
       "name": "The template's page shows its answers in the review's cards",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-TEMPLATES-026-A",
@@ -680,6 +706,23 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "a template saved after answering every section shows every saved answer", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-026-C",
+          "name": "A part-answered template's page reads Not applicable and shows no errors",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "the Contact address card shows the place of origin", "strength": "partial", "notes": "checks one unanswered row, Consignor, reads Not applicable; does not check the other rows or that no error is shown." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "with no contact address chosen, the template's page and the notification started from it use the place of origin", "strength": "partial", "notes": "checks one unanswered row, Consignor, reads Not applicable; does not check the other rows or that no error is shown." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-026-D",
+          "name": "The transit countries and each species' number of animals and identification details have their own Change links",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "every section the template page links to saves and returns to the template page", "strength": "partial", "notes": "opens every distinct Change link on the page for the template, but does not name the transit countries, number of animals or identification details links." }
           ]
         }
       ]

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification" while a notification is being amended, and "Review before re-submitting" once an amendment's answers differ from the submitted version. A draft's review and a submitted notification's view are headed and titled by its reference number, with its status as a tag, its date and the actions open to it in a header, and its import reference numbers. A submitted notification's view offers Amend this notification, Copy as new and Delete in its header, and shows its import reference numbers.
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification" while a notification is being amended, and "Review before re-submitting" once an amendment's answers differ from the submitted version. A draft's review and a submitted notification's view are headed and titled by its reference number, with its status as a tag, its date and the actions open to it in a header, and its import reference numbers. A submitted notification's view offers Amend this notification, Copy as new and Delete in its header, and shows its import reference numbers. While a template is being created the page is the template review, titled "Review your template", specified by live-animals/notification-templates (REQ-TEMPLATES-013 to REQ-TEMPLATES-018).
 
 ## Requirements
 
 ### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
 **ID**: REQ-CYA-001
-The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST stand every card directly under its section heading, with no subsection heading between them, titled one heading level below it. Which cards stand within a section MAY depend on the notification. The system MUST read each card's rows under the names the scenarios give.
+For a notification, the system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST stand every card directly under its section heading, with no subsection heading between them, titled one heading level below it. Which cards stand within a section MAY depend on the notification. The system MUST read each card's rows under the names the scenarios give.
 
 #### Scenario: The review draws all six numbered sections in order
 **ID**: SCN-CYA-001-A
@@ -175,7 +175,7 @@ The system MUST group the page under the same six numbered section headings the 
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
-The system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
+On a notification's review, the system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
 
 #### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
 **ID**: SCN-CYA-002-A

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-The task list a user works a notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview".
+The task list a user works a notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview". While a template is being created the page is the template's task list, specified by live-animals/notification-templates (REQ-TEMPLATES-008 to REQ-TEMPLATES-011).
 
 ## Requirements
 
 ### Requirement: Overview groups the notification's tasks under six fixed, numbered sections
 **ID**: REQ-OVERVIEW-001
-The system MUST group the notification's tasks on the Overview page under six numbered section headings, in a fixed order, with one task list per section.
+For a notification, the system MUST group its tasks on the Overview page under six numbered section headings, in a fixed order, with one task list per section.
 
 #### Scenario: A fresh notification's Overview lists its always-present tasks under the six sections
 **ID**: SCN-OVERVIEW-001-A
@@ -19,7 +19,7 @@ The system MUST group the notification's tasks on the Overview page under six nu
 
 ### Requirement: Each task row shows one of two statuses, and Overview offers a review button open at any point
 **ID**: REQ-OVERVIEW-002
-The system MUST show each task row's status as one of two labels — Complete once it is answered, To do otherwise, never a third or blocked state — and MUST offer a fixed "Review and submit" button, not a task row, that opens the review page at any point in the journey however much of the notification remains outstanding.
+For a notification, the system MUST show each task row's status as one of two labels — Complete once it is answered, To do otherwise, never a third or blocked state — and MUST offer a fixed "Review and submit" button, not a task row, that opens the review page at any point in the journey however much of the notification remains outstanding.
 
 #### Scenario: A fresh notification shows an answered task as Complete and an unworked task as To do, both linked
 **ID**: SCN-OVERVIEW-002-A
@@ -37,7 +37,7 @@ The system MUST show each task row's status as one of two labels — Complete on
 
 ### Requirement: Overview's only route off the page is the Return to dashboard action — there is no back link
 **ID**: REQ-OVERVIEW-003
-The system MUST offer a return-to-dashboard action from Overview and take the user to the dashboard, and MUST NOT show a back link, since Overview is the top of the notification rather than a step within it.
+For a notification, the system MUST offer a return-to-dashboard action from Overview and take the user to the dashboard, and MUST NOT show a back link, since Overview is the top of the notification rather than a step within it.
 
 #### Scenario: The return action leads to the dashboard, with no back link present
 **ID**: SCN-OVERVIEW-003-A
@@ -146,7 +146,7 @@ The system MUST mark the "Where is this consignment coming from?" task Complete 
 
 ### Requirement: Overview marks its commodity summary, the task list and each numbered section as named regions
 **ID**: REQ-OVERVIEW-010
-The system MUST mark the "Your commodities" block, the task list and each numbered section on Overview as regions named by their own heading, MUST mark the animals total card as a region named "Animals summary" and the packages total card as one named "Packages summary", and MUST keep each task link describing its status, and Roles and addresses its hint, to assistive technology.
+For a notification, the system MUST mark the "Your commodities" block, the task list and each numbered section on Overview as regions named by their own heading, MUST mark the animals total card as a region named "Animals summary" and the packages total card as one named "Packages summary", and MUST keep each task link describing its status, and Roles and addresses its hint, to assistive technology.
 
 #### Scenario: The two total cards are named regions
 **ID**: SCN-OVERVIEW-010-A

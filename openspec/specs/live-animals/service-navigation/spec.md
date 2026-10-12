@@ -83,3 +83,14 @@ The system MUST open the Manage templates page when the user follows the Templat
 - **GIVEN** the user is signed in
 - **WHEN** they follow Templates in the navigation
 - **THEN** the page headed "Manage templates" is shown
+
+### Requirement: The Address book item opens the Import Notification Service address book
+**ID**: REQ-NAV-006
+The system MUST open the Import Notification Service's address book when the user follows the Address book item.
+
+#### Scenario: Following Address book opens the INS address book
+**ID**: SCN-NAV-006-A
+- **GIVEN** the user is signed in and on the live animals dashboard
+- **WHEN** they follow Address book in the navigation
+- **AND** they complete sign-in to the Import Notification Service if it asks
+- **THEN** the Import Notification Service address book is shown

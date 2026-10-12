@@ -75,6 +75,28 @@ in `business-review/page/build/`.
 
 ## Templates
 
-<!-- updated when laptop 2 has pushed -->
-Waiting on laptop 2. When it has stopped and pushed, templates merges into this branch in its 5 repos, the branch is
-re-proved, and its remaining rows build on this laptop.
+Laptop 2 stopped and pushed on 12 October at 09:52 with 13 of templates' 22 live rows done (inc-161 last), 9 to
+build and 1 dropped. Its workspace commits (templates backlog, its OpenSpec capabilities, and build-loop gate fixes)
+were merged into `feat/NO_JIRA-design-release-2-1` with no conflicts.
+
+`feat/NO_JIRA-design-release-2-1-type-question-and-templates` then merged into this branch:
+
+| Repo | Merge | Conflicts | Log |
+|---|---|---|---|
+| animals backend | `19b7af2` | none | — |
+| plants frontend | `10d7ce6` | none | — |
+| INS frontend | `340e956` | 4 (shared copy and its tests) | `templates-merge-ins-and-tests.md` |
+| tests | `17fa81c` | 6 (4 page objects, 2 origin visual baselines) | `templates-merge-ins-and-tests.md` |
+| animals frontend | `74d79f1f` | 34 (opening run, save actions, review, template-mode pages) | `templates-merge-animals-frontend.md` |
+
+Normal notifications keep the combined branch's behaviour; template behaviour switches on only in template mode.
+
+Re-proof:
+
+| Check | Result |
+|---|---|
+| Unit and lint: animals 3,322, plants 2,213, INS 757 (fit 72), tests lint and typecheck | Green |
+| Animals fit (stub mode) | 625 passed |
+| Backend `mvn verify` | 178 ITs passed (a first run failed only because Docker was restarting) |
+| Full E2E, dev-mode stack | 500 passed, 2 failed, 1 flaky. Fixed in `9740498`: the template origin test predated the origin page's 5-character limit; the origin visual baselines now show the Templates navigation item. |
+| Flaky "Save template ... lists it first" | Cause: every template spec saves as the one stub user, so another worker's template can legitimately be newest. Fix: a dedicated stub user for those tests, made on the templates branch (tests and defra-id-stub) before its remaining rows build, then re-merged here. |

@@ -42,7 +42,7 @@ The page MUST ask "What are you importing?" with five unselected options and a s
 
 ### Requirement: Choosing what is being imported hands the user to the journey that notifies it
 **ID**: REQ-INS-NTYPE-002
-The system MUST, when the user chooses a type and continues, hand them to the journey that notifies it: Live animals to a new live-animals draft, Germinal products to the germinal products journey's start, and Plants for planting, Potatoes (seed and ware) or Wood products to a new high-risk plants draft. It MUST NOT create a live-animals notification for any other choice.
+The system MUST, when the user chooses a type and continues, hand them to the journey that notifies it: Live animals to a new live-animals draft, Germinal products to the germinal products start address (/germinal-products/start) in the animals service, and Plants for planting, Potatoes (seed and ware) or Wood products to a new high-risk plants draft. It MUST NOT create a live-animals notification for any other choice.
 
 #### Scenario: Live animals opens a new live-animals draft
 **ID**: SCN-INS-NTYPE-002-A
@@ -55,7 +55,7 @@ The system MUST, when the user chooses a type and continues, hand them to the jo
 **ID**: SCN-INS-NTYPE-002-B
 - **GIVEN** the question is shown
 - **WHEN** the user chooses Germinal products (semen, ova, embryos) and continues
-- **THEN** the germinal products journey's start is opened
+- **THEN** the user is sent to the germinal products start address in the animals service
 - **AND** no live-animals notification is created
 
 #### Scenario: A plants type opens a new high-risk plants draft
@@ -79,7 +79,7 @@ The system MUST, when the user continues with nothing chosen, show the question 
 
 ### Requirement: Creating a template asks what is being imported, offering only the types templates cover
 **ID**: REQ-INS-NTYPE-004
-The system MUST, when the user chooses to create a template, ask the same question under the caption "About the consignment" with only Live animals and Germinal products (semen, ova, embryos), none selected, a single "Continue" button, a Back link to Manage templates and Templates as the current service-navigation item, and MUST NOT show a "Template" caption. It MUST refuse continuing with nothing chosen as REQ-INS-NTYPE-003 does.
+The system MUST, when creating a template, ask the question under "About the consignment" offering only Live animals and Germinal products, none selected, with one "Continue" button, Back to Manage templates and Templates current. It MUST NOT show a Template tag, template name, Draft tag or reference, MUST refuse an empty choice as REQ-INS-NTYPE-003 does, and MUST return to a template already named when the user goes back and continues again.
 
 #### Scenario: Create new template asks the type question with two options
 **ID**: SCN-INS-NTYPE-004-A
@@ -88,7 +88,8 @@ The system MUST, when the user chooses to create a template, ask the same questi
 - **THEN** "What are you importing?" is shown under the caption "About the consignment"
 - **AND** the options are Live animals and Germinal products (semen, ova, embryos), with none selected
 - **AND** Plants for planting, Potatoes (seed and ware) and Wood products are not offered
-- **AND** the page ends with a single "Continue" button and shows no "Template" caption
+- **AND** the page ends with a single "Continue" button
+- **AND** no "Template" tag, no template name, no Draft tag and no notification reference are shown
 - **AND** Back leads to Manage templates and Templates is the current service-navigation item
 
 #### Scenario: Continuing with nothing chosen is refused
@@ -117,3 +118,18 @@ The system MUST, when the user chooses to create a template, ask the same questi
 - **WHEN** they leave without saving the name
 - **THEN** Manage templates shows the same count of templates as before
 - **AND** none of the user's draft notifications has changed
+
+#### Scenario: Continuing for a template already in progress returns to that template's name page
+**ID**: SCN-INS-NTYPE-004-F
+- **GIVEN** the user has named a template, reached "Origin of the import", followed Back to the template name page and Back again to the question
+- **WHEN** the question is shown
+- **THEN** the template's type is shown selected
+- **WHEN** they continue
+- **THEN** the template name page is shown with the name already entered
+
+#### Scenario: Continuing again returns to the same template with its name
+**ID**: SCN-INS-NTYPE-004-G
+- **GIVEN** the user has named a template, reached "Origin of the import" and followed Back twice to the type question
+- **WHEN** they choose Live animals or Germinal products (semen, ova, embryos) and continue, including after first continuing with nothing chosen
+- **THEN** the template name page shows the name already saved
+- **AND** Manage templates later shows only one new template

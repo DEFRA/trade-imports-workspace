@@ -50,3 +50,19 @@ The system MUST mark Dashboard as the current section on the dashboard and anywh
 - **WHEN** they view the navigation
 - **THEN** Dashboard is marked as the current section
 - **AND** Templates is not
+
+### Requirement: The Dashboard and Address book items lead to the plants dashboard and the INS address book
+**ID**: REQ-PLANTS-NAV-004
+The system MUST open the high-risk plants dashboard when the user follows Dashboard, including from inside a notification, and MUST open the Import Notification Service's address book when they follow Address book.
+
+#### Scenario: Following Dashboard from inside a notification opens the plants dashboard
+**ID**: SCN-PLANTS-NAV-004-A
+- **GIVEN** the user is working on a notification
+- **WHEN** they follow Dashboard in the navigation
+- **THEN** the plants dashboard is shown
+
+#### Scenario: Following Address book opens the INS address book
+**ID**: SCN-PLANTS-NAV-004-B
+- **GIVEN** the user is signed in
+- **WHEN** they follow Address book in the navigation
+- **THEN** the Import Notification Service address book is shown

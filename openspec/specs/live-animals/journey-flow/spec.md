@@ -180,9 +180,9 @@ The system MUST show check your answers whatever the notification owes, naming w
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created in this session runs an opening sequence covering the whole journey, ending on check your answers
+### Requirement: A notification created from the dashboard or the type question runs an opening sequence covering the whole journey, ending on check your answers
 **ID**: REQ-FLOW-007
-The system MUST walk a newly created notification through an opening sequence covering the whole journey, skipping any step not in scope. The sequence MUST NOT offer the CPH number page as a step, MUST go to Overview from roles and addresses when every task is already complete, and MUST end on check your answers once the contact address is saved, complete or not; reaching either ends it. Its order is its own and MUST NOT be assumed to match the order of the flow sections in REQ-FLOW-001.
+The system MUST walk a notification created from the dashboard or the Import Notification Service's type question through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved; reaching either ends it. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
 
 #### Scenario: A newly created notification is walked through the whole opening sequence to review
 **ID**: SCN-FLOW-007-A
@@ -369,3 +369,14 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 - **WHEN** they choose Live animals and continue
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
 - **AND** saving that page continues the opening sequence
+
+### Requirement: A notification started from a template opens on its Overview with no opening sequence
+**ID**: REQ-FLOW-015
+The system MUST open a notification started from a template (`live-animals/notification-templates`) on its Overview, with no opening sequence walked, and continuing from its pages MUST follow REQ-FLOW-003. A template being created runs its own shorter sequence instead, set out in `live-animals/notification-templates`.
+
+#### Scenario: Using a template opens the new draft's Overview
+**ID**: SCN-FLOW-015-A
+- **GIVEN** a saved template
+- **WHEN** the user selects "Use template"
+- **THEN** the new draft's Overview is shown
+- **AND** no opening sequence is walked

@@ -193,6 +193,19 @@ A template MUST be answered on the same pages as a notification, with the same q
 - **THEN** the page is not found
 - **AND** the run through the pages skips the upload documents page
 
+#### Scenario: Origin of the import ends with Save and continue alone while a template is created
+**ID**: SCN-TEMPLATES-006-E
+- **GIVEN** the user has named a new template
+- **WHEN** Origin of the import is shown
+- **THEN** "Save and continue" is the only control
+- **AND** no "Save and return to overview" and no "Cancel and return to overview" is offered
+
+#### Scenario: Saving Origin of the import moves on to What are you importing? for the template
+**ID**: SCN-TEMPLATES-006-F
+- **GIVEN** the user has named a new template and Origin of the import is shown
+- **WHEN** they answer it and select "Save and continue"
+- **THEN** "What are you importing?" is shown for the template
+
 ### Requirement: Starting and naming a template creates no notification
 **ID**: REQ-TEMPLATES-007
 The system MUST hold a template being created, with its chosen type and name, apart from the user's saved templates, MUST NOT list it on Manage templates until it is first saved, MUST NOT create a draft notification when a template is started or named, and MUST leave the user's draft notifications unchanged.
@@ -242,6 +255,12 @@ The template's task list MUST show the notification task list's own tasks, title
 - **AND** the "Roles and addresses" task alone carries its hint, as on the notification task list
 - **AND** each task opens its question page for the template
 
+#### Scenario: A template's Arrival details task is complete without an arrival date
+**ID**: SCN-TEMPLATES-010-B
+- **GIVEN** the user is creating a template and has answered the port of entry, means of transport, transport identification and transport document reference
+- **WHEN** the template's Overview is shown
+- **THEN** the "Arrival details" task is tagged "Complete"
+
 ### Requirement: The template's task list ends with Review template and Return to manage templates
 **ID**: REQ-TEMPLATES-011
 The template's task list MUST end with a primary "Review template" button to the template review and a secondary "Return to manage templates" button to Manage templates, and MUST NOT offer "Save template".
@@ -287,28 +306,28 @@ While a template is being created, "What are you importing?" MUST show the "Temp
 
 ### Requirement: The template review shows the template task list's five sections
 **ID**: REQ-TEMPLATES-014
-The template review MUST show "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address", the template task list's sections, with no uploaded documents section and no "Arrival date at port of entry" row, and MUST read "Not applicable" for every unanswered row.
+The template review MUST show "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Consignment parties" and "5. Contact address", the template task list's sections, with no uploaded documents section and no "Arrival date at destination" row, and MUST read "Not applicable" for every unanswered row.
 
 #### Scenario: The template review shows five sections, no documents or arrival date, and Not applicable for unanswered rows
 **ID**: SCN-TEMPLATES-014-A
 - **GIVEN** the user is creating a template and has answered only some questions
 - **WHEN** they open the template review
 - **THEN** the five sections of the template's task list are shown, in order
-- **AND** no uploaded documents section and no "Arrival date at port of entry" row is shown
+- **AND** no uploaded documents section and no "Arrival date at destination" row is shown
 - **AND** every unanswered row reads "Not applicable"
 
 ### Requirement: The template review shows the rows the template's commodity asks for
 **ID**: REQ-TEMPLATES-015
-For cattle, the "Additional animal details" card MUST hold "Certified for" and "Includes unweaned animals", the "Roles and addresses" card MUST add "County parish holding (CPH) number", there MUST be no identification details card, and the card under "Main reason for import" MUST hold the single row "Reason for import" while no reason is chosen.
+For cattle, the "Additional details" card MUST hold "Certified for" and "Includes unweaned animals", the "Addresses" card MUST add "County parish holding (CPH) number", no "Identification details" table MUST be shown while no animal is identified, and the "Main import reason" card MUST hold the single row "Main import reason" while no reason is chosen.
 
 #### Scenario: A cattle template's review shows the cattle rows and one main reason row
 **ID**: SCN-TEMPLATES-015-A
 - **GIVEN** the user is creating a template for cattle
 - **WHEN** they open the template review
-- **THEN** "Additional animal details" holds "Certified for" and "Includes unweaned animals"
-- **AND** "Roles and addresses" holds "County parish holding (CPH) number"
-- **AND** no identification details card is shown
-- **AND** the card under "Main reason for import" holds the single row "Reason for import"
+- **THEN** "Additional details" holds "Certified for" and "Includes unweaned animals"
+- **AND** "Addresses" holds "County parish holding (CPH) number"
+- **AND** no "Identification details" heading is shown
+- **AND** the "Main import reason" card holds the single row "Main import reason"
 
 ### Requirement: The template review's Back link returns to the template's task list
 **ID**: REQ-TEMPLATES-016
@@ -327,7 +346,7 @@ Each card's Change link MUST open its question page for the template being creat
 #### Scenario: Change opens Origin of the import and the contact address page for the template with their template-creation controls
 **ID**: SCN-TEMPLATES-017-A
 - **GIVEN** the user is on the template review
-- **WHEN** they select "Change" on the import details card
+- **WHEN** they select "Change" on the "Origin of import" card
 - **THEN** Origin of the import is shown with the "Template" tag
 - **AND** "Save and continue" is offered without "Save and return to overview"
 - **WHEN** they return to the template review and select "Change" on the contact address card
@@ -413,6 +432,7 @@ Each template MUST be a card labelled "Template <title>", showing the template's
 - **WHEN** they select "View template" on its card
 - **THEN** the page is headed "Weekly cattle" under the caption "Templates"
 - **AND** the browser title is "Weekly cattle - Import notification service - GOV.UK"
+- **AND** no "Template" tag or status strip is shown above the caption
 
 ### Requirement: The template's page shows the date it was created
 **ID**: REQ-TEMPLATES-023
@@ -454,7 +474,7 @@ The page MUST offer a Back link to Manage templates.
 
 ### Requirement: The template's page shows its answers in the review's cards
 **ID**: REQ-TEMPLATES-026
-The page MUST list the template's answers in the notification review's cards, under "1. About the consignment" to "5. Contact address", with no documents section and no arrival date, each card with one Change link that opens that card's question page for the template.
+The page MUST list the template's answers in the notification review's cards, under "1. About the consignment" to "5. Contact address", with no documents section and no arrival date. Each card MUST have a Change link to its question page for the template, as MUST the transit countries and each species' number of animals and identification details. Every unanswered row MUST read "Not applicable", with no card error or error summary.
 
 #### Scenario: The answers are listed in five numbered sections with a Change link on each card
 **ID**: SCN-TEMPLATES-026-A
@@ -468,10 +488,24 @@ The page MUST list the template's answers in the notification review's cards, un
 **ID**: SCN-TEMPLATES-026-B
 - **GIVEN** the user answered every section of a live animals template and saved it
 - **WHEN** they open its page
-- **THEN** it shows the country and region of origin, internal reference, commodity code, common name and species, the number of animals and packages, the reason for import, the purpose in the market, certified for and unweaned animals
+- **THEN** it shows the country and region of origin, internal reference, commodity code, common name and species, the number of animals and packages, the main import reason, the purpose in the market, certified for and unweaned animals
 - **AND** it shows the port of entry, means of transport, transport identification and transport document reference
 - **AND** it shows the transporter's name, address, country, approval number and type, the animal identification details and the CPH number
 - **AND** no arrival date at the port of entry is shown
+
+#### Scenario: A part-answered template's page reads Not applicable and shows no errors
+**ID**: SCN-TEMPLATES-026-C
+- **GIVEN** the user has saved a template with only some sections answered
+- **WHEN** they open its page
+- **THEN** every unanswered row reads "Not applicable"
+- **AND** no error summary or card error is shown
+
+#### Scenario: The transit countries and each species' number of animals and identification details have their own Change links
+**ID**: SCN-TEMPLATES-026-D
+- **GIVEN** the user has saved a template with every section answered, arriving overland through transit countries
+- **WHEN** they open its page
+- **THEN** the transit countries, and each species' number of animals and identification details, each have a Change link of their own
+- **AND** each opens its question page for the template
 
 ### Requirement: A template the user cannot open returns them to Manage templates
 **ID**: REQ-TEMPLATES-027
@@ -502,7 +536,7 @@ The question page MUST show the template's answers, MUST leave an unanswered opt
 #### Scenario: Change opens the section prefilled, ending with Save and return and Cancel
 **ID**: SCN-TEMPLATES-028-A
 - **GIVEN** the user has opened a saved template's page
-- **WHEN** they select "Change" on the import details card
+- **WHEN** they select "Change" on the "Origin of import" card
 - **THEN** Origin of the import is shown with the template's answers
 - **AND** an unanswered optional field is empty
 - **AND** "Save and return" is the only submit button
@@ -678,14 +712,14 @@ A notification started from a template MUST hold the answers the template holds,
 **ID**: SCN-TEMPLATES-033-H
 - **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address
 - **WHEN** they use it and open the review of the new notification
-- **THEN** the "Roles and addresses" card shows the template's place of origin, consignor, consignee, importer and place of destination
-- **AND** the "Contact address for this consignment" card shows the template's contact address
+- **THEN** the "Addresses" card shows the template's place of origin, consignor, consignee, importer and place of destination
+- **AND** the "Contact address" card shows the template's contact address
 
 #### Scenario: With no contact address, the place of origin becomes the contact address
 **ID**: SCN-TEMPLATES-033-I
 - **GIVEN** the user has saved a template that has a place of origin and no contact address
 - **WHEN** they use it and open the review of the new notification
-- **THEN** the "Contact address for this consignment" card shows the template's place of origin
+- **THEN** the "Contact address" card shows the template's place of origin
 
 ### Requirement: A template the user cannot use returns them to Manage templates
 **ID**: REQ-TEMPLATES-034
@@ -707,7 +741,7 @@ Using a template that does not exist, has been deleted or is another user's MUST
 
 ### Requirement: Each template card lists Commodity, Origin, Consignee and Consignor
 **ID**: REQ-TEMPLATES-035
-Each template card MUST list, below "View template" and "Use template" and in this order, "Commodity" (the common name of each of the template's commodities), "Origin" (the country of origin), "Consignee" (the consignee's name) and "Consignor" (the consignor's name), each reading "Not applicable" when the template has no answer.
+Each template card MUST list, below "View template" and "Use template" and in this order, "Commodity" (the common name of each of the template's commodities, each named once, in the order they were added, separated by commas), "Origin" (the country of origin), "Consignee" (the consignee's name) and "Consignor" (the consignor's name), each reading "Not applicable" when the template has no answer.
 
 #### Scenario: A part-answered template's card reads Not applicable for what it does not hold
 **ID**: SCN-TEMPLATES-035-A
@@ -731,18 +765,18 @@ Each template card MUST list, below "View template" and "Use template" and in th
 
 ### Requirement: A saved template's page shows each consignment party and the contact address
 **ID**: REQ-TEMPLATES-036
-A saved template's page MUST show, in its "Roles and addresses" card, the place of origin, consignor, consignee, importer and place of destination each as answered, by name, with the place of origin also showing its address. Its "Contact address for this consignment" card MUST show the contact address as answered or, where none was chosen, the place of origin.
+A saved template's page MUST show, in its "Addresses" card, the place of origin, consignor, consignee, importer and place of destination each as answered, by name, with the place of origin also showing its address. Its "Contact address" card MUST show the contact address as answered or, where none was chosen, the place of origin.
 
 #### Scenario: Each party and the contact address are shown as answered
 **ID**: SCN-TEMPLATES-036-A
 - **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address
 - **WHEN** they open the template's page
-- **THEN** the "Roles and addresses" card shows each of the five parties by name, and the place of origin with its address
-- **AND** the "Contact address for this consignment" card shows the contact address
+- **THEN** the "Addresses" card shows each of the five parties by name, and the place of origin with its address
+- **AND** the "Contact address" card shows the contact address
 
 #### Scenario: With no contact address chosen, the place of origin is shown as the contact address
 **ID**: SCN-TEMPLATES-036-B
 - **GIVEN** the user has saved a template that has a place of origin and no contact address
 - **WHEN** they open the template's page
-- **THEN** the "Contact address for this consignment" card shows the template's place of origin
-- **AND** the "Roles and addresses" card reads "Not applicable" for a party the template does not hold
+- **THEN** the "Contact address" card shows the template's place of origin
+- **AND** the "Addresses" card reads "Not applicable" for a party the template does not hold

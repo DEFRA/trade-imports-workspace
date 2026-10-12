@@ -48,14 +48,14 @@ const sampleGates = () =>
             name: 'e2e-plants',
             phase: 'e2e',
             run: 'test:docker-compose',
-            scope: ['--project=plants'],
+            scope: ['tests/plants/'],
             forRepos: ['plants-frontend', 'plants-backend']
           },
           {
             name: 'e2e-animals',
             phase: 'e2e',
             run: 'test:docker-compose',
-            scope: ['--project=e2e'],
+            scope: ['tests/animals/'],
             forRepos: ['animals-frontend']
           }
         ]
@@ -360,7 +360,7 @@ describe('planRungs', () => {
       expect.objectContaining({
         name: 'e2e-plants',
         run: 'test:docker-compose',
-        scope: ['--project=plants'],
+        scope: ['tests/plants/'],
         path: '/workspace/repos/tests'
       })
     ])

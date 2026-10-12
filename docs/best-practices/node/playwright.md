@@ -10,9 +10,9 @@ Project baseline: Playwright with TypeScript, Allure reporting, multiple config 
 repos/trade-imports-ins-tests/
 ├── playwright.config.ts                 ← CDP config
 ├── playwright.docker-compose.config.ts  ← local workspace-stack config
-├── utils/playwright/shared-config.ts    ← projects, reporters, retries shared by both
+├── utils/playwright/shared-config.ts    ← the `chromium` project, reporters, retries shared by both
 ├── tests/
-│   └── <domain>/                        ← one Playwright project per domain:
+│   └── <domain>/                        ← one domain per directory:
 │       ├── a11y/                        ←   animals, animals-admin, ins, plants
 │       ├── e2e/
 │       │   ├── features/
@@ -31,7 +31,7 @@ Not every domain has every folder. Each domain has a local script per suite,
 `test:docker-compose:<domain>[:a11y|:security]`, and a CDP profile per suite,
 `<domain>:<suite>`.
 
-Tags used in this project. Tags select the suite; the project selects the domain.
+Tags used in this project. Tags select the suite; the path selects the domain (`tests/<domain>/`).
 
 | Tag | Purpose |
 |-----|---------|
@@ -599,6 +599,7 @@ cd /path/to/workspace
 cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:animals     # one domain
+npm run test:docker-compose -- tests/plants/  # any domain, by path (trailing slash: paths are regexes)
 ```
 
 ---

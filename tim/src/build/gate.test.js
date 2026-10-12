@@ -146,7 +146,7 @@ const withE2e = (testsScripts) => ({
           name: 'e2e-plants',
           phase: 'e2e',
           run: 'test:docker-compose',
-          scope: ['--project=plants'],
+          scope: ['tests/plants/'],
           forRepos: ['frontend']
         }
       ]
@@ -423,7 +423,7 @@ describe('runGate — e2e rungs', () => {
     const outcome = await gate(env, { phase: 'e2e' })
 
     expect(readFileSync(outcome.rungs[0].log, 'utf8')).toContain(
-      'e2e --project=plants'
+      'e2e tests/plants/'
     )
   })
 

@@ -11,7 +11,7 @@ You will be told:
 - Where the suite report lives — the fit/vitest run's output and, for
   the E2E leg, the Playwright report/spec files under
   `repos/trade-imports-ins-tests/tests/<domain>/e2e/` (domain per
-  [`SUITES.md`](SUITES.md)'s **E2E project** column — `animals`,
+  [`SUITES.md`](SUITES.md)'s **Domain** column — `animals`,
   `animals-admin`, `ins` or `plants`)
 - The run directory to write into
 
@@ -21,7 +21,7 @@ and the source they exercise.
 
 ## Verdicts
 
-Use the whole set report (fit + e2e; admin: vitest + e2e) as the
+Use the whole domain report (fit + e2e; animals-admin: vitest + e2e) as the
 behaviour oracle. Unit tests do not portray behaviour — never use one to
 justify rewriting `spec.md`; the one exception is fixing a unit link's
 own path/title (see "Unit links" below).
@@ -40,7 +40,7 @@ own path/title (see "Unit links" below).
 
 Step 1 now runs both legs with `--trace=on` (see
 [`SUITES.md`](SUITES.md#traces)), so a trace exists for every test in the
-report, pass or fail — not just the `journeys` fit project, which already
+report, pass or fail — not just the frontend repo's fit `journeys` project, which already
 always records one.
 
 Reach for it when source + test body genuinely don't resolve the
@@ -52,8 +52,8 @@ already agree — that's cost with no signal, and it doesn't apply to
 `update-link`/`remove-dead-link`/`delete-spec` judgements at all (those
 turn on whether a test still exists, not on behaviour).
 
-Trace file: `test-results/<project-and-test-dir>/trace.zip` (Playwright
-names the directory from the project + test title). Inspect it with the
+Trace file: `test-results/<test-dir>/trace.zip` (Playwright
+names the directory from the project, `chromium`, plus the test title, so it starts with `chromium-`, not the domain: find it by the spec path or test title, not by domain). Inspect it with the
 `playwright-trace` skill. If it resolves the judgement, cite what you saw
 in `evidence` the same way you'd cite a test/source line — e.g.
 `"trace": "test-results/features-declares-species/trace.zip — network tab

@@ -18,7 +18,7 @@ Method: `origin/main...feat/NO_JIRA-design-release-2-1-combined` diffed in all 8
 
 The 3 orphan sweeps (6 code areas, all touched by the diff) raised no gaps.
 
-Templates (EUDPA-690) is not in the combined branch yet, so its specs were not audited. This audit re-runs on its diff once it merges.
+Templates (EUDPA-690) was not in the combined branch for this pass. Section 7 covers it and the type question after the merge.
 
 ## 2. Questions for the business
 
@@ -167,3 +167,74 @@ Capabilities marked "not touched" had no change in the diff. Orphan sweeps (code
 | Scenarios | 966 to 974 |
 | Partial scenarios | 31 to 35 (new scenarios whose only witnesses are partial, such as SCN-CYA-001-T) |
 | Commit | `36007aa5` on `feat/NO_JIRA-design-release-2-1`, `openspec/` only, 46 files, pushed. Its message says "46 confirmed and fixed, 5 refuted"; the true counts are 45 and 4, as this report gives |
+
+## 7. Type question and templates (after the merge)
+
+The type question (INS) and templates (EUDPA-690) merged into the combined branch on 12 October. The audit was re-run on that diff: 12 capabilities (7 live animals, 2 plants, 3 INS) and 4 orphan sweeps (animals backend, animals frontend, INS frontend, plants frontend) in 7 batches, each with a judge, an adversarial verifier and a fixer. The sweeps found no gap that sits outside a capability.
+
+### Summary
+
+| Measure | Live animals | Plants | INS | Total |
+|---|---|---|---|---|
+| Capabilities checked | 7 | 2 | 3 | 12 |
+| Gaps raised (reports) | 37 | 3 | 8 | 48 |
+| Confirmed (reports) | 26 | 1 | 7 | 34 |
+| Confirmed and fixed (distinct) | 20 | 1 | 6 | 27 |
+| Refuted | 2 | 2 | 1 | 5 |
+| Held as business questions (reports) | 9 | 0 | 0 | 9 |
+| Business questions (de-duplicated) | 6 | 0 | 0 | 6 |
+
+How the counts reconcile: 34 confirmed reports, less 5 raised twice (four by both notification-templates batches, one on the INS Dashboard item), less 2 whose own batch could not edit the capability and were fixed by the notification-templates run (card names on the review, and the template's Origin step). That leaves 27 distinct gaps fixed.
+
+### Questions for the business
+
+Nine reports came to six questions. Each one is held, not written into the spec; the verifiers agreed the code looks wrong against the backlog or against how a notification behaves.
+
+| # | Question | Built now | Reports merged |
+|---|---|---|---|
+| 1 | Should a template's review and a saved template's page head the parties section "4. Consignment addresses", like the notification review (the backlog, inc-156, says so), or keep "4. Consignment parties", like the template's task list? | "4. Consignment parties", hard-coded in the template copy, so the review's rename never reached template mode | 3 |
+| 2 | What should Germinal products do before the germinal set exists? A germinal template can be named but is silently lost on Save and continue; its Use template button returns to Manage templates and starts nothing; the type question sends Germinal products to a start address that shows no page. Hide it, explain it, or build it? | Silent return to Manage templates, no message | 2 (plus the open point noted on the type question) |
+| 3 | Should Origin of the import, opened from a template's task list, offer "Save and return to overview" and "Cancel and return to overview", as every other task does? | Only "Save and continue"; Back goes to the template name page | 1 |
+| 4 | Where should Back go on "What are you importing?" when opened from the template's task list or review: where the trader came from, or always Origin as now? | Always Origin | 1 |
+| 5 | After changing "What are you importing?" from the template review, should Save and continue return to the template review, as every other Change link does? | The template's task list | 1 |
+| 6 | Until template delete is built, should the Delete button on a saved template's page be hidden? | The button leads to "page not found" | 1 |
+
+### Gaps fixed
+
+| Capability | What the spec now says | IDs | Coverage |
+|---|---|---|---|
+| live-animals/notification-templates | Review and page use the merged names: "Additional details", "Addresses", "Main import reason" (card and single row), "Contact address", "Origin of import"; no "Identification details" card while nothing is identified | REQ-TEMPLATES-014, 015, 017, 026, 028, 033, 036 and their scenarios | full; fit link for SCN-015-A dropped to partial |
+| live-animals/notification-templates | The E2E link for the review's no-identification scenario renamed to the test that exists | SCN-TEMPLATES-015-A | full |
+| live-animals/notification-templates | "Arrival date at destination", not "at port of entry" | REQ-TEMPLATES-014, SCN-TEMPLATES-014-A | full |
+| live-animals/notification-templates | Every card, the transit countries and each species' count and identification have a Change link; unanswered rows read "Not applicable" with no error (new scenarios) | REQ-TEMPLATES-026, SCN-TEMPLATES-026-C, 026-D | partial |
+| live-animals/notification-templates | Origin in template mode ends with Save and continue alone, and saving moves on to "What are you importing?" (two new scenarios) | SCN-TEMPLATES-006-E, 006-F | full |
+| live-animals/notification-templates | Arrival details reads Complete once port, transport, identification and document reference are given (new scenario) | SCN-TEMPLATES-010-B | partial (unit only) |
+| live-animals/notification-templates | A saved template's page shows no Template tag or status strip | SCN-TEMPLATES-022-A | full |
+| live-animals/notification-templates | Commodity answer lists each common name once, in the order added | REQ-TEMPLATES-035 | full |
+| live-animals/journey-flow | Opening run applies to notifications from the dashboard or the type question; a notification started from a template opens on its Overview (new requirement) | REQ-FLOW-007, REQ-FLOW-015, SCN-FLOW-015-A | full |
+| live-animals/journey-pages/origin-of-import | Back rule scoped to notifications; Save and continue in template mode stays in the template; dead unit link replaced | REQ-ORIGIN-013, 019, SCN-ORIGIN-019-A, 019-B | full; REQ-ORIGIN-019 now partial |
+| live-animals/journey-pages/commodity-selection | The three-control ending also applies while a template is created; a changed saved template follows REQ-TEMPLATES-028 | REQ-COMMODITY-SELECT-012 | unchanged |
+| live-animals/journey-pages/check-your-answers | Requirements scoped to a notification's review; the template review is named in the Purpose | REQ-CYA-001, 002 | unchanged |
+| live-animals/journey-pages/overview | Requirements scoped to a notification; the template's task list is named in the Purpose | REQ-OVERVIEW-001, 002, 003, 010 | unchanged |
+| live-animals/service-navigation | The Address book item opens the INS address book, signing in if asked (new requirement) | REQ-NAV-006, SCN-NAV-006-A | full |
+| plants/service-navigation | The Dashboard and Address book items lead to the plants dashboard and the INS address book (new requirement) | REQ-PLANTS-NAV-004, SCN-PLANTS-NAV-004-A, 004-B | partial (unit only) |
+| ins/notification-type | Germinal products goes to the germinal start address; the template question shows no Template tag, name, Draft tag or reference; continuing for a template in progress returns to it with its name (two new scenarios) | REQ-INS-NTYPE-002, 004, SCN-INS-NTYPE-002-B, 004-A, 004-F, 004-G | 002-B and 004-A full; 004-F and 004-G unit only |
+| ins/notification-dashboard | Create new and Use template are still offered when the list cannot be loaded (two new scenarios) | REQ-INS-DASH-004, 005, SCN-INS-DASH-004-D, 005-C | 004-D unit only; 005-C partial |
+| ins/service-navigation | Dashboard is marked current on the type question when starting a notification (new scenario) | REQ-INS-NAV-003, SCN-INS-NAV-003-D | partial |
+
+### Refuted
+
+| Gap | Reason |
+|---|---|
+| Manage account links to `#` and goes nowhere (live animals, plants and INS navigation: three reports) | It is the agreed placeholder copied from the design release prototype, which names no owner for the destination. Each REQ-...-NAV-001 already says the item is offered. Writing "leads nowhere" into the spec would record a placeholder as intended behaviour. Its destination stays an open product question |
+| Plants: the type chosen on the INS question is not carried into plants' own "What are you importing?" | REQ-PLANTS-FLOW-015 already says the draft opens exactly as it does from plants' own dashboard, with nothing pre-chosen. The 9 October ruling accepts plants' first page as its own type question, and the options differ in label, so carrying the choice would be a new feature. A fair product question, but no ruling is contradicted |
+| Live animals check-your-answers: Back from the template review goes to the template's task list | REQ-CYA-003 lists its cases and a template is none of them, so nothing false is said. REQ-TEMPLATES-016 already specifies it, and the fit and E2E tests match. Only a cross-reference was missing, which the Purpose edit supplies |
+
+### Proof
+
+| Check | Result |
+|---|---|
+| `openspec validate --specs --strict` | 78 passed, 0 failed |
+| `tim spec lint` | Clean: 78 capabilities, no findings |
+| Commit | `eb98960c` on `feat/NO_JIRA-design-release-2-1` |
+| Witnesses | Three new scenarios have unit witnesses only: SCN-INS-DASH-004-D, SCN-INS-NTYPE-004-F and SCN-INS-NTYPE-004-G. They are being covered on the templates branch. Other new scenarios are partial (listed above) and are spec-cover candidates |

@@ -149,11 +149,12 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
 <div class="wrap">
   <header class="top">
     <h1>DR2.1 engineering review</h1>
-    <p class="lede">A risk-ranked review of the Design Release 2.1 combined branch, <span class="mono">feat/NO_JIRA-design-release-2-1-combined</span>, which carries 8 draft PRs. Templates (EUDPA-690) is not merged yet and is reviewed later on this page.</p>
+    <p class="lede">A risk-ranked review of the Design Release 2.1 combined branch, <span class="mono">feat/NO_JIRA-design-release-2-1-combined</span>, which carries 8 draft PRs. The page covers two reviews: the six themes, then the type question and templates (EUDPA-690), which was merged on 12 October and is reviewed in its own section below the first findings.</p>
     <nav class="jump" aria-label="On this page">
       <a href="#questions">Questions the handover asked</a>
       <a href="#order">Review order</a>
       <a href="#findings">Findings</a>
+      <a href="#templates">Type question and templates</a>
       <a href="#refuted">Refuted</a>
       <a href="#how">How it was made</a>
     </nav>
@@ -219,6 +220,7 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
         </div>
       </div>
     </div>
+    <p class="note">Type question and templates: the shared-user flake (templates rank 1) is being fixed on the templates branch with an isolated stub user per order-sensitive spec.</p>
   </section>
 
   <section class="section" id="order" aria-labelledby="order-h">
@@ -255,6 +257,23 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
     <div class="cards" id="cards"></div>
   </section>
 
+  <section class="section" id="templates" aria-labelledby="templates-h">
+    <h2 id="templates-h">Type question and templates (merged 12 October)</h2>
+    <div class="callout" id="tpl-headline"><p>Loading the review…</p></div>
+    <p class="note">The severity, priority and area filters above apply to this section too. Verdicts work the same way. Ranks here are separate from the ranks above, so they are shown as templates ranks.</p>
+    <p class="note" id="tpl-count" aria-live="polite"></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Priority</th><th>Findings</th><th>Refuted</th></tr></thead>
+        <tbody id="tpl-area-rows"></tbody>
+      </table>
+    </div>
+    <h3>Area summaries</h3>
+    <div id="tpl-areas"></div>
+    <h3>Findings, ranked</h3>
+    <div class="cards" id="tpl-cards"></div>
+  </section>
+
   <section class="section" id="refuted" aria-labelledby="refuted-h">
     <h2 id="refuted-h">Refuted findings</h2>
     <details class="panel" id="refuted-box">
@@ -269,7 +288,7 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
   </section>
 
   <footer class="end" id="how">
-    <p><strong>How it was made.</strong> 11 Opus reviewers, one per area. One adversarial Opus verifier per area, told to refute by default. A Sonnet pass ranked what survived. 23 agents in all.</p>
+    <p><strong>How it was made.</strong> 11 Opus reviewers, one per area. One adversarial Opus verifier per area, told to refute by default. A Sonnet pass ranked what survived. 23 agents in all. The type question and templates section was reviewed the same way, in six areas, after the merge.</p>
     <p>Source data: <span class="mono">workareas/shared/design-release-2-1/combined/engineering-review/review.json</span> in the trade-imports-workspace repo.</p>
   </footer>
 </div>
@@ -307,20 +326,34 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
   }
 
   /* ---------- summary ---------- */
-  $('headline').replaceChildren(h('p', { text: D.headline }));
-  var sev = { high: 0, medium: 0, low: 0 };
-  D.findings.forEach(function (f) { sev[f.severity] = (sev[f.severity] || 0) + 1; });
-  var reported = D.findings.reduce(function (n, f) { return n + f.ranks.length; }, 0);
+  var T = D.templates || { headline: '', areas: [], findings: [], killed: [] };
+  var ALL = D.findings.concat(T.findings);
+  $('headline').replaceChildren(
+    h('p', null, [h('strong', { text: 'The six themes. ' }), D.headline]),
+    h('p', null, [h('strong', { text: 'Type question and templates. ' }), T.headline])
+  );
+  function sevCounts(list) {
+    var s = { high: 0, medium: 0, low: 0 };
+    list.forEach(function (f) { s[f.severity] = (s[f.severity] || 0) + 1; });
+    return s;
+  }
+  function reportedCount(list) { return list.reduce(function (n, f) { return n + f.ranks.length; }, 0); }
   function fact(value, label, cls) {
     return h('div', { class: 'fact' }, [h('b', { text: String(value), class: cls || '' }), h('span', { text: label })]);
   }
   var facts = $('facts');
-  facts.appendChild(fact(sev.high, 'high severity', 'high'));
-  facts.appendChild(fact(sev.medium, 'medium severity'));
-  facts.appendChild(fact(sev.low, 'low severity'));
-  facts.appendChild(fact(D.findings.length, 'finding cards (' + reported + ' reported, duplicates merged)'));
-  facts.appendChild(fact(D.reviewed, 'areas reviewed'));
-  facts.appendChild(fact(D.refuted, 'findings refuted'));
+  [
+    { name: 'six themes', list: D.findings, areas: D.reviewed, refuted: D.refuted },
+    { name: 'type question and templates', list: T.findings, areas: T.areas.length, refuted: T.killed.length }
+  ].forEach(function (g) {
+    var s = sevCounts(g.list);
+    facts.appendChild(fact(s.high, 'high severity (' + g.name + ')', 'high'));
+    facts.appendChild(fact(s.medium, 'medium severity (' + g.name + ')'));
+    facts.appendChild(fact(s.low, 'low severity (' + g.name + ')'));
+    facts.appendChild(fact(g.list.length, 'finding cards (' + g.name + '; ' + reportedCount(g.list) + ' reported, duplicates merged)'));
+    facts.appendChild(fact(g.areas, 'areas reviewed (' + g.name + ')'));
+    facts.appendChild(fact(g.refuted, 'findings refuted (' + g.name + ')'));
+  });
   var mineFact = h('div', { class: 'fact', id: 'fact-mine', hidden: '' });
   facts.appendChild(mineFact);
 
@@ -367,9 +400,10 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
   }
   function section(title, text) { return h('div', null, [h('h4', { text: title }), h('p', { text: text })]); }
 
-  function buildCard(f) {
+  function buildCard(f, rankPrefix) {
     var id = f.id;
-    var rankText = f.ranks.length > 1 ? 'Ranks ' + f.ranks.join(' and ') : 'Rank ' + f.rank;
+    var pre = rankPrefix || '';
+    var rankText = f.ranks.length > 1 ? pre + 'Ranks ' + f.ranks.join(' and ') : pre + 'Rank ' + f.rank;
     var art = h('article', { class: 'fcard sev-' + f.severity, id: 'f-' + id, 'aria-labelledby': 'h-' + id });
     art.setAttribute('data-sev', f.severity);
     art.setAttribute('data-pri', String(f.priority));
@@ -432,11 +466,35 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
   var cardEls = {};
   D.findings.forEach(function (f) { var c = buildCard(f); cardEls[f.id] = c; cardsEl.appendChild(c); });
 
+  /* ---------- type question and templates ---------- */
+  $('tpl-headline').replaceChildren(h('p', { text: T.headline }));
+  var tplCardCount = {};
+  T.findings.forEach(function (f) { tplCardCount[f.area] = (tplCardCount[f.area] || 0) + 1; });
+  var tplRows = $('tpl-area-rows');
+  T.areas.slice().sort(function (a, b) { return a.priority - b.priority; }).forEach(function (a) {
+    tplRows.appendChild(h('tr', null, [
+      h('td', { text: a.title }),
+      h('td', { class: 'num', text: String(a.priority) }),
+      h('td', { class: 'num', text: String(tplCardCount[a.title] || 0) }),
+      h('td', { class: 'num', text: String(a.refuted || 0) })
+    ]));
+  });
+  var tplAreasEl = $('tpl-areas');
+  T.areas.slice().sort(function (a, b) { return a.priority - b.priority; }).forEach(function (a) {
+    tplAreasEl.appendChild(h('details', { class: 'area' }, [
+      h('summary', { text: 'Priority ' + a.priority + ' · ' + a.title + ' · ' + a.survived + ' survived, ' + a.refuted + ' refuted' }),
+      h('p', { text: a.summary, style: 'white-space: pre-line' })
+    ]));
+  });
+  var tplCardsEl = $('tpl-cards');
+  T.findings.forEach(function (f) { var c = buildCard(f, 'Templates '); cardEls[f.id] = c; tplCardsEl.appendChild(c); });
+
   /* ---------- refuted ---------- */
-  $('refuted-sum').textContent = D.killed.length + ' refuted findings (each was reported, then disproved by the verifier)';
+  var ALL_KILLED = D.killed.concat(T.killed.map(function (k) { return Object.assign({}, k, { area: 'Type question and templates: ' + k.area }); }));
+  $('refuted-sum').textContent = ALL_KILLED.length + ' refuted findings (' + D.killed.length + ' in the six themes, ' + T.killed.length + ' in the type question and templates; each was reported, then disproved by the verifier)';
   function firstSentence(s) { var m = s.match(/^.{20,260}?[.!?](\s|$)/); return m ? m[0].trim() : s.slice(0, 240); }
   var rr = $('refuted-rows');
-  D.killed.forEach(function (k) {
+  ALL_KILLED.forEach(function (k) {
     var short = firstSentence(k.refutation);
     var cell = h('td', null, [h('p', { text: short })]);
     if (short.length < k.refutation.length) cell.appendChild(h('details', null, [h('summary', { text: 'Full refutation' }), h('p', { text: k.refutation })]));
@@ -453,28 +511,34 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
   D.order.forEach(function (o) {
     if (cardCountByArea[o.area]) areaSel.appendChild(h('option', { value: o.area, text: o.area }));
   });
+  T.areas.forEach(function (a) {
+    if (tplCardCount[a.title]) areaSel.appendChild(h('option', { value: a.title, text: 'Templates: ' + a.title }));
+  });
   var filt = { sev: '', pri: '', area: '', mine: false };
   try { var saved = JSON.parse(localStorage.getItem(FKEY) || 'null'); if (saved) filt = Object.assign(filt, saved); } catch (e) { /* storage unavailable */ }
   $('f-sev').value = filt.sev; $('f-pri').value = filt.pri; areaSel.value = filt.area;
   if (areaSel.value !== filt.area) { filt.area = ''; areaSel.value = ''; }
   $('f-mine').checked = !!filt.mine;
 
+  var isTpl = {};
+  T.findings.forEach(function (f) { isTpl[f.id] = true; });
   var verdictsByUser = {};   // uid -> { items }
   var myId = null;
   var canWrite = false;
 
   function applyFilters() {
-    var shown = 0;
-    D.findings.forEach(function (f) {
+    var shown = 0, shownTpl = 0;
+    ALL.forEach(function (f) {
       var ok = (!filt.sev || f.severity === filt.sev) && (!filt.pri || String(f.priority) === filt.pri) && (!filt.area || f.area === filt.area);
       if (ok && filt.mine && canWrite) {
         var mine = verdictsByUser[myId] && verdictsByUser[myId].items && verdictsByUser[myId].items[f.id];
         if (mine && mine.verdict) ok = false;
       }
       cardEls[f.id].hidden = !ok;
-      if (ok) shown++;
+      if (ok) { if (isTpl[f.id]) shownTpl++; else shown++; }
     });
-    $('f-count').textContent = 'Showing ' + shown + ' of ' + D.findings.length + ' findings.';
+    $('f-count').textContent = 'Showing ' + shown + ' of ' + D.findings.length + ' findings in the six themes.';
+    $('tpl-count').textContent = 'Showing ' + shownTpl + ' of ' + T.findings.length + ' findings in the type question and templates.';
   }
   function onFilter() {
     filt.sev = $('f-sev').value; filt.pri = $('f-pri').value; filt.area = areaSel.value; filt.mine = $('f-mine').checked;
@@ -567,7 +631,7 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
     ta.addEventListener('blur', saveComment);
     btn.addEventListener('click', saveComment);
   }
-  D.findings.forEach(function (f) { wireCard(f.id); });
+  ALL.forEach(function (f) { wireCard(f.id); });
 
   function nameFor(uid) {
     var p = profiles[uid];
@@ -577,7 +641,7 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
 
   function renderVerdicts() {
     var mineCount = 0;
-    D.findings.forEach(function (f) {
+    ALL.forEach(function (f) {
       var id = f.id;
       var counts = { fix: 0, accept: 0, 'not-a-problem': 0, 'not-sure': 0 };
       var rows = [];
@@ -606,7 +670,7 @@ footer.end { color: var(--muted); font-size: 0.88rem; display: grid; gap: 6px; b
     if (canWrite) {
       var fm = $('fact-mine');
       fm.hidden = false;
-      fm.replaceChildren(h('b', { text: mineCount + ' of ' + D.findings.length }), h('span', { text: 'with your verdict' }));
+      fm.replaceChildren(h('b', { text: mineCount + ' of ' + ALL.length }), h('span', { text: 'with your verdict' }));
     }
     applyFilters();
   }

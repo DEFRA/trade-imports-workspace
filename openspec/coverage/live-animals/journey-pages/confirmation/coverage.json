@@ -25,10 +25,13 @@
       "scenarios": [
         {
           "id": "SCN-CONFIRM-002-A",
-          "name": "Requesting confirmation for an unsubmitted notification redirects to Overview",
+          "name": "Requesting confirmation for an unsubmitted notification opens the declaration",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "redirects an unsubmitted notification back to its hub", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "sends an unsubmitted notification to its declaration", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should send a notification that is not submitted to its declaration", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should send an amendment to its declaration", "strength": "full", "notes": "the amendment arm of the same redirect" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "a notification not yet submitted goes to its declaration", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -58,7 +61,8 @@
           "name": "The confirmation page offers a route back to the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "full", "notes": "expectViewOrAmendCopy asserts the amend/resubmit body and the dashboard link" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "full", "notes": "expectViewOrAmendCopy asserts the view-or-change body, read from copy, and the dashboard link" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "submitted with no document: asks for the ITAHC and tells the trader they can view or change it from the dashboard", "strength": "full", "notes": "asserts the exact view-or-change sentence" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "dashboard link returns to the dashboard", "strength": "full", "notes": "follows the link to /" }
           ]
         }
@@ -76,6 +80,16 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "partial", "notes": "expectHelpCopy asserts APHA technical help, telephone, opening hours and customs link — does not assert the import-notifications email (importsEmailPrefix / mailto) that the template renders" }
           ]
+        },
+        {
+          "id": "SCN-CONFIRM-005-B",
+          "name": "The HMRC links open in a new tab",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "the HMRC links open in a new tab", "strength": "full", "notes": "target, rel and href of both links" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js", "test": "Should open the HMRC links in a new tab and say so to screen readers", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "partial", "notes": "target only" }
+          ]
         }
       ]
     },
@@ -89,7 +103,27 @@
           "name": "A submission with no documents carries the outstanding-work section",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "full", "notes": "expectOutstandingCopy asserts the heading, intro and documents bullet; the journey these tests submit uploads no documents, which is why the section appears" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/confirmation.fit.spec.js", "test": "renders the notification reference and all feature copy, with no declaration date and no back link", "strength": "full", "notes": "expectOutstandingCopy asserts the heading, intro and documents bullet; the journey these tests submit uploads no documents, which is why the section appears" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "submitted with no document: asks for the ITAHC and tells the trader they can view or change it from the dashboard", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the outstanding documents when nothing has been uploaded", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-006-B",
+          "name": "A submission with only other documents still carries the outstanding-work section",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "submitted with only a commercial invoice: still asks for the ITAHC", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should still list the outstanding documents when only a document that is not an ITAHC or health certificate has been uploaded", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-006-C",
+          "name": "A submission with an ITAHC or health certificate carries no outstanding-work section",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "submitted with an ITAHC: asks for nothing more", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when a %s has been uploaded", "strength": "full", "notes": "each of ITAHC and HEALTH_CERTIFICATE" }
           ]
         }
       ]

@@ -59,3 +59,20 @@ The system MUST submit the notification when the user confirms the declaration a
 - **WHEN** they confirm the declaration and continue
 - **THEN** the confirmation page opens
 - **AND** the read-only check-your-answers shows no late banner
+
+### Requirement: The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar
+**ID**: REQ-PLANTS-DECLARATION-006
+The system MUST offer the confirmation as a small GOV.UK checkbox in a group whose legend "Declaration confirmation" is announced to screen-reader users but not shown on screen. It MUST NOT show a status bar above the heading — no "Draft" or "Amend" tag, no reference number and no "Cancel amend" — whether the notification is a draft being submitted for the first time or an amendment being re-submitted.
+
+#### Scenario: A draft's declaration offers a small confirmation in a hidden-legend group and no status bar
+**ID**: SCN-PLANTS-DECLARATION-006-A
+- **GIVEN** a draft notification ready to submit
+- **WHEN** the user opens the declaration
+- **THEN** the confirmation is a small checkbox in a group named "Declaration confirmation", whose name is not shown on screen
+- **AND** no status bar is shown above the heading
+
+#### Scenario: An amendment's declaration shows no status bar
+**ID**: SCN-PLANTS-DECLARATION-006-B
+- **GIVEN** a notification is being amended
+- **WHEN** the user continues from check your answers to the declaration
+- **THEN** no status bar, reference number or "Cancel amend" is shown above the heading

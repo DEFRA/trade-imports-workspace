@@ -27,7 +27,7 @@ The system MUST group the page under the same six numbered section headings the 
 
 #### Scenario: With nothing uploaded, Uploaded documents holds a single Document 1 card reading Not applicable
 **ID**: SCN-CYA-001-E
-- **GIVEN** a notification with no documents uploaded
+- **GIVEN** a draft, or a notification being amended, with no documents uploaded
 - **WHEN** the user views the review
 - **THEN** "4. Uploaded documents" holds one card, titled "Document 1", whose only row, "Document reference", reads "Not applicable"
 - **AND** the words "You have not added any documents yet." do not appear

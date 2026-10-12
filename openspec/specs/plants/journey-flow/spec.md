@@ -120,9 +120,9 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 - **WHEN** the journey reaches the arrival section
 - **THEN** arrival status is not offered, and arrival details is offered instead
 
-### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
+### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-PLANTS-FLOW-006
-The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification still owes, naming what is outstanding. The Overview's check-and-submit row MUST stay withheld until every task row is ready (see REQ-PLANTS-OB-REVIEW-001), and the system MUST withhold the declaration and the confirmation until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification owes, naming what is outstanding. Overview's check-and-submit row MUST stay withheld until every task row is ready (REQ-PLANTS-OB-REVIEW-001), a row being ready when fulfilled, not applicable or optional. Until then, continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-PLANTS-FLOW-006-A

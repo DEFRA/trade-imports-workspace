@@ -29,7 +29,7 @@ The system MUST open this page when the user follows Overview's consignor or exp
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
 
 #### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A
@@ -46,14 +46,14 @@ The system MUST accept a chosen address, continue to identification numbers on s
 
 #### Scenario: Save and return to overview saves without continuing
 **ID**: SCN-PLANTS-CONSIGNOR-003-C
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select save-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Cancel and return to overview reaches Overview without saving
 **ID**: SCN-PLANTS-CONSIGNOR-003-D
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page of a notification that is not being amended
 - **WHEN** they choose an address and select cancel-and-return-to-overview
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen

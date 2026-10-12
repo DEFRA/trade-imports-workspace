@@ -163,9 +163,9 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 - **WHEN** the journey reaches the point that page would be offered
 - **THEN** the page is not offered, and the journey continues past it
 
-### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
+### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft and naming nothing while it is being amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010), and MUST withhold the declaration and the confirmation until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional. How Overview offers the review is specified by `live-animals/journey-pages/overview`.
+The system MUST show check your answers whatever the notification owes, naming what is outstanding on a draft and nothing while it is amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010). Until every Overview task row is ready (fulfilled, not applicable or optional), continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A

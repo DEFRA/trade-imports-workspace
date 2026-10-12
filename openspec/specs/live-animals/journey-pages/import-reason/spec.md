@@ -19,17 +19,17 @@ The system MUST ask the user their reason for importing the consignment, offerin
 
 ### Requirement: A chosen reason is accepted
 **ID**: REQ-IMPORT-REASON-002
-The system MUST accept a chosen import reason, saving it without error.
+The system MUST accept a chosen import reason whose own questions, if it reveals any, are answered, saving it without error.
 
-#### Scenario: Choosing a reason saves without error
+#### Scenario: Choosing a reason that asks nothing more saves without error
 **ID**: SCN-IMPORT-REASON-002-A
 - **GIVEN** the user is on the import reason page
-- **WHEN** they choose the "Internal market" reason and save and continue
+- **WHEN** they choose the "Re-entry" reason and save and continue
 - **THEN** the answer is saved and no error summary is shown
 
 ### Requirement: The internal market reason reveals a follow-up purpose question
 **ID**: REQ-IMPORT-REASON-003
-The system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, and MUST accept the reason and purpose together.
+The system MUST reveal a purpose question when the user chooses the internal market reason, MUST leave its options unchosen until answered, MUST accept the reason and purpose together, and MUST refuse Save and continue from the internal market reason while its purpose is unanswered, keeping the reveal open and focusing the first purpose.
 
 #### Scenario: Choosing internal market reveals the purpose question and accepts an answer to it
 **ID**: SCN-IMPORT-REASON-003-A
@@ -38,6 +38,13 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 - **THEN** a purpose question appears, with no purpose shown as chosen
 - **WHEN** they choose a purpose and save and continue
 - **THEN** both answers are saved and no error summary is shown
+
+#### Scenario: Internal market without a purpose is refused on save and continue
+**ID**: SCN-IMPORT-REASON-003-B
+- **GIVEN** the user is on the import reason page
+- **WHEN** they choose "Internal market", leave the purpose unanswered and save and continue
+- **THEN** an error reading "Select a purpose in the internal market" is shown, with the purpose question still open under Internal market
+- **AND** following the error focuses the first purpose option, with "Internal market" still chosen
 
 ### Requirement: The port of exit is chosen from the same list as the port of entry
 **ID**: REQ-IMPORT-REASON-004

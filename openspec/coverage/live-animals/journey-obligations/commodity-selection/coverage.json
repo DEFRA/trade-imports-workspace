@@ -16,7 +16,7 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and addresses-hub row show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "after Felis catus, adding Bos taurus makes the addresses-hub CPH row appear Not added yet" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is mandatory in-scope when at least one line has a CPH-required commodity", "strength": "full", "notes": "Horse+Cow mixed lines; Cow alone triggers" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should put cph in scope when a line has commodity = 'Cow'", "strength": "full", "notes": "iterates every cphCommodities() name" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "seeds Bos taurus then deep-links to /cph-number — proves the page when in scope, not the add-line transition" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "renders the CPH copy", "strength": "partial", "notes": "chooses Bos taurus on the commodity page, opens addresses and follows the CPH row's link (return=addresses); proves the page when in scope, not the add-line transition" }
           ]
         },
         {
@@ -29,7 +29,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should not put cph in scope when no line matches", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the CPH row for an exempt commodity", "strength": "partial", "notes": "CYA omit only; not the addresses hub / page skip" }
           ],
-          "notes": "FIT-NEGATIVE GAP (verified): cph-number.fit.spec.js always seeds Bos taurus and deep-links to /cph-number — never opens addresses with only a non-triggering commodity and asserts the row/page absent. UI hide path is E2E-only; unit covers the evaluator/whitelist out-of-scope decision."
+          "notes": "FIT-NEGATIVE GAP (verified): cph-number.fit.spec.js always chooses Bos taurus and opens /cph-number from the addresses row — never opens addresses with only a non-triggering commodity and asserts the row/page absent. UI hide path is E2E-only; unit covers the evaluator/whitelist out-of-scope decision."
         }
       ]
     },
@@ -80,6 +80,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "full", "notes": "Cow and Cat (both on package-count list) show Number of packages fields" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: a blank number of packages on a line that asks for one holds the page and names it", "strength": "full", "notes": "blanks the first line's packages, asserts one packagesRequired error link that focuses the field — proves the mandatory half" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should put numberOfPackages in scope for a line with commodity = 'Cow'", "strength": "full", "notes": "iterates storable package-count entries" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "is in scope with reason on a matching line", "strength": "full", "notes": "V4 — numberOfPackages; status mandatory" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/whitelists.test.js", "test": "Should make numberOfPackages a required answer on a line whose commodity is counted in packages", "strength": "full", "notes": "" },

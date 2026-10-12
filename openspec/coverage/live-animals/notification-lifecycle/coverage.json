@@ -98,15 +98,16 @@
     {
       "id": "REQ-LIFECYCLE-005",
       "name": "A submitted notification is read-only until an amendment is started",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-LIFECYCLE-005-A",
           "name": "A submitted notification shows no change controls",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "full", "notes": "Submitted strip; zero Change links" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and Delete on the read-only view", "strength": "full", "notes": "Cancel amendment absent on submitted view" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "renders a submitted notification read-only and re-enters an amendment at Overview", "strength": "partial", "notes": "Submitted action required tag and zero Change links; does not assert Cancel amend absent" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Amend this notification, a secondary Copy as new and a red Delete in its header", "strength": "partial", "notes": "the SUBMITTED describe block (the same title repeats under SUBMITTED ACTION REQUIRED, where it does not check Cancel amend); asserts Cancel amend absent on the submitted view; does not assert the status or Change links" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with an orange Submitted action required tag, read-only, and warns that a health certificate is needed", "strength": "partial", "notes": "SUBMITTED ACTION REQUIRED block; asserts the Submitted action required tag and no Change origin of import link; does not assert Cancel amend absent" }
           ]
         }
       ]
@@ -193,8 +194,8 @@
           "name": "Confirming the cancellation restores the submitted answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "banner, Submitted, France restored, no Change links" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and shows its banner", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "Yes cancels the amendment and restores the submitted answers", "strength": "full", "notes": "submitted without a health certificate: banner, Submitted action required, France restored, no Change links" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and shows its banner", "strength": "full", "notes": "submitted with a health certificate: banner, Submitted, changed answer gone, no Change links" }
           ]
         },
         {
@@ -211,8 +212,8 @@
           "name": "Cancel amend works without JavaScript",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "the status bar Cancel amend on a question page restores the submitted answers", "strength": "full", "notes": "JavaScript off; Submitted, no Cancel amend, original answer restored" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the status bar Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cancel-amend-ui.spec.ts", "test": "the status bar Cancel amend on a question page restores the submitted answers", "strength": "full", "notes": "JavaScript off; submitted without a health certificate: Submitted action required, no Cancel amend, original answer restored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the status bar Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "partial", "notes": "JavaScript off; asserts Submitted is restored, but changes no answer first, so does not prove answers are restored" }
           ]
         },
         {

@@ -458,6 +458,30 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-017",
+      "name": "The error summary names each task still to complete as \"Complete <task>\", once, after any origin or address error",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-017-A",
+          "name": "An unfinished draft names the missing contact as a task to complete",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "error summary contains 'Complete contact address for consignment' on viewing and after Continue" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-017-B",
+          "name": "A removed destination is named once",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue for a removed address-book reference", "strength": "full", "notes": "errorList toEqual exactly the place-of-destination party error, so no 'Complete place of destination' entry" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "partial", "notes": "asserts 'Select an address for the place of destination' after Continue; does not assert 'Complete place of destination' is absent" }
+          ]
+        }
+      ]
     }
   ]
 }

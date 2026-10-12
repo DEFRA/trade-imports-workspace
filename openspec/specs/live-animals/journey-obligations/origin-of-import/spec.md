@@ -2,25 +2,26 @@
 
 ## Purpose
 
-What answering the origin brings into play. The region of origin code always applies; the answer to whether one is required decides whether it is mandatory, and answering that none is required clears a code already given.
+What answering the origin brings into play. The answer to whether a region of origin code is required decides whether the code is asked for: Yes asks for it as a mandatory answer, and No asks for none and clears a code already given.
 
 ## Requirements
 
-### Requirement: Whether a region of origin code is required decides whether the code is mandatory, not whether it is asked for
+### Requirement: Whether a region of origin code is required decides whether the code is asked for, and makes it mandatory when it is
 **ID**: REQ-OB-ORIGIN-001
-The system MUST always ask for the region of origin code, and MUST make it mandatory when the user has answered that a region code is required, and optional otherwise.
+The system MUST ask for the region of origin code, as a mandatory answer, only when the user has answered that a region code is required. When they answer that none is required, or have not answered that question, it MUST NOT ask for a region of origin code or save one, and the notification MUST be able to be submitted without it.
 
 #### Scenario: Answering that a region code is required makes it mandatory
 **ID**: SCN-OB-ORIGIN-001-A
 - **GIVEN** the user is answering the origin of the import
 - **WHEN** they answer that a region of origin code is required
-- **THEN** the region of origin code must be given before the notification can be submitted
+- **THEN** the region of origin code is asked for, and must be given before the notification can be submitted
 
-#### Scenario: Answering that no region code is required leaves it optional
+#### Scenario: Answering that no region code is required asks for no code
 **ID**: SCN-OB-ORIGIN-001-B
 - **GIVEN** the user is answering the origin of the import
-- **WHEN** they answer that no region of origin code is required
-- **THEN** the region of origin code is still offered, but the notification can be submitted without it
+- **WHEN** they answer that no region of origin code is required and save
+- **THEN** no region of origin code is asked for or saved
+- **AND** the notification can be submitted without one
 
 ### Requirement: Answering that no region code is required clears a code already given
 **ID**: REQ-OB-ORIGIN-002

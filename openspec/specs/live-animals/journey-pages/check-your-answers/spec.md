@@ -59,6 +59,7 @@ The system MUST group the page under the same six numbered section headings the 
 - **GIVEN** a notification with its import reason and additional details answered
 - **WHEN** the user views the review
 - **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason", with the internal market purpose labelled "Purpose in the market", for Temporary admission horses, "Exit date" and "Port of exit" rows, and for Transit, "Exit border control post" and then "Destination country", with no "Port of exit" row
+- **AND** for a reason that asks none of the exit questions, such as Re-entry, the Main import reason card shows no "Destination country", "Exit date", "Port of exit" or "Exit border control post" row
 - **AND** the additional details answers, when there are any to show, stand on the card titled "Additional details" and read "Certified for" and, where the unweaned question was asked, "Includes unweaned animals"
 
 #### Scenario: The contact address section holds one Contact address card
@@ -97,6 +98,15 @@ The system MUST group the page under the same six numbered section headings the 
 - **AND** it holds a "Transit countries" subsection whose row "Countries that the consignment will travel through" lists the countries comma-separated in the order added
 - **AND** that row has its own Change link, which opens the transit countries page
 - **AND** no separate Transit countries card is shown
+
+#### Scenario: An overland arrival with no transit countries reads Not applicable, and other arrivals have no transit subsection
+**ID**: SCN-CYA-001-T
+- **GIVEN** a notification arriving by road or rail with no transit countries added and every task ready
+- **WHEN** the user views the review
+- **THEN** the Arrival details card still holds the "Transit countries" subsection, its row "Countries that the consignment will travel through" reading "Not applicable"
+- **GIVEN** a notification arriving by sea or air
+- **WHEN** the user views the review
+- **THEN** the Arrival details card holds no "Transit countries" subsection
 
 #### Scenario: The Transport details card always shows the transporter's five rows
 **ID**: SCN-CYA-001-K
@@ -344,7 +354,7 @@ On a submitted notification's view, the system MUST offer in its header a primar
 **ID**: SCN-CYA-008-B
 - **GIVEN** a submitted notification's view
 - **WHEN** the user chooses "Amend this notification"
-- **THEN** the notification is being amended
+- **THEN** Overview opens with the notification's status "Amend"
 
 #### Scenario: Delete opens the delete confirmation
 **ID**: SCN-CYA-008-C
@@ -524,7 +534,7 @@ On a submitted notification's view or a draft's review, the system MUST show a s
 
 ### Requirement: A notification submitted without its health certificate is shown as Submitted action required
 **ID**: REQ-CYA-018
-A notification submitted with no ITAHC or health certificate MUST be shown as "Submitted action required": read-only, tagged so, with the same header actions as "Submitted", ending with "Continue", which starts an amendment and opens the hub. It MUST show the warning "You need to upload a health certificate" only when that is the only outstanding item. A veterinary health certificate does not count. One with an ITAHC or health certificate is "Submitted".
+A notification submitted with no ITAHC or health certificate MUST be shown as "Submitted action required": read-only, tagged so, with the same header actions as "Submitted", ending with "Continue", which starts an amendment and opens the hub. A certificate counts only once its virus scan has passed, and a veterinary health certificate never does. It MUST show the warning "You need to upload a health certificate" only when that is the only outstanding item.
 
 #### Scenario: Submitting without a health certificate shows Submitted action required
 **ID**: SCN-CYA-018-A

@@ -51,7 +51,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 #### Scenario: A page opened from its Overview task returns to Overview rather than running on into the next task
 **ID**: SCN-FLOW-003-C
-- **GIVEN** the opening sequence has ended and the user opens what are you importing, main reason for import, arrival details or transit countries from its task on Overview
+- **GIVEN** the opening sequence has ended and the user opens what are you importing, main import reason, arrival details or transit countries from its task on Overview
 - **WHEN** they save and continue
 - **THEN** Overview is shown, not commodity details, additional details, transit countries or the transporter list
 
@@ -90,7 +90,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 #### Scenario: Main import reason and additional details opened from Overview return to Overview
 **ID**: SCN-FLOW-003-I
-- **GIVEN** the opening sequence has ended and the user opens main reason for import or additional details from its task on Overview
+- **GIVEN** the opening sequence has ended and the user opens main import reason or additional details from its task on Overview
 - **WHEN** they save and continue
 - **THEN** Overview is shown, not commodity details or arrival details
 
@@ -165,7 +165,7 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 
 ### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft and naming nothing while it is being amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010), and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft and naming nothing while it is being amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010), and MUST withhold the declaration and the confirmation until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional. How Overview offers the review is specified by `live-animals/journey-pages/overview`.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A
@@ -180,12 +180,6 @@ The system MUST show check your answers whatever the notification still owes, na
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-#### Scenario: Check and submit on Overview is withheld while a task row is outstanding
-**ID**: SCN-FLOW-006-C
-- **GIVEN** a notification with a task row that is neither fulfilled, not applicable, nor optional
-- **WHEN** the user views Overview
-- **THEN** the Check and submit row cannot be started yet and offers no link
-
 ### Requirement: A notification created in this session runs an opening sequence covering the whole journey, ending on check your answers
 **ID**: REQ-FLOW-007
 The system MUST walk a newly created notification through an opening sequence covering the whole journey, skipping any step not in scope. The sequence MUST NOT offer the CPH number page as a step, MUST go to Overview from roles and addresses when every task is already complete, and MUST end on check your answers once the contact address is saved, complete or not; reaching either ends it. Its order is its own and MUST NOT be assumed to match the order of the flow sections in REQ-FLOW-001.
@@ -194,7 +188,7 @@ The system MUST walk a newly created notification through an opening sequence co
 **ID**: SCN-FLOW-007-A
 - **GIVEN** the user has just created a notification from the dashboard
 - **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through origin of the import, what are you importing, main reason for import, commodity details, identification details, additional details, arrival details, the transporter, upload documents, roles and addresses and the contact address, in that order
+- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, the transporter, upload documents, roles and addresses and the contact address, in that order
 - **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
 
 #### Scenario: An opening-sequence step not yet in scope is skipped
@@ -213,7 +207,7 @@ The system MUST walk a newly created notification through an opening sequence co
 **ID**: SCN-FLOW-007-D
 - **GIVEN** the user is in the opening sequence on what are you importing
 - **WHEN** they save a selection
-- **THEN** main reason for import is shown
+- **THEN** main import reason is shown
 - **WHEN** they save the reason
 - **THEN** commodity details is shown
 
@@ -237,7 +231,7 @@ The system MUST walk a newly created notification through an opening sequence co
 
 #### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
 **ID**: SCN-FLOW-007-H
-- **GIVEN** the user is in the opening sequence on commodity details, reached from main reason for import
+- **GIVEN** the user is in the opening sequence on commodity details, reached from main import reason
 - **WHEN** they save valid counts for a species that needs identifiers
 - **THEN** identification details is shown
 - **WHEN** instead no chosen species needs identifiers

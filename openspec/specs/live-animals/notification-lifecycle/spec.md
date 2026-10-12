@@ -139,7 +139,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 - **GIVEN** the user has changed an answer while amending and then opened the cancel-amendment confirmation page
 - **WHEN** they confirm the cancellation
 - **THEN** a message confirms the amendment was cancelled and the submitted version restored
-- **AND** the notification's status shows "Submitted" again, with the changed answer reverted and no Change links shown
+- **AND** the notification's status shows the submitted status it had before the amendment ("Submitted", or "Submitted action required" when it was submitted without its health certificate), with the changed answer reverted and no Change links shown
 
 #### Scenario: Cancel amend on a question page opens the confirmation page
 **ID**: SCN-LIFECYCLE-008-E
@@ -152,7 +152,7 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 **ID**: SCN-LIFECYCLE-008-F
 - **GIVEN** JavaScript is off and the notification is being amended
 - **WHEN** the user selects "Cancel amend" on a question page and confirms
-- **THEN** the notification shows "Submitted" with its submitted answers restored
+- **THEN** the notification shows the submitted status it had before the amendment ("Submitted", or "Submitted action required" when it was submitted without its health certificate), with its submitted answers restored
 
 #### Scenario: A draft offers no Cancel amend
 **ID**: SCN-LIFECYCLE-008-G

@@ -64,9 +64,9 @@ The system MUST report, on this page, how many lines a commodity-type change rem
 - **THEN** it reports how many lines were removed and names the type they did not belong to
 - **AND** it offers a control to add a fresh line
 
-### Requirement: The page ends with its primary action alone, and continuing leaves the section for origin
+### Requirement: The page ends with its primary action alone, and continuing during the opening sequence leaves the section for origin
 **ID**: REQ-PLANTS-COMMODITIES-006
-The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved.
+The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved during the opening sequence. Outside the opening sequence, continuing returns to Overview (`plants/journey-flow` REQ-PLANTS-FLOW-003).
 
 #### Scenario: The page offers only its primary action
 **ID**: SCN-PLANTS-COMMODITIES-006-A
@@ -74,9 +74,9 @@ The system MUST offer only a save-and-continue action on this page, with no save
 - **WHEN** the page is shown
 - **THEN** only the save-and-continue action is offered
 
-#### Scenario: Continuing with at least one line leaves the section for origin
+#### Scenario: Continuing with at least one line during the opening sequence leaves the section for origin
 **ID**: SCN-PLANTS-COMMODITIES-006-B
-- **GIVEN** the consignment holds at least one commodity line
+- **GIVEN** a notification still in its opening sequence whose consignment holds at least one commodity line
 - **WHEN** the user saves and continues from the list
 - **THEN** the origin page is shown
 

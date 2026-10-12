@@ -51,7 +51,7 @@ The system MUST show, on each notification card, the notification's reference nu
 
 ### Requirement: The actions offered on a card depend on the notification's status
 **ID**: REQ-DASH-004
-The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, copy and amend on a submitted notification's card, with or without action required, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended. Resume on a draft's card MUST open its Overview, not its review.
+The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, amend, copy and delete on a submitted notification's card, with or without action required, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended. Resume on a draft's card MUST open its Overview, not its review.
 
 #### Scenario: A draft notification's card offers resume, copy and delete
 **ID**: SCN-DASH-004-A
@@ -60,11 +60,11 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 - **THEN** its card shows a "Draft" status, offering resume, copy and delete actions
 - **AND** no amend action is offered
 
-#### Scenario: A submitted notification's card offers view, copy and amend
+#### Scenario: A submitted notification's card offers view, amend, copy and delete
 **ID**: SCN-DASH-004-B
 - **GIVEN** a submitted notification exists
 - **WHEN** the user searches the dashboard for its reference number
-- **THEN** its card shows a "Submitted" status, offering view, copy and amend actions
+- **THEN** its card shows a "Submitted" status, offering view, amend, copy and delete actions
 
 #### Scenario: A notification being amended offers resume and cancel-amendment
 **ID**: SCN-DASH-004-C
@@ -76,7 +76,7 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 **ID**: SCN-DASH-004-D
 - **GIVEN** a notification has been submitted without its health certificate
 - **WHEN** the user searches the dashboard for its reference number
-- **THEN** its card shows a "Submitted action required" status, offering view, copy and amend actions
+- **THEN** its card shows a "Submitted action required" status, offering view, amend, copy and delete actions
 
 #### Scenario: Resuming a draft opens its Overview
 **ID**: SCN-DASH-004-E
@@ -130,7 +130,7 @@ The system MUST let a user search the notification dashboard by reference number
 - **GIVEN** a reference-number search has returned exactly one matching notification
 - **WHEN** the user selects View on that result
 - **THEN** the notification view page opens at the URL for that reference number
-- **AND** the page heading and reference-number caption are shown
+- **AND** the page is headed by that reference number
 
 #### Scenario: An unmatched reference number shows no results
 **ID**: SCN-DASH-007-D

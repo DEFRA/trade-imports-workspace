@@ -34,7 +34,7 @@ The system MUST treat the journey's flow sections and the Overview page's task r
 
 ### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
 **ID**: REQ-PLANTS-FLOW-003
-Outside the opening sequence (REQ-PLANTS-FLOW-007) and outside a change made from check your answers, the system MUST take the user, on continuing from a page, to the next page of that section in the same Overview task whose conditions are met, skipping any that are not, and MUST otherwise return them to Overview. It MUST add no marker to a page's address, link or form to tell such a save.
+Outside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check your answers, continuing from a page MUST go to the next in-scope page of that section in the same Overview task, and otherwise MUST return to Overview. A page in no Overview task (check your answers, the declaration) MUST go on to the next page of its section (REQ-PLANTS-FLOW-006). The system MUST NOT add a marker to a page's address, link or form to tell such a save.
 
 #### Scenario: Continuing skips a page that is not in scope
 **ID**: SCN-PLANTS-FLOW-003-A
@@ -157,8 +157,9 @@ The system MUST walk a newly created notification through an opening sequence of
 #### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
 **ID**: SCN-PLANTS-FLOW-007-C
 - **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or check your answers
-- **WHEN** they open one of the opening sequence's own pages again and save it
-- **THEN** they return to Overview, not to whatever would be the next step of the sequence
+- **WHEN** they open origin again and save it
+- **THEN** they return to Overview, not to arrival status, the next step the sequence would have taken
+- **AND** a revisited page with a later page in its own Overview task, such as commodity type or arrival status, goes on only to that page (REQ-PLANTS-FLOW-003), never past the end of its task
 
 #### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
 **ID**: SCN-PLANTS-FLOW-007-D
@@ -168,7 +169,7 @@ The system MUST walk a newly created notification through an opening sequence of
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008
-The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds any answer the user has entered. The commodity-type page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
+The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds an answer the user entered. Exempt MUST be: the commodity-type page and those beneath it, so the redirect cannot loop; the dashboard's actions on a notification (amend, cancel an amendment, copy, delete); and a notification that does not exist, which the page asked for answers (for the view, REQ-PLANTS-CYA-015).
 
 #### Scenario: A deep link to an unknown journey lands on the entry page
 **ID**: SCN-PLANTS-FLOW-008-A

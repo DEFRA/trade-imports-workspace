@@ -92,9 +92,9 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving without a means of transport is refused
+### Requirement: Save and continue without a means of transport is refused
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question, which is shown in its error style; the page's title MUST start 'Error: ' and the other answers entered MUST be shown back.
+The system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing back the other answers entered, and showing the error 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question. Save and return to overview with no means of transport is not refused; what it saves is specified by `live-animals/journey-flow`.
 
 #### Scenario: Saving with no means of transport shows an error on that question
 **ID**: SCN-ARRIVAL-006-A
@@ -215,7 +215,7 @@ The system MUST let the user save and continue once a means of transport is chos
 
 ### Requirement: The port search is hinted and shows a placeholder
 **ID**: REQ-ARRIVAL-012
-The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen.
+The system MUST hint the port of entry with "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code." and MUST show "Select a port" in the search while no port is chosen, and MUST begin the ordinary port list with a blank "Select a port" entry.
 
 #### Scenario: The port search reads as Design Release 2.1 words it
 **ID**: SCN-ARRIVAL-012-A
@@ -223,6 +223,12 @@ The system MUST hint the port of entry with "Select where the transporter will e
 - **WHEN** the page loads
 - **THEN** the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
 - **AND** the port search shows "Select a port"
+
+#### Scenario: Without JavaScript, the port list begins with "Select a port"
+**ID**: SCN-ARRIVAL-012-B
+- **GIVEN** the user has reached the arrival details page without JavaScript
+- **WHEN** the page loads
+- **THEN** the port of entry list begins with its blank "Select a port" entry
 
 ### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code
 **ID**: REQ-ARRIVAL-013

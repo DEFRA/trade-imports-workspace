@@ -96,7 +96,7 @@ The system MUST accept an origin answer that names a country and answers whether
 
 ### Requirement: Saving without a country is accepted, but leaves the origin task outstanding
 **ID**: REQ-ORIGIN-008
-The system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row outstanding on Overview until a country is chosen.
+The system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row on Overview outstanding while no country is chosen. When the task reads Complete is specified by `live-animals/journey-pages/overview`.
 
 #### Scenario: Saving with no country chosen succeeds and moves on
 **ID**: SCN-ORIGIN-008-A

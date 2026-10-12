@@ -8,11 +8,11 @@ Asks which address-book record is the consignor or exporter. The page is titled 
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker, with save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview.
+The system MUST ask which address is the consignor or exporter, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
-- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification
+- **GIVEN** the user has reached the consignor page on a wood or plants-for-planting notification that is not being amended
 - **WHEN** the page loads
 - **THEN** it shows the parties section caption, the heading "Consignor or exporter", the sender description, and a search box
 - **AND** the three save controls are offered

@@ -197,7 +197,6 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 ### Requirement: An unfinished draft names every outstanding task
 **ID**: REQ-PLANTS-CYA-012
 The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
-
 #### Scenario: Viewing an unfinished notification names each outstanding task
 **ID**: SCN-PLANTS-CYA-012-A
 - **GIVEN** a draft notification with one or more tasks not yet complete
@@ -312,3 +311,20 @@ On a submitted notification's read-only view or a draft's check answers, the sys
 - **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
 - **AND** it holds a "Notification reference" row reading the notification's reference
 - **AND** no "Customs document code" row and no "Copy" button is shown
+
+### Requirement: The error summary names each task still to complete as "Complete <task>", once, after any origin or address error
+**ID**: REQ-PLANTS-CYA-017
+Each task still to complete MUST be named in the error summary as "Complete what you are importing", "Complete where this consignment is coming from", "Complete arrival details", "Complete place of destination", "Complete consignor or exporter", "Complete identification numbers" or "Complete contact address for consignment". Any country-of-origin or removed-address error MUST be listed first, then the tasks in Overview order. A task already named by such an error MUST NOT be named again.
+
+#### Scenario: An unfinished draft names the missing contact as a task to complete
+**ID**: SCN-PLANTS-CYA-017-A
+- **GIVEN** a draft notification complete except for its contact address
+- **WHEN** the user views check-your-answers
+- **THEN** the error summary reads "Complete contact address for consignment"
+
+#### Scenario: A removed destination is named once
+**ID**: SCN-PLANTS-CYA-017-B
+- **GIVEN** a complete draft whose place-of-destination address has been removed from the address book
+- **WHEN** the user continues from check-your-answers
+- **THEN** the error summary names "Select an address for the place of destination"
+- **AND** it does not also name "Complete place of destination"

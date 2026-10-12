@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "ffa1146c619bd11ad42a9ec77b2c8024a9034547",
+  "pr": 395,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-12T14:34:16Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The three fields the ticket names are converted correctly and match the existing call-site pattern, but the fourth country field on the same page (transhipmentDestinationCountry) stays a plain select while its shared item list loses the divider.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 34,
+      "severity": "Major",
+      "category": "consistency",
+      "issue": "transhipmentDestinationCountry is left as a plain govukSelect while transitDestinationCountry, the same 'Destination country' question fed by the same countryItems on the same page, becomes appAccessibleAutocomplete; this PR's controller change also drops DIVIDER_OPTION from the shared countryItems() on the grounds that the lists 'feed type-aheads', so the one remaining scroll-only select loses its divider and the controller comment is untrue for it. The ticket names only three fields, so this may be a deliberate scope limit, but the user story says 'wherever the journey asks for a country or a port'.",
+      "fix": "Convert transhipmentDestinationCountry to appAccessibleAutocomplete with autocomplete: { showAllValues: true, noResults: copy.country.noResults } (then drop the unused govukSelect import and update the transhipment fit test to the input/-select pair), or confirm with the ticket owner that it is out of scope and correct the controller comment."
+    }
+  ],
+  "reconciled_at": "2026-10-12T14:34:49Z"
+}

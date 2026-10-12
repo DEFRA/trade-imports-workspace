@@ -1,0 +1,30 @@
+{
+  "file": "fit/live-animals-journey.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "ffa1146c619bd11ad42a9ec77b2c8024a9034547",
+  "pr": 395,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-12T14:33:52Z",
+  "verdict": "SAFE",
+  "verdict_reason": "New chooseAutocompleteByLabel fit helper correctly drives both the enhanced input and the no-JS select for the three import-reason fields (AC14); two Minor robustness/design notes only.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 206,
+      "severity": "Minor",
+      "category": "flakiness",
+      "issue": "chooseAutocompleteByLabel probes el.tagName without the waitForLoadState('domcontentloaded') that chooseCountryOfOrigin and addTransitCountry in this file use and document; called mid-load, the probe can read the not-yet-enhanced SELECT and then selectOption runs against the enhanced input. Today's three callers in check-answers.fit.spec.js are safe only because they follow an awaited page.goto.",
+      "fix": "Add await page.waitForLoadState('domcontentloaded') before resolving the field, as the two sibling helpers do, so the exported helper is safe for any caller."
+    },
+    {
+      "id": 2,
+      "line": 203,
+      "severity": "Minor",
+      "category": "test-design",
+      "issue": "chooseAutocompleteByLabel ignores label whenever inputId is passed, and all three callers pass both, so the getByLabel branch the name and comment describe is never exercised and every real use resolves the field by a raw #id selector instead of a semantic locator.",
+      "fix": "Scope the label lookup to the reveal instead of switching to an id (e.g. accept an optional scope locator and call scope.getByLabel(label, { exact: true })), or drop the unused label from id-addressed calls and rename the helper so the signature matches what it does.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-10-12T14:34:49Z"
+}

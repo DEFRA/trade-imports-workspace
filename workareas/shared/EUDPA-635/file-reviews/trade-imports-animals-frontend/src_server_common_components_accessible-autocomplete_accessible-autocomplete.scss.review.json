@@ -1,0 +1,30 @@
+{
+  "file": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "ffa1146c619bd11ad42a9ec77b2c8024a9034547",
+  "pr": 395,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-12T14:34:11Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The arrow-to-search-icon reskin meets AC15, keeps the upstream stacking contract, is allowed by the CSP and is covered by origin.fit.spec.js; only two Minor findings.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Minor",
+      "category": "robustness",
+      "issue": "Search icon ::after is painted on every .autocomplete__wrapper, but the 35px right padding that keeps text clear of it comes only from upstream .autocomplete__input--show-all-values; the macro still supports showAllValues false, where the input has 5px padding and typed text runs underneath the icon (the upstream arrow was only rendered when showAllValues was on).",
+      "fix": "Set padding-right: 35px on .autocomplete__input in this file so the clearance travels with the icon, or scope the ::after to wrappers containing .autocomplete__input--show-all-values via :has()."
+    },
+    {
+      "id": 2,
+      "line": 17,
+      "severity": "Minor",
+      "category": "gds-styles",
+      "issue": "Icon stroke colour is hard-coded twice as the hex %230b0c0c inside the data URI rather than derived from the GOV.UK Sass palette, so it will not follow a govuk-frontend palette change.",
+      "fix": "Build the data URI from the palette, e.g. interpolate the text colour (string.slice of the govuk text colour value, prefixed with %23) into the stroke attributes instead of the literal hex.",
+      "best_practice": "gds/styles.md"
+    }
+  ],
+  "reconciled_at": "2026-10-12T14:34:49Z"
+}

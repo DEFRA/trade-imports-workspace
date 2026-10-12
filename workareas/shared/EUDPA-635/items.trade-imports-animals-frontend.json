@@ -1,0 +1,141 @@
+{
+  "ticket": "EUDPA-635",
+  "repo": "trade-imports-animals-frontend",
+  "items": [
+    {
+      "id": 1,
+      "line": 206,
+      "severity": "Minor",
+      "category": "flakiness",
+      "issue": "chooseAutocompleteByLabel probes el.tagName without the waitForLoadState('domcontentloaded') that chooseCountryOfOrigin and addTransitCountry in this file use and document; called mid-load, the probe can read the not-yet-enhanced SELECT and then selectOption runs against the enhanced input. Today's three callers in check-answers.fit.spec.js are safe only because they follow an awaited page.goto.",
+      "fix": "Add await page.waitForLoadState('domcontentloaded') before resolving the field, as the two sibling helpers do, so the exported helper is safe for any caller.",
+      "file": "fit/live-animals-journey.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 203,
+      "severity": "Minor",
+      "category": "test-design",
+      "issue": "chooseAutocompleteByLabel ignores label whenever inputId is passed, and all three callers pass both, so the getByLabel branch the name and comment describe is never exercised and every real use resolves the field by a raw #id selector instead of a semantic locator.",
+      "fix": "Scope the label lookup to the reveal instead of switching to an id (e.g. accept an optional scope locator and call scope.getByLabel(label, { exact: true })), or drop the unused label from id-addressed calls and rename the helper so the signature matches what it does.",
+      "best_practice": "playwright/BEST_PRACTICES.md",
+      "file": "fit/live-animals-journey.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 41,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "countryItems() drops DIVIDER_OPTION for every consumer, but template.njk line 34-41 still renders transhipmentDestinationCountry as a plain scroll-only govukSelect from the same countryItems - so that unconverted select silently loses its divider row, and the new comment ('The lists feed type-aheads that enhance these selects') is untrue for it; the ticket's own rationale is that a scroll-only list needs the divider.",
+      "fix": "Either convert transhipmentDestinationCountry to appAccessibleAutocomplete too (matches the story's 'wherever the journey asks for a country', add a fit test), or keep a divider-bearing list for that one select; then make the comment match what the lists actually feed.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 4,
+      "line": 134,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "The PR drops DIVIDER_OPTION from both countryItems() and portItems() in controller.js, but only the port list is pinned (portItems.slice(1) toEqual ports.list()); countryItems is asserted at index 0 only, so reinstating the divider row in the destination-country list would pass every test in the feature.",
+      "fix": "Add the sibling assertion: expect(result.view.context.countryItems.slice(1)).toEqual(await countries.originCountries()), importing services/countries/index.js.",
+      "best_practice": "node/testing/frontend.md",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 5,
+      "line": 476,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "'filters countries as the user types' (AC9) only asserts the Ireland option is visible after fill('ire'); the whole-list test at line 464 shows that is already true with no filtering, so this test still passes if filtering is broken (the port twin at line 447 does assert toHaveCount(1)).",
+      "fix": "Assert the narrowed list as the port test and origin.fit.spec.js do: expect page.getByRole('option') toHaveCount of the fixture countries whose name contains 'ire' (or a unique query with toHaveCount(1)), or assert a non-matching country option has count 0.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "line": 430,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "AC8, AC12 and AC13 name the temporary admission (horses) port of exit, but the type-ahead describe (beforeEach checks only 'transit') and the no-JS test (line 495) drive only the transit fields; temporaryAdmissionPortOfExit has its own template config (showAllValues, noResults) and is only ever exercised by fill-and-pick, so a missing 'No ports found' message, whole-list-on-focus or no-JS submit on that field would go unnoticed.",
+      "fix": "Add temporaryAdmissionHorses cases for whole list on focus and copy.port.noResults against temporaryAdmissionPortInput, and extend the no-JS test (or add one) to selectOption on select#temporaryAdmissionPortOfExit and assert the code persists.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 7,
+      "line": 330,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "AC7 and AC10 'I should be able to change the selection' (and AC8/AC11 'change or clear the search term') have no test: every case picks one option once, so the wrapper's onConfirm path that clears the select then re-selects (accessible-autocomplete.js onConfirmFor) is never exercised with a second choice or a cleared input on these three fields.",
+      "fix": "Add a case that picks a port (and a country), then picks a different one and asserts both the visible input label and the hidden -select code now hold the second choice; and one that types a no-match term, replaces it with a matching term and asserts the option is offered again.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 8,
+      "line": 34,
+      "severity": "Major",
+      "category": "consistency",
+      "issue": "transhipmentDestinationCountry is left as a plain govukSelect while transitDestinationCountry, the same 'Destination country' question fed by the same countryItems on the same page, becomes appAccessibleAutocomplete; this PR's controller change also drops DIVIDER_OPTION from the shared countryItems() on the grounds that the lists 'feed type-aheads', so the one remaining scroll-only select loses its divider and the controller comment is untrue for it. The ticket names only three fields, so this may be a deliberate scope limit, but the user story says 'wherever the journey asks for a country or a port'.",
+      "fix": "Convert transhipmentDestinationCountry to appAccessibleAutocomplete with autocomplete: { showAllValues: true, noResults: copy.country.noResults } (then drop the unused govukSelect import and update the transhipment fit test to the input/-select pair), or confirm with the ticket owner that it is out of scope and correct the controller comment.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/template.njk",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "line": 444,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "AC15 test 'paints the search icon behind the interactive input' does not prove an icon is painted or that it is behind the input: searchIconPainted only checks the wrapper ::after content is not 'none' (passes with the background image removed), and inputIsTopHit cannot fail because elementsFromPoint never returns a pseudo-element and the ::after is pointer-events:none, so it passes whatever the ::after z-index is. The old test proved the stacking with the real arrow element in the hit stack; that proof was lost in the rewrite.",
+      "fix": "Assert the ::after computed styles that carry the behaviour: backgroundImage contains 'data:image/svg+xml' (the magnifying glass), zIndex is '-1' and pointerEvents is 'none', alongside the existing arrowHidden/wrapperZIndex checks; rename or drop inputIsTopHit if it is kept only as a click-through check.",
+      "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 10,
+      "line": 27,
+      "severity": "Minor",
+      "category": "robustness",
+      "issue": "Search icon ::after is painted on every .autocomplete__wrapper, but the 35px right padding that keeps text clear of it comes only from upstream .autocomplete__input--show-all-values; the macro still supports showAllValues false, where the input has 5px padding and typed text runs underneath the icon (the upstream arrow was only rendered when showAllValues was on).",
+      "fix": "Set padding-right: 35px on .autocomplete__input in this file so the clearance travels with the icon, or scope the ::after to wrappers containing .autocomplete__input--show-all-values via :has().",
+      "file": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 11,
+      "line": 17,
+      "severity": "Minor",
+      "category": "gds-styles",
+      "issue": "Icon stroke colour is hard-coded twice as the hex %230b0c0c inside the data URI rather than derived from the GOV.UK Sass palette, so it will not follow a govuk-frontend palette change.",
+      "fix": "Build the data URI from the palette, e.g. interpolate the text colour (string.slice of the govuk text colour value, prefixed with %23) into the stroke attributes instead of the literal hex.",
+      "best_practice": "gds/styles.md",
+      "file": "src/server/common/components/accessible-autocomplete/accessible-autocomplete.scss",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "ffa1146c619bd11ad42a9ec77b2c8024a9034547",
+  "pr": 395,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-12T14:33:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rewritten AC15 style test is correct in intent but its search-icon and behind-the-input assertions would still pass with no icon image or the wrong stacking, so the new behaviour is only weakly tested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 444,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "AC15 test 'paints the search icon behind the interactive input' does not prove an icon is painted or that it is behind the input: searchIconPainted only checks the wrapper ::after content is not 'none' (passes with the background image removed), and inputIsTopHit cannot fail because elementsFromPoint never returns a pseudo-element and the ::after is pointer-events:none, so it passes whatever the ::after z-index is. The old test proved the stacking with the real arrow element in the hit stack; that proof was lost in the rewrite.",
+      "fix": "Assert the ::after computed styles that carry the behaviour: backgroundImage contains 'data:image/svg+xml' (the magnifying glass), zIndex is '-1' and pointerEvents is 'none', alongside the existing arrowHidden/wrapperZIndex checks; rename or drop inputIsTopHit if it is kept only as a click-through check."
+    }
+  ],
+  "reconciled_at": "2026-10-12T14:34:49Z"
+}

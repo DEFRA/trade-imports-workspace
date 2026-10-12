@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "ffa1146c619bd11ad42a9ec77b2c8024a9034547",
+  "pr": 395,
+  "mode": "FRESH",
+  "reviewed_at": "2026-10-12T14:34:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rewrite to the enhanced input is correct and matches origin.fit.spec.js, but the country filter test cannot fail and the temporary admission port and change-selection AC clauses are untested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 476,
+      "severity": "Major",
+      "category": "test-quality",
+      "issue": "'filters countries as the user types' (AC9) only asserts the Ireland option is visible after fill('ire'); the whole-list test at line 464 shows that is already true with no filtering, so this test still passes if filtering is broken (the port twin at line 447 does assert toHaveCount(1)).",
+      "fix": "Assert the narrowed list as the port test and origin.fit.spec.js do: expect page.getByRole('option') toHaveCount of the fixture countries whose name contains 'ire' (or a unique query with toHaveCount(1)), or assert a non-matching country option has count 0."
+    },
+    {
+      "id": 2,
+      "line": 430,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "AC8, AC12 and AC13 name the temporary admission (horses) port of exit, but the type-ahead describe (beforeEach checks only 'transit') and the no-JS test (line 495) drive only the transit fields; temporaryAdmissionPortOfExit has its own template config (showAllValues, noResults) and is only ever exercised by fill-and-pick, so a missing 'No ports found' message, whole-list-on-focus or no-JS submit on that field would go unnoticed.",
+      "fix": "Add temporaryAdmissionHorses cases for whole list on focus and copy.port.noResults against temporaryAdmissionPortInput, and extend the no-JS test (or add one) to selectOption on select#temporaryAdmissionPortOfExit and assert the code persists."
+    },
+    {
+      "id": 3,
+      "line": 330,
+      "severity": "Major",
+      "category": "test-coverage",
+      "issue": "AC7 and AC10 'I should be able to change the selection' (and AC8/AC11 'change or clear the search term') have no test: every case picks one option once, so the wrapper's onConfirm path that clears the select then re-selects (accessible-autocomplete.js onConfirmFor) is never exercised with a second choice or a cleared input on these three fields.",
+      "fix": "Add a case that picks a port (and a country), then picks a different one and asserts both the visible input label and the hidden -select code now hold the second choice; and one that types a no-match term, replaces it with a matching term and asserts the option is offered again."
+    }
+  ],
+  "reconciled_at": "2026-10-12T14:34:49Z"
+}

@@ -20,7 +20,7 @@ pointers stay in the main backlog. `themes/HOW-TO-BUILD.md` lists every theme's 
 | Arrival and transit | EUDPA-694 | `arrival-and-transit` | Done, 5 of 5 |
 | Origin page | EUDPA-695 | `origin-page` | Done, 3 of 3 |
 | Overview and review | EUDPA-696 | `overview-and-review` | 16 landed; inc-108 and inc-117 wait on main inc-054 |
-| Type question and templates | EUDPA-690 | branch `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | Built on Sam's second laptop. **State unknown here**: fetch it and read its backlog before relying on it |
+| Type question and templates | EUDPA-690 | branch `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | **Still building, and incomplete.** See "Templates is still in flight" below |
 
 Stacking: commodities, arrival and transit, and origin page branch from journey foundation with reference
 lists merged in. Overview and review is built on all five. Templates branched separately from `main`. Merge order is:
@@ -34,6 +34,34 @@ Published pages already exist. Read each one with the Artifact tool's `read` act
 - "Design Release 2.1 decisions": https://claude.ai/artifact/ChnyYcakTW2GfgG7Jx23wH (Sam's rulings)
 
 Rulings are in `sources/ruling-sam-*.md`, and deferred work is in `deferred.md`.
+
+## Templates is still in flight
+
+- **Where it stands:** the templates theme (EUDPA-690) is still building on Sam's second laptop. Sam has told that
+  loop to stop once it lands its current increment. Some of its rows will be left unbuilt.
+- **Don't wait for it.** Start every step below without templates.
+- **When laptop 2 has stopped and pushed:**
+  - The templates branch is in its 5 repos: animals frontend, animals backend, INS frontend, plants frontend and tests.
+    Its backlog and OpenSpec commits are on the workspace branch.
+  - Sam will tell you, or you'll see it pushed. Treat `themes/type-question-and-templates/backlog.json` on the pushed
+    workspace branch as the truth for what's done.
+- **Then, in this order:**
+  1. **Merge templates into the combined branch.** Pull the workspace branch first; laptop 2's backlog may conflict
+     with local changes, and laptop 2's version wins for that theme's files. Merge `feat/NO_JIRA-...-templates` into
+     the combined branch in each repo and log the conflicts. Expect clashes with journey foundation's opening run.
+     Re-prove the branch: unit tests, lint, full E2E under the lease.
+  2. **Re-run the checks on what templates added.** Run steps 2 to 4 again on its diff only, and add the results to
+     the existing pages rather than starting new ones. Update the progress report.
+  3. **Build its remaining rows on this laptop.** Laptop 2 is too slow for the tests and stops after this increment.
+     - On the templates branch (not the combined one), run `tim workspace branch
+       feat/NO_JIRA-design-release-2-1-type-question-and-templates`.
+     - Launch the increment build loop with `themes/type-question-and-templates/build-args.json`, branch lifecycle,
+       by `scriptPath`. See `themes/HOW-TO-BUILD.md`.
+     - Commit and push the theme's backlog path-limited after each run.
+     - When it finishes, merge templates into the combined branch again and re-prove it.
+- **One stack, one lease.** The combined branch's E2E runs and the templates build both need the Docker stack. Run
+  them one after the other, never side by side. Switch the repos back to the combined branch
+  (`tim workspace branch feat/NO_JIRA-design-release-2-1-combined`) before any combined-branch run.
 
 ## Two things checked before you start
 
@@ -81,15 +109,13 @@ Create `feat/NO_JIRA-design-release-2-1-combined` in every repo any theme touche
 Build it from `main` by merging, in this order:
 - journey foundation, then reference lists;
 - commodities and import reason, arrival and transit, and origin page;
-- overview and review;
-- templates.
+- overview and review.
 
-Overview and review already contains the first five, so in practice you merge 696 and then templates. Check that
+Templates comes in later; see "Templates is still in flight". Overview and review already contains the first five,
+so in practice you merge 696. Check that
 with `git merge-base` rather than assuming it.
 
-- **Resolving conflicts:** resolve each conflict on its merits and write down every resolution. The templates merge
-  is the new one: it was built in parallel, and its type question and template work will clash with the journey
-  foundation's opening run.
+- **Resolving conflicts:** resolve each conflict on its merits and write down every resolution.
 - **Proving the branch:** unit tests and lint in each repo, then the full E2E suite under the lease
   (`npm run test:docker-compose` in the tests repo) on a dev-mode stack on this branch.
 - **CI:** open one **draft** PR per repo, titled as a combined review branch and marked "do not merge", so CI publishes
@@ -208,6 +234,7 @@ Tell Sam, in one short message:
 - what the OpenSpec audit found;
 - the links to the four pages: business review, engineering review, the updated progress report, and the decisions
   page if you changed it;
-- anything you couldn't do and why.
+- anything you couldn't do and why;
+- where templates stands: merged in or still waiting on laptop 2, and how many of its rows are left to build here.
 
 Then add one line to `MEMORY.md` pointing at this handover's outcome.

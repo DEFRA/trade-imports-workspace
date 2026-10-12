@@ -5,8 +5,13 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
+      suites:
+        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one. Empty runs every test suite.'
+        required: false
+        type: string
+        default: ''
       project:
-        description: 'Playwright project(s) (domain) to run: animals, animals-admin, ins or plants — space- or comma-separated for more than one. Empty runs every project.'
+        description: 'Deprecated: use suites. Domain name(s) (animals, animals-admin, ins, plants), mapped to tests/<domain>/. Ignored when suites is set.'
         required: false
         type: string
         default: ''
@@ -16,8 +21,13 @@ on:
         description: 'Branch name to probe for service images'
         required: true
         type: string
+      suites:
+        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one. Empty runs every test suite.'
+        required: false
+        type: string
+        default: ''
       project:
-        description: 'Playwright project(s) (domain) to run: animals, animals-admin, ins or plants — space- or comma-separated for more than one. Empty runs every project.'
+        description: 'Deprecated: use suites. Domain name(s) (animals, animals-admin, ins, plants), mapped to tests/<domain>/. Ignored when suites is set.'
         required: false
         type: string
         default: ''
@@ -127,16 +137,19 @@ jobs:
 
       - name: Run E2E tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         env:
+          SUITES: ${{ inputs.suites }}
           PROJECT: ${{ inputs.project }}
         run: |
-          # Playwright selects multiple projects by repeating --project, so
-          # turn a space- and/or comma-separated PROJECT into one flag each.
-          # Unquoted word-splitting below also trims stray whitespace.
-          projects="${PROJECT//,/ }"
-          project_args=()
-          for p in $projects; do
-            project_args+=(--project="$p")
-          done
+          # Test suites are selected by path, not --project (a project is
+          # browser config). normalise-suites.sh validates the input, gives
+          # each directory the trailing slash that stops tests/animals also
+          # matching tests/animals-admin, and maps the deprecated `project`.
+          normalised="$(bash ./scripts/ci/normalise-suites.sh)"
+          suite_args=()
+          if [ -n "$normalised" ]; then
+            mapfile -t suite_args <<< "$normalised"
+          fi
+          echo "Test suites: ${suite_args[*]:-all}"
 
           docker run --rm \
             --network host \
@@ -147,7 +160,7 @@ jobs:
             --entrypoint npm \
             defradigital/trade-imports-ins-tests:${{ steps.branch-tag.outputs.tests-tag }} \
             run test:docker-compose:ci -- \
-              "${project_args[@]}" \
+              "${suite_args[@]}" \
               --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
       - name: Upload shard artifacts

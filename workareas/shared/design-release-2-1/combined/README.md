@@ -62,10 +62,15 @@ After resolution the merge adds no content over 696; it records reference lists 
 | Business review (BAs, POs, SMEs): every change a user would notice, before and after, with Right / Wrong / Not sure | https://claude.ai/artifact/WWWq8qXCzAHaciTzU8YBGa | `business-review/` |
 | Engineering review: risk-ranked findings, with each engineer's verdict | https://claude.ai/artifact/7bH3vbECyuEax7i6xiwfDA | `engineering-review/` |
 | Progress report: Design Release 2.1 work by theme | https://claude.ai/artifact/FHJCGEJ8jm7zs9mLXT4YBw | `progress-page/` |
+| Build order: the themes as a dependency schematic, with what could start today | https://claude.ai/code/artifact/f7f85b51-6974-4096-acd1-66bec1171457 | `build-order-page/` |
 | OpenSpec audit | — | `openspec-audit.md` |
 
 Answers on both review pages live in each page's shared database (`verdicts/<reviewer id>`); read them back with the
 ArtifactData tool.
+
+The build-order page is the exception to this section's heading: it reads the backlogs, not this branch, so it is
+true of the whole programme rather than of the combined review. Refresh it with `npm run build` then `npm run check`
+in `build-order-page/build/`, and republish to the same URL — see `build-order-page/README.md`.
 
 Screenshots: `business-review/capture/` is a Playwright harness that walks the same data through both sides
 (`SIDE=before|after CLEAN=1 npm run capture --prefix business-review/capture`). Before = published `:latest` images

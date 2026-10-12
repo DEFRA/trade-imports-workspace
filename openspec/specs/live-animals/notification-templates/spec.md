@@ -626,7 +626,7 @@ Selecting "Use template" on a live animals template's card or on its page MUST c
 
 ### Requirement: A notification started from a template holds the template's answers, without an arrival date or documents
 **ID**: REQ-TEMPLATES-033
-A notification started from a template MUST hold the answers the template holds, except that it MUST hold no arrival date and no documents, and it MUST show no errors when first opened.
+A notification started from a template MUST hold the answers the template holds, except that it MUST hold no arrival date and no documents, and it MUST show no errors when first opened. It MUST hold each consignment party and the contact address as the template holds them, and where the template has no contact address its place of origin MUST be the contact address.
 
 #### Scenario: A fully answered template's answers are carried into the notification
 **ID**: SCN-TEMPLATES-033-A
@@ -674,6 +674,19 @@ A notification started from a template MUST hold the answers the template holds,
 - **WHEN** they use it
 - **THEN** the new notification's Overview shows no error summary
 
+#### Scenario: Each party and the contact address are carried
+**ID**: SCN-TEMPLATES-033-H
+- **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address
+- **WHEN** they use it and open the review of the new notification
+- **THEN** the "Roles and addresses" card shows the template's place of origin, consignor, consignee, importer and place of destination
+- **AND** the "Contact address for this consignment" card shows the template's contact address
+
+#### Scenario: With no contact address, the place of origin becomes the contact address
+**ID**: SCN-TEMPLATES-033-I
+- **GIVEN** the user has saved a template that has a place of origin and no contact address
+- **WHEN** they use it and open the review of the new notification
+- **THEN** the "Contact address for this consignment" card shows the template's place of origin
+
 ### Requirement: A template the user cannot use returns them to Manage templates
 **ID**: REQ-TEMPLATES-034
 Using a template that does not exist, has been deleted or is another user's MUST show Manage templates and MUST create no notification.
@@ -691,3 +704,45 @@ Using a template that does not exist, has been deleted or is another user's MUST
 - **WHEN** the signed-in user selects "Use template"
 - **THEN** Manage templates is shown, without the template
 - **AND** no notification is created
+
+### Requirement: Each template card lists Commodity, Origin, Consignee and Consignor
+**ID**: REQ-TEMPLATES-035
+Each template card MUST list, below "View template" and "Use template" and in this order, "Commodity" (the common name of each of the template's commodities), "Origin" (the country of origin), "Consignee" (the consignee's name) and "Consignor" (the consignor's name), each reading "Not applicable" when the template has no answer.
+
+#### Scenario: A part-answered template's card reads Not applicable for what it does not hold
+**ID**: SCN-TEMPLATES-035-A
+- **GIVEN** the user has saved a template that answers Origin and a commodity but names no consignee or consignor
+- **WHEN** Manage templates is shown
+- **THEN** the template's card lists "Commodity", "Origin", "Consignee" and "Consignor", in that order
+- **AND** "Commodity" shows the commodity's common name and "Origin" shows the country of origin
+- **AND** "Consignee" and "Consignor" read "Not applicable"
+
+#### Scenario: A template's card names its commodity, origin, consignee and consignor
+**ID**: SCN-TEMPLATES-035-B
+- **GIVEN** the user has saved a template with a commodity, a country of origin, a consignee and a consignor
+- **WHEN** Manage templates is shown
+- **THEN** the template's card shows the commodity's common name, the country of origin, the consignee's name and the consignor's name against "Commodity", "Origin", "Consignee" and "Consignor"
+
+#### Scenario: A template saved with nothing answered reads Not applicable for all four
+**ID**: SCN-TEMPLATES-035-C
+- **GIVEN** a saved template holds no answers
+- **WHEN** Manage templates is shown
+- **THEN** the template's card reads "Not applicable" for "Commodity", "Origin", "Consignee" and "Consignor"
+
+### Requirement: A saved template's page shows each consignment party and the contact address
+**ID**: REQ-TEMPLATES-036
+A saved template's page MUST show, in its "Roles and addresses" card, the place of origin, consignor, consignee, importer and place of destination each as answered, by name, with the place of origin also showing its address. Its "Contact address for this consignment" card MUST show the contact address as answered or, where none was chosen, the place of origin.
+
+#### Scenario: Each party and the contact address are shown as answered
+**ID**: SCN-TEMPLATES-036-A
+- **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address
+- **WHEN** they open the template's page
+- **THEN** the "Roles and addresses" card shows each of the five parties by name, and the place of origin with its address
+- **AND** the "Contact address for this consignment" card shows the contact address
+
+#### Scenario: With no contact address chosen, the place of origin is shown as the contact address
+**ID**: SCN-TEMPLATES-036-B
+- **GIVEN** the user has saved a template that has a place of origin and no contact address
+- **WHEN** they open the template's page
+- **THEN** the "Contact address for this consignment" card shows the template's place of origin
+- **AND** the "Roles and addresses" card reads "Not applicable" for a party the template does not hold

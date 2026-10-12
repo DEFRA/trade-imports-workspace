@@ -577,7 +577,8 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "shows each template as a card labelled Template <title> with its category, an H3 title, View template and a Use template button in a POST form", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should card each template with its title, its label, its category and its View and Use template targets", "strength": "partial", "notes": "pins the view model, not the rendered page." },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "each template card is labelled 'Template <title>' with its category, an H3 title, View template and a Use template button in a form", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "each template card is labelled 'Template <title>' with its category, an H3 title, View template and a Use template button in a form", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "a template's card, page and the notification started from it carry each party and the contact address", "strength": "full", "notes": "proves the label for a template made through the Live animals type." }
           ]
         }
       ]
@@ -960,6 +961,26 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/use-template.fit.spec.js", "test": "the new notification holds the template's answers", "strength": "partial", "notes": "proves the Yes branch with the template's code only." },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/use-template.spec.ts", "test": "Use template on a card starts a new live animals draft on its Notification tasklist", "strength": "partial", "notes": "proves the No branch only." }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-033-H",
+          "name": "Each party and the contact address are carried",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/use-template.fit.spec.js", "test": "the new notification holds each party and the contact address the template holds", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "a template's card, page and the notification started from it carry each party and the contact address", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/seed-notification.test.js", "test": "Should carry each party and the contact address as the template holds them", "strength": "partial", "notes": "pins the stored answers, not the page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-033-I",
+          "name": "With no contact address, the place of origin becomes the contact address",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/use-template.fit.spec.js", "test": "a template with no contact address starts a notification whose contact address is its place of origin", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "with no contact address chosen, the template's page and the notification started from it use the place of origin", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/seed-notification.test.js", "test": "Should seed the place of origin as the contact address when the template has none", "strength": "partial", "notes": "pins the stored answers, not the page." }
+          ]
         }
       ]
     },
@@ -985,6 +1006,67 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/use-template.fit.spec.js", "test": "using another user's template opens Manage templates and starts nothing", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/use-template.test.js", "test": "Should open Manage templates and start nothing for a template that is missing, deleted or another user’s", "strength": "partial", "notes": "pins the handler, not the page." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-035",
+      "name": "Each template card lists Commodity, Origin, Consignee and Consignor",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-035-A",
+          "name": "A part-answered template's card reads Not applicable for what it does not hold",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "lists Commodity, Origin, Consignee and Consignor on a part-answered template's card, Not applicable for the parties", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "with no contact address chosen, the template's page and the notification started from it use the place of origin", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-035-B",
+          "name": "A template's card names its commodity, origin, consignee and consignor",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/manage-templates.fit.spec.js", "test": "a fully answered template's card names its consignee and consignor", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "a template's card, page and the notification started from it carry each party and the contact address", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/card-answers.test.js", "test": "Should name the commodity, country of origin, consignee and consignor a template holds", "strength": "partial", "notes": "pins the card's answers, not the rendered page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-035-C",
+          "name": "A template saved with nothing answered reads Not applicable for all four",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/card-answers.test.js", "test": "Should answer blanks for a template saved with nothing answered", "strength": "partial", "notes": "pins the card's answers, not the rendered page." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/templates/controller.test.js", "test": "Should card each template with its title, its label, its category and its View and Use template targets", "strength": "full", "notes": "no page can save a template without a country of origin, so the view model is the only reachable proof." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-036",
+      "name": "A saved template's page shows each consignment party and the contact address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-036-A",
+          "name": "Each party and the contact address are shown as answered",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "shows each party and the contact address as answered", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "a template's card, page and the notification started from it carry each party and the contact address", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-036-B",
+          "name": "With no contact address chosen, the place of origin is shown as the contact address",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "the Contact address card shows the place of origin", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/template-parties.spec.ts", "test": "with no contact address chosen, the template's page and the notification started from it use the place of origin", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should show the place of origin as the contact address when none was chosen", "strength": "partial", "notes": "pins the cards' input, not the rendered page." }
           ]
         }
       ]

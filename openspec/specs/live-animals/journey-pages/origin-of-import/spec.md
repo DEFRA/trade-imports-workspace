@@ -285,3 +285,15 @@ The system MUST name every territory in the country of origin list "<territory> 
 - **GIVEN** the user chose "Canary Islands (Spain)", answered that a region code is required, typed a code and saved
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows "Canary Islands (Spain)", the notification keeps the territory's code, and the region code field carries Spain's code, ES, as its fixed prefix
+
+### Requirement: While a template is being created, the page ends with Save and continue alone and goes back to the template name
+**ID**: REQ-ORIGIN-019
+The system MUST, when the page is shown for a template being created, end it with "Save and continue" alone, with no "Save and return to overview" and no cancel link, and MUST make its Back link return to the page headed "Enter template name".
+
+#### Scenario: Origin of the import for a template ends with Save and continue and goes back to the template name
+**ID**: SCN-ORIGIN-019-A
+- **GIVEN** the user has named a template and "Origin of the import" is shown for it
+- **WHEN** they read the page
+- **THEN** it offers "Save and continue" and no "Save and return to overview" and no cancel link
+- **WHEN** they follow Back
+- **THEN** the page headed "Enter template name" is shown

@@ -358,3 +358,14 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **GIVEN** a draft notification
 - **WHEN** the user opens the CPH number page
 - **THEN** only "Save and continue" is offered
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-FLOW-014
+The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
+
+#### Scenario: Choosing Live animals opens a new draft at Origin of the import
+**ID**: SCN-FLOW-014-A
+- **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
+- **WHEN** they choose Live animals and continue
+- **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
+- **AND** saving that page continues the opening sequence

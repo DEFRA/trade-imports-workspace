@@ -1,0 +1,150 @@
+{
+  "capability": "ins/notification-type",
+  "areaCode": "INS-NTYPE",
+  "specFile": "openspec/specs/ins/notification-type/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-NTYPE-001",
+      "name": "The notification type question asks what is being imported before any notification exists",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NTYPE-001-A",
+          "name": "The question shows its title, options and single Continue button",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "the type question offers five unselected options, a single Continue button, the alpha banner and no draft strip", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "asks what you are importing with five unselected options and a single Continue button", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-001-B",
+          "name": "Back returns to the home and no notification is created",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "starting a new notification from the INS home asks what you are importing, and Back leaves no notification behind", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "goes back to the dashboard, with Dashboard highlighted in the service navigation", "strength": "partial", "notes": "asserts the Back href and aria-current; that no notification is created is asserted by the e2e link" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-001-C",
+          "name": "The question shows no Draft tag and no reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "the type question offers five unselected options, a single Continue button, the alpha banner and no draft strip", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-001-D",
+          "name": "The question shows the Alpha phase banner with an email feedback link",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "the type question offers five unselected options, a single Continue button, the alpha banner and no draft strip", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "shows the alpha phase banner with an email feedback link", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-NTYPE-002",
+      "name": "Choosing what is being imported hands the user to the journey that notifies it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NTYPE-002-A",
+          "name": "Live animals opens a new live-animals draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Live animals creates a live-animals draft on its Origin of the import page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-002-B",
+          "name": "Germinal products opens the germinal products start",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Germinal products sends the user to the germinal products start and creates no live-animals notification", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-002-C",
+          "name": "A plants type opens a new high-risk plants draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Plants for planting creates a plants draft on the plants service's first page", "strength": "full", "notes": "also run for Potatoes (seed and ware) and Wood products" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "hands Plants for planting over to the plants service's start entry", "strength": "partial", "notes": "asserts the redirect Location only; the plants service is not followed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-NTYPE-003",
+      "name": "Continuing with nothing chosen is refused",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NTYPE-003-A",
+          "name": "Continuing with nothing chosen shows the error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "continuing with nothing chosen shows the error summary, the inline error and an Error: title", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "refuses Continue with nothing chosen and links the error to the first option", "strength": "partial", "notes": "asserts the error-summary link and the Error: title prefix; the There is a problem title and the inline error message are asserted by the e2e link" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-NTYPE-004",
+      "name": "Creating a template asks what is being imported, offering only the types templates cover",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NTYPE-004-A",
+          "name": "Create new template asks the type question with two options",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Create new template opens the type question in template mode: two unselected options, Continue, Back to Manage templates and Templates current", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "offers only live animals and germinal products, unselected, with a single Continue button", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "GET asks the same question and offers only live animals and germinal products, none selected", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-B",
+          "name": "Continuing with nothing chosen is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "continuing with nothing chosen shows the error linked to the first radio", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "refuses Continue with nothing chosen for a template and links the error to the first option", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-C",
+          "name": "Continuing goes to the template name page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Germinal products also goes to the template name page", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "POST %s hands over to the template name page", "strength": "full", "notes": "run for Live animals and Germinal products" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-D",
+          "name": "Coming back from the template name page shows the chosen type selected",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "Live animals goes to the template name page; Back shows Live animals still selected", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/controller.test.js", "test": "GET shows the type already chosen when it is one templates can have", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NTYPE-004-E",
+          "name": "Leaving before naming the template stores nothing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/create-template.spec.ts", "test": "leaving before the name page is posted adds nothing to Manage templates", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    }
+  ]
+}

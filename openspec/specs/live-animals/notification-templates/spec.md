@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first. Once saved, a template has its own page showing its answers in the review's cards, from which it can be used or deleted; a template the user cannot open returns them to Manage templates.
+Lets a signed-in importer or agent keep notification templates — saved sets of notification answers — and manage them from the Manage templates page. A user's templates are their own and are kept between sessions; the page's place in the service navigation is in `live-animals/service-navigation`. While a template is being created, the Overview is the template's task list. A template being created ends on the template review, the notification review in template mode, whose Save template saves it. Saving a template confirms it once with a success banner and lists it first. Once saved, a template has its own page showing its answers in the review's cards, from which it can be used or deleted; a template the user cannot open returns them to Manage templates. A saved template's sections are changed from its page, one at a time, and saving returns to the page with a success banner; a template never holds an arrival date.
 
 ## Requirements
 
@@ -96,6 +96,13 @@ Templates MUST be stored by the service and kept between sessions, and the list 
 - **GIVEN** the user has saved a template
 - **WHEN** they open their notification dashboard
 - **THEN** the template is not listed among their notifications
+
+#### Scenario: A template changed after saving is listed first
+**ID**: SCN-TEMPLATES-003-H
+- **GIVEN** the user has saved two templates
+- **AND** they change a section of the older one and save the change
+- **WHEN** their templates are listed
+- **THEN** the changed template is listed first
 
 ### Requirement: Manage templates offers Create new template
 **ID**: REQ-TEMPLATES-004
@@ -409,13 +416,19 @@ Each template MUST be a card labelled "Template <title>", showing the template's
 
 ### Requirement: The template's page shows the date it was created
 **ID**: REQ-TEMPLATES-023
-The page MUST show "Date created: <d Month yyyy>" with the day the template was saved.
+The page MUST show "Date created: <d Month yyyy>" with the day the template was saved, or the day one of its sections was last changed and saved.
 
 #### Scenario: The page shows the day the template was saved
 **ID**: SCN-TEMPLATES-023-A
 - **GIVEN** the user saved a template today
 - **WHEN** they open its page
 - **THEN** it shows "Date created:" followed by today's date, written with the month in full
+
+#### Scenario: Changing a section resets the date created
+**ID**: SCN-TEMPLATES-023-B
+- **GIVEN** the user has opened a saved template's page
+- **WHEN** they change a section and save the change
+- **THEN** the page shows "Date created:" followed by the day of that save
 
 ### Requirement: The template's page offers Use template and Delete, and no Edit
 **ID**: REQ-TEMPLATES-024
@@ -462,7 +475,7 @@ The page MUST list the template's answers in the notification review's cards, un
 
 ### Requirement: A template the user cannot open returns them to Manage templates
 **ID**: REQ-TEMPLATES-027
-Opening the page of a template that does not exist, or of another user's template, MUST show Manage templates.
+Opening the page of a template that does not exist, or of another user's template, or any of its question pages, MUST show Manage templates.
 
 #### Scenario: A template that does not exist shows Manage templates
 **ID**: SCN-TEMPLATES-027-A
@@ -475,3 +488,100 @@ Opening the page of a template that does not exist, or of another user's templat
 - **GIVEN** another user has saved a template
 - **WHEN** the signed-in user opens that template's address
 - **THEN** Manage templates is shown, without the template
+
+#### Scenario: Changing a template the user cannot open shows Manage templates
+**ID**: SCN-TEMPLATES-027-C
+- **GIVEN** no template has the address the user opens, or another user has saved the template
+- **WHEN** they follow the address of one of its question pages from a Change link
+- **THEN** Manage templates is shown, without the template
+
+### Requirement: A Change link on a saved template's page opens that section's question page for the template, ready to edit
+**ID**: REQ-TEMPLATES-028
+The question page MUST show the template's answers, MUST leave an unanswered optional field empty, MUST end with the single button "Save and return" and a "Cancel" link to the template's page with none of "Save and continue", "Save and return to overview" or "Cancel and return to overview", and its Back link MUST open the template's page.
+
+#### Scenario: Change opens the section prefilled, ending with Save and return and Cancel
+**ID**: SCN-TEMPLATES-028-A
+- **GIVEN** the user has opened a saved template's page
+- **WHEN** they select "Change" on the import details card
+- **THEN** Origin of the import is shown with the template's answers
+- **AND** an unanswered optional field is empty
+- **AND** "Save and return" is the only submit button
+- **AND** the link "Cancel" goes to the template's page
+- **AND** none of "Save and continue", "Save and return to overview" or "Cancel and return to overview" is offered
+
+#### Scenario: Back returns to the template's page
+**ID**: SCN-TEMPLATES-028-B
+- **GIVEN** the user has opened a section of a saved template with a Change link
+- **WHEN** they follow Back
+- **THEN** the template's page is shown
+
+### Requirement: Save and return updates the template and confirms it on the template's page
+**ID**: REQ-TEMPLATES-029
+Selecting "Save and return" MUST update the template and no draft notification, MUST open the template's page showing the new answer and a GOV.UK success notification banner with the role alert, titled "Success" and headed "<template name> has been updated" ("Template has been updated" for a template with no name), MUST show the banner once and never dismiss it itself, with or without JavaScript, and MUST work for every section the page links to.
+
+#### Scenario: Saving a changed section shows the new answer and the Success banner
+**ID**: SCN-TEMPLATES-029-A
+- **GIVEN** the user has opened a section of a saved template named "Weekly cattle" with a Change link
+- **WHEN** they change an answer and select "Save and return"
+- **THEN** the template's page is shown with the new answer
+- **AND** a success banner with the role alert is shown, titled "Success" and headed "Weekly cattle has been updated"
+
+#### Scenario: A template with no name is confirmed as 'Template has been updated'
+**ID**: SCN-TEMPLATES-029-B
+- **GIVEN** the user has opened a section of a saved template with no name with a Change link
+- **WHEN** they select "Save and return"
+- **THEN** the banner is headed "Template has been updated"
+
+#### Scenario: The banner is gone on reload
+**ID**: SCN-TEMPLATES-029-C
+- **GIVEN** the template's page is showing the banner for a section just saved
+- **WHEN** the user reloads the page
+- **THEN** the banner is not shown
+
+#### Scenario: The banner shows and stays without JavaScript
+**ID**: SCN-TEMPLATES-029-D
+- **GIVEN** the user has JavaScript turned off
+- **WHEN** they change a section of a saved template and select "Save and return"
+- **THEN** the template's page shows the Success banner and it stays on the page
+
+#### Scenario: Every section the page links to saves and returns to the template's page
+**ID**: SCN-TEMPLATES-029-E
+- **GIVEN** the user has opened a saved template's page with every section answered
+- **WHEN** they follow each Change link on the page and select "Save and return"
+- **THEN** each time the template's page is shown with the Success banner
+- **AND** a new answer on the arrival details section is shown on the page
+
+#### Scenario: Changing a template leaves the draft notifications unchanged
+**ID**: SCN-TEMPLATES-029-F
+- **GIVEN** the user has draft notifications on their dashboard
+- **WHEN** they change a section of a saved template and select "Save and return"
+- **THEN** the user's draft notifications on the dashboard are the same as before
+
+### Requirement: Leaving a change without saving keeps the template's answers
+**ID**: REQ-TEMPLATES-030
+Following a Change link MUST store nothing until "Save and return" is selected.
+
+#### Scenario: Cancel or Back after editing keeps the saved answer
+**ID**: SCN-TEMPLATES-030-A
+- **GIVEN** the user has opened a section of a saved template with a Change link and typed a new answer
+- **WHEN** they follow "Cancel", or Back, instead of saving
+- **THEN** the template's page is shown with the answer it had before
+- **AND** no banner is shown
+
+### Requirement: A template never holds an arrival date
+**ID**: REQ-TEMPLATES-031
+An arrival date answered on the arrival page while a template is created or changed MUST NOT be kept, so the template's page shows no arrival date and the arrival page opens with the date empty.
+
+#### Scenario: An arrival date answered while creating is not kept
+**ID**: SCN-TEMPLATES-031-A
+- **GIVEN** the user answers the arrival details of a template, including an arrival date, and saves the template
+- **WHEN** they open its page and change its arrival details
+- **THEN** the template's page shows no arrival date
+- **AND** the arrival date field is empty
+
+#### Scenario: An arrival date answered while changing is not kept
+**ID**: SCN-TEMPLATES-031-B
+- **GIVEN** the user has opened the arrival details of a saved template with a Change link
+- **WHEN** they enter an arrival date and select "Save and return"
+- **THEN** the template's page shows no arrival date
+- **AND** changing the arrival details again shows the arrival date field empty

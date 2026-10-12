@@ -131,6 +131,15 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "a saved template never appears among the user's notifications on the dashboard", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-003-H",
+          "name": "A template changed after saving is listed first",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "findAll_shouldListAChangedSavedTemplateFirst", "strength": "full", "notes": "backend integration test on real Mongo, recorded as unit as other backend ITs are." },
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationTemplateIT.java", "test": "replaceFulfilments_onASavedTemplate_movesTheSavedTimeOn", "strength": "partial", "notes": "pins the saved time at the API, not the list order." }
+          ]
         }
       ]
     },
@@ -605,6 +614,16 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/view-template.spec.ts", "test": "the template page shows 'Date created:' with the day it was saved", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/controller.test.js", "test": "Should date the template by the day it was first saved, falling back to the day it was created", "strength": "partial", "notes": "pins the view model, not the rendered page." }
           ]
+        },
+        {
+          "id": "SCN-TEMPLATES-023-B",
+          "name": "Changing a section resets the date created",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/template/NotificationTemplateServiceTest.java", "test": "replaceFulfilments_shouldMoveTheSavedTimeOn_whenTheTemplateIsSaved", "strength": "full", "notes": "the date created is the saved time, so moving it on resets it." },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "Date created shows today's date after a same-day change", "strength": "partial", "notes": "same-day: the first save and the change fall on one day." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Save and return updates the template, shows the Success banner once, shows Date created as today and leaves the draft notifications unchanged", "strength": "partial", "notes": "same-day: the first save and the change fall on one day." }
+          ]
         }
       ]
     },
@@ -686,6 +705,140 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/template-page.fit.spec.js", "test": "opening another user's template goes to Manage templates", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/save-template.spec.ts", "test": "another user does not see a user's saved template, and opening its address shows their own Manage templates", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-027-C",
+          "name": "Changing a template the user cannot open shows Manage templates",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "changing a template that does not exist, or another user's, goes to Manage templates", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "changing a template that does not exist goes to Manage templates", "strength": "partial", "notes": "a template that does not exist only; another user's is proven by the FIT." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change.test.js", "test": "Should send a get for a template the user does not have to Manage templates", "strength": "partial", "notes": "pins the redirect target, not the rendered page." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-028",
+      "name": "A Change link on a saved template's page opens that section's question page for the template, ready to edit",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-028-A",
+          "name": "Change opens the section prefilled, ending with Save and return and Cancel",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "Change opens the question page prefilled for the template, ending with Save and return and Cancel", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Change on a saved template opens Origin with only Save and return and Cancel, and Back returns to the template page", "strength": "partial", "notes": "checks the prefilled answer, the only submit button and the Cancel link; the empty optional field and no 'Cancel and return to overview' are proven by the FIT." },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end with Save and return and a Cancel link to the template alone", "strength": "partial", "notes": "pins the shared ending, not a page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-028-B",
+          "name": "Back returns to the template's page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "Back from a changed section returns to the template page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Change on a saved template opens Origin with only Save and return and Cancel, and Back returns to the template page", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-029",
+      "name": "Save and return updates the template and confirms it on the template's page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-029-A",
+          "name": "Saving a changed section shows the new answer and the Success banner",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "Save and return updates the template and returns to its page with a success banner", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Save and return updates the template, shows the Success banner once, shows Date created as today and leaves the draft notifications unchanged", "strength": "partial", "notes": "finds the banner by its class, so role alert is proven by the FIT." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-029-B",
+          "name": "A template with no name is confirmed as 'Template has been updated'",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "a template with no name is confirmed as Template has been updated", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-029-C",
+          "name": "The banner is gone on reload",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "the banner is gone on reload", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Save and return updates the template, shows the Success banner once, shows Date created as today and leaves the draft notifications unchanged", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-029-D",
+          "name": "The banner shows and stays without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "without JavaScript the banner shows and stays", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-029-E",
+          "name": "Every section the page links to saves and returns to the template's page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "every section the template page links to saves and returns to the template page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-029-F",
+          "name": "Changing a template leaves the draft notifications unchanged",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "Save and return updates the template, shows the Success banner once, shows Date created as today and leaves the draft notifications unchanged", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "Save and return updates the template and returns to its page with a success banner", "strength": "partial", "notes": "a fresh user has no drafts, so it asserts none appear." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-030",
+      "name": "Leaving a change without saving keeps the template's answers",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-030-A",
+          "name": "Cancel or Back after editing keeps the saved answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "leaving a change without saving keeps the template's answers", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/templates/change-template.spec.ts", "test": "leaving a change with Cancel keeps the saved answer", "strength": "partial", "notes": "Cancel only; Back is proven by the FIT." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TEMPLATES-031",
+      "name": "A template never holds an arrival date",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TEMPLATES-031-A",
+          "name": "An arrival date answered while creating is not kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "an arrival date answered while creating or changing is never held", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/persistence/template-records/template-records.test.js", "test": "Should drop it on a write and keep the rest", "strength": "partial", "notes": "pins the stored answers, not the page." }
+          ]
+        },
+        {
+          "id": "SCN-TEMPLATES-031-B",
+          "name": "An arrival date answered while changing is not kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/template-page/change-template.fit.spec.js", "test": "an arrival date answered while creating or changing is never held", "strength": "full", "notes": "" }
           ]
         }
       ]

@@ -1,0 +1,418 @@
+{
+  "chunk": "eng-six-c",
+  "items": [
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f2",
+      "field": "refutation",
+      "before": "The raw enum in the INS table cell (features/dashboard/controller.js:54) is on main, and the build did not change it. The ins-frontend fit spec on main already asserts raw 'SUBMITTED' cells. Sam's ruling ruling-sam-2026-10-09-pm.md section (j), point 52, blocks the INS dashboard rows until its requirements firm up and are re-distilled, so the raw-enum table is the accepted interim display. The new toContainText('SUBMITTED_ACTION_REQUIRED') proves the aggregated read model caught up to the new status, which is a real behaviour worth checking. A future change to a readable label would update this assertion alongside the fit spec, which is normal test maintenance and not a defect. The finding's wider point (the INS dashboard shows raw enums) is a known, ruled gap and not something this diff introduced.",
+      "after": "The raw enum in the INS table cell is on main, and the build did not change it.\n\n- The raw enum is at features/dashboard/controller.js:54.\n- The ins-frontend fit spec on main already asserts raw 'SUBMITTED' cells.\n- Sam's ruling ruling-sam-2026-10-09-pm.md section (j), point 52, blocks the INS dashboard rows until its requirements firm up and are re-distilled.\n- So the raw-enum table is the accepted interim display.\n\nThe new toContainText('SUBMITTED_ACTION_REQUIRED') proves the aggregated read model caught up to the new status. That is a real behaviour worth checking.\n\nA future change to a readable label would update this assertion alongside the fit spec. That is normal test maintenance, not a defect.\n\nThe finding's wider point is that the INS dashboard shows raw enums. That is a known, ruled gap, and this diff did not introduce it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f4",
+      "field": "refutation",
+      "before": "The widened heading follows the design, which gives a draft's review and a submitted view the same H1 (the reference), so a heading-only locator cannot tell them apart. The cited scenario is refuted. In addresses-submit-freeze.spec.ts, the heading check at :65 after amendNotification is followed at once by statusTag toHaveText('Amend') at :66, and the same holds at :126/:128. A misroute to the read-only submitted view would fail there ('Submitted action required'). change-from-cya pairs the heading check with toHaveURL, as the reviewer says. No spec was shown to rely on heading alone to tell states apart, so this is a theoretical proxy risk, not a demonstrated weakness.",
+      "after": "The widened heading follows the design, and the cited scenario is refuted.\n\nThe design gives a draft's review and a submitted view the same H1 (the reference). So a heading-only locator cannot tell them apart.\n\nOther checks sit right beside the heading checks:\n\n- In addresses-submit-freeze.spec.ts, the heading check at :65 after amendNotification is followed at once by statusTag toHaveText('Amend') at :66.\n- The same holds at :126/:128.\n- A misroute to the read-only submitted view would fail there ('Submitted action required').\n- change-from-cya pairs the heading check with toHaveURL, as the reviewer says.\n\nNo spec was shown to rely on the heading alone to tell states apart. So this is a theoretical proxy risk, not a demonstrated weakness."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "animals-fe-shared-f2",
+      "field": "refutation",
+      "before": "The main claim is not a regression from this diff. On main the line was already request.logger.error(response?.stack), which also logs a plain string with no { err } object, so the ECS error.* fields were already missing before the build. The change only adds the cause stacks to a message that was already a string, which is an improvement on main. The infinite-loop part needs a cause chain that loops back on itself. Neither undici's 'fetch failed' wrapping nor Boom produces one, and the reviewer gives no real source. Switching to { err: response } is a fair hardening suggestion, but no failure scenario holds for code this diff introduced.",
+      "after": "The main claim is not a regression from this diff.\n\nOn main the line was already request.logger.error(response?.stack). That also logs a plain string with no { err } object. So the ECS error.* fields were already missing before the build.\n\nThe change only adds the cause stacks to a message that was already a string. That is an improvement on main.\n\nThe infinite-loop part needs a cause chain that loops back on itself.\n\n- Neither undici's 'fetch failed' wrapping nor Boom produces one.\n- The reviewer gives no real source.\n\nSwitching to { err: response } is a fair hardening suggestion. But no failure scenario holds for code this diff introduced."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-shared-f1",
+      "field": "refutation",
+      "before": "The loop in src/server/common/helpers/errors.js:18-27 does have no cycle guard, but the review gives no way to make it spin. I grepped every place plants src sets a cause: get-oidc-config-with-retry.js:20, services/countries/index.js:27 and services/ports/index.js:26. Each wraps a fresh `new Error(..., { cause: err })` one level deep, and nothing assigns `.cause` back up the chain. undici's 'fetch failed' errors also have acyclic causes. The 'retry wrapper' in the scenario does not exist in this codebase. It is a cheap hardening (keep a Set of seen causes), and backend-fetch.js:30-35 walks causes the same unguarded way, but it is not a defect the diff makes reachable.",
+      "after": "The loop does have no cycle guard, but the review gives no way to make it spin.\n\nThe loop is in src/server/common/helpers/errors.js:18-27.\n\nI grepped every place plants src sets a cause:\n\n- get-oidc-config-with-retry.js:20\n- services/countries/index.js:27\n- services/ports/index.js:26\n\nEach wraps a fresh `new Error(..., { cause: err })` one level deep. Nothing assigns `.cause` back up the chain.\n\nundici's 'fetch failed' errors also have acyclic causes.\n\nThe 'retry wrapper' in the scenario does not exist in this codebase.\n\nIt is a cheap hardening: keep a Set of seen causes. backend-fetch.js:30-35 walks causes the same unguarded way. But it is not a defect the diff makes reachable."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-shared-f2",
+      "field": "refutation",
+      "before": "The facts are right. Plants kit.js has only isHubExit (line 126). arrival-details/controller.js:192 and the other plants pages pass `allowMissing: kit.isHubExit(request)`, and their templates use amendFormActions. So on plants, an amend 'Save and return' (?change=1) with a required answer blank is refused. But that is the plants increment working as scoped, not a shared-code defect. journey-foundation inc-003 (plans/inc-003.md) scopes soft save to 'Save and return to overview' only, and its AC5 for plants proves exactly that. Animals' skipsRequiredChecks came from a separate per-page increment (fa115bd6, inc-022, commodities-and-reason theme) and is used only on import-reason. Every other animals page also refuses a blank on amend 'Save and return', so the gap is within animals as well as between the two frontends, not a plants regression. It is worth one line to Sam as an open product question (the prototype treats the review as a soft-save action), but it is not a defect in the changed shared code.",
+      "after": "The facts are right. But this is the plants increment working as scoped, not a shared-code defect.\n\nWhat the plants code does:\n\n- Plants kit.js has only isHubExit (line 126).\n- arrival-details/controller.js:192 and the other plants pages pass `allowMissing: kit.isHubExit(request)`.\n- Their templates use amendFormActions.\n- So on plants, an amend 'Save and return' (?change=1) with a required answer blank is refused.\n\nWhy that is as scoped:\n\n- journey-foundation inc-003 (plans/inc-003.md) scopes soft save to 'Save and return to overview' only.\n- Its AC5 for plants proves exactly that.\n\nHow animals compares:\n\n- Animals' skipsRequiredChecks came from a separate per-page increment (fa115bd6, inc-022, commodities-and-reason theme).\n- It is used only on import-reason.\n- Every other animals page also refuses a blank on amend 'Save and return'.\n- So the gap is within animals as well as between the two frontends. It is not a plants regression.\n\nIt is worth one line to Sam as an open product question. The prototype treats the review as a soft-save action.\n\nBut it is not a defect in the changed shared code."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f3",
+      "field": "refutation",
+      "before": "The missing cycle guard is real in principle, but I found nothing that can produce a cyclic cause. The only cause producers are undici fetch errors (a linear chain), get-oidc-config-with-retry.js and countries/index.js, which puts its cause in data so the loop never sees it. No retry or wrapping code here assigns err.cause back up the chain. It is a hardening suggestion, not a demonstrable defect. Adding a Set guard is cheap if someone is already changing the function.",
+      "after": "The missing cycle guard is real in principle, but I found nothing that can produce a cyclic cause.\n\nThe only cause producers are:\n\n- undici fetch errors (a linear chain)\n- get-oidc-config-with-retry.js\n- countries/index.js, which puts its cause in data, so the loop never sees it\n\nNo retry or wrapping code here assigns err.cause back up the chain.\n\nIt is a hardening suggestion, not a demonstrable defect. Adding a Set guard is cheap if someone is already changing the function."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f4",
+      "field": "refutation",
+      "before": "list.js:112 is not touched by the diff, and every status already shows as its raw code. inc-113's plan decides this deliberately (decision 12: 'The status cell keeps printing the raw code, as it does for every status today. The dashboard template and copy belong to another theme'), and its out-of-scope list repeats it. The fit test asserting 'SUBMITTED_ACTION_REQUIRED' matches the existing DRAFT/AMEND/SUBMITTED assertions. This is a real, existing GDS gap for the theme that owns dashboard copy, not a defect this build introduced.",
+      "after": "list.js:112 is not touched by the diff, and every status already shows as its raw code.\n\ninc-113's plan decides this deliberately:\n\n- Decision 12: 'The status cell keeps printing the raw code, as it does for every status today. The dashboard template and copy belong to another theme'.\n- Its out-of-scope list repeats it.\n\nThe fit test asserting 'SUBMITTED_ACTION_REQUIRED' matches the existing DRAFT/AMEND/SUBMITTED assertions.\n\nThis is a real, existing GDS gap for the theme that owns dashboard copy. It is not a defect this build introduced."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "animals-fe-shared-f3",
+      "field": "what",
+      "before": "skipsRequiredChecks is documented as the rule for 'Save and return to overview' and, while amending, 'Save and return' to the review. Only the import-reason controller calls it. Origin, port of entry, transit countries, transporters and additional details pass allowMissing: kit.isHubExit(request). The new save-actions macro gives every amend page the same three controls, but on those five pages amend 'Save and return' to the review still runs the full required checks. The inc-022 plan narrowed this on purpose ('another row's decision'), but no backlog row picks it up, so the controls look the same and behave differently from page to page.",
+      "after": "skipsRequiredChecks is documented as the rule for:\n\n- 'Save and return to overview'\n- while amending, 'Save and return' to the review\n\nOnly the import-reason controller calls it.\n\nThese five pages pass allowMissing: kit.isHubExit(request):\n\n- origin\n- port of entry\n- transit countries\n- transporters\n- additional details\n\nThe new save-actions macro gives every amend page the same three controls. But on those five pages, amend 'Save and return' to the review still runs the full required checks.\n\nThe inc-022 plan narrowed this on purpose ('another row's decision'). But no backlog row picks it up.\n\nSo the controls look the same and behave differently from page to page."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "animals-fe-shared-f3",
+      "field": "scenario",
+      "before": "A trader amending a submitted notification opens Arrival details from a Change link, clears the arrival time and presses 'Save and return'. The page refuses with the required-time error. On Main import reason, the same action with a blank port of exit saves and returns to the review.",
+      "after": "A trader amending a submitted notification opens Arrival details from a Change link.\n\nThey clear the arrival time and press 'Save and return'. The page refuses with the required-time error.\n\nOn Main import reason, the same action with a blank port of exit saves and returns to the review."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "animals-fe-shared-f3",
+      "field": "fix",
+      "before": "Decide the rule once. Either switch every soft-save call site to kit.skipsRequiredChecks(request, journey) and add one E2E amend case per page, or record in the backlog or a ruling that amend 'Save and return' keeps required checks everywhere except import reason, and narrow the helper's doc comment to match.",
+      "after": "Decide the rule once. Do one of these:\n\n- Switch every soft-save call site to kit.skipsRequiredChecks(request, journey). Add one E2E amend case per page.\n- Record in the backlog or a ruling that amend 'Save and return' keeps required checks everywhere except import reason. Narrow the helper's doc comment to match."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "animals-fe-shared-f3",
+      "field": "verifierNote",
+      "before": "Confirmed. kit.js:149-151 documents skipsRequiredChecks as covering amend 'Save and return' to the review, but only import-reason/controller.js:101 calls it. Origin (88), port-of-entry (102), transit-countries (153), transporters (144) and additional-details (80) pass allowMissing: kit.isHubExit(request), so an amend save from a Change link still runs the required checks on those pages. The controls are shared, so the same action behaves differently from page to page. No data-integrity risk: the stricter pages fail closed, and submit stays gated. It is a UX inconsistency between the doc comment and the call sites, so low.",
+      "after": "Confirmed.\n\nkit.js:149-151 documents skipsRequiredChecks as covering amend 'Save and return' to the review. But only import-reason/controller.js:101 calls it.\n\nThese pages pass allowMissing: kit.isHubExit(request):\n\n- origin (88)\n- port-of-entry (102)\n- transit-countries (153)\n- transporters (144)\n- additional-details (80)\n\nSo an amend save from a Change link still runs the required checks on those pages. The controls are shared, so the same action behaves differently from page to page.\n\nThere is no data-integrity risk:\n\n- the stricter pages fail closed\n- submit stays gated\n\nIt is a UX inconsistency between the doc comment and the call sites, so low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f2",
+      "field": "also.what",
+      "before": "kit.skipsRequiredChecks is documented as true for 'Save and return to overview' and for 'Save and return' to the review while amending. Only import-reason uses it. Origin (origin/controller.js:88), port-of-entry, transit-countries, transporters and additional-details pass allowMissing: kit.isHubExit(request), so the same amend 'Save and return' button runs the required checks there. The same control behaves differently from page to page.",
+      "after": "kit.skipsRequiredChecks is documented as true for:\n\n- 'Save and return to overview'\n- 'Save and return' to the review while amending\n\nOnly import-reason uses it.\n\nThese pages pass allowMissing: kit.isHubExit(request):\n\n- origin (origin/controller.js:88)\n- port-of-entry\n- transit-countries\n- transporters\n- additional-details\n\nSo the same amend 'Save and return' button runs the required checks there. The same control behaves differently from page to page."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f2",
+      "field": "also.scenario",
+      "before": "While amending, the trader opens Main import reason from a Change link (?change=1), leaves the reason blank and presses 'Save and return': it saves and goes back to the amend review. They then open Arrival details from a Change link, leave the required means of transport unanswered and press 'Save and return': the page refuses with 'Select a means of transport to the port of entry'.",
+      "after": "While amending, the trader opens Main import reason from a Change link (?change=1). They leave the reason blank and press 'Save and return'. It saves and goes back to the amend review.\n\nThey then open Arrival details from a Change link. They leave the required means of transport unanswered and press 'Save and return'.\n\nThe page refuses with 'Select a means of transport to the port of entry'."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f2",
+      "field": "also.fix",
+      "before": "Decide which behaviour inc-004 and c-211 intend for amend 'Save and return', then use the same predicate on every page that renders amendFormActions: skipsRequiredChecks everywhere, or isHubExit on import-reason too. Add one controller test per page for the amend return path.",
+      "after": "Decide which behaviour inc-004 and c-211 intend for amend 'Save and return'.\n\nThen use the same predicate on every page that renders amendFormActions. Either:\n\n- skipsRequiredChecks everywhere\n- or isHubExit on import-reason too\n\nAdd one controller test per page for the amend return path."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f2",
+      "field": "also.verifierNote",
+      "before": "Confirmed in code. The amend 'Save and return' button posts to ?change=1 with no exit=hub (shared/amend-form-actions.js, save-actions.njk). kit.skipsRequiredChecks is used only in import-reason/controller.js:101. Origin (88), port-of-entry (102), transit-countries (153), transporters (144) and additional-details (80) use isHubExit, so on those pages the same button runs the required checks. However, the difference was decided on purpose: inc-022 plan decision 5 says 'use it in the import reason controller only… the other pages' amend behaviour is another row's decision'. The behaviour differs from page to page as the reviewer describes, but nothing is lost or corrupted, and it is a planned deferral rather than a slip. I lowered it to low and suggest tracking it as the missing follow-up row.",
+      "after": "Confirmed in code.\n\nThe amend 'Save and return' button posts to ?change=1 with no exit=hub (shared/amend-form-actions.js, save-actions.njk).\n\nkit.skipsRequiredChecks is used only in import-reason/controller.js:101.\n\nThese pages use isHubExit, so on them the same button runs the required checks:\n\n- origin (88)\n- port-of-entry (102)\n- transit-countries (153)\n- transporters (144)\n- additional-details (80)\n\nHowever, the difference was decided on purpose. inc-022 plan decision 5 says 'use it in the import reason controller only… the other pages' amend behaviour is another row's decision'.\n\nThe behaviour differs from page to page as the reviewer describes. But nothing is lost or corrupted, and it is a planned deferral rather than a slip.\n\nI lowered it to low and suggest tracking it as the missing follow-up row."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f2",
+      "field": "what",
+      "before": "The commit says it fixes 'A 500 from a failed backend call logged only TypeError: fetch failed'. But the dashboard and every address-book controller catch non-Boom errors themselves, log them with logger.error({ err }, ...) and return a 500 view. Those errors never reach catchAll. The logger uses @elastic/ecs-pino-format, whose error formatter writes only err.stack as error.stack_trace (checked in node_modules/@elastic/ecs-helpers/lib/error-formatters.js), so the causes are still dropped there.",
+      "after": "The commit says it fixes 'A 500 from a failed backend call logged only TypeError: fetch failed'.\n\nBut the dashboard and every address-book controller catch non-Boom errors themselves:\n\n- they log them with logger.error({ err }, ...)\n- they return a 500 view\n- those errors never reach catchAll\n\nThe logger uses @elastic/ecs-pino-format. Its error formatter writes only err.stack as error.stack_trace. This was checked in node_modules/@elastic/ecs-helpers/lib/error-formatters.js.\n\nSo the causes are still dropped there."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f2",
+      "field": "scenario",
+      "before": "ins-backend times out → GET / → listNotifications rejects with TypeError('fetch failed', { cause: ConnectTimeoutError }) → dashboard/controller.js:117 logs { err } → the ECS line holds only 'TypeError: fetch failed', with no host or connect-timeout detail. This is the same diagnostic gap the commit claims to close.",
+      "after": "- ins-backend times out.\n- GET /\n- listNotifications rejects with TypeError('fetch failed', { cause: ConnectTimeoutError }).\n- dashboard/controller.js:117 logs { err }.\n- The ECS line holds only 'TypeError: fetch failed', with no host or connect-timeout detail.\n\nThis is the same diagnostic gap the commit claims to close."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f2",
+      "field": "fix",
+      "before": "Add the causes at the logger instead of in catchAll. For example, add a pino err serializer or formatter in logger-options.js that writes stackWithCauses(err) into error.stack_trace. Then catchAll can log { err: response } like every other call site, which also follows the pino-logging best practice of always logging { err }.",
+      "after": "Add the causes at the logger instead of in catchAll.\n\nFor example, add a pino err serializer or formatter in logger-options.js. It would write stackWithCauses(err) into error.stack_trace.\n\nThen catchAll can log { err: response } like every other call site. That also follows the pino-logging best practice of always logging { err }."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f2",
+      "field": "verifierNote",
+      "before": "Factually right. Every controller catch block logs logger.error({ err }, ...) (dashboard/controller.js:117, add/edit/delete/list/view controllers). @elastic/ecs-helpers formatError writes only err.stack into error.stack_trace, and logger-options.js adds no err serializer, so causes are dropped there and those errors never reach catchAll. The commit message ('A 500 from a failed backend call logged only TypeError: fetch failed') therefore claims more than it fixes. Severity lowered to low: the catch blocks predate the diff, nothing regressed, and the gap only costs diagnostics. The dashboard path renders a recoverable-error view rather than a 500. Moving cause handling into a pino err serializer is the right fix and would also cover f1's catchAll path.",
+      "after": "Factually right.\n\n- Every controller catch block logs logger.error({ err }, ...) (dashboard/controller.js:117, add/edit/delete/list/view controllers).\n- @elastic/ecs-helpers formatError writes only err.stack into error.stack_trace.\n- logger-options.js adds no err serializer.\n- So causes are dropped there, and those errors never reach catchAll.\n\nThe commit message ('A 500 from a failed backend call logged only TypeError: fetch failed') therefore claims more than it fixes.\n\nSeverity lowered to low:\n\n- the catch blocks predate the diff\n- nothing regressed\n- the gap only costs diagnostics\n\nThe dashboard path renders a recoverable-error view rather than a 500.\n\nMoving cause handling into a pino err serializer is the right fix. It would also cover f1's catchAll path."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f5",
+      "field": "what",
+      "before": "fixtures.test.js checks the contents of a checked-in JSON file: 249 entries, AF first, Aland Islands second, JE present. No app behaviour is tested. The test only fails when someone runs npm run capture:reference-data and MDM has changed, which is the refresh the script exists for.",
+      "after": "fixtures.test.js checks the contents of a checked-in JSON file:\n\n- 249 entries\n- AF first\n- Aland Islands second\n- JE present\n\nNo app behaviour is tested.\n\nThe test only fails when someone runs npm run capture:reference-data and MDM has changed. That is the refresh the script exists for."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f5",
+      "field": "scenario",
+      "before": "MDM adds or renames a country → a developer recaptures → toHaveLength(249) or the order assertions fail, and the test gets 'fixed' by editing the numbers. The test protects nothing.",
+      "after": "- MDM adds or renames a country.\n- A developer recaptures.\n- toHaveLength(249) or the order assertions fail.\n- The test gets 'fixed' by editing the numbers.\n\nThe test protects nothing."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f5",
+      "field": "fix",
+      "before": "Delete the count and order assertions. If a guard is wanted, keep one shape check (an array of { code, name } with no GB). The behaviour is already covered by run-mode.test.js and the address-book tests.",
+      "after": "Delete the count and order assertions.\n\nIf a guard is wanted, keep one shape check: an array of { code, name } with no GB.\n\nThe behaviour is already covered by run-mode.test.js and the address-book tests."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "ins-frontend-f5",
+      "field": "verifierNote",
+      "before": "Confirmed. fixtures.test.js imports a checked-in JSON file and asserts its length (249), its first two entries and that JE is present. It tests no app behaviour and fails only on a legitimate recapture, which conflicts with Sam's no-coverage-padding and test-behaviour rules. The 'no GB' assertion has some value as a guard, since address-countries.js adds GB itself and a GB in the fixture would duplicate it. Keep that check plus a { code, name } shape check, and drop the count and order assertions.",
+      "after": "Confirmed.\n\nfixtures.test.js imports a checked-in JSON file and asserts:\n\n- its length (249)\n- its first two entries\n- that JE is present\n\nIt tests no app behaviour and fails only on a legitimate recapture. That conflicts with Sam's no-coverage-padding and test-behaviour rules.\n\nThe 'no GB' assertion has some value as a guard. address-countries.js adds GB itself, so a GB in the fixture would duplicate it.\n\nKeep that check plus a { code, name } shape check. Drop the count and order assertions."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f4",
+      "field": "what",
+      "before": "The suffix box now has maxlength 5. Server-side, suffixOf in origin/validate.js deliberately accepts a value typed with the country prefix ('FR-75'). With maxlength 5 the browser truncates that input before the server sees it, so the forgiving path can never receive a full prefixed code. GOV.UK guidance also advises against maxlength on text inputs because users are not told their input was cut.",
+      "after": "The suffix box now has maxlength 5.\n\nServer-side, suffixOf in origin/validate.js deliberately accepts a value typed with the country prefix ('FR-75').\n\nWith maxlength 5, the browser truncates that input before the server sees it. So the forgiving path can never receive a full prefixed code.\n\nGOV.UK guidance also advises against maxlength on text inputs, because users are not told their input was cut."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f4",
+      "field": "scenario",
+      "before": "With France as the country, the trader pastes 'FR-12345' from the health certificate. The browser keeps 'FR-12'. suffixOf strips 'FR-', the page stores 'FR-12', and the review shows a wrong region code with no error.",
+      "after": "France is the country. The trader pastes 'FR-12345' from the health certificate.\n\n- The browser keeps 'FR-12'.\n- suffixOf strips 'FR-'.\n- The page stores 'FR-12'.\n- The review shows a wrong region code with no error."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f4",
+      "field": "fix",
+      "before": "Drop the maxlength attribute and rely on the existing server-side REGION_CODE_SUFFIX_MAX_LENGTH check, which reports the error. If the design insists on maxlength, remove the prefix-forgiving branch so behaviour is predictable, and update the fit test that asserts the attribute.",
+      "after": "Drop the maxlength attribute. Rely on the existing server-side REGION_CODE_SUFFIX_MAX_LENGTH check, which reports the error.\n\nIf the design insists on maxlength:\n\n- remove the prefix-forgiving branch, so behaviour is predictable\n- update the fit test that asserts the attribute"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f4",
+      "field": "verifierNote",
+      "before": "Confirmed. The diff adds attributes: { maxlength: '5' } to origin/template.njk, while origin/validate.js:59-65 suffixOf still strips a typed 'FR-' prefix ('Also forgives a user who typed the prefix themselves'). The server-side REGION_CODE_SUFFIX_MAX_LENGTH = 5 check can never fire on a pasted 'FR-12345', because the browser has already cut it to 'FR-12'. That value passes as region code FR-12 with no error. The maxlength was requested in the origin-page backlog (row note at line 229), so this is a conflict in the spec as well as in the code.",
+      "after": "Confirmed.\n\n- The diff adds attributes: { maxlength: '5' } to origin/template.njk.\n- origin/validate.js:59-65 suffixOf still strips a typed 'FR-' prefix ('Also forgives a user who typed the prefix themselves').\n\nThe server-side REGION_CODE_SUFFIX_MAX_LENGTH = 5 check can never fire on a pasted 'FR-12345'. The browser has already cut it to 'FR-12'.\n\nThat value passes as region code FR-12 with no error.\n\nThe maxlength was requested in the origin-page backlog (row note at line 229). So this is a conflict in the spec as well as in the code."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f2",
+      "field": "what",
+      "before": "longDateText always formats with the 'en-GB' locale, but the new copy.cy viewHeader.dateCreated/dateSubmitted wrap it in Welsh. The Welsh page therefore mixes Welsh text with an English date.",
+      "after": "longDateText always formats with the 'en-GB' locale.\n\nBut the new copy.cy viewHeader.dateCreated/dateSubmitted wrap it in Welsh.\n\nSo the Welsh page mixes Welsh text with an English date."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f2",
+      "field": "scenario",
+      "before": "Draft viewed with the Welsh locale shows 'Dyddiad creu: 22 July 2026' instead of '22 Gorffennaf 2026'. A submitted view does the same with 'Dyddiad cyflwyno'.",
+      "after": "A draft viewed with the Welsh locale shows 'Dyddiad creu: 22 July 2026' instead of '22 Gorffennaf 2026'.\n\nA submitted view does the same with 'Dyddiad cyflwyno'."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f2",
+      "field": "fix",
+      "before": "Format with the request's locale ('cy' or 'cy-GB' when Welsh is active; Intl supports Welsh month names), or use a shared localised long-date helper, and add a cy assertion to the existing fake-timer test.",
+      "after": "Format with the request's locale, or use a shared localised long-date helper.\n\nFor the locale, use 'cy' or 'cy-GB' when Welsh is active. Intl supports Welsh month names.\n\nAlso add a cy assertion to the existing fake-timer test."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f2",
+      "field": "verifierNote",
+      "before": "Real. longDateText (controller.js:83-89) hardcodes 'en-GB', and the new copy.cy.js:18-19 wraps it in 'Dyddiad creu:' / 'Dyddiad cyflwyno:', so the Welsh page shows an English month name. confirmation/controller.js:25 and declaration/controller.js:29 already format with 'en-GB' in the same way, so the build copied an existing convention rather than adding a new kind of defect. A fix should be one shared localised date helper, not a change to this file alone.",
+      "after": "Real.\n\n- longDateText (controller.js:83-89) hardcodes 'en-GB'.\n- The new copy.cy.js:18-19 wraps it in 'Dyddiad creu:' / 'Dyddiad cyflwyno:'.\n- So the Welsh page shows an English month name.\n\nconfirmation/controller.js:25 and declaration/controller.js:29 already format with 'en-GB' in the same way. So the build copied an existing convention rather than adding a new kind of defect.\n\nA fix should be one shared localised date helper, not a change to this file alone."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f3",
+      "field": "what",
+      "before": "headed is true for DRAFT, so pageTitle becomes the journey reference. Inc-111 says 'the journey review of a draft or an amendment keeps Review your notification - Import notification service - GOV.UK' (c-006). Inc-187 later changed the draft's h1 to the reference but says nothing about the <title>. The fit spec 'a draft's review is titled by its reference' pins the changed title, so a live acceptance criterion is now contradicted and that contradiction is locked in by a test.",
+      "after": "headed is true for DRAFT, so pageTitle becomes the journey reference.\n\nInc-111 says 'the journey review of a draft or an amendment keeps Review your notification - Import notification service - GOV.UK' (c-006).\n\nInc-187 later changed the draft's h1 to the reference. But it says nothing about the <title>.\n\nThe fit spec 'a draft's review is titled by its reference' pins the changed title. So a live acceptance criterion is now contradicted, and a test locks that contradiction in."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f3",
+      "field": "scenario",
+      "before": "A trader opens a draft's review from the hub. The browser tab and the screen-reader page title read '<reference> - Import notification service - GOV.UK' (with 'Error: ' in front while incomplete), not 'Review your notification - …' as the inc-111 criterion requires.",
+      "after": "A trader opens a draft's review from the hub.\n\nThe browser tab and the screen-reader page title read '<reference> - Import notification service - GOV.UK'. While the notification is incomplete, 'Error: ' comes in front.\n\nThey do not read 'Review your notification - …' as the inc-111 criterion requires."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f3",
+      "field": "fix",
+      "before": "Get a ruling on which wins. If inc-111 stands, set pageTitle to copy.title for DRAFT while keeping the reference as the h1, and update the fit spec. If inc-187 supersedes it, update the inc-111 criterion and the openspec scenario so they agree.",
+      "after": "Get a ruling on which wins.\n\n- If inc-111 stands: set pageTitle to copy.title for DRAFT, keep the reference as the h1, and update the fit spec.\n- If inc-187 supersedes it: update the inc-111 criterion and the openspec scenario so they agree."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f3",
+      "field": "verifierNote",
+      "before": "Confirmed. check-answers/controller.js sets headed = readOnly || status === DRAFT and title = headed ? journey.journeyId : reviewTitle(journey), and passes that as pageTitle. The overview-and-review backlog.json:996 (inc-111) still says the review of a draft 'keeps Review your notification - Import notification service - GOV.UK'. The draft-header row (backlog.json:1701-1711) changes only the h1 and says nothing about <title>. The criteria contradict each other, and the code follows one of them.",
+      "after": "Confirmed.\n\ncheck-answers/controller.js sets:\n\n- headed = readOnly || status === DRAFT\n- title = headed ? journey.journeyId : reviewTitle(journey)\n\nIt passes that title as pageTitle.\n\nThe overview-and-review backlog.json:996 (inc-111) still says the review of a draft 'keeps Review your notification - Import notification service - GOV.UK'.\n\nThe draft-header row (backlog.json:1701-1711) changes only the h1 and says nothing about <title>.\n\nThe criteria contradict each other, and the code follows one of them."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f5",
+      "field": "what",
+      "before": "The new check-answers view-model module imports scopedFields from commodities/animal-identification/animal-identification.controller.js, which reaches into another feature's controller rather than its page.js descriptor. It also restates the obligation's multi-species identifier rule in the view model: lines.length <= 1 plus 'any unit carries any identifier' mirrors unitRecord.requires.floorAppliesToParent(moreThanOne(...)) in obligations/sections/commodities/identifiers.js. If the obligation changes, the error summary drifts from what actually blocks submission.",
+      "after": "The new check-answers view-model module imports scopedFields from commodities/animal-identification/animal-identification.controller.js.\n\nThat reaches into another feature's controller rather than its page.js descriptor.\n\nIt also restates the obligation's multi-species identifier rule in the view model:\n\n- lines.length <= 1 plus 'any unit carries any identifier'\n- this mirrors unitRecord.requires.floorAppliesToParent(moreThanOne(...)) in obligations/sections/commodities/identifiers.js\n\nIf the obligation changes, the error summary drifts from what actually blocks submission."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f5",
+      "field": "scenario",
+      "before": "The identifier floor is later changed, for example to count species rather than commodity lines, or to require an identifier on every unit. The review keeps naming 'Enter at least 1 animal identifier for <species>' by the old rule, or names nothing while Continue is refused. Separately, a refactor of the animal-identification controller breaks check-answers.",
+      "after": "The identifier floor is later changed. For example, it counts species rather than commodity lines, or requires an identifier on every unit.\n\nThe review keeps naming 'Enter at least 1 animal identifier for <species>' by the old rule. Or it names nothing while Continue is refused.\n\nSeparately, a refactor of the animal-identification controller breaks check-answers."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f5",
+      "field": "fix",
+      "before": "Get the per-line verdict from the evaluator or scope (the same per-instance verdict the bridge's invariants compute) instead of re-deriving it. Move scopedFields to services/commodities, or to a non-controller module, so neither identifier-columns nor species-errors imports a controller.",
+      "after": "Get the per-line verdict from the evaluator or scope instead of re-deriving it. It is the same per-instance verdict the bridge's invariants compute.\n\nMove scopedFields to services/commodities, or to a non-controller module. Then neither identifier-columns nor species-errors imports a controller."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f5",
+      "field": "verifierNote",
+      "before": "Confirmed. The new file check-answers/view-model/species-errors.js:5 imports scopedFields from commodities/animal-identification/animal-identification.controller.js, which reaches into another feature's controller. identifier-columns.js already did the same on main. It also re-derives the multi-species floor itself ('lines.length <= SINGLE_SPECIES' plus 'any unit carries any identifier'), and its own JSDoc says this is 'the same test the unit record's floor applies' (obligations/sections/commodities/identifiers.js:113 moreThanOne). The rule is now kept in two places that can drift apart. This is a design risk with no current wrong output, so low.",
+      "after": "Confirmed.\n\nThe new file check-answers/view-model/species-errors.js:5 imports scopedFields from commodities/animal-identification/animal-identification.controller.js. That reaches into another feature's controller.\n\nidentifier-columns.js already did the same on main.\n\nspecies-errors.js also re-derives the multi-species floor itself ('lines.length <= SINGLE_SPECIES' plus 'any unit carries any identifier').\n\nIts own JSDoc says this is 'the same test the unit record's floor applies' (obligations/sections/commodities/identifiers.js:113 moreThanOne).\n\nThe rule is now kept in two places that can drift apart. This is a design risk with no current wrong output, so low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f6",
+      "field": "what",
+      "before": "The overview now wraps the totals block, each totals tile (aria-label) and every task-list group in a <section> with an accessible name. Each one becomes a region landmark, so the page goes from no regions to about nine nested ones. That clutters landmark navigation and is not a GOV.UK task list pattern.",
+      "after": "The overview now wraps each of these in a <section> with an accessible name:\n\n- the totals block\n- each totals tile (aria-label)\n- every task-list group\n\nEach one becomes a region landmark. So the page goes from no regions to about nine nested ones.\n\nThat clutters landmark navigation and is not a GOV.UK task list pattern."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f6",
+      "field": "scenario",
+      "before": "A screen-reader user opens the landmarks list on the Overview. They find 'Animals summary', 'Packages summary', the totals region, the task list region and one region per section group, all nested inside main, where previously the headings gave them the structure.",
+      "after": "A screen-reader user opens the landmarks list on the Overview.\n\nThey find these, all nested inside main:\n\n- 'Animals summary'\n- 'Packages summary'\n- the totals region\n- the task list region\n- one region per section group\n\nPreviously the headings gave them the structure."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f6",
+      "field": "fix",
+      "before": "Keep the headings and remove the section wrappers (or use plain divs), leaving at most one labelled region if the design really needs one. Check with the accessibility lead before adding landmarks the GOV.UK task list pattern does not use.",
+      "after": "Keep the headings and remove the section wrappers (or use plain divs).\n\nLeave at most one labelled region, if the design really needs one.\n\nCheck with the accessibility lead before adding landmarks the GOV.UK task list pattern does not use."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f6",
+      "field": "verifierNote",
+      "before": "Partly mandated. backlog.json:118 (overview-and-review) requires the two tiles to be regions named 'Animals summary' and 'Packages summary', so those two sections are acceptance criteria. The extra wrappers are not required by any criterion: the totals section, the task-list section and one section per group, each with aria-labelledby. Each becomes a named region landmark. The landmark noise the reviewer describes does happen, but it is a minor accessibility concern. The fix should keep the two required tile regions.",
+      "after": "Partly mandated.\n\nbacklog.json:118 (overview-and-review) requires the two tiles to be regions named 'Animals summary' and 'Packages summary'. So those two sections are acceptance criteria.\n\nNo criterion requires the extra wrappers, each with aria-labelledby:\n\n- the totals section\n- the task-list section\n- one section per group\n\nEach becomes a named region landmark.\n\nThe landmark noise the reviewer describes does happen, but it is a minor accessibility concern.\n\nThe fix should keep the two required tile regions."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f7",
+      "field": "what",
+      "before": "The build added comments that explain behaviour or design history, against the house rule. Examples: '// Asked of rail and road consignments only…' (transit-countries.controller.js:38); '// The customs document code a live-animals import declaration quotes (CHED-A), fixed.' (view-header.js:16); the {# A submitted notification is a record… A draft ends with Continue… #} block at the end of check-answers/template.njk; the 'Design release 2.1 lays the review out…' and 'Design release 2.1 reads the countries…' comments in check-answers.fit.spec.js; '// The error summary lists errors by question…' (commodities/consignment-details/fields.js); and '// A radio cannot be un-chosen…' (import-reason/validate.js).",
+      "after": "The build added comments that explain behaviour or design history, against the house rule.\n\nExamples:\n\n- '// Asked of rail and road consignments only…' (transit-countries.controller.js:38)\n- '// The customs document code a live-animals import declaration quotes (CHED-A), fixed.' (view-header.js:16)\n- the {# A submitted notification is a record… A draft ends with Continue… #} block at the end of check-answers/template.njk\n- the 'Design release 2.1 lays the review out…' and 'Design release 2.1 reads the countries…' comments in check-answers.fit.spec.js\n- '// The error summary lists errors by question…' (commodities/consignment-details/fields.js)\n- '// A radio cannot be un-chosen…' (import-reason/validate.js)"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f7",
+      "field": "scenario",
+      "before": "The next change to these pages leaves the 'Design release 2.1' prose stating something the code no longer does. The prose is a migration narrative that belongs in docs/openspec, not the source.",
+      "after": "The next change to these pages leaves the 'Design release 2.1' prose stating something the code no longer does.\n\nThe prose is a migration narrative. It belongs in docs/openspec, not the source."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f7",
+      "field": "fix",
+      "before": "Delete them. Where the rationale matters, it already lives in the backlog and openspec, so rely on the names (transitApplies, CUSTOMS_DOCUMENT_CODE) and the tests.",
+      "after": "Delete them.\n\nWhere the rationale matters, it already lives in the backlog and openspec. So rely on the names (transitApplies, CUSTOMS_DOCUMENT_CODE) and the tests."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "feature-folders-f7",
+      "field": "verifierNote",
+      "before": "Confirmed for the cited example. The diff adds '// Asked of rail and road consignments only. Out of scope, the page has nothing to ask, so a load or a submit goes to the overview instead.' above transitApplies in transit-countries.controller.js. It also rewrites the existing countryItems explanatory comment instead of removing it. This breaks the house no-explanatory-comments rule. It is a hygiene issue only, so low.",
+      "after": "Confirmed for the cited example.\n\nThe diff adds this comment above transitApplies in transit-countries.controller.js: '// Asked of rail and road consignments only. Out of scope, the page has nothing to ask, so a load or a submit goes to the overview instead.'\n\nIt also rewrites the existing countryItems explanatory comment instead of removing it.\n\nThis breaks the house no-explanatory-comments rule. It is a hygiene issue only, so low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f3",
+      "field": "what",
+      "before": "The build added `import { declarationPage } from '../declaration/page.js'` so confirmation can redirect a non-submitted journey to the declaration page. That makes the confirmation feature depend directly on another feature folder, which breaks the rule that feature folders are independent.",
+      "after": "The build added `import { declarationPage } from '../declaration/page.js'`. It lets confirmation redirect a non-submitted journey to the declaration page.\n\nThat makes the confirmation feature depend directly on another feature folder.\n\nThis breaks the rule that feature folders are independent."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f3",
+      "field": "scenario",
+      "before": "Renaming or moving the declaration feature, or changing its page descriptor, now breaks confirmation's import. The two folders can no longer be changed or deleted independently.",
+      "after": "Renaming or moving the declaration feature, or changing its page descriptor, now breaks confirmation's import.\n\nThe two folders can no longer be changed or deleted independently."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f3",
+      "field": "fix",
+      "before": "Resolve the redirect through the flow layer, for example the review section's page order in flow/flow.js or a slug constant in shared kit like CYA_SLUG/CANCEL_AMEND_SLUG, rather than importing another feature's page.js.",
+      "after": "Resolve the redirect through the flow layer, rather than importing another feature's page.js.\n\nFor example:\n\n- the review section's page order in flow/flow.js\n- or a slug constant in shared kit, like CYA_SLUG/CANCEL_AMEND_SLUG"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f3",
+      "field": "verifierNote",
+      "before": "The diff adds `import { declarationPage } from '../declaration/page.js'` at confirmation/controller.js:11, replacing kit.CYA_SLUG. That is a new cross-feature dependency against the house rule. Cross-feature imports already exist (check-answers imports origin/controller.js and review/lateness.js, and dashboard imports commodity-type/page.js), so the rule is already bent in places, but this one is new. The fix suggested (a slug constant in kit, like CYA_SLUG and CANCEL_AMEND_SLUG) fits. Low.",
+      "after": "The diff adds `import { declarationPage } from '../declaration/page.js'` at confirmation/controller.js:11, replacing kit.CYA_SLUG.\n\nThat is a new cross-feature dependency against the house rule.\n\nCross-feature imports already exist, so the rule is already bent in places:\n\n- check-answers imports origin/controller.js and review/lateness.js\n- dashboard imports commodity-type/page.js\n\nBut this one is new.\n\nThe fix suggested (a slug constant in kit, like CYA_SLUG and CANCEL_AMEND_SLUG) fits. Low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f4",
+      "field": "what",
+      "before": "The build added comments that cite ruling IDs or explain the code: '// c-201: an amendment opens with no errors; c-136: Continue refused shows them.', '// A UTC instant shown as the Europe/London civil date.', and a rewritten '// Ruled c-030: ...'. commodity-type/controller.js:84 gains a comment ('A blank type only reaches here on Save and return to overview with no type ever saved') that states something the code never checks. The house rules say no explanatory or migration comments; the reasoning belongs in docs and git history.",
+      "after": "The build added comments that cite ruling IDs or explain the code:\n\n- '// c-201: an amendment opens with no errors; c-136: Continue refused shows them.'\n- '// A UTC instant shown as the Europe/London civil date.'\n- a rewritten '// Ruled c-030: ...'\n\ncommodity-type/controller.js:84 gains a comment that states something the code never checks: 'A blank type only reaches here on Save and return to overview with no type ever saved'.\n\nThe house rules say no explanatory or migration comments. The reasoning belongs in docs and git history."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f4",
+      "field": "scenario",
+      "before": "Once ruling IDs c-201/c-136 are renumbered or superseded, the comment points readers at the wrong decision. The commodity-type comment will go stale silently if the radios ever become clearable.",
+      "after": "Once ruling IDs c-201/c-136 are renumbered or superseded, the comment points readers at the wrong decision.\n\nThe commodity-type comment will go stale silently if the radios ever become clearable."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f4",
+      "field": "fix",
+      "before": "Remove these comments. Name the branch instead (holdsSilently already says what it does), and keep the c-xxx references in the openspec/plan, not in source.",
+      "after": "Remove these comments.\n\nName the branch instead. holdsSilently already says what it does.\n\nKeep the c-xxx references in the openspec/plan, not in source."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "plants-features-f4",
+      "field": "verifierNote",
+      "before": "The diff confirms these lines are new: '// c-201: an amendment opens with no errors; c-136: ...' (controller.js:150), '// A UTC instant shown as the Europe/London civil date.' (line 82), the rewritten '// Ruled c-030' comment (lines 180-181, which existed before but was edited), and the commodity-type comment (lines 84-85). These are the explanatory and ruling-reference comments the house rules ban. One correction: the commodity-type comment is accurate today, because validate refuses a blank type unless allowMissing (a hub exit) is set. It is a rule breach, not a false statement. Low.",
+      "after": "The diff confirms these lines are new:\n\n- '// c-201: an amendment opens with no errors; c-136: ...' (controller.js:150)\n- '// A UTC instant shown as the Europe/London civil date.' (line 82)\n- the rewritten '// Ruled c-030' comment (lines 180-181, which existed before but was edited)\n- the commodity-type comment (lines 84-85)\n\nThese are the explanatory and ruling-reference comments the house rules ban.\n\nOne correction: the commodity-type comment is accurate today. validate refuses a blank type unless allowMissing (a hub exit) is set.\n\nIt is a rule breach, not a false statement. Low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "found-in-capture-f1",
+      "field": "what",
+      "before": "The animals backend accepts only letters and digits in a document reference (@Pattern ^[a-zA-Z0-9]*$ on documentReference), but the animals frontend has no matching rule. The backend's 400 surfaces as a 500 from the frontend's accompanying-documents POST, and the page says 'The file could not be uploaded. Try again.' This is on main too, so the build did not introduce it; the engineering review's tests-repo verifier flagged the same gap.",
+      "after": "The animals backend accepts only letters and digits in a document reference (@Pattern ^[a-zA-Z0-9]*$ on documentReference).\n\nBut the animals frontend has no matching rule.\n\nThe backend's 400 surfaces as a 500 from the frontend's accompanying-documents POST. The page says 'The file could not be uploaded. Try again.'\n\nThis is on main too, so the build did not introduce it.\n\nThe engineering review's tests-repo verifier flagged the same gap."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "found-in-capture-f1",
+      "field": "scenario",
+      "before": "A trader uploads an ITAHC with reference VHC-2026-0001 (or UK-123). The POST to /live-animals/notifications/{id}/accompanying-documents returns 500 and the trader sees a generic upload failure with no hint that the hyphen is the problem. Reproduced on both main (published images) and the combined branch on 12 October.",
+      "after": "A trader uploads an ITAHC with reference VHC-2026-0001 (or UK-123).\n\nThe POST to /live-animals/notifications/{id}/accompanying-documents returns 500.\n\nThe trader sees a generic upload failure, with no hint that the hyphen is the problem.\n\nReproduced on both main (published images) and the combined branch on 12 October."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "found-in-capture-f1",
+      "field": "fix",
+      "before": "Validate the reference in the frontend with the backend's rule and a specific error message (or widen the backend rule if hyphens are legitimate in real certificate numbers — ask the business), and map a backend 400 to a page error rather than a 500. Add a fit test for the hyphenated case.",
+      "after": "Validate the reference in the frontend with the backend's rule and a specific error message.\n\nOr widen the backend rule, if hyphens are legitimate in real certificate numbers. Ask the business.\n\nMap a backend 400 to a page error rather than a 500.\n\nAdd a fit test for the hyphenated case."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "found-in-capture-f1",
+      "field": "verifierNote",
+      "before": "Reproduced directly by the screenshot harness on both branches (screens/before/hyphen-check.json); not run through the adversarial verifier.",
+      "after": "Reproduced directly by the screenshot harness on both branches (screens/before/hyphen-check.json).\n\nNot run through the adversarial verifier."
+    }
+  ]
+}

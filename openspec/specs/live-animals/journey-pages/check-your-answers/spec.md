@@ -445,7 +445,7 @@ The system MUST head and title an amendment's review "Review your notification" 
 
 ### Requirement: A submitted notification's view is headed by its reference and status, and dated
 **ID**: REQ-CYA-015
-On a submitted notification's view, the system MUST head the page with the notification's reference number in place of "Review your notification", with its status beside it as a tag and no status bar above it, MUST title the page by the reference, and MUST show the UK day it was submitted under the heading. The review of a draft or an amendment MUST keep its heading, title (per REQ-CYA-014) and status bar.
+A submitted notification's view MUST be headed and titled by its reference number instead of "Review your notification", with its status as a tag and no status bar, and MUST show the UK day it was submitted under the heading. A notification submitted while still owed its health certificate is tagged "Submitted action required" (REQ-CYA-018), and the date line reads the same on every later visit. A draft's or amendment's review MUST keep its heading, title (per REQ-CYA-014) and status bar.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag
 **ID**: SCN-CYA-015-A
@@ -467,6 +467,12 @@ On a submitted notification's view, the system MUST head the page with the notif
 - **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
 - **WHEN** the user opens its view
 - **THEN** under the heading it reads "Date submitted: 22 July 2026"
+
+#### Scenario: The date submitted reads the same on a later visit
+**ID**: SCN-CYA-015-D
+- **GIVEN** a submitted notification's view
+- **WHEN** the user opens it again later
+- **THEN** "Date submitted:" shows the same day
 
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
 **ID**: REQ-CYA-016
@@ -501,3 +507,49 @@ On a submitted notification's view, the system MUST show a section headed "Impor
 - **GIVEN** a draft notification's review
 - **WHEN** the user views it
 - **THEN** no "Import reference numbers" section is shown
+
+### Requirement: A notification submitted without its health certificate is shown as Submitted action required
+**ID**: REQ-CYA-018
+A notification submitted with no ITAHC or health certificate MUST be shown as "Submitted action required": read-only, tagged so, with the same header actions as "Submitted", ending with "Continue", which starts an amendment and opens the hub. It MUST show the warning "You need to upload a health certificate" only when that is the only outstanding item. A veterinary health certificate does not count. One with an ITAHC or health certificate is "Submitted".
+
+#### Scenario: Submitting without a health certificate shows Submitted action required
+**ID**: SCN-CYA-018-A
+- **GIVEN** a notification submitted with no document
+- **WHEN** the user opens its view
+- **THEN** it is tagged "Submitted action required"
+- **AND** it shows the warning "You need to upload a health certificate"
+- **AND** it offers no Change links
+
+#### Scenario: Submitting with an ITAHC shows Submitted
+**ID**: SCN-CYA-018-B
+- **GIVEN** a notification submitted with an ITAHC
+- **WHEN** the user opens its view
+- **THEN** it is tagged "Submitted"
+- **AND** it shows no warning
+
+#### Scenario: With nothing uploaded, the documents section asks for a valid health certificate
+**ID**: SCN-CYA-018-C
+- **GIVEN** a notification submitted with no document
+- **WHEN** the user opens its view
+- **THEN** "4. Uploaded documents" shows "Upload a valid health certificate" and no document cards
+- **AND** no error summary is shown
+
+#### Scenario: The header offers Amend this notification, Copy as new and Delete
+**ID**: SCN-CYA-018-D
+- **GIVEN** a notification submitted without its health certificate
+- **WHEN** the user opens its view
+- **THEN** the header offers "Amend this notification", "Copy as new" and "Delete"
+
+#### Scenario: Continue starts an amendment and opens Overview
+**ID**: SCN-CYA-018-E
+- **GIVEN** a notification submitted without its health certificate
+- **WHEN** the user chooses "Continue"
+- **THEN** Overview opens with the notification's status "Amend"
+- **AND** this works without JavaScript
+
+#### Scenario: Another document does not stand in for the health certificate
+**ID**: SCN-CYA-018-F
+- **GIVEN** a notification submitted with only a veterinary health certificate
+- **WHEN** the user opens its view
+- **THEN** it is tagged "Submitted action required" with the warning "You need to upload a health certificate"
+- **AND** its document card is shown

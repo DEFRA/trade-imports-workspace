@@ -8,7 +8,7 @@ The outbox events the system records as a notification moves through its lifecyc
 
 ### Requirement: One outbox event is recorded per meaningful lifecycle transition
 **ID**: REQ-EVENTS-001
-The system MUST record a distinctly named outbox event for each of the following notification transitions: creation, submission, starting an amendment, cancelling an amendment, and soft-deleting a draft or a submitted notification, each carrying the notification's status at that point.
+The system MUST record a distinctly named outbox event for each of the following notification transitions: creation, submission, starting an amendment, cancelling an amendment, and soft-deleting a draft or a submitted notification, each carrying the notification's status at that point. A submission event MUST show its status as submitted, or as submitted with action required when no ITAHC or health certificate had passed its virus scan.
 
 #### Scenario: Creating a notification records a creation event
 **ID**: SCN-EVENTS-001-A
@@ -20,13 +20,13 @@ The system MUST record a distinctly named outbox event for each of the following
 **ID**: SCN-EVENTS-001-B
 - **GIVEN** a user submits a notification through the full journey
 - **WHEN** the outbox is checked
-- **THEN** a submission event exists for that notification, showing its status as submitted and carrying the submitted consignment detail, along with the identity of who submitted it
+- **THEN** a submission event exists for that notification, showing its status as submitted, or submitted with action required when it carries no health certificate, and carrying the submitted consignment detail, along with the identity of who submitted it
 
 #### Scenario: Starting and cancelling an amendment each record their own event
 **ID**: SCN-EVENTS-001-C
 - **GIVEN** a submitted notification has an amendment started on it, which is then cancelled
 - **WHEN** the outbox is checked
-- **THEN** an amendment-started event exists showing the notification's status as amending, and an amendment-cancelled event exists showing it back as submitted
+- **THEN** an amendment-started event exists showing the notification's status as amending, and an amendment-cancelled event exists showing it back as the submitted status it had
 
 #### Scenario: Soft-deleting a draft and soft-deleting a submitted notification record different events
 **ID**: SCN-EVENTS-001-D

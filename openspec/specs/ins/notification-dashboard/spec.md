@@ -8,18 +8,18 @@ The Import Notification Service's landing page: a single list of notifications a
 
 ### Requirement: The dashboard lists notifications from every status, identifying each one
 **ID**: REQ-INS-DASH-001
-The system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, DRAFT and AMEND — each row showing its reference number and status, and MUST NOT show a notification that has been soft-deleted.
+The system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT and AMEND — each row showing its reference number and status, and MUST NOT show a notification that has been soft-deleted.
 
 #### Scenario: Notifications of every status appear together, deleted ones excluded
 **ID**: SCN-INS-DASH-001-A
-- **GIVEN** notifications exist in SUBMITTED, DRAFT, AMEND and soft-deleted states
+- **GIVEN** notifications exist in SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT, AMEND and soft-deleted states
 - **WHEN** a signed-in user opens the dashboard
-- **THEN** the SUBMITTED, DRAFT and AMEND notifications are all shown, each with its reference number and status
+- **THEN** the SUBMITTED, SUBMITTED_ACTION_REQUIRED, DRAFT and AMEND notifications are all shown, each with its reference number and status
 - **AND** the soft-deleted notification does not appear
 
 ### Requirement: Opening a notification's link routes by its status
 **ID**: REQ-INS-DASH-002
-The system MUST link a submitted notification's row to its read-only notification-view page, and MUST link a draft notification's row to its journey hub rather than notification-view.
+The system MUST link a submitted notification's row, with or without action required, to its read-only notification-view page, and MUST link a draft notification's row to its journey hub rather than notification-view.
 
 #### Scenario: A submitted notification opens read-only
 **ID**: SCN-INS-DASH-002-A
@@ -32,6 +32,12 @@ The system MUST link a submitted notification's row to its read-only notificatio
 - **GIVEN** a draft notification is listed on the dashboard
 - **WHEN** the user selects its View link
 - **THEN** the journey hub opens for that reference, not notification-view
+
+#### Scenario: A notification submitted with action required opens read-only
+**ID**: SCN-INS-DASH-002-C
+- **GIVEN** a SUBMITTED_ACTION_REQUIRED notification is listed on the dashboard
+- **WHEN** the user selects its View link
+- **THEN** the read-only notification-view page opens for that reference
 
 ### Requirement: The dashboard can be searched by notification reference
 **ID**: REQ-INS-DASH-003

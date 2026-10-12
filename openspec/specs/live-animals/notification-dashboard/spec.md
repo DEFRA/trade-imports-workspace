@@ -45,13 +45,13 @@ The system MUST show, on each notification card, the notification's reference nu
 
 #### Scenario: A submitted notification's card shows its details
 **ID**: SCN-DASH-003-A
-- **GIVEN** a notification has been submitted
+- **GIVEN** a notification has been submitted with its ITAHC
 - **WHEN** the user searches the dashboard for its reference number
 - **THEN** its card shows the reference number, the commodity, the origin, the consignor's and consignee's names, an arrival date at destination, a status of "Submitted", and the date it was created
 
 ### Requirement: The actions offered on a card depend on the notification's status
 **ID**: REQ-DASH-004
-The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, copy and amend on a submitted notification's card, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended.
+The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, copy and amend on a submitted notification's card, with or without action required, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended.
 
 #### Scenario: A draft notification's card offers resume, copy and delete
 **ID**: SCN-DASH-004-A
@@ -71,6 +71,12 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 - **GIVEN** an amendment has been started on a submitted notification
 - **WHEN** the user searches the dashboard for its reference number
 - **THEN** its card shows an "Amend" status, offering resume and cancel-amendment actions
+
+#### Scenario: A notification submitted without its health certificate is listed as Submitted action required
+**ID**: SCN-DASH-004-D
+- **GIVEN** a notification has been submitted without its health certificate
+- **WHEN** the user searches the dashboard for its reference number
+- **THEN** its card shows a "Submitted action required" status, offering view, copy and amend actions
 
 ### Requirement: Copying a notification from its dashboard card opens a new draft under its own reference
 **ID**: REQ-DASH-005

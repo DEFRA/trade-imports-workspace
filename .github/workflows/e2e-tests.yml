@@ -10,11 +10,6 @@ on:
         required: false
         type: string
         default: ''
-      project:
-        description: 'Deprecated: use suites. Domain name(s) (animals, animals-admin, ins, plants), mapped to tests/<domain>/. Ignored when suites is set.'
-        required: false
-        type: string
-        default: ''
   workflow_call:
     inputs:
       branch:
@@ -23,11 +18,6 @@ on:
         type: string
       suites:
         description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one. Empty runs every test suite.'
-        required: false
-        type: string
-        default: ''
-      project:
-        description: 'Deprecated: use suites. Domain name(s) (animals, animals-admin, ins, plants), mapped to tests/<domain>/. Ignored when suites is set.'
         required: false
         type: string
         default: ''
@@ -138,12 +128,11 @@ jobs:
       - name: Run E2E tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         env:
           SUITES: ${{ inputs.suites }}
-          PROJECT: ${{ inputs.project }}
         run: |
           # Test suites are selected by path, not --project (a project is
-          # browser config). normalise-suites.sh validates the input, gives
+          # browser config). normalise-suites.sh validates the input and gives
           # each directory the trailing slash that stops tests/animals also
-          # matching tests/animals-admin, and maps the deprecated `project`.
+          # matching tests/animals-admin.
           normalised="$(bash ./scripts/ci/normalise-suites.sh)"
           suite_args=()
           if [ -n "$normalised" ]; then

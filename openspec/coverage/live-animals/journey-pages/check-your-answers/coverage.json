@@ -261,15 +261,17 @@
     },
     {
       "id": "REQ-CYA-003",
-      "name": "A back link returns to Overview from the review, and to the notification list from a submitted notification's view",
-      "coverage": "full",
+      "name": "A back link returns to Overview from an amendment's review, and to the notification list from a draft's review or a submitted notification's view",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CYA-003-A",
-          "name": "The back link opens Overview",
+          "name": "A draft's review back link opens the notification list",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review's back link returns to the notification hub", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review is titled by its reference, and Back goes to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Back goes to the live-animals notification list", "strength": "full", "notes": "the DRAFT describe's arm" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point a submitted view's and a draft's Back link at the live-animals notification list, and an amendment's at Overview", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -277,9 +279,17 @@
           "name": "The submitted view's back link opens the notification list",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point a submitted view's Back link at the live-animals notification list, and a draft's at Overview", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point a submitted view's and a draft's Back link at the live-animals notification list, and an amendment's at Overview", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Back on a submitted notification's view goes to the notification list", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Back goes to the live-animals notification list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-C",
+          "name": "An amendment's review back link opens Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point a submitted view's and a draft's Back link at the live-animals notification list, and an amendment's at Overview", "strength": "partial", "notes": "href only; no browser test follows an amendment's Back" }
           ]
         }
       ]
@@ -323,18 +333,17 @@
     },
     {
       "id": "REQ-CYA-005",
-      "name": "A draft notification ends with Continue and Delete",
+      "name": "A draft's review offers Copy as new and Delete in its header and ends with Continue",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-005-A",
-          "name": "The draft view ends with Continue and a red Delete",
+          "name": "The draft's review offers Copy as new and a red Delete in its header and ends with Continue",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a red Delete, and offers neither Copy as new nor Cancel amend", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable draft journey", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable amend journey", "strength": "partial", "notes": "the amend arm of the same pair; pins the delete href on an amendment" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and a red Delete in its header, no Amend this notification, and ends with Continue", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review offers Copy as new and a red Delete in its header, no Amend this notification, and ends with Continue", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft's review with its reference, a Draft tag, the date created and its header actions, with no status bar", "strength": "full", "notes": "header actions, and no Delete at the foot" }
           ]
         },
         {
@@ -343,7 +352,16 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Delete opens the delete confirmation", "strength": "full", "notes": "the DRAFT describe's arm" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review offers Copy as new and a red Delete in its header, no Amend this notification, and ends with Continue", "strength": "full", "notes": "clicks the header Delete" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-005-C",
+          "name": "Copy as new on a draft's review opens a distinct new draft",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "copies the draft to a new draft", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Copy as new on a draft's review opens a new draft at Overview", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -520,9 +538,9 @@
           "name": "A draft's review offers no Amend this notification",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should retain Change hrefs for an editable %s journey", "strength": "full", "notes": "a draft and an amendment carry no view header" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a red Delete, and offers neither Copy as new nor Cancel amend", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft's review with its reference, a Draft tag, the date created and its header actions, with no status bar", "strength": "full", "notes": "a draft's header offers no Amend" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review offers Copy as new and a red Delete in its header, no Amend this notification, and ends with Continue", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "offers Copy as new and a red Delete in its header, no Amend this notification, and ends with Continue", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -689,9 +707,8 @@
           "name": "The submitted view is titled by its reference",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title a submitted view by its reference, and a draft's and an amendment's review Review your notification", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title a submitted view and a draft's review by its reference, and an amendment's review Review your notification", "strength": "full", "notes": "also pins the amendment keeping Review your notification" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "is headed by its reference with a Submitted tag and no status bar, and titled by its reference", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review's back link returns to the notification hub", "strength": "full", "notes": "asserts the draft review's browser title" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "lands on the view page headed by its reference with a Submitted tag and no status bar", "strength": "full", "notes": "" }
           ]
         },
@@ -736,7 +753,7 @@
     },
     {
       "id": "REQ-CYA-017",
-      "name": "A submitted notification's view shows its import reference numbers as text to copy",
+      "name": "A submitted notification's view and a draft's review show the import reference numbers as text to copy",
       "coverage": "full",
       "scenarios": [
         {
@@ -759,11 +776,12 @@
         },
         {
           "id": "SCN-CYA-017-C",
-          "name": "A draft's review shows no import reference numbers",
+          "name": "A draft's review shows its import reference numbers",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft review ends with Continue and a red Delete that opens the delete confirmation", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "ends with Continue and a red Delete, and offers neither Copy as new nor Cancel amend", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review shows the import reference numbers as plain text, with no Copy button, without JavaScript", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "shows the import reference numbers as text, with no Copy button", "strength": "full", "notes": "the DRAFT describe's arm" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft's review with its reference, a Draft tag, the date created and its header actions, with no status bar", "strength": "full", "notes": "importReferences" }
           ]
         }
       ]
@@ -830,6 +848,43 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep the document cards when a document other than a health certificate is held", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-backend", "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/OutstandingItemTest.java", "test": "outstandingFor_owesTheHealthCertificate_whenOnlyAVeterinaryHealthCertificateIsUploaded", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-019",
+      "name": "A draft's review is headed by its reference, its Draft status and the date it was created",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-019-A",
+          "name": "The draft's review is headed by its reference with a Draft tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review opened from Review and submit is headed by its reference with a blue Draft tag, the date created and no status bar", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with a blue Draft tag and the date created, and no status bar", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a draft's review with its reference, a Draft tag, the date created and its header actions, with no status bar", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-019-B",
+          "name": "The draft's review is titled by its reference",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's review is titled by its reference, and Back goes to the notification list", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "renders the recorded answers in the numbered design sections", "strength": "full", "notes": "asserts the Error-prefixed title" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title a submitted view and a draft's review by its reference, and an amendment's review Review your notification", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-019-C",
+          "name": "The draft's review shows the date it was created",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should date a draft's review with the UK day it was created", "strength": "full", "notes": "pins 23:30 UTC on 21 July as 22 July" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/view-header.test.js", "test": "Should date a draft's header with the day it was created, and give no date submitted", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "is headed by its reference with a blue Draft tag and the date created, and no status bar", "strength": "full", "notes": "" }
           ]
         }
       ]

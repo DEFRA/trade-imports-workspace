@@ -51,7 +51,7 @@ The system MUST show, on each notification card, the notification's reference nu
 
 ### Requirement: The actions offered on a card depend on the notification's status
 **ID**: REQ-DASH-004
-The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, copy and amend on a submitted notification's card, with or without action required, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended.
+The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, copy and amend on a submitted notification's card, with or without action required, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended. Resume on a draft's card MUST open its Overview, not its review.
 
 #### Scenario: A draft notification's card offers resume, copy and delete
 **ID**: SCN-DASH-004-A
@@ -77,6 +77,12 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 - **GIVEN** a notification has been submitted without its health certificate
 - **WHEN** the user searches the dashboard for its reference number
 - **THEN** its card shows a "Submitted action required" status, offering view, copy and amend actions
+
+#### Scenario: Resuming a draft opens its Overview
+**ID**: SCN-DASH-004-E
+- **GIVEN** a draft notification is listed
+- **WHEN** the user chooses resume on its card
+- **THEN** its Overview opens
 
 ### Requirement: Copying a notification from its dashboard card opens a new draft under its own reference
 **ID**: REQ-DASH-005

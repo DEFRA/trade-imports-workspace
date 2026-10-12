@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification". While an amendment's answers differ from the submitted version, the page is titled "Review before re-submitting". A submitted notification's read-only view is titled by its reference number instead. A submitted notification's view offers Amend this notification, Copy as new and Delete in its header, and shows its import reference numbers.
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification" while a notification is being amended, and "Review before re-submitting" once an amendment's answers differ from the submitted version. A draft's review and a submitted notification's view are headed and titled by its reference number, with its status as a tag, its date and the actions open to it in a header, and its import reference numbers. A submitted notification's view offers Amend this notification, Copy as new and Delete in its header, and shows its import reference numbers.
 
 ## Requirements
 
@@ -181,21 +181,27 @@ The system MUST draw a blank by its card, not its field: on a card with nothing 
 - **WHEN** the user views the review
 - **THEN** each unanswered role is marked missing, and no role error is raised against it
 
-### Requirement: A back link returns to Overview from the review, and to the notification list from a submitted notification's view
+### Requirement: A back link returns to Overview from an amendment's review, and to the notification list from a draft's review or a submitted notification's view
 **ID**: REQ-CYA-003
-The system MUST return the user to Overview when they follow the back link from the review of a draft or an amendment, and MUST take them to the live-animals notification list when they follow it from a submitted notification's view.
+The system MUST return the user to Overview when they follow the back link from the review of an amendment, and MUST take them to the live-animals notification list when they follow it from the review of a draft or from a submitted notification's view.
 
-#### Scenario: The back link opens Overview
+#### Scenario: A draft's review back link opens the notification list
 **ID**: SCN-CYA-003-A
 - **GIVEN** the user is on the review of a draft notification
 - **WHEN** they follow the back link
-- **THEN** Overview is shown
+- **THEN** the live-animals notification list is shown
 
 #### Scenario: The submitted view's back link opens the notification list
 **ID**: SCN-CYA-003-B
 - **GIVEN** the user is on a submitted notification's view
 - **WHEN** they follow the back link
 - **THEN** the live-animals notification list is shown
+
+#### Scenario: An amendment's review back link opens Overview
+**ID**: SCN-CYA-003-C
+- **GIVEN** the user is on the review of a notification being amended
+- **WHEN** they follow the back link
+- **THEN** Overview is shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-CYA-004
@@ -219,22 +225,29 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
 - **THEN** they are back on the review
 
-### Requirement: A draft notification ends with Continue and Delete
+### Requirement: A draft's review offers Copy as new and Delete in its header and ends with Continue
 **ID**: REQ-CYA-005
-The system MUST invite the user to submit a draft notification with a continue action, and MUST offer beside it a red "Delete" that opens the notification's delete confirmation. It MUST NOT offer copy-as-new or cancel-amendment while the notification is still a draft.
+The system MUST offer in a draft's review header a "Copy as new" button as the primary button and a red "Delete" that opens the notification's delete confirmation, and MUST end the review with "Continue" and no Delete beside it. It MUST NOT offer "Amend this notification" or cancel-amendment while the notification is a draft.
 
-#### Scenario: The draft view ends with Continue and a red Delete
+#### Scenario: The draft's review offers Copy as new and a red Delete in its header and ends with Continue
 **ID**: SCN-CYA-005-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** it ends with "Continue" and a red "Delete" beside it
-- **AND** no copy-as-new or cancel-amendment action is offered
+- **THEN** the header offers "Copy as new" and a red "Delete", in that order
+- **AND** the page ends with "Continue" alone
+- **AND** no "Amend this notification" or cancel-amendment action is offered
 
 #### Scenario: Delete on a draft opens the delete confirmation
 **ID**: SCN-CYA-005-B
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user selects "Delete"
 - **THEN** the delete confirmation for that notification opens
+
+#### Scenario: Copy as new on a draft's review opens a distinct new draft
+**ID**: SCN-CYA-005-C
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user selects "Copy as new"
+- **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
 ### Requirement: Continuing from a ready draft notification moves on to the declaration
 **ID**: REQ-CYA-006
@@ -445,7 +458,7 @@ The system MUST head and title an amendment's review "Review your notification" 
 
 ### Requirement: A submitted notification's view is headed by its reference and status, and dated
 **ID**: REQ-CYA-015
-A submitted notification's view MUST be headed and titled by its reference number instead of "Review your notification", with its status as a tag and no status bar, and MUST show the UK day it was submitted under the heading. A notification submitted while still owed its health certificate is tagged "Submitted action required" (REQ-CYA-018), and the date line reads the same on every later visit. A draft's or amendment's review MUST keep its heading, title (per REQ-CYA-014) and status bar.
+A submitted notification's view MUST be headed and titled by its reference number instead of "Review your notification", with its status as a tag (REQ-CYA-018 for action required) and no status bar, and MUST show the UK day it was submitted under the heading, unchanged on every later visit. An amendment's review MUST keep its heading, title (REQ-CYA-014) and status bar; a draft's is headed per REQ-CYA-019.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag
 **ID**: SCN-CYA-015-A
@@ -460,7 +473,7 @@ A submitted notification's view MUST be headed and titled by its reference numbe
 - **GIVEN** a notification that has been submitted
 - **WHEN** the user opens its view
 - **THEN** the browser title reads "<reference> - Import notification service - GOV.UK"
-- **AND** the review of a draft is still titled "Review your notification"
+- **AND** the review of an amendment is still titled "Review your notification"
 
 #### Scenario: The submitted view shows the date it was submitted
 **ID**: SCN-CYA-015-C
@@ -484,9 +497,9 @@ The system MUST send the user to the live-animals notification list when they op
 - **WHEN** the user opens that notification's view
 - **THEN** the live-animals notification list is shown
 
-### Requirement: A submitted notification's view shows its import reference numbers as text to copy
+### Requirement: A submitted notification's view and a draft's review show the import reference numbers as text to copy
 **ID**: REQ-CYA-017
-On a submitted notification's view, the system MUST show a section headed "Import reference numbers" with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row with the notification's reference and a "Customs document code" row reading "C640". Each value MUST be plain text the user can select and copy with JavaScript on or off, and no "Copy" button is shown.
+On a submitted notification's view or a draft's review, the system MUST show a section headed "Import reference numbers" with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row with the notification's reference and a "Customs document code" row reading "C640". Each value MUST be plain text the user can select and copy with JavaScript on or off, and no "Copy" button is shown.
 
 #### Scenario: The submitted view shows the notification reference and customs document code
 **ID**: SCN-CYA-017-A
@@ -502,11 +515,12 @@ On a submitted notification's view, the system MUST show a section headed "Impor
 - **THEN** both import reference values are shown as text
 - **AND** no "Copy" button is shown
 
-#### Scenario: A draft's review shows no import reference numbers
+#### Scenario: A draft's review shows its import reference numbers
 **ID**: SCN-CYA-017-C
 - **GIVEN** a draft notification's review
 - **WHEN** the user views it
-- **THEN** no "Import reference numbers" section is shown
+- **THEN** the "Import reference numbers" section shows its warning, a "Notification reference" row reading the reference and a "Customs document code" row reading "C640"
+- **AND** no "Copy" button is shown
 
 ### Requirement: A notification submitted without its health certificate is shown as Submitted action required
 **ID**: REQ-CYA-018
@@ -553,3 +567,28 @@ A notification submitted with no ITAHC or health certificate MUST be shown as "S
 - **WHEN** the user opens its view
 - **THEN** it is tagged "Submitted action required" with the warning "You need to upload a health certificate"
 - **AND** its document card is shown
+
+### Requirement: A draft's review is headed by its reference, its Draft status and the date it was created
+**ID**: REQ-CYA-019
+The system MUST head the review of a draft, reached from Overview's "Review and submit", with the notification's reference in place of "Review your notification", a "Draft" tag beside it and no status bar. It MUST title the page by the reference and MUST show "Date created: <d Month yyyy>", the UK day the notification was created, under the heading. The review stays editable, with its Change links, error summary (REQ-CYA-007) and Continue (REQ-CYA-005).
+
+#### Scenario: The draft's review is headed by its reference with a Draft tag
+**ID**: SCN-CYA-019-A
+- **GIVEN** a draft notification
+- **WHEN** the user opens its review from Overview's "Review and submit"
+- **THEN** the page heading is the notification's reference number
+- **AND** a "Draft" tag stands beside it
+- **AND** no status bar is shown
+
+#### Scenario: The draft's review is titled by its reference
+**ID**: SCN-CYA-019-B
+- **GIVEN** a draft notification
+- **WHEN** the user opens its review
+- **THEN** the browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** it is led by "Error: " while the error summary names outstanding cards
+
+#### Scenario: The draft's review shows the date it was created
+**ID**: SCN-CYA-019-C
+- **GIVEN** a draft created at 23:30 UTC on 21 July 2026
+- **WHEN** the user opens its review
+- **THEN** under the heading it reads "Date created: 22 July 2026"

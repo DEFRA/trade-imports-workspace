@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers". A submitted notification's read-only view is titled by its reference number instead.
+The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers" while a notification is being amended. A draft's check answers and a submitted notification's read-only view are headed and titled by its reference number instead.
 
 ## Requirements
 
@@ -88,17 +88,17 @@ The system MUST return the user to check-your-answers after saving an answer edi
 - **WHEN** they follow a Change link for a commodity line, change its quantity and save through the commodities list
 - **THEN** they return to check-your-answers, showing the new quantity
 
-### Requirement: A draft notification invites submission and offers delete beside Continue
+### Requirement: A draft notification invites submission and offers Delete notification in its header
 **ID**: REQ-PLANTS-CYA-006
-The system MUST invite the user to submit a draft notification, offering a continue action under a "Now submit your notification" heading, and MUST offer beside it a red "Delete notification" that opens the notification's delete page, keeping "Save and return to overview" and the Cancel link. It MUST NOT offer cancel-amendment while the notification is still a draft. How lateness is warned on a draft is governed by `plants/journey-obligations/review`.
+The system MUST invite the user to submit a draft notification with a continue action under a "Now submit your notification" heading, keeping "Save and return to overview" and the Cancel link. It MUST offer a red "Delete notification" in the header that opens the delete page, not beside Continue, and MUST NOT offer "Copy as new" or cancel-amendment. Lateness warnings are governed by `plants/journey-obligations/review`.
 
-#### Scenario: The draft view invites submission and offers delete beside Continue
+#### Scenario: The draft view invites submission and offers delete in its header
 **ID**: SCN-PLANTS-CYA-006-A
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** it invites them to continue to the declaration to submit
-- **AND** a red "Delete notification" stands beside "Continue", with "Save and return to overview" and the Cancel link
-- **AND** no cancel-amendment action is offered
+- **AND** a red "Delete notification" stands in its header and not beside "Continue", with "Save and return to overview" and the Cancel link at the foot
+- **AND** no "Copy as new" or cancel-amendment action is offered
 
 #### Scenario: Delete notification on a draft opens the delete page
 **ID**: SCN-PLANTS-CYA-006-B
@@ -230,9 +230,9 @@ While a notification is being amended, the system MUST open check-your-answers w
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-### Requirement: A submitted notification's read-only view is headed by its reference and status, and dated
+### Requirement: A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated
 **ID**: REQ-PLANTS-CYA-014
-On a submitted notification's read-only view, the system MUST head the page with the notification's reference number in place of "Check your answers", with its status beside it as a tag and no status bar above it, MUST start the browser title with the reference, and MUST show the UK day it was submitted under the heading. A draft or an amendment MUST keep its "Check your answers" heading, title and status bar.
+A submitted notification's read-only view and a draft's check answers MUST be headed and titled by the notification's reference in place of "Check your answers", with its status as a tag and no status bar. Under the heading they MUST show the UK day the notification was submitted ("Date submitted: <d Month yyyy>") or, for a draft, created ("Date created: <d Month yyyy>"). An amendment MUST keep its "Check your answers" heading, title and status bar.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag
 **ID**: SCN-PLANTS-CYA-014-A
@@ -247,13 +247,34 @@ On a submitted notification's read-only view, the system MUST head the page with
 - **GIVEN** a notification that has been submitted
 - **WHEN** the user opens its read-only view
 - **THEN** the browser title starts with the reference, before the service name
-- **AND** a draft's check-your-answers is still titled "Check your answers"
 
 #### Scenario: The submitted view shows the date it was submitted
 **ID**: SCN-PLANTS-CYA-014-C
 - **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
 - **WHEN** the user opens its read-only view
 - **THEN** under the heading it reads "Date submitted: 22 July 2026"
+
+#### Scenario: A draft's check answers is headed by its reference with a Draft tag
+**ID**: SCN-PLANTS-CYA-014-D
+- **GIVEN** a draft notification
+- **WHEN** the user opens its check-your-answers
+- **THEN** the page heading is the notification's reference number
+- **AND** a "Draft" tag stands beside it
+- **AND** no status bar is shown
+- **AND** the browser title starts with the reference
+
+#### Scenario: A draft's check answers shows the date it was created
+**ID**: SCN-PLANTS-CYA-014-E
+- **GIVEN** a draft created at 23:30 UTC on 21 July 2026
+- **WHEN** the user opens its check-your-answers
+- **THEN** under the heading it reads "Date created: 22 July 2026"
+
+#### Scenario: An amendment's check answers keeps its heading and status bar
+**ID**: SCN-PLANTS-CYA-014-F
+- **GIVEN** a notification is being amended
+- **WHEN** the user views check-your-answers
+- **THEN** the page heading and browser title are "Check your answers"
+- **AND** the status bar is shown
 
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
 **ID**: REQ-PLANTS-CYA-015
@@ -265,9 +286,9 @@ The system MUST send the user to the plants notification list when they open the
 - **WHEN** the user opens that notification's view
 - **THEN** the plants notification list is shown
 
-### Requirement: A submitted notification's read-only view shows its notification reference as text to copy
+### Requirement: A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy
 **ID**: REQ-PLANTS-CYA-016
-The system MUST show an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row with the reference, as plain text the user can select with JavaScript on or off. It MUST NOT show a "Customs document code" row or any "Copy" button.
+On a submitted notification's read-only view or a draft's check answers, the system MUST show an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row with the reference, as plain text the user can select with JavaScript on or off. It MUST NOT show a "Customs document code" row or any "Copy" button.
 
 #### Scenario: The submitted view shows its notification reference
 **ID**: SCN-PLANTS-CYA-016-A
@@ -283,3 +304,11 @@ The system MUST show an "Import reference numbers" section with the warning "You
 - **THEN** the notification reference is shown as text
 - **AND** no "Customs document code" row is shown
 - **AND** no "Copy" button is shown
+
+#### Scenario: A draft's check answers shows its notification reference
+**ID**: SCN-PLANTS-CYA-016-C
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
+- **AND** it holds a "Notification reference" row reading the notification's reference
+- **AND** no "Customs document code" row and no "Copy" button is shown

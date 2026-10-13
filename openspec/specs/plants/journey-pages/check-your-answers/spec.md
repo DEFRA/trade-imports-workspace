@@ -52,15 +52,15 @@ The system MUST show the selected consignment contact's name, address, telephone
 **ID**: REQ-PLANTS-CYA-004
 The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST NOT show an unanswered role as an error. A party's card shows the address copied onto the notification, which a later change to the address book does not reach, as governed by `plants/addresses`.
 
-#### Scenario: An unanswered destination reads Not provided, with no error shown
+#### Scenario: An unanswered destination reads Not provided, with no address error, and is named as outstanding
 **ID**: SCN-PLANTS-CYA-004-A
 - **GIVEN** a notification whose place of destination has never been answered
 - **WHEN** the user views check-your-answers
-- **THEN** the destination card's rows each read "Not provided", and no error is shown against it
+- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names "Complete place of destination", linking to that card
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page.
+The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
 
 #### Scenario: Editing an answer via Change returns to check-your-answers with the new value
 **ID**: SCN-PLANTS-CYA-005-A
@@ -112,13 +112,13 @@ The system MUST show a submitted notification read-only — with no Change or Ed
 
 ### Requirement: An amending notification offers cancel-amendment instead of delete
 **ID**: REQ-PLANTS-CYA-009
-The system MUST offer a cancel-amendment action on check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
+The system MUST offer "Cancel amend" in the status bar of check-your-answers while a notification is being amended, and MUST NOT offer delete in that state. What cancel-amendment does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: Cancel amendment is offered only while amending
 **ID**: SCN-PLANTS-CYA-009-A
 - **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
-- **THEN** a "Cancel amendment" action is offered
+- **THEN** "Cancel amend" is offered in the status bar
 - **AND** no delete action is offered
 
 #### Scenario: Cancelling an amendment from check-your-answers restores the submitted answers
@@ -166,3 +166,47 @@ The system MUST offer, on a draft's consignor-or-exporter, place-of-destination 
 - **WHEN** the user views check-your-answers
 - **THEN** the Contact card offers Change and Edit details as two separate actions, Edit details opening the contact address's edit page
 - **AND** the Place of destination card offers only Change
+
+### Requirement: An unfinished draft names every unfinished card and links to it
+**ID**: REQ-PLANTS-CYA-013
+The system MUST show check-your-answers for an unfinished draft under an error summary titled "There is a problem" that names each card still holding outstanding answers once, in page order, as "Complete" and the card's title, linking to that card, which MUST be marked with the same words; commodity details link to the "About the consignment" heading. It MUST keep the user on the page when they continue while any card is unfinished.
+
+#### Scenario: Viewing an unfinished notification names each unfinished card and links to it
+**ID**: SCN-PLANTS-CYA-013-A
+- **GIVEN** a draft notification with one or more cards still holding outstanding answers
+- **WHEN** the user views check-your-answers
+- **THEN** an error summary titled "There is a problem" names each unfinished card in page order, such as "Complete arrival details" and "Complete contact"
+- **AND** each entry links to the card it names, which is itself marked with the same words
+- **AND** "Complete commodity details" links to the "About the consignment" heading
+
+#### Scenario: A half-done card is named once and links to the card, not to a page
+**ID**: SCN-PLANTS-CYA-013-C
+- **GIVEN** a plants-for-planting draft whose arrival status is answered and whose arrival date is not
+- **WHEN** the user views check-your-answers
+- **THEN** the error summary names "Complete arrival details" once
+- **AND** that entry links to the Arrival details card on the page
+
+#### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page
+**ID**: SCN-PLANTS-CYA-013-B
+- **GIVEN** a draft notification with a task still to complete is open on check-your-answers
+- **WHEN** the user continues
+- **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
+- **AND** the declaration is not opened
+
+### Requirement: An amendment that is not yet ready opens without an error and refuses Continue with one
+**ID**: REQ-PLANTS-CYA-014
+While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message when it is opened, and MUST refuse Continue while any answer is incomplete or breaks its rules, keeping the user on check-your-answers, still amending and without opening the declaration, under an error summary titled "There is a problem" that names each reason and takes focus, as a draft's refused Continue does.
+
+#### Scenario: An incomplete amendment's review opens with no error
+**ID**: SCN-PLANTS-CYA-014-A
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user opens check-your-answers
+- **THEN** no error summary and no error message is shown
+
+#### Scenario: Continuing from an incomplete amendment stays on check-your-answers, naming what is missing
+**ID**: SCN-PLANTS-CYA-014-B
+- **GIVEN** a notification being amended whose arrival date has been cleared and saved
+- **WHEN** the user continues
+- **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
+- **AND** the notification is still being amended
+- **AND** the declaration is not opened

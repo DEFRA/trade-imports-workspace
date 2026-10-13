@@ -79,10 +79,10 @@
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-004-A",
-          "name": "An unanswered destination reads Not provided, with no error shown",
+          "name": "An unanswered destination reads Not provided, with no address error, and is named as outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render an unanswered destination without a party error", "strength": "full", "notes": "every destination row Not provided; errorSummary null" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name an unanswered destination as an outstanding task, not a party error", "strength": "full", "notes": "every destination row Not provided; no party error, and the summary names Complete place of destination linking to #place-of-destination" }
           ]
         }
       ]
@@ -98,7 +98,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "CYA renders numbered sections, scoped cards and contact details, and Change returns to saved answers", "strength": "full", "notes": "origin → Germany and commodity quantity → 300 both return to CYA" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that return to review", "strength": "full", "notes": "origin and commodity Change round-trips; quantity 300 after reload" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, a question page opened from a Change link on the review returns to the review showing the change", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" }
           ]
         }
       ]
@@ -148,7 +149,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; Edit details absence not asserted; delete offer covered by sibling delete test and unit" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions, so neither Change nor Edit details" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref set; cancelAmendHref null" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref set; no cancelAmend in the strip" }
           ]
         },
         {
@@ -171,7 +172,8 @@
           "name": "Cancel amendment is offered only while amending",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: cancelAmendHref set, deleteHref null" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "amending: strip cancelAmend href set, deleteHref null" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "partial", "notes": "Amend tag and Cancel amend in the status bar on CYA; delete absence not asserted" }
           ]
         },
         {
@@ -242,6 +244,66 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Change and Edit details on an answered address, and only Change on an unanswered one", "strength": "full", "notes": "contact card actions are Change then Edit details to the contact edit page returning to CYA; unanswered destination offers Change only" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Edit details on CYA changes only this notification, not the address book record or another notification", "strength": "partial", "notes": "follows the destination card's Edit details to its edit page; unanswered-card branch not driven" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-013",
+      "name": "An unfinished draft names every unfinished card and links to it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-013-A",
+          "name": "Viewing an unfinished notification names each unfinished card and links to it",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every unfinished card on an incomplete notification, in page order, linking to the card on this page", "strength": "full", "notes": "exact error list in page order: Complete commodity details to #about-the-consignment, then arrival details, place of destination, identification numbers and contact, each to its card" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should mark each unfinished card with its anchor and message, and leave finished cards unmarked", "strength": "partial", "notes": "the card marking: the unfinished contact card carries its anchor and the same message, the finished import details card none" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "Complete contact links to #contact; one card only, and the card marking is not asserted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-013-C",
+          "name": "A half-done card is named once and links to the card, not to a page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name a half-done card once, linking to the card rather than a page", "strength": "full", "notes": "plants-for-planting, arrival status answered, date missing: exactly one Complete arrival details entry, linking to #arrival-details" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-013-B",
+          "name": "Continuing from an unfinished notification is refused, keeping the user on the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete notification, naming what is outstanding", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-014",
+      "name": "An amendment that is not yet ready opens without an error and refuses Continue with one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-014-A",
+          "name": "An incomplete amendment's review opens with no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on opening an incomplete amend review", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-014-B",
+          "name": "Continuing from an incomplete amendment stays on check-your-answers, naming what is missing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the outstanding task", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete amend with the error summary, naming what is outstanding", "strength": "full", "notes": "400, focus on the summary, still amending" }
           ]
         }
       ]

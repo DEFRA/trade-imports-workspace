@@ -13,6 +13,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | ins/authentication | INS-AUTH |
 | ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
+| ins/page-titles | INS-PAGE-TITLE |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |
@@ -76,3 +77,4 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | plants/journey-section-captions | PLANTS-CAPTIONS |
 | plants/notification-dashboard | PLANTS-DASH |
 | plants/notification-lifecycle | PLANTS-LIFECYCLE |
+| plants/page-titles | PLANTS-PAGE-TITLE |

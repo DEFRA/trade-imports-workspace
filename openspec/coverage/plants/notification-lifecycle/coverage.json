@@ -15,10 +15,10 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "the new draft is listed on the dashboard and Resume reopens it", "strength": "partial", "notes": "Draft after create" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "Draft → Submitted" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "partial", "notes": "Submitted → Amending → Submitted again after cancel" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "partial", "notes": "Submitted → Amend → Submitted again after cancel" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification can be deleted from CYA", "strength": "partial", "notes": "Submitted → Deleted (soft-delete from listing)" }
           ],
-          "notes": "GAP: no single plants test walks Draft → Submitted → Amend → Submitted → Deleted end to end; transitions are covered across separate e2e cases. User-facing label is \"Amending\" while recorded state is Amend."
+          "notes": "GAP: no single plants test walks Draft → Submitted → Amend → Submitted → Deleted end to end; transitions are covered across separate e2e cases. User-facing label is \"Amend\", matching the recorded state."
         }
       ]
     },
@@ -82,7 +82,7 @@
           "name": "Starting an amendment opens Overview with editing enabled",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "amend() lands on Overview with Amending tag" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "amend() lands on Overview with Amend tag and Cancel amend" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should unfreeze a known submitted notification and land on its hub", "strength": "full", "notes": "amend POST redirects to hub path" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "partial", "notes": "also starts amendment from dashboard; focuses late-flag rather than Overview landing" }
           ]
@@ -112,11 +112,14 @@
       "scenarios": [
         {
           "id": "SCN-PLANTS-LIFECYCLE-007-A",
-          "name": "A Cancel amendment option is offered while amending",
+          "name": "A Cancel amend option is offered while amending",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment on dashboard card while Amending" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment link on CYA" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amendment on dashboard card while Amend" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from CYA restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel amend in the status bar on CYA" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from question page restores submitted answers and read-only CYA", "strength": "full", "notes": "Amend tag and Cancel amend in the status bar on a question page" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Overview and review offer Cancel amend while amending", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should show Cancel amend as a link beside the tag and reference while amending", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should give an amending notification Resume, Cancel amendment and Delete", "strength": "full", "notes": "" }
           ]
@@ -127,7 +130,8 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Cancel this amendment? confirmation page before Yes" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "full", "notes": "confirm and reject actions" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "full", "notes": "confirm and reject actions" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend on the Overview opens the confirmation page", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -135,7 +139,7 @@
           "name": "Declining the confirmation keeps the amendment in progress",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No preserves the amendment and its changes after reload", "strength": "full", "notes": "still Amending; DiscardMe99 intact" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "No preserves the amendment and its changes after reload", "strength": "full", "notes": "still Amend; DiscardMe99 intact" }
           ]
         },
         {
@@ -145,6 +149,33 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "Submitted again; edit reverted; no Change links; cancelled banner" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "confirmation restores the submitted snapshot and an accessible success view", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-E",
+          "name": "Cancel amend on a question page opens the confirmation page",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from question page restores submitted answers and read-only CYA", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Cancel amend in the strip of a question page opens the confirmation page and No keeps the amendment", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-F",
+          "name": "Cancel amend works without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "the strip Cancel amend reaches the confirmation and Yes restores Submitted", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-007-G",
+          "name": "A draft offers no Cancel amend",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "shows the draft tag and the notification reference", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should show no link in the strip without a Cancel amend control", "strength": "full", "notes": "" }
           ]
         }
       ]

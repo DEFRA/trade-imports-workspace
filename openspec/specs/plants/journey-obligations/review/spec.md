@@ -18,19 +18,19 @@ The system MUST withhold the Check and submit task until every other task row on
 - **WHEN** they complete the contact and return to Overview
 - **THEN** Check and submit is offered and opens check-your-answers
 
-### Requirement: Continuing from check-your-answers while a task is still outstanding returns to Overview
+### Requirement: Continuing from check-your-answers while a task is still outstanding is refused on the page
 **ID**: REQ-PLANTS-OB-REVIEW-002
-The system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead return them to Overview when they continue from check-your-answers.
+The system MUST NOT take the user on to the declaration while a task is still outstanding, and MUST instead keep them on check-your-answers, with the outstanding tasks named, on a draft and on an amendment alike; an amendment's check-your-answers names nothing until Continue is refused (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-014).
 
-#### Scenario: Continuing an incomplete notification returns to Overview
+#### Scenario: Continuing an incomplete notification stays on check-your-answers
 **ID**: SCN-PLANTS-OB-REVIEW-002-A
-- **GIVEN** a notification is open on check-your-answers with a task still outstanding
+- **GIVEN** a draft notification is open on check-your-answers with a task still outstanding
 - **WHEN** the user continues
-- **THEN** they are returned to Overview
+- **THEN** they stay on check-your-answers, which names the outstanding task
 
 ### Requirement: An origin that commodity lines no longer allow blocks continue, with a correction into origin
 **ID**: REQ-PLANTS-OB-REVIEW-003
-The system MUST refuse to continue from check-your-answers when the saved country of origin falls outside the narrowest scope of the notification's commodity lines, showing an error that links into the origin page under change context, and MUST leave the notification in draft. The origin scopes themselves are governed by `plants/journey-obligations/origin`.
+The system MUST refuse to continue from check-your-answers when the saved country of origin falls outside the narrowest scope of the notification's commodity lines, showing an error that links into the origin page under change context, and MUST leave the notification's status unchanged. While amending, the error shows only once Continue is refused (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-014). Origin scopes are governed by `plants/journey-obligations/origin`.
 
 #### Scenario: A saved country that a new ware-potato line disallows blocks continue with a link to origin
 **ID**: SCN-PLANTS-OB-REVIEW-003-A
@@ -41,7 +41,7 @@ The system MUST refuse to continue from check-your-answers when the saved countr
 
 ### Requirement: A copied address that breaks the address book's rules blocks continue and submit
 **ID**: REQ-PLANTS-OB-REVIEW-004
-The system MUST refuse to continue from check-your-answers, and refuse the declaration's submit, while an address copied onto the notification breaks the address book's field rules (`plants/addresses`). Check-your-answers MUST name each such role in an error at the top of the page, linking to its edit page, which returns there. A refused submit MUST return to check-your-answers, still in draft. An unanswered role MUST NOT count as breaking the rules.
+While a copied address breaks the address book's field rules (`plants/addresses`), the system MUST refuse Continue on check-your-answers and submit on the declaration, returning a refused submit to check-your-answers in draft. Check-your-answers MUST name each such role at the top, linking to its edit page, which returns there; when amending, once Continue is refused (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-014). An unanswered role MUST NOT count as breaking the rules.
 
 #### Scenario: A copied address that breaks the rules blocks continue and submit until it is corrected
 **ID**: SCN-PLANTS-OB-REVIEW-004-A

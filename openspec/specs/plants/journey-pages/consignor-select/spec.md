@@ -29,11 +29,11 @@ The system MUST open this page when the user follows Overview's consignor or exp
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing; cancel-and-return-to-overview MUST reach Overview without saving.
 
-#### Scenario: Choosing a consignor saves, continues to identification numbers, and persists on return
+#### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A
-- **GIVEN** the user is on the consignor page
+- **GIVEN** the user is on the consignor page in the opening sequence
 - **WHEN** they choose an address and save and continue
 - **THEN** they reach identification numbers
 - **AND** returning to the consignor page shows that address still chosen
@@ -58,9 +58,15 @@ The system MUST accept a chosen address, continue to identification numbers on s
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen
 
+#### Scenario: Opened from Overview, saving returns to Overview
+**ID**: SCN-PLANTS-CONSIGNOR-003-E
+- **GIVEN** the consignor page opened from its Overview task
+- **WHEN** the user chooses an address and saves and continues
+- **THEN** Overview is shown, with the consignor task Completed
+
 ### Requirement: Saving with nothing chosen while no consignor is held is refused with focused recovery
 **ID**: REQ-PLANTS-CONSIGNOR-004
-The system MUST refuse to save when nothing has been chosen and the notification holds no consignor yet, focusing the first address row when the user follows the error, and MUST focus the search field instead when the list is empty after a no-match search. Choosing an address after the error MUST recover. A consignor already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
+The system MUST refuse save-and-continue when nothing is chosen and no consignor is held yet, focusing the first address row when the user follows the error, or the search field when a search matched nothing. Choosing an address after the error MUST recover. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A consignor already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the first row
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
@@ -76,9 +82,15 @@ The system MUST refuse to save when nothing has been chosen and the notification
 
 #### Scenario: Choosing an address after the error recovers
 **ID**: SCN-PLANTS-CONSIGNOR-004-C
-- **GIVEN** the consignor page is showing the nothing-chosen error
+- **GIVEN** the consignor page, reached in the opening sequence, is showing the nothing-chosen error
 - **WHEN** the user chooses an address and saves
 - **THEN** they continue to identification numbers
+
+#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
+**ID**: SCN-PLANTS-CONSIGNOR-004-D
+- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
+- **WHEN** they select save and return to overview
+- **THEN** Overview is shown, with no error and no consignor saved
 
 ### Requirement: The back link returns to Overview
 **ID**: REQ-PLANTS-CONSIGNOR-005

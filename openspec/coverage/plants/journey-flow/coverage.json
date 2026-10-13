@@ -81,8 +81,8 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-003",
-      "name": "Continuing from any page moves to the next still in scope, and finishing a section returns to Overview",
-      "coverage": "full",
+      "name": "Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-003-A",
@@ -124,9 +124,9 @@
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should fall through to the overview after the run's last step",
+              "test": "Should fall through to the overview when the last step is out of scope",
               "strength": "full",
-              "notes": "outside mid-run, section end \u2192 hub"
+              "notes": "with no step left in scope, the run falls through to the hub"
             },
             {
               "type": "unit",
@@ -135,6 +135,122 @@
               "test": "Should redirect to the overview, the page after the run\u2019s last step",
               "strength": "full",
               "notes": "outside active run, origin Continue \u2192 hub"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-C",
+          "name": "Arrival details opened from Overview returns to Overview, not the place of destination",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "arrival details opened from the overview returns to the overview, not the place of destination",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should carry arrival status on to the arrival details, the next page of its task",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the arrival details to the overview, not on to the place of destination",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-D",
+          "name": "A task of more than one page moves through its own pages first",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "'What are you importing?' opened from the overview moves through its own pages before returning to the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should carry the entry question on to the commodities list, the next page of its task",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the commodities list to the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-E",
+          "name": "Consignor opened from Overview returns to Overview, not identification numbers",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/parties.spec.ts",
+              "test": "consignor opened from the overview returns to the overview on Save and continue, not to identification numbers",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/consignor-select.fit.spec.js",
+              "test": "opened from the overview, saves the chosen address and returns to the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js",
+              "test": "Should return the consignor to the overview rather than on to identification numbers, a task of its own",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-F",
+          "name": "Nothing marks a page as opened from Overview",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "arrival details opened from the overview returns to the overview, not the place of destination",
+              "strength": "partial",
+              "notes": "asserts the row link and the landing address; no other task is checked"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/overview-task-return.spec.ts",
+              "test": "'What are you importing?' opened from the overview moves through its own pages before returning to the overview",
+              "strength": "partial",
+              "notes": "asserts the row link and the landing address; no other task is checked"
             }
           ]
         }
@@ -186,6 +302,60 @@
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js",
               "test": "Save and return to overview saves the country and reaches the overview",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/arrival.spec.ts",
+              "test": "save and return to overview: when a date is typed, saves it and shows it again on return",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-004-C",
+          "name": "Save and return to overview saves a blank arrival details page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/arrival.spec.ts",
+              "test": "save and return to overview: when a potato arrival page is blank, saves it and leaves the arrival row incomplete",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should save an empty potato page and go to the overview",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-004-D",
+          "name": "A time not on the 24-hour clock is refused on save and return",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/arrival.spec.ts",
+              "test": "save and return to overview: when the time is not on the 24-hour clock, refuses the save",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/arrival-details/controller.test.js",
+              "test": "Should still refuse a time that is not on the 24-hour clock",
               "strength": "full",
               "notes": ""
             }
@@ -264,12 +434,12 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-006",
-      "name": "Check your answers, the declaration and the confirmation are reachable only once every task row is ready",
+      "name": "Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-006-A",
-          "name": "The review section is withheld while a task row is outstanding",
+          "name": "Continuing from check your answers is refused while a task row is outstanding",
           "coverage": "full",
           "tests": [
             {
@@ -278,15 +448,15 @@
               "file": "tests/plants/e2e/features/review.spec.ts",
               "test": "review stays blocked until the final required row is complete",
               "strength": "full",
-              "notes": ""
+              "notes": "Continue on the unfinished review keeps the user on it with the outstanding task named"
             },
             {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/plants/e2e/features/start.spec.ts",
-              "test": "the Overview carries the journey strip and the task rows landed so far",
-              "strength": "partial",
-              "notes": "Check and submit Cannot start yet with no link on a fresh notification"
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+              "test": "Should refuse Continue on an incomplete notification, naming what is outstanding",
+              "strength": "full",
+              "notes": ""
             }
           ]
         },
@@ -317,21 +487,21 @@
     },
     {
       "id": "REQ-PLANTS-FLOW-007",
-      "name": "A notification created in this session runs an opening sequence ending on Overview",
+      "name": "A notification created in this session runs an opening sequence ending on check your answers",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-007-A",
-          "name": "A newly created notification is walked through the opening sequence to Overview",
+          "name": "A newly created notification is walked through the opening sequence to check your answers",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "test": "Should open on commodity-type and end on check your answers",
               "strength": "full",
-              "notes": "opening spine; parties/contact continuation covered separately"
+              "notes": "the run's step list, from the entry question to check your answers"
             },
             {
               "type": "unit",
@@ -347,15 +517,15 @@
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js",
               "test": "renders accessible confirmation copy, actions and a bare heading",
               "strength": "partial",
-              "notes": "completeNotification helper walks opening run to hub before review \u2014 witness via setup, not the named assertion"
+              "notes": "completeNotification helper walks the opening run to check your answers \u2014 witness via setup, not the named assertion"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/plants/e2e/features/journey.spec.ts",
               "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification",
-              "strength": "partial",
-              "notes": "full happy path includes opening sequence then review; does not stop to assert hub as sequence end alone"
+              "strength": "full",
+              "notes": "the contact save lands on check your answers, which continues to the declaration"
             }
           ]
         },
@@ -410,6 +580,45 @@
               "test": "Save and return to overview saves the choice and reaches the overview",
               "strength": "partial",
               "notes": "after answers exist, exit lands on hub rather than next run step"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-007-D",
+          "name": "The opening sequence ends on check your answers even when tasks are outstanding",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
+              "test": "Should end the run on check your answers after the contact step, even with tasks outstanding",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js",
+              "test": "Should complete the opening run when check your answers is shown",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-frontend",
+              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/consignment-contact-select.fit.spec.js",
+              "test": "in the opening run, Continue goes to check your answers even though the notification is incomplete",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/review.spec.ts",
+              "test": "review stays blocked until the final required row is complete",
+              "strength": "full",
+              "notes": "the contact is left blank, the run still ends on check your answers, and the missing contact is named"
             }
           ]
         }
@@ -587,11 +796,79 @@
               "type": "unit",
               "repo": "trade-imports-plants-frontend",
               "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js",
-              "test": "Should open on commodity-type, then commodities, origin, arrival status, arrival details and the destination",
+              "test": "Should open on commodity-type and end on check your answers",
               "strength": "full",
               "notes": "RUN_STEPS id list has commodities then origin \u2014 no commodity-details page id"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-014",
+      "name": "While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-014-A",
+          "name": "A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, an overview-linked page ends with the three amend controls and Save and return goes back to the review showing the change", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end an overview-linked page with Save and return, Save and continue and a secondary Save and return to overview button, in that order", "strength": "partial", "notes": "the macro's amend ending" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js", "test": "Should end the %s page with Save and return to the review while amending", "strength": "partial", "notes": "renders every task-row page while amending; fails when a template stops passing amend" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-014-B",
+          "name": "Save and continue while amending goes to the next page of the task",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, Save and continue goes to the next page of the task and Save and return to overview goes to Overview", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-014-C",
+          "name": "The address pickers offer two controls while amending, and Save and return goes back to the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, the address pickers end with Save and return and Save and continue only", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should drop the overview exit on a picker while amending", "strength": "partial", "notes": "the two-control macro ending" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-014-D",
+          "name": "The commodities list offers two controls while amending",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "The commodities list ends with Save and return and Save and continue while amending", "strength": "full", "notes": "both buttons, no hub exit or cancel link; Save and return lands on the review, Save and continue on Overview" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js", "test": "Should end the %s page with Save and return to the review while amending", "strength": "partial", "notes": "the commodities case renders the list with the amend form actions" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-015",
+      "name": "A page the hub links to directly keeps its two buttons side by side and its overview exit below them",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-015-A",
+          "name": "Cancel and return to overview sits on its own line below the two buttons",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should put Cancel and return to overview on its own line below the two buttons", "strength": "partial", "notes": "the shared macro's default ending: both buttons in the group, the cancel link after it" }
+          ],
+          "notes": "Unit render of the shared macro only; no fit or e2e asserts the layout on a rendered page."
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-015-B",
+          "name": "While amending, Save and return to overview sits on its own line below the two save buttons",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should put Save and return to overview on its own line below the two save buttons", "strength": "partial", "notes": "the shared macro's amend layout: the two save buttons in the group, Save and return to overview after it" }
+          ],
+          "notes": "Unit render of the shared macro only; no fit or e2e asserts the layout on a rendered page."
         }
       ]
     }

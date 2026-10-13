@@ -48,13 +48,27 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 
 ### Requirement: The port of exit is chosen from the same list as the port of entry
 **ID**: REQ-IMPORT-REASON-004
-The system MUST offer the same list of ports for the port of exit, which this page asks for under the reasons that call for it, as it offers for the port of entry.
+The system MUST offer, for the port of exit under each reason that asks it, the same ports as the port of entry, in the same order, after the placeholder "Select port of exit", each reading "<port name> - <port code>", and MUST save the chosen port's code and show it as chosen when the page is reopened.
 
 #### Scenario: The port of exit offers the port of entry's list
 **ID**: SCN-IMPORT-REASON-004-A
 - **GIVEN** the reason for importing calls for a port of exit
 - **WHEN** the user answers it
 - **THEN** the ports offered are those offered for the port of entry
+
+#### Scenario: Each port of exit reads its name, a dash and its code, in the port of entry's order
+**ID**: SCN-IMPORT-REASON-004-B
+- **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
+- **WHEN** the port of exit list is read in full
+- **THEN** after the placeholder "Select port of exit" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
+- **AND** each reads "<port name> - <port code>", for example "Aberdeen Harbour - GB ABD"
+
+#### Scenario: A chosen port of exit is kept and offered back
+**ID**: SCN-IMPORT-REASON-004-C
+- **GIVEN** the user has chosen "Transit"
+- **WHEN** they choose a port of exit, answer the destination country and save and continue
+- **THEN** no error is shown
+- **AND** when they reopen the page that port of exit is shown as chosen
 
 ### Requirement: A reason needing more than the purpose question reveals its own questions inline, under that reason
 **ID**: REQ-IMPORT-REASON-005
@@ -115,3 +129,42 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the import reason page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: The destination country is chosen from the origin countries and their territories, each territory named with its country
+**ID**: REQ-IMPORT-REASON-009
+The system MUST offer, for the destination country under both Transit and Transhipment or onward travel, a placeholder and then the origin countries and their territories that the reference data service serves, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name.
+
+#### Scenario: The transhipment destination country offers the origin countries and their territories
+**ID**: SCN-IMPORT-REASON-009-A
+- **GIVEN** the user has chosen "Transhipment or onward travel"
+- **WHEN** the destination country list is read in full
+- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
+
+#### Scenario: The transit destination country offers the same places
+**ID**: SCN-IMPORT-REASON-009-B
+- **GIVEN** the user has chosen "Transit"
+- **WHEN** the destination country list is read in full
+- **THEN** it holds the same places as under "Transhipment or onward travel"
+
+#### Scenario: Each territory is named with its country
+**ID**: SCN-IMPORT-REASON-009-C
+- **GIVEN** either destination country list
+- **WHEN** a territory is read
+- **THEN** it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+### Requirement: A chosen destination country, a territory included, is kept and offered back
+**ID**: REQ-IMPORT-REASON-010
+The system MUST save a territory chosen as the destination country without an error, and MUST show the saved destination country, a territory or a country saved before territories were offered, as chosen when the page is reopened.
+
+#### Scenario: A territory chosen as the destination country is kept
+**ID**: SCN-IMPORT-REASON-010-A
+- **GIVEN** the user has chosen a reason that asks the destination country
+- **WHEN** they choose a territory and save and continue
+- **THEN** no error is shown
+- **AND** when they reopen the page the territory is shown as chosen
+
+#### Scenario: A destination country saved before territories were offered is still shown
+**ID**: SCN-IMPORT-REASON-010-B
+- **GIVEN** the notification holds a destination country from the country list
+- **WHEN** the user reopens the page
+- **THEN** that country is shown as chosen

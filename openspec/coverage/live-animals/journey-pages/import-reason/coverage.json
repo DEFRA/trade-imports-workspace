@@ -72,7 +72,30 @@
           "name": "The port of exit offers the port of entry's list",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list labelled as the ports service labels it and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-004-B",
+          "name": "Each port of exit reads its name, a dash and its code, in the port of entry's order",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer each served port as '<name> - <code>' valued by its code, in the order reference data serves them, matching its label", "strength": "partial", "notes": "label and served order, real mode" },
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java", "test": "getPortsOfEntry_returnsAirportsThenSeaportsThenRailThenUnknown_eachAToZIgnoringCaseAndSpacing", "strength": "full", "notes": "reference-data integration test (recorded as unit, the nearest type): the airports, seaports, rail order the port of exit keeps" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-004-C",
+          "name": "A chosen port of exit is kept and offered back",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "a port of exit chosen under transit saves its code and is shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a reason and its reveal in one submit, and offers the answers back", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer a stored port of exit to both reveals that ask for it", "strength": "partial", "notes": "GET prefill only" }
           ]
         }
       ]
@@ -159,6 +182,67 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "this requirement was absent from the spec until this pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-009",
+      "name": "The destination country is chosen from the origin countries and their territories, each territory named with its country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-009-A",
+          "name": "The transhipment destination country offers the origin countries and their territories",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "compose stack only; compares with the stub's MDM fixture" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transhipment for the destination country alone", "strength": "partial", "notes": "stub mode, captured fixture" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-009-B",
+          "name": "The transit destination country offers the same places",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "compose stack only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-009-C",
+          "name": "Each territory is named with its country",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transhipment destination country list offers the origin countries and their territories, each territory named with its country", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "the transit destination country list offers the same places as the transhipment one", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer destination options as whatever reference data serves, each subdivision named with its parent, in one alphabetical list", "strength": "full", "notes": "real mode, labels and order" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IMPORT-REASON-010",
+      "name": "A chosen destination country, a territory included, is kept and offered back",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IMPORT-REASON-010-A",
+          "name": "A territory chosen as the destination country is kept",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "a territory chosen as the destination country saves and is shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a territory as the destination country and offers it back", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should commit a subdivision chosen as the transhipment destination country", "strength": "partial", "notes": "commit only" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-010-B",
+          "name": "A destination country saved before territories were offered is still shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/destination-country-list.spec.ts", "test": "a destination country from the country list is still shown selected when the page is reopened", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer a stored destination country to both reveals that ask for it", "strength": "full", "notes": "" }
           ]
         }
       ]

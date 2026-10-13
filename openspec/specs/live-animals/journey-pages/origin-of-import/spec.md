@@ -34,13 +34,13 @@ The system MUST offer the country of origin as a searchable field that filters t
 
 ### Requirement: The country field offers the origin countries and territories the service accepts, and submits a code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder, the thirty-one origin countries the service accepts and the nine territories of those countries it also accepts (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text the user typed.
+The system MUST offer a placeholder and the origin countries and territories the service accepts (for example the Canary Islands), MUST submit the chosen country's or territory's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, listed by name.
 
 #### Scenario: The country list holds a placeholder, the accepted origin countries and their territories
 **ID**: SCN-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** its first entry invites the user to select a country, and it holds thirty-one origin countries and nine territories besides
+- **THEN** its first entry invites the user to select a country, and the origin countries and territories follow it
 
 #### Scenario: Choosing a country submits and keeps its code
 **ID**: SCN-ORIGIN-003-B
@@ -54,6 +54,12 @@ The system MUST offer a placeholder, the thirty-one origin countries the service
 - **WHEN** they choose the Canary Islands and save the page
 - **THEN** the territory's code is what the notification keeps
 - **AND** returning to the page shows "Canary Islands" in the country field
+
+#### Scenario: The country list holds the reference data service's origin countries and their territories, by name
+**ID**: SCN-ORIGIN-003-D
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** the country list is read in full
+- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
 
 ### Requirement: The country field offers its whole list on focus, before anything is typed
 **ID**: REQ-ORIGIN-004

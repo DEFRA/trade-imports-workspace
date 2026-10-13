@@ -50,6 +50,24 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "shows the no-results message when nothing matches (AC3)", "strength": "full", "notes": "not covered in E2E" }
           ]
+        },
+        {
+          "id": "SCN-ARRIVAL-002-D",
+          "name": "Every port the reference data service serves is offered, in its order",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-entry-list.spec.ts", "test": "the port of entry list offers every captured port, in the order reference data serves them", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "renders captured port options and all feature copy", "strength": "partial", "notes": "stub mode against the captured fixture" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should supply an empty-value placeholder followed by name-plus-code options (no divider)", "strength": "partial", "notes": "pins the '<port name> - <port code>' label, e.g. 'Aberdeen Harbour - GB ABD'" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-002-E",
+          "name": "Ports are listed airports first, then seaports, then rail ports, each A to Z by name",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java", "test": "getPortsOfEntry_returnsAirportsThenSeaportsThenRailThenUnknown_eachAToZIgnoringCaseAndSpacing", "strength": "full", "notes": "reference-data integration test through MDM's wire format (recorded as unit, the nearest type); the order is made here, so it holds in every environment; the frontend keeps the served order (SCN-ARRIVAL-002-D)" }
+          ]
         }
       ]
     },
@@ -72,7 +90,7 @@
           "name": "The chosen port is shown as its name and code together",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "asserts combobox value is 'Aberdeen Harbour (GB ABD)'" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/port-of-entry-select.spec.ts", "test": "enhances the select, filters by name or code, submits and persists the code", "strength": "full", "notes": "asserts combobox value is 'Aberdeen Harbour - GB ABD'" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "selecting a port shows its name and code and submits the code (AC2)", "strength": "full", "notes": "" }
           ]
         }
@@ -121,7 +139,7 @@
           "name": "Saving with nothing answered keeps a draft and moves on",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "saves a draft and moves on when submitted empty", "strength": "full", "notes": "asserts no error summary and that the next page (transporter) is shown" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "saves a draft and returns to the overview when submitted empty", "strength": "full", "notes": "asserts no error summary; the page was opened from its overview task, so the next page is the overview (see journey-flow)" }
           ]
         }
       ]

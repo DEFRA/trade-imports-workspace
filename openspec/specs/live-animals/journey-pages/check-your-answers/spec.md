@@ -191,3 +191,25 @@ While a notification is being amended, the system MUST show the review with no e
 - **THEN** they stay on the review, under an error summary that names the arrival details
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
+
+### Requirement: Ports and destination countries read back exactly as they were offered
+**ID**: REQ-CYA-013
+The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", and MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does.
+
+#### Scenario: The port of exit row reads the option the user chose
+**ID**: SCN-CYA-013-A
+- **GIVEN** a transit notification whose port of exit is Port of Dover
+- **WHEN** the user views the review
+- **THEN** the port of exit row reads "Port of Dover - GB DVR", the same text as the option they chose
+
+#### Scenario: The port of entry row reads the port's name, a dash and its code
+**ID**: SCN-CYA-013-B
+- **GIVEN** a notification whose port of entry is Aberdeen Harbour
+- **WHEN** the user views the review
+- **THEN** the port of entry row reads "Aberdeen Harbour - GB ABD"
+
+#### Scenario: A territory destination country is named with its country
+**ID**: SCN-CYA-013-C
+- **GIVEN** a transhipment notification whose destination country is Martinique
+- **WHEN** the user views the review
+- **THEN** the destination country row reads "Martinique (France)"

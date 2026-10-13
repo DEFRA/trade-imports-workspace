@@ -210,3 +210,19 @@ While a notification is being amended, the system MUST show check-your-answers w
 - **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
+
+### Requirement: The place of landing and a territory of origin read back as they were offered
+**ID**: REQ-PLANTS-CYA-015
+The system MUST show the proposed place of landing exactly as the port was offered when it was chosen, reading "<port name> - <port code>", and MUST name a territory chosen as the country of origin "<territory> (<country>)".
+
+#### Scenario: The place of landing row reads the option the user chose
+**ID**: SCN-PLANTS-CYA-015-A
+- **GIVEN** a potatoes notification with a proposed place of landing
+- **WHEN** the user views check-your-answers
+- **THEN** the place of landing row reads the same "<port name> - <port code>" text as the option they chose
+
+#### Scenario: A territory of origin is named with its country
+**ID**: SCN-PLANTS-CYA-015-B
+- **GIVEN** a notification whose country of origin is the Canary Islands
+- **WHEN** the user views check-your-answers
+- **THEN** the country of origin row reads "Canary Islands (Spain)"

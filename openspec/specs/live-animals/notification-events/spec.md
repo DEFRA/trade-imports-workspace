@@ -34,6 +34,12 @@ The system MUST record a distinctly named outbox event for each of the following
 - **WHEN** each is soft-deleted
 - **THEN** the draft's deletion records a deletion event, and the submitted one's deletion records a distinctly named "submission deleted" event, each showing a status of deleted
 
+#### Scenario: Copying a submitted notification records a creation event carrying the copied detail
+**ID**: SCN-EVENTS-001-E
+- **GIVEN** a notification has been submitted
+- **WHEN** a user copies it as new
+- **THEN** a creation event exists for the new notification's own reference number, carrying the consignor's name and address copied from the source
+
 ### Requirement: Deleting a never-submitted draft records no withdrawal event
 **ID**: REQ-EVENTS-002
 The system MUST NOT record a withdrawal event when a draft that was never submitted is deleted, since there is nothing downstream to withdraw.

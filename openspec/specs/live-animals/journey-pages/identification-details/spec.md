@@ -17,15 +17,23 @@ The system MUST show, above the identification cards, a summary table listing ev
 - **THEN** a summary table lists every commodity's code, common name and declared number of animals, ahead of the identification cards
 - **AND** each row offers a Change link that opens commodity selection
 
-### Requirement: The page asks for one animal's identifiers per card, and offers two ways to save
+### Requirement: The page asks for one animal's identifiers per card, and the card's save button says what is left on the line
 **ID**: REQ-IDENT-002
-The system MUST ask the user for the identifiers of a single animal on a card scoped to one commodity, and MUST offer both a save-and-add-another action and a save-and-finish action, so a record can be followed by the next or end the run.
+The system MUST ask the user for the identifiers of a single animal on a card scoped to one commodity, and MUST label the card's own save button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
 
-#### Scenario: The page presents its identifier fields and both save routes
+#### Scenario: A line of several animals offers add-another, then finish on the last
 **ID**: SCN-IDENT-002-A
-- **GIVEN** the user has reached the identification details page for a commodity
+- **GIVEN** the user has reached the identification details page for a commodity line declared as more than one animal
+- **WHEN** the page loads, and again after each record is saved
+- **THEN** it asks for that animal's identifiers, offering a save-and-add-another action while more than one animal is outstanding
+- **AND** on the last outstanding animal the same button reads save-and-finish instead
+
+#### Scenario: A line of one animal has no card button and saves on Save and continue
+**ID**: SCN-IDENT-002-B
+- **GIVEN** the user has reached the identification details page for a commodity line declared as one animal
 - **WHEN** the page loads
-- **THEN** it asks for that animal's identifiers, offering both a save-and-add-another action and a save-and-finish action
+- **THEN** it asks for that animal's identifiers, with no save-and-add-another or save-and-finish action on the card
+- **AND** the page's own Save and continue is offered, and saves the record
 
 ### Requirement: Each card offers a way to change that commodity's declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
@@ -57,10 +65,10 @@ The system MUST leave the identifier fields empty when the page is opened for a 
 **ID**: REQ-IDENT-005
 The system MUST accept an identifier record once a valid identifier has been entered, saving it without error.
 
-#### Scenario: Entering a valid identifier and finishing saves without error
+#### Scenario: Entering a valid identifier and saving succeeds without error
 **ID**: SCN-IDENT-005-A
 - **GIVEN** the user is on the identification details page
-- **WHEN** they enter a valid identifier and save and finish
+- **WHEN** they enter a valid identifier and save, with Save and continue on a line of one animal or the card's save-and-finish on the last of several
 - **THEN** the record is saved and no error summary is shown
 
 ### Requirement: The identifier fields offered for an animal depend on its commodity, and a commodity with none of its own gets no panel
@@ -225,3 +233,13 @@ The system MUST return the user to Overview when they follow the back link from 
 - **GIVEN** the user is on the identification details page
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+### Requirement: A consignment with nothing to identify never shows the page
+**ID**: REQ-IDENT-019
+The system MUST pass the user on, without showing the identification details page, when no commodity on the notification carries an identifier of its own.
+
+#### Scenario: A consignment of fish alone carries on past the page
+**ID**: SCN-IDENT-019-A
+- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, fish)
+- **WHEN** the identification details page is requested directly
+- **THEN** Overview is shown instead, and the page itself is never rendered

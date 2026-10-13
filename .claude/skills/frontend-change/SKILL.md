@@ -9,7 +9,9 @@ that repo already ships. What a change targets is a **repo and a set** — the
 line lives in `sets/<set>`, so the domain is an input here, not something this
 skill is welded to. Two targets exist today — `trade-imports-animals-frontend`
 (`sets/live-animals`) and `trade-imports-plants-frontend`
-(`sets/high-risk-plants`) — and the workspace expects more, so read the target
+(`sets/high-risk-plants`) — a third, `sets/germinal-products` in
+`trade-imports-animals-frontend`, arrives with the Design Release 2.1
+programme, and the workspace expects more, so read the target
 from the caller (or from the build loop's target profile) rather than
 assuming it. See "Targets" below.
 
@@ -38,6 +40,32 @@ columns this skill actually uses:
 |---|---|---|---|---|---|
 | animals (`live-animals-frontend`) | `repos/trade-imports-animals-frontend` | `sets/live-animals` | `test:live-animals` | `sets/live-animals/docs/` | `live-animals/` |
 | plants (`high-risk-plants-frontend`) | `repos/trade-imports-plants-frontend` | `sets/high-risk-plants` | `test:high-risk-plants` | `sets/high-risk-plants/docs/` | `plants/` |
+| germinal products | `repos/trade-imports-animals-frontend` | `sets/germinal-products` | `test:germinal-products` | `sets/germinal-products/docs/` | `germinal-products/` |
+
+The germinal products row is ahead of the code. The set is not on `main`
+yet: the Design Release 2.1 programme builds it by copying the
+live-animals feature folders into `sets/germinal-products`. Its unit
+script, its recipes and its `openspec/specs/germinal-products/` entries
+all arrive with the set. The script follows the live-animals pattern —
+`TZ=UTC vitest run src/server/app/sets/germinal-products --no-coverage`
+in the repo's `package.json` — and the increment that creates the set
+adds it. Until `package.json` has it, Steps 2 and 4 run the full `test`,
+which picks up any vitest file under `sets/`, or the explicit
+`TZ=UTC vitest run src/server/app/sets/germinal-products --no-coverage`.
+Do not use `test:live-animals` for a germinal change: it is scoped to
+`sets/live-animals` and runs none of the germinal code.
+
+The fit suites do not reach the germinal set yet. In
+`playwright.config.js` the default `testDir` is `./fit` and the
+`features` project's `testDir` is hard-coded to
+`./src/server/app/sets/live-animals/journeys/linear/features`, so a
+`*.fit.spec.js` under `sets/germinal-products` never runs. The increment
+that creates the set must also extend `playwright.config.js` — either a
+germinal features project with `testDir`
+`./src/server/app/sets/germinal-products/journeys/linear/features`, or a
+wider `testDir`. Until then, germinal fit specs do not run. Before
+treating Step 4 as green for a germinal change, check that the fit
+report lists the germinal specs; if it does not, Step 4 has not passed.
 
 Both repos ship the platform (`docs/README.md`, `architecture.md`,
 `flow-and-gates.md`, `scope-and-wipe.md`, `cardinality.md`, …) and the four
@@ -95,7 +123,8 @@ the rules or the baseline.
 All recipe/guide paths below are inside
 `~/git/defra/trade-imports-workspace/<target repo>/src/server/app/` —
 `<target repo>` and the `sets/<set>` prefix substitute from the Targets table
-above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants).
+above (`sets/live-animals` for animals, `sets/high-risk-plants` for plants,
+`sets/germinal-products` for germinal products).
 
 | Trigger | Recipe to follow verbatim |
 |---------|---------------------------|
@@ -123,7 +152,7 @@ planning (`ticket`), NOT for the plants prototype or a design release
    matching guide(s): platform work → the `docs/README.md` platform index
    (engine, flow-and-gates, scope-and-wipe, validation, persistence,
    cardinality, limits, testing); set/journey work → the
-   `sets/live-animals/docs/README.md` set index (obligation-model, features,
+   `sets/<set>/docs/README.md` set index (obligation-model, features,
    journey-flow-and-gates, services, limits, testing).
 3. Read the recipe's exemplar files. The exemplars are the idiom — match them,
    don't invent.
@@ -320,8 +349,10 @@ survive the rollback — `journey-builder`'s `rollback-increment.sh` does.
 Map each touched element to its capability path with the lookup tables in
 `references/SPEC_SYNC.md`. Read the set from the caller or the target
 profile — `sets/live-animals` maps to the `live-animals/` namespace,
-`sets/high-risk-plants` to `plants/`. Do not assume live-animals because
-the examples in this file say so. The leaf is named for the page the user
+`sets/high-risk-plants` to `plants/`, `sets/germinal-products` to
+`germinal-products/`. Do not assume live-animals because the examples in
+this file say so — and for germinal products, not even though both sets
+share a repo and the set began as a copy of live-animals' feature folders. The leaf is named for the page the user
 sees, not the feature directory; `SPEC_SYNC.md` has the mismatch table
 and the explicit judgement it demands.
 

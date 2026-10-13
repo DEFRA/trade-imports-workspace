@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The reconcile areas",
+  "description": "workareas/<workarea>/distil/areas.json: how reconcile is cut up, so one reconciler per area weighs every source's claims about that area in full rather than one reconciler skimming them all. The area-plan agent writes it from each source's partition (its parts' titles, scopes and covers). `tim distil areas` validates it against this file, and also checks what a schema cannot: area ids are unique, every slice names a verified source, its parts are in that source's partition and its claim range runs forward through that source's extract, every claim in the working set (held or missed) falls in at least one area or comes from an `everyArea` source, and, on a re-distil, every existing requirement and conflict belongs to exactly one area. `tim distil areas --write` then writes one working set per area, at distil/areas/<area id>/working-set.json.",
+  "type": "object",
+  "required": ["everyArea", "areas"],
+  "additionalProperties": false,
+  "properties": {
+    "everyArea": {
+      "description": "Source ids whose every claim goes into every area's working set: rulings and short judgement documents that weigh every difference, whatever the area. [] when there is none. Never a long source: slice that into the areas it speaks to.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "areas": {
+      "description": "Every area, in the order the service runs: the journey's pages or page groups first, then the dashboard, the address book, templates, transporters, amend, copy and delete, and a cross-cutting area for layout, navigation and shared copy last.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/area" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "claimId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "slice": {
+      "description": "Some of one source's claims. Name `parts` to take every claim those extract parts hold, `from` and `to` to take a run of claims in extract order (both ends kept), or neither to take the whole source. A claim's missed claims (`<claim id>-m<N>`) go wherever the claim goes.",
+      "type": "object",
+      "required": ["source"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "description": "The source id from sources.json.",
+          "$ref": "#/$defs/text"
+        },
+        "parts": {
+          "description": "Extract part numbers from the source's partition, such as [3, 4].",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1 }
+        },
+        "from": {
+          "description": "The first claim id of the run.",
+          "$ref": "#/$defs/claimId"
+        },
+        "to": {
+          "description": "The last claim id of the run.",
+          "$ref": "#/$defs/claimId"
+        }
+      },
+      "dependentRequired": { "from": ["to"], "to": ["from"] },
+      "not": { "required": ["parts", "from"] }
+    },
+    "area": {
+      "description": "One area: a part of the service one reconciler can weigh in full, with every source's claims about it, today's sources (repos, traces of the real services, the tests repo) as well as the target's.",
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "scope",
+        "slices",
+        "requirements",
+        "conflicts"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Lower-case words joined by hyphens, such as \"origin\" or \"address-book\". New requirement ids in the area's file are req-<area id>-NNN, and new conflict ids c-<area id>-NNN, until `tim distil merge-reconcile` numbers them.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "title": {
+          "description": "A short name, such as \"Origin of the import\".",
+          "$ref": "#/$defs/text"
+        },
+        "scope": {
+          "description": "What the area holds and where it stops, so its reconciler knows what is its own: the pages, records, features and behaviours.",
+          "$ref": "#/$defs/text"
+        },
+        "slices": {
+          "description": "Every source's claims about the area. Name a today source wherever it holds claims about the area: a target repo's feature folder, the traces and specs that walk the area's pages, the tests repo's specs.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/slice" }
+        },
+        "requirements": {
+          "description": "On a re-distil: the existing requirement ids this area owns, each in exactly one area. Its reconciler keeps each one's id. [] on a first run.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^req-[0-9]{3,}$" }
+        },
+        "conflicts": {
+          "description": "On a re-distil: the existing conflict ids this area owns, each in exactly one area. [] on a first run.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^c-[0-9]{3,}$" }
+        }
+      }
+    }
+  }
+}

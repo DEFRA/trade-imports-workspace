@@ -8,10 +8,13 @@ A trace is a recording of a real browser session against a running service. It i
 evidence there is of what a service actually does, because it holds the rendered DOM, not somebody's
 account of it. It is also only ever a lower bound: a page nobody exercised leaves no trace.
 
-Your output is the same as every other extractor's — `<workarea>/distil/extract/<source-slug>.json`,
-with `source`, `structure` and `claims` in the shape `extract.schema.json` beside this file defines. The verify step that
-follows treats your extract like any other, so nothing downstream needs to know the source was a
-trace.
+A trace source is extracted in parts, like every source. The **characterise** step indexes the
+corpus and cuts it into parts (step 1 below), writing `<workarea>/distil/extract/<source-slug>.partition.json`.
+One **extract** agent per part then mines every trace its part names (steps 2 to 5) and writes
+`<workarea>/distil/extract/<source-slug>.part<N>.json`, with `source`, `structure` and `claims` in the
+shape `extract.schema.json` beside this file defines. `tim distil merge-extract` joins the parts into
+the one extract. The verify step that follows treats it like any other, so nothing downstream needs
+to know the source was a trace.
 
 ## Two input shapes
 
@@ -53,15 +56,16 @@ Two things about it shape how you work:
 and opening another replaces it.
 
 **It is scoped to the working directory.** `open` extracts into `.playwright-cli/` under the
-directory it runs from. Each trace source needs a private one —
-`<workarea>/distil/extract/<source-slug>.work/` — so a second trace source running beside you cannot
-overwrite your extracted trace.
+directory it runs from. Each agent needs a private one, so another agent running beside you cannot
+overwrite your extracted trace: the characterise step works in
+`<workarea>/distil/extract/<source-slug>.work/`, and each part's extract agent and each verifier in a
+sub-folder of it, `part<N>/` or `verify<N>/`.
 
 So you never run the CLI yourself. `tim distil trace` runs it for you, with the Playwright version tim
-installs, in your source's working folder:
+installs, in your own folder (`--folder` names the sub-folder):
 
 ```bash
-tim distil trace <workarea> --source <source id> --out actions.txt --workspace <workspace> --json -- actions
+tim distil trace <workarea> --source <source id> --folder part3 --out actions.txt --workspace <workspace> --json -- actions
 ```
 
 tim's own options come first, then `--`, then the subcommand and its arguments, exactly as the
@@ -78,33 +82,41 @@ Working files under `.work/` are yours. Only the extract file is read downstream
 
 ## Mining a corpus
 
-### 1. Index the corpus
+### 1. Index the corpus and cut it into parts (the characterise step)
 
-Open each trace and record what it is. `open` prints the title as
+Where the corpus folder holds a Playwright `report.json`, read it first: it lists every spec file and
+test, and each test's trace attachment, so it maps tests to trace zips without opening one. Open only
+the traces it leaves unclear, or every trace when there is no report.
+
+Otherwise, open each trace and record what it is. `open` prints the title as
 `<spec file>:<line> › <describe> › <test name>`, along with its duration, action count, page count
 and error count. A corpus can run to hundreds of zips, so make this one pass: append every trace's
 metadata to a single file in your working directory, then work from that file rather than reopening
 traces to remember what they were.
 
-Select the traces the source's `scope` covers, and say in your `structure` how many you selected and
-how you drew the line. **Match on whole path segments and whole names, never substrings** — where
-one journey's name is a prefix of another's, a substring filter silently takes both or discards
-everything you wanted. State the rule you used.
+Select the traces the source's `scope` covers, and say in the partition's `structure` how many you
+selected and how you drew the line. **Match on whole path segments and whole names, never
+substrings** — where one journey's name is a prefix of another's, a substring filter silently takes
+both or discards everything you wanted. State the rule you used.
 
-Classify each selected trace, so later steps mine the richest first:
+Classify each selected trace:
 
 - **core journey** — completes the thing end to end
 - **validation** — exercises error states
 - **variant** — a conditional branch: an upload, a copy, a split, an alternative route
 - **post-submission** — what happens after the user is done
-- **peripheral** — touches the journey only in passing; do not mine it
+- **peripheral** — touches the journey only in passing; leave it out of every part, and say so
 
-Traces that recorded errors are worth more than their number suggests: they are where validation
-messages and error states actually rendered. Mine them for that copy.
+Then cut the selected traces into parts: the traces of one spec file, or of one group of journey
+steps, about 10 to 20 traces a part. Each part's `read` names every trace zip and the test it came
+from; its `covers` names the pages those tests reach and the error states they drive. Traces that
+recorded errors go in the part for their spec: they are where validation messages and error states
+actually rendered.
 
-### 2. Read each trace's timeline
+### 2. Read each trace's timeline (each part's extract agent, from here on)
 
-For each trace worth mining, `open` it and take the full action list. Do not sample it.
+Mine **every** trace your part names: `open` it and take the full action list. Do not sample the
+traces, and do not sample a trace's actions.
 
 ```
 -- open <locator>/<hash>.zip
@@ -131,8 +143,8 @@ For each page pick one to three snapshot pointers: a trace hash and an action id
 **on** that page. Choose an action in the middle of the page's range — the last action is usually
 the click that navigates away. Prefer a core-journey trace with a high action count.
 
-This inventory is your extract's `structure`. Write it there: the pages, their order, and what is
-conditional. Do not give it a file of its own.
+This inventory is your part file's `structure`. Write it there: the traces you mined, the pages, their
+order, and what is conditional. Do not give it a file of its own.
 
 ### 4. Mine each page
 
@@ -210,8 +222,8 @@ the rebuild needs to know what it touches. The network log says what actually we
 `requests` takes `--grep <pattern>`, `--method` and `--failed`; let the CLI narrow the log rather
 than post-processing it.
 
-Take three to five of the richest core-journey traces. Ignore static assets and telemetry; you want
-the data calls. For each system, record what the journey needs it for, which pages depend on it, the
+Read the network log of every core-journey and variant trace in your part. Ignore static assets and
+telemetry; you want the data calls. For each system, record what the journey needs it for, which pages depend on it, the
 call shape — protocol, method, path, request and response — and a real example where you captured
 one. Record each reference-data list separately: what it holds, roughly how big it is, and which
 pages read it.
@@ -232,8 +244,9 @@ which pages it faulted — read that first and discount those pages accordingly.
 | `conflicts.json` | Disagreements the set recorded but did not settle |
 | `integrations.md` | External systems and reference-data lists |
 
-Read the pages the source's `scope` names, and its `journey-spec.json` for the order, and write your
-`structure` from them. `backlog.json`, `backlog.md` and `target-model.md` are **not** sources: they
+The characterise step cuts the pages the source's `scope` names into parts, in the order
+`journey-spec.json` gives. Each part's agent reads every page file its part names, in full, and writes
+its `structure` from them. `backlog.json`, `backlog.md` and `target-model.md` are **not** sources: they
 are an earlier distillation of the same evidence, and taking claims from them would launder somebody
 else's judgement into yours.
 
@@ -257,8 +270,8 @@ file, a class or a function.
 | A pattern outside the design system | `constraint` | What it does, and what would replace it |
 | Surface the corpus never reached | any, `confidence: "gap"` | What you expected to find and did not |
 
-Ids run `trace-001` onwards. Where a run has more than one trace source, prefix them from the source
-id so the reconciler can tell them apart.
+Ids take the part's prefix your prompt gives, such as `trace-ched-pp-p3-001`, so no two parts or
+sources clash.
 
 `ref` is the pointer somebody else can follow to check you:
 
@@ -270,9 +283,11 @@ where a page's detail lives, and it is why the extract needs no richer file of i
 
 ## Done means
 
-- `structure` says what the corpus or set held, what you took from it, and how you drew the scope
-  line.
-- Every page in scope has a claim, and every field on it has one.
+- The partition's `structure` says what the corpus or set held, what was taken from it, and how the
+  scope line was drawn. Each part's `structure` says which traces or pages it mined.
+- Every trace a part names was opened and mined: none sampled.
+- Every page in scope has a claim, and every field on it has one. A page or field seen in a part's
+  traces and not claimed is a defect.
 - Every claim carries a `ref` somebody can follow and a `quote` you did not paraphrase.
 - Uncovered surface is written down as a `gap`, not left out.
 - No credential appears anywhere in the file.

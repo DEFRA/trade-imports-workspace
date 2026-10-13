@@ -73,7 +73,12 @@ const committedRepo = async (folder) => {
   await git(path, 'commit', '-q', '-m', 'first')
 }
 
-const overlay = () =>
+const refreshWithLines = (upstreams = []) =>
+  upstreams.length === 0
+    ? []
+    : ['    x-refresh-with:', ...upstreams.map((name) => `      - ${name}`)]
+
+const overlay = (refreshWith = {}) =>
   [
     'services:',
     ...SERVICES.flatMap((service) => [
@@ -81,7 +86,8 @@ const overlay = () =>
       '    build:',
       `      context: ../../repos/${service}`,
       '    volumes:',
-      `      - ../../repos/${service}/src:/app/src`
+      `      - ../../repos/${service}/src:/app/src`,
+      ...refreshWithLines(refreshWith[service])
     ]),
     ''
   ].join('\n')
@@ -90,9 +96,9 @@ const overlay = () =>
 // containers live in one state file, and a dev-service.sh that records each
 // call: a rebuild recreates every container (new ids); a restart keeps them;
 // FAIL_REBUILD makes a rebuild fail.
-const workspace = async ({ rebuildFails = false } = {}) => {
+const workspace = async ({ rebuildFails = false, refreshWith = {} } = {}) => {
   for (const service of SERVICES) await committedRepo(service)
-  writeFile(join(root, DEV_OVERLAY_PATH), overlay())
+  writeFile(join(root, DEV_OVERLAY_PATH), overlay(refreshWith))
   writeFileSync(statePath(), 'c1\nc2\n')
   writeExecutable(
     join(root, 'scripts', 'stack', 'dev-service.sh'),
@@ -221,6 +227,25 @@ describe('refreshLeasedStack', () => {
       calls: ['dev-service.sh rebuild api'],
       containers: ['c3', 'c4'],
       rebuildLog: logPaths().rebuild
+    })
+  })
+
+  test('restarts an unchanged service that caches answers from a service it rebuilt', async () => {
+    const env = await workspace({ refreshWith: { web: ['api'] } })
+    const lease = await leaseWithCurrentFingerprints()
+    writeFileSync(join(root, 'repos', 'api', 'package.json'), '{"x":1}\n')
+
+    const outcome = await refresh(env, lease)
+
+    expect({ outcome: summaryOf(outcome), calls: calls() }).toEqual({
+      outcome: {
+        ok: true,
+        rebuilt: ['api'],
+        restarted: ['web'],
+        left: [],
+        reason: null
+      },
+      calls: ['dev-service.sh rebuild api', 'dev-service.sh restart web']
     })
   })
 

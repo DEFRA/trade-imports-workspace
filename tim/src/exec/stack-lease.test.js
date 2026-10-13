@@ -68,6 +68,27 @@ const fakeStack = ({ upFails = false, downFails = false } = {}) => {
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
 
+// The same stack, with Docker Desktop quit under it: its containers went with
+// it, and docker answers nothing until `open -a Docker` starts it again.
+const dockerQuitUnderStack = () => {
+  const env = fakeStack()
+  const running = join(root, 'docker-running')
+  writeExecutable(
+    join(root, 'fake-bin', 'docker'),
+    [
+      `if [ ! -f '${running}' ]; then echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1; fi`,
+      'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
+      `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
+    ].join('\n')
+  )
+  writeExecutable(join(root, 'fake-bin', 'open'), `touch '${running}'`)
+  return {
+    ...env,
+    TIM_DOCKER_START_POLL_MS: '10',
+    TIM_DOCKER_START_WAIT_MS: '2000'
+  }
+}
+
 const stackIsUp = () => existsSync(statePath())
 const markUp = (containers = 'c1') =>
   writeFileSync(statePath(), `${containers}\n`)
@@ -477,6 +498,30 @@ describe('acquireStack', () => {
       holder: readLease(leasePath()).holder
     }).toEqual({ acquired: true, holder: HOLDER })
   })
+
+  test.runIf(process.platform === 'darwin')(
+    'brings Docker Desktop back when it quit under the holder, then starts the stack again under the same lease',
+    async () => {
+      const env = dockerQuitUnderStack()
+      writeLease({ holder: HOLDER })
+
+      const outcome = await acquire(env)
+
+      expect({
+        acquired: outcome.acquired,
+        started: outcome.started,
+        calls: calls(),
+        up: stackIsUp(),
+        holder: readLease(leasePath()).holder
+      }).toEqual({
+        acquired: true,
+        started: true,
+        calls: ['run-stack.sh -d'],
+        up: true,
+        holder: HOLDER
+      })
+    }
+  )
 
   test('takes the stack down and clears the lease when it does not come up', async () => {
     const env = fakeStack({ upFails: true })

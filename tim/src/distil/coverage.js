@@ -1,11 +1,23 @@
 import {
+  COVERING_STATUSES,
+  requirementsOfPointer,
+  splitOffOf
+} from '../backlog/split-off.js'
+import {
   DISTIL_SCHEMA_FILES,
   isEditableRow,
   readJsonLenient,
+  requirementFingerprintOf,
   rowStatusOf
 } from './files.js'
 import { inspectSources, readSources } from './checks.js'
+import {
+  challengeApplicationProblems,
+  challengeProblems,
+  readChallenges
+} from './challenge.js'
 import { problemsError, schemaProblems } from './problems.js'
+import { claimStandings } from './standings.js'
 
 const REQUIREMENT_STATUSES = ['adopted', 'question', 'out-of-scope']
 const DELTAS = ['new', 'change', 'exists']
@@ -15,10 +27,6 @@ const isObject = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 const objectsIn = (list) => (Array.isArray(list) ? list.filter(isObject) : [])
 const textsIn = (list) => (Array.isArray(list) ? list.filter(isText) : [])
-const idsIn = (list) =>
-  objectsIn(list)
-    .map((item) => item.id)
-    .filter(isText)
 
 const overruledOf = (conflict) => textsIn(conflict.overruled)
 
@@ -33,53 +41,6 @@ const duplicatesIn = (values) =>
   [...Object.entries(Object.groupBy(values, (value) => value))]
     .filter(([, copies]) => copies.length > 1)
     .map(([value]) => value)
-
-const heldIdsOf = (entry) =>
-  new Set(
-    (entry.verify?.verdicts ?? [])
-      .filter((verdict) => verdict.holds === true)
-      .map((verdict) => verdict.id)
-  )
-
-const standingOf = (verified, held, claimId) => {
-  if (!verified) return 'unverified'
-  return held.has(claimId) ? 'held' : 'refuted'
-}
-
-/**
- * Where every claim id in the workarea stands: held or missed (in the
- * working set), refuted, or in a source not verified yet. Each standing
- * carries its source's state and the reason for it, so a problem can say
- * what the source needs.
- *
- * @param {object[]} entries - From `inspectSources`
- * @returns {Map<string, {source: string, state: string, reason: string, standing: 'held'|'missed'|'refuted'|'unverified'}>}
- */
-const claimStandings = (entries) => {
-  const standings = new Map()
-  for (const entry of entries) {
-    const held = heldIdsOf(entry)
-    const verified = entry.report.state === 'verified'
-    const origin = {
-      source: entry.source.id,
-      state: entry.report.state,
-      reason: entry.report.reason
-    }
-    for (const claimId of idsIn(entry.raw.extract?.claims)) {
-      standings.set(claimId, {
-        ...origin,
-        standing: standingOf(verified, held, claimId)
-      })
-    }
-    for (const claimId of idsIn(entry.raw.verify?.missed)) {
-      standings.set(claimId, {
-        ...origin,
-        standing: verified ? 'missed' : 'unverified'
-      })
-    }
-  }
-  return standings
-}
 
 const citedClaimProblem = (citer, claimId, standings) => {
   const standing = standings.get(claimId)
@@ -216,11 +177,18 @@ const requirementProblems = (
           `${id} is adopted as ${delta} but its deltaNote is empty: ${DELTA_NOTE_ASKS[delta]}.`
         ]
       : []
+  const blockerProblems =
+    isText(requirement.blockedBy) && status !== 'adopted'
+      ? [
+          `${id} is ${status} but carries blockedBy. Only an adopted requirement waits on a blocker: a design choice is a question.`
+        ]
+      : []
   return [
     ...claimProblems,
     ...missingConflicts,
     ...questionProblems,
-    ...deltaNoteProblems
+    ...deltaNoteProblems,
+    ...blockerProblems
   ]
 }
 
@@ -365,10 +333,6 @@ const NEVER_IN_AN_INCREMENT = {
   'out-of-scope': 'is out of scope'
 }
 
-// A row built, being built or still to build covers its requirements. A
-// dropped, rejected or merged-into row carries no work, so it covers nothing.
-const COVERING_STATUSES = new Set(['todo', 'blocked', 'done', 'deferred'])
-
 const escapeForPattern = (text) =>
   text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -390,20 +354,67 @@ const overruledRowProblems = (editable, overruledBy) =>
       )
   })
 
-const backlogProblems = (increments, requirements, overruledBy) => {
+// A requirement that waits on somebody outside the programme cannot be built
+// yet, so the row that carries it waits too, with the blocker its open
+// question.
+const blockedInTodoProblems = (editable, requirementsById) =>
+  editable
+    .filter((increment) => rowStatusOf(increment) === 'todo')
+    .flatMap((increment) =>
+      textsIn(increment.requirements)
+        .map((requirementId) => requirementsById.get(requirementId))
+        .filter((requirement) => isText(requirement?.blockedBy))
+        .map(
+          (requirement) =>
+            `${increment.id} is todo but covers ${requirement.id}, which is blocked by: ${requirement.blockedBy} Make the row blocked, with the blocker in its openQuestions, or move ${requirement.id} to a blocked row.`
+        )
+    )
+
+const isToBuild = (requirement) =>
+  requirement.status === 'adopted' && requirement.delta !== 'exists'
+
+// A requirement a theme split off early holds is the split branch's to build.
+// A row here never covers it, and the split branch picks up only what is
+// still to build.
+const splitOffHoldingProblems = ({ citing, pointers, requirementsById }) => [
+  ...pointers.flatMap((pointer) =>
+    requirementsOfPointer(pointer)
+      .filter((requirementId) => citing.has(requirementId))
+      .map(
+        (requirementId) =>
+          `${citing.get(requirementId).join(', ')} covers ${requirementId}, which theme "${pointer.theme}" holds: it was split off to ${pointer.branch}. Take ${requirementId} out of the row. The split branch builds it.`
+      )
+  ),
+  ...pointers.flatMap((pointer) =>
+    textsIn(pointer.pickUp)
+      .filter((requirementId) => {
+        const requirement = requirementsById.get(requirementId)
+        return !requirement || !isToBuild(requirement)
+      })
+      .map(
+        (requirementId) =>
+          `Theme "${pointer.theme}" picks up ${requirementId}, which is not an adopted requirement to build in distil/requirements.json. Take it out of the theme's pickUp.`
+      )
+  )
+]
+
+const backlogProblems = ({
+  increments,
+  requirements,
+  overruledBy,
+  pointers
+}) => {
   const covering = increments.filter((increment) =>
     COVERING_STATUSES.has(rowStatusOf(increment))
   )
   const citing = incrementsCiting(covering)
+  const heldBySplitOff = new Set(pointers.flatMap(requirementsOfPointer))
   const editable = covering.filter(isEditableRow)
   const citingToBuild = incrementsCiting(editable)
   const requirementsById = new Map(
     requirements.map((requirement) => [requirement.id, requirement])
   )
-  const mustBeBuilt = requirements.filter(
-    (requirement) =>
-      requirement.status === 'adopted' && requirement.delta !== 'exists'
-  )
+  const mustBeBuilt = requirements.filter(isToBuild)
   const reasonNeverIn = (requirement) =>
     NEVER_IN_AN_INCREMENT[requirement.status] ??
     (requirement.status === 'adopted'
@@ -412,10 +423,12 @@ const backlogProblems = (increments, requirements, overruledBy) => {
   return [
     ...mustBeBuilt
       .filter((requirement) => !citing.has(requirement.id))
+      .filter((requirement) => !heldBySplitOff.has(requirement.id))
       .map(
         (requirement) =>
           `${requirement.id} is adopted as ${requirement.delta} but sits in no increment.`
       ),
+    ...splitOffHoldingProblems({ citing, pointers, requirementsById }),
     ...[...citing]
       .filter(([, incrementIds]) => incrementIds.length > 1)
       .map(
@@ -438,7 +451,8 @@ const backlogProblems = (increments, requirements, overruledBy) => {
           ]
         : []
     }),
-    ...overruledRowProblems(editable, overruledBy)
+    ...overruledRowProblems(editable, overruledBy),
+    ...blockedInTodoProblems(editable, requirementsById)
   ]
 }
 
@@ -451,7 +465,72 @@ const readBacklog = (path) => {
   return {
     exists: true,
     increments: objectsIn(read.value?.increments),
+    pointers: splitOffOf(read.value),
     problems: []
+  }
+}
+
+const fingerprintChanged = (pointer, requirementsById) => (requirementId) => {
+  const kept = pointer.fingerprints?.[requirementId]
+  const requirement = requirementsById.get(requirementId)
+  return (
+    isText(kept) &&
+    Boolean(requirement) &&
+    requirementFingerprintOf(requirement) !== kept
+  )
+}
+
+const isInPlace = (requirement) =>
+  requirement?.status === 'adopted' && requirement.delta === 'exists'
+
+/**
+ * What each theme split off early holds, and what has happened to it since.
+ * Each requirement it held lands in at most one list: `nowInPlace` when it
+ * is now adopted as already in place, which is what a branch that built and
+ * merged its rows leads to; `noLongerToBuild` when it is gone, a question or
+ * out of scope; `changed` when it is still to build and its fingerprint
+ * changed. `pickUp` lists the ones a re-distil handed it. The report hands
+ * `pickUp`, `changed` and `noLongerToBuild` to the split branch; the main
+ * report already lists what is in place. `fingerprintsNow` gives the current
+ * fingerprint of each changed or picked-up requirement, which the pointer
+ * takes once the branch has its rows, so the report stops listing it.
+ */
+const splitOffStandingOf = (pointer, requirementsById) => {
+  const requirements = textsIn(pointer.requirements)
+  const requirementOf = (requirementId) => requirementsById.get(requirementId)
+  const isStillToBuild = (requirementId) => {
+    const requirement = requirementOf(requirementId)
+    return Boolean(requirement) && isToBuild(requirement)
+  }
+  const nowInPlace = requirements.filter((requirementId) =>
+    isInPlace(requirementOf(requirementId))
+  )
+  const noLongerToBuild = requirements.filter(
+    (requirementId) =>
+      !isStillToBuild(requirementId) && !nowInPlace.includes(requirementId)
+  )
+  const pickUp = textsIn(pointer.pickUp)
+  const changed = requirements
+    .filter(isStillToBuild)
+    .filter(fingerprintChanged(pointer, requirementsById))
+  return {
+    theme: pointer.theme,
+    branch: pointer.branch,
+    workarea: pointer.workarea,
+    backlog: pointer.backlog,
+    requirements,
+    pickUp,
+    changed,
+    noLongerToBuild,
+    nowInPlace,
+    fingerprintsNow: Object.fromEntries(
+      [...changed, ...pickUp]
+        .filter((requirementId) => requirementsById.has(requirementId))
+        .map((requirementId) => [
+          requirementId,
+          requirementFingerprintOf(requirementsById.get(requirementId))
+        ])
+    )
   }
 }
 
@@ -462,6 +541,69 @@ const countBy = (items, field, keys) =>
   Object.fromEntries(
     keys.map((key) => [key, items.filter((item) => item[field] === key).length])
   )
+
+const WORKING_SET_STANDINGS = new Set(['held', 'missed'])
+
+/**
+ * For each verified source, how many of its working-set claims (held and
+ * missed) a requirement or a conflict position cites.
+ *
+ * @param {object[]} entries - From `inspectSources`
+ * @param {Map<string, object>} standings - From `claimStandings`
+ * @param {{citer: string, claims: string[]}[]} citers - From `citersOf`
+ * @returns {{id: string, claims: number, cited: number}[]}
+ */
+const sourceUsageOf = (entries, standings, citers) => {
+  const cited = new Set(citers.flatMap(({ claims }) => claims))
+  const inWorkingSet = [...standings].filter(([, standing]) =>
+    WORKING_SET_STANDINGS.has(standing.standing)
+  )
+  return entries
+    .filter((entry) => entry.report.state === 'verified')
+    .map((entry) => {
+      const ids = inWorkingSet
+        .filter(([, standing]) => standing.source === entry.source.id)
+        .map(([claimId]) => claimId)
+      return {
+        id: entry.source.id,
+        claims: ids.length,
+        cited: ids.filter((claimId) => cited.has(claimId)).length
+      }
+    })
+}
+
+// A source in sources.json was chosen as evidence for the goal, and its held
+// claims are facts verification could not refute. When none of them backs a
+// requirement, a conflict or a recorded exclusion, reconcile skipped the
+// source: that is a defect, never a judgement, so it is a problem.
+const unusedSourceProblems = (usage) =>
+  usage
+    .filter((source) => source.claims > 0 && source.cited === 0)
+    .map(
+      (source) =>
+        `${source.id} backs no requirement or conflict: none of its ${source.claims} held or missed claims is cited. Weigh every one: cite each where it shows what the service does today or must do, and record any the goal excludes in an out-of-scope requirement.`
+    )
+
+const challengeFileProblems = ({
+  layout,
+  schemas,
+  conflictsById,
+  standings,
+  requirements
+}) => {
+  const challenges = readChallenges(layout)
+  const fileProblems = challenges.flatMap((challenge) =>
+    challengeProblems({
+      challenge,
+      schema: schemas.challenge,
+      conflictsById,
+      standings
+    })
+  )
+  return fileProblems.length
+    ? fileProblems
+    : challengeApplicationProblems({ challenges, conflictsById, requirements })
+}
 
 const questionsOf = (conflicts, requirements) =>
   conflicts
@@ -486,11 +628,15 @@ const questionsOf = (conflicts, requirements) =>
  * conflicts.json and their citations, `backlog` for backlog.json, so a
  * caller sends each to the step that can fix it without reading the wording.
  *
+ * Beyond each file's own rules it refuses a verified source that backs no
+ * requirement or conflict, and a challenge verdict in distil/challenge/
+ * that is out of shape or was not applied.
+ *
  * @param {object} args
  * @param {object} args.layout - From `distilLayout`
  * @param {object} args.schemas - From `loadDistilSchemas`
  * @param {string} args.workarea
- * @returns {{requirements: object, conflicts: object, questions: object[], backlog: object|null}}
+ * @returns {{requirements: object, conflicts: object, questions: object[], blocked: {id: string, blockedBy: string}[], sources: {id: string, claims: number, cited: number}[], unavailable: object[], backlog: object|null}}
  * @throws {TimError} when sources.json is out of shape, LINT with every problem
  */
 export const distilCoverage = ({ layout, schemas, workarea }) => {
@@ -532,6 +678,9 @@ export const distilCoverage = ({ layout, schemas, workarea }) => {
       : null
   }
   const backlog = readBacklog(layout.backlog)
+  const citers = citersOf(requirements, conflictsFile.value ? conflicts : [])
+  const usage = sourceUsageOf(entries, standings, citers)
+  const reconciled = Boolean(requirementsFile.value && conflictsFile.value)
   const reconcileProblems = [
     ...requirementsFile.problems,
     ...conflictsFile.problems,
@@ -541,21 +690,33 @@ export const distilCoverage = ({ layout, schemas, workarea }) => {
     ...duplicatesIn(conflicts.map((conflict) => conflict.id)).map(
       (id) => `distil/conflicts.json has ${id} more than once.`
     ),
-    ...unverifiedCitationProblems(
-      citersOf(requirements, conflictsFile.value ? conflicts : []),
-      standings
-    ),
+    ...unverifiedCitationProblems(citers, standings),
     ...requirements.flatMap((requirement) =>
       requirementProblems(requirement, context)
     ),
     ...(conflictsFile.value
       ? conflicts.flatMap((conflict) => conflictProblems(conflict, context))
+      : []),
+    ...(reconciled ? unusedSourceProblems(usage) : []),
+    ...(reconciled
+      ? challengeFileProblems({
+          layout,
+          schemas,
+          conflictsById,
+          standings,
+          requirements
+        })
       : [])
   ]
   const backlogFileProblems = [
     ...backlog.problems,
     ...(backlog.increments && requirementsFile.value
-      ? backlogProblems(backlog.increments, requirements, overruledBy)
+      ? backlogProblems({
+          increments: backlog.increments,
+          requirements,
+          overruledBy,
+          pointers: backlog.pointers
+        })
       : [])
   ]
   const problems = [
@@ -581,21 +742,46 @@ export const distilCoverage = ({ layout, schemas, workarea }) => {
       ).length
     },
     questions: questionsOf(conflicts, requirements),
+    blocked: requirements
+      .filter((requirement) => isText(requirement.blockedBy))
+      .map((requirement) => ({
+        id: requirement.id,
+        blockedBy: requirement.blockedBy
+      })),
+    sources: usage,
     unavailable: entries
       .filter((entry) => entry.report.state !== 'verified')
       .map(({ report }) => ({ id: report.id, state: report.state })),
     backlog: backlog.exists
-      ? {
-          path: layout.backlog,
-          increments: backlog.increments.length,
-          covered: [
-            ...incrementsCiting(
-              backlog.increments.filter((increment) =>
-                COVERING_STATUSES.has(rowStatusOf(increment))
-              )
-            ).keys()
-          ].length
-        }
+      ? backlogSummaryOf(layout, backlog, requirements)
       : null
+  }
+}
+
+const backlogSummaryOf = (layout, backlog, requirements) => {
+  const requirementsById = new Map(
+    requirements.map((requirement) => [requirement.id, requirement])
+  )
+  const splitOff = backlog.pointers.map((pointer) =>
+    splitOffStandingOf(pointer, requirementsById)
+  )
+  const heldBySplitOff = new Set(
+    backlog.pointers.flatMap(requirementsOfPointer).filter((requirementId) => {
+      const requirement = requirementsById.get(requirementId)
+      return Boolean(requirement) && isToBuild(requirement)
+    })
+  )
+  return {
+    path: layout.backlog,
+    increments: backlog.increments.length,
+    covered: [
+      ...incrementsCiting(
+        backlog.increments.filter((increment) =>
+          COVERING_STATUSES.has(rowStatusOf(increment))
+        )
+      ).keys()
+    ].length,
+    coveredBySplitOff: heldBySplitOff.size,
+    splitOff
   }
 }

@@ -9,8 +9,11 @@ scope, and never more than about 15 pages.
 
 ## Characterise the site
 
-Write into `structure`: every page you read, by URL and title, in the order you read them, and what each covers.
-Say which pages the scope led you to leave out. The verifier reads the same URLs, so list them exactly.
+The characterise step writes into the partition's `structure` every page in scope, by URL and title, and what each
+covers, says which pages the scope led it to leave out, and cuts them into parts of one or a few pages.
+
+An extract part reads every URL its `read` names, and its part file's `structure` lists them exactly: the verifier
+reads the same URLs.
 
 ## What a claim says
 

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One source's partition",
+  "description": "workareas/<workarea>/distil/extract/<source slug>.partition.json: what the source is, and the parts it is cut into so that one extract agent can read each part in full and claim everything in it. The characterise agent writes it before any claim. One extract agent per part then writes distil/extract/<source slug>.part<N>.json, in the shape extract.schema.json defines, and `tim distil merge-extract` joins the parts into the one extract. `tim distil check --stage partition` validates this file against this schema, and also checks what a schema cannot: `source` names this file's source, the parts are numbered 1, 2, 3 and on in order, no two parts share a prefix or one part's prefix starts another's, and no old claim id is kept by two parts. `check --stage extract` checks that every part has its file, and that the extract is exactly its parts merged.",
+  "type": "object",
+  "required": ["source", "structure", "parts"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "description": "The source id from sources.json, such as \"repo:frontend\".",
+      "$ref": "#/$defs/text"
+    },
+    "structure": {
+      "description": "What the source is and how it is laid out, whole: its sections, pages, folders, specs or traces, how big each is, and what its scope leaves out. It heads the merged extract's structure, so it says how much of the source the extract covers.",
+      "$ref": "#/$defs/text"
+    },
+    "parts": {
+      "description": "Every part, in the order the source runs. Together they cover everything the scope takes in, and no part is bigger than one agent can read in full and claim exhaustively. A small source is one part.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/part" }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "claimId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "part": {
+      "description": "One slice of the source, small enough for one agent to read in full and claim everything it shows.",
+      "type": "object",
+      "required": ["part", "title", "scope", "read", "covers", "prefix"],
+      "additionalProperties": false,
+      "properties": {
+        "part": {
+          "description": "The part's number: 1 for the first, then 2, 3 and on in order. Its extract agent writes <source slug>.part<N>.json.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "description": "A short name for the slice, such as \"Origin pages\" or \"specs/plants/commodity\".",
+          "$ref": "#/$defs/text"
+        },
+        "scope": {
+          "description": "The slice in a sentence or two: what it holds and where it stops, so the agent knows what is its own and what belongs to another part.",
+          "$ref": "#/$defs/text"
+        },
+        "read": {
+          "description": "Everything the part's agent reads in full, each precise enough to open: a folder or file for a repo, a page file or view for a prototype, a spec file or trace zip for a trace corpus, a section heading for a document or page, an image file.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "covers": {
+          "description": "What the part must claim, so its agent and the reader know what complete means: the pages, fields, options, hints, errors, rules, branches, routes or tests in the slice, named or counted.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "prefix": {
+          "description": "The claim id prefix for the part's new claims, unique to the part: its claims are <prefix>-001, <prefix>-002 and on. The workflow gives it, as the source's prefix plus -p<N>.",
+          "$ref": "#/$defs/claimId"
+        },
+        "keeps": {
+          "description": "On a re-extract only: the ids of claims in the existing extract that this part's slice holds. The part keeps each id whose claim still says the same thing, and drops the rest. Each old id goes to one part at most.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/claimId" }
+        }
+      }
+    }
+  }
+}

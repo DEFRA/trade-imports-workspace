@@ -9,6 +9,7 @@ import {
   defaultLeasePath
 } from '../exec/stack-lease.js'
 import { refreshLeasedStack } from '../exec/stack-refresh.js'
+import { writeStackLogs } from '../exec/stack.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
 import { loadGates, planRungs, MVN_VERIFY, PHASES } from './gates.js'
@@ -203,28 +204,50 @@ const runInOrder = async (rungs, runOne) => {
   return runs
 }
 
+const runChain = async (chain, runOne) => {
+  const runs = await runInOrder(
+    chain.map(({ rung }) => rung),
+    runOne
+  )
+  return runs.map((run, index) => ({
+    ...run,
+    position: chain[index].position
+  }))
+}
+
+// At most `limit` chains at once: each worker takes the next chain in plan
+// order as soon as its last one finishes.
+const runChainsAtMost = async (chains, runOne, limit) => {
+  const queue = [...chains]
+  const worker = async () => {
+    const finished = []
+    while (queue.length > 0) {
+      finished.push(...(await runChain(queue.shift(), runOne)))
+    }
+    return finished
+  }
+  const workers = Array.from({ length: Math.min(limit, chains.length) }, worker)
+  return (await Promise.all(workers)).flat()
+}
+
 // Each repo's rungs run in plan order, one after another: a repo's FIT
 // builds its frontend into the same folder its unit rungs read, so they
-// never overlap. Different repos run at the same time. Results come back in
-// plan order, whatever order they finished in.
-const runEachRepoAtOnce = async (rungs, runOne) => {
+// never overlap. Different repos run at the same time, at most
+// `parallelRepos` of them when gates.json sets it, because five repos' FIT
+// suites and `mvn verify` at once beside the stack starve a laptop until
+// their own timeouts fire. Results come back in plan order, whatever order
+// they finished in.
+const runEachRepoAtOnce = async (rungs, runOne, parallelRepos) => {
   const positioned = rungs.map((rung, position) => ({ rung, position }))
   const chains = Object.values(
     Object.groupBy(positioned, ({ rung }) => rung.repo)
   )
-  const finished = await Promise.all(
-    chains.map(async (chain) => {
-      const runs = await runInOrder(
-        chain.map(({ rung }) => rung),
-        runOne
-      )
-      return runs.map((run, index) => ({
-        ...run,
-        position: chain[index].position
-      }))
-    })
+  const finished = await runChainsAtMost(
+    chains,
+    runOne,
+    parallelRepos ?? chains.length
   )
-  return finished.flat().sort((left, right) => left.position - right.position)
+  return finished.sort((left, right) => left.position - right.position)
 }
 
 const elapsedSince = (startedAt) => Math.round(performance.now() - startedAt)
@@ -348,10 +371,38 @@ const inPlanOrder = (rungs, runs) => {
 // The stack can get ready while the unit and FIT rungs run, but no e2e rung
 // starts until they have all finished. The e2e rungs then run one at a
 // time, so an exclusive rung never shares the machine with another rung.
+const FLAKY_COUNT = /^\s+\d+ flaky\s*$/m
+
+const loggedFlaky = (log) => {
+  try {
+    return Boolean(log) && FLAKY_COUNT.test(readFileSync(log, 'utf8'))
+  } catch {
+    return false
+  }
+}
+
+// A red or flaky e2e rung is often explained only by a service's own log: a
+// 500 page, a dropped socket, a container that restarted. The stack, and
+// those logs with it, goes when the lease is given back, so they are written
+// beside the rung's log straight away.
+const withStackLogs = async (result, rung, context) => {
+  if (result.ok && !loggedFlaky(result.log)) return result
+  try {
+    const stackLogs = await writeStackLogs({
+      logsDir: context.logsDir,
+      prefix: `gate-stack-after-${rung.repo}-${rung.name}`,
+      env: context.env
+    })
+    return { ...result, stackLogs }
+  } catch (error) {
+    return { ...result, stackLogs: [], stackLogsError: messageOf(error) }
+  }
+}
+
 const runE2eRungs = async (rungs, context) => {
   await context.localDone
-  const runs = await runInOrder(e2eRunOrder(rungs, context), (rung) =>
-    runRung(rung, context)
+  const runs = await runInOrder(e2eRunOrder(rungs, context), async (rung) =>
+    withStackLogs(await runRung(rung, context), rung, context)
   )
   const ordered = inPlanOrder(rungs, runs)
   return { results: ordered.map(({ result }) => result), runs: ordered }
@@ -383,6 +434,8 @@ const runE2e = async (rungs, context) => {
       stack: NO_E2E_STACK
     }
   }
+  // A laptop that cannot rebuild the stack beside layer one waits for it.
+  if (context.stackAfterLocal) await context.localDone
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const stack = {
@@ -438,7 +491,8 @@ const runSerially = async (plan, context) => {
 const runInLayers = async (plan, context) => {
   const layerOne = runEachRepoAtOnce(
     plan.filter((rung) => rung.phase !== 'e2e'),
-    (rung) => runLocalRung(rung, context)
+    (rung) => runLocalRung(rung, context),
+    context.parallelRepos
   ).then((local) => ({ local, localEndedAt: performance.now() }))
   const [{ local, localEndedAt }, e2e] = await Promise.all([
     layerOne,
@@ -531,6 +585,8 @@ export const runGate = async ({
     holder,
     leasePath,
     env,
+    parallelRepos: gates.parallelRepos,
+    stackAfterLocal: gates.stackAfterLocal === true,
     held: null
   }
 

@@ -37,11 +37,14 @@ const stackCallsPath = () => join(root, 'stack-calls')
 // scripts and a `docker` that share one state file: run-stack.sh marks the
 // stack up, stop-stack.sh marks it down, and `docker ps` lists a container
 // while it is up. Every stack script call is recorded.
-const workspaceWith = ({ gates, repos }) => {
+const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
   mkdirSync(dirname(join(root, GATES_PATH)), { recursive: true })
-  writeFileSync(join(root, GATES_PATH), JSON.stringify({ repos: gates }))
+  writeFileSync(
+    join(root, GATES_PATH),
+    JSON.stringify({ parallelRepos, stackAfterLocal, repos: gates })
+  )
   for (const [folder, scripts] of Object.entries(repos)) {
     const dir = join(root, 'repos', folder)
     mkdirSync(dir, { recursive: true })
@@ -636,6 +639,53 @@ describe('runGate — e2e rungs', () => {
     })
   })
 
+  describe("keeping the stack's container logs", () => {
+    const e2eRungOf = (outcome) =>
+      outcome.rungs.find((rung) => rung.phase === 'e2e')
+    const stackLogFor = () =>
+      join(
+        root,
+        'workareas',
+        'shared',
+        'programme',
+        'logs',
+        'gate-stack-after-tests-e2e-plants-trade-imports-frontend-1.log'
+      )
+
+    test('writes each container’s log beside a red e2e rung’s, before the stack goes', async () => {
+      const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect({
+        stackLogs: e2eRungOf(outcome).stackLogs,
+        written: existsSync(stackLogFor())
+      }).toEqual({ stackLogs: [stackLogFor()], written: true })
+    })
+
+    test('writes them for a green e2e rung that only passed on a retry', async () => {
+      const env = workspaceWith(
+        withE2e({
+          'test:docker-compose': 'echo "  2 flaky"; echo "  340 passed"'
+        })
+      )
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect(e2eRungOf(outcome).stackLogs).toEqual([stackLogFor()])
+    })
+
+    test('writes none for a clean green e2e rung', async () => {
+      const env = workspaceWith(
+        withE2e({ 'test:docker-compose': 'echo "  340 passed"' })
+      )
+
+      const outcome = await gate(env, { phase: 'e2e' })
+
+      expect(e2eRungOf(outcome).stackLogs).toBeUndefined()
+    })
+  })
+
   test('fails the e2e rungs when the stack does not come up, still stops it, and clears the lease', async () => {
     const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
     writeFileSync(join(root, 'up-fails'), '')
@@ -735,6 +785,62 @@ describe('runGate — running repos at the same time', () => {
         'alpha:format:pass',
         'alpha:unit:pass',
         'beta:unit:pass'
+      ])
+    },
+    CONCURRENCY_TIMEOUT_MS
+  )
+
+  test(
+    'runs no more repos at once than gates.json’s parallelRepos allows',
+    async () => {
+      const startThenEnd = (repo) =>
+        `${appendTo('timeline', `start-${repo}`)}; sleep 0.2; ${appendTo('timeline', `end-${repo}`)}`
+      const unitOnly = { rungs: [{ name: 'unit', phase: 'unit', run: 'test' }] }
+      const env = workspaceWith({
+        parallelRepos: 1,
+        gates: { alpha: unitOnly, beta: unitOnly, gamma: unitOnly },
+        repos: {
+          alpha: { test: startThenEnd('alpha') },
+          beta: { test: startThenEnd('beta') },
+          gamma: { test: startThenEnd('gamma') }
+        }
+      })
+
+      await gate(env, { phase: 'unit' })
+
+      expect(linesOf('timeline')).toEqual([
+        'start-alpha',
+        'end-alpha',
+        'start-beta',
+        'end-beta',
+        'start-gamma',
+        'end-gamma'
+      ])
+    },
+    CONCURRENCY_TIMEOUT_MS
+  )
+
+  test(
+    'starts the stack only once layer one has finished when gates.json sets stackAfterLocal',
+    async () => {
+      const fixture = withE2e({ 'test:docker-compose': 'echo e2e' })
+      const env = workspaceWith({
+        ...fixture,
+        stackAfterLocal: true,
+        repos: {
+          ...fixture.repos,
+          frontend: {
+            test: `sleep 0.3; ${appendTo('stack-calls', 'unit-done')}`
+          }
+        }
+      })
+
+      await gate(env, { phase: 'all' })
+
+      expect(stackCalls()).toEqual([
+        'unit-done',
+        'run-stack.sh -d',
+        'stop-stack.sh'
       ])
     },
     CONCURRENCY_TIMEOUT_MS

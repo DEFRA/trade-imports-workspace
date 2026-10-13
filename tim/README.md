@@ -156,20 +156,48 @@ tim backlog rule <programme> q-house-rules-source --option B --by sam --at 2026-
 tim backlog question check-page <programme> --page design/decisions-for-sam.md --json  # check the hand-written decisions page's ids, defaults and blocked increments against backlog.json
 ```
 
-Three commands work on any workarea's `backlog.json` in the one backlog shape,
+Four commands work on any workarea's `backlog.json` in the one backlog shape,
 with no registration. The shape is defined by
 `.claude/skills/requirements-pipeline/references/backlog.schema.json`, which
 `check` reads from the workspace at runtime and validates against; it then checks
 what a schema cannot say (every dependency is in the backlog, no cycle, no
-duplicate id). The requirements-pipeline skill's DISTIL and BUILD phases and the
-build loop use them:
+duplicate id, the theme rules, and every `externalDependsOn` row is in its own
+workarea's backlog). The requirements-pipeline skill's DISTIL and BUILD phases
+and the build loop use them:
 
 ```bash
-tim backlog check shared/my-programme --json     # the shape, dependencies, cycles and recipe fields; exits 1 when out of shape
-tim backlog next shared/my-programme --json      # the next buildable id, or NONE
+tim backlog check shared/my-programme --json     # the shape, dependencies, cycles, recipe fields and themes; exits 1 when out of shape
+tim backlog next shared/my-programme --json      # the next buildable id, or NONE; an externalDependsOn row must be done in its own workarea
 tim backlog set shared/my-programme inc-004 --commit abc1234 --status done --json   # record build state
 tim backlog set shared/my-programme inc-004 --pr '{"repo":"frontend","url":"https://github.com/DEFRA/x/pull/9"}' --json
+tim backlog split shared/my-programme --json     # a dry run: one backlog per theme, and the landing order
+tim backlog split shared/my-programme --write --branch-prefix feat/EUDPA-123-plants --json
+tim backlog split shared/my-programme --theme origin-pages --json          # a dry run: split one ready theme off early
+tim backlog split shared/my-programme --theme origin-pages --write --json  # its rows leave backlog.json, which keeps a splitOff pointer
 ```
+
+`split` takes a backlog with `themes` and writes one backlog per theme at
+`workareas/<workarea>/themes/<theme id>/backlog.json`, plus
+`workareas/<workarea>/themes/themes.json`. Each split backlog carries the
+parent's envelope (its programme suffixed with the theme id), only the repos
+its rows use, its `theme`, `branch` (default `feat/NO_JIRA-<programme>-<theme id>`;
+`--branch-prefix` replaces the part before the theme id), `parent` (the parent
+workarea, its landing wave and the themes it lands after) and `touches`, and
+only its own rows. A `dependsOn` on another theme's row becomes an
+`externalDependsOn` on that theme's workarea; one on a row in no theme points
+at the parent. `themes.json` lists each theme's id, title, workarea, branch,
+wave, row count, `dependsOn` and `touches`, every cross-theme row dependency,
+the rows in no theme, and the landing order as waves: themes in one wave have
+no ordering need between them and build in parallel.
+
+It is a dry run unless given `--write`. It checks the parent and every split
+backlog first, and writes nothing if any fails (exit 1). It writes only the
+files that change, so a second run changes nothing. On a re-split, a row whose
+split copy the build loop has built or set aside (any status but `todo` or
+`blocked`) is kept as it is; a `todo` or `blocked` row is refreshed from the
+parent, keeping the ticket, branch, commit, pull requests, notes and open
+questions written on the split copy. It refuses, writing nothing, when the
+parent now puts a built row in another theme or in none.
 
 A programme is registered in `tools/backlog/registry.json` — including
 `fixture-requirements`, the tracked fixture this file's own tests re-ingest on
@@ -190,22 +218,48 @@ by the distil workflow's agents instead of hand-written `jq`. The workflow is
 which stage runs which command. Each command
 takes a workarea under `workareas/`, reads its `sources.json` and `distil/`
 files, and checks them against the schemas beside `backlog.schema.json` in
-`.claude/skills/requirements-pipeline/references/` (`sources`, `extract`,
-`verify`, `requirements` and `conflicts`), read from the workspace at runtime.
+`.claude/skills/requirements-pipeline/references/` (`sources`, `partition`,
+`extract`, `verify`, `areas`, `reconcile-part`, `requirements`, `conflicts`
+and `challenge`), read from the workspace at runtime.
+
+Every source is extracted in parts: a characterise agent writes
+`distil/extract/<slug>.partition.json`, one agent per part writes
+`distil/extract/<slug>.part<N>.json`, and `merge-extract` joins them into
+`distil/extract/<slug>.json`. Reconcile is cut into areas the same way: an
+area-plan agent writes `distil/areas.json`, `areas --write` gives each area
+its working set, one agent per area writes
+`distil/areas/<area id>/reconciled.json`, and `merge-reconcile` joins them
+into `distil/requirements.json` and `distil/conflicts.json`. Each question
+conflict is then challenged, one verdict per file in `distil/challenge/`.
 
 ```bash
 tim distil status shared/my-programme --json        # every source's state and what it needs next: the work list
-tim distil check shared/my-programme --source repo:tests --stage extract --chunk 150 --json   # one source's extract, with its verify ranges
+tim distil check shared/my-programme --source repo:tests --stage partition --clear-parts --json   # the partition, then remove old extract parts
+tim distil check shared/my-programme --source repo:tests --stage extract --part 2 --json           # one extract part file, against the partition
+tim distil merge-extract shared/my-programme --source repo:tests --json   # join the extract parts into the extract and stamp its scope hash
+tim distil check shared/my-programme --source repo:tests --stage extract --chunk 60 --json   # the extract, its parts and verify ranges
 tim distil check shared/my-programme --stage all --json                                     # every source, both stages
 tim distil check shared/my-programme --source repo:tests --stage extract --clear-parts --json   # and, once it passes, remove old verify parts
+tim distil reset shared/my-programme --source repo:tests --json          # move a source's extract and verify files aside, so it is extracted again
+tim distil reset shared/my-programme --all --json                        # every source
+tim distil reset shared/my-programme --stage reconcile --json            # keep every extract; move requirements, conflicts, areas, verdicts, backlog and report aside
 tim distil stamp shared/my-programme --source repo:tests --json          # record the source's scope hash in its extract
 tim distil merge-verify shared/my-programme --source repo:tests --json   # join verify parts into one file with the extract's hash, then remove them
 tim distil adopt shared/my-programme --source repo:tests --json          # take on a source distilled by hand: record both hashes
 tim distil working-set shared/my-programme --write --json   # held plus missed claims, to distil/working-set.json
-tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, and the backlog
+tim distil areas shared/my-programme --json                 # check distil/areas.json: every claim in an area, every existing id in one
+tim distil areas shared/my-programme --write --json         # each area's working set, and clear the last reconcile's area files and verdicts
+tim distil areas shared/my-programme --area origin --json   # one area's reconciled requirements, and those still to build
+tim distil areas shared/my-programme --requirements --json  # every area's, and the requirements no area holds
+tim distil merge-reconcile shared/my-programme --area origin --json   # check one area's reconciled.json, writing nothing
+tim distil merge-reconcile shared/my-programme --json       # join every area into requirements.json and conflicts.json
+tim distil challenge shared/my-programme --json             # the question conflicts to challenge, and the verdicts written
+tim distil challenge shared/my-programme --conflict c-002 --json   # check one verdict
+tim distil challenge shared/my-programme --clear --json     # remove every verdict
+tim distil coverage shared/my-programme --json      # requirements and conflicts against the working set, sources, verdicts, and the backlog
 tim distil backlog-snapshot shared/my-programme --save before --json        # keep the row ids and the rows built or set aside
 tim distil backlog-snapshot shared/my-programme --compare-to before --json  # rows removed, and rows built or set aside that changed, since
-tim distil trace shared/my-programme --source trace:ched-p --out actions.txt --json -- actions   # playwright trace, in the source's .work folder
+tim distil trace shared/my-programme --source trace:ched-p --folder part2 --out actions.txt --json -- actions   # playwright trace, in a sub-folder of the source's .work folder
 ```
 
 A source's state is `pending` (no extract), `extracted` (no verification),
@@ -213,17 +267,56 @@ A source's state is `pending` (no extract), `extracted` (no verification),
 extracted, the extract records no scope hash, or its claims changed after they
 were verified) or `invalid` (a file out of shape). `next` says what it needs:
 `extract`, `verify` or nothing. A relaunch skips every verified source whose
-scope hash and extract hash are unchanged.
+scope hash and extract hash are unchanged. `reset` is how to extract one again
+anyway: it moves the source's extract, partition, parts and verify files to
+`distil/superseded/<time>/`, keeping them, and the source reads `pending`.
 
-`check`, `merge-verify`, `adopt` and `coverage` exit 1 (`LINT`) and name every
-problem when anything is out of shape; `merge-verify` and `adopt` then write
-nothing. With `--json`, `coverage` also lists each problem in
-`errors[0].problems` with its scope, `reconcile` or `backlog`, so the workflow
-routes it to the step that can fix it.
+`check --stage partition` checks the partition alone: its parts numbered 1 to
+n, no two sharing a prefix, no old claim id kept by two. `check --stage
+extract` also checks every part file against `extract.schema.json` and its
+prefix, that every part has its file and no file is outside the partition, no
+claim id is in two parts, and that the extract is exactly its parts merged.
+`--clear-parts` removes the part files the next stage writes: extract parts
+after the partition stage, verify parts after any other.
+
+`reset --stage reconcile` is how to reconcile from nothing after the
+reconcile or consolidate method changes: it keeps every verified extract and
+moves `requirements.json`, `conflicts.json`, the working sets, `areas.json` and
+`distil/areas/`, `distil/challenge/`, the backlog snapshots, `backlog.json` and
+`report.md` to `distil/superseded/<time>/reconcile/`. It refuses while a
+backlog row has build work on it. A normal re-distil keeps every id and needs
+no reset.
+
+`areas` refuses a claim in no area, a slice whose source is not verified or
+whose part or claim does not exist, a range that runs backwards, an area with
+no claim, and an existing requirement or conflict in no area or two.
+`merge-reconcile` refuses an area with no file, an id that is not the area's
+(`req-<area>-NNN` new, or an existing id the area owns), an existing id left
+out, a claim outside the area's working set, and a conflict nobody can find; it
+numbers new ids on from the highest and writes `distil/areas/id-map.json`.
+`coverage` refuses a verified source that backs no requirement or conflict
+(its held claims were never weighed), a challenge verdict out of shape or not
+applied, `blockedBy` on a requirement that is not adopted, and a todo row that
+covers a blocked requirement. It reports each source's cited claims and every
+blocked requirement.
+
+`check`, `merge-extract`, `merge-verify`, `merge-reconcile`, `areas`,
+`challenge --conflict`, `adopt` and `coverage` exit 1 (`LINT`) and name every
+problem when anything is out of shape; `merge-extract`, `merge-verify`,
+`merge-reconcile` and `adopt` then write nothing. With `--json`, `coverage`
+also lists each problem in `errors[0].problems` with its scope, `reconcile` or
+`backlog`, so the workflow routes it to the step that can fix it.
 
 `trace` takes tim's options first, then `--`, then the `playwright trace`
-subcommand. It runs the Playwright tim installs, in
-`distil/extract/<slug>.work/`, so a trace opened there belongs to that source.
+subcommand. It runs in `distil/extract/<slug>.work/`, or with `--folder` in a
+sub-folder of it, so a trace opened there belongs to that agent: part and
+verify agents reading one source side by side never open over each other's
+trace. Playwright cannot read a trace recorded by a newer version of itself,
+so `open` reads the version the trace recorded and picks a Playwright at least
+that new: tim's own (pinned to the newest the workspace repos use), else the
+newest a cloned repo has installed. The folder records the choice, so every
+later subcommand uses the same one. A trace newer than any of them is refused
+with `MISSING_DEP` and the command that updates tim's.
 
 ### `tim docker lease` — who holds the workspace stack
 

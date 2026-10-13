@@ -33,12 +33,36 @@ table: [`docs/agent-skills.md`](../../../docs/agent-skills.md)
 | "write the theme ticket", "write the business tickets for `<theme>`", "theme ticket for EUDPA-X" | WRITE flow |
 | "split the theme ticket by domain" | WRITE flow — it always splits |
 | "regenerate the theme tickets" | WRITE flow against a theme whose tickets exist; descriptions are rewritten in place |
+| "raise the theme stub", a theme being split off | STUB flow |
+| "the build loop is starting on `<theme>`" | START flow |
+| "`<theme>` has merged", "the theme merged to main" | MERGE flow |
 | "which theme tickets are stale", "are the tickets out of date" | STALE flow |
 
 NOT for raising a ticket from scratch (`ticket-creator`), assessing refinement
 readiness (`ticket-refiner`), planning or building a ticket's code (`ticket`),
 editing openspec (`spec-catchup`, `spec-cover`) or editing a backlog
 (`requirements-pipeline`).
+
+## Where this runs in the theme's life
+
+A theme's ticket is filled in automatically from the development work, at four
+points. Nothing here waits for a person.
+
+| When | Flow | What happens |
+|---|---|---|
+| The theme is split off a backlog | STUB | One Story per theme, titled from the theme, status `Ready for Dev`. It exists to supply the branch name — there is no openspec for the theme's rows yet, so there is nothing to describe. |
+| The build loop starts on the theme | START | Status → `In Dev`. No description change; openspec is still being written row by row. |
+| The loop drains the theme | WRITE | Derive, split by domain, update the stub as one domain and create the others, each `In Dev`. This is the real fill-in. |
+| The theme merges to `main` | MERGE | Regenerate against `main` so the spec links do not point at a deleted branch, then status → `Deskcheck`. |
+
+**Why the loop itself does not call this.** The theme builds run
+`lifecycle: "branch"`, which BUILD.md guarantees "makes no Jira call of any
+kind" and which "refuses a value" in any Jira field. Driving a ticket from
+inside the loop would break that contract. The orchestrating session, which
+launches the loop per theme, runs START before it and WRITE after it instead —
+same effect, contract intact. See
+[`themes/HOW-TO-BUILD.md`](../../../workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md)
+for the per-theme steps.
 
 ## The rules this skill holds to
 
@@ -72,8 +96,17 @@ ticket that told the business something untrue.
    document format and drops macros, so it renders as literal text. There is no
    collapsing on this path; a genuinely collapsible section would need an
    Atlassian Document Format body posted to `rest/api/3`.
-7. **Nothing reaches Jira without the user seeing it first.** Write
-   `description.txt`, show it, take their changes, then push.
+7. **Run without asking.** The description is derived from openspec, and it is
+   regenerated whenever openspec changes, so a human gate before each push buys
+   nothing — it only leaves the ticket stale until somebody gets round to it. The
+   ticket exists *to be* the review: it is filled in automatically from the
+   development work, and the business reviews the result. Create, update and
+   transition without confirmation.
+
+   Two things still hold. Report what you changed, with the keys and the counts,
+   so the writes are visible after the fact. And when `derive-scenarios.sh` fails
+   — counts that do not sum, an unmapped openspec area — stop and say so rather
+   than publishing a ticket you cannot vouch for.
 
 ## How a service is attributed to a domain
 
@@ -122,9 +155,46 @@ than letting a reader think a row went missing.
 ~/git/defra/trade-imports-workspace/tools/theme-ticket/start-theme-ticket.sh "<trigger phrase>" --workarea <path under workareas/> --theme <id>
 ```
 
-First stdout line is `MODE: WRITE` or `MODE: STALE`. Branch on it. The JSON
+First stdout line is `MODE: STUB`, `MODE: START`, `MODE: WRITE`, `MODE: MERGE`
+or `MODE: STALE`. Branch on it. Pass `--mode <NAME>` to set it explicitly, which
+is what an automated caller should do rather than relying on phrasing. The JSON
 payload carries the workarea paths, the branch, and every existing ticket folder
 with the Jira key it produced.
+
+---
+
+# STUB flow
+
+Run when a theme is split off a backlog, because the branch name needs a ticket
+number. There is no openspec for the theme's rows yet, so there is nothing to
+describe and no domains to split into.
+
+Write `<workareaDir>/tickets/<theme>-stub/ticket.json` — type `Story`, the
+programme epic as `parent` — and a `description.txt` saying in two or three
+lines which theme it is, how many rows it holds, and that the description is
+filled in automatically once the build completes. Then:
+
+```bash
+tim jira create --from <workareaDir>/tickets/<theme>-stub/ticket.json
+```
+
+Re-run with `--confirm <planId>`, then `tim jira transition <KEY> "Ready for Dev"`.
+
+Report the key so the branch can be named `feat/<KEY>-<programme>-<theme>`.
+
+---
+
+# START flow
+
+Run when the build loop is about to work the theme. Move every ticket the theme
+already has to `In Dev`:
+
+```bash
+tim jira transition <KEY> "In Dev"
+```
+
+Change no description — openspec is still being written row by row, and a
+ticket regenerated mid-build describes a half-finished theme.
 
 ---
 
@@ -181,12 +251,7 @@ file, so nothing is hidden by the curation. Keep the curated count roughly even
 across domains: a count skewed to one service leaves another domain's BA unable
 to see their own change.
 
-## Step 3: Show the user, and iterate
-
-Show what you wrote and take their changes. This is a small number of narrative
-artefacts, so it is natural-language approval — there is no walker here.
-
-## Step 4: Create or update
+## Step 3: Create or update
 
 A domain whose ticket does not exist yet needs a `ticket.json` manifest beside
 its description: `tim-ticket/1`, type `Story`, the epic as `parent`, and
@@ -196,7 +261,9 @@ its description: `tim-ticket/1`, type `Story`, the epic as `parent`, and
 tim jira create --from <workareaDir>/tickets/<domain-slug>/ticket.json
 ```
 
-Dry run by default. Re-run with `--confirm <planId>` once the user approves.
+Dry run by default. Read the plan, check it carries the right parent and
+summary, then re-run with `--confirm <planId>` — the dry run is a correctness
+check on the manifest, not an approval gate.
 
 A domain whose ticket already exists is updated in place:
 
@@ -209,7 +276,7 @@ cannot drift, and refuses a description that is hard-wrapped or uses `{expand}`.
 `tim` has no update command — this is why the helper wraps
 `tools/jira/update-ticket.sh`.
 
-## Step 5: Set the status
+## Step 4: Set the status
 
 Per rule 4, from the theme's actual situation:
 
@@ -217,11 +284,35 @@ Per rule 4, from the theme's actual situation:
 tim jira transition <KEY> "In Dev"
 ```
 
-## Step 6: Record
+## Step 5: Record
 
 Add each ticket to `<workareaDir>/tickets/README.md` — folder, Jira key, domain,
 rows, scenarios, spec files — and state the arithmetic that the per-domain totals
 sum to the theme's. That table is how a reader checks the split is whole.
+
+---
+
+# MERGE flow
+
+Run when the theme has merged to `main`. Two things are now wrong: every spec
+link points at a branch that may have been deleted, and the status still says
+the work is in development.
+
+Re-derive against `main` and rewrite each description so the links resolve:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/theme-ticket/derive-scenarios.sh --workarea <workarea> --theme <id> --branch main --out <workareaDir>/tickets/derived.json
+```
+
+Push each description, then move each ticket on:
+
+```bash
+tim jira transition <KEY> "Deskcheck"
+```
+
+The scenarios themselves should not change — a merge moves commits, it does not
+rewrite specs. If the counts differ from the pre-merge run, something landed on
+`main` in between: say so rather than quietly publishing different numbers.
 
 ---
 
@@ -235,9 +326,9 @@ For each ticket folder it compares when its cited spec files last changed on the
 branch against when the Jira ticket was last updated, and prints a verdict per
 ticket. It reports only.
 
-Show the user the table. For each stale ticket, offer to re-run the WRITE flow
-for that theme. Do not regenerate without being asked — a push to Jira is a
-write to a shared system.
+Show the table, then re-run the WRITE flow for every stale ticket's theme. The
+whole point is that the ticket tracks the specification; a stale one left stale
+is the failure this skill exists to prevent.
 
 ## Completion output
 

@@ -1,15 +1,21 @@
 #!/bin/bash
 # Dispatcher for the theme-ticket skill.
 #
-# Usage: ./start-theme-ticket.sh "<trigger phrase>" --workarea <path under workareas/> [--theme <id>]
+# Usage: ./start-theme-ticket.sh "<trigger phrase>" --workarea <path under workareas/> [--theme <id>] [--mode NAME]
 #
-# Prints MODE: WRITE or MODE: STALE as its first line, then a JSON payload with
-# the paths the skill needs. WRITE derives a theme and writes its per-domain
-# descriptions; STALE reports which of a workarea's tickets openspec has moved
-# on from.
+# Prints MODE: <NAME> as its first line, then a JSON payload with the paths the
+# skill needs. The mode is the point in the theme's life:
+#
+#   STUB    the theme has just been split off — raise its ticket for the branch name
+#   START   the build loop is starting on it — move its tickets to In Dev
+#   WRITE   the loop has drained it — derive, split by domain, fill the tickets in
+#   MERGE   it has merged to main — regenerate links against main, move to Deskcheck
+#   STALE   report which of a workarea's tickets openspec has moved on from
+#
+# An automated caller should pass --mode rather than rely on the trigger phrase.
 #
 # Examples:
-#   ./start-theme-ticket.sh "write the theme ticket" --workarea shared/design-release-2-1 --theme origin-page
+#   ./start-theme-ticket.sh "" --workarea shared/design-release-2-1 --theme origin-page --mode WRITE
 #   ./start-theme-ticket.sh "which theme tickets are stale" --workarea shared/design-release-2-1
 
 set -euo pipefail
@@ -21,10 +27,12 @@ shift || true
 
 WORKAREA=""
 THEME=""
+MODE_ARG=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --workarea) WORKAREA="$2"; shift 2 ;;
         --theme) THEME="$2"; shift 2 ;;
+        --mode) MODE_ARG="$(echo "$2" | tr '[:lower:]' '[:upper:]')"; shift 2 ;;
         -h|--help) grep '^#' "${BASH_SOURCE[0]}" | cut -c3-; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
@@ -46,15 +54,26 @@ mkdir -p "$TICKETS_DIR"
 
 BRANCH="$(git -C "$WS" rev-parse --abbrev-ref HEAD)"
 
-# Which mode the trigger asks for. Anything mentioning staleness reports; every
-# other trigger writes.
-MODE="WRITE"
-case "$(echo "$TRIGGER" | tr '[:upper:]' '[:lower:]')" in
-    *stale*|*out\ of\ date*) MODE="STALE" ;;
-esac
+# Which point in the theme's life this is. An automated caller should pass
+# --mode rather than rely on phrasing.
+if [[ -n "$MODE_ARG" ]]; then
+    MODE="$MODE_ARG"
+    case "$MODE" in
+        STUB|START|WRITE|MERGE|STALE) ;;
+        *) echo "start-theme-ticket: unknown --mode $MODE (STUB, START, WRITE, MERGE, STALE)" >&2; exit 2 ;;
+    esac
+else
+    MODE="WRITE"
+    case "$(echo "$TRIGGER" | tr '[:upper:]' '[:lower:]')" in
+        *stale*|*out\ of\ date*) MODE="STALE" ;;
+        *stub*|*split*off*) MODE="STUB" ;;
+        *merge*) MODE="MERGE" ;;
+        *loop\ is\ starting*|*build\ is\ starting*|*starting\ on*) MODE="START" ;;
+    esac
+fi
 
-if [[ "$MODE" == "WRITE" && -z "$THEME" ]]; then
-    echo "start-theme-ticket: --theme is required to write a theme's tickets" >&2
+if [[ "$MODE" != "STALE" && -z "$THEME" ]]; then
+    echo "start-theme-ticket: --theme is required for mode $MODE" >&2
     echo "Themes in this workarea:" >&2
     if [[ -d "$WORKAREA_DIR/themes" ]]; then
         find "$WORKAREA_DIR/themes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort >&2

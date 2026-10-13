@@ -75,8 +75,159 @@ describe('distilCoverage', () => {
           requirements: ['req-002', 'req-004']
         }
       ],
+      blocked: [],
+      sources: [
+        { id: 'ruling:sam-2026-09-29c', claims: 1, cited: 1 },
+        { id: 'repo:tests', claims: 4, cited: 4 },
+        { id: 'confluence:6608160092', claims: 6, cited: 6 }
+      ],
       unavailable: [],
-      backlog: { path: workspace.layout.backlog, increments: 2, covered: 4 }
+      backlog: {
+        path: workspace.layout.backlog,
+        increments: 2,
+        covered: 4,
+        coveredBySplitOff: 0,
+        splitOff: []
+      }
+    })
+  })
+
+  describe('a source that backs nothing', () => {
+    const dropRulingCitations = () => {
+      editRequirement('req-001', (requirement) => ({
+        ...requirement,
+        claims: requirement.claims.filter((claimId) => claimId !== 'sam3-001')
+      }))
+    }
+
+    test('refuses a verified source none of whose claims is cited', () => {
+      workspace = makeDistilWorkspace()
+      dropRulingCitations()
+
+      expect(problemsOf()).toEqual([
+        'ruling:sam-2026-09-29c backs no requirement or conflict: none of its 1 held or missed claims is cited. Weigh every one: cite each where it shows what the service does today or must do, and record any the goal excludes in an out-of-scope requirement.'
+      ])
+    })
+
+    test('counts a claim cited only by an out-of-scope requirement as used', () => {
+      workspace = makeDistilWorkspace()
+      dropRulingCitations()
+      editRequirement('req-005', (requirement) => ({
+        ...requirement,
+        claims: [...requirement.claims, 'sam3-001']
+      }))
+
+      expect(coverage().sources[0]).toEqual({
+        id: 'ruling:sam-2026-09-29c',
+        claims: 1,
+        cited: 1
+      })
+    })
+  })
+
+  describe('a requirement blocked by somebody outside the programme', () => {
+    const BLOCKER =
+      'CDP raises the ingress request-body cap to at least 50MB (EUDPA-518).'
+
+    test('lists it among the blocked requirements', () => {
+      workspace = makeDistilWorkspace()
+      rmSync(workspace.layout.backlog)
+      editRequirement('req-006', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(coverage().blocked).toEqual([
+        { id: 'req-006', blockedBy: BLOCKER }
+      ])
+    })
+
+    test('refuses a blocker on a requirement that is not adopted', () => {
+      workspace = makeDistilWorkspace()
+      rmSync(workspace.layout.backlog)
+      editRequirement('req-004', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(problemsOf()).toEqual([
+        'req-004 is question but carries blockedBy. Only an adopted requirement waits on a blocker: a design choice is a question.'
+      ])
+    })
+
+    test('refuses a todo row that covers it', () => {
+      workspace = makeDistilWorkspace()
+      const todoRow = workspace
+        .readJson(workspace.layout.backlog)
+        .increments.find(
+          (increment) =>
+            (increment.status ?? 'todo') === 'todo' &&
+            increment.requirements.includes('req-006')
+        )
+      editRequirement('req-006', (requirement) => ({
+        ...requirement,
+        blockedBy: BLOCKER
+      }))
+
+      expect(problemsOf()).toEqual([
+        `${todoRow.id} is todo but covers req-006, which is blocked by: ${BLOCKER} Make the row blocked, with the blocker in its openQuestions, or move req-006 to a blocked row.`
+      ])
+    })
+  })
+
+  describe('a challenge verdict', () => {
+    const challengePath = (conflictId) =>
+      join(workspace.layout.challengeDir, `${conflictId}.json`)
+
+    const SETTLED = {
+      conflict: 'c-002',
+      verdict: 'precedence',
+      rule: 'ruling:sam-2026-09-29c claim 3 says which tiers run where.',
+      claims: ['sam3-001'],
+      outcome: 'The tier-1 smoke run locally; tiers 2 to 5 in CDP perf-test.'
+    }
+
+    test('refuses a settling verdict that was not applied', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), SETTLED)
+
+      expect(problemsOf()).toEqual([
+        `distil/challenge/c-002.json settled it by precedence (${SETTLED.rule}), but distil/conflicts.json still has c-002 as a question. Rewrite it as precedence with the verdict's outcome and overruled claims, and adopt the requirements that cite it.`
+      ])
+    })
+
+    test('needs nothing applied when it keeps the question', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), {
+        ...SETTLED,
+        verdict: 'question',
+        why: 'No ruling or source says how often the tiers run.'
+      })
+
+      expect(coverage().questions.map((question) => question.id)).toEqual([
+        'c-002'
+      ])
+    })
+
+    test('refuses a blocked verdict whose requirements are still questions and carry no blocker', () => {
+      workspace = makeDistilWorkspace()
+      workspace.writeJson(challengePath('c-002'), {
+        ...SETTLED,
+        verdict: 'blocked',
+        blocker: 'CDP provisions the perf-test environment.'
+      })
+      editConflict('c-002', ({ question, default: _default, ...conflict }) => ({
+        ...conflict,
+        resolution: 'precedence',
+        outcome: SETTLED.outcome
+      }))
+
+      expect(problemsOf()).toEqual(
+        expect.arrayContaining([
+          `distil/challenge/c-002.json found it waits on a blocker, not a design choice (${SETTLED.rule}), but req-004 is still a question. Adopt it with blockedBy: "CDP provisions the perf-test environment.".`,
+          `distil/challenge/c-002.json found it waits on a blocker, not a design choice (${SETTLED.rule}), but no requirement citing c-002 carries blockedBy. Give each one it holds back blockedBy: "CDP provisions the perf-test environment.".`
+        ])
+      )
     })
   })
 
@@ -470,6 +621,141 @@ describe('distilCoverage', () => {
     expect(problemsOf()).toEqual([
       'distil/requirements.json does not exist yet.',
       'distil/conflicts.json conflicts[c-001].resolution is "vote". Use one of: precedence, question.'
+    ])
+  })
+})
+
+describe('distilCoverage over a theme split off early', () => {
+  const POINTER = {
+    theme: 'smoke-gate',
+    title: 'The smoke run gates pull requests',
+    touches: ['tests:k6/smoke'],
+    dependsOn: [],
+    branch: 'feat/NO_JIRA-ins-performance-testing-smoke-gate',
+    workarea: `${DEMO_WORKAREA}/themes/smoke-gate`,
+    backlog: 'themes/smoke-gate/backlog.json',
+    increments: ['inc-002'],
+    requirements: ['req-002', 'req-004'],
+    at: '2026-10-09T12:00:00.000Z'
+  }
+
+  const splitOffInc002 = (pointer = {}) =>
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [{ ...POINTER, ...pointer }],
+      increments: backlog.increments.filter(
+        (increment) => increment.id !== 'inc-002'
+      )
+    }))
+
+  test('counts a requirement the split-off theme holds as covered, and says by which branch', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002()
+
+    expect(coverage().backlog).toEqual({
+      path: workspace.layout.backlog,
+      increments: 1,
+      covered: 2,
+      coveredBySplitOff: 1,
+      splitOff: [
+        {
+          theme: 'smoke-gate',
+          branch: POINTER.branch,
+          workarea: POINTER.workarea,
+          backlog: POINTER.backlog,
+          requirements: ['req-002', 'req-004'],
+          pickUp: [],
+          changed: [],
+          noLongerToBuild: ['req-004'],
+          nowInPlace: [],
+          fingerprintsNow: {}
+        }
+      ]
+    })
+  })
+
+  test('names a requirement that changed since the split', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({
+      fingerprints: { 'req-002': 'a fingerprint from before a ruling' }
+    })
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: ['req-002'],
+      fingerprintsNow: { 'req-002': expect.stringMatching(/^[0-9a-f]{64}$/) }
+    })
+  })
+
+  test('stops naming a changed requirement once the pointer takes its fingerprint now', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    const now = coverage().backlog.splitOff[0].fingerprintsNow
+    splitOffInc002({ fingerprints: now })
+
+    expect(coverage().backlog.splitOff[0].changed).toEqual([])
+  })
+
+  test('names a held requirement now in place only as in place, not as changed or no longer to build', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    editRequirement('req-002', (requirement) => ({
+      ...requirement,
+      delta: 'exists',
+      deltaNote: 'The split branch built and merged it.'
+    }))
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: [],
+      noLongerToBuild: ['req-004'],
+      nowInPlace: ['req-002'],
+      fingerprintsNow: {}
+    })
+  })
+
+  test('names a held requirement now out of scope only as no longer to build, not as changed', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ fingerprints: { 'req-002': 'stale' } })
+    editRequirement('req-002', (requirement) => ({
+      ...requirement,
+      status: 'out-of-scope'
+    }))
+
+    expect(coverage().backlog.splitOff[0]).toMatchObject({
+      changed: [],
+      noLongerToBuild: ['req-002', 'req-004'],
+      nowInPlace: []
+    })
+  })
+
+  test('counts a requirement handed to the split-off theme to pick up as covered', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-006'] })
+    editIncrement('inc-001', (increment) => ({
+      ...increment,
+      requirements: ['req-001']
+    }))
+
+    expect([
+      coverage().backlog.coveredBySplitOff,
+      coverage().backlog.splitOff[0].pickUp
+    ]).toEqual([2, ['req-006']])
+  })
+
+  test('refuses a row that covers a requirement the split-off theme holds', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-006'] })
+
+    expect(problemsOf()).toEqual([
+      'inc-001 covers req-006, which theme "smoke-gate" holds: it was split off to feat/NO_JIRA-ins-performance-testing-smoke-gate. Take req-006 out of the row. The split branch builds it.'
+    ])
+  })
+
+  test('refuses a requirement to pick up that is not adopted to build', () => {
+    workspace = makeDistilWorkspace()
+    splitOffInc002({ pickUp: ['req-003'] })
+
+    expect(problemsOf()).toEqual([
+      'Theme "smoke-gate" picks up req-003, which is not an adopted requirement to build in distil/requirements.json. Take it out of the theme\'s pickUp.'
     ])
   })
 })

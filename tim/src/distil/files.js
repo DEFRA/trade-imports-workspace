@@ -26,17 +26,21 @@ export const isEditableRow = (row) =>
 
 export const DISTIL_SCHEMA_FILES = {
   sources: 'sources.schema.json',
+  partition: 'partition.schema.json',
   extract: 'extract.schema.json',
   verify: 'verify.schema.json',
   requirements: 'requirements.schema.json',
-  conflicts: 'conflicts.schema.json'
+  conflicts: 'conflicts.schema.json',
+  areas: 'areas.schema.json',
+  reconcilePart: 'reconcile-part.schema.json',
+  challenge: 'challenge.schema.json'
 }
 
 /**
  * Read every DISTIL schema from the workspace.
  *
  * @param {string} workspaceRoot
- * @returns {{sources: object, extract: object, verify: object, requirements: object, conflicts: object}}
+ * @returns {{sources: object, partition: object, extract: object, verify: object, requirements: object, conflicts: object, areas: object, reconcilePart: object, challenge: object}}
  * @throws {TimError} NOT_FOUND when a schema is missing, PARSE when one is not JSON
  */
 export const loadDistilSchemas = (workspaceRoot) =>
@@ -115,22 +119,85 @@ export const canonicalJsonOf = (value) => JSON.stringify(sortedKeys(value))
 export const claimsHashOf = (claims) =>
   createHash('sha256').update(canonicalJsonOf(claims)).digest('hex')
 
+/** The fields of a requirement that say what is to be built. */
+const FINGERPRINTED_FIELDS = [
+  'statement',
+  'status',
+  'delta',
+  'deltaNote',
+  'blockedBy',
+  'conflicts'
+]
+
+/**
+ * The sha256, in hex, of what a requirement asks for: its statement, status,
+ * delta and delta note, blocker and conflicts. Its `why` and the claims it
+ * cites are left out, because a re-distil rewords and re-cites them without
+ * changing what is built. A theme split off early keeps each of its
+ * requirements' fingerprints, so a later re-distil can tell which changed.
+ *
+ * @param {object} requirement - One entry of distil/requirements.json
+ * @returns {string}
+ */
+export const requirementFingerprintOf = (requirement) =>
+  claimsHashOf(
+    Object.fromEntries(
+      FINGERPRINTED_FIELDS.filter(
+        (field) => requirement[field] !== undefined
+      ).map((field) => [field, requirement[field]])
+    )
+  )
+
 /**
  * Every DISTIL file's path inside one workarea folder.
  *
  * @param {string} workareaDir
- * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, requirements: string, conflicts: string, workingSet: string, backlog: string}}
+ * @returns {{dir: string, sources: string, extractDir: string, verifyDir: string, supersededDir: string, requirements: string, conflicts: string, workingSet: string, areas: string, areasDir: string, areaIdMap: string, challengeDir: string, backlog: string, report: string}}
  */
 export const distilLayout = (workareaDir) => ({
   dir: workareaDir,
   sources: join(workareaDir, 'sources.json'),
   extractDir: join(workareaDir, 'distil', 'extract'),
   verifyDir: join(workareaDir, 'distil', 'verify'),
+  supersededDir: join(workareaDir, 'distil', 'superseded'),
   requirements: join(workareaDir, 'distil', 'requirements.json'),
   conflicts: join(workareaDir, 'distil', 'conflicts.json'),
   workingSet: join(workareaDir, 'distil', 'working-set.json'),
-  backlog: join(workareaDir, 'backlog.json')
+  areas: join(workareaDir, 'distil', 'areas.json'),
+  areasDir: join(workareaDir, 'distil', 'areas'),
+  areaIdMap: join(workareaDir, 'distil', 'areas', 'id-map.json'),
+  challengeDir: join(workareaDir, 'distil', 'challenge'),
+  backlog: join(workareaDir, 'backlog.json'),
+  report: join(workareaDir, 'report.md')
 })
+
+/**
+ * One area's folder under distil/areas/, holding its working set, its
+ * reconciled requirements and conflicts, and its draft rows.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} areaId
+ * @returns {{dir: string, workingSet: string, reconciled: string, rows: string}}
+ */
+export const areaFilesOf = (layout, areaId) => {
+  const dir = join(layout.areasDir, areaId)
+  return {
+    dir,
+    workingSet: join(dir, 'working-set.json'),
+    reconciled: join(dir, 'reconciled.json'),
+    rows: join(dir, 'rows.json')
+  }
+}
+
+/**
+ * Where one question conflict's challenge verdict is written.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} conflictId
+ * @returns {string}
+ */
+export const challengePathOf = (layout, conflictId) =>
+  join(layout.challengeDir, `${conflictId}.json`)
 
 export const extractPathOf = (layout, slug) =>
   join(layout.extractDir, `${slug}.json`)
@@ -140,6 +207,12 @@ export const verifyPathOf = (layout, slug) =>
 
 export const verifyPartPathOf = (layout, slug, part) =>
   join(layout.verifyDir, `${slug}.part${part}.json`)
+
+export const partitionPathOf = (layout, slug) =>
+  join(layout.extractDir, `${slug}.partition.json`)
+
+export const extractPartPathOf = (layout, slug, part) =>
+  join(layout.extractDir, `${slug}.part${part}.json`)
 
 /**
  * A source's own working folder, for the extract agent's scratch files and
@@ -163,8 +236,19 @@ export const backlogSnapshotPathOf = (layout, tag) =>
   join(layout.dir, 'distil', `backlog-snapshot.${tag}.json`)
 
 const PART_FILE = /^(.+)\.part([1-9][0-9]*)\.json$/
+const PARTITION_FILE = /^(.+)\.partition\.json$/
 
 const filesIn = (dir) => (existsSync(dir) ? readdirSync(dir).sort() : [])
+
+const partsIn = (dir, slug) =>
+  filesIn(dir)
+    .map((name) => name.match(PART_FILE))
+    .filter((match) => match && match[1] === slug)
+    .map((match) => ({
+      part: Number(match[2]),
+      path: join(dir, match[0])
+    }))
+    .sort((left, right) => left.part - right.part)
 
 /**
  * A source's verify part files, in part-number order.
@@ -173,15 +257,17 @@ const filesIn = (dir) => (existsSync(dir) ? readdirSync(dir).sort() : [])
  * @param {string} slug
  * @returns {{part: number, path: string}[]}
  */
-export const verifyPartsOf = (layout, slug) =>
-  filesIn(layout.verifyDir)
-    .map((name) => name.match(PART_FILE))
-    .filter((match) => match && match[1] === slug)
-    .map((match) => ({
-      part: Number(match[2]),
-      path: join(layout.verifyDir, match[0])
-    }))
-    .sort((left, right) => left.part - right.part)
+export const verifyPartsOf = (layout, slug) => partsIn(layout.verifyDir, slug)
+
+/**
+ * A source's extract part files, in part-number order: one per part of its
+ * partition, each written by that part's extract agent.
+ *
+ * @param {object} layout - From `distilLayout`
+ * @param {string} slug
+ * @returns {{part: number, path: string}[]}
+ */
+export const extractPartsOf = (layout, slug) => partsIn(layout.extractDir, slug)
 
 /**
  * The extract and verify files whose slug no source in sources.json has:
@@ -193,7 +279,9 @@ export const verifyPartsOf = (layout, slug) =>
  */
 export const orphanFilesOf = (layout, slugs) => {
   const slugOfFile = (name) =>
-    name.match(PART_FILE)?.[1] ?? name.replace(/\.json$/, '')
+    name.match(PART_FILE)?.[1] ??
+    name.match(PARTITION_FILE)?.[1] ??
+    name.replace(/\.json$/, '')
   const orphansIn = (dir) =>
     filesIn(dir)
       .filter((name) => name.endsWith('.json') && !name.startsWith('.'))

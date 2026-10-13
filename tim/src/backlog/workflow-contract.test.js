@@ -177,20 +177,38 @@ const ACQUIRE_LABEL = 'run lease:acquire'
 const RELEASE_LABEL = 'run lease:release'
 const isRunLease = (label) => /^run lease:/.test(label ?? '')
 
-const answeringRunLease = (answers, leaseAnswers = {}) => {
+// After every landing the loop reads the row's theme, and once a theme has no
+// row left to build it checks the spec under the prefixes the theme touched.
+// Those agents are answered here too — by default a row in no theme — so a
+// test's answers list stays the stages it is about. A test about the theme
+// check passes its own answers for them, keyed by label.
+const NO_THEME = {
+  exitCode: 0,
+  stdout: '{"theme":null,"rows":0,"todo":0,"built":[],"otherRepos":[]}'
+}
+const isThemeCheck = (label) => / theme$|^spec check:/.test(label ?? '')
+const themeAnswer = (themeAnswers, label) => {
+  if (label in themeAnswers) return themeAnswers[label]
+  return / theme$/.test(label) ? NO_THEME : null
+}
+
+const answeringRunLease = (answers, leaseAnswers = {}, themeAnswers = {}) => {
   const leaseAnswer = (label) =>
     label === ACQUIRE_LABEL
       ? (leaseAnswers.acquire ?? LEASE_ACQUIRED)
       : (leaseAnswers.release ?? LEASE_RELEASED)
+  const answerOwnStage = (label) =>
+    isRunLease(label) ? leaseAnswer(label) : themeAnswer(themeAnswers, label)
+  const isOwnStage = (label) => isRunLease(label) || isThemeCheck(label)
   if (typeof answers === 'function') {
     return (prompt, options) =>
-      isRunLease(options.label)
-        ? leaseAnswer(options.label)
+      isOwnStage(options.label)
+        ? answerOwnStage(options.label)
         : answers(prompt, options)
   }
   let next = 0
   return (prompt, options) => {
-    if (isRunLease(options.label)) return leaseAnswer(options.label)
+    if (isOwnStage(options.label)) return answerOwnStage(options.label)
     const answer = next < answers.length ? answers[next] : null
     next += 1
     return answer
@@ -202,10 +220,10 @@ const stageLabels = (run) =>
     .map((entry) => entry.options.label)
     .filter((label) => !isRunLease(label))
 
-const runLoop = (path, { answers = [], lease, ...options } = {}) =>
+const runLoop = (path, { answers = [], lease, themes, ...options } = {}) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease)
+    answers: answeringRunLease(answers, lease, themes)
   })
 
 // What `tim build start --json` prints, as the start agent copies it.
@@ -682,6 +700,8 @@ describe('increment-build-loop', () => {
           decisions: ['Filter in the backend query, not the frontend.']
         }
       ],
+      reviewChecks: [],
+      specChecks: [],
       stopped: {
         reason: 'no-buildable',
         detail: 'the increments list is built out'
@@ -818,6 +838,8 @@ describe('increment-build-loop', () => {
               'EUDPA-900 is To Do and offers no transition to "In Dev". The board offers (transition -> status): Start -> Doing.'
           }
         ],
+        reviewChecks: [],
+        specChecks: [],
         stopped: {
           reason: 'ticket-failed',
           detail:
@@ -944,9 +966,18 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``
+        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json\``
       )
       expect(prompt).not.toContain('--phase e2e')
+    })
+
+    test('tells the baseline to wait on a gate that outlasts one Bash call rather than call it red', async () => {
+      const prompt = await baselinePrompt()
+
+      expect(prompt).toContain(
+        '`tim build gate-wait <the --result file of that command> --workspace ~/ws --json`'
+      )
+      expect(prompt).not.toContain('or that hits the Bash timeout, is RED')
     })
 
     test('tells the baseline to hand back a stack somebody else holds rather than work round it', async () => {
@@ -1061,27 +1092,33 @@ describe('increment-build-loop', () => {
           .map((entry) => entry.options.label)
           .filter((label) => !isRunLease(label))
 
+      // Review to fix: one confirmed finding, fixed, with a fixer that reports
+      // no Spec sync line of its own.
+      const FIX_STAGE_ANSWERS = [
+        NO_FINDINGS,
+        { findings: [FINDING] },
+        NO_FINDINGS,
+        { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
+        {
+          decisions: [
+            { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
+          ],
+          fixNow: ['Save the origin in src/a.js.'],
+          summary: 'one fix'
+        },
+        {
+          ok: true,
+          summary: 'Saved the origin.',
+          notes: 'FIT went green once the port-holding test server exited.'
+        }
+      ]
+
       const runThroughFixToLadder = () =>
         runFrom(
           BASELINE_ANSWER,
           PLAN_ANSWER,
           implementAnswer(['frontend:src/a.js']),
-          NO_FINDINGS,
-          { findings: [FINDING] },
-          NO_FINDINGS,
-          { verdicts: [{ n: 1, real: true, reasoning: 'src/a.js:3' }] },
-          {
-            decisions: [
-              { what: 'origin', call: 'fix-now', reasoning: 'in scope' }
-            ],
-            fixNow: ['Save the origin in src/a.js.'],
-            summary: 'one fix'
-          },
-          {
-            ok: true,
-            summary: 'Saved the origin.',
-            notes: 'FIT went green once the port-holding test server exited.'
-          }
+          ...FIX_STAGE_ANSWERS
         )
 
       const ladderPrompt = (run) =>
@@ -1155,7 +1192,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}"\``
+          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -1172,10 +1209,10 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}"\``
+          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}"\``
+          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
@@ -1286,6 +1323,240 @@ describe('increment-build-loop', () => {
         )
       })
 
+      describe('keeping the Behaviour Spec current', () => {
+        const SPEC_SYNC_NOTE =
+          'Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+
+        const runWithImplementNotes = (notes) =>
+          runFrom(BASELINE_ANSWER, PLAN_ANSWER, {
+            ...implementAnswer(['frontend:src/a.js']),
+            notes
+          })
+
+        test('gives every plan a spec sync section, naming the prefix by repo and set', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect({
+            section: prompt.includes(
+              '8. Spec sync — every row has one, whatever its repos.'
+            ),
+            germinal: prompt.includes(
+              'under `sets/germinal-products`\n  → `germinal-products/`. They are sibling sets'
+            ),
+            insRepos: prompt.includes(
+              '`trade-imports-ins-frontend`, `trade-imports-ins-backend` and `trade-imports-address-book` → `ins/`.'
+            ),
+            asksForPrefixes: prompt.includes(
+              'specPrefixes (the prefixes section 8 writes under, [] for none)'
+            )
+          }).toEqual({
+            section: true,
+            germinal: true,
+            insRepos: true,
+            asksForPrefixes: true
+          })
+        })
+
+        test('tells the planner which spec namespace each frontend-change set writes', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            '       - frontend (`repos/trade-imports-animals-frontend`): `sets/live-animals` → spec namespace `live-animals/`, `sets/germinal-products` → spec namespace `germinal-products/`'
+          )
+        })
+
+        test('says precisely which wording, content and layout changes the spec records', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            "So a WORDING change is spec'd wherever a title, a Purpose, a requirement or a scenario\nstates that wording"
+          )
+          expect(prompt).toContain(
+            'and pure styling (spacing, colour, a class)\nthat changes none of those is not.'
+          )
+        })
+
+        test('tells every implementor to keep the spec current and validate it, whatever its repos', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+          )
+          expect(prompt).toContain(
+            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [<capability path> ...]`'
+          )
+          expect(prompt).toContain(
+            'Either exiting non-zero means the row is NOT complete'
+          )
+        })
+
+        test('tells the implementor to report a spec sync line, none with its reason included', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain('`Spec sync: none — <reason>`')
+        })
+
+        test('hands the consistency reviewer the implementor’s spec sync line to judge', async () => {
+          const run = await runWithImplementNotes(
+            `Built it.\n${SPEC_SYNC_NOTE}`
+          )
+          const prompt = promptOf(run, 'inc-900 consistency')
+
+          expect(prompt).toContain(
+            `The implementor reported:\n   ${SPEC_SYNC_NOTE}`
+          )
+          expect(prompt).toContain(
+            "a `Spec sync: none` whose reason does not hold against the plan's\nbehaviour changes"
+          )
+        })
+
+        test('reads a spec sync line written as a bullet', async () => {
+          const run = await runWithImplementNotes(
+            `Built it.\n- ${SPEC_SYNC_NOTE}`
+          )
+
+          expect(promptOf(run, 'inc-900 consistency')).toContain(
+            `The implementor reported:\n   ${SPEC_SYNC_NOTE}\n`
+          )
+        })
+
+        test('reads a spec sync line with a bold label, dropping the markers', async () => {
+          const run = await runWithImplementNotes(
+            'Built it.\n**Spec sync:** none — only spacing changed'
+          )
+
+          expect(promptOf(run, 'inc-900 consistency')).toContain(
+            'The implementor reported:\n   Spec sync: none — only spacing changed\n'
+          )
+        })
+
+        test('tells the ladder a row with no spec sync line from either agent is red', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            "2a. THE SPEC SYNC. Every row reports a `Spec sync:` line. The implementor's:\n   (none reported)"
+          )
+          expect(prompt).toContain(
+            'When NEITHER the implementor NOR the fixer reported a `Spec sync:` line, that is a failure: put "no spec sync\n   reported" in failures[].'
+          )
+        })
+
+        test('tells the ladder a fixer with no spec sync line is normal when the implementor reported one', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            {
+              ...implementAnswer(['frontend:src/a.js']),
+              notes: `Built it.\n${SPEC_SYNC_NOTE}`
+            },
+            ...FIX_STAGE_ANSWERS
+          )
+          const prompt = ladderPrompt(run)
+
+          expect(prompt).toContain(
+            `The implementor's:\n   ${SPEC_SYNC_NOTE}\n   The fixer's: (none reported)`
+          )
+          expect(prompt).toContain(
+            'A fixer with no line is normal when the implementor reported one'
+          )
+        })
+
+        test('tells the implementor to mark a deleted capability and confirm it is gone rather than validate it', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).toContain(
+            'each one removed as `deleted: <capability path>`'
+          )
+          expect(prompt).toContain(
+            'A capability you deleted is not validated: confirm it is gone\n   with `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
+          )
+        })
+
+        test('tells the ladder to validate only the capabilities that still exist', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            'A path marked `deleted:` is not validated: confirm it is gone with `ls ~/ws/openspec/specs/<capability path>`,\n   which must fail'
+          )
+        })
+
+        test('tells the ladder a timed-out spec is a failure to repair, even when its retry passed', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            'a green rung whose only retries are those IS a pass, but say so explicitly. That exception covers nothing else.'
+          )
+          expect(prompt).toContain(
+            'spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair'
+          )
+          expect(prompt).toContain(
+            'never cut a step or an assertion to make it fit.'
+          )
+        })
+
+        test('tells the ladder to validate the spec write again', async () => {
+          const prompt = ladderPrompt(await runThroughFixToLadder())
+
+          expect(prompt).toContain(
+            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [...] > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-validate.log 2>&1`'
+          )
+        })
+
+        test('tells the fixer to keep the spec in step with its fix', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 fix')
+
+          expect(prompt).toContain(
+            'THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps `~/ws/openspec/` in step'
+          )
+        })
+
+        describe('a spec failure that predates the row, in a capability it writes', () => {
+          const WHOLE_CAPABILITY =
+            "a failure in a\n   capability this row writes is this row's to fix even where it predates the row"
+          const NEVER_LEFT =
+            'never report such a failure as pre-existing and leave it.'
+
+          test('is the implementor’s to fix', async () => {
+            const prompt = promptOf(
+              await runThroughFixToLadder(),
+              'inc-900 implement'
+            )
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+
+          test('is the fixer’s to fix', async () => {
+            const prompt = promptOf(
+              await runThroughFixToLadder(),
+              'inc-900 fix'
+            )
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+
+          test('is the ladder’s to repair', async () => {
+            const prompt = ladderPrompt(await runThroughFixToLadder())
+
+            expect(prompt).toContain(WHOLE_CAPABILITY)
+            expect(prompt).toContain(NEVER_LEFT)
+          })
+        })
+      })
+
       describe('the command forms a plan check may take', () => {
         const CURL_CHECK = 'curl -s http://localhost:8087/latency-profiles'
         const PREFIX_CHECK =
@@ -1386,6 +1657,31 @@ describe('increment-build-loop', () => {
           expect(replan).not.toContain(`  - \`${NPM_CHECK}\``)
         })
 
+        test('sends back a FIT check that would serve on a port the leased stack already holds', async () => {
+          const STACK_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit -- src/a.fit.spec.js'
+          const CLEAR_PORT_FIT =
+            'npm --prefix ~/ws/repos/trade-imports-animals-frontend run test:fit:ci -- src/a.fit.spec.js'
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            planWithChecks(STACK_PORT_FIT, CLEAR_PORT_FIT),
+            planWithChecks(CLEAR_PORT_FIT),
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(replan).toContain(`  - \`${STACK_PORT_FIT}\`\n`)
+          expect(replan).not.toContain(`  - \`${CLEAR_PORT_FIT}\``)
+        })
+
+        test('tells the planner a FIT check runs the gate’s test:fit:ci script', async () => {
+          const prompt = promptOf(await runThroughFixToLadder(), 'inc-900 plan')
+
+          expect(prompt).toContain(
+            '`npm --prefix ~/ws/<repoPath> run test:fit:ci -- <spec file>`. Never `test:fit`.'
+          )
+        })
+
         test('stops with plan-refused, naming the check, when the second plan still names a denied form', async () => {
           const run = await runFrom(
             BASELINE_ANSWER,
@@ -1458,6 +1754,14 @@ describe('increment-build-loop', () => {
           stackHeld
         })
         const KEPT = { ok: true, summary: 'wip commit pushed' }
+        const leaseHeldBy = (holder) => ({
+          ok: true,
+          holder,
+          summary: `lease held by ${holder}`
+        })
+        const LEASE_ELSEWHERE = leaseHeldBy('ibl-20260930T170000Z')
+        const LEASE_GONE = leaseHeldBy(null)
+        const LEASE_STILL_OURS = leaseHeldBy(RUN_ID)
 
         const runToLadderWith = (...answers) =>
           runFrom(
@@ -1471,7 +1775,11 @@ describe('increment-build-loop', () => {
           )
 
         test('stops with stack-held, preserving the attempt, when another run holds the stack', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect({
             stopped: run.result.stopped,
@@ -1486,13 +1794,21 @@ describe('increment-build-loop', () => {
         })
 
         test('still gives back the run’s own lease after a stage found the stack held', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.agents.at(-1).options.label).toBe(RELEASE_LABEL)
         })
 
         test('names the holder in the increment’s result', async () => {
-          const run = await runToLadderWith(heldLadder(OTHER_RUN), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(OTHER_RUN),
+            LEASE_ELSEWHERE,
+            KEPT
+          )
 
           expect(run.result.increments[0]).toMatchObject({
             id: 'inc-900',
@@ -1503,7 +1819,11 @@ describe('increment-build-loop', () => {
         })
 
         test('stops with stack-held for a stack that no lease names', async () => {
-          const run = await runToLadderWith(heldLadder(UNLEASED), KEPT)
+          const run = await runToLadderWith(
+            heldLadder(UNLEASED),
+            LEASE_GONE,
+            KEPT
+          )
 
           expect(run.result.stopped).toEqual({
             reason: 'stack-held',
@@ -1512,13 +1832,16 @@ describe('increment-build-loop', () => {
         })
 
         test('stops at the baseline with stack-held and nothing to preserve', async () => {
-          const run = await runFrom({
-            ok: true,
-            green: false,
-            rungs: [],
-            summary: 'the stack is held',
-            stackHeld: OTHER_RUN
-          })
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'the stack is held',
+              stackHeld: OTHER_RUN
+            },
+            LEASE_ELSEWHERE
+          )
 
           expect({
             increments: run.result.increments,
@@ -1533,7 +1856,26 @@ describe('increment-build-loop', () => {
                 detail: `inc-900 baseline: the workspace stack is held by "ibl-20260930T170000Z". ${OTHER_RUN.detail}`
               }
             ],
-            last: 'inc-900 baseline'
+            last: 'inc-900 baseline lease check'
+          })
+        })
+
+        test('treats a red baseline as baseline-red when it reports the stack held but the lease is still the run’s', async () => {
+          const run = await runFrom(
+            {
+              ok: true,
+              green: false,
+              rungs: [],
+              summary: 'Baseline is RED: trade-imports-ins-tests e2e failed',
+              stackHeld: { holder: null, detail: 'not held' }
+            },
+            LEASE_STILL_OURS
+          )
+
+          expect(run.result.stopped).toEqual({
+            reason: 'baseline-red',
+            detail:
+              'inc-900: Baseline is RED: trade-imports-ins-tests e2e failed'
           })
         })
 
@@ -1545,11 +1887,83 @@ describe('increment-build-loop', () => {
             NO_FINDINGS,
             NO_FINDINGS,
             { findings: [], stackHeld: OTHER_RUN },
+            LEASE_ELSEWHERE,
             KEPT
           )
 
           expect(run.result.stopped.detail).toMatch(
             /^inc-900 consistency: the workspace stack is held by "ibl-20260930T170000Z"\./
+          )
+        })
+      })
+
+      describe('when the workspace stack goes down under the run', () => {
+        const DOWN = {
+          detail:
+            'E2E global setup: connect ECONNREFUSED ::1:8089. tim docker lease status: the lease is this run’s, and the stack is down.'
+        }
+        const downBaseline = {
+          ok: true,
+          green: false,
+          rungs: [],
+          summary: 'the stack went down',
+          stackDown: DOWN
+        }
+        const allLabels = (run) =>
+          run.agents.map((entry) => entry.options.label)
+        const timesRan = (run, label) =>
+          allLabels(run).filter((name) => name === label).length
+
+        test('takes the run’s lease again, then runs the stage once more', async () => {
+          const run = await runFrom(downBaseline, BASELINE_ANSWER)
+
+          const firstBaseline = allLabels(run).indexOf('inc-900 baseline')
+          expect(
+            allLabels(run).slice(firstBaseline, firstBaseline + 3)
+          ).toEqual(['inc-900 baseline', ACQUIRE_LABEL, 'inc-900 baseline'])
+        })
+
+        test('carries on with the increment once the stage has run again', async () => {
+          const run = await runFrom(downBaseline, BASELINE_ANSWER, PLAN_ANSWER)
+
+          expect(allLabels(run)).toContain('inc-900 plan')
+        })
+
+        test('runs a stage only once more, however often it finds the stack down', async () => {
+          const run = await runFrom(downBaseline, downBaseline)
+
+          expect({
+            baselines: timesRan(run, 'inc-900 baseline'),
+            stopped: run.result.stopped.reason
+          }).toEqual({ baselines: 2, stopped: 'baseline-red' })
+        })
+
+        test('runs the ladder once more after the stack went down under it', async () => {
+          const run = await runFrom(
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            {
+              green: false,
+              ran: [],
+              summary: 'the stack went down',
+              stackDown: DOWN
+            }
+          )
+
+          expect(timesRan(run, 'inc-900 ladder')).toBe(2)
+        })
+
+        test('tells every stack stage to report a stack gone from under the run, never to start it', async () => {
+          const run = await runFrom(BASELINE_ANSWER, PLAN_ANSWER)
+
+          expect(
+            promptOf(run, 'inc-900 implement').replace(/\s+/g, ' ')
+          ).toContain(
+            'the stack went down under the run (Docker Desktop quit, say): run nothing more that needs it, and return `stackDown` with `detail` saying what could not reach it. Never start it yourself'
           )
         })
       })
@@ -1576,6 +1990,48 @@ describe('increment-build-loop', () => {
           expect(promptOf(run, ACQUIRE_LABEL)).toContain(
             `\`tim docker lease acquire --holder "${RUN_ID}" --mode dev --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/${RUN_ID}-lease\``
           )
+        })
+
+        test('lets only the lease taker and the releaser run a lease command', async () => {
+          const forbidsLeaseCommands = (prompt) =>
+            prompt.includes('no `tim docker lease acquire` or `release`')
+          const run = await runFrom(null)
+
+          expect({
+            acquire: forbidsLeaseCommands(promptOf(run, ACQUIRE_LABEL)),
+            release: forbidsLeaseCommands(promptOf(run, RELEASE_LABEL)),
+            otherGuardedStages: run.agents
+              .filter(
+                ({ options, prompt }) =>
+                  !isRunLease(options.label) && prompt.includes('GUARD RAILS')
+              )
+              .every(({ prompt }) => forbidsLeaseCommands(prompt))
+          }).toEqual({
+            acquire: false,
+            release: false,
+            otherGuardedStages: true
+          })
+        })
+
+        test('tells the lease taker its lease command is the one stack command it runs', async () => {
+          const run = await runFrom(null)
+
+          expect(promptOf(run, ACQUIRE_LABEL)).toContain(
+            `your task below is to take its lease for this run, as\n  \`${RUN_ID}\`, with \`tim docker lease acquire\`. Run that command exactly as given`
+          )
+        })
+
+        test('tells every agent of the run to run its commands with Bash, never to report one it has not run', async () => {
+          const run = await runFrom(null)
+
+          expect(
+            run.agents
+              .filter(
+                ({ prompt }) =>
+                  !prompt.includes('The Bash tool is loaded in every stage')
+              )
+              .map(({ options }) => options.label)
+          ).toEqual([])
         })
 
         test('gives the lease back once, as the run, after the run stops', async () => {
@@ -1609,6 +2065,8 @@ describe('increment-build-loop', () => {
           }).toEqual({
             result: {
               increments: [],
+              reviewChecks: [],
+              specChecks: [],
               stopped: {
                 reason: 'stack-held',
                 detail:
@@ -1832,6 +2290,8 @@ describe('increment-build-loop', () => {
 
           expect(run.result).toEqual({
             increments: [],
+            reviewChecks: [],
+            specChecks: [],
             stopped: {
               reason: 'no-buildable',
               detail: 'tim build start found nothing buildable in the backlog'
@@ -1914,8 +2374,8 @@ describe('increment-build-loop', () => {
           )
         })
 
-        // The Workflow tool caps a run at 1000 agents. At 39 an increment on
-        // Claude, plus the run’s four own agents, the twenty-sixth does not
+        // The Workflow tool caps a run at 1000 agents. At 41 an increment on
+        // Claude, plus the run’s four own agents, the twenty-fifth does not
         // fit — so the run stops before starting it rather than dying inside it.
         test('stops before the increment that would exhaust the agent budget', async () => {
           const run = await runDraining(
@@ -1925,9 +2385,337 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(25)
+          expect(run.result.increments.length).toBe(24)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('25 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('24 increment(s) landed')
+        })
+
+        describe('checking a theme’s spec once its last row lands', () => {
+          const THEME = 'origin-pages'
+          const SPEC_CHECK_LABEL = `spec check:${THEME}`
+          const IMPLEMENT_ANSWER_INDEX = 2
+
+          // What the theme reader's jq summary prints.
+          const themeStatus = (summary) => ({
+            exitCode: 0,
+            stdout: JSON.stringify({
+              theme: THEME,
+              rows: 1,
+              todo: 0,
+              built: ['inc-901'],
+              otherRepos: [],
+              ...summary
+            })
+          })
+          // inc-901, built by this run, and inc-800, built by an earlier one
+          // in the frontend, which reaches both of its sets' prefixes.
+          const BUILT = themeStatus({ rows: 2, otherRepos: ['frontend'] })
+          const ONE_LEFT = themeStatus({
+            rows: 2,
+            todo: 1,
+            otherRepos: ['frontend']
+          })
+          const REACHED = ['repo reach']
+
+          const checkedPrefix = (prefix, fields = {}) => ({
+            prefix,
+            present: true,
+            lintOk: true,
+            lintFindings: 0,
+            noneCount: 0,
+            partialCount: 2,
+            noneScenarios: [],
+            lintLog: `~/ws/workareas/shared/args-fixture/logs/spec-check-${THEME}-${prefix}-lint.json`,
+            gapsLog: `~/ws/workareas/shared/args-fixture/logs/spec-check-${THEME}-${prefix}-gaps.json`,
+            ...fields
+          })
+          const NO_GERMINAL_SPEC = {
+            prefix: 'germinal-products',
+            present: false
+          }
+          const CLEAN = {
+            prefixes: [checkedPrefix('live-animals'), NO_GERMINAL_SPEC],
+            summary: 'checked'
+          }
+
+          const landedWithNotes = (notes) =>
+            notes === undefined
+              ? LANDED
+              : LANDED.with(IMPLEMENT_ANSWER_INDEX, {
+                  ...LANDED[IMPLEMENT_ANSWER_INDEX],
+                  notes
+                })
+
+          const runThemed = ({ status, specCheck, notes }) =>
+            runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...landedWithNotes(notes)
+              ],
+              themes: {
+                'inc-901 theme': status,
+                [SPEC_CHECK_LABEL]: specCheck
+              }
+            })
+
+          test('reads the theme of the row that landed', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: CLEAN })
+
+            expect(promptOf(run, 'inc-901 theme')).toContain(
+              'select(.id=="inc-901") | (.theme // $split)'
+            )
+          })
+
+          test('asks jq for a summary of the theme, not its rows, naming the rows this run built', async () => {
+            const prompt = promptOf(
+              await runThemed({ status: BUILT, specCheck: CLEAN }),
+              'inc-901 theme'
+            )
+
+            expect(prompt).toContain('["inc-901"] as $built')
+            expect(prompt).toContain(
+              'todo: ([$rows[] | select(.status == "todo")] | length)'
+            )
+            expect(prompt).not.toContain('{id, status, repos}')
+          })
+
+          test('waits for the theme’s last row before checking its spec', async () => {
+            const run = await runThemed({ status: ONE_LEFT, specCheck: CLEAN })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              specChecks: run.result.specChecks,
+              stopped: run.result.stopped.reason
+            }).toEqual({
+              checked: false,
+              specChecks: [],
+              stopped: 'count-reached'
+            })
+          })
+
+          test('checks every prefix a theme row the run did not build could reach once its last row lands', async () => {
+            const prompt = promptOf(
+              await runThemed({ status: BUILT, specCheck: CLEAN }),
+              SPEC_CHECK_LABEL
+            )
+
+            expect(prompt).toContain(
+              'in this order — `live-animals`, `germinal-products` — one Bash call per command'
+            )
+            expect(prompt).toContain(
+              '`tim spec lint --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-<prefix>-lint.json 2>&1`'
+            )
+            expect(prompt).toContain(
+              '`tim spec gaps --none --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-<prefix>-gaps.json 2>&1`'
+            )
+          })
+
+          test('records a clean check and carries on', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: CLEAN })
+
+            expect({
+              specChecks: run.result.specChecks,
+              stopped: run.result.stopped.reason
+            }).toEqual({
+              specChecks: [
+                {
+                  after: 'inc-901',
+                  theme: THEME,
+                  outcome: 'spec-checked',
+                  prefixes: [
+                    {
+                      prefix: 'live-animals',
+                      present: true,
+                      lintOk: true,
+                      noneCount: 0,
+                      partialCount: 2
+                    },
+                    { prefix: 'germinal-products', present: false }
+                  ],
+                  sources: {
+                    'live-animals': REACHED,
+                    'germinal-products': REACHED
+                  },
+                  problems: []
+                }
+              ],
+              stopped: 'count-reached'
+            })
+          })
+
+          test('stops with spec-check-red, naming the catch-up and cover to run, when a scenario has no test', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: {
+                ...CLEAN,
+                prefixes: [
+                  checkedPrefix('live-animals', {
+                    noneCount: 1,
+                    noneScenarios: ['SCN-ORIGIN-009-A']
+                  }),
+                  NO_GERMINAL_SPEC
+                ]
+              }
+            })
+
+            expect(run.result.stopped).toEqual({
+              reason: 'spec-check-red',
+              detail: `theme origin-pages, after inc-901: 1 scenario(s) under live-animals/ that no test proves: SCN-ORIGIN-009-A (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-gaps.json). Every row of the theme is built, so nothing re-runs this check: run "catch-up and cover animals" (spec-catchup, then spec-cover), then launch again`
+            })
+          })
+
+          test('stops with spec-check-red when lint finds anything', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: {
+                ...CLEAN,
+                prefixes: [
+                  checkedPrefix('live-animals', {
+                    lintOk: false,
+                    lintFindings: 3
+                  }),
+                  NO_GERMINAL_SPEC
+                ]
+              }
+            })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'tim spec lint found 3 finding(s) under live-animals/ (~/ws/workareas/shared/args-fixture/logs/spec-check-origin-pages-live-animals-lint.json)'
+            ])
+          })
+
+          test('stops when a row wrote the spec under a prefix that has no spec', async () => {
+            const run = await runThemed({
+              status: BUILT,
+              specCheck: CLEAN,
+              notes:
+                'Built it.\nSpec sync: germinal-products/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+            })
+
+            expect(run.result.stopped.reason).toBe('spec-check-red')
+            expect(run.result.stopped.detail).toContain(
+              'a row reported writing the spec under germinal-products/, but openspec/specs/germinal-products does not exist'
+            )
+            expect(run.result.stopped.detail).toContain(
+              'run "catch-up and cover germinal"'
+            )
+          })
+
+          test('stops when the spec check agent dies, rather than calling the spec clean', async () => {
+            const run = await runThemed({ status: BUILT, specCheck: null })
+
+            expect(run.result.specChecks[0].problems).toEqual([
+              'the spec check agent died, so nothing checked the spec'
+            ])
+          })
+
+          test('checks only the prefixes a row this run built wrote under, not every prefix its repos reach', async () => {
+            const run = await runThemed({
+              status: themeStatus({}),
+              specCheck: {
+                prefixes: [checkedPrefix('live-animals')],
+                summary: 'checked'
+              },
+              notes:
+                'Built it.\n- Spec sync: live-animals/journey-pages/origin-of-import (2 scenarios) — validate green, lint clean'
+            })
+
+            expect({
+              asked: promptOf(run, SPEC_CHECK_LABEL).includes(
+                'in this order — `live-animals` — one Bash call per command'
+              ),
+              sources: run.result.specChecks[0].sources
+            }).toEqual({
+              asked: true,
+              sources: { 'live-animals': ['written'] }
+            })
+          })
+
+          test('stops when a row wrote under a prefix that has no spec, its line in bold', async () => {
+            const run = await runThemed({
+              status: themeStatus({}),
+              specCheck: { prefixes: [NO_GERMINAL_SPEC], summary: 'checked' },
+              notes:
+                'Built it.\n**Spec sync:** germinal-products/journey-pages/origin-of-import (2 scenarios) — validate green'
+            })
+
+            expect(run.result.stopped.detail).toContain(
+              'a row reported writing the spec under germinal-products/, but openspec/specs/germinal-products does not exist'
+            )
+          })
+
+          test('checks nothing for a theme that touched no spec prefix', async () => {
+            const run = await runThemed({
+              status: themeStatus({ rows: 2, otherRepos: ['tests'] }),
+              specCheck: CLEAN,
+              notes:
+                'Built it.\nSpec sync: none — only sets/high-risk-plants/ spacing changed'
+            })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              outcome: run.result.specChecks[0].outcome
+            }).toEqual({ checked: false, outcome: 'no-spec-prefix' })
+          })
+
+          test('reads an unreadable theme a second time, then stops rather than lose the check', async () => {
+            const run = await runThemed({
+              status: { exitCode: 5, stdout: 'jq: error: Could not open file' },
+              specCheck: CLEAN
+            })
+
+            expect({
+              reads: labels(run).filter((label) => label === 'inc-901 theme')
+                .length,
+              outcome: run.result.specChecks[0].outcome,
+              stopped: run.result.stopped.reason,
+              unread: run.result.stopped.detail.includes('theme unread')
+            }).toEqual({
+              reads: 2,
+              outcome: 'theme-unread',
+              stopped: 'spec-check-red',
+              unread: true
+            })
+          })
+
+          test('carries on when the second read of the theme succeeds', async () => {
+            const readings = [
+              { exitCode: 0, stdout: '{"theme":"origin-pa' },
+              BUILT
+            ]
+            const run = await runLoop(scriptPath, {
+              args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+              answers: [
+                WORKSPACE_ANSWER,
+                PREFLIGHT_ANSWER,
+                derived('inc-901'),
+                ...LANDED
+              ],
+              themes: {
+                get 'inc-901 theme'() {
+                  return readings.shift()
+                },
+                [SPEC_CHECK_LABEL]: CLEAN
+              }
+            })
+
+            expect({
+              outcome: run.result.specChecks[0].outcome,
+              stopped: run.result.stopped.reason
+            }).toEqual({ outcome: 'spec-checked', stopped: 'count-reached' })
+          })
+
+          test('checks nothing for a row in no theme', async () => {
+            const run = await runThemed({ status: NO_THEME, specCheck: CLEAN })
+
+            expect({
+              checked: labels(run).includes(SPEC_CHECK_LABEL),
+              specChecks: run.result.specChecks
+            }).toEqual({ checked: false, specChecks: [] })
+          })
         })
       })
 
@@ -2128,6 +2916,38 @@ describe('increment-build-loop', () => {
         expect(run.error.message).toContain('no readable backlog')
       })
 
+      test('stops before any increment when a repo on the branch has no open pull request to publish its branch image', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [
+            WORKSPACE_ANSWER,
+            {
+              ok: true,
+              summary: '1',
+              branchWithoutPr: [
+                'trade-imports-stub',
+                'trade-imports-reference-data'
+              ]
+            }
+          ]
+        })
+
+        expect(run.error.message).toBe(
+          `increment-build-loop: trade-imports-stub, trade-imports-reference-data are on ${WORKING_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${WORKING_BRANCH} in each, then launch again`
+        )
+      })
+
+      test('asks the preflight which repos on the branch have no open pull request', async () => {
+        const run = await runLoop(scriptPath, {
+          args: BRANCH_ARGS,
+          answers: [WORKSPACE_ANSWER, null]
+        })
+
+        expect(run.agents[1].prompt).toContain(
+          `gh pr list --repo DEFRA/<repo> --head ${WORKING_BRANCH} --state open --json number`
+        )
+      })
+
       test('refuses a Jira or approval key that is given a value, naming it', async () => {
         const run = await runLoop(scriptPath, {
           args: { ...BRANCH_ARGS, epic: 'EUDPA-1', requireApproval: false }
@@ -2287,7 +3107,8 @@ describe('increment-build-loop', () => {
           'inc-900 pr',
           'inc-900 ci watch',
           'inc-900 done',
-          'inc-900 gate check'
+          'inc-900 gate check',
+          'inc-900 theme'
         ])
       })
 
@@ -2332,8 +3153,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}"\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )
@@ -2472,6 +3293,52 @@ describe('increment-build-loop', () => {
         )
       })
 
+      describe('a row that carries a halt gate', () => {
+        const GATE_TEXT =
+          'Look at the opening run end to end on a new notification.'
+        const GATED = { ok: false, summary: GATE_TEXT }
+
+        const runGatedRow = (overrides = {}) =>
+          runBranch(
+            overrides,
+            MERGE_ROW,
+            BASELINE,
+            PLAN,
+            MERGE_STARTED,
+            ...reviewedAndLanded,
+            FOUND,
+            CI_GREEN,
+            MARKED_DONE,
+            GATED
+          )
+
+        test('returns the gate as a review check for the finished branch', async () => {
+          const run = await runGatedRow()
+
+          expect(run.result.reviewChecks).toEqual([
+            { id: 'inc-900', check: GATE_TEXT }
+          ])
+        })
+
+        test('lands the row and does not stop at the gate', async () => {
+          const run = await runGatedRow()
+
+          expect({
+            outcomes: run.result.increments.map(({ outcome }) => outcome),
+            stopped: run.result.stopped.reason
+          }).toEqual({ outcomes: ['landed'], stopped: 'count-reached' })
+        })
+
+        test('carries on to the next row', async () => {
+          const run = await runGatedRow({
+            increments: ['inc-900', 'inc-901'],
+            stopAfter: 2
+          })
+
+          expect(labelsOf(run)).toContain('inc-901 branch')
+        })
+      })
+
       test('does not wait for CI on a row that sets awaitCi false', async () => {
         const run = await runBranch(
           {},
@@ -2574,6 +3441,28 @@ describe('increment-build-loop', () => {
           expect(prompt).toContain('--diff-filter=U')
         })
 
+        test('moves commits a stage made back off the shared branch, saved as a patch, before stashing them', async () => {
+          const prompt = promptOf(await runToRedLadder(), 'inc-900 preserve')
+
+          expect({
+            counts: /rev-list --count origin\/\S+\.\.HEAD/.test(prompt),
+            savesPatch:
+              /format-patch --stdout --binary origin\/\S+\.\.HEAD > \S+inc-900-preserve-<repoKey>\.commits\.patch/.test(
+                prompt
+              ),
+            movesBack:
+              /reset --soft origin\/\S+`, which leaves those commits/.test(
+                prompt
+              ),
+            neverHard: prompt.includes('Never `reset --hard`, and never push.')
+          }).toEqual({
+            counts: true,
+            savesPatch: true,
+            movesBack: true,
+            neverHard: true
+          })
+        })
+
         test('stops the run at ladder-red with what the preserve step kept', async () => {
           const run = await runToRedLadder()
 
@@ -2585,7 +3474,10 @@ describe('increment-build-loop', () => {
       })
 
       describe('a docs row that changes no backlog repo', () => {
-        const runDocsRow = () =>
+        const REPORT_FILE =
+          'workspace:workareas/shared/frontend-alignment/report.md'
+
+        const runDocsRow = (changedFiles = [REPORT_FILE]) =>
           runBranch(
             {},
             { ...ROW, repos: [], gatePhases: [] },
@@ -2594,9 +3486,7 @@ describe('increment-build-loop', () => {
             {
               ok: true,
               summary: 'Rewrote the report.',
-              changedFiles: [
-                'workspace:workareas/shared/frontend-alignment/report.md'
-              ]
+              changedFiles
             },
             NO_FINDINGS,
             NO_FINDINGS,
@@ -2623,7 +3513,8 @@ describe('increment-build-loop', () => {
             'inc-900 branch-guard:land',
             'inc-900 land',
             'inc-900 done',
-            'inc-900 gate check'
+            'inc-900 gate check',
+            'inc-900 theme'
           ])
         })
 
@@ -2637,6 +3528,17 @@ describe('increment-build-loop', () => {
             ],
             ci: 'none: the row changes no backlog repo'
           })
+        })
+
+        test('leaves the spec files the land stage commits out of the edits it reports', async () => {
+          const run = await runDocsRow([
+            REPORT_FILE,
+            'workspace:openspec/specs/live-animals/journey-pages/origin-of-import/spec.md'
+          ])
+
+          expect(run.result.increments[0].leftUncommitted).toEqual([
+            REPORT_FILE
+          ])
         })
 
         test('tells the implementor to leave the workspace edits unstaged', async () => {
@@ -2925,7 +3827,8 @@ describe('increment-build-loop', () => {
           'inc-014 ci watch',
           'inc-014 merge',
           'inc-014 done',
-          'inc-014 gate check'
+          'inc-014 gate check',
+          'inc-014 theme'
         ])
       })
 
@@ -2938,6 +3841,25 @@ describe('increment-build-loop', () => {
           branch: WORK_BRANCH,
           outcome: 'landed',
           prs: PRS_AS_RAISED.map(({ url }) => url)
+        })
+      })
+
+      test('stops at a halt gate once the increment has landed', async () => {
+        const run = await runPerf(
+          { increments: ['inc-014', 'inc-015'], stopAfter: 2 },
+          {
+            'inc-014 gate check': { ok: false, summary: 'Look at the report.' }
+          }
+        )
+
+        expect({
+          stopped: run.result.stopped,
+          reviewChecks: run.result.reviewChecks,
+          nextStarted: labelsOf(run).includes('inc-015 start')
+        }).toEqual({
+          stopped: { reason: 'gate', detail: 'inc-014: Look at the report.' },
+          reviewChecks: [],
+          nextStarted: false
         })
       })
 
@@ -3104,9 +4026,29 @@ describe('increment-build-loop', () => {
           }
         )
 
-        expect(promptOf(run, 'inc-014 plan')).not.toContain('frontend-change')
+        expect(promptOf(run, 'inc-014 plan')).not.toContain(
+          'frontend-change/SKILL.md'
+        )
         expect(promptOf(run, 'inc-014 implement')).not.toContain(
-          'frontend-change'
+          'frontend-change/SKILL.md'
+        )
+        expect(promptOf(run, 'inc-014 implement')).toContain(
+          'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+        )
+      })
+
+      test('gives the Codex implementor the same spec duty', async () => {
+        const run = await runPerf(
+          { executor: 'codex' },
+          { 'inc-014 codex:implement': { ok: true, summary: 'ran' } }
+        )
+        const prompt = promptOf(run, 'inc-014 codex:implement')
+
+        expect(prompt).toContain(
+          'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
+        )
+        expect(prompt).toContain(
+          '**Paths under the WORKSPACE root `~/ws` are LITERAL'
         )
       })
 
@@ -3461,7 +4403,8 @@ describe('increment-build-loop', () => {
           'inc-020 merge',
           'inc-020 done',
           'inc-020 workspace to base',
-          'inc-020 gate check'
+          'inc-020 gate check',
+          'inc-020 theme'
         ])
         expect(run.result.increments[0]).toMatchObject({
           id: 'inc-020',
@@ -4038,36 +4981,70 @@ describe('distil', () => {
     problems: [],
     summary: 'read'
   })
-  const EXTRACTED = {
+  const EXTRACT_DIR = '/ws/workareas/shared/demo/distil/extract'
+  const CHARACTERISED = {
     ok: true,
-    claims: 3,
-    structure: 'Three specs.',
+    parts: 2,
+    structure: 'Two spec folders.',
     decisions: ['Left the admin specs out of scope.'],
-    summary: 'extracted'
+    summary: 'characterised'
   }
-  const CHECKED = {
+  const partitionedAs = (slug) => ({
     ok: true,
     problems: [],
-    claims: 3,
-    chunks: [
+    parts: [
       {
         part: 1,
-        from: 'repo-tests-001',
-        to: 'repo-tests-002',
-        count: 2,
-        path: `${VERIFY_DIR}/repo-tests.part1.json`
+        title: 'Specs',
+        prefix: `${slug}-p1`,
+        path: `${EXTRACT_DIR}/${slug}.part1.json`
       },
       {
         part: 2,
-        from: 'repo-tests-003',
-        to: 'repo-tests-003',
-        count: 1,
-        path: `${VERIFY_DIR}/repo-tests.part2.json`
+        title: 'Fixtures',
+        prefix: `${slug}-p2`,
+        path: `${EXTRACT_DIR}/${slug}.part2.json`
       }
     ],
     removedParts: [],
     summary: 'in shape'
+  })
+  const PARTITIONED = partitionedAs('repo-tests')
+  const extractedPart = (part) => ({
+    ok: true,
+    part,
+    claims: part === 1 ? 2 : 1,
+    gaps: 0,
+    structure: `Part ${part}, read in full.`,
+    decisions: [`Claimed every test in part ${part}.`],
+    summary: 'extracted'
+  })
+  const PART_RANGES = [
+    {
+      part: 1,
+      title: 'Specs',
+      claims: 2,
+      from: 'repo-tests-p1-001',
+      to: 'repo-tests-p1-002'
+    },
+    {
+      part: 2,
+      title: 'Fixtures',
+      claims: 1,
+      from: 'repo-tests-p2-001',
+      to: 'repo-tests-p2-001'
+    }
+  ]
+  const CHECKED = {
+    ok: true,
+    problems: [],
+    claims: 3,
+    ranges: 2,
+    parts: PART_RANGES,
+    removedParts: [],
+    summary: 'in shape'
   }
+  const MERGED_EXTRACT = { ...CHECKED, stage: 'done', summary: 'merged' }
   const verifiedPart = (part) => ({
     ok: true,
     part,
@@ -4140,9 +5117,67 @@ describe('distil', () => {
   const CONSOLIDATED = {
     ok: true,
     increments: 2,
+    themes: 0,
     decisions: [],
     reconcileProblems: [],
     summary: 'two increments'
+  }
+  const AREA_PLANNED = {
+    ok: true,
+    areas: [
+      { id: 'suite', title: 'The test suite' },
+      { id: 'tiers', title: 'Test tiers' }
+    ],
+    everyArea: ['ruling:sam'],
+    decisions: ['Gave the ruling to every area.'],
+    summary: 'two areas'
+  }
+  const AREA_SETS = {
+    ok: true,
+    problems: [],
+    areas: [
+      { id: 'suite', claims: 4 },
+      { id: 'tiers', claims: 3 }
+    ],
+    total: 7,
+    removed: [],
+    summary: 'written'
+  }
+  const AREA_RECONCILED = {
+    ok: true,
+    requirements: 2,
+    conflicts: 1,
+    questions: 1,
+    decisions: ['Kept the smoke test apart from the tiers.'],
+    goalConflicts: [],
+    summary: 'reconciled'
+  }
+  const AREAS_MERGED = {
+    ok: true,
+    problems: [],
+    areas: ['suite', 'tiers'],
+    requirements: 4,
+    conflicts: 1,
+    summary: 'merged'
+  }
+  const CROSS_AREA = {
+    ...RECONCILED,
+    merged: ['req-002 kept; req-005 folded into it'],
+    decisions: ['Merged two claims about the smoke test.']
+  }
+  const STANDS = {
+    ok: true,
+    conflict: 'c-001',
+    verdict: 'question',
+    rule: 'No ruling or precedence says where the suites live.',
+    summary: 'stands'
+  }
+  const DRAFTED = {
+    ok: true,
+    rows: 1,
+    requirements: 2,
+    decisions: [],
+    summary: 'drafted'
   }
   const BACKLOG_OK = {
     ...COVERAGE_OK,
@@ -4157,15 +5192,27 @@ describe('distil', () => {
 
   const HAPPY_ANSWERS = {
     status: statusWith([PENDING_SOURCE, VERIFIED_SOURCE]),
-    'repo:tests extract': EXTRACTED,
+    'repo:tests characterise': CHARACTERISED,
+    'repo:tests check partition': PARTITIONED,
+    'repo:tests extract part 1/2': extractedPart(1),
+    'repo:tests extract part 2/2': extractedPart(2),
+    'repo:tests merge extract': MERGED_EXTRACT,
     'repo:tests check extract': CHECKED,
     'repo:tests verify 1/2': verifiedPart(1),
     'repo:tests verify 2/2': verifiedPart(2),
     'repo:tests merge': MERGED,
     'working set': workingSetWith({}),
-    reconcile: RECONCILED,
-    'coverage after reconcile': COVERAGE_OK,
-    consolidate: CONSOLIDATED,
+    'area plan': AREA_PLANNED,
+    'area working sets': AREA_SETS,
+    'reconcile suite': AREA_RECONCILED,
+    'reconcile tiers': AREA_RECONCILED,
+    'merge areas': AREAS_MERGED,
+    'reconcile across areas': CROSS_AREA,
+    'coverage after reconcile across areas': COVERAGE_OK,
+    'challenge c-001': STANDS,
+    'draft rows suite': DRAFTED,
+    'draft rows tiers': DRAFTED,
+    'combine rows': CONSOLIDATED,
     'check backlog': BACKLOG_OK,
     report: { report: REPORT_TEXT, issues: [] }
   }
@@ -4248,13 +5295,42 @@ describe('distil', () => {
   })
 
   describe('the models and agents', () => {
-    test('runs status on the light tier, extract and verify on code, and reconcile on think', async () => {
+    test('runs characterise, every extract part and every verifier on opus when models is empty', async () => {
       const run = await runDistil()
 
-      expect(optionsOf(run, 'status').model).toBe('haiku')
-      expect(optionsOf(run, 'repo:tests extract').model).toBe('sonnet')
-      expect(optionsOf(run, 'repo:tests verify 1/2').model).toBe('sonnet')
-      expect(optionsOf(run, 'reconcile').model).toBe('opus')
+      expect({
+        characterise: optionsOf(run, 'repo:tests characterise').model,
+        part: optionsOf(run, 'repo:tests extract part 2/2').model,
+        verify: optionsOf(run, 'repo:tests verify 1/2').model,
+        reconcile: optionsOf(run, 'reconcile across areas').model
+      }).toEqual({
+        characterise: 'opus',
+        part: 'opus',
+        verify: 'opus',
+        reconcile: 'opus'
+      })
+    })
+
+    test('runs status and the checks and merges on the light tier', async () => {
+      const run = await runDistil()
+
+      expect({
+        status: optionsOf(run, 'status').model,
+        partition: optionsOf(run, 'repo:tests check partition').model,
+        mergeExtract: optionsOf(run, 'repo:tests merge extract').model,
+        mergeVerify: optionsOf(run, 'repo:tests merge').model
+      }).toEqual({
+        status: 'haiku',
+        partition: 'haiku',
+        mergeExtract: 'haiku',
+        mergeVerify: 'haiku'
+      })
+    })
+
+    test('lets the code tier be lowered for the extract parts and verifiers', async () => {
+      const run = await runDistil({ models: { code: 'sonnet' } })
+
+      expect(optionsOf(run, 'repo:tests extract part 1/2').model).toBe('sonnet')
     })
 
     test('lets a tier be set to inherit the session model', async () => {
@@ -4286,15 +5362,26 @@ describe('distil', () => {
 
       expect(labelsOf(run)).toEqual([
         'status',
-        'repo:tests extract',
-        'repo:tests check extract',
+        'repo:tests characterise',
+        'repo:tests check partition',
+        'repo:tests extract part 1/2',
+        'repo:tests extract part 2/2',
+        'repo:tests merge extract',
         'repo:tests verify 1/2',
         'repo:tests verify 2/2',
         'repo:tests merge',
         'working set',
-        'reconcile',
-        'coverage after reconcile',
-        'consolidate',
+        'area plan',
+        'area working sets',
+        'reconcile suite',
+        'reconcile tiers',
+        'merge areas',
+        'reconcile across areas',
+        'coverage after reconcile across areas',
+        'challenge c-001',
+        'draft rows suite',
+        'draft rows tiers',
+        'combine rows',
         'check backlog',
         'report'
       ])
@@ -4344,31 +5431,85 @@ describe('distil', () => {
       )
     })
 
-    test('picks the extract brief by the source kind and names the claim id prefix', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+    test('has the characterise agent follow its brief and write the partition', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/characterise.md'
+      )
+      expect(prompt).toContain(
+        'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/extract/repo-tests.partition.json'
+      )
+    })
+
+    test('names each part its prefix', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        'PREFIXES: part N\'s prefix is "repo-tests-p<N>": repo-tests-p1, repo-tests-p2 and on.'
+      )
+    })
+
+    test('has tim clear old extract part files once the partition checks out', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests check partition')
+
+      expect(prompt).toContain(
+        '`tim distil check shared/demo --source repo:tests --stage partition --clear-parts --workspace ~/ws --json`'
+      )
+    })
+
+    test('gives each part agent its kind brief, its slice of the partition and its own file', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract part 2/2')
 
       expect(prompt).toContain(
         '/ws/.claude/skills/requirements-pipeline/workflow/distil/briefs/extract-repo.md'
       )
       expect(prompt).toContain(
-        'Use the prefix "repo-tests": repo-tests-001, repo-tests-002 and on.'
+        "`jq '.parts[1]' ~/ws/workareas/shared/demo/distil/extract/repo-tests.partition.json`"
+      )
+      expect(prompt).toContain(
+        `THE FILE YOU WRITE: ${EXTRACT_DIR}/repo-tests.part2.json`
       )
     })
 
-    test('tells the extractor to stamp its file with the scope hash', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests extract')
+    test('has each part agent check only its own part', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests extract part 2/2')
 
       expect(prompt).toContain(
-        '`tim distil stamp shared/demo --source repo:tests --workspace ~/ws --json`'
+        '`tim distil check shared/demo --source repo:tests --stage extract --part 2 --workspace ~/ws --json`'
       )
     })
 
-    test('asks the check for verify ranges of at most verifyChunk claims', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+    test('merges the extract parts, then asks for verify ranges of at most verifyChunk claims', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests merge extract')
+
+      expect(
+        prompt.indexOf(
+          '`tim distil merge-extract shared/demo --source repo:tests --workspace ~/ws --json`'
+        )
+      ).toBeLessThan(
+        prompt.indexOf(
+          '`tim distil check shared/demo --source repo:tests --stage extract --chunk 2 --clear-parts --workspace ~/ws --json`'
+        )
+      )
+    })
+
+    test('tells each verifier which parts its range came from', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests verify 2/2')
 
       expect(prompt).toContain(
-        '`tim distil check shared/demo --source repo:tests --stage extract --chunk 2 --clear-parts --workspace ~/ws --json`'
+        "your claims come from part 2 of the partition.\nRead `jq '.parts[1]' ~/ws/workareas/shared/demo/distil/extract/repo-tests.partition.json`"
       )
+    })
+
+    test('returns every decision, from characterise and from each part', async () => {
+      const run = await runDistil()
+
+      expect(run.result.sources[0].decisions).toEqual([
+        'Left the admin specs out of scope.',
+        'part 1: Claimed every test in part 1.',
+        'part 2: Claimed every test in part 2.'
+      ])
     })
 
     test('gives each verifier its own range of claims and its own part file', async () => {
@@ -4391,41 +5532,61 @@ describe('distil', () => {
     })
 
     test('has tim clear old verify part files, rather than an agent running rm', async () => {
-      const prompt = promptOf(await runDistil(), 'repo:tests check extract')
+      const prompt = promptOf(await runDistil(), 'repo:tests merge extract')
 
       expect(prompt).toContain('--clear-parts')
       expect(prompt).not.toMatch(/`rm /)
     })
 
-    test('tells a trace extractor and its verifiers to run the trace CLI through tim, with no cd', async () => {
+    describe('a trace source', () => {
       const traceSource = {
         ...PENDING_SOURCE,
         id: 'trace:ched-p',
         kind: 'trace',
         slug: 'trace-ched-p'
       }
-      const run = await runDistil(
-        {},
-        {
-          status: statusWith([traceSource, VERIFIED_SOURCE]),
-          'trace:ched-p extract': EXTRACTED,
-          'trace:ched-p check extract': {
-            ...CHECKED,
-            chunks: CHECKED.chunks.map((chunk) => ({
-              ...chunk,
-              path: chunk.path.replace('repo-tests', 'trace-ched-p')
-            }))
-          },
-          'trace:ched-p verify 1/2': verifiedPart(1),
-          'trace:ched-p verify 2/2': verifiedPart(2),
-          'trace:ched-p merge': MERGED
-        }
-      )
+      const forTrace = (answer) =>
+        JSON.parse(
+          JSON.stringify(answer).replaceAll('repo-tests', 'trace-ched-p')
+        )
+      const runTrace = () =>
+        runDistil(
+          {},
+          {
+            status: statusWith([traceSource, VERIFIED_SOURCE]),
+            'trace:ched-p characterise': CHARACTERISED,
+            'trace:ched-p check partition': partitionedAs('trace-ched-p'),
+            'trace:ched-p extract part 1/2': extractedPart(1),
+            'trace:ched-p extract part 2/2': extractedPart(2),
+            'trace:ched-p merge extract': forTrace(MERGED_EXTRACT),
+            'trace:ched-p verify 1/2': verifiedPart(1),
+            'trace:ched-p verify 2/2': verifiedPart(2),
+            'trace:ched-p merge': MERGED
+          }
+        )
+      const traceCommand = (folder) =>
+        `\`tim distil trace shared/demo --source trace:ched-p${folder} [--out <file name>] --workspace ~/ws --json -- <subcommand and its arguments>\``
 
-      const command =
-        '`tim distil trace shared/demo --source trace:ched-p [--out <file name>] --workspace ~/ws --json -- <subcommand and its arguments>`'
-      expect(promptOf(run, 'trace:ched-p extract')).toContain(command)
-      expect(promptOf(run, 'trace:ched-p verify 1/2')).toContain(command)
+      test('has the characterise agent run the trace CLI through tim, in the source folder', async () => {
+        const run = await runTrace()
+
+        expect(promptOf(run, 'trace:ched-p characterise')).toContain(
+          traceCommand('')
+        )
+      })
+
+      test('gives each part agent and each verifier a trace folder of its own, so none opens over another', async () => {
+        const run = await runTrace()
+
+        expect({
+          part: promptOf(run, 'trace:ched-p extract part 2/2').includes(
+            traceCommand(' --folder part2')
+          ),
+          verify: promptOf(run, 'trace:ched-p verify 1/2').includes(
+            traceCommand(' --folder verify1')
+          )
+        }).toEqual({ part: true, verify: true })
+      })
     })
 
     test('merges the parts, then checks the verify stage', async () => {
@@ -4539,7 +5700,12 @@ describe('distil', () => {
         'ruling:sam-b withdrew real integrations in perf-test: the goal should say every environment is stubbed.'
       const run = await runDistil(
         {},
-        { reconcile: { ...RECONCILED, goalConflicts: [contradiction] } }
+        {
+          'reconcile tiers': {
+            ...AREA_RECONCILED,
+            goalConflicts: [contradiction]
+          }
+        }
       )
 
       expect(promptOf(run, 'report')).toContain(
@@ -4567,8 +5733,36 @@ describe('distil', () => {
         }
       )
 
-      expect(labelsOf(run)).not.toContain('repo:tests extract')
+      expect(labelsOf(run)).not.toContain('repo:tests characterise')
       expect(labelsOf(run)).toContain('repo:tests verify 1/2')
+    })
+
+    test('has a stale source characterised again, sharing its old claim ids out among the parts', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([
+            {
+              ...PENDING_SOURCE,
+              state: 'stale',
+              reason: 'The extract records no scope hash.'
+            },
+            VERIFIED_SOURCE
+          ])
+        }
+      )
+
+      expect(promptOf(run, 'repo:tests characterise')).toContain(
+        "`jq -c '.claims[] | {id, ref}' ~/ws/workareas/shared/demo/distil/extract/repo-tests.json`"
+      )
+    })
+
+    test('starts a pending source with no old claim ids to keep', async () => {
+      const prompt = promptOf(await runDistil(), 'repo:tests characterise')
+
+      expect(prompt).toContain(
+        'KEEPS: This source has no extract yet, so no part has "keeps".'
+      )
     })
 
     test('stops before any extract when only names a source sources.json does not have', async () => {
@@ -4590,7 +5784,7 @@ describe('distil', () => {
       )
 
       expect(labelsOf(run)).not.toContain('repo:stub extract')
-      expect(labelsOf(run)).not.toContain('reconcile')
+      expect(labelsOf(run)).not.toContain('reconcile across areas')
       expect(run.result.stopped.reason).toBe('sources-unverified')
       expect(run.result.stopped.detail).toContain(
         '1 source(s) left for a later launch: repo:stub'
@@ -4617,37 +5811,98 @@ describe('distil', () => {
   })
 
   describe('a source that will not check out', () => {
-    const EXTRACT_PROBLEMS = {
+    const PARTITION_PROBLEMS = {
       ok: false,
-      problems: ['repo-tests.json claim 2 has "gap" as its kind.'],
-      chunks: [],
+      problems: [
+        'distil/extract/repo-tests.partition.json parts[1].read needs at least 1 item.'
+      ],
+      parts: [],
       removedParts: [],
       summary: 'out of shape'
     }
+    const PART_MISSING = {
+      ok: false,
+      stage: 'merge',
+      problems: [
+        'distil/extract/repo-tests.part2.json does not exist yet: part 2 (Fixtures) has no extract.'
+      ],
+      parts: [],
+      claims: 0,
+      ranges: 0,
+      removedParts: [],
+      summary: 'refused'
+    }
 
-    test('sends the extractor back once with the problems', async () => {
+    test('sends the characterise agent back once with the partition problems', async () => {
       const run = await runDistil(
         {},
         {
-          'repo:tests check extract': EXTRACT_PROBLEMS,
-          'repo:tests extract retry 1': EXTRACTED,
-          'repo:tests check extract 2': CHECKED
+          'repo:tests check partition': PARTITION_PROBLEMS,
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITIONED
         }
       )
 
-      expect(promptOf(run, 'repo:tests extract retry 1')).toContain(
-        '- repo-tests.json claim 2 has "gap" as its kind.'
+      expect(promptOf(run, 'repo:tests characterise retry 1')).toContain(
+        '- distil/extract/repo-tests.partition.json parts[1].read needs at least 1 item.'
       )
       expect(run.result.stopped).toBeNull()
     })
 
-    test('marks the source failed after one retry and stops before reconcile', async () => {
+    test('marks the source failed at characterise after one retry, and extracts no part', async () => {
       const run = await runDistil(
         {},
         {
-          'repo:tests check extract': EXTRACT_PROBLEMS,
-          'repo:tests extract retry 1': EXTRACTED,
-          'repo:tests check extract 2': EXTRACT_PROBLEMS
+          'repo:tests check partition': PARTITION_PROBLEMS,
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITION_PROBLEMS
+        }
+      )
+
+      expect(run.result.sources[0]).toMatchObject({
+        outcome: 'failed',
+        failedAt: 'characterise'
+      })
+      expect(labelsOf(run)).not.toContain('repo:tests extract part 1/2')
+    })
+
+    test('sends back a partition whose prefixes are not the ones the workflow names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check partition': partitionedAs('tests'),
+          'repo:tests characterise retry 1': CHARACTERISED,
+          'repo:tests check partition 2': PARTITIONED
+        }
+      )
+
+      expect(promptOf(run, 'repo:tests characterise retry 1')).toContain(
+        '- part 1 has the prefix tests-p1. Give it repo-tests-p1, the prefix the workflow names'
+      )
+    })
+
+    test('extracts again only the part a failed merge names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': PART_MISSING,
+          'repo:tests extract part 2/2 retry 1': extractedPart(2),
+          'repo:tests merge extract 2': MERGED_EXTRACT
+        }
+      )
+
+      const retries = labelsOf(run).filter((label) => label.includes('retry'))
+      expect(retries).toEqual(['repo:tests extract part 2/2 retry 1'])
+      expect(run.result.stopped).toBeNull()
+    })
+
+    test('marks the source failed at extract when the merge fails twice, and stops before reconcile', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': PART_MISSING,
+          'repo:tests extract part 2/2 retry 1': extractedPart(2),
+          'repo:tests merge extract 2': PART_MISSING
         }
       )
 
@@ -4655,9 +5910,34 @@ describe('distil', () => {
       expect(run.result.sources[0]).toMatchObject({
         outcome: 'failed',
         failedAt: 'extract',
-        problems: ['repo-tests.json claim 2 has "gap" as its kind.']
+        problems: PART_MISSING.problems
       })
       expect(labelsOf(run)).not.toContain('working set')
+    })
+
+    test('characterises and extracts again an extracted source whose extract no longer checks out', async () => {
+      const run = await runDistil(
+        {},
+        {
+          status: statusWith([
+            { ...PENDING_SOURCE, state: 'extracted', next: 'verify' },
+            VERIFIED_SOURCE
+          ]),
+          'repo:tests check extract': {
+            ...PART_MISSING,
+            stage: undefined,
+            problems: [
+              'distil/extract/repo-tests.json is not its parts merged: a part changed after the merge, or the extract was written by hand.'
+            ]
+          }
+        }
+      )
+
+      expect(labelsOf(run).slice(1, 4)).toEqual([
+        'repo:tests check extract',
+        'repo:tests characterise',
+        'repo:tests check partition'
+      ])
     })
 
     test('verifies again only the part a failed merge names', async () => {
@@ -4711,7 +5991,7 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ok: false,
             problems: [
               'req-002 cites repo-tests-009, which verification refuted. Cite a claim that held.'
@@ -4721,21 +6001,24 @@ describe('distil', () => {
             ],
             summary: 'two problems'
           },
-          'reconcile send-back 1': RECONCILED,
-          'coverage after reconcile 2': COVERAGE_OK
+          'reconcile across areas send-back 1': RECONCILED,
+          'coverage after reconcile across areas 2': COVERAGE_OK
         }
       )
 
-      const prompt = promptOf(run, 'reconcile send-back 1')
+      const prompt = promptOf(run, 'reconcile across areas send-back 1')
       expect(prompt).toContain('- req-002 cites repo-tests-009')
       expect(prompt).not.toContain('- req-003 is adopted as new')
     })
 
     test('routes problems by the scope tim gives them, not their wording', async () => {
-      const prompt = promptOf(await runDistil(), 'coverage after reconcile')
+      const prompt = promptOf(
+        await runDistil(),
+        'coverage after reconcile across areas'
+      )
 
       expect(prompt).toContain(
-        'Copy the message of each one whose\n   scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems'
+        'Copy the message\n   of each one whose scope is reconcile into problems, and of each one whose scope is backlog into backlogProblems'
       )
     })
 
@@ -4743,7 +6026,7 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ...COVERAGE_OK,
             ok: false,
             backlogProblems: [
@@ -4753,8 +6036,8 @@ describe('distil', () => {
         }
       )
 
-      expect(labelsOf(run)).not.toContain('reconcile send-back 1')
-      expect(labelsOf(run)).toContain('consolidate')
+      expect(labelsOf(run)).not.toContain('reconcile across areas send-back 1')
+      expect(labelsOf(run)).toContain('combine rows')
     })
 
     test('stops with reconcile-failed after two send-backs', async () => {
@@ -4769,20 +6052,20 @@ describe('distil', () => {
       const run = await runDistil(
         {},
         {
-          'coverage after reconcile': refuted,
-          'reconcile send-back 1': RECONCILED,
-          'coverage after reconcile 2': refuted,
-          'reconcile send-back 2': RECONCILED,
-          'coverage after reconcile 3': refuted
+          'coverage after reconcile across areas': refuted,
+          'reconcile across areas send-back 1': RECONCILED,
+          'coverage after reconcile across areas 2': refuted,
+          'reconcile across areas send-back 2': RECONCILED,
+          'coverage after reconcile across areas 3': refuted
         }
       )
 
       expect(run.result.stopped.reason).toBe('reconcile-failed')
-      expect(labelsOf(run)).not.toContain('consolidate')
+      expect(labelsOf(run)).not.toContain('combine rows')
     })
 
     test('tells the reconciler a doubt about one part of the target is a question, never a plain reading', async () => {
-      const prompt = promptOf(await runDistil(), 'reconcile')
+      const prompt = promptOf(await runDistil(), 'reconcile across areas')
 
       expect(prompt).toContain(
         'WHERE A SOURCE OR RULING CANNOT BE MET AS WRITTEN in some part of the target (an environment, a repo, a journey or\na stage), or two readings of it would build different things, make it a question with a default that says what each\npart gets. Never adopt one plain reading for every part.'
@@ -4790,7 +6073,7 @@ describe('distil', () => {
     })
 
     test('tells the consolidator to send back a criterion one environment cannot observe', async () => {
-      const prompt = promptOf(await runDistil(), 'consolidate')
+      const prompt = promptOf(await runDistil(), 'combine rows')
 
       expect(prompt).toContain(
         'EVERY ACCEPTANCE CRITERION CAN BE OBSERVED in every environment its row names. Never write one that cannot. Put the\nrequirement in reconcileProblems instead: the workflow sends it back to the reconciler.'
@@ -4802,10 +6085,10 @@ describe('distil', () => {
         'req-007: the local stack has no real SQS, so "real, not stubbed" cannot be observed there.'
       const SENDS_BACK = { ...CONSOLIDATED, reconcileProblems: [SENT_BACK] }
       const ROUND_2 = {
-        consolidate: SENDS_BACK,
-        'reconcile, round 2': RECONCILED,
-        'coverage after reconcile, round 2': BACKLOG_OK,
-        'consolidate, round 2': CONSOLIDATED,
+        'combine rows': SENDS_BACK,
+        'reconcile across areas, round 2': RECONCILED,
+        'coverage after reconcile across areas, round 2': BACKLOG_OK,
+        'combine rows, round 2': CONSOLIDATED,
         'check backlog, round 2': BACKLOG_OK
       }
       const runSentBack = (overrides = {}) =>
@@ -4815,11 +6098,11 @@ describe('distil', () => {
         const run = await runSentBack()
 
         expect(labelsOf(run).slice(-7)).toEqual([
-          'consolidate',
+          'combine rows',
           'check backlog',
-          'reconcile, round 2',
-          'coverage after reconcile, round 2',
-          'consolidate, round 2',
+          'reconcile across areas, round 2',
+          'coverage after reconcile across areas, round 2',
+          'combine rows, round 2',
           'check backlog, round 2',
           'report'
         ])
@@ -4828,7 +6111,7 @@ describe('distil', () => {
       test('gives the reconciler the requirement as the consolidator worded it', async () => {
         const run = await runSentBack()
 
-        expect(promptOf(run, 'reconcile, round 2')).toContain(
+        expect(promptOf(run, 'reconcile across areas, round 2')).toContain(
           `THE CONSOLIDATOR SENT THESE BACK: it could not write an acceptance criterion that every environment its row names can\nobserve. Settle each one as a question with a default that says what each part gets, or reword the requirement:\n- ${SENT_BACK}`
         )
       })
@@ -4836,7 +6119,7 @@ describe('distil', () => {
       test('tells the second consolidator its first pass is there to rewrite', async () => {
         const run = await runSentBack()
 
-        const prompt = promptOf(run, 'consolidate, round 2')
+        const prompt = promptOf(run, 'combine rows, round 2')
         expect(prompt).toContain(
           'backlog.json is the first pass from this run. Rewrite any row in it.'
         )
@@ -4852,7 +6135,7 @@ describe('distil', () => {
       })
 
       test('puts a requirement still open after round 2 in the report as a step before building', async () => {
-        const run = await runSentBack({ 'consolidate, round 2': SENDS_BACK })
+        const run = await runSentBack({ 'combine rows, round 2': SENDS_BACK })
 
         expect(run.result.reconcileProblems).toEqual([SENT_BACK])
         expect(promptOf(run, 'report')).toContain(
@@ -4872,9 +6155,17 @@ describe('distil', () => {
         }
       )
 
-      expect(promptOf(run, 'reconcile')).toContain(
-        'requirements.json already exists: this is a re-distil. Keep every existing id.'
-      )
+      expect({
+        plan: promptOf(run, 'area plan').includes(
+          'Give every existing\nrequirement and conflict to exactly one area'
+        ),
+        area: promptOf(run, 'reconcile suite').includes(
+          'keep every one of them, id unchanged.'
+        ),
+        across: promptOf(run, 'reconcile across areas').includes(
+          'This is a re-distil: requirements and conflicts existed before this run. Keep every existing id.'
+        )
+      }).toEqual({ plan: true, area: true, across: true })
     })
 
     describe('over an existing backlog', () => {
@@ -4900,7 +6191,7 @@ describe('distil', () => {
               hasConflicts: true,
               hasBacklog: true
             }),
-            'coverage after reconcile': BEFORE,
+            'coverage after reconcile across areas': BEFORE,
             'check backlog': afterWith({}),
             ...answerOverrides
           }
@@ -4909,7 +6200,9 @@ describe('distil', () => {
       test('has tim save the rows before the consolidator runs, and compare them after', async () => {
         const run = await runRedistil({})
 
-        expect(promptOf(run, 'coverage after reconcile')).toContain(
+        expect(
+          promptOf(run, 'coverage after reconcile across areas')
+        ).toContain(
           '`tim distil backlog-snapshot shared/demo --save before --workspace ~/ws --json`'
         )
         expect(promptOf(run, 'check backlog')).toContain(
@@ -4930,11 +6223,11 @@ describe('distil', () => {
       test('sends the consolidator back when a row built or set aside changed', async () => {
         const run = await runRedistil({
           'check backlog': afterWith({ changed: ['inc-001'] }),
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': afterWith({})
         })
 
-        expect(promptOf(run, 'consolidate send-back 1')).toContain(
+        expect(promptOf(run, 'combine rows send-back 1')).toContain(
           '- inc-001: a row built or set aside (not todo or blocked) changed.'
         )
         expect(run.result.stopped).toBeNull()
@@ -4942,7 +6235,7 @@ describe('distil', () => {
 
       test('stops with snapshot-failed when the rows could not be saved', async () => {
         const run = await runRedistil({
-          'coverage after reconcile': {
+          'coverage after reconcile across areas': {
             ...BEFORE,
             snapshotOk: false,
             snapshotProblems: ['backlog.json is not valid JSON.']
@@ -4950,16 +6243,131 @@ describe('distil', () => {
         })
 
         expect(run.result.stopped.reason).toBe('snapshot-failed')
-        expect(labelsOf(run)).not.toContain('consolidate')
+        expect(labelsOf(run)).not.toContain('combine rows')
+      })
+
+      describe('with a theme split off early', () => {
+        const SPLIT_OFF_BEFORE = {
+          theme: 'smoke-gate',
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: 'shared/demo/themes/smoke-gate',
+          touches: ['tests:k6/smoke'],
+          requirements: ['req-002'],
+          pickUp: []
+        }
+        const STANDING = {
+          theme: 'smoke-gate',
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: 'shared/demo/themes/smoke-gate',
+          backlog: 'themes/smoke-gate/backlog.json',
+          requirements: ['req-002'],
+          pickUp: ['req-007'],
+          changed: ['req-002'],
+          noLongerToBuild: [],
+          nowInPlace: []
+        }
+        const runSplitOff = (answerOverrides = {}) =>
+          runRedistil({
+            'coverage after reconcile across areas': {
+              ...BEFORE,
+              splitOffBefore: [SPLIT_OFF_BEFORE]
+            },
+            'check backlog': afterWith({
+              splitOffChanged: [],
+              backlogCoveredBySplitOff: 2,
+              splitOff: [STANDING]
+            }),
+            ...answerOverrides
+          })
+
+        test('has tim save the split-off pointers with the rows, and compare them after', async () => {
+          const run = await runSplitOff()
+
+          expect([
+            promptOf(run, 'coverage after reconcile across areas'),
+            promptOf(run, 'check backlog')
+          ]).toEqual([
+            expect.stringContaining(
+              'every entry of result.splitOff into splitOffBefore, exactly'
+            ),
+            expect.stringContaining(
+              'result.compared.splitOffChanged into removed, changed and splitOffChanged, exactly'
+            )
+          ])
+        })
+
+        test('tells every drafter to draft no row for what a split-off theme holds or touches', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'draft rows suite')).toContain(
+            'THEMES SPLIT OFF EARLY. These left backlog.json and build on their own branches:\n- smoke-gate, on feat/NO_JIRA-demo-smoke-gate: touches tests:k6/smoke; holds req-002\nDraft no row for a requirement one of them holds'
+          )
+        })
+
+        test('tells the combiner to carry the pointers over and hand new work to pickUp', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'combine rows')).toContain(
+            'Carry backlog.json\'s "splitOff" over unchanged: never remove a pointer or change any of its fields but "pickUp".'
+          )
+        })
+
+        test('sends the combiner back when a pointer changed', async () => {
+          const run = await runSplitOff({
+            'check backlog': afterWith({ splitOffChanged: ['smoke-gate'] }),
+            'combine rows send-back 1': CONSOLIDATED,
+            'check backlog 2': afterWith({ splitOffChanged: [] })
+          })
+
+          expect(promptOf(run, 'combine rows send-back 1')).toContain(
+            '- smoke-gate: a theme split off early lost its pointer in "splitOff", or the pointer changed in a field other than "pickUp".'
+          )
+        })
+
+        test('sends the combiner back when the check relays no pointer comparison', async () => {
+          const run = await runSplitOff({
+            'check backlog': afterWith({}),
+            'combine rows send-back 1': CONSOLIDATED,
+            'check backlog 2': afterWith({ splitOffChanged: [] })
+          })
+
+          expect(labelsOf(run)).toContain('combine rows send-back 1')
+        })
+
+        test('has the report hand each split branch what falls to it, naming the branch', async () => {
+          const run = await runSplitOff()
+
+          expect(promptOf(run, 'report')).toContain(
+            'Write the "For the split branches" section, as REPORT.md says, with\none part per theme below, naming its branch, and say in the summary that a split branch has work to pick up:\n- smoke-gate, on feat/NO_JIRA-demo-smoke-gate (shared/demo/themes/smoke-gate):\n  to pick up, adopted since the split: req-007\n  changed since the split: req-002\n  no longer to build: none'
+          )
+        })
+
+        test('returns what each split-off theme holds and has to pick up', async () => {
+          const run = await runSplitOff()
+
+          expect([
+            run.result.splitOff,
+            run.result.backlog.coveredBySplitOff
+          ]).toEqual([[STANDING], 2])
+        })
+
+        test('says nothing of split-off themes when the backlog has none', async () => {
+          const run = await runRedistil({})
+
+          const mentions = run.agents
+            .filter(({ prompt }) => prompt.includes('THEMES SPLIT OFF EARLY'))
+            .map(({ options }) => options.label)
+          expect([mentions, run.result.splitOff]).toEqual([[], []])
+        })
       })
 
       test('stops with consolidate-failed when a row stays removed after two send-backs', async () => {
         const removed = afterWith({ removed: ['inc-001'] })
         const run = await runRedistil({
           'check backlog': removed,
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': removed,
-          'consolidate send-back 2': CONSOLIDATED,
+          'combine rows send-back 2': CONSOLIDATED,
           'check backlog 3': removed
         })
 
@@ -4982,14 +6390,306 @@ describe('distil', () => {
               'inc-002 depends on inc-009, which is not in the backlog.'
             ]
           },
-          'consolidate send-back 1': CONSOLIDATED,
+          'combine rows send-back 1': CONSOLIDATED,
           'check backlog 2': BACKLOG_OK
         }
       )
 
-      expect(promptOf(run, 'consolidate send-back 1')).toContain(
+      expect(promptOf(run, 'combine rows send-back 1')).toContain(
         '- inc-002 depends on inc-009, which is not in the backlog.'
       )
+    })
+  })
+
+  describe('relays the workflow builds on', () => {
+    test('asks the extract check again when the merge relayed no verify ranges, then verifies every range', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': { ...MERGED_EXTRACT, ranges: 0 },
+          'repo:tests check extract again': CHECKED
+        }
+      )
+
+      expect({
+        asked: promptOf(run, 'repo:tests check extract again').includes(
+          'the extract check relayed 0 verify ranges, but 3 claims in ranges of 2 make 2'
+        ),
+        verifiers: labelsOf(run).filter((label) =>
+          label.startsWith('repo:tests verify ')
+        )
+      }).toEqual({
+        asked: true,
+        verifiers: ['repo:tests verify 1/2', 'repo:tests verify 2/2']
+      })
+    })
+
+    test('fails the source at extract when the relay is wrong twice, and verifies nothing', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests merge extract': { ...MERGED_EXTRACT, ranges: 0 },
+          'repo:tests check extract again': { ...CHECKED, ranges: 0 }
+        }
+      )
+
+      expect({
+        source: run.result.sources[0].failedAt,
+        verified: labelsOf(run).some((label) => label.includes('verify'))
+      }).toEqual({ source: 'extract', verified: false })
+    })
+
+    test('works out each verify range from the claim count, never from a relayed list', async () => {
+      const run = await runDistil()
+
+      expect(promptOf(run, 'repo:tests verify 2/2')).toContain(
+        '1 claims, at indexes 2 to 2 of the extract.'
+      )
+    })
+
+    test('asks the partition check again when it relayed fewer parts than characterise wrote', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'repo:tests check partition': {
+            ...PARTITIONED,
+            parts: PARTITIONED.parts.slice(0, 1)
+          },
+          'repo:tests check partition again': PARTITIONED
+        }
+      )
+
+      expect(labelsOf(run)).toContain('repo:tests extract part 2/2')
+    })
+
+    test('asks the coverage check again when it relayed fewer questions than it counted', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'coverage after reconcile across areas': {
+            ...COVERAGE_OK,
+            questions: []
+          },
+          'coverage after reconcile across areas again': COVERAGE_OK
+        }
+      )
+
+      expect(labelsOf(run)).toContain('challenge c-001')
+    })
+  })
+
+  describe('reconcile by area', () => {
+    test('gives each area reconciler its own working set, file and check', async () => {
+      const prompt = promptOf(await runDistil(), 'reconcile tiers')
+
+      expect({
+        workingSet: prompt.includes(
+          'YOUR WORKING SET, every claim of it (3 claims, in pages if you need to): /ws/workareas/shared/demo/distil/areas/tiers/working-set.json.'
+        ),
+        file: prompt.includes(
+          'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/areas/tiers/reconciled.json'
+        ),
+        check: prompt.includes(
+          '`tim distil merge-reconcile shared/demo --area tiers --workspace ~/ws --json`'
+        )
+      }).toEqual({ workingSet: true, file: true, check: true })
+    })
+
+    test('runs the area plan, every area reconciler, every challenger and every drafter on opus', async () => {
+      const run = await runDistil()
+
+      expect(
+        [
+          'area plan',
+          'reconcile suite',
+          'reconcile across areas',
+          'challenge c-001',
+          'draft rows tiers',
+          'combine rows'
+        ].map((label) => optionsOf(run, label).model)
+      ).toEqual(['opus', 'opus', 'opus', 'opus', 'opus', 'opus'])
+    })
+
+    test('tells every reconciler to weigh today sources and keep questions minimal', async () => {
+      const run = await runDistil()
+
+      const missing = ['reconcile suite', 'reconcile across areas'].filter(
+        (label) =>
+          !promptOf(run, label).includes(
+            'WEIGH EVERY CLAIM FROM A TODAY SOURCE'
+          ) ||
+          !promptOf(run, label).includes('QUESTIONS ARE MINIMAL BY DEFAULT')
+      )
+      expect(missing).toEqual([])
+    })
+
+    test('reconciles at most six areas at once, in plan order', async () => {
+      const areas = Array.from({ length: 8 }, (_, index) => ({
+        id: `area-${index + 1}`,
+        title: `Area ${index + 1}`
+      }))
+      const answers = Object.fromEntries(
+        areas.map((area) => [`reconcile ${area.id}`, AREA_RECONCILED])
+      )
+      const run = await runDistil(
+        {},
+        {
+          'area plan': { ...AREA_PLANNED, areas },
+          'area working sets': {
+            ...AREA_SETS,
+            areas: areas.map((area) => ({ id: area.id, claims: 1 })),
+            total: 8
+          },
+          'merge areas': {
+            ...AREAS_MERGED,
+            areas: areas.map((area) => area.id)
+          },
+          ...answers
+        }
+      )
+
+      expect(
+        labelsOf(run).filter((label) => /^reconcile area-/.test(label))
+      ).toEqual(areas.map((area) => `reconcile ${area.id}`))
+    })
+
+    test('reconciles again only the area a failed merge names', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'merge areas': {
+            ok: false,
+            problems: [
+              "distil/areas/tiers/reconciled.json req-tiers-001 cites dr5-404, which is not in this area's working set."
+            ],
+            areas: [],
+            requirements: 0,
+            conflicts: 0,
+            summary: 'refused'
+          },
+          'reconcile tiers retry 1': AREA_RECONCILED,
+          'merge areas 2': AREAS_MERGED
+        }
+      )
+
+      expect(labelsOf(run).filter((label) => label.includes('retry'))).toEqual([
+        'reconcile tiers retry 1'
+      ])
+    })
+
+    test('stops with areas-failed when the area plan will not check out', async () => {
+      const refused = {
+        ok: false,
+        problems: [
+          'repo:tests has 4 claims in no area: tests-001, tests-002, tests-005, tests-001-m1. Give each to the area it speaks to, or name the source in everyArea.'
+        ],
+        areas: [],
+        total: 0,
+        removed: [],
+        summary: 'refused'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'area working sets': refused,
+          'area plan retry 1': AREA_PLANNED,
+          'area working sets 2': refused
+        }
+      )
+
+      expect({
+        reason: run.result.stopped.reason,
+        retried: promptOf(run, 'area plan retry 1').includes(
+          '- repo:tests has 4 claims in no area'
+        )
+      }).toEqual({ reason: 'areas-failed', retried: true })
+    })
+  })
+
+  describe('the question challenge', () => {
+    const SETTLED = {
+      ok: true,
+      conflict: 'c-001',
+      verdict: 'precedence',
+      rule: 'ruling:sam claim 2 puts the suites in the tests repo.',
+      summary: 'settled'
+    }
+    const AFTER_APPLY = {
+      ...COVERAGE_OK,
+      conflicts: { total: 1, precedence: 1, question: 0 },
+      questions: []
+    }
+
+    test('gives each challenger its question, its verdict file and its check', async () => {
+      const prompt = promptOf(await runDistil(), 'challenge c-001')
+
+      expect({
+        file: prompt.includes(
+          'THE FILE YOU WRITE: /ws/workareas/shared/demo/distil/challenge/c-001.json'
+        ),
+        check: prompt.includes(
+          '`tim distil challenge shared/demo --conflict c-001 --workspace ~/ws --json`'
+        )
+      }).toEqual({ file: true, check: true })
+    })
+
+    test('applies a settling verdict and reports only the questions that survive', async () => {
+      const run = await runDistil(
+        {},
+        {
+          'challenge c-001': SETTLED,
+          'apply challenges': {
+            ok: true,
+            applied: ['c-001: precedence'],
+            decisions: [],
+            summary: 'applied'
+          },
+          'coverage after apply challenges': AFTER_APPLY,
+          'check backlog': { ...BACKLOG_OK, ...AFTER_APPLY }
+        }
+      )
+
+      expect({
+        challenge: run.result.challenge,
+        questions: run.result.questions
+      }).toEqual({
+        challenge: {
+          challenged: 1,
+          settled: ['c-001'],
+          blocked: [],
+          survived: []
+        },
+        questions: []
+      })
+    })
+
+    test('runs no apply step when every question stands', async () => {
+      const run = await runDistil()
+
+      expect(labelsOf(run)).not.toContain('apply challenges')
+    })
+
+    test('stops with challenge-failed when the verdicts are still not applied after two send-backs', async () => {
+      const unapplied = {
+        ok: false,
+        problems: [
+          'distil/challenge/c-001.json settled it by precedence (rule), but distil/conflicts.json still has c-001 as a question.'
+        ],
+        backlogProblems: [],
+        questions: [],
+        summary: 'one problem'
+      }
+      const run = await runDistil(
+        {},
+        {
+          'challenge c-001': SETTLED,
+          'coverage after apply challenges': unapplied,
+          'coverage after apply challenges 2': unapplied,
+          'coverage after apply challenges 3': unapplied
+        }
+      )
+
+      expect(run.result.stopped.reason).toBe('challenge-failed')
     })
   })
 

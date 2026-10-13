@@ -15,6 +15,7 @@ import {
   runStackScriptToLog,
   stackContainers,
   stackContainerIds,
+  writeStackLogs,
   STACK_PROJECT
 } from './stack.js'
 
@@ -56,7 +57,8 @@ describe('runStackScript', () => {
     writeStackScript('run-stack.sh', 'exit 0')
     const result = await runStackScript({
       workspaceRoot: workspace,
-      script: 'run-stack.sh'
+      script: 'run-stack.sh',
+      env: answeringDocker()
     })
     expect(result.exitCode).toBe(0)
   })
@@ -65,7 +67,8 @@ describe('runStackScript', () => {
     writeStackScript('run-stack.sh', 'exit 7')
     const result = await runStackScript({
       workspaceRoot: workspace,
-      script: 'run-stack.sh'
+      script: 'run-stack.sh',
+      env: answeringDocker()
     })
     expect(result.exitCode).toBe(7)
   })
@@ -76,6 +79,7 @@ describe('runStackScript', () => {
     const result = await runStackScript({
       workspaceRoot: workspace,
       script: 'run-stack.sh',
+      env: answeringDocker(),
       args: ['-d', '-e', 'backend']
     })
     expect(result.exitCode).toBe(3)
@@ -90,6 +94,7 @@ describe('runStackScriptToLog', () => {
     const result = await runStackScriptToLog({
       workspaceRoot: workspace,
       script: 'run-stack.sh',
+      env: answeringDocker(),
       args: ['-d'],
       logPath
     })
@@ -112,6 +117,9 @@ const fakeDocker = (body) => {
   return { PATH: `${bin}:${process.env.PATH}` }
 }
 
+// Docker Desktop is running, so starting the stack has nothing to bring back.
+const answeringDocker = () => fakeDocker('echo 29.1.0')
+
 describe('stackContainers', () => {
   test("lists the workspace stack's running containers", async () => {
     const env = fakeDocker(
@@ -133,14 +141,128 @@ describe('stackContainers', () => {
   })
 
   test('says what went wrong when docker cannot list containers', async () => {
-    const env = fakeDocker(
-      'echo "Cannot connect to the Docker daemon" >&2\nexit 1'
-    )
+    const env = fakeDocker('echo "permission denied" >&2\nexit 1')
 
     await expect(stackContainers({ env })).rejects.toMatchObject({
-      message:
-        "Can't list the workspace stack's containers: Cannot connect to the Docker daemon"
+      message: "Can't list the workspace stack's containers: permission denied"
     })
+  })
+})
+
+// A Docker Desktop that has quit: docker answers only once `open -a Docker`
+// has run. The daemon can only be started this way on macOS.
+const dockerThatQuit = ({ openExit = 0 } = {}) => {
+  const bin = join(workspace, 'fake-bin')
+  mkdirSync(bin, { recursive: true })
+  const running = join(workspace, 'docker-running')
+  writeFileSync(
+    join(bin, 'docker'),
+    [
+      '#!/usr/bin/env bash',
+      `if [ ! -f "${running}" ]; then echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1; fi`,
+      'if [ "$1" = "info" ]; then echo 29.1.0; exit 0; fi',
+      'if [ "$1" = "ps" ]; then echo trade-imports-mongodb-1; exit 0; fi',
+      'exit 1'
+    ].join('\n')
+  )
+  chmodSync(join(bin, 'docker'), 0o755)
+  writeFileSync(
+    join(bin, 'open'),
+    `#!/usr/bin/env bash\nif [ ${openExit} -ne 0 ]; then echo "Unable to find application named 'Docker'" >&2; exit ${openExit}; fi\ntouch "${running}"\n`
+  )
+  chmodSync(join(bin, 'open'), 0o755)
+  return {
+    PATH: `${bin}:${process.env.PATH}`,
+    TIM_DOCKER_START_POLL_MS: '10',
+    TIM_DOCKER_START_WAIT_MS: '2000'
+  }
+}
+
+describe.runIf(process.platform === 'darwin')(
+  'when Docker Desktop has quit',
+  () => {
+    test('starts Docker Desktop, then lists the stack containers', async () => {
+      const env = dockerThatQuit()
+
+      expect(await stackContainers({ env })).toEqual([
+        'trade-imports-mongodb-1'
+      ])
+    })
+
+    test('says why when Docker Desktop will not come back', async () => {
+      const env = dockerThatQuit({ openExit: 1 })
+
+      await expect(stackContainers({ env })).rejects.toMatchObject({
+        message: expect.stringContaining('Docker Desktop would not open')
+      })
+    })
+
+    test('brings Docker Desktop back before running run-stack.sh', async () => {
+      const env = dockerThatQuit()
+      writeStackScript(
+        'run-stack.sh',
+        'if docker info >/dev/null 2>&1; then echo "docker answered"; else echo "docker down"; exit 1; fi'
+      )
+      const logPath = join(workspace, 'logs', 'up.log')
+
+      const result = await runStackScriptToLog({
+        workspaceRoot: workspace,
+        script: 'run-stack.sh',
+        logPath,
+        env
+      })
+
+      expect({
+        exitCode: result.exitCode,
+        body: readFileSync(logPath, 'utf8')
+      }).toEqual({
+        exitCode: 0,
+        body: expect.stringContaining('docker answered')
+      })
+    })
+  }
+)
+
+describe('writeStackLogs', () => {
+  const FAKE_STACK = [
+    'if [ "$1" = "ps" ]; then printf "trade-imports-frontend-1\\ntrade-imports-mongodb-1\\n"; exit 0; fi',
+    'if [ "$1" = "logs" ] && [ "$2" = "--timestamps" ]; then echo "2026-10-11T01:49:12Z log of $3"; exit 0; fi',
+    'exit 1'
+  ].join('\n')
+
+  test("writes each stack container's timestamped log to its own file", async () => {
+    const env = fakeDocker(FAKE_STACK)
+    const logsDir = join(workspace, 'logs')
+
+    const written = await writeStackLogs({ logsDir, prefix: 'gate-stack', env })
+
+    expect(
+      written.map((path) => [
+        path,
+        readFileSync(path, 'utf8').trim().split('\n').at(-1)
+      ])
+    ).toEqual([
+      [
+        join(logsDir, 'gate-stack-trade-imports-frontend-1.log'),
+        '2026-10-11T01:49:12Z log of trade-imports-frontend-1'
+      ],
+      [
+        join(logsDir, 'gate-stack-trade-imports-mongodb-1.log'),
+        '2026-10-11T01:49:12Z log of trade-imports-mongodb-1'
+      ]
+    ])
+  })
+
+  test('writes nothing when the stack has no containers', async () => {
+    const env = fakeDocker('exit 0')
+
+    expect(
+      await writeStackLogs({
+        logsDir: join(workspace, 'logs'),
+        prefix: 'gate-stack',
+        env
+      })
+    ).toEqual([])
   })
 })
 

@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { readJsonFile, writeJsonAtomic } from '../backlog/io.js'
 import { nextBuildable, setRowFields } from '../backlog/shape.js'
+import { workareaBacklogReader } from '../backlog/workarea.js'
 import { backlogPathFor } from '../commands/backlog/rows.js'
 import { readEnvelopeRepos } from './envelope-repos.js'
 import { branchIncrementRepos } from './increment-branch.js'
@@ -129,14 +130,19 @@ const recordOnRow = (path, id, changes) => {
   if (Object.keys(changed).length > 0) writeJsonAtomic(path, backlog)
 }
 
-const derive = ({ path, id, last }) => {
+const derive = ({ workspaceRoot, path, id, last }) => {
   let backlog
+  let next
   try {
     backlog = readJsonFile(path)
+    next =
+      id ??
+      nextBuildable(backlog, {
+        readWorkareaBacklog: workareaBacklogReader(workspaceRoot)
+      })
   } catch (error) {
     fail('derive', messageOf(error))
   }
-  const next = id ?? nextBuildable(backlog)
   if (next === null) return { id: null, repeat: false }
   if (!(backlog.increments ?? []).some((row) => row.id === next)) {
     fail('derive', `Can't find ${next} in ${path}.`)

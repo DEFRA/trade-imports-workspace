@@ -1,6 +1,12 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync
+} from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -238,6 +244,127 @@ describe('tim build gate', () => {
     expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
       exitCode: 2,
       stderr: '--phase must be one of: unit, fit, e2e, all.'
+    })
+  })
+
+  test('writes the same result it prints to the --result file', async () => {
+    seedGateRepo({ test: 'exit 2' })
+    const resultPath = join(root, 'logs', 'gate-result.json')
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--result',
+      resultPath
+    ])
+
+    expect(JSON.parse(readFileSync(resultPath, 'utf8'))).toEqual(
+      envelopeOf(run)
+    )
+  })
+
+  test('replaces an earlier result in its logs folder even without --result', async () => {
+    seedGateRepo({ test: 'echo tested' })
+    const logs = join(root, 'logs')
+    const resultPath = join(logs, 'gate-result-unit.json')
+    mkdirSync(logs, { recursive: true })
+    writeFileSync(resultPath, JSON.stringify({ ok: false, stale: true }))
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--logs',
+      logs
+    ])
+
+    expect(JSON.parse(readFileSync(resultPath, 'utf8'))).toEqual(
+      envelopeOf(run)
+    )
+  })
+
+  test('writes an error to the --result file when the gate cannot start', async () => {
+    seedWorkspace(['frontend'])
+    const resultPath = join(root, 'logs', 'gate-result.json')
+
+    await runTim([
+      'build',
+      'gate',
+      'shared/missing',
+      '--phase',
+      'unit',
+      '--json',
+      '--result',
+      resultPath
+    ])
+
+    expect(JSON.parse(readFileSync(resultPath, 'utf8')).ok).toBe(false)
+  })
+})
+
+describe('tim build gate-wait', () => {
+  test('prints a finished gate’s result and exits as the gate did', async () => {
+    seedGateRepo({ test: 'exit 2' })
+    const resultPath = join(root, 'logs', 'gate-result.json')
+    const gate = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--json',
+      '--result',
+      resultPath
+    ])
+
+    const wait = await runTim(['build', 'gate-wait', resultPath, '--json'])
+
+    expect({ exitCode: wait.exitCode, envelope: envelopeOf(wait) }).toEqual({
+      exitCode: 1,
+      envelope: envelopeOf(gate)
+    })
+  })
+
+  test('says the gate is still running when no result arrives in time', async () => {
+    seedWorkspace(['frontend'])
+    const resultPath = join(root, 'logs', 'gate-result.json')
+
+    const wait = await runTim([
+      'build',
+      'gate-wait',
+      resultPath,
+      '--seconds',
+      '0.1',
+      '--json'
+    ])
+
+    expect({
+      exitCode: wait.exitCode,
+      code: envelopeOf(wait).errors[0].code
+    }).toEqual({ exitCode: 1, code: 'GATE_STILL_RUNNING' })
+  })
+
+  test('refuses a wait longer than the Bash tool allows', async () => {
+    seedWorkspace(['frontend'])
+
+    const wait = await runTim([
+      'build',
+      'gate-wait',
+      join(root, 'gate-result.json'),
+      '--seconds',
+      '900'
+    ])
+
+    expect({ exitCode: wait.exitCode, stderr: wait.stderr.trim() }).toEqual({
+      exitCode: 2,
+      stderr: '--seconds must be 590 or fewer.'
     })
   })
 })

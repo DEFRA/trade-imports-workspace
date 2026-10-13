@@ -3,9 +3,11 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   DISTIL_SCHEMA_DIR,
+  extractPartsOf,
   loadDistilSchemas,
   orphanFilesOf,
   readJsonLenient,
+  requirementFingerprintOf,
   scopeHashOf,
   slugOf,
   verifyPartsOf
@@ -87,7 +89,47 @@ describe('verifyPartsOf', () => {
   })
 })
 
+describe('extractPartsOf', () => {
+  test('lists one source extract part files in part-number order, never its partition', () => {
+    workspace = makeDistilWorkspace()
+    const { extractDir } = workspace.layout
+    for (const name of [
+      'repo-tests.part2.json',
+      'repo-tests.part1.json',
+      'repo-tests.partition.json',
+      'repo-testsx.part1.json'
+    ]) {
+      writeFileSync(join(extractDir, name), '{}')
+    }
+
+    expect(
+      extractPartsOf(workspace.layout, 'repo-tests').map((part) => part.path)
+    ).toEqual([
+      join(extractDir, 'repo-tests.part1.json'),
+      join(extractDir, 'repo-tests.part2.json')
+    ])
+  })
+})
+
 describe('orphanFilesOf', () => {
+  test('names a partition no source owns, and not one a source owns', () => {
+    workspace = makeDistilWorkspace()
+    const { extractDir } = workspace.layout
+    writeFileSync(join(extractDir, 'repo-gone.partition.json'), '{}')
+    writeFileSync(join(extractDir, 'repo-tests.partition.json'), '{}')
+
+    expect(
+      orphanFilesOf(
+        workspace.layout,
+        new Set([
+          'repo-tests',
+          'ruling-sam-2026-09-29c',
+          'confluence-6608160092'
+        ])
+      )
+    ).toEqual([join(extractDir, 'repo-gone.partition.json')])
+  })
+
   test('names extract and verify files no source owns, parts included', () => {
     workspace = makeDistilWorkspace()
     const { extractDir, verifyDir } = workspace.layout
@@ -151,5 +193,36 @@ describe('loadDistilSchemas', () => {
     expect(withoutDescriptions(verify.$defs.claim)).toEqual(
       withoutDescriptions(extract.$defs.claim)
     )
+  })
+})
+
+describe('requirementFingerprintOf', () => {
+  const REQUIREMENT = {
+    id: 'req-002',
+    statement: 'The smoke run fails a pull request on a breached threshold.',
+    why: 'So a slower change fails its check.',
+    claims: ['confluence-6608160092-004'],
+    status: 'adopted',
+    delta: 'new'
+  }
+
+  test('stays the same when a re-distil rewords the why or cites other claims', () => {
+    expect(
+      requirementFingerprintOf({
+        ...REQUIREMENT,
+        why: 'Reworded.',
+        claims: ['repo-tests-002']
+      })
+    ).toBe(requirementFingerprintOf(REQUIREMENT))
+  })
+
+  test('changes when what is to be built changes', () => {
+    expect(
+      [
+        { ...REQUIREMENT, statement: 'The smoke run warns on a breach.' },
+        { ...REQUIREMENT, status: 'question' },
+        { ...REQUIREMENT, blockedBy: 'CDP must open the port.' }
+      ].map(requirementFingerprintOf)
+    ).not.toContain(requirementFingerprintOf(REQUIREMENT))
   })
 })

@@ -1,0 +1,60 @@
+h3. Background
+
+The place-of-landing and country lists a trader picks from on a high-risk plants notification now show exactly what master reference data (MDM) really serves, through the reference data service, rather than a hand-kept list held in the code.
+
+Two things follow. Places of landing are grouped by what they are — airports, then seaports, then rail — rather than mixed together in one alphabetical run, and each reads its name with its code so two with similar names can be told apart. And the country list on the origin page holds exactly the countries MDM serves for the SPS origin block, in MDM's own order.
+
+No list entry is added, removed or respelt by hand. Whatever MDM serves is what a trader sees, so a change in MDM reaches the service without a code change.
+
+This ticket covers the *high-risk plants journey only*. The same increments changed the live animals journey and the Import notification service address book, each of which has its own ticket under the same epic. The work is not yet merged.
+
+h3. What changes for the user
+
+h4. Places of landing are grouped by type, and read with their code
+
+The place-of-landing list on arrival details runs airports first, then seaports, then rail ports, each group A to Z by name ignoring capitals. Each reads "<port name> - <port code>". Before, they were mixed together and a name in capitals sorted to the front.
+
+h4. The origin country list comes from the reference data service
+
+The country list on the origin page holds exactly the countries the reference data service serves for the SPS origin block, by their served names, in the order it serves them.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 3 scenarios for the plants journey are listed in full.
+
+h5. Places of landing are listed airports first, then seaports, then rail ports, each A to Z by name
+
+* *GIVEN* a potatoes notification is on the arrival details page
+* *WHEN* the place-of-landing list is read in full
+* *THEN* every airport comes before every seaport, and every seaport before every rail port
+* *AND* within each group the ports run A to Z by name ignoring letter case, with non-breaking and doubled spaces read as single spaces
+
+h5. Every port the reference data service serves is offered as a place of landing, in its order
+
+* *GIVEN* a potatoes notification is on the arrival details page
+* *WHEN* the place-of-landing list is read in full
+* *THEN* it holds every port the reference data service serves, each reading "<port name> - <port code>", in the order the service serves them
+
+h5. The country list holds the reference data service's SPS origin countries, in its order
+
+* *GIVEN* the user is on the origin of the import page
+* *WHEN* the country list is read in full
+* *THEN* besides the placeholder it holds exactly the countries the reference data service serves for the SPS origin block, by their served names, in the order it serves them
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-007|Place-of-landing lists ordered airports, then seaports, then rail, from MDM's port type|Done|
+|inc-173|The stub's countries and ports match real MDM, and every captured country and port fixture is recaptured from it|Done|
+
+Both are built. A third row in this theme changed the live animals destination country lists only, so it changes nothing in plants.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 3 scenarios across these 2 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-details/spec.md]|2|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/origin/spec.md]|1|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

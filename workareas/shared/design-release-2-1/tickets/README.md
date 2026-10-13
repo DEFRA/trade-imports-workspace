@@ -9,19 +9,54 @@ Each folder holds `description.txt` — the Jira description field, verbatim —
 
 ## The tickets
 
+All four fully built themes have their tickets. Every one is `In Dev` and hangs
+off epic **EUDPA-328**.
+
+### Journey foundation — 74 scenarios, 19 files
+
 | Folder | Jira | Domain | Rows | Scenarios | Spec files |
 |---|---|---|---|---|---|
-| `animals-journey/` | [EUDPA-691](https://eaflood.atlassian.net/browse/EUDPA-691) | Live animals journey | 6 | 35 | 7 |
+| `animals-journey/` | [EUDPA-691](https://eaflood.atlassian.net/browse/EUDPA-691) | Live animals journey | 5 | 35 | 7 |
 | `plants-journey/` | [EUDPA-699](https://eaflood.atlassian.net/browse/EUDPA-699) | High-risk plants journey | 6 | 34 | 11 |
-| `ins-front-door/` | [EUDPA-700](https://eaflood.atlassian.net/browse/EUDPA-700) | Import notification service front door | 1 | 5 | 1 |
+| `ins-front-door/` | [EUDPA-700](https://eaflood.atlassian.net/browse/EUDPA-700) | Front door | 1 | 5 | 1 |
 
-35 + 34 + 5 = 74 scenarios, and 7 + 11 + 1 = 19 files: the theme's totals, so
-nothing was dropped or double-counted in the split. EUDPA-699 and EUDPA-700 both
-*relate to* EUDPA-691 in Jira.
+### Reference lists — 14 scenarios, 6 files
 
-`animals-journey/` has no `ticket.json` because EUDPA-691 already existed — it
-was created at theme-split time to supply the branch name. Its description is
-updated in place.
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `reference-lists-animals/` | [EUDPA-692](https://eaflood.atlassian.net/browse/EUDPA-692) | Live animals journey | 3 | 10 | 3 |
+| `reference-lists-plants/` | [EUDPA-701](https://eaflood.atlassian.net/browse/EUDPA-701) | High-risk plants journey | 2 | 3 | 2 |
+| `reference-lists-ins/` | [EUDPA-702](https://eaflood.atlassian.net/browse/EUDPA-702) | Front door | 1 | 1 | 1 |
+
+### Arrival and transit — 24 scenarios, 5 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `arrival-and-transit-animals/` | [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694) | Live animals journey | 5 | 20 | 4 |
+| `arrival-and-transit-plants/` | [EUDPA-703](https://eaflood.atlassian.net/browse/EUDPA-703) | High-risk plants journey | 2 | 4 | 1 |
+
+### Origin page — 16 scenarios, 4 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `origin-page-animals/` | [EUDPA-695](https://eaflood.atlassian.net/browse/EUDPA-695) | Live animals journey | 3 | 14 | 3 |
+| `origin-page-plants/` | [EUDPA-704](https://eaflood.atlassian.net/browse/EUDPA-704) | High-risk plants journey | 1 | 2 | 1 |
+
+Every theme's per-domain scenarios and files sum to its own totals, which is how
+a dropped or double-counted file gets caught. Each new ticket *relates to* the
+ticket the theme was split with.
+
+A folder whose ticket already existed has a `ticket.created.json` but no plan id:
+those were raised at theme-split time to supply the branch name, before this
+skill existed, so their descriptions are updated in place rather than created.
+
+### Not yet ticketed
+
+Three themes are not fully drained, so their tickets would describe unfinished
+work: commodities and import reason (4 rows blocked on MDM commodities), overview
+and review (2 todo, 2 blocked) and type question and templates (9 rows held).
+Each still has only the stub raised at split time. The ten unsplit themes in the
+main backlog have no tickets at all.
 
 All three hang off epic **EUDPA-328**, "Catch up frontend with prototype".
 

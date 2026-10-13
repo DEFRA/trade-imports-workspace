@@ -1,0 +1,115 @@
+h3. Background
+
+The country and port lists a trader picks from on a live animals notification now show exactly what master reference data (MDM) really serves, through the reference data service, rather than a hand-kept list held in the code.
+
+Three things follow from that. Destination countries now include their territories, so a consignment going to the Canary Islands can say so instead of only "Spain". Ports are grouped by what they are — airports, then seaports, then rail — rather than mixed together in one alphabetical run. And every port reads its name with its code, so two ports with similar names can be told apart.
+
+No list entry is added, removed or respelt by hand anywhere. Whatever MDM serves is what a trader sees, which means a change in MDM reaches the service without a code change.
+
+This ticket covers the *live animals journey only*. The same increments changed the high-risk plants journey and the Import notification service address book, each of which has its own ticket under the same epic. The work is not yet merged.
+
+h3. What changes for the user
+
+h4. Destination countries include territories
+
+Choosing "Transhipment or onward travel" or "Transit" asks for a destination country. That list now holds every origin country *and territory* the reference data service serves, in alphabetical order. A territory reads with its country in brackets — "Canary Islands (Spain)" — so it is clear what is being chosen. A destination saved before territories were offered still shows as chosen.
+
+h4. Ports are grouped by type, and read with their code
+
+The port of entry list, the port of exit list and the country of origin list all come from the reference data service. Ports run airports first, then seaports, then rail ports, each group A to Z. Each reads "<port name> - <port code>", for example "Port of Dover - GB DVR". The port of exit now reads and orders exactly like the port of entry, which it did not before.
+
+h4. Sorting is predictable
+
+Within each group, names sort A to Z ignoring capitals, so a name in capitals no longer jumps to the front. A name containing a doubled or non-breaking space sorts where the same name with single spaces would.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 10 scenarios for the live animals journey are listed — this change's specification is small enough to give in full.
+
+h4. Destination countries and their territories
+
+h5. The transhipment destination country offers the origin countries and their territories
+
+* *GIVEN* the user has chosen "Transhipment or onward travel"
+* *WHEN* the destination country list is read in full
+* *THEN* after the placeholder "Select one" it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
+
+h5. The transit destination country offers the same places
+
+* *GIVEN* the user has chosen "Transit"
+* *WHEN* the destination country list is read in full
+* *THEN* it holds the same places as under "Transhipment or onward travel"
+
+h5. Each territory is named with its country
+
+* *GIVEN* either destination country list
+* *WHEN* a territory is read
+* *THEN* it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
+
+h5. A territory chosen as the destination country is kept
+
+* *GIVEN* the user has chosen a reason that asks the destination country
+* *WHEN* they choose a territory and save and continue
+* *THEN* no error is shown
+* *AND* when they reopen the page the territory is shown as chosen
+
+h5. A destination country saved before territories were offered is still shown
+
+* *GIVEN* the notification holds a destination country from the country list
+* *WHEN* the user reopens the page
+* *THEN* that country is shown as chosen
+
+h5. The country list holds the reference data service's origin countries and their territories, by name
+
+* *GIVEN* the user is on the origin of the import page
+* *WHEN* the country list is read in full
+* *THEN* besides the placeholder it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as "<territory> (<country>)", in alphabetical order of the name shown
+
+h4. Port order and port labels
+
+h5. Ports are listed airports first, then seaports, then rail ports, each A to Z by name
+
+* *GIVEN* the user is on the arrival details page
+* *WHEN* the port list is read in full
+* *THEN* every airport comes before every seaport, and every seaport before every rail port
+* *AND* within each group the ports run A to Z by name, a name in capitals sorting among the names that start with the same letter, and a name with a non-breaking or doubled space sorting where the same name with single spaces would
+
+h5. Each port of exit reads its name, a dash and its code, in the port of entry's order
+
+* *GIVEN* the user has chosen "Transit" or "Temporary admission horses"
+* *WHEN* the port of exit list is read in full
+* *THEN* after the placeholder "Select one" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
+* *AND* each reads "<port name> - <port code>", for example "Aberdeen Harbour - GB ABD"
+
+h5. A chosen port of exit is kept and offered back
+
+* *GIVEN* the user has chosen "Transit"
+* *WHEN* they choose a port of exit, answer the destination country and save and continue
+* *THEN* no error is shown
+* *AND* when they reopen the page that port of exit is shown as chosen
+
+h5. Every port the reference data service serves is offered, in its order
+
+* *GIVEN* the user is on the arrival details page
+* *WHEN* the port list is read in full
+* *THEN* it holds every port the reference data service serves, each reading "<port name> - <port code>", for example "Port of Dover - GB DVR", in the order the service serves them
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-006|Destination country selects offer the reference data service's countries and their territories|Done|
+|inc-007|Port lists ordered airports, then seaports, then rail, with the port of exit reading and ordering like the port of entry|Done|
+|inc-173|The stub's countries and ports match real MDM, and every captured country and port fixture is recaptured from it|Done|
+
+All three are built.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 10 scenarios across these 3 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|7|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/arrival-details/spec.md]|2|
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|1|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

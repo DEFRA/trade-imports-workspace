@@ -27,7 +27,29 @@ const pageDir = path.resolve(here, '..')
 const workarea = path.resolve(pageDir, '..', '..')
 
 const META_FILE = path.join(here, 'themes.meta.json')
+const TICKETS_FILE = path.join(workarea, 'tickets', 'tickets.json')
 const OUT_FILE = path.join(pageDir, 'data.js')
+
+const JIRA_BROWSE = 'https://eaflood.atlassian.net/browse'
+
+/**
+ * How each domain reads on a theme's card: a glyph a reader can tell apart at a
+ * glance, and the words behind it for the legend and the accessible label.
+ *
+ * "stub" is not a domain. It is a theme whose only ticket is the one raised at
+ * split time to supply the branch name, not yet split by domain — worth showing,
+ * because a card with only a stub is a card whose business ticket is still a
+ * placeholder.
+ */
+const DOMAIN_BADGE = {
+  animals: { emoji: '🐄', label: 'Live animals' },
+  plants: { emoji: '🌱', label: 'High-risk plants' },
+  ins: { emoji: '🚪', label: 'Front door' },
+  admin: { emoji: '🗂️', label: 'Animals admin' },
+  stub: { emoji: '🎫', label: 'Stub only, not yet split by domain' }
+}
+
+const DOMAIN_ORDER = ['animals', 'plants', 'ins', 'admin', 'stub']
 
 /* ---------------------------------------------------------------- reading --- */
 
@@ -89,12 +111,37 @@ for (const row of rows) {
   theme[row.status] += 1
 }
 
+// Which Jira ticket covers which theme, per domain. Absent on a programme whose
+// tickets have not been written yet, which is not an error — the cards simply
+// carry no ticket rows.
+const ticketsByTheme = fs.existsSync(TICKETS_FILE) ? readJson(TICKETS_FILE).themes || {} : {}
+
 for (const theme of themes.values()) {
   if (!meta[theme.id]) throw new Error('no themes.meta.json entry for theme ' + theme.id)
   theme.name = meta[theme.id].name
   theme.ticket = meta[theme.id].ticket
   // Dropped rows sit outside the total: they are not work anyone will do.
   theme.live = theme.rows - theme.dropped
+
+  const forTheme = ticketsByTheme[theme.id] || {}
+  theme.tickets = Object.keys(forTheme)
+    .sort((a, b) => DOMAIN_ORDER.indexOf(a) - DOMAIN_ORDER.indexOf(b))
+    .map((domain) => {
+      const badge = DOMAIN_BADGE[domain]
+      if (!badge) {
+        throw new Error(
+          'tickets.json gives theme ' + theme.id + ' a ticket for "' + domain +
+            '", which has no badge. Add it to DOMAIN_BADGE in make-data.mjs rather than letting a card show a ticket nobody can place.'
+        )
+      }
+      return {
+        domain,
+        key: forTheme[domain],
+        url: JIRA_BROWSE + '/' + forTheme[domain],
+        emoji: badge.emoji,
+        label: badge.label
+      }
+    })
 }
 
 /* ----------------------------------------------------------------- graph ---- */
@@ -181,11 +228,17 @@ for (const theme of themes.values()) {
 
 const NODE_W = 150
 const NODE_H = 60
-const ROW_PITCH = 124
+const TICKET_ROW_H = 15
+const TICKET_PAD = 7
+const CORRIDOR = 64
 const TOP = 44
 const CANVAS_W = 900
 const LANE_GAP = 16
 const CLEARANCE = 14
+
+/** A card is as tall as its ticket rows need; one with no tickets stays short. */
+const heightOf = (theme) =>
+  theme.tickets.length ? NODE_H + TICKET_PAD + theme.tickets.length * TICKET_ROW_H : NODE_H
 
 const levels = [...new Set([...themes.values()].map((theme) => theme.level))].sort((a, b) => a - b)
 
@@ -209,14 +262,34 @@ for (let pass = 0; pass < 2; pass += 1) {
   }
 }
 
+// Each level starts a clear corridor below the tallest card of the one above,
+// so a level holding a three-ticket card pushes the rest of the diagram down
+// rather than overlapping it.
+const levelHeight = new Map(
+  levels.map((level) => [level, Math.max(...order.get(level).map((id) => heightOf(themes.get(id))))])
+)
+
+const levelTop = new Map()
+levels.forEach((level, i) => {
+  const previous = levels[i - 1]
+  levelTop.set(level, i === 0 ? TOP : levelTop.get(previous) + levelHeight.get(previous) + CORRIDOR)
+})
+
+/** The clear band below a level, where a line may run sideways. */
+const corridorOf = (level) => ({
+  from: levelTop.get(level) + levelHeight.get(level),
+  to: levelTop.get(level + 1) ?? levelTop.get(level) + levelHeight.get(level) + CORRIDOR
+})
+
 const box = new Map()
 for (const level of levels) {
   const ids = order.get(level)
   const gap = (CANVAS_W - ids.length * NODE_W) / (ids.length + 1)
   ids.forEach((id, i) => {
     const x = Math.round(gap + i * (NODE_W + gap))
-    const y = TOP + (level - 1) * ROW_PITCH
-    box.set(id, { x, y, w: NODE_W, h: NODE_H, cx: x + NODE_W / 2, top: y, bottom: y + NODE_H })
+    const y = levelTop.get(level)
+    const h = heightOf(themes.get(id))
+    box.set(id, { x, y, w: NODE_W, h, cx: x + NODE_W / 2, top: y, bottom: y + h })
   })
 }
 
@@ -269,8 +342,7 @@ const laneUsage = new Map()
 
 /** Picks a horizontal lane in the gap below a row that no other line is using. */
 function lane(level, span) {
-  const gapTop = TOP + (level - 1) * ROW_PITCH + NODE_H
-  const gapBottom = TOP + level * ROW_PITCH
+  const { from: gapTop, to: gapBottom } = corridorOf(level)
   const slots = Math.max(1, Math.floor((gapBottom - gapTop) / LANE_GAP) - 1)
   if (!laneUsage.has(level)) laneUsage.set(level, [])
   const used = laneUsage.get(level)
@@ -348,9 +420,15 @@ const data = {
     nodeW: NODE_W,
     nodeH: NODE_H,
     canvasW: CANVAS_W,
-    viewBox: `-60 10 ${CANVAS_W + 140} ${TOP + levels.length * ROW_PITCH - ROW_PITCH + NODE_H + 40}`,
+    viewBox: `-60 10 ${CANVAS_W + 140} ${
+      levelTop.get(levels[levels.length - 1]) + levelHeight.get(levels[levels.length - 1]) + 40
+    }`,
     boxes: Object.fromEntries([...box].map(([id, b]) => [id, { x: b.x, y: b.y, w: b.w, h: b.h, cx: b.cx }])),
-    rowPitch: ROW_PITCH,
+    // The axis labels each level against where its cards actually start, since
+    // a level holding a tall card is no longer a fixed pitch from the last.
+    levelBands: Object.fromEntries(levels.map((level) => [level, { top: levelTop.get(level), height: levelHeight.get(level) }])),
+    ticketRowH: TICKET_ROW_H,
+    ticketPad: TICKET_PAD,
     top: TOP,
     paths
   },

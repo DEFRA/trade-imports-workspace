@@ -44,7 +44,17 @@ function node(tag) {
   }
 }
 
-const regions = ['standfirst', 'asof', 'figures', 'plate', 'figcaption', 'register', 'readings', 'provenance']
+const regions = [
+  'standfirst',
+  'asof',
+  'figures',
+  'plate',
+  'badge-legend',
+  'figcaption',
+  'register',
+  'readings',
+  'provenance'
+]
 const byRegion = new Map(regions.map((id) => [id, node('div')]))
 
 const documentStub = {
@@ -95,6 +105,22 @@ if (svg) {
   )
   check(Boolean(svg.attrs['aria-label']), 'the svg has no aria-label')
   check(svg.attrs.viewBox === data.geometry.viewBox, 'the svg viewBox does not match the generated geometry')
+
+  // One link per ticket, each with an href and a label a screen reader can use.
+  const links = groups.flatMap((group) => group.children.filter((child) => child.tag === 'a'))
+  const expectedLinks = data.themes.reduce((n, theme) => n + theme.tickets.length, 0)
+  check(
+    links.length === expectedLinks,
+    'drew ' + links.length + ' ticket links, expected ' + expectedLinks
+  )
+  check(
+    links.every((link) => (link.attrs.href || '').startsWith('https://')),
+    'a ticket link has no absolute href'
+  )
+  check(
+    links.every((link) => Boolean(link.attrs['aria-label'])),
+    'a ticket link has no aria-label'
+  )
 }
 
 const registerRows = (byRegion.get('register').innerHTML.match(/<tr>/g) || []).length
@@ -126,6 +152,8 @@ console.log(
     ' boxes, ' +
     data.totals.edgesDrawn +
     ' lines, ' +
+    data.themes.reduce((n, theme) => n + theme.tickets.length, 0) +
+    ' ticket links, ' +
     registerRows +
     ' register rows, ' +
     readingCount +

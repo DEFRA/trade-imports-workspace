@@ -13,6 +13,7 @@
     --rule: #ccd4dd;
     --rule-soft: #dde3ea;
     --accent: #1b4a7a;
+    --accent-soft: #e2ebf4;
     --done: #1a6b4a;
     --part: #9a6413;
     --open: #6b7685;
@@ -33,6 +34,7 @@
       --rule: #27313d;
       --rule-soft: #1f2832;
       --accent: #74a8de;
+      --accent-soft: #1b2836;
       --done: #45b588;
       --part: #d99f49;
       --open: #7b8696;
@@ -49,6 +51,7 @@
     --rule: #27313d;
     --rule-soft: #1f2832;
     --accent: #74a8de;
+    --accent-soft: #1b2836;
     --done: #45b588;
     --part: #d99f49;
     --open: #7b8696;
@@ -133,7 +136,15 @@
   .node-box.ready { stroke: var(--accent); stroke-width: 2.2; }
   .node-name { font-family: var(--sans); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
   .node-count { font-family: var(--mono); font-size: 9.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
-  .node-tag { font-family: var(--mono); font-size: 9px; font-weight: 500; fill: var(--accent); }
+  .node-rule { stroke: var(--rule); stroke-width: 1; }
+  .ticket-hit { fill: transparent; }
+  .ticket-emoji { font-size: 11px; }
+  .ticket-key { font-family: var(--mono); font-size: 10.5px; fill: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+  .plate a:hover .ticket-hit { fill: var(--accent-soft); }
+  .plate a:hover .ticket-key { fill: var(--ink); }
+  .plate a:focus-visible { outline: none; }
+  .plate a:focus-visible .ticket-hit { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
   .edge { fill: none; stroke: var(--accent); stroke-width: 1.3; opacity: 0.72; }
   .axis-line { stroke: var(--rule); stroke-width: 1; }
   .axis-num { font-family: var(--mono); font-size: 11px; font-weight: 500; fill: var(--muted); }
@@ -248,8 +259,9 @@
         <span class="legend-item"><span class="swatch open"></span>Not started</span>
         <span class="legend-item"><span class="swatch blocked"></span>Mostly blocked on someone outside the team</span>
         <span class="legend-item"><span class="ring"></span>Every dependency met — can start now</span>
-        <span class="legend-item"><span class="tagkey">691</span>Jira ticket EUDPA-691</span>
       </div>
+
+      <div class="legend" id="badge-legend"></div>
 
       <figcaption id="figcaption"></figcaption>
     </figure>
@@ -366,14 +378,14 @@
 
     // Level axis: the numbers are the build order, so they carry real information.
     const axis = el('g')
-    const axisTop = g.top
-    const axisBottom = g.top + (data.levels.length - 1) * g.rowPitch + g.nodeH
+    const lastLevel = data.levels[data.levels.length - 1]
+    const axisTop = g.levelBands[data.levels[0]].top
+    const axisBottom = g.levelBands[lastLevel].top + g.levelBands[lastLevel].height
     axis.appendChild(el('line', { class: 'axis-line', x1: -44, y1: axisTop, x2: -44, y2: axisBottom }))
-    data.levels.forEach((level, i) => {
-      const y = g.top + i * g.rowPitch + 30
+    data.levels.forEach((level) => {
+      const y = g.levelBands[level].top + 30
       axis.appendChild(el('line', { class: 'axis-line', x1: -44, y1: y, x2: -32, y2: y }))
-      const num = el('text', { class: 'axis-num', x: -54, y: y + 4, 'text-anchor': 'end' }, String(level))
-      axis.appendChild(num)
+      axis.appendChild(el('text', { class: 'axis-num', x: -54, y: y + 4, 'text-anchor': 'end' }, String(level)))
     })
     svg.appendChild(axis)
 
@@ -416,16 +428,50 @@
       if (theme.deferred > 0) count = theme.done + ' of ' + theme.live + ' · ' + theme.deferred + ' held'
       node.appendChild(el('text', { class: 'node-count', x: textX, y: b.y + (lines.length === 1 ? 46 : 53) }, count))
 
-      if (theme.ticket) {
+      // One row per Jira ticket, under a rule, each a link badged by domain.
+      if (theme.tickets.length) {
+        const rulesY = b.y + 60
         node.appendChild(
-          el('text', { class: 'node-tag', x: b.x + b.w - 9, y: b.y + 16, 'text-anchor': 'end' },
-            theme.ticket.replace('EUDPA-', ''))
+          el('line', { class: 'node-rule', x1: b.x + 6, y1: rulesY, x2: b.x + b.w - 6, y2: rulesY })
         )
+        theme.tickets.forEach((ticket, i) => {
+          const y = rulesY + g.ticketPad + g.ticketRowH * i + 11
+          const link = el('a', {
+            href: ticket.url,
+            target: '_blank',
+            rel: 'noopener',
+            'aria-label': ticket.key + ' — ' + ticket.label
+          })
+          // A transparent box over the whole row, so the whole row is clickable.
+          link.appendChild(
+            el('rect', { class: 'ticket-hit', x: b.x + 6, y: y - 11, width: b.w - 12, height: g.ticketRowH })
+          )
+          link.appendChild(el('text', { class: 'ticket-emoji', x: b.x + 17, y: y }, ticket.emoji))
+          link.appendChild(el('text', { class: 'ticket-key', x: b.x + 36, y: y }, ticket.key))
+          link.appendChild(el('title', {}, ticket.key + ' — ' + ticket.label))
+          node.appendChild(link)
+        })
       }
       svg.appendChild(node)
     }
 
     document.getElementById('plate').appendChild(svg)
+
+    // The domain badges actually in use, so the legend never names one no card shows.
+    const badges = []
+    for (const theme of data.themes) {
+      for (const ticket of theme.tickets) {
+        if (!badges.some((b) => b.domain === ticket.domain)) {
+          badges.push({ domain: ticket.domain, emoji: ticket.emoji, label: ticket.label })
+        }
+      }
+    }
+
+    document.getElementById('badge-legend').innerHTML =
+      '<span class="legend-item" style="color:var(--ink)">Jira tickets on each card</span>' +
+      badges
+        .map((b) => '<span class="legend-item"><span style="font-size:13px">' + b.emoji + '</span>' + b.label + '</span>')
+        .join('')
 
     const repeats = t.edgesRecorded - t.edgesDrawn
     document.getElementById('figcaption').textContent =

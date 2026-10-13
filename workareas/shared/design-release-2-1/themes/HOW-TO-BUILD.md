@@ -6,6 +6,24 @@ request per repo. Nothing merges to `main` until Sam checks the finished theme.
 On the build machine, pull the workspace branch `feat/NO_JIRA-design-release-2-1` first. Then run
 `tim workspace branch <theme branch>`, open Claude Code at the workspace root and say the phrase for the theme.
 
+## The business tickets, around every theme
+
+A theme's Jira tickets are filled in automatically from the development work by the `theme-ticket` skill — one Story
+per service domain, with acceptance criteria copied from `openspec/`. Run it at three points around the loop. It needs
+no approval: the ticket is the thing the business reviews, so it is kept true rather than gated.
+
+| When | Say | What it does |
+|---|---|---|
+| Before starting the loop on a theme | "the build loop is starting on `<theme>`" | Moves the theme's tickets to **In Dev**. Descriptions are left alone — openspec is written row by row, so a ticket regenerated mid-build describes a half-finished theme. |
+| Once the loop has drained the theme | "write the business tickets for `<theme>`" | Derives the theme's scenarios from the commits it produced, splits them by domain, updates the theme's existing ticket as one domain and creates the others. |
+| After the theme merges to `main` | "`<theme>` has merged" | Regenerates against `main` so the spec links do not point at a deleted branch, then moves each ticket to **Deskcheck**. |
+
+The loop itself makes no Jira call — `lifecycle: branch` guarantees that — so these run in the orchestrating session
+around it, not inside it.
+
+To check nothing has drifted: "which theme tickets are stale". Tickets and their sources live in
+[`../tickets/`](../tickets/).
+
 ## Journey foundation: EUDPA-691
 
 - **Ticket:** [EUDPA-691](https://eaflood.atlassian.net/browse/EUDPA-691)

@@ -726,6 +726,11 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 - It makes no Jira call of any kind. There is no ticket and no board, so `jiraProject`, `epic`,
   `jiraInDevStatus`, `jiraDoneStatus`, `jiraBoard`, `requireApproval` and `approvalWaitMinutes` are passed as
   `null`. The loop refuses a value in any of them, because a value would suggest it governs the run.
+
+  A theme built this way still gets its Jira tickets, from outside the loop: the orchestrating session runs the
+  `theme-ticket` skill before it ("the build loop is starting on `<theme>`" — statuses to In Dev) and after it
+  ("write the business tickets for `<theme>`" — one Story per service domain, acceptance criteria copied from
+  `openspec/`). Keeping it outside is what preserves this guarantee.
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
   a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can

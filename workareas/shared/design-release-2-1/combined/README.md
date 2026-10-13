@@ -69,8 +69,21 @@ Answers on both review pages live in each page's shared database (`verdicts/<rev
 ArtifactData tool.
 
 The build-order page is the exception to this section's heading: it reads the backlogs, not this branch, so it is
-true of the whole programme rather than of the combined review. Refresh it with `npm run build` then `npm run check`
-in `build-order-page/build/`, and republish to the same URL — see `build-order-page/README.md`.
+true of the whole programme rather than of the combined review. Everything on it is derived — levels, positions,
+every line, the counts, the register, and four of its six readings — so it stays true as themes are built. Only
+`build/themes.meta.json` is hand-kept, holding each theme's display name and Jira ticket; add a row there when a
+theme is added and the schematic places it and routes its lines, with no layout to edit.
+
+Refresh it with `npm run build` then `npm run check` in `build-order-page/build/`. The `check` step runs the page's
+own script against a stub DOM and the new data, failing if a region is left empty, if the drawing has the wrong
+number of boxes or lines, or if a value renders as `undefined` — run it before republishing, because a half-drawn
+page otherwise only shows up once it is live. The generator fails rather than guessing: an unknown row status, a
+theme with no `themes.meta.json` entry, a duplicated row id or a dependency cycle all stop the build.
+
+Then republish `index.html` with `data.js` as a supporting file, **passing the artifact URL above** — publishing
+without it creates a second page instead of updating this one. Two of the six readings under "What the shape tells
+you" are authored judgement rather than derived, and are labelled *Commentary* on the page: the transporters
+decision and the waiting-on-design holding pen. Both are skipped automatically once their theme is complete.
 
 Screenshots: `business-review/capture/` is a Playwright harness that walks the same data through both sides
 (`SIDE=before|after CLEAN=1 npm run capture --prefix business-review/capture`). Before = published `:latest` images

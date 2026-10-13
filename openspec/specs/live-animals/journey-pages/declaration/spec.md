@@ -47,3 +47,64 @@ The system MUST redirect a request for the declaration page to the confirmation 
 - **GIVEN** the user has just submitted a notification
 - **WHEN** they request the declaration page for it again
 - **THEN** the confirmation page is shown instead
+
+### Requirement: The declaration is reached only by continuing from check your answers
+**ID**: REQ-DECLARATION-005
+The system MUST show the declaration only when the user continues from a check your answers shown in their own browser, and MUST send a user who reaches the declaration by a bookmark or typed address, or by a form altered to post to it before check your answers has been shown for the notification as it now stands in this browser, to check your answers instead.
+
+#### Scenario: Opening the declaration page directly shows check your answers
+**ID**: SCN-DECLARATION-005-A
+- **GIVEN** a draft notification
+- **WHEN** the user opens its declaration page directly, without continuing from check your answers
+- **THEN** check your answers is shown instead
+
+#### Scenario: A form altered to continue to the declaration, without check your answers having been opened, shows check your answers
+**ID**: SCN-DECLARATION-005-B
+- **GIVEN** a ready draft notification whose check your answers has not been opened in this browser
+- **WHEN** another page's form is altered to continue to the declaration, and sent
+- **THEN** check your answers is shown, not the declaration
+
+### Requirement: A notification is submitted only as check your answers showed it
+**ID**: REQ-DECLARATION-006
+The system MUST submit a notification only if it is unchanged since the check your answers the user continued from was shown, even when the declaration has been shown again since. If it has changed at any moment up to the submission, the system MUST NOT submit it, and MUST return the user to check your answers under a message that it has been updated since they opened it.
+
+#### Scenario: A notification unchanged since check your answers submits
+**ID**: SCN-DECLARATION-006-A
+- **GIVEN** the user has continued from check your answers to the declaration, and nothing has changed since
+- **WHEN** they confirm the declaration and submit
+- **THEN** the notification is submitted and the confirmation page is shown
+
+#### Scenario: A change made after the declaration was shown stops the submission
+**ID**: SCN-DECLARATION-006-B
+- **GIVEN** the declaration is shown
+- **AND** the notification is then changed in another tab or by another user
+- **WHEN** the user confirms the declaration and submits
+- **THEN** the notification is not submitted
+- **AND** check your answers is shown with the changed answer, under a message that the notification has been updated since they opened it
+
+#### Scenario: A declaration shown again is still held to the original check your answers
+**ID**: SCN-DECLARATION-006-C
+- **GIVEN** the declaration was shown again because the user submitted it unconfirmed
+- **AND** the notification is then changed elsewhere
+- **WHEN** the user submits the declaration again
+- **THEN** the notification is not submitted, and check your answers is shown under the updated message
+
+#### Scenario: A declaration shown again after a failed save is still held to the original check your answers
+**ID**: SCN-DECLARATION-006-F
+- **GIVEN** the declaration was shown again because saving it failed
+- **AND** the notification is then changed elsewhere
+- **WHEN** the user submits the declaration again
+- **THEN** the notification is not submitted, and check your answers is shown under the updated message
+
+#### Scenario: Refreshing the declaration after a change does not show it again
+**ID**: SCN-DECLARATION-006-D
+- **GIVEN** the declaration is shown
+- **AND** the notification is then changed elsewhere
+- **WHEN** the user refreshes the declaration, sending its form again
+- **THEN** check your answers is shown under the updated message, not the declaration
+
+#### Scenario: A change landing at the moment of submission stops the submission
+**ID**: SCN-DECLARATION-006-E
+- **GIVEN** the user has confirmed the declaration and the checks before submission have passed
+- **WHEN** another change to the notification lands before it is submitted
+- **THEN** the notification is not submitted, and check your answers is shown under the updated message

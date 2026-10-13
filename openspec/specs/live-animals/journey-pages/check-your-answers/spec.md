@@ -137,3 +137,31 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
+
+### Requirement: The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is
+**ID**: REQ-CYA-010
+The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
+
+#### Scenario: Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review
+**ID**: SCN-CYA-010-A
+- **GIVEN** a ready draft notification is open on the review, and one of its documents is still being scanned
+- **WHEN** the user continues
+- **THEN** they are returned to the review, which marks the uploaded-documents card as still being scanned
+
+#### Scenario: An infected document marks the uploaded-documents card in preference to one still scanning
+**ID**: SCN-CYA-010-B
+- **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
+- **WHEN** the user continues
+- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document, not as still being scanned
+
+### Requirement: Continuing is refused if the notification has changed since the review was shown
+**ID**: REQ-CYA-011
+The system MUST refuse to continue from the review to the declaration if the notification has changed since that review was shown — in another tab or by another user — and MUST return the user to the review showing the notification as it now stands, under a message that it has been updated since they opened it.
+
+#### Scenario: A change made in another tab after the review was shown sends the user back to the review
+**ID**: SCN-CYA-011-A
+- **GIVEN** a ready draft notification is open on the review
+- **AND** the notification is then changed in another tab
+- **WHEN** the user continues from the review they already have open
+- **THEN** the review is shown again with the changed answer, under a message that the notification has been updated since they opened it
+- **AND** the declaration is not shown

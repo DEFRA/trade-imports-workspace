@@ -32,7 +32,9 @@ Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
 
 The reference implementation is `ExternalCallMetrics.logCall` in
-`trade-imports-reference-data`.
+`trade-imports-reference-data`. Until EUDPA-632 merges, it and the test
+helper named below are only on that repo's
+`feat/EUDPA-632-observability` branch, not `main`.
 
 ### What was learned on reference-data
 

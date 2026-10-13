@@ -2,9 +2,8 @@ Build the service's custom alerts, route them to Slack, promote them and
 prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
-Everything here is from the CDP monitoring docs and the EUDPA-632
-plan. `[UNPROVEN]` No alert has been built, routed or fired from it yet.
-Correct this file from the first real run.
+No alert has been built, routed or fired from this file yet. Each fact
+that comes only from the CDP monitoring docs is marked `[UNPROVEN]`.
 
 The developer does this by hand in Grafana and Slack. Claude supplies
 the names, conditions and messages below, filled in for the service.
@@ -16,9 +15,9 @@ the names, conditions and messages below, filled in for the service.
 | Folder | `Playground/<service>-monitoring` |
 | Evaluation group | `<service>-advanced-alerts` |
 
-The alerts must be in that evaluation group; it evaluates every 5
-minutes. Leave the alert named `platform_managed_do_not_delete` alone.
-No labels are needed: promotion adds them.
+`[UNPROVEN]` The alerts must be in that evaluation group; it evaluates
+every 5 minutes. Leave the alert named `platform_managed_do_not_delete`
+alone. No labels are needed: promotion adds them.
 
 Starting alerts. The thresholds are a first guess for the team to
 agree, not tested values.
@@ -27,7 +26,7 @@ agree, not tested values.
 |---|---|---|
 | Dependency unavailable | `DependencyAvailable`, `Minimum`, below 1 over 5 minutes, per `Dependency` | Normal |
 | Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` | Normal |
-| Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes | Normal |
+| Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
 
 **Never set "no data" to Alerting on these.** Where availability is
 passive (see `METRICS.md`), nothing is published until the first call
@@ -59,8 +58,8 @@ for every service that follows.
 `[UNPROVEN]` Where alerts from perf-test and ext-test go. Assumed
 non-prod.
 
-Still open from EUDPA-632: whether the team wants email as well as
-Slack. Email is also a #cdp-support request.
+If the team asked for email as well (Step 2), make that request to
+#cdp-support at the same time.
 
 ## Promote
 
@@ -68,7 +67,8 @@ Alerts are promoted to test and prod by asking #cdp-support. Use the
 request template in the CDP monitoring how-to, naming the owning
 service.
 
-Three things to know before asking:
+`[UNPROVEN]` Three things the docs say, to know before asking. Confirm
+each with #cdp-support on the first promotion:
 
 - **Promotion copies every alert in the evaluation group.** Remove
   experiments first.

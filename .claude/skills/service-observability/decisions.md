@@ -25,7 +25,7 @@ Walks a developer through adding custom metrics, dependency call logging, a Graf
 ## 5. Worker fan-out
 
 **Choice:** false
-**Workers:** 
+**Workers:** none
 **Pattern reference:** patterns.md §5
 
 ## 6. Walker

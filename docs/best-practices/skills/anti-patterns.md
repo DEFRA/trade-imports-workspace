@@ -132,3 +132,29 @@ allowlisted ([GH#51001](https://github.com/anthropics/claude-code/issues/51001))
 
 **Correction:** literal `~/git/defra/trade-imports-workspace/...`
 paths. `~` expands transparently and doesn't trip the check.
+
+## A11. Cross-skill handoff claimed on one side only
+
+**Symptom:** a skill's description or "When to use" says another
+skill "follows this recipe" or "invokes this skill", and a search of
+the named skill finds no mention.
+
+**Why it's wrong:** the description is what routes a request. A
+reader, or the model, trusts the handoff and the other skill never
+makes it.
+
+**Correction:** land the pointer in the other skill in the same
+change, or word the claim as an instruction to the user ("point its
+plan at these steps").
+
+## A12. Reference implementation cited on an unmerged branch
+
+**Symptom:** a reference tells the reader to "read these classes
+before writing anything" and the classes are not on the cited repo's
+`main`.
+
+**Why it's wrong:** a run started from a clean checkout finds nothing
+at the cited path and either stalls or invents the shape.
+
+**Correction:** name the branch beside the citation until it merges,
+or wait for the merge before the skill lands.

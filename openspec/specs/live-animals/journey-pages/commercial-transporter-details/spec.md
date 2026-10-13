@@ -68,3 +68,15 @@ The system MUST accept the page being saved with every field left blank, without
 - **GIVEN** the user is on the commercial transporter details page with every field blank
 - **WHEN** they save and continue
 - **THEN** the save succeeds without an error summary
+
+### Requirement: A saved commercial transporter joins the transporter list, already chosen
+**ID**: REQ-COMMERCIAL-TRANS-006
+The system MUST add a commercial transporter saved from this page to the transporter list and have it chosen for the notification, and MUST leave its saved details unchanged when the list is saved again.
+
+#### Scenario: The transporter just added is the checked row on the list and survives saving the list
+**ID**: SCN-COMMERCIAL-TRANS-006-A
+- **GIVEN** the user has saved a complete set of commercial transporter details
+- **WHEN** they open the transporter list
+- **THEN** a row for that transporter is shown with its radio checked
+- **WHEN** they save the list without changing the choice
+- **THEN** they return to Overview, and the commercial transporter form still shows the saved authorisation number

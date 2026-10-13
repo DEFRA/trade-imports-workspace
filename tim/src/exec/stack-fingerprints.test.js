@@ -94,7 +94,7 @@ describe('devServices', () => {
     })
   })
 
-  test("reads that reference-data refreshes with the stub, whose MDM answers it caches", () => {
+  test('reads that reference-data refreshes with the stub, whose MDM answers it caches', () => {
     const referenceData = devServices(realWorkspaceRoot).find(
       ({ service }) => service === 'trade-imports-reference-data'
     )
@@ -332,7 +332,11 @@ describe('planRefresh', () => {
     expect([
       planRefresh(
         { stub: unchanged, refdata: unchanged, web: unchanged },
-        { stub: { build: 'x', source: 's' }, refdata: unchanged, web: unchanged },
+        {
+          stub: { build: 'x', source: 's' },
+          refdata: unchanged,
+          web: unchanged
+        },
         { refdata: ['stub'] }
       ),
       planRefresh(

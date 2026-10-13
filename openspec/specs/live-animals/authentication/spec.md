@@ -58,3 +58,13 @@ The system MUST NOT display the signed-in user's identity (such as an email addr
 - **GIVEN** the user has just signed in
 - **WHEN** they view the notification dashboard
 - **THEN** no signed-in user identity is shown anywhere on the page
+
+### Requirement: The service root sends a signed-in user to the live-animals dashboard
+**ID**: REQ-AUTH-005
+The system MUST send a signed-in user who opens the service root to the notification dashboard.
+
+#### Scenario: Opening the service root after signing in lands on the dashboard
+**ID**: SCN-AUTH-005-A
+- **GIVEN** the user has signed in
+- **WHEN** they open the service root
+- **THEN** the notification dashboard is shown

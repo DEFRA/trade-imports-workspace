@@ -31,17 +31,17 @@ The system MUST use the reason for importing to decide whether each of four furt
 - **THEN** the destination country is asked for, as a mandatory answer
 - **AND** the purpose in the internal market, port of exit and exit date are not asked for
 
-#### Scenario: Temporary admission of horses asks for the port of exit and the exit date
+#### Scenario: Temporary admission horses asks for the port of exit and the exit date
 **ID**: SCN-OB-IMPORT-REASON-001-D
 - **GIVEN** the user is answering the reason for importing
-- **WHEN** they choose "Temporary admission of horses"
+- **WHEN** they choose "Temporary admission horses"
 - **THEN** the port of exit and the exit date are both asked for, as mandatory answers
 - **AND** the purpose in the internal market and the destination country are not asked for
 
 #### Scenario: Any other reason asks for none of the four
 **ID**: SCN-OB-IMPORT-REASON-001-E
 - **GIVEN** the user is answering the reason for importing
-- **WHEN** they choose a reason other than Internal market, Transit, Transhipment or onward travel, or Temporary admission of horses
+- **WHEN** they choose a reason other than Internal market, Transit, Transhipment or onward travel, or Temporary admission horses
 - **THEN** none of the purpose, destination country, port of exit or exit date is asked for
 
 ### Requirement: Changing the reason discards the answers the previous reason called for

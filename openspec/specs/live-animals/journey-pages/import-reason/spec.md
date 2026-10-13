@@ -17,7 +17,7 @@ The system MUST ask the user their reason for importing the consignment, offerin
 - **THEN** it asks the reason for importing, offering the available reasons and a save-and-continue action
 - **AND** no reason is shown as chosen
 
-### Requirement: A chosen reason is accepted
+### Requirement: A chosen reason that asks nothing further is accepted
 **ID**: REQ-IMPORT-REASON-002
 The system MUST accept a chosen import reason whose own questions, if it reveals any, are answered, saving it without error.
 
@@ -72,7 +72,7 @@ The system MUST offer, for the port of exit under each reason that asks it, the 
 
 ### Requirement: A reason needing more than the purpose question reveals its own questions inline, under that reason
 **ID**: REQ-IMPORT-REASON-005
-The system MUST reveal Transit's own questions — the port of exit, then the destination country — inline under the Transit option; MUST reveal Transhipment or onward travel's own question — the destination country alone — inline under that option; and MUST reveal Temporary admission of horses' own questions — the exit date, then the port of exit — inline under that option.
+The system MUST reveal Transit's own questions — the port of exit, then the destination country — inline under the Transit option; MUST reveal Transhipment or onward travel's own question — the destination country alone — inline under that option; and MUST reveal Temporary admission horses' own questions — the exit date, then the port of exit — inline under that option.
 
 #### Scenario: Transit reveals the port of exit and then the destination country
 **ID**: SCN-IMPORT-REASON-005-A
@@ -86,10 +86,10 @@ The system MUST reveal Transit's own questions — the port of exit, then the de
 - **WHEN** they choose "Transhipment or onward travel"
 - **THEN** only the destination country is asked for inline, under that option
 
-#### Scenario: Temporary admission of horses reveals the exit date and then the port of exit
+#### Scenario: Temporary admission horses reveals the exit date and then the port of exit
 **ID**: SCN-IMPORT-REASON-005-C
 - **GIVEN** the user is on the import reason page
-- **WHEN** they choose "Temporary admission of horses"
+- **WHEN** they choose "Temporary admission horses"
 - **THEN** the exit date and then the port of exit are asked for inline, under that option
 
 ### Requirement: An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered

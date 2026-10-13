@@ -22,7 +22,7 @@
     },
     {
       "id": "REQ-IMPORT-REASON-002",
-      "name": "A chosen reason is accepted",
+      "name": "A chosen reason that asks nothing further is accepted",
       "coverage": "partial",
       "scenarios": [
         {
@@ -72,7 +72,7 @@
           "name": "The port of exit offers the port of entry's list",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list labelled '<name> - <code>' and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should carry the reveal placeholders, the port list labelled as the ports service labels it and the exit-date label into the view", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
           ]
         },
@@ -81,10 +81,11 @@
           "name": "Each port of exit reads its name, a dash and its code, in the port of entry's order",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port as its name and code, airports first, then seaports, then rail ports, each A to Z by name ignoring letter case", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "partial", "notes": "stub mode, captured fixture" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer each served port as '<name> - <code>' valued by its code, in the order reference data serves them", "strength": "partial", "notes": "label and served order, real mode" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/services/run-mode.test.js", "test": "Should offer each served port as '<name> - <code>' valued by its code, in the order reference data serves them, matching its label", "strength": "partial", "notes": "label and served order, real mode" },
+            { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/PortsOfEntryControllerIT.java", "test": "getPortsOfEntry_returnsAirportsThenSeaportsThenRailThenUnknown_eachAToZIgnoringCaseAndSpacing", "strength": "full", "notes": "reference-data integration test (recorded as unit, the nearest type): the airports, seaports, rail order the port of exit keeps" }
           ]
         },
         {
@@ -122,7 +123,7 @@
         },
         {
           "id": "SCN-IMPORT-REASON-005-C",
-          "name": "Temporary admission of horses reveals the exit date and then the port of exit",
+          "name": "Temporary admission horses reveals the exit date and then the port of exit",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "full", "notes": "" },
@@ -297,7 +298,7 @@
           "name": "A port of exit select opens on Select one",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port as its name and code, airports first, then seaports, then rail ports, each A to Z by name ignoring letter case", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the transit port of exit list opens on Select one, then offers every port labelled like the port of entry, in the order reference data serves them", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "full", "notes": "compose stack only; reads the whole list, placeholder first" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks transit for the port of exit and then the destination country", "strength": "full", "notes": "stub mode, captured fixture" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "full", "notes": "stub mode, captured fixture" }

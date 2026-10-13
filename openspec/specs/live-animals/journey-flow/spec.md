@@ -165,7 +165,7 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 
 ### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST show check your answers whatever the notification owes, naming what is outstanding on a draft and nothing while it is amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-010). Until every Overview task row is ready (fulfilled, not applicable or optional), continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
+The system MUST show check your answers whatever the notification owes, naming what is outstanding on a draft, and while it is being amended naming nothing until Continue is refused (`live-animals/journey-pages/check-your-answers` REQ-CYA-012). Until every Overview task row is ready (fulfilled, not applicable or optional), continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A
@@ -283,12 +283,12 @@ The system MUST count only an answer the user gave when deciding whether a journ
 
 ### Requirement: A collection page reached by changing an answer stays in that context until its own finishing action
 **ID**: REQ-FLOW-010
-The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — reached by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
+The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — reached in change mode, such as by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
 
-#### Scenario: Adding and removing identification records while changing stays on that page until finishing
+#### Scenario: Removing and replacing an identification record while changing stays on that page until finishing
 **ID**: SCN-FLOW-010-A
-- **GIVEN** the user has followed a Change link from check your answers to a commodity's identification records
-- **WHEN** they remove a record and add a replacement, saving each in turn
+- **GIVEN** the user has opened a commodity's identification details page in change mode, as when sent back to it from the consignment details count error
+- **WHEN** they remove a record and enter a replacement
 - **THEN** they remain on the identification details page throughout
 - **WHEN** they choose the page's finishing action
 - **THEN** they return to check your answers, now showing the replacement record
@@ -323,13 +323,13 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
 
 #### Scenario: A page opened from Overview while amending ends with the three amend controls
 **ID**: SCN-FLOW-013-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Arrival details from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview"
+- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons
 - **AND** no "Cancel and return to overview" is offered
 - **AND** its Back link goes to Overview
 
@@ -359,23 +359,41 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **WHEN** the user opens the CPH number page
 - **THEN** only "Save and continue" is offered
 
-### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-FLOW-014
+Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+
+#### Scenario: Cancel and return to overview sits on its own line below the two buttons
+**ID**: SCN-FLOW-014-A
+- **GIVEN** a notification that is not being amended
+- **WHEN** the user opens Commodity details from Overview
+- **THEN** "Save and continue" and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
+
+#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+**ID**: SCN-FLOW-014-B
+- **GIVEN** a notification being amended
+- **WHEN** the user opens Arrival details from Overview
+- **THEN** "Save and return" and "Save and continue" sit side by side
+- **AND** "Save and return to overview" sits on its own line below them
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-FLOW-015
 The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
 
 #### Scenario: Choosing Live animals opens a new draft at Origin of the import
-**ID**: SCN-FLOW-014-A
+**ID**: SCN-FLOW-015-A
 - **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
 - **WHEN** they choose Live animals and continue
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
 - **AND** saving that page continues the opening sequence
 
 ### Requirement: A notification started from a template opens on its Overview with no opening sequence
-**ID**: REQ-FLOW-015
+**ID**: REQ-FLOW-016
 The system MUST open a notification started from a template (`live-animals/notification-templates`) on its Overview, with no opening sequence walked, and continuing from its pages MUST follow REQ-FLOW-003. A template being created runs its own shorter sequence instead, set out in `live-animals/notification-templates`.
 
 #### Scenario: Using a template opens the new draft's Overview
-**ID**: SCN-FLOW-015-A
+**ID**: SCN-FLOW-016-A
 - **GIVEN** a saved template
 - **WHEN** the user selects "Use template"
 - **THEN** the new draft's Overview is shown

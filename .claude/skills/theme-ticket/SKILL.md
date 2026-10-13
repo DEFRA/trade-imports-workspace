@@ -60,9 +60,9 @@ points. Nothing here waits for a person.
 kind" and which "refuses a value" in any Jira field. Driving a ticket from
 inside the loop would break that contract. The orchestrating session, which
 launches the loop per theme, runs START before it and WRITE after it instead —
-same effect, contract intact. See
-[`themes/HOW-TO-BUILD.md`](../../../workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md)
-for the per-theme steps.
+same effect, contract intact. A programme's own
+`workareas/<workarea>/themes/HOW-TO-BUILD.md` is where those steps belong, next
+to the phrase that starts each theme's loop.
 
 ## The rules this skill holds to
 

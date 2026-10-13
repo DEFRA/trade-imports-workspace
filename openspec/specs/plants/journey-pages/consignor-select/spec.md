@@ -64,19 +64,19 @@ The system MUST accept a chosen address, continue to identification numbers on s
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** Overview is shown, with the consignor task Completed
 
-### Requirement: Saving with nothing chosen, or after a no-match search, is refused with focused recovery
+### Requirement: Saving with nothing chosen while no consignor is held is refused with focused recovery
 **ID**: REQ-PLANTS-CONSIGNOR-004
-The system MUST refuse to save when nothing has been chosen, focusing the first address row when the user follows the error, and MUST focus the search field instead when the list is empty after a no-match search. Choosing an address after the error MUST recover.
+The system MUST refuse save-and-continue when nothing is chosen and no consignor is held yet, focusing the first address row when the user follows the error, or the search field when a search matched nothing. Choosing an address after the error MUST recover. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A consignor already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the first row
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
-- **GIVEN** the user is on the consignor page with nothing chosen
+- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
 - **WHEN** they save and continue and follow the error
 - **THEN** the first address row is focused
 
 #### Scenario: Saving after a no-match search focuses the search field
 **ID**: SCN-PLANTS-CONSIGNOR-004-B
-- **GIVEN** the user has searched for a term that matched nothing
+- **GIVEN** the user has searched for a term that matched nothing, with no consignor held yet
 - **WHEN** they save and continue and follow the error
 - **THEN** the search field is focused
 
@@ -85,6 +85,12 @@ The system MUST refuse to save when nothing has been chosen, focusing the first 
 - **GIVEN** the consignor page, reached in the opening sequence, is showing the nothing-chosen error
 - **WHEN** the user chooses an address and saves
 - **THEN** they continue to identification numbers
+
+#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
+**ID**: SCN-PLANTS-CONSIGNOR-004-D
+- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
+- **WHEN** they select save and return to overview
+- **THEN** Overview is shown, with no error and no consignor saved
 
 ### Requirement: The back link returns to Overview
 **ID**: REQ-PLANTS-CONSIGNOR-005

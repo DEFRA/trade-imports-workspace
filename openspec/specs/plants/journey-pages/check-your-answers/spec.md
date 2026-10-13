@@ -60,21 +60,15 @@ The system MUST show, on the Place of destination, Consignor or exporter and Con
 - **WHEN** the user views check-your-answers
 - **THEN** the Consignor or exporter card has only "Name" and "Address" rows
 
-### Requirement: Anything not yet answered, or whose address no longer resolves, is shown as "Not provided"
+### Requirement: Anything not yet answered is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004
-The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST show "Not provided" for a previously selected party whose address no longer resolves. An unanswered role MUST NOT be shown as an error — an error is reserved for a role whose linked address no longer resolves, as governed by `plants/journey-obligations/review`.
+The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST NOT show an unanswered role as an error. A party's card shows the address copied onto the notification, which a later change to the address book does not reach, as governed by `plants/addresses`.
 
 #### Scenario: An unanswered destination reads Not provided, with no address error, and is named as outstanding
 **ID**: SCN-PLANTS-CYA-004-A
 - **GIVEN** a notification whose place of destination has never been answered
 - **WHEN** the user views check-your-answers
-- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names the place of destination as a task still to complete
-
-#### Scenario: A deleted destination reads Not provided on every row
-**ID**: SCN-PLANTS-CYA-004-B
-- **GIVEN** a complete draft notification is open on check-your-answers
-- **WHEN** the place-of-destination address is removed from the address book and the page is reloaded
-- **THEN** the Place of destination card's rows each read "Not provided", and the removed party's name is not shown
+- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names "Complete place of destination", linking to that card
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
@@ -118,14 +112,14 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only, with no Change links and no continue action. It MUST offer in the header a primary "Amend this notification" button that submits a form, and a red "Delete notification" button that leads to the delete page, not at the foot. It MUST NOT offer "Copy as new", or cancel-amendment while no amendment is in progress. What delete does is owned by `plants/notification-lifecycle`.
+The system MUST show a submitted notification read-only, with no Change or Edit details links and no continue action. It MUST offer in the header a primary "Amend this notification" button that submits a form, and a red "Delete notification" button that leads to the delete page, not at the foot. It MUST NOT offer "Copy as new", or cancel-amendment while no amendment is in progress. What delete does is owned by `plants/notification-lifecycle`.
 
 #### Scenario: The submitted view is read-only and offers delete
 **ID**: SCN-PLANTS-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** the status shown is "Submitted"
-- **AND** no Change links and no continue action are offered
+- **AND** no Change or Edit details links and no continue action are offered
 - **AND** "Amend this notification" and a red "Delete notification" are offered in its header, and no "Copy as new" or cancel-amendment action is shown
 
 #### Scenario: A submitted notification can be deleted from check-your-answers
@@ -194,47 +188,83 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 - **THEN** a banner explains the notification was made outside the required timing
 - **AND** an on-time submission shows no such banner
 
-### Requirement: An unfinished draft names every outstanding task
+### Requirement: Each party card offers Change and, once an address is held, Edit details
 **ID**: REQ-PLANTS-CYA-012
-The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
-#### Scenario: Viewing an unfinished notification names each outstanding task
+The system MUST offer, on a draft's consignor-or-exporter, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
+
+#### Scenario: An answered party card offers Change and Edit details; an unanswered one only Change
 **ID**: SCN-PLANTS-CYA-012-A
-- **GIVEN** a draft notification with one or more tasks not yet complete
+- **GIVEN** a draft notification whose contact address is held and whose place of destination is not yet answered
 - **WHEN** the user views check-your-answers
-- **THEN** an error summary titled "There is a problem" names each task not yet complete
-- **AND** each entry links to that task's page, which returns to check-your-answers once saved
+- **THEN** the Contact card offers Change and Edit details as two separate actions, Edit details opening the contact address's edit page
+- **AND** the Place of destination card offers only Change
+
+### Requirement: An unfinished draft names every unfinished card and links to it
+**ID**: REQ-PLANTS-CYA-013
+The system MUST show check-your-answers for an unfinished draft under an error summary titled "There is a problem" that names each card still holding outstanding answers once, in page order, as "Complete" and the card's title, linking to that card, which MUST be marked with the same words; commodity details link to the "About the consignment" heading. It MUST keep the user on the page when they continue while any card is unfinished.
+
+#### Scenario: Viewing an unfinished notification names each unfinished card and links to it
+**ID**: SCN-PLANTS-CYA-013-A
+- **GIVEN** a draft notification with one or more cards still holding outstanding answers
+- **WHEN** the user views check-your-answers
+- **THEN** an error summary titled "There is a problem" names each unfinished card in page order, such as "Complete arrival details" and "Complete contact"
+- **AND** each entry links to the card it names, which is itself marked with the same words
+- **AND** "Complete commodity details" links to the "About the consignment" heading
+
+#### Scenario: A half-done card is named once and links to the card, not to a page
+**ID**: SCN-PLANTS-CYA-013-C
+- **GIVEN** a plants-for-planting draft whose arrival status is answered and whose arrival date is not
+- **WHEN** the user views check-your-answers
+- **THEN** the error summary names "Complete arrival details" once
+- **AND** that entry links to the Arrival details card on the page
 
 #### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page
-**ID**: SCN-PLANTS-CYA-012-B
+**ID**: SCN-PLANTS-CYA-013-B
 - **GIVEN** a draft notification with a task still to complete is open on check-your-answers
 - **WHEN** the user continues
 - **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
 - **AND** the declaration is not opened
 
-### Requirement: An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why
-**ID**: REQ-PLANTS-CYA-013
-While a notification is being amended, the system MUST open check-your-answers with no error summary and no error message against any card or role. When the user continues while any answer is incomplete or breaks its rules, the system MUST keep them on check-your-answers, still amending and without opening the declaration, and MUST show the error summary naming what is missing.
+### Requirement: An amendment that is not yet ready opens without an error and refuses Continue with one
+**ID**: REQ-PLANTS-CYA-014
+While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message when it is opened, and MUST refuse Continue while any answer is incomplete or breaks its rules, keeping the user on check-your-answers, still amending and without opening the declaration, under an error summary titled "There is a problem" that names each reason and takes focus, as a draft's refused Continue does.
 
-#### Scenario: An incomplete amendment's review shows no error
-**ID**: SCN-PLANTS-CYA-013-A
+#### Scenario: An incomplete amendment's review opens with no error
+**ID**: SCN-PLANTS-CYA-014-A
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user opens check-your-answers
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment is refused, naming what is missing
-**ID**: SCN-PLANTS-CYA-013-B
+#### Scenario: Continuing from an incomplete amendment stays on check-your-answers, naming what is missing
+**ID**: SCN-PLANTS-CYA-014-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on check-your-answers and the error summary names "Complete arrival details"
+- **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
+### Requirement: The place of landing and a territory of origin read back as they were offered
+**ID**: REQ-PLANTS-CYA-015
+The system MUST show the proposed place of landing exactly as the port was offered when it was chosen, reading "<port name> - <port code>", and MUST name a territory chosen as the country of origin "<territory> (<country>)".
+
+#### Scenario: The place of landing row reads the option the user chose
+**ID**: SCN-PLANTS-CYA-015-A
+- **GIVEN** a potatoes notification with a proposed place of landing
+- **WHEN** the user views check-your-answers
+- **THEN** the place of landing row reads the same "<port name> - <port code>" text as the option they chose
+
+#### Scenario: A territory of origin is named with its country
+**ID**: SCN-PLANTS-CYA-015-B
+- **GIVEN** a notification whose country of origin is the Canary Islands
+- **WHEN** the user views check-your-answers
+- **THEN** the country of origin row reads "Canary Islands (Spain)"
+
 ### Requirement: A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated
-**ID**: REQ-PLANTS-CYA-014
+**ID**: REQ-PLANTS-CYA-016
 A submitted notification's read-only view and a draft's check answers MUST be headed and titled by the notification's reference in place of "Check your answers", with its status as a tag and no status bar. Under the heading they MUST show the UK day the notification was submitted ("Date submitted: <d Month yyyy>") or, for a draft, created ("Date created: <d Month yyyy>"). An amendment MUST keep its "Check your answers" heading, title and status bar.
 
 #### Scenario: The submitted view is headed by its reference with a Submitted tag
-**ID**: SCN-PLANTS-CYA-014-A
+**ID**: SCN-PLANTS-CYA-016-A
 - **GIVEN** a notification that has been submitted
 - **WHEN** the user opens its read-only view
 - **THEN** the page heading is the notification's reference number
@@ -242,19 +272,19 @@ A submitted notification's read-only view and a draft's check answers MUST be he
 - **AND** no status bar is shown
 
 #### Scenario: The submitted view's browser title starts with its reference
-**ID**: SCN-PLANTS-CYA-014-B
+**ID**: SCN-PLANTS-CYA-016-B
 - **GIVEN** a notification that has been submitted
 - **WHEN** the user opens its read-only view
 - **THEN** the browser title starts with the reference, before the service name
 
 #### Scenario: The submitted view shows the date it was submitted
-**ID**: SCN-PLANTS-CYA-014-C
+**ID**: SCN-PLANTS-CYA-016-C
 - **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
 - **WHEN** the user opens its read-only view
 - **THEN** under the heading it reads "Date submitted: 22 July 2026"
 
 #### Scenario: A draft's check answers is headed by its reference with a Draft tag
-**ID**: SCN-PLANTS-CYA-014-D
+**ID**: SCN-PLANTS-CYA-016-D
 - **GIVEN** a draft notification
 - **WHEN** the user opens its check-your-answers
 - **THEN** the page heading is the notification's reference number
@@ -263,41 +293,41 @@ A submitted notification's read-only view and a draft's check answers MUST be he
 - **AND** the browser title starts with the reference
 
 #### Scenario: A draft's check answers shows the date it was created
-**ID**: SCN-PLANTS-CYA-014-E
+**ID**: SCN-PLANTS-CYA-016-E
 - **GIVEN** a draft created at 23:30 UTC on 21 July 2026
 - **WHEN** the user opens its check-your-answers
 - **THEN** under the heading it reads "Date created: 22 July 2026"
 
 #### Scenario: An amendment's check answers keeps its heading and status bar
-**ID**: SCN-PLANTS-CYA-014-F
+**ID**: SCN-PLANTS-CYA-016-F
 - **GIVEN** a notification is being amended
 - **WHEN** the user views check-your-answers
 - **THEN** the page heading and browser title are "Check your answers"
 - **AND** the status bar is shown
 
 ### Requirement: Opening the view of a notification that does not exist goes to the notification list
-**ID**: REQ-PLANTS-CYA-015
+**ID**: REQ-PLANTS-CYA-017
 The system MUST send the user to the plants notification list when they open the view of a notification that does not exist.
 
 #### Scenario: An unknown notification's view opens the notification list
-**ID**: SCN-PLANTS-CYA-015-A
+**ID**: SCN-PLANTS-CYA-017-A
 - **GIVEN** no notification has the reference GBN-HRP-00-000000
 - **WHEN** the user opens that notification's view
 - **THEN** the plants notification list is shown
 
 ### Requirement: A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy
-**ID**: REQ-PLANTS-CYA-016
+**ID**: REQ-PLANTS-CYA-018
 On a submitted notification's read-only view or a draft's check answers, the system MUST show an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row with the reference, as plain text the user can select with JavaScript on or off. It MUST NOT show a "Customs document code" row or any "Copy" button.
 
 #### Scenario: The submitted view shows its notification reference
-**ID**: SCN-PLANTS-CYA-016-A
+**ID**: SCN-PLANTS-CYA-018-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
 - **AND** it holds a "Notification reference" row reading the notification's reference
 
 #### Scenario: Without JavaScript the reference reads as plain text, with no customs document code and no Copy button
-**ID**: SCN-PLANTS-CYA-016-B
+**ID**: SCN-PLANTS-CYA-018-B
 - **GIVEN** JavaScript is off
 - **WHEN** the user opens a submitted notification's view
 - **THEN** the notification reference is shown as text
@@ -305,26 +335,9 @@ On a submitted notification's read-only view or a draft's check answers, the sys
 - **AND** no "Copy" button is shown
 
 #### Scenario: A draft's check answers shows its notification reference
-**ID**: SCN-PLANTS-CYA-016-C
+**ID**: SCN-PLANTS-CYA-018-C
 - **GIVEN** a draft notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** an "Import reference numbers" section shows the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed."
 - **AND** it holds a "Notification reference" row reading the notification's reference
 - **AND** no "Customs document code" row and no "Copy" button is shown
-
-### Requirement: The error summary names each task still to complete as "Complete <task>", once, after any origin or address error
-**ID**: REQ-PLANTS-CYA-017
-Each task still to complete MUST be named in the error summary as "Complete what you are importing", "Complete where this consignment is coming from", "Complete arrival details", "Complete place of destination", "Complete consignor or exporter", "Complete identification numbers" or "Complete contact address for consignment". Any country-of-origin or removed-address error MUST be listed first, then the tasks in Overview order. A task already named by such an error MUST NOT be named again.
-
-#### Scenario: An unfinished draft names the missing contact as a task to complete
-**ID**: SCN-PLANTS-CYA-017-A
-- **GIVEN** a draft notification complete except for its contact address
-- **WHEN** the user views check-your-answers
-- **THEN** the error summary reads "Complete contact address for consignment"
-
-#### Scenario: A removed destination is named once
-**ID**: SCN-PLANTS-CYA-017-B
-- **GIVEN** a complete draft whose place-of-destination address has been removed from the address book
-- **WHEN** the user continues from check-your-answers
-- **THEN** the error summary names "Select an address for the place of destination"
-- **AND** it does not also name "Complete place of destination"

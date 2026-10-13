@@ -175,7 +175,7 @@ For a notification, the system MUST group the page under the same six numbered s
 
 ### Requirement: A blank is written out as "Not applicable" on a settled card and marked missing on one still outstanding
 **ID**: REQ-CYA-002
-On a notification's review, the system MUST draw a blank by its card, not its field: on a card with nothing further owed, as "Not applicable"; on a card still holding outstanding answers, as a row with no text in the missing style, "Missing" announced for a screen reader, alike for every blank row in that card, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet; that error is for a copied address breaking the address book's rules (REQ-ADDR-005).
+On a notification's review, the system MUST decide how to draw a blank by the card it sits in, not the field itself: on a card with nothing further owed it MUST write the blank out as "Not applicable", a settled answer; on a card still holding outstanding answers it MUST give the row no text at all, drawing it in the missing style with "Missing" announced in its place for a screen reader. The decision MUST apply to every blank row in a marked card alike, optional or not. The system MUST NOT raise a role error against a party role nobody has reached yet — that error is reserved for a role whose copied address breaks the address book's rules (REQ-ADDR-005).
 
 #### Scenario: A blank row is written out on a settled card and marked missing on an outstanding one
 **ID**: SCN-CYA-002-A
@@ -316,24 +316,24 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **THEN** the same entry links to the "2. Description of the goods" heading
 
 ### Requirement: The review of a draft names each species of a multi-species consignment that is still short of its animals
-**ID**: REQ-CYA-012
+**ID**: REQ-CYA-021
 Where more than one chosen commodity asks for animal identifiers, the system MUST name in the error summary, straight after commodity details, each such species that has no animal identifier yet: "Enter the number of animals for <species>" while its number of animals is not given, otherwise "Enter at least 1 animal identifier for <species>", the species name in lower case. Each entry MUST link to that species' block, which MUST NOT be marked.
 
 #### Scenario: A species with no count is named by its number of animals
-**ID**: SCN-CYA-012-A
+**ID**: SCN-CYA-021-A
 - **GIVEN** a notification whose cow (Bos taurus) and cat (Felis catus) lines both ask for identifiers, with no numbers saved
 - **WHEN** the user views the review
 - **THEN** the error summary names "Enter the number of animals for bos taurus" and "Enter the number of animals for felis catus", each linking to that species' block
 
 #### Scenario: A counted species with no identifier is named by its identifiers
-**ID**: SCN-CYA-012-B
+**ID**: SCN-CYA-021-B
 - **GIVEN** the same two species with their numbers saved and no identifier saved for either
 - **WHEN** the user views the review
 - **THEN** the error summary names "Enter at least 1 animal identifier for bos taurus" and "Enter at least 1 animal identifier for felis catus", straight after "Complete commodity details", each linking to that species' block
 - **AND** a species with an identifier saved is not named
 
 #### Scenario: A single species asking for identifiers is not named
-**ID**: SCN-CYA-012-C
+**ID**: SCN-CYA-021-C
 - **GIVEN** a notification where only one chosen commodity asks for animal identifiers, with none saved
 - **WHEN** the user views the review
 - **THEN** no "Enter at least 1 animal identifier for" or "Enter the number of animals for" entry is shown
@@ -385,61 +385,89 @@ The system MUST open a new draft when the user copies a submitted notification f
 - **WHEN** the user copies it as new
 - **THEN** a new draft opens at Overview, carrying its own reference number, different from the original's
 
-### Requirement: An amendment's review opens without errors and refuses an incomplete resubmission, saying why
+### Requirement: The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is
 **ID**: REQ-CYA-010
-While a notification is being amended, the system MUST open the review with no error summary and no error message against any card or role. When the user continues while any answer is incomplete or breaks its rules, the system MUST keep them on the review, still amending and without opening the declaration, and MUST show the error summary "There is a problem" naming what is missing, with focus on it.
+The system MUST mark the uploaded-documents card on a draft's review while any stored document is still being scanned or has been found infected — putting the infected message ahead of the still-scanning one — and MUST refuse to continue from the review while either is so, returning the user to the review with that error shown.
 
-#### Scenario: An incomplete amendment's review shows no error
+#### Scenario: Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review
 **ID**: SCN-CYA-010-A
+- **GIVEN** a ready draft notification is open on the review, and one of its documents is still being scanned
+- **WHEN** the user continues
+- **THEN** they are returned to the review, which marks the uploaded-documents card as still being scanned
+
+#### Scenario: An infected document marks the uploaded-documents card in preference to one still scanning
+**ID**: SCN-CYA-010-B
+- **GIVEN** a ready draft notification is open on the review, and one of its documents has been found infected while another is still being scanned
+- **WHEN** the user continues
+- **THEN** they are returned to the review, which marks the uploaded-documents card as holding an infected document, not as still being scanned
+
+### Requirement: Continuing is refused if the notification has changed since the review was shown
+**ID**: REQ-CYA-011
+The system MUST refuse to continue from the review to the declaration if the notification has changed since that review was shown — in another tab or by another user — and MUST return the user to the review showing the notification as it now stands, under a message that it has been updated since they opened it.
+
+#### Scenario: A change made in another tab after the review was shown sends the user back to the review
+**ID**: SCN-CYA-011-A
+- **GIVEN** a ready draft notification is open on the review
+- **AND** the notification is then changed in another tab
+- **WHEN** the user continues from the review they already have open
+- **THEN** the review is shown again with the changed answer, under a message that the notification has been updated since they opened it
+- **AND** the declaration is not shown
+
+### Requirement: An amendment that is not yet ready opens without an error and refuses Continue with one
+**ID**: REQ-CYA-012
+While a notification is being amended, the system MUST show the review with no error summary and no error message when it is opened, and MUST refuse Continue while any answer is incomplete or breaks its rules, keeping the user on the review, still amending and without opening the declaration, under an error summary titled "There is a problem" that names each reason and takes focus, as a draft's refused Continue does.
+
+#### Scenario: An incomplete amendment's review opens with no error
+**ID**: SCN-CYA-012-A
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user opens the review
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment is refused, naming what is missing
-**ID**: SCN-CYA-010-B
+#### Scenario: Continuing from an incomplete amendment stays on the review, naming what is missing
+**ID**: SCN-CYA-012-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on the review and the error summary names "Complete arrival details"
+- **THEN** they stay on the review, under an error summary titled "There is a problem" that names the arrival details and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-#### Scenario: Continuing from an amendment whose arrival date breaks its rule is refused
-**ID**: SCN-CYA-010-C
+#### Scenario: Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it
+**ID**: SCN-CYA-012-C
 - **GIVEN** a notification being amended whose arrival date at port has been changed to more than 6 months ahead
 - **WHEN** the user continues on the review
-- **THEN** they stay on the review with an error summary naming the arrival details card's problem
+- **THEN** they stay on the review, under an error summary that names the arrival details
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
 ### Requirement: A transited territory is named with its country on the review
-**ID**: REQ-CYA-011
+**ID**: REQ-CYA-020
 The system MUST show each transited country in the review's Transit countries subsection of the Arrival details card by the name the transited countries page lists it under, naming a territory "<territory> (<country>)".
 
 #### Scenario: A transited territory reads with its country
-**ID**: SCN-CYA-011-A
+**ID**: SCN-CYA-020-A
 - **GIVEN** the notification's transited countries include a territory
 - **WHEN** the review page is shown
 - **THEN** the Transit countries subsection names it "<territory> (<country>)", for example "Canary Islands (Spain)"
 
 ### Requirement: An amendment's review ends with Continue, Cancel amend and Delete
-**ID**: REQ-CYA-013
+**ID**: REQ-CYA-022
 While a notification is being amended, the system MUST end the review with "Continue", which goes on to resubmission, a secondary "Cancel amend" button that opens the cancel-amendment confirmation, and a red "Delete" that opens the delete confirmation. The status bar on this page MUST NOT also offer "Cancel amend".
 
 #### Scenario: The amendment review ends with three controls and no status bar Cancel amend
-**ID**: SCN-CYA-013-A
+**ID**: SCN-CYA-022-A
 - **GIVEN** a notification being amended is open on the review
 - **WHEN** the user reads the end of the page
 - **THEN** it ends with "Continue", a secondary "Cancel amend" button and a red "Delete" button
 - **AND** the status bar offers no "Cancel amend"
 
 #### Scenario: Cancel amend opens the cancel-amendment confirmation
-**ID**: SCN-CYA-013-B
+**ID**: SCN-CYA-022-B
 - **GIVEN** a notification being amended is open on the review
 - **WHEN** the user selects "Cancel amend"
 - **THEN** the cancel-amendment confirmation opens
 
 #### Scenario: Delete opens the delete confirmation
-**ID**: SCN-CYA-013-C
+**ID**: SCN-CYA-022-C
 - **GIVEN** a notification being amended is open on the review
 - **WHEN** the user selects "Delete"
 - **THEN** the delete confirmation for that notification opens
@@ -602,3 +630,25 @@ The system MUST head the review of a draft, reached from Overview's "Review and 
 - **GIVEN** a draft created at 23:30 UTC on 21 July 2026
 - **WHEN** the user opens its review
 - **THEN** under the heading it reads "Date created: 22 July 2026"
+
+### Requirement: Ports and destination countries read back exactly as they were offered
+**ID**: REQ-CYA-013
+The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", and MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does.
+
+#### Scenario: The port of exit row reads the option the user chose
+**ID**: SCN-CYA-013-A
+- **GIVEN** a transit notification whose port of exit is Port of Dover
+- **WHEN** the user views the review
+- **THEN** the port of exit row reads "Port of Dover - GB DVR", the same text as the option they chose
+
+#### Scenario: The port of entry row reads the port's name, a dash and its code
+**ID**: SCN-CYA-013-B
+- **GIVEN** a notification whose port of entry is Aberdeen Harbour
+- **WHEN** the user views the review
+- **THEN** the port of entry row reads "Aberdeen Harbour - GB ABD"
+
+#### Scenario: A territory destination country is named with its country
+**ID**: SCN-CYA-013-C
+- **GIVEN** a transhipment notification whose destination country is Martinique
+- **WHEN** the user views the review
+- **THEN** the destination country row reads "Martinique (France)"

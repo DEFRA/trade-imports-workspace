@@ -19,7 +19,7 @@ The system MUST ask the user for the port of entry, the means of transport, the 
 
 ### Requirement: The port field offers every port before typing, and filters by name or code
 **ID**: REQ-ARRIVAL-002
-The system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
+The system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name, and MUST list every port the reference data service serves, each reading "<port name> - <port code>", airports first, then seaports, then rail ports, then any port of unknown type, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.
 
 #### Scenario: Opening the port field offers the full list
 **ID**: SCN-ARRIVAL-002-A
@@ -43,13 +43,15 @@ The system MUST offer the whole list of ports as soon as the user opens the port
 **ID**: SCN-ARRIVAL-002-D
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the port list is read in full
-- **THEN** it holds every port the reference data service serves, each reading "<port name> - <port code>", for example "Port of Dover - GB DVR", in the order the service serves them
+- **THEN** it holds every port the reference data service serves, in the order the service serves them
+- **AND** each reads "<port name> - <port code>", for example "Aberdeen Harbour - GB ABD"
 
 #### Scenario: Ports are listed airports first, then seaports, then rail ports, each A to Z by name
 **ID**: SCN-ARRIVAL-002-E
 - **GIVEN** the user is on the arrival details page
 - **WHEN** the port list is read in full
 - **THEN** every airport comes before every seaport, and every seaport before every rail port
+- **AND** a port whose type the reference data service does not know comes after every rail port
 - **AND** within each group the ports run A to Z by name, a name in capitals sorting among the names that start with the same letter, and a name with a non-breaking or doubled space sorting where the same name with single spaces would
 
 ### Requirement: Choosing a port submits and keeps its code
@@ -68,7 +70,7 @@ The system MUST submit the chosen port's code rather than the text the user type
 **ID**: SCN-ARRIVAL-003-B
 - **GIVEN** the user is on the arrival details page
 - **WHEN** they choose a port
-- **THEN** the search field shows that port as "<port name> - <port code>", for example "Port of Dover - GB DVR"
+- **THEN** the search field shows that port as "<port name> - <port code>"
 
 ### Requirement: The port field works without client-side JavaScript
 **ID**: REQ-ARRIVAL-004
@@ -186,11 +188,11 @@ The system MUST reject a port of entry or means of transport that is not one of 
 - **THEN** an error is shown, the port field is focused and empty
 - **AND** the page's other answers are still held
 
-#### Scenario: An invalid means of transport clears the whole group, keeping the rest of the page
+#### Scenario: An invalid means of transport clears the dropdown, keeping the rest of the page
 **ID**: SCN-ARRIVAL-009-B
 - **GIVEN** the user has answered every arrival question
 - **WHEN** the submitted means of transport is not one of the offered options
-- **THEN** an error is shown, the means-of-transport group is focused with nothing checked
+- **THEN** an error is shown, the means-of-transport dropdown is focused with nothing chosen
 - **AND** the page's other answers, including the chosen port, are still held
 
 ### Requirement: The back link returns to Overview

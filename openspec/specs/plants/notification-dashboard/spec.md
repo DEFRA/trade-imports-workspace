@@ -41,7 +41,7 @@ The system MUST list the notifications matching the current view as cards, and M
 
 ### Requirement: A notification card shows the notification's key details
 **ID**: REQ-PLANTS-DASH-003
-The system MUST show, on each notification card, the notification's reference number, its commodity, its origin, its arrival, its consignor, its status, the date it was created and the date it was submitted. The card MUST NOT show a consignee row.
+The system MUST show, on each notification card, the notification's reference number, its commodity, its origin, its arrival, its consignor, its status, the date it was created and the date it was submitted. The card MUST NOT show a consignee row. The created and submitted dates MUST be the day each happened in UK time, and a territory of origin MUST be named "<territory> (<country>)".
 
 #### Scenario: A draft notification's card shows its details
 **ID**: SCN-PLANTS-DASH-003-A
@@ -49,6 +49,18 @@ The system MUST show, on each notification card, the notification's reference nu
 - **WHEN** the user views its card on the dashboard
 - **THEN** its card shows the reference number, commodity, origin, arrival, consignor, a status of "Draft", a dated created row, and an empty submitted row
 - **AND** no consignee row is shown
+
+#### Scenario: A notification submitted late in the evening is dated the UK day it was submitted
+**ID**: SCN-PLANTS-DASH-003-B
+- **GIVEN** a notification was submitted at 23:35 UTC on 10 September 2026, which is 00:35 on 11 September in the UK
+- **WHEN** the user views its card on the dashboard
+- **THEN** its submitted date reads "11 Sep 2026", the same day the confirmation page names
+
+#### Scenario: A territory of origin is named with its country on the card
+**ID**: SCN-PLANTS-DASH-003-C
+- **GIVEN** a notification whose country of origin is the Canary Islands
+- **WHEN** the user views its card on the dashboard
+- **THEN** its origin reads "Canary Islands (Spain)"
 
 ### Requirement: The actions offered on a card depend on the notification's status
 **ID**: REQ-PLANTS-DASH-004

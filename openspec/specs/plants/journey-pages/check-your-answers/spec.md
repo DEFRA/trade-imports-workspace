@@ -56,7 +56,7 @@ The system MUST show "Not provided" against any field or party role that has not
 **ID**: SCN-PLANTS-CYA-004-A
 - **GIVEN** a notification whose place of destination has never been answered
 - **WHEN** the user views check-your-answers
-- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names the place of destination as a task still to complete
+- **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names "Complete place of destination", linking to that card
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
@@ -167,22 +167,24 @@ The system MUST offer, on a draft's consignor-or-exporter, place-of-destination 
 - **THEN** the Contact card offers Change and Edit details as two separate actions, Edit details opening the contact address's edit page
 - **AND** the Place of destination card offers only Change
 
-### Requirement: An unfinished draft names every outstanding task
+### Requirement: An unfinished draft names every unfinished card and links to it
 **ID**: REQ-PLANTS-CYA-013
-The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to the first page of that task still to be answered, and MUST keep the user on the page when they continue while any task is outstanding.
+The system MUST show check-your-answers for an unfinished draft under an error summary titled "There is a problem" that names each card still holding outstanding answers once, in page order, as "Complete" and the card's title, linking to that card, which MUST be marked with the same words; commodity details link to the "About the consignment" heading. It MUST keep the user on the page when they continue while any card is unfinished.
 
-#### Scenario: Viewing an unfinished notification names each outstanding task
+#### Scenario: Viewing an unfinished notification names each unfinished card and links to it
 **ID**: SCN-PLANTS-CYA-013-A
-- **GIVEN** a draft notification with one or more tasks not yet complete
+- **GIVEN** a draft notification with one or more cards still holding outstanding answers
 - **WHEN** the user views check-your-answers
-- **THEN** an error summary titled "There is a problem" names each task not yet complete
-- **AND** each entry links to that task's page, which returns to check-your-answers once saved
+- **THEN** an error summary titled "There is a problem" names each unfinished card in page order, such as "Complete arrival details" and "Complete contact"
+- **AND** each entry links to the card it names, which is itself marked with the same words
+- **AND** "Complete commodity details" links to the "About the consignment" heading
 
-#### Scenario: A half-done task links to the page still missing, not its answered first page
+#### Scenario: A half-done card is named once and links to the card, not to a page
 **ID**: SCN-PLANTS-CYA-013-C
 - **GIVEN** a plants-for-planting draft whose arrival status is answered and whose arrival date is not
 - **WHEN** the user views check-your-answers
-- **THEN** the arrival details entry in the error summary links to the arrival details page, not the arrival status page
+- **THEN** the error summary names "Complete arrival details" once
+- **AND** that entry links to the Arrival details card on the page
 
 #### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page
 **ID**: SCN-PLANTS-CYA-013-B
@@ -205,6 +207,6 @@ While a notification is being amended, the system MUST show check-your-answers w
 **ID**: SCN-PLANTS-CYA-014-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the arrival details task and takes focus
+- **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened

@@ -235,7 +235,7 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers, and the commodities list (reached from the commodity type page), MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
 
 #### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
 **ID**: SCN-PLANTS-FLOW-014-A
@@ -267,3 +267,21 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **THEN** it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
 - **AND** "Save and return" returns to the review
 - **AND** "Save and continue" goes to Overview
+
+### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
+**ID**: REQ-PLANTS-FLOW-015
+Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+
+#### Scenario: Cancel and return to overview sits on its own line below the two buttons
+**ID**: SCN-PLANTS-FLOW-015-A
+- **GIVEN** a notification that is not being amended
+- **WHEN** the user opens a page the hub links to directly
+- **THEN** its primary action and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
+
+#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+**ID**: SCN-PLANTS-FLOW-015-B
+- **GIVEN** a notification being amended
+- **WHEN** the user opens a page the hub links to directly
+- **THEN** "Save and return" and "Save and continue" sit side by side
+- **AND** "Save and return to overview" sits on its own line below them

@@ -311,3 +311,21 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **GIVEN** a draft notification
 - **WHEN** the user opens the CPH number page
 - **THEN** only "Save and continue" is offered
+
+### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
+**ID**: REQ-FLOW-014
+Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+
+#### Scenario: Cancel and return to overview sits on its own line below the two buttons
+**ID**: SCN-FLOW-014-A
+- **GIVEN** a notification that is not being amended
+- **WHEN** the user opens Commodity details from Overview
+- **THEN** "Save and continue" and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
+
+#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+**ID**: SCN-FLOW-014-B
+- **GIVEN** a notification being amended
+- **WHEN** the user opens Arrival details from Overview
+- **THEN** "Save and return" and "Save and continue" sit side by side
+- **AND** "Save and return to overview" sits on its own line below them

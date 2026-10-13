@@ -6,6 +6,7 @@ import {
   recordLeaseFingerprints
 } from './stack-lease.js'
 import {
+  devServices,
   planRefresh,
   serviceFingerprints,
   stackFilesFingerprint
@@ -46,6 +47,14 @@ const failureOf = (action, services, result) =>
 
 const fingerprintsOf = (services, current) =>
   Object.fromEntries(services.map((service) => [service, current[service]]))
+
+const refreshWithOf = (workspaceRoot) =>
+  Object.fromEntries(
+    devServices(workspaceRoot).map(({ service, refreshWith }) => [
+      service,
+      refreshWith
+    ])
+  )
 
 // A lease written before tim kept the stack files' fingerprint cannot say
 // what they were, so it is treated as changed. A workspace git cannot read
@@ -105,7 +114,11 @@ const refreshServices = async ({
   env
 }) => {
   const current = await serviceFingerprints(workspaceRoot)
-  const plan = planRefresh(lease.fingerprints, current)
+  const plan = planRefresh(
+    lease.fingerprints,
+    current,
+    refreshWithOf(workspaceRoot)
+  )
   const context = { workspaceRoot, env }
   const rebuild = await runDevService(
     context,
@@ -167,7 +180,9 @@ const refreshServices = async ({
  * fingerprints the lease does not have) is rebuilt and recreated, and the
  * lease records the new container ids. A service whose bind-mounted source
  * alone changed is restarted, keeping its container, and waited on until it
- * is healthy. Any other service is left as it is. The lease then records
+ * is healthy. So is a service whose `x-refresh-with` names a service being
+ * rebuilt or restarted, so it drops answers it cached from that service. Any
+ * other service is left as it is. The lease then records
  * what each service serves; a service whose rebuild or restart failed is
  * left out, so the next refresh rebuilds it.
  *

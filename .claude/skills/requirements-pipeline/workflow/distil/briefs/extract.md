@@ -1,21 +1,42 @@
 # Extract: the rules for every source
 
-You extract **one** source into **one** file. Your prompt names the source, the file, the claim id prefix and the
-commands. This file holds the rules every kind of source shares. The brief for your source's kind, named in your
-prompt, adds how to read that kind.
+You extract **one part** of **one** source into **one** part file. A characterise agent has already cut the source
+into parts, each small enough for one agent to read in full. Another agent extracts each other part beside you, and
+`tim distil merge-extract` joins every part into the source's one extract. Your prompt names the source, your part,
+the file, the claim ids and the commands. This file holds the rules every kind of source shares. The brief for your
+source's kind, named in your prompt, adds how to read that kind.
 
 The file's shape is defined, field by field, in
-`.claude/skills/requirements-pipeline/references/extract.schema.json`. Read it before you write.
+`.claude/skills/requirements-pipeline/references/extract.schema.json`. Read it before you write. A part file has no
+`scopeHash`: the merge stamps the extract.
 
-## Characterise first, extract second
+## Your part, and nothing but your part
 
-Before you record a single claim, work out what the source is and how it is laid out: its sections, tables,
-annexes, pages, folders or journey steps. Write that into `structure`. Reading as you go and guessing the shape from
-the parts you happen to hit is how an extract gains invented requirements. `structure` also tells the reconciler
-how much of the source your extract covers, so say what the source's `scope` let you leave out.
+Read your part's entry in the partition with the `jq` command your prompt gives:
 
-Read the source's entry in `sources.json` first: its `scope` narrows what you read, and its `role` says what the
-source is authoritative for. Distil the scoped slice well rather than the whole source thinly.
+- `scope` is your slice: where it starts and stops. Anything outside it is another part's.
+- `read` is everything you read **in full**: every file, folder, page, section or trace it names. Never sample, skim
+  or stop at the first few. Read a long file in pages with `offset` and `limit` until you reach its end.
+- `covers` is what you must claim, named or counted. It is a floor, not a ceiling: claim everything else your slice
+  shows too.
+
+Read the source's entry in `sources.json` as well: its `role` says what the source is authoritative for.
+
+## Exhaustive within the part
+
+Your part is small so that you can claim **all** of it. Every page, heading, field, label, option, hint, error
+message, rule, condition, branch, route, link, state, test and integration your slice shows gets a claim. **A page or
+field you saw in your slice and did not claim is a defect**: the reconciler can only build what an extract records.
+Where `covers` names a count (14 traces, 6 views), your claims account for every one of them.
+
+Before you finish, walk `read` and `covers` once more against your claims, item by item. Anything you cannot find a
+claim for, claim now, or record as a `gap` if the slice is silent on it.
+
+## Characterise your part first
+
+Before your first claim, write `structure`: what your part read, how it is laid out, and what it covered. It goes
+into the merged extract's structure under your part's title, so the reconciler sees what each part covered. Reading
+as you go and guessing the shape from the bits you happen to hit is how an extract gains invented requirements.
 
 ## One claim per observable fact
 
@@ -36,12 +57,13 @@ source is authoritative for. Distil the scoped slice well rather than the whole 
 
 ## Claim ids
 
-- Use the prefix your prompt gives, then a three-digit number: `<prefix>-001`, `<prefix>-002` and on.
-- Ids are unique across the whole workarea, because requirements cite claims by id alone. The prefix exists for
-  that.
+- New claims use your part's prefix, from your prompt, then a three-digit number: `<prefix>-001`, `<prefix>-002` and
+  on. Your prefix is yours alone, so no other part's ids can clash with yours.
+- Ids are unique across the whole workarea, because requirements cite claims by id alone.
 - Never end an id with `-m` and a number. That suffix is kept for claims a verifier finds missing.
-- If your prompt says an extract already exists for this source, keep its prefix and keep the id of any claim
-  that still says the same thing. A requirement may already cite it.
+- If your part has `keeps`, those are claim ids from the source's earlier extract that sit in your slice. Read them
+  in the earlier extract. Keep each id whose claim still says the same thing: a requirement may already cite it.
+  Give a claim that now says something different a new id under your prefix. No other id is yours to use.
 
 ## Record, do not reconcile
 
@@ -55,10 +77,10 @@ one into a claim, a quote or a note.
 
 ## Finishing
 
-1. Write the whole file with the Write tool, at the absolute path your prompt gives. Keep `claims` last.
-2. Run the stamp command your prompt gives. It records the source's scope hash in your file, so a later launch
-   knows the extract matches the source as `sources.json` describes it. Never compute or type the hash yourself.
-3. Run the check command your prompt gives. It exits 1 and names every problem when the file is out of shape. Fix
-   each one with Edit or a fresh Write, stamp again if you rewrote the file, and check again until it passes.
-4. Answer with the structured output your prompt asks for: how many claims, a line on the structure you found,
-   and every decision you made along the way.
+1. Write your whole part file with the Write tool, at the absolute path your prompt gives. Keep `claims` last.
+2. Run the check command your prompt gives. It checks your part file against the schema and your prefix, and exits 1
+   naming every problem. Fix each one with Edit or a fresh Write, and check again until it passes.
+3. Never merge the parts, stamp the extract or write the source's extract file. The workflow merges every part once
+   all of them are written.
+4. Answer with the structured output your prompt asks for: your part, how many claims and how many of them are gaps,
+   a line on what your part read and covered, and every decision you made along the way.

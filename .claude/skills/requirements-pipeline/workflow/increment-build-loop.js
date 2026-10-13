@@ -1,7 +1,7 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan against the live tree → implement the plan and keep the Behaviour Spec current → style review + code review → adversarially verify findings → judge → fix → the plan\'s ladder → commit → PR → CI → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched',
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
@@ -218,18 +218,18 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 39 agents on Claude and 45 on Codex,
-// its start stage, the replan of a plan whose checks the workspace denies, the workspace commit reader and the one that
-// puts the workspace repo back on the base branch included, so a drain of an open-ended backlog would hit the
-// cap mid-increment and lose the attempt. The run stops before starting one
-// that would not fit — roughly 25 increments on Claude, 22 on Codex — and
+// not a config key. An increment is up to 41 agents on Claude and 47 on Codex,
+// its start stage, the replan of a plan whose checks the workspace denies, the workspace commit reader, the one that
+// puts the workspace repo back on the base branch, the theme reader and its theme's spec check included, so a drain
+// of an open-ended backlog would hit the cap mid-increment and lose the attempt. The run stops before starting one
+// that would not fit — roughly 24 increments on Claude, 21 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs. The run's
 // own agents are the workspace and preflight checks, and the one that takes
 // the workspace stack's lease at the start and the one that gives it back at
 // the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 39, codex: 45 }
+const AGENTS_PER_INCREMENT = { claude: 41, codex: 47 }
 const STARTUP_AGENTS = 4
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -403,8 +403,18 @@ const IS_LEGACY_KEYS =
   REPO_KEYS.length === LEGACY_REPO_KEYS.length && LEGACY_REPO_KEYS.every((key) => REPO_KEYS.includes(key))
 
 // frontend-change covers only these two repos, whatever key a programme gives
-// them. Its recipes, copy files and behaviour spec mean nothing elsewhere.
-const FRONTEND_CHANGE_PATHS = ['repos/trade-imports-animals-frontend', 'repos/trade-imports-plants-frontend']
+// them, and only the sets each one ships. Its recipes, copy files and behaviour
+// spec mean nothing elsewhere. Two sets share the animals repo and a set's spec
+// namespace is not its folder name, so the set is read from where the change
+// lives, never from the repo.
+const FRONTEND_CHANGE_SETS = {
+  'repos/trade-imports-animals-frontend': [
+    { set: 'sets/live-animals', prefix: 'live-animals' },
+    { set: 'sets/germinal-products', prefix: 'germinal-products' }
+  ],
+  'repos/trade-imports-plants-frontend': [{ set: 'sets/high-risk-plants', prefix: 'plants' }]
+}
+const FRONTEND_CHANGE_PATHS = Object.keys(FRONTEND_CHANGE_SETS)
 const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.includes(REPOS[key].path))
 
 // ---------------------------------------------------------------------------
@@ -469,6 +479,12 @@ const think = withTier('think')
 const code = withTier('code')
 const light = withTier('light')
 
+// A light-tier lease taker twice reported a result without calling any tool,
+// saying Bash was not loaded. It always is, so every prompt that runs commands
+// says so, guard rails or not.
+const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
+  command you have not run, and never report Bash or any tool as missing without first calling it.`
+
 // ---------------------------------------------------------------------------
 // Workspace root. A workflow script has no filesystem and no environment, so it
 // cannot see $HOME — an agent resolves the root and everything else hangs off
@@ -510,7 +526,8 @@ Set canonical:true only if candidate 1 worked; if it did not, say so in your sum
 rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
-No Grep/Glob tools. One command per Bash call.`,
+No Grep/Glob tools. One command per Bash call.
+${RUN_WITH_BASH}`,
   light({ label: 'workspace', phase: 'Baseline', schema: WORKSPACE_SCHEMA })
 )
 
@@ -698,16 +715,172 @@ const changedReposRule = () => {
 with \`git -C ${TILDE}/<repoPath> status --short\`, and act on each one that has changes.${workspaceLine}`
 }
 
-// frontend-change ends by writing the workspace's own behaviour spec under
-// openspec/ and leaves it uncommitted. The workspace is not a configured repo
-// and is never branched, so without this no stage commits those edits, they
-// pile up across a run, and a rolled-back increment leaves a spec for behaviour
-// that is gone.
+// Every row's spec sync — frontend-change's Step 5, or the same duty without
+// the skill — writes the workspace's own behaviour spec under openspec/ and
+// leaves it uncommitted. The workspace is not a configured repo and is never
+// branched, so without this no stage commits those edits, they pile up across
+// a run, and a rolled-back increment leaves a spec for behaviour that is gone.
 const SPEC_RULE = `THE BEHAVIOUR SPEC: an increment may also change \`${TILDE}/openspec/\`, the workspace repo's own spec and
-coverage, which frontend-change writes and leaves uncommitted. The workspace is not a configured repo and is never
+coverage, which every row's spec sync writes and leaves uncommitted. The workspace is not a configured repo and is never
 branched: act on \`openspec/\` ONLY, on whatever branch the workspace is on, and never on anything else in the
 workspace — not the backlog, not the plans, not the logs. See what it holds with
 \`git -C ${TILDE} status --short -- openspec/\`.`
+
+// ---------------------------------------------------------------------------
+// The Behaviour Spec is kept current by every row, whatever its repos — not only
+// a row frontend-change builds. The plan names the edits (its section 8), the
+// implementor makes them (through frontend-change's Step 5 where the row is
+// routed there, by the same duty without it otherwise), the consistency
+// reviewer checks them, the ladder validates them again, and land commits them
+// by SPEC_RULE, with the same rollback. A row that changes nothing the spec
+// records says so, with its reason, and reviewers check the reason.
+// ---------------------------------------------------------------------------
+const SPEC_PREFIXES = ['live-animals', 'germinal-products', 'plants', 'ins', 'admin']
+
+// What spec-catchup and spec-cover call each prefix's set: what a person types
+// after "catch-up and cover".
+const SPEC_SET_NAMES = {
+  'live-animals': 'animals',
+  'germinal-products': 'germinal',
+  plants: 'plants',
+  ins: 'ins',
+  admin: 'admin'
+}
+
+// The prefixes a repo's change can reach. A repo with no journey of its own —
+// reference data, the gateway, the stubs, the schemas, the test suites — is
+// spec'd under whichever prefix's behaviour it alters, which the plan names.
+const SPEC_PREFIXES_BY_REPO_PATH = {
+  'repos/trade-imports-animals-frontend': ['live-animals', 'germinal-products'],
+  'repos/trade-imports-animals-backend': ['live-animals', 'germinal-products'],
+  'repos/trade-imports-plants-frontend': ['plants'],
+  'repos/trade-imports-plants-backend': ['plants'],
+  'repos/trade-imports-ins-frontend': ['ins'],
+  'repos/trade-imports-ins-backend': ['ins'],
+  'repos/trade-imports-address-book': ['ins'],
+  'repos/trade-imports-animals-admin': ['admin']
+}
+
+const SPEC_VALIDATE = `${TILDE}/tools/frontend-change/openspec-validate.sh`
+
+// Validate and lint judge a whole capability, so a failure already in one a
+// row writes would otherwise be nobody's: every stage calls it pre-existing and
+// the ladder stops on it.
+const SPEC_WHOLE_CAPABILITY = `Validation and lint judge the WHOLE capability, not only your lines, so a failure in a
+   capability this row writes is this row's to fix even where it predates the row: an over-long requirement, a scenario
+   missing, a lint finding. Fix it in place by ${ABS}/openspec/config.yaml's rules, keeping the behaviour it states:
+   tighten the wording, or move examples and edge cases into scenarios. Never delete or weaken a requirement to make it
+   pass, and never report such a failure as pre-existing and leave it.`
+
+const SPEC_PREFIX_TABLE = `WHICH PREFIX, by repo and set:
+- \`trade-imports-animals-frontend\`: a change under \`sets/live-animals\` → \`live-animals/\`; under \`sets/germinal-products\`
+  → \`germinal-products/\`. They are sibling sets: never spec germinal behaviour under \`live-animals/\`, or the reverse,
+  even where a germinal page began as a copy.
+- \`trade-imports-plants-frontend\` and \`trade-imports-plants-backend\` → \`plants/\`.
+- \`trade-imports-ins-frontend\`, \`trade-imports-ins-backend\` and \`trade-imports-address-book\` → \`ins/\`.
+- \`trade-imports-animals-admin\` → \`admin/\`.
+- \`trade-imports-animals-backend\` → the prefix of the journey whose notification it changes (\`live-animals/\` or
+  \`germinal-products/\`), or \`admin/\` for what an operator sees.
+- Any other repo — reference data, the gateway, a stub, the schemas — → the prefix whose observable behaviour the change
+  alters, or none. A tests-repo change adds or moves coverage links; it changes no spec text on its own.`
+
+// What openspec/config.yaml says the spec records, so "is this wording or
+// layout change spec'd?" has one answer in every prompt.
+const SPEC_RECORDS = `WHAT THE SPEC RECORDS (${ABS}/openspec/config.yaml owns this): observable behaviour only — what a user, an
+operator or another system sees. That is each page's exact title (its H1, from the \`title\` key in its copy files,
+not its legend), the question it asks and the controls it offers, any wording a requirement or scenario quotes (a hint,
+an error message, a caption, a button), which pages are offered and in what order (journey-flow), which questions apply
+given earlier answers (journey-obligations), task-list rows and section captions, the browser page title, and the
+dashboard, lifecycle, event and API behaviour a capability states. It never records selectors, routes, CSS classes,
+files, modules or test names. So a WORDING change is spec'd wherever a title, a Purpose, a requirement or a scenario
+states that wording; a CONTENT change is spec'd when it changes what a page shows or asks; a LAYOUT change is spec'd
+when it changes page order, what a page offers or groups, or a caption — and pure styling (spacing, colour, a class)
+that changes none of those is not.`
+
+const SPEC_SYNC_LINE = `\`Spec sync: <capability path> (<n> scenarios), … — validate green, lint clean\`, naming
+   every capability written and each one removed as \`deleted: <capability path>\`, or \`Spec sync: none — <reason>\``
+
+const specSkillStep = () =>
+  FRONTEND_CHANGE_KEYS.length
+    ? `Where the change was made through ${SKILLS}/frontend-change/SKILL.md, its Step 5 is how the spec is written:
+   follow it, as the line about that skill above says, then run step 3's lint as well. Otherwise do`
+    : 'Do'
+
+const specSyncDuty = () => `
+THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos. It lives in the workspace repo, \`${TILDE}/openspec/\`.
+${SPEC_RECORDS}
+${SPEC_PREFIX_TABLE}
+1. Work out which observable behaviour this row changed, from the plan's section 8 and your own diff.
+2. ${specSkillStep()} the work yourself: read ${ABS}/openspec/config.yaml and
+   ${SKILLS}/frontend-change/references/SPEC_SYNC.md in full — the merge technique, the capability lookup and the file
+   shapes — then find each capability under \`${TILDE}/openspec/specs/<prefix>/\` with \`grep -rln\` and merge into its
+   \`spec.md\` and \`${TILDE}/openspec/coverage/<path>/coverage.json\`. A genuinely new capability gets its row in
+   \`${TILDE}/openspec/coverage/AREAS.md\` first. Link only tests this row wrote or changed, read from their bodies.
+3. Validate, in the FOREGROUND: \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [<capability path> ...]\` once
+   for every capability you wrote that still exists. A capability you deleted is not validated: confirm it is gone
+   with \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. Then run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
+   prefix you wrote under. Either exiting non-zero means the row is NOT complete: fix the write, or report ok:false
+   saying what failed. Never report ok:true over a red validation.
+   ${SPEC_WHOLE_CAPABILITY}
+4. Leave \`openspec/\` uncommitted: the land stage commits it.
+5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
+   The consistency reviewer checks that reason and the ladder validates the write again.`
+
+const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
+duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
+and \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
+confirmed gone with \`ls\`, not validated), and put your own \`Spec sync:\` line in notes.
+${SPEC_WHOLE_CAPABILITY}`
+
+const specSyncPlanSection = () => `   8. Spec sync — every row has one, whatever its repos. Name the prefix each changed behaviour belongs to, by WHICH
+      PREFIX below, then each capability under \`${TILDE}/openspec/specs/<prefix>/\` it touches and the requirement and
+      scenario to add, change or delete there, by ID where one exists (find them with \`grep -rln\`), any new capability
+      and the AREAS.md row it needs, and the coverage links the plan's tests will give it.${
+        FRONTEND_CHANGE_KEYS.length ? ' For a row routed through\n      frontend-change, its Step 5 makes these writes: name what it will write.' : ''
+      } Where the row changes no
+      behaviour the spec records, write "none — <reason>": reviewers check that reason.
+${SPEC_RECORDS}
+${SPEC_PREFIX_TABLE}`
+
+// Agents write the line as a bullet, a numbered item, a quote or in bold as
+// often as bare, so the markers around the label are allowed and dropped.
+const SPEC_SYNC_PATTERN = /^[ \t>*_`+-]*(?:\d+[.)][ \t]+)?[*_`]*Spec sync[*_`]*:[*_`]*(.*)$/gim
+const specSyncLinesIn = (text) =>
+  [...String(text ?? '').matchAll(SPEC_SYNC_PATTERN)].map(([, rest]) => `Spec sync: ${rest.trim()}`.trimEnd())
+
+const reportedSpecSync = (notes) => specSyncLinesIn(notes).join('\n   ') || '(none reported)'
+
+// A prefix named in a Spec sync line, as the start of a capability path. The
+// character class keeps `sets/high-risk-plants/` from reading as `plants/`.
+const specPrefixesIn = (text) => {
+  const lines = specSyncLinesIn(text).join('\n')
+  return SPEC_PREFIXES.filter((prefix) => new RegExp(`(^|[^a-z-])${prefix}/`).test(lines))
+}
+
+const inPrefixOrder = (prefixes) => SPEC_PREFIXES.filter((prefix) => prefixes.includes(prefix))
+
+const specReviewRule = (implementorNotes) => `THE SPEC SYNC is part of the change. The implementor reported:
+   ${reportedSpecSync(implementorNotes)}
+See the write with \`git -C ${TILDE} status --short -- openspec/\` and \`git -C ${TILDE} diff HEAD -- openspec/\`, and Read
+a new file under it in full. Judge it against the plan's section 8 and ${ABS}/openspec/config.yaml. Each of these is a
+finding, its \`file\` written \`${WORKSPACE_KEY}:openspec/<path>\`: a behaviour change in the diff that no scenario records; a scenario the diff
+does not implement; a coverage link to a test the change does not hold; a write under the wrong prefix (germinal
+behaviour under \`live-animals/\`, or the reverse); a \`Spec sync: none\` whose reason does not hold against the plan's
+behaviour changes, wording, content and layout included where the spec records them; and no \`Spec sync:\` line at all.`
+
+const ladderSpecStep = (id, implementorNotes, fixerNotes) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
+   ${reportedSpecSync(implementorNotes)}
+   The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
+   When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
+   reported" in failures[]. A fixer with no line is normal when the implementor reported one: a fixer reports a line
+   only when its fix changed behaviour. For the capability paths the lines name that still exist, run
+   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
+   once. A path marked \`deleted:\` is not validated: confirm it is gone with \`ls ${TILDE}/openspec/specs/<capability path>\`,
+   which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
+   any other: the spec write is this increment's, and a row whose spec does not validate is not complete. A line that
+   reads \`Spec sync: none — <reason>\` runs nothing here: the reviewers have judged the reason.
+   ${SPEC_WHOLE_CAPABILITY}`
 
 // An increment that builds in the workspace repo carries its spec changes in
 // that repo's own commit, on the increment's branch, like any other file.
@@ -768,8 +941,23 @@ const gateLogs = (id, stage) => `${WORKAREA_TILDE}/logs/${id}-${stage}`
 // ---------------------------------------------------------------------------
 const RUN_HOLDER = RUN_ID
 
+// A whole gate across several repos outlasts the Bash tool's 600s ceiling, so
+// every gate also writes its result to a file that `tim build gate-wait` reads
+// once the call that started it has been moved to the background.
+const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}"`
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)}`
+// A one-repo-at-a-time gate over five repos runs well past an hour and a half.
+const MAX_GATE_WAITS = 20
+const GATE_WAIT_RULE = `A LONG GATE. A gate across several repos often runs longer than one Bash call allows. When the tool reports
+  that a gate command exceeded its timeout and was MOVED TO THE BACKGROUND, the gate is still running and nothing is
+  wrong: never kill it, never run it again, and never call it red. Wait for it instead, with ONE FOREGROUND Bash call,
+  \`timeout\` 600000:
+  \`tim build gate-wait <the --result file of that command> --workspace ${TILDE} --json\`
+  It prints the gate's own JSON line, exactly as the gate would have, once the gate finishes. If it prints
+  \`GATE_STILL_RUNNING\` instead, make the same call again, up to ${MAX_GATE_WAITS} times. Only a gate that has still
+  written no result after the last of them is RED, reported as "the gate did not finish". Never use
+  run_in_background, a trailing \`&\` or \`sleep\` for any of this: each wait returns by itself.`
 const gateCommandList = (phases, logs) =>
   phases.map((phase, index) => `   ${index + 1}. \`${gateCommand(phase, logs)}\``).join('\n')
 
@@ -784,6 +972,7 @@ lint, typecheck, unit tests, \`mvn verify\`, FIT and the local-stack E2E suite �
 \`gate-<repo>-<rung>.log\` under the --logs folder. Every gate command names this run's lease holder,
 \`${RUN_HOLDER}\`: the workspace stack is already up under that lease, and the gate's E2E phase uses it as it is,
 rebuilding only what changed. The gate refuses a stack leased to anybody else or up with no lease at all. So:
+- Run every gate command exactly as written, character for character: never drop, add or reorder a flag.
 - Never pick, add, drop or substitute a script for a repo's own rungs, and never run one by hand.
 - Never start or stop the workspace stack, and never drive \`docker\` yourself. A stack that is up is not in your way:
   leave it as it is.
@@ -791,11 +980,15 @@ rebuilding only what changed. The gate refuses a stack leased to anybody else or
   \`ok\`, then \`result.green\` and \`result.rungs[]\`, each with \`repo\`, \`name\`, \`phase\`, \`ok\`, \`log\` and \`reason\`.
   It exits 1 unless every rung passed. A phase whose \`result.rungs\` is empty has nothing to run for this backlog:
   it is neither green nor red, so say so and go on. A command that errors before running any rung (\`ok\` false with
-  an \`errors[]\` entry and no \`result\`), or that hits the Bash timeout, is RED: report its error verbatim.
+  an \`errors[]\` entry and no \`result\`) is RED: report its error verbatim.
+- ${GATE_WAIT_RULE}
 - A gate command whose \`result.stack.held\` is not null found the workspace stack in somebody else's hands. Stop
   there, run nothing more, and ${STACK_HELD_LINE}
 - A red rung's evidence is its \`log\`: read that file once. For a Playwright failure read
-  \`test-results/*/error-context.md\` in the tests repo as well.`
+  \`test-results/*/error-context.md\` in the tests repo as well.
+- An e2e rung that went red, or passed only on a retry, also carries \`stackLogs\`: each stack container's own log,
+  written before the stack could go. A 500 page, a dropped socket or a test timeout is explained there: read the log of
+  the service the failure points at and name its cause. Never call a failure transient without it.`
 
 const RUN_STACK_RULE = `THE WORKSPACE STACK is already up, leased to this run as \`${RUN_HOLDER}\` for every increment it builds. A
 check that needs it up uses it as it is. Never acquire or release its lease, and never start, stop, restart or rebuild
@@ -804,7 +997,10 @@ it, run \`tim docker lease status --workspace ${TILDE} --json\` once. Where \`re
 \`${RUN_HOLDER}\`, the stack is no longer this run's: run nothing more that needs it, and return \`stackHeld\` with
 \`holder\` copied from \`result.lease.holder\` (null when there is no lease) and \`detail\` saying whether \`result.up\` is
 true and who, if anybody, holds the lease. Never wait for it, retry, work round it, or take the stack down: the loop
-decides what happens next. Where the lease is still this run's, the check failed for a reason of its own: report it.`
+decides what happens next. Where the lease is still this run's but \`result.up\` is false, the stack went down under
+the run (Docker Desktop quit, say): run nothing more that needs it, and return \`stackDown\` with \`detail\` saying what
+could not reach it. Never start it yourself: the loop takes the lease again and runs this stage once more. Where the
+lease is still this run's and \`result.up\` is true, the check failed for a reason of its own: report it.`
 
 const BUILDER_PHASES = ['unit', 'fit']
 
@@ -817,7 +1013,9 @@ yourself. Never run the gate's E2E phase, never start or stop the workspace stac
 repo's own rungs.`
       : `CHECKING YOUR OWN WORK: a repo's own rungs belong to \`tim build gate\`. Run its ${phases.length === BUILDER_PHASES.length ? 'unit and\nFIT phases' : `${phases[0] === 'fit' ? 'FIT' : phases[0]} phase`} yourself, one Bash call each, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 ${gateCommandList(phases, gateLogs(id, stage))}
-Each prints one JSON line; a red rung names its \`log\` — read that file once. To repair a red format rung, run the
+Each prints one JSON line; a red rung names its \`log\` — read that file once.
+${GATE_WAIT_RULE}
+To repair a red format rung, run the
 repo's \`format\` script, then the unit phase again. Never run the gate's E2E phase — the ladder does, after review —
 never start or stop the workspace stack, and never pick a script by hand for a repo's own rungs. A gate command whose
 \`result.stack.held\` is not null found the stack in somebody else's hands: ${STACK_HELD_LINE}`
@@ -884,9 +1082,10 @@ const LANGUAGE_BY_EXTENSION = {
 
 const repoKeyOfPath = (repoPath) => REPO_KEYS.find((key) => REPO_PATH[key] === repoPath)
 
-// Under the branch lifecycle a docs row writes in the workspace repo itself,
-// reported as `workspace:<path>`, so review can be routed there too.
-const FILE_REPO_KEYS = IS_BRANCH ? [...REPO_KEYS, WORKSPACE_KEY] : REPO_KEYS
+// A docs row under the branch lifecycle writes in the workspace repo itself,
+// and every row's spec sync writes `openspec/` there, reported as
+// `workspace:<path>`, so review and verification can be routed there too.
+const FILE_REPO_KEYS = [...new Set([...REPO_KEYS, WORKSPACE_KEY])]
 
 const repoOfFile = (file) => {
   const prefixed = /^([a-z]+):/.exec(file)
@@ -939,7 +1138,10 @@ const findingFile = (finding) => finding.file || WHOLE_CHANGE
 const groupFilesForReview = (fileList) => reviewGroupsOf(fileList, (file) => file)
 const groupFindingsForVerification = (findings) => reviewGroupsOf(findings, findingFile)
 
-const isWorkspaceGroup = (group) => IS_BRANCH && group.repo === WORKSPACE_KEY
+// The workspace repo as an increment's own repo is staged like any other. Its
+// edits otherwise — a branch-lifecycle docs row's, and a spec write in an
+// increment that does not build there — are left unstaged until land.
+const isWorkspaceGroup = (group) => group.repo === WORKSPACE_KEY && !buildsWorkspace()
 
 const groupRepoPath = (group) => {
   if (isWorkspaceGroup(group)) return TILDE
@@ -947,9 +1149,8 @@ const groupRepoPath = (group) => {
 }
 const groupFileList = (group) => group.files.map((file) => `- ${file}`).join('\n')
 
-// The workspace repo's edits are left unstaged for the orchestrator, so they
-// are read against HEAD rather than from the index. A new file shows nowhere
-// in a diff: it is read in full.
+// Unstaged workspace edits are read against HEAD rather than from the index.
+// A new file shows nowhere in a diff: it is read in full.
 const groupDiffCommand = (group) =>
   isWorkspaceGroup(group)
     ? `\`git -C ${TILDE} diff HEAD -- <path>\` (a new, untracked file shows in no diff: Read it in full)`
@@ -1072,7 +1273,7 @@ const acquireRunLease = () =>
   agent(
     `You are the LEASE TAKER for build run ${RUN_ID}. You take the workspace stack's lease for the whole run, before
 its first increment. That is your whole job.
-${guardrails()}
+${leaseGuardrails('acquire')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease acquire --holder "${RUN_HOLDER}" --mode dev --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report acquired:true only when it exited 0 and printed ok:true, whether it started the stack
@@ -1088,7 +1289,7 @@ const releaseRunLease = () =>
   agent(
     `You are the LEASE RELEASER for build run ${RUN_ID}. The run has ended, and you give back the workspace stack's
 lease it held as \`${RUN_HOLDER}\`. That is your whole job.
-${guardrails()}
+${leaseGuardrails('release')}
 Run exactly one command, in the FOREGROUND with the Bash tool's \`timeout\` set to 600000:
 \`tim docker lease release --holder "${RUN_HOLDER}" --workspace ${TILDE} --json --logs ${RUN_LEASE_LOGS}\`
 It prints one JSON line. Report ok:true only when it exited 0 and printed ok:true — which it also does when there
@@ -1114,13 +1315,24 @@ const BRANCH_PUSH_GUARD = `- Never \`git push --force\`. Never create, edit, ret
 // ins-performance-testing inc-001 also left the perftests repo's own stand-in
 // container running: its `docker compose run` checks started the services in
 // their `depends_on` and nothing took them down.
-const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
-  once and gives it back once; no stage does either unless its task below is exactly that. Never start, stop, restart
-  or rebuild it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\`
-  or \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
-- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
+const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose project — \`docker compose run\` also starts the services in its
   \`depends_on\` and leaves them running — is followed, before you return, by that repo's own script that takes the
   project down. Leave nothing running that you started.`
+
+const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
+  once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
+  \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
+  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
+${OTHER_COMPOSE_GUARD}`
+
+// The lease stages' own rule. Given the general one, which forbids the very
+// command their task names, a Haiku lease taker twice returned without running
+// anything and blamed a Bash tool it had (journey-foundation, 9 Oct 2026).
+const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
+  \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
+  you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
+  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+${OTHER_COMPOSE_GUARD}`
 
 const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against the
 stack the run already holds, as THE WORKSPACE STACK below says.`
@@ -1166,9 +1378,13 @@ const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
 
 const firstWordOf = (command) => command.trim().replace(/^`+/, '').trim().split(/\s+/)[0] ?? ''
 
+// `test:fit` serves a frontend on its default port, which the leased stack
+// already holds, so it can never start during a run. `test:fit:ci` is clear.
+const FIT_ON_STACK_PORT = /\brun test:fit(?!:)/
+
 const isDeniedCommand = (command) => {
   const firstWord = firstWordOf(command)
-  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord)
+  return ENV_ASSIGNMENT.test(firstWord) || DENIED_PROGRAMS.includes(firstWord) || FIT_ON_STACK_PORT.test(command)
 }
 
 const DENIED_FORMS_LINE = `- DENIED, so never run them and never write them into a plan: ${DENIED_PROGRAMS.map((program) => `\`${program}\``).join(', ')}
@@ -1183,6 +1399,10 @@ in a denied form cannot run, so the ladder stops the increment red with nothing 
   - a \`tim\` command;
   - a k6 run through the repo's own npm script, which reads its endpoints itself;
   - \`git -C\`, \`jq\`, \`grep\`, \`ls\` or \`find\` over files.
+The workspace stack is up for every check, and its frontends hold their own ports (3000 for animals, 3003 for plants
+and so on), so a check that starts a frontend on its default port cannot run. A FIT check therefore runs the script
+gates.json names for that repo's \`fit\` rung, which serves on a port clear of the stack, with the spec file after it:
+\`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`. Never \`test:fit\`.
 A check never takes a form GUARD RAILS lists as DENIED: no \`curl\` or \`wget\`, no \`env\` or \`VAR=value\` prefix, no
 \`bash <script>\`, \`bash -n\` or \`sh <script>\`, no bare \`node\` or \`node -e\`, no python.
 Where a check must read a live endpoint on the stack, name the npm script or test that already makes that read. Where
@@ -1190,8 +1410,9 @@ none does, add a small test or npm script that makes it to the plan's own work (
 or the performance-tests repo) and name that as the check. To prove a script runs, run the npm script that calls it.
 To vary a script's behaviour, use an npm script or a flag the script takes, never a variable prefix.`
 
-const BASE_GUARDRAILS = `
+const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
+${RUN_WITH_BASH}
 - NEVER use the Grep or Glob TOOLS — they are not allowlisted and will prompt the user. Use Bash \`grep -rn\` / \`find\` / \`ls\` / \`jq\`.
 - Bash hygiene: ONE command per Bash call. No \`&&\`, no \`;\`, no \`|\`, no \`cd\`, no trailing \`echo $?\`. Use \`git -C\`, \`npm --prefix\`, \`mvn -f\`. Output redirection (\`> file 2>&1\`) IS allowed.
 - In Bash ALWAYS use tilde paths \`${TILDE}/...\` — a literal /Users/... path in Bash is DENIED.
@@ -1205,14 +1426,18 @@ ${DENIED_FORMS_LINE}
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
-${STACK_GUARD}
+${stackGuard}
 ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
 
+const BASE_GUARDRAILS = baseGuardrails(STACK_GUARD)
+
 // Every stage of an increment that builds in the workspace repo is told how
 // that repo differs from the others.
 const guardrails = () => `${BASE_GUARDRAILS}${workspaceRepoRule()}`
+
+const leaseGuardrails = (verb) => `${baseGuardrails(leaseStackGuard(verb))}${workspaceRepoRule()}`
 
 // How every stage pushes, and why it looks paranoid.
 //
@@ -1298,8 +1523,17 @@ ${guardrails()}
 ${REPO_RULE}
 EVIDENCE: ${evidence}
 \`${branch}\` is a shared branch with open pull requests. NOTHING from a failed attempt may be committed or pushed to
-it. Your own task below is the one place you ARE told to abort a merge.
+it. Your own task below is the one place you ARE told to abort a merge, and to move \`${branch}\` back with
+\`reset --soft\`.
 TASK:
+0. COMMITS A STAGE MADE. No stage commits: only landing does, and it pushes at once. So a configured repo on \`${branch}\`
+   whose \`git -C ${TILDE}/<repoPath> rev-list --count origin/${branch}..HEAD\` prints more than 0 holds this attempt's
+   work in local commits (overview and review inc-107 left one, and the next run's baseline went red on it). Check
+   EVERY configured repo — ${REPO_KEYS.filter((key) => key !== WORKSPACE_KEY).map((key) => `\`${repoTilde(key)}\``).join(', ')} — even one whose status is clean. For each with a count above 0:
+   \`git -C ${TILDE}/<repoPath> log --oneline origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.txt\`
+   \`git -C ${TILDE}/<repoPath> format-patch --stdout --binary origin/${branch}..HEAD > ${WORKAREA_TILDE}/logs/${id}-preserve-<repoKey>.commits.patch\`
+   then \`git -C ${TILDE}/<repoPath> reset --soft origin/${branch}\`, which leaves those commits' changes staged for the steps
+   below to save and stash. Name the commits' SHAs in your note. Never \`reset --hard\`, and never push.
 1. ${changedReposRule()} Also act on every repo that is MID-MERGE:
    \`git -C ${TILDE}/<repoPath> rev-parse --verify --quiet MERGE_HEAD\` prints a SHA, even where status looks empty.
    A repo with changes that is not on \`${branch}\` is a stop: report ok:false naming it, and change nothing in it.
@@ -1319,7 +1553,7 @@ TASK:
 5a. ${SPEC_RULE} If it has changes, stash them:
    \`git -C ${TILDE} stash push -u -m "failed-${id}" -- openspec/\`, then confirm
    \`git -C ${TILDE} status --short -- openspec/\` is empty. Name the stash ref in the note below.
-6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
+6. Record it: \`${setRow(id, "--note 'ATTEMPT FAILED: <what went red>; merge of <ref> aborted in <repo>; local commits <SHAs or none> moved back from <repo>; patches and unresolved paths at <the logs files>; stash <ref or none>'")}\`.
    Write the text inside those single quotes, and write any ' in it as \`'\\''\` — backticks and $ are then safe.
    Do NOT record a commit — the increment is not built.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.
@@ -1413,13 +1647,71 @@ const STACK_HELD_PROPERTY = {
   description: 'ONLY when tim showed the workspace stack in somebody else\'s hands, not this run\'s. Leave it out otherwise'
 }
 
+const STACK_DOWN_PROPERTY = {
+  type: 'object',
+  required: ['detail'],
+  properties: {
+    detail: { type: 'string', description: 'What could not reach the stack, and what tim said' }
+  },
+  additionalProperties: false,
+  description: "ONLY when the lease is still this run's but tim's result.up is false: the stack went down under the run. Leave it out otherwise"
+}
+
 // The stages that may use the workspace stack under the run's lease, and so
-// may find it in somebody else's hands: implement, fix, the consistency
-// reviewer, baseline and ladder.
+// may find it in somebody else's hands, or gone: implement, fix, the
+// consistency reviewer, baseline and ladder.
 const withStackHeld = (schema) => ({
   ...schema,
-  properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY }
+  properties: { ...schema.properties, stackHeld: STACK_HELD_PROPERTY, stackDown: STACK_DOWN_PROPERTY }
 })
+
+// Docker Desktop can quit under a run: a Homebrew cask upgrade quits it, then
+// fails at sudo and never reopens it. tim brings Docker back when it finds the
+// daemon gone, so the run takes its own lease again, which starts the stack
+// under it, and runs the stage once more.
+const recoverDownStack = async (id, stage, runStage) => {
+  const first = await runStage()
+  if (!first?.stackDown) return first
+  log(`${id}: the workspace stack went down under the run at ${stage} — ${first.stackDown.detail}. Taking the lease again and running ${stage} once more`)
+  const retaken = await acquireRunLease()
+  if (!retaken?.acquired) {
+    const why = (retaken?.summary ?? 'the lease agent died').replace(/\.$/, '')
+    log(`${id}: could not take the lease again after the stack went down — ${why}`)
+    return first
+  }
+  return runStage()
+}
+
+const LEASE_OWNER_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'holder', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: "tim's `ok`" },
+    holder: { type: ['string', 'null'], description: "result.lease.holder, copied; null when result.lease is null" },
+    summary: { type: 'string' }
+  }
+}
+
+// A stage's stackHeld is its own reading of tim, and a stage has filled it in
+// with `holder: null, detail: "not held"` while the lease was still this run's
+// — turning a red baseline into a stack-held stop. The script asks the lease
+// file itself before it believes one.
+const confirmStackHeld = async (id, stage, held) => {
+  if (!held) return null
+  const owner = await agent(
+    `Report who holds the workspace stack's lease. Run exactly one command and read it:
+\`tim docker lease status --workspace ${TILDE} --json\`
+Return ok as tim's \`ok\`, holder as \`result.lease.holder\` (null when \`result.lease\` is null), and a one-line summary.
+${RUN_WITH_BASH}
+Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
+    light({ label: `${id} ${stage} lease check`, phase: 'Baseline', schema: LEASE_OWNER_SCHEMA })
+  )
+  if (owner?.ok && owner.holder === RUN_HOLDER) {
+    log(`${id}: the ${stage} stage reported the stack held (${held.detail}), but the lease is still this run's — ignoring that report`)
+    return null
+  }
+  return held
+}
 
 // The CI fixer's schema is the increment schema plus a channel for a PR it had
 // to open in a repo the increment did not start with — a frontend change whose
@@ -1582,7 +1874,12 @@ const PLAN_SCHEMA = {
       description: 'Every behaviour a user, operator or other system will see change, one line each. Empty when the change is pure structure'
     },
     decisions: { type: 'array', items: { type: 'string' }, description: 'Every choice the increment left open, and how you settled it' },
-    risks: { type: 'array', items: { type: 'string' } }
+    risks: { type: 'array', items: { type: 'string' } },
+    specPrefixes: {
+      type: 'array',
+      items: { type: 'string', enum: SPEC_PREFIXES },
+      description: 'The Behaviour Spec prefixes section 8 writes under. Empty when it says none'
+    }
   },
   additionalProperties: false
 }
@@ -1959,6 +2256,13 @@ const frontendChangeTarget = () => {
   return `whichever of ${FRONTEND_CHANGE_KEYS.map((key) => `\`${TILDE}/${REPO_PATH[key]}\``).join(' and ')} the plan names for the journey change`
 }
 
+const frontendChangeSetList = (key) =>
+  FRONTEND_CHANGE_SETS[REPO_PATH[key]].map(({ set, prefix }) => `\`${set}\` → spec namespace \`${prefix}/\``).join(', ')
+
+const FRONTEND_CHANGE_SET_TABLE = FRONTEND_CHANGE_KEYS.map(
+  (key) => `       - ${key} (\`${REPO_PATH[key]}\`): ${frontendChangeSetList(key)}`
+).join('\n')
+
 const FRONTEND_CHANGE_IMPLEMENT_LINE = FRONTEND_CHANGE_KEYS.length
   ? `
 Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
@@ -1966,7 +2270,10 @@ paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERA
 skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
 and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
 at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
-${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). Leave the
+${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). The SET, and so
+the spec namespace, is the one the plan names, read from where the change lives — never assumed from the repo:
+${FRONTEND_CHANGE_SET_TABLE}
+Leave the
 \`openspec/\` write uncommitted — the land stage commits it — and name every file the skill's completion output lists
 in your notes. If the skill HALTS at spec sync, the increment is NOT complete: report the halt, do not paper over it.`
   : ''
@@ -1977,7 +2284,11 @@ const FRONTEND_CHANGE_PLAN_LINE = FRONTEND_CHANGE_KEYS.length
    - where the change adds a field, page, section or collection to a frontend journey, or changes an obligation or
      the journey flow, ${SKILLS}/frontend-change/SKILL.md, then the repo's own recipe it routes to. Plan by that
      recipe, substituting this programme's repo path and set. A recipe is the repo's own how-knowledge: follow it
-     rather than improvising.${IS_LEGACY_KEYS ? '' : ` It covers ${frontendChangeRepos} only: never route another repo's change through it.`}`
+     rather than improvising.${IS_LEGACY_KEYS ? '' : ` It covers ${frontendChangeRepos} only: never route another repo's change through it.`}
+     Name the set in the plan, read from the path the change lives under — two sets share the animals repo — and
+     the spec namespace it writes:
+${FRONTEND_CHANGE_SET_TABLE}
+     A change frontend-change does not route — wording, content or layout alone, say — still has section 8.`
   : ''
 
 const rowReposPlanLine = (rowRepos) => {
@@ -2070,13 +2381,14 @@ implementor decides nothing.
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
       repo's script that takes that project down, as a check of its own. "None" is an answer.
    7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
+${specSyncPlanSection()}
    The plan never covers lifecycle: no commit messages, branches, pushes or pull requests. Later stages own those.
    The increment is one full-stack slice. Plan every repo it needs in this one plan; never leave "the tests half"
    or "the backend half" for another increment.
 ${PLAN_CHECK_FORMS}
-Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions, risks
-and checks: every command in sections 5 and 6, exactly as the plan writes it. The loop reads checks[] and sends back a
-plan that names a denied form.
+Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions, risks,
+specPrefixes (the prefixes section 8 writes under, [] for none) and checks: every command in sections 5 and 6, exactly
+as the plan writes it. The loop reads checks[] and sends back a plan that names a denied form.
 Return the structured output only.`,
     think({ label: deniedChecks.length ? `${id} replan` : `${id} plan`, phase: 'Plan', schema: PLAN_SCHEMA })
   )
@@ -2123,20 +2435,37 @@ const PREFLIGHT_SCHEMA = {
       type: ['array', 'null'],
       items: ENVELOPE_REPO_SCHEMA,
       description: "The backlog envelope's repos exactly as the second command printed them, or null when it printed null"
+    },
+    branchWithoutPr: {
+      type: 'array',
+      items: { type: 'string' },
+      description: `Branch lifecycle only: every repo checked out on ${BASE_BRANCH} with no open pull request for it`
     }
   },
   additionalProperties: false
 }
 
+// A stacked theme branch lives in repos its rows never build, so the stack in
+// CI runs that repo's branch image. A branch image is published only from a
+// pull request: without one, CI falls back to :latest and the theme's E2E goes
+// red on code its base branches already changed.
+const BRANCH_PR_STEP = IS_BRANCH
+  ? `
+3. \`tim workspace status --workspace ${TILDE} --json\`. For every entry of \`result\` whose \`branch\` is
+   \`${BASE_BRANCH}\`, run \`gh pr list --repo DEFRA/<repo> --head ${BASE_BRANCH} --state open --json number\`, with
+   <repo> the entry's \`repo\`. Put every repo whose list prints \`[]\` in branchWithoutPr, and [] when there is none.`
+  : ''
+
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, and which repos its envelope names. Run exactly these
-two commands, one Bash call each, and read their output:
+commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Do nothing
-else. No Grep/Glob tools, tilde paths only.`,
+else. No Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
 )
 
@@ -2169,6 +2498,13 @@ const envelopeRepoProblems = (envelopeRepos) => {
           `"${entry.key}" ${entry.requireApproval ? 'needs' : 'does not need'} approval in the envelope and ${REPOS[entry.key].requireApproval ? 'needs' : 'does not need'} it in the args`
       )
   ]
+}
+
+const branchWithoutPr = IS_BRANCH ? (preflight.branchWithoutPr ?? []) : []
+if (branchWithoutPr.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: ${branchWithoutPr.join(', ')} ${branchWithoutPr.length === 1 ? 'is' : 'are'} on ${BASE_BRANCH} with no open pull request, so CI publishes no branch image there and its E2E runs that repo's :latest instead. Open a draft pull request for ${BASE_BRANCH} in each, then launch again`
+  )
 }
 
 const ENVELOPE_REPOS = preflight.envelopeRepos ?? null
@@ -2209,7 +2545,8 @@ Read \`result.next\` and nothing else:
 If the command exits non-zero or prints no JSON, return ok:false quoting exactly what it said. Do NOT choose an
 increment yourself, do NOT read the backlog, and do NOT judge whether the one tim named looks ready: buildability
 is status and dependencies, which tim has already applied.
-One Bash call, no Grep/Glob tools, tilde paths only.`,
+One Bash call, no Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
     light({ label: 'derive next', phase: 'Derive', schema: NEXT_SCHEMA })
   )
 
@@ -2772,6 +3109,215 @@ Return the structured output only.`,
   return { ok: false, detail }
 }
 
+// ---------------------------------------------------------------------------
+// The theme's spec check. Once a row lands and no row of its theme is left
+// `todo`, the run checks the Behaviour Spec under every prefix the theme
+// touched. spec-catchup and spec-cover cannot run headless inside the
+// loop as written: they start the workspace stack the run already holds under
+// lease, run a FIT suite behind a `PORT=` prefix the deny list refuses, fan
+// out to Task subagents, stop to ask a person to start Docker, commit
+// `openspec/` wherever the workspace stands, and cut branches in service repos
+// with no pull request behind them. So the loop runs the two deterministic
+// checks those skills start from — `tim spec lint` and
+// `tim spec gaps --none` — and a red one stops the run, naming the
+// "catch-up and cover" a person runs next. Every row of the theme is built by
+// then, so nothing re-runs the check: the stop is the record.
+// ---------------------------------------------------------------------------
+const THEME_SCHEMA = WORKSPACE_COMMIT_SCHEMA
+
+// The row's theme, or a split backlog's own, summed up by jq so the line stays
+// short enough to copy back whatever the backlog's size: how many of its rows
+// are left `todo`, which of them this run built, and the repos of the rest —
+// a row with no repos counted as reaching every configured repo.
+const themeFilter = (id, builtIds) =>
+  `(.theme // null) as $split | ([.increments[] | select(.id=="${id}") | (.theme // $split)] | first) as $theme | ${JSON.stringify(builtIds)} as $built | ${JSON.stringify(REPO_KEYS)} as $all | [.increments[] | select($theme != null and (.theme // $split) == $theme)] as $rows | {theme: $theme, rows: ($rows | length), todo: ([$rows[] | select(.status == "todo")] | length), built: [$rows[] | .id | select(IN($built[]))], otherRepos: ([$rows[] | select((.id | IN($built[])) | not) | (.repos // $all)[]] | unique)}`
+
+const readTheme = (id, builtIds) =>
+  agent(
+    `You are the THEME READER for increment ${id}. Run exactly one command and report what it printed. That is your
+whole job.
+${BASE_GUARDRAILS}
+\`jq -c '${themeFilter(id, builtIds)}' ${BACKLOG_TILDE}\`
+Report its exit code, and in \`stdout\` everything it printed, word for word: one short JSON line. Never summarise or
+correct it, and run nothing else. The loop reads the JSON itself.`,
+    light({ label: `${id} theme`, phase: 'Done', schema: THEME_SCHEMA })
+  )
+
+const isThemeSummary = (parsed) =>
+  parsed.theme === null ||
+  (typeof parsed.todo === 'number' && Array.isArray(parsed.built) && Array.isArray(parsed.otherRepos))
+
+// null when the reader's line is not the shape the filter prints.
+const themeStatusOf = (answer) => {
+  const line = lastJsonLine(answer?.stdout)
+  try {
+    const parsed = line ? JSON.parse(line) : null
+    return parsed && 'theme' in parsed && isThemeSummary(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+// One retry: a reader that dies or garbles its line once is not a reason to
+// stop the run, but the check must not be lost silently either.
+const readThemeStatus = async (id, builtIds) =>
+  themeStatusOf(await readTheme(id, builtIds)) ?? themeStatusOf(await readTheme(id, builtIds))
+
+const repoSpecPrefixes = (key) => SPEC_PREFIXES_BY_REPO_PATH[REPO_PATH[key]] ?? []
+
+const SPEC_CHECK_SCHEMA = {
+  type: 'object',
+  required: ['prefixes', 'summary'],
+  properties: {
+    prefixes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['prefix', 'present'],
+        properties: {
+          prefix: { type: 'string' },
+          present: { type: 'boolean', description: 'openspec/specs/<prefix> exists' },
+          lintOk: { type: 'boolean', description: 'tim spec lint exited 0 with no findings' },
+          lintFindings: { type: 'number' },
+          noneCount: { type: 'number', description: "tim spec gaps' result.noneCount" },
+          partialCount: { type: 'number', description: "tim spec gaps' result.partialCount" },
+          noneScenarios: { type: 'array', items: { type: 'string' }, description: 'The id of every row tim spec gaps --none printed' },
+          lintLog: { type: 'string' },
+          gapsLog: { type: 'string' }
+        },
+        additionalProperties: false
+      }
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const specCheckLog = (theme, prefix, kind) =>
+  `${WORKAREA_TILDE}/logs/spec-check-${theme.replace(/[^A-Za-z0-9-]/g, '-')}-${prefix}-${kind}.json`
+
+const checkThemeSpec = (id, theme, prefixes) =>
+  agent(
+    `You are the SPEC CHECK for theme \`${theme}\`: its last row to build, ${id}, has landed. You run fixed commands and
+report what they printed. You change nothing: no spec, no test, no commit.
+${BASE_GUARDRAILS}
+For EACH of these prefixes, in this order — ${prefixes.map((prefix) => `\`${prefix}\``).join(', ')} — one Bash call per command:
+1. \`ls ${TILDE}/openspec/specs/<prefix>\`. When it fails, the prefix has no spec yet: report present:false and go on to
+   the next prefix. tim refuses a prefix with no spec, so run nothing more for it.
+2. \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${specCheckLog(theme, '<prefix>', 'lint')} 2>&1\`.
+   Read that file once. lintOk:true only when the command exited 0 and \`result.findings\` is empty; lintFindings is the
+   length of \`result.findings\`. A non-zero exit with findings is an ordinary answer: report it as it is.
+3. \`tim spec gaps --none --capability <prefix> --workspace ${TILDE} --json > ${specCheckLog(theme, '<prefix>', 'gaps')} 2>&1\`.
+   Read it once: noneCount and partialCount from \`result\`, and noneScenarios as the \`id\` of every row in \`result.rows\`.
+Report one entry per prefix, with lintLog and gapsLog the two files you wrote. Never fix a finding, write a test or edit
+\`openspec/\`: the loop decides what happens next.
+Return the structured output only.`,
+    light({ label: `spec check:${theme}`, phase: 'Done', schema: SPEC_CHECK_SCHEMA })
+  )
+
+const missingSpecProblem = (entry, written) =>
+  written.includes(entry.prefix)
+    ? [`a row reported writing the spec under ${entry.prefix}/, but openspec/specs/${entry.prefix} does not exist`]
+    : []
+
+const lintProblem = (entry) =>
+  entry.lintOk === true
+    ? []
+    : [`tim spec lint found ${entry.lintFindings ?? 'an unreported number of'} finding(s) under ${entry.prefix}/ (${entry.lintLog ?? 'no log named'})`]
+
+const gapsProblem = (entry) => {
+  if (typeof entry.noneCount !== 'number') return [`no gap count came back for ${entry.prefix}/`]
+  if (entry.noneCount === 0) return []
+  const ids = (entry.noneScenarios ?? []).join(', ') || 'ids not reported'
+  return [`${entry.noneCount} scenario(s) under ${entry.prefix}/ that no test proves: ${ids} (${entry.gapsLog ?? 'no log named'})`]
+}
+
+const prefixProblems = (entry, written) =>
+  entry.present ? [...lintProblem(entry), ...gapsProblem(entry)] : missingSpecProblem(entry, written)
+
+const specCheckProblems = (answer, prefixes, written) => {
+  if (!answer) return ['the spec check agent died, so nothing checked the spec']
+  const checked = (answer.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
+  const unchecked = prefixes
+    .filter((prefix) => !checked.some((entry) => entry.prefix === prefix))
+    .map((prefix) => `${prefix}/ was not checked`)
+  return [...unchecked, ...checked.flatMap((entry) => prefixProblems(entry, written))]
+}
+
+const describeSpecPrefix = (entry) =>
+  entry.present
+    ? `${entry.prefix}/ lint clean, ${entry.noneCount} unproven, ${entry.partialCount ?? 'unreported'} partly proven`
+    : `${entry.prefix}/ has no spec yet`
+
+const catchUpAdvice = (prefixes) => prefixes.map((prefix) => `"catch-up and cover ${SPEC_SET_NAMES[prefix]}"`).join(', ')
+
+// What each landed row of this run planned and wrote under the spec, by id.
+// A prefix a row wrote under must exist when its theme is checked; one it only
+// planned is checked if it exists. A theme row this run did not build is known
+// only by its repos, so every prefix those repos could reach is checked too.
+const landedSpecPrefixes = new Map()
+
+const PREFIX_SOURCES = ['planned', 'written', 'repo reach']
+
+const prefixesBySource = (status) => {
+  const ofBuiltRows = (kind) => status.built.flatMap((rowId) => landedSpecPrefixes.get(rowId)?.[kind] ?? [])
+  return {
+    planned: ofBuiltRows('planned'),
+    written: ofBuiltRows('written'),
+    'repo reach': status.otherRepos.flatMap(repoSpecPrefixes)
+  }
+}
+
+// Each prefix the theme touched, with where the run learned of it.
+const themePrefixSources = (status) => {
+  const bySource = prefixesBySource(status)
+  const prefixes = inPrefixOrder(PREFIX_SOURCES.flatMap((source) => bySource[source]))
+  return Object.fromEntries(
+    prefixes.map((prefix) => [prefix, PREFIX_SOURCES.filter((source) => bySource[source].includes(prefix))])
+  )
+}
+
+const themeSpecCheck = async (id) => {
+  const status = await readThemeStatus(id, [...landedSpecPrefixes.keys()])
+  if (!status) {
+    const detail = `${id}: theme unread — the theme reader's line could not be read twice, so no spec check ran and the run cannot tell whether this was its theme's last row. Read the theme with \`jq\` by hand; if it has no row left to build, run "catch-up and cover" for its prefixes, then launch again`
+    log(`${id}: THEME UNREAD — ${detail}`)
+    return { record: { after: id, theme: null, outcome: 'theme-unread', detail }, stop: { reason: 'spec-check-red', detail } }
+  }
+  if (status.theme === null) return null
+  if (status.todo > 0) {
+    log(`${id}: theme ${status.theme} has ${status.todo} row(s) left to build — its spec check waits for the last`)
+    return null
+  }
+  const { theme } = status
+  const sources = themePrefixSources(status)
+  const prefixes = Object.keys(sources)
+  if (prefixes.length === 0) {
+    log(`${id}: theme ${theme} is built; it touched no Behaviour Spec prefix, so there is no spec to check`)
+    return { record: { after: id, theme, outcome: 'no-spec-prefix', prefixes: [], sources, problems: [] } }
+  }
+  const written = prefixes.filter((prefix) => sources[prefix].includes('written'))
+  const answer = await checkThemeSpec(id, theme, prefixes)
+  const problems = specCheckProblems(answer, prefixes, written)
+  const checked = (answer?.prefixes ?? []).filter((entry) => prefixes.includes(entry.prefix))
+  const record = {
+    after: id,
+    theme,
+    outcome: problems.length > 0 ? 'spec-check-red' : 'spec-checked',
+    prefixes: checked.map(({ prefix, present, lintOk, noneCount, partialCount }) => ({ prefix, present, lintOk, noneCount, partialCount })),
+    sources,
+    problems
+  }
+  if (problems.length === 0) {
+    log(`${id}: theme ${theme} is built; spec check clean — ${checked.map(describeSpecPrefix).join('; ')}`)
+    return { record }
+  }
+  const redPrefixes = prefixes.filter((prefix) => problems.some((problem) => problem.includes(`${prefix}/`)))
+  const detail = `theme ${theme}, after ${id}: ${problems.join('; ')}. Every row of the theme is built, so nothing re-runs this check: run ${catchUpAdvice(redPrefixes.length > 0 ? redPrefixes : prefixes)} (spec-catchup, then spec-cover), then launch again`
+  log(`${id}: SPEC CHECK RED — ${detail}`)
+  return { record, stop: { reason: 'spec-check-red', detail } }
+}
+
 const LAND_ORDER = IS_LEGACY_KEYS ? 'backend first' : "in the order of the increment's repos"
 
 const queue = EXPLICIT_IDS === null ? null : [...EXPLICIT_IDS]
@@ -2784,6 +3330,9 @@ log(
 )
 
 const results = []
+// One entry per theme spec check the run made, clean or red.
+const specChecks = []
+const reviewChecks = []
 let built = 0
 let lastId = null
 let stopped = null
@@ -3014,6 +3563,7 @@ while (stopped === null) {
   let land = null
   let mergesInProgress = []
   let workspaceEdits = []
+  let specPrefixesOfRow = { planned: [], written: [] }
   const findingCounts = () => ({ raw: rawFindings.length, confirmed: confirmed.length, fixed: judgement.fixNow.length })
 
   build: {
@@ -3027,7 +3577,7 @@ while (stopped === null) {
   // -----------------------------------------------------------------------
   phase('Baseline')
 
-  const baseline = await agent(
+  const baseline = await recoverDownStack(id, 'baseline', () => agent(
     IS_BRANCH ? branchBaselinePrompt(id, rowGatePhases) : `You are the BASELINE GUARD for increment ${id}. Establish that the tree is clean, on the right branch and
 green BEFORE any edit, so a failure later in this increment is unambiguously ours. You run fixed commands and
 report what they printed. You choose no test, script or suite: \`tim build gate\` does that.
@@ -3054,14 +3604,15 @@ ${baselineGateStep(GATE_PHASES, gateLogs(id, 'baseline'))}
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`,
     light({ label: `${id} baseline`, phase: 'Baseline', schema: withStackHeld(BASELINE_SCHEMA) })
-  )
+  ))
 
   // A stack somebody else holds is not a red tree: nothing about this
   // increment's code has been tested, and a human rules on the holder.
-  if (baseline?.stackHeld) {
-    const detail = stackHeldDetail(id, 'baseline', baseline.stackHeld)
+  const baselineHeld = await confirmStackHeld(id, 'baseline', baseline?.stackHeld)
+  if (baselineHeld) {
+    const detail = stackHeldDetail(id, 'baseline', baselineHeld)
     log(`${id}: STACK HELD at the baseline — ${detail}`)
-    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baseline.stackHeld.holder, detail })
+    results.push({ id, ticket: ticket?.key, outcome: 'stack-held', holder: baselineHeld.holder, detail })
     stopped = { reason: 'stack-held', detail }
     break
   }
@@ -3147,11 +3698,11 @@ ${baselineRungList(baseline)}`
     ? await codexStage(id, 'implement', {
         phaseName: 'Implement',
         schema: incrementSchema,
-        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${workspaceRepoRule()}`,
+        instructions: `You are implementing increment ${id}. Execute the plan at ${PLANS}/${id}.md.${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty()}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
       })
-    : await agent(
+    : await recoverDownStack(id, 'implement', () => agent(
     `You are the IMPLEMENTOR for increment ${id}. You execute the plan and nothing else — you do not review it,
 and you do not commit it.
 ${guardrails()}
@@ -3162,6 +3713,7 @@ and copy its shape rather than improvising. Where it follows a repo's recipe, re
 it exactly. Where the plan is wrong about the tree, do the smallest thing that meets the increment's acceptance
 criteria and say what you changed in notes.
 Before you write to a file, read the rules and best-practice files the plan lists for it.${FRONTEND_CHANGE_IMPLEMENT_LINE}
+${specSyncDuty()}
 
 RULES:
 - Implement EXACTLY the plan's scope. Do not fix adjacent things you notice — report them in notes instead;
@@ -3192,7 +3744,7 @@ including anything the increment got wrong and any diagnosis of a red suite you 
 changedFiles: every file you created or edited, each written \`<repoKey>:<repo-relative path>\` with the repo keys
 ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in the workspace repo itself)` : ''} — e.g. \`${REPO_KEYS[0]}:src/server/app/index.js\`. Review is grouped by repo and language from it.`,
     code({ label: `${id} implement`, phase: 'Implement', schema: withStackHeld(incrementSchema) })
-  )
+  ))
 
   const attempt = { id, ticket, workBranch }
 
@@ -3213,8 +3765,9 @@ ${REPO_KEYS.join(', ')}${IS_BRANCH ? ` (and \`${WORKSPACE_KEY}\` for a file in t
     stopped = { reason: 'stack-held', detail }
   }
 
-  if (impl?.stackHeld) {
-    await stopForHeldStack('implement', 'Implement', impl.stackHeld)
+  const implHeld = await confirmStackHeld(id, 'implement', impl?.stackHeld)
+  if (implHeld) {
+    await stopForHeldStack('implement', 'Implement', implHeld)
     break
   }
 
@@ -3332,7 +3885,7 @@ Return the structured output only.`,
   )
 
   const consistencyReview = () =>
-    agent(
+    recoverDownStack(id, 'consistency', () => agent(
       `You are the CONSISTENCY REVIEWER for increment ${id} — you look ACROSS the whole change, not at one file.
 ${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/CONSISTENCY_REVIEWER.md IN FULL and follow it.
@@ -3348,12 +3901,13 @@ or performance-tests repo exercises the slice through it;
 an acceptance criterion nothing in the change proves; and the plan's section 5 — run each check it names and
 report any that fails as a finding. A check in a form GUARD RAILS lists as DENIED is not run: report it as a finding
 naming the plan. ${SECTION_5_STACK_LINE} A better solution than the plan imagined is not a finding.
+${specReviewRule(impl.notes)}
 Write each finding's \`file\` as \`<repoKey>:<repo-relative path>\` (repo keys ${REPO_KEYS.join(', ')}), so it can be
 routed to the right verifier.
 ${RUN_STACK_RULE}
 Return the structured output only.`,
       think({ label: `${id} consistency`, phase: 'Review', schema: withStackHeld(FINDINGS_SCHEMA) })
-    )
+    ))
 
   // Codex reviews at the same granularity as Claude: one run per group applying
   // that group's personas (style + code, code alone for docs), plus one
@@ -3382,7 +3936,7 @@ Return the structured output only.`,
       group.files.join(', '),
       `Review ONE GROUP of the staged, uncommitted change for increment ${id}: ${groupHeader(group)}
 Apply every persona bound to <personas>, and no other. Another Codex run reviews each other group, and a consistency
-run looks across the whole change, so report findings on this group's files only.${mergeNote}${isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+run looks across the whole change, so report findings on this group's files only.${mergeNote}${IS_BRANCH && isWorkspaceGroup(group) ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
     )
   )
 
@@ -3394,7 +3948,8 @@ run looks across the whole change, so report findings on this group's files only
 <personas>, and no other: other Codex runs review each (repo, language) group file by file. Hunt for the same concept
 named two ways, a pattern the repo already has reimplemented, registration in one place but not its twin, the contract
 between repos, an acceptance criterion nothing in the change proves, and run each check the plan's section 5 names,
-reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
+reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}
+${specReviewRule(impl.notes)}${mergeNote}${IS_BRANCH && repos.length === 0 ? WORKSPACE_REVIEW_LINE : ''}${workspaceRepoRule()}`
   )
 
   const codexReviewResults = async () => {
@@ -3423,9 +3978,13 @@ reporting any that fails as a finding. ${CODEX_SECTION_5_STACK_LINE}${mergeNote}
     break
   }
 
-  const heldReview = reviewed.results.find((result) => result?.stackHeld)
-  if (heldReview) {
-    await stopForHeldStack('consistency', 'Review', heldReview.stackHeld)
+  const reviewHeld = await confirmStackHeld(
+    id,
+    'consistency',
+    reviewed.results.find((result) => result?.stackHeld)?.stackHeld
+  )
+  if (reviewHeld) {
+    await stopForHeldStack('consistency', 'Review', reviewHeld)
     break
   }
 
@@ -3559,7 +4118,9 @@ Return the structured output only.`,
 ${baselineEvidence}
 
 THE IMPLEMENTOR'S NOTES — a diagnosis it already made is yours to use:
-${impl.notes || '(none)'}${mergeNote}${workspaceRepoRule()}`,
+${impl.notes || '(none)'}
+
+${SPEC_SYNC_FIX_LINE}${mergeNote}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'fix', builderPhases) }
       })
@@ -3584,7 +4145,7 @@ ${impl.notes || '(none)'}${mergeNote}${workspaceRepoRule()}`,
         break
       }
     } else {
-      fixResult = await agent(
+      fixResult = await recoverDownStack(id, 'fix', () => agent(
       `You are the FIXER for increment ${id}. Apply EXACTLY the fixes the judge ruled — no more, no less.
 ${guardrails()}
 YOUR PERSONA — read ${SKILLS}/review/references/REVIEW_ITEM_FIXER.md IN FULL and follow it. For any fix that is
@@ -3597,15 +4158,17 @@ RULES: apply each fix and prove it with the test or assertion the instruction na
 judge rejected or deferred. Do NOT expand scope. If a fix turns out to be wrong or impossible, say so in your
 summary rather than forcing it — a fix that requires weakening a test is not a fix. Leave everything STAGED, do
 not commit.
+${SPEC_SYNC_FIX_LINE}
 ${builderGateRule(id, 'fix', builderPhases)}
 ${baselineEvidence}
 If a rung goes red for a reason that is not your fix — a port held, an environment variable — write the diagnosis
 and whatever got it green in notes. The ladder runs after you and is given your notes.
 Return the structured output only.`,
         code({ label: `${id} fix`, phase: 'Fix', schema: withStackHeld(incrementSchema) })
-      )
-      if (fixResult?.stackHeld) {
-        await stopForHeldStack('fix', 'Fix', fixResult.stackHeld)
+      ))
+      const fixHeld = await confirmStackHeld(id, 'fix', fixResult?.stackHeld)
+      if (fixHeld) {
+        await stopForHeldStack('fix', 'Fix', fixHeld)
         break
       }
     }
@@ -3629,7 +4192,7 @@ FIXER — ${fixerReport()}`
   // -----------------------------------------------------------------------
   phase('Ladder')
 
-  const ladder = await agent(
+  const ladder = await recoverDownStack(id, 'ladder', () => agent(
     `You are the VERIFIER for increment ${id}. Run its ladder and report honestly.
 ${guardrails()}
 ${readIncrement(id)}
@@ -3649,6 +4212,7 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
    the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
    A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
    the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
+${ladderSpecStep(id, impl.notes, fixResult ? fixResult.notes : null)}
 3. COMPARE EVERY RED RUNG WITH THE BASELINE by its repo and name. A rung green at baseline and red now is this
    increment's to fix — repair it, or diagnose it and name the cause in failures[]. "Pre-existing" is not available
    for a gate rung: every one was green at baseline. A plan check has no baseline, and the same holds for it.
@@ -3682,25 +4246,31 @@ ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
   run every leg, not just the one your increment was aimed at.
 - For a red E2E rung, read \`test-results/*/error-context.md\` in the tests repo rather than grepping the rung's log.
   Journey E2E specs on a fresh stack are known to be flaky with transient 500s in beforeEach that recover on retry —
-  a green rung with retried journey specs IS a pass, but say so explicitly.
+  a green rung whose only retries are those IS a pass, but say so explicitly. That exception covers nothing else. A
+  spec that hit "Test timeout of …ms exceeded", even once and even if its retry passed, is a failure you repair: the
+  journey it drives no longer fits its time budget, and every row that lengthens the journey makes it worse until a
+  later baseline goes red. Read the trace's request timings first. If this increment made a request slow, fix the
+  code. If the spec simply drives more of the journey than its budget holds, give it \`test.slow()\` as the tests
+  repo's other full-journey specs do, and never cut a step or an assertion to make it fit.
 - A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
   start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
   \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.
 ${RUN_STACK_RULE}
-In ran[], list every gate rung as \`<repo> <name>\` and every plan check you ran. In failures[], one line per red rung
-or check, with its reason and its log.
+In ran[], list every gate rung as \`<repo> <name>\`, every plan check and every spec check you ran. In failures[], one
+line per red rung or check, with its reason and its log.
 Report green:true ONLY if every rung and every check actually ran and actually passed, with no repair after it.
 Return the structured output only.`,
     code({ label: `${id} ladder`, phase: 'Ladder', schema: withStackHeld(LADDER_SCHEMA) })
-  )
+  ))
 
   // -----------------------------------------------------------------------
   // Land — commit on green, non-destructive rollback on red.
   // -----------------------------------------------------------------------
   phase('Land')
 
-  if (ladder?.stackHeld) {
-    await stopForHeldStack('ladder', 'Ladder', ladder.stackHeld)
+  const ladderHeld = await confirmStackHeld(id, 'ladder', ladder?.stackHeld)
+  if (ladderHeld) {
+    await stopForHeldStack('ladder', 'Ladder', ladderHeld)
     break
   }
 
@@ -3730,7 +4300,11 @@ Return the structured output only.`,
   const workspaceFiles = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter((file) =>
     file.startsWith(`${WORKSPACE_KEY}:`)
   )
-  workspaceEdits = IS_BRANCH ? workspaceFiles : []
+  // The land stage commits openspec/ itself, by SPEC_RULE, so it is not left
+  // for the orchestrator.
+  workspaceEdits = IS_BRANCH
+    ? workspaceFiles.filter((file) => !withoutWorkspacePrefix(file).startsWith('openspec/'))
+    : []
 
   land = IS_BRANCH
     ? await agent(
@@ -3813,6 +4387,11 @@ Return the structured output only.`,
     results.push({ id, branch: workBranch, outcome: 'push-failed', commit: land.commit, detail: land.summary, findings: findingCounts() })
     stopped = { reason: 'push-failed', detail: `${id}: ${land.summary}` }
     break
+  }
+
+  specPrefixesOfRow = {
+    planned: plan.specPrefixes ?? [],
+    written: inPrefixOrder([...specPrefixesIn(impl.notes), ...specPrefixesIn(fixResult?.notes)])
   }
   } // build
 
@@ -4371,14 +4950,40 @@ Return the structured output only.`,
     `Report whether increment ${id} carries a halt gate. Run exactly one command and read it:
 \`jq -r '.increments[] | select(.id=="${id}") | .gate' ${BACKLOG_TILDE}\`
 If it prints \`null\`, return ok:true with summary "no gate". Otherwise return ok:false and put the gate's full text
-in summary — the run will stop so a human can review before dependent increments proceed.
-Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.`,
+in summary.
+Do not do anything else. One Bash call, no Grep/Glob tools, tilde paths only.
+${RUN_WITH_BASH}`,
     light({ label: `${id} gate check`, phase: 'Done', schema: incrementSchema })
   )
 
-  if (gate && !gate.ok) {
+  // Runs whether or not the row carries a halt gate: a theme whose last row
+  // halts is still built, and its spec is checked before a person looks.
+  landedSpecPrefixes.set(id, specPrefixesOfRow)
+  const themeCheck = await themeSpecCheck(id)
+  if (themeCheck) specChecks.push(themeCheck.record)
+
+  // A branch run is unattended and merges nothing: the whole theme branch waits
+  // for a person anyway, so a gate becomes a check for them at the end rather
+  // than a stop mid-theme.
+  const gated = Boolean(gate && !gate.ok)
+  if (gated && IS_BRANCH) {
+    log(`${id}: review check for the finished branch — ${gate.summary}`)
+    reviewChecks.push({ id, check: gate.summary })
+  }
+  const halted = gated && !IS_BRANCH
+  if (halted) {
     log(`${id}: HALT-FOR-REVIEW GATE — stopping the run. ${gate.summary}`)
     results.push({ id, ticket: ticket?.key, outcome: 'halted-at-gate', detail: gate.summary })
+  }
+
+  if (themeCheck?.stop) {
+    stopped = halted
+      ? { ...themeCheck.stop, detail: `${themeCheck.stop.detail}. ${id} also carries a halt gate: ${gate.summary}` }
+      : themeCheck.stop
+    break
+  }
+
+  if (halted) {
     stopped = { reason: 'gate', detail: `${id}: ${gate.summary}` }
     break
   }
@@ -4401,4 +5006,4 @@ if (workspaceLeftOn) {
 
 log(`${WORKAREA_REL}: ${built} increment(s) landed — stopping: ${stopped.reason}. ${stopped.detail}`)
 
-return { increments: results, stopped }
+return { increments: results, specChecks, reviewChecks, stopped }

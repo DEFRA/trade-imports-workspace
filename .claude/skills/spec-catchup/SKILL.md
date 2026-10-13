@@ -1,6 +1,6 @@
 ---
 name: spec-catchup
-description: 'Catch the Behaviour Spec (openspec/) up with what one domain''s tests and source now show — the direction where the code does something the spec does not say. Runs that domain''s full test suite (fit + e2e, or vitest + e2e for animals-admin), then walks every spec.md under the domain''s spec prefix against the report and source, editing, adding, updating a coverage link, or deleting spec.md + coverage.json as the evidence dictates — never using tim spec gaps as the work list. Fans out per-capability judgement to Task subagents when a domain has more than a handful of capabilities; the parent applies and commits in this workspace repo. Also drives "catch-up and cover": for each domain, finishes catch-up then follows spec-cover before moving to the next domain. Use when the user asks to catch a domain''s spec up (triggers: "catch-up", "catch-up animals", "catch-up plants", "catch-up ins", "catch-up animals-admin", "catch-up and cover"). NOT for writing a test for a scenario whose spec wording is already correct — that is spec-cover. NOT for validating conventions alone — use tim spec lint directly.'
+description: 'Catch the Behaviour Spec (openspec/) up with what one domain''s tests and source now show — the direction where the code does something the spec does not say. Runs that domain''s full test suite (fit + e2e, or vitest + e2e for animals-admin), then walks every spec.md under the domain''s spec prefix against the report and source, editing, adding, updating a coverage link, or deleting spec.md + coverage.json as the evidence dictates — never using tim spec gaps as the work list. Fans out per-capability judgement to Task subagents when a domain has more than a handful of capabilities; the parent applies and commits in this workspace repo. Also drives "catch-up and cover": for each domain, finishes catch-up then follows spec-cover before moving to the next domain. Use when the user asks to catch a domain''s spec up (triggers: "catch-up", "catch-up animals", "catch-up germinal", "catch-up plants", "catch-up ins", "catch-up animals-admin", "catch-up and cover"). NOT for writing a test for a scenario whose spec wording is already correct — that is spec-cover. NOT for validating conventions alone — use tim spec lint directly.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Edit, Write, Task]
 ---
@@ -35,8 +35,8 @@ hygiene".
 
 | Trigger | What happens |
 |---|---|
-| `catch-up` | All four domains, one at a time, each following this skill |
-| `catch-up animals` / `plants` / `ins` / `animals-admin` | One domain |
+| `catch-up` | Every domain in `references/SUITES.md`, one at a time, each following this skill |
+| `catch-up animals` / `germinal` / `plants` / `ins` / `animals-admin` | One domain |
 | `catch-up and cover` (with or without a domain name) | For each domain: finish this skill, then follow `spec-cover` for that same domain, before moving to the next |
 
 NOT for `tim spec gaps` holes (no test proves an already-correct claim)

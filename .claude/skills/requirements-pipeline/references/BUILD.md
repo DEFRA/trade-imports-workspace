@@ -218,10 +218,10 @@ with commits of its own is left as it is. A failure names its step and its exact
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 39 agents on Claude and 45 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 41 agents on Claude and 47 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 25
-   increments on Claude and 22 on Codex.
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 24
+   increments on Claude and 21 on Codex.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
    one shape defined in [`backlog.schema.json`](backlog.schema.json), with the rules
@@ -250,7 +250,13 @@ with commits of its own is left as it is. A failure names its step and its exact
    takes one lease, `tim docker lease acquire --holder "<run id>" --mode dev`,
    which starts the stack from local source. The stack stays up across every
    increment, and every gate call passes `--holder "<run id>"`, so the gate
-   reuses it and rebuilds only what changed. No stage takes or gives back a
+   reuses it and rebuilds only what changed. A service that caches another
+   service's answers names it under `x-refresh-with` in
+   `docker/stack/dev.compose.yml`, and the gate restarts it whenever that
+   service is rebuilt or restarted. Reference-data names the stub, because it
+   keeps the stub's MDM countries and ports for an hour, and without the restart
+   a stub fixture change would not reach the E2E rung. Add the key to any
+   service that caches another one's answers. No stage takes or gives back a
    lease, or starts or stops the stack. A plan may name a check that needs the
    stack, marked "needs the workspace stack"; the stage that runs it uses the
    stack as it is. The integration proof is still the gate's E2E rung. After the
@@ -258,7 +264,11 @@ with commits of its own is left as it is. A failure names its step and its exact
    stack down. A refused acquire stops the run at `stack-held` before any
    increment; a stack that will not start stops it at `stack-failed`. A stage
    that finds the stack in somebody else's hands returns `stackHeld`, and the
-   run stops at `stack-held` for you to rule on. A stack somebody brought up by
+   run stops at `stack-held` for you to rule on. When Docker Desktop has quit,
+   tim starts it again (`open -a Docker`, up to five minutes) wherever it reads
+   or starts the stack, and a stage that finds the stack gone from under the
+   run's own lease returns `stackDown`: the loop takes the lease again, which
+   brings the stack back, and runs that stage once more. A stack somebody brought up by
    hand, with no lease, counts as somebody else's: it is never reused and never
    taken down, and so does a stack restarted by hand under a lease (its container
    ids no longer match the lease's). The lease file is per machine
@@ -310,7 +320,10 @@ what lets one launch build many: a list chosen in advance throws away everything
 the first increment teaches, and a run that needed a turn from you per increment
 died whenever the session did.
 
-**Buildability is status and dependencies. Nothing else.** The six withheld
+**Buildability is status and dependencies. Nothing else.** A dependency is a
+`dependsOn` id in the same backlog, or an `externalDependsOn` row in another
+workarea's backlog, which must be `done` there ([Building one theme](#building-one-theme)).
+The six withheld
 statuses (`done`, `deferred`, `dropped`, `blocked`, `rejected`, `merged-into`)
 are named explicitly and everything else counts as buildable, so an
 unknown status fails **loudly** — it gets picked up and you see it — rather than
@@ -431,9 +444,20 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, stopped}`: one entry per increment it attempted,
-each with its `outcome`, and one `stopped` saying which condition ended the run.
-Do not trust that report on its own.
+The run returns `{increments, specChecks, stopped}`: one entry per increment it attempted,
+each with its `outcome`, one entry per theme whose spec it checked, and one `stopped` saying
+which condition ended the run. Do not trust that report on its own.
+
+**The Behaviour Spec.** Every row keeps `openspec/` current, whatever its repos: its plan's
+section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
+Step 5 where the row is routed there), and the land stage commits them with the rest. A row that
+changes nothing the spec records reports `Spec sync: none — <reason>`, which the consistency
+reviewer checks. A row owns every capability it writes, whole: a validate or lint failure
+already there before the row is the row's to fix, not to report as pre-existing. Once a theme's last row lands, the run lints the spec and lists unproven
+scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
+its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
+by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
+[`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -545,16 +569,17 @@ handover prompt.
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
 | `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
-| `gate` | The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
+| `gate` | Full lifecycle only. The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
+| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves, or a prefix a row reported writing that does not exist. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
-| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
-| `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again |
+| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
+| `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back: the detail names each one. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
 | `off-branch` | A repo left the run's branch and could not be moved back |
-| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code |
+| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
 | `land-failed` | The commit could not be made |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
@@ -568,7 +593,7 @@ handover prompt.
 | `row-invalid` | Branch lifecycle only. The row's `repos`, `merge` or `gatePhases` do not fit the run: a repo it does not configure, a merge into a repo the row does not build, a gate phase that does not exist |
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
 | `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch |
-| `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one |
+| `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
 
 **Every failure stops the whole run, not just that increment.** The loop never
 skips to the next id after one goes wrong: `tim backlog next` selects on status
@@ -581,7 +606,11 @@ failing.
 **`gate` is honoured regardless of `requireApproval`.** A row's own `gate`
 field is a checkpoint somebody set deliberately on that specific increment —
 data on the backlog, not a setting on the run — and it is unaffected by
-whether the human approval gate is on or off. `awaiting-approval` and
+whether the human approval gate is on or off. **Under the branch lifecycle a
+gate never stops the run**: the run is unattended and merges nothing, so the
+whole theme branch already waits for a person. The loop logs the gate's text
+and returns it in `reviewChecks` (`{ id, check }`), and carries on; put those
+checks in front of the reviewer when the theme finishes. `awaiting-approval` and
 `changes-requested`, by contrast, fire only when `requireApproval: true`, or
 when a repo of the increment sets it on its own entry.
 
@@ -624,6 +653,62 @@ asked.
 A run that stops short of `stopAfter` is not a failure — it is the loop telling
 you reality diverged from the plan.
 
+## Building one theme
+
+A themed backlog is split by `tim backlog split` ([`DISTIL.md`](DISTIL.md#7-split-into-themes)) into one backlog per
+theme, each at `workareas/<workarea>/themes/<theme id>/`. Each theme builds on its own machine, at the same time as
+the others. Its themes never touch the same code ([`SHAPE.md`](SHAPE.md#themes)), so their pull requests do not
+conflict.
+
+- **Build the theme's workarea, never the parent's.** The `workarea` arg is `<workarea>/themes/<theme id>`, and
+  `repos` is that split backlog's envelope `repos`, which holds only the repos the theme builds in. The parent
+  stays the source for re-distilling.
+- **Start in landing order.** `workareas/<workarea>/themes/themes.json` gives each theme's wave. Themes in wave 1
+  start at once; a later theme can start once the rows it waits for are `done`. `tim backlog next` on its workarea
+  prints NONE until then.
+- **`externalDependsOn` is a wait on another workarea.** A row with one is buildable only when each row it names is
+  `done` in that workarea's own `backlog.json`. `tim backlog next` and `tim build start` both read it there, so the
+  other theme's landed state must be on this machine: pull the workspace repo before you launch. The loop never
+  commits its `backlog.json` writes, so after a theme lands rows another theme waits for, commit and push that
+  theme's `backlog.json`.
+- **Which branch.** Under the full lifecycle each increment still cuts its own branch off `main` and merges there,
+  and the split's `branch` is not used. To build a theme onto one branch instead, create the split's `branch` in
+  every repo of its `repos`, open each pull request, and run `lifecycle: 'branch'` with `branch` set to it (see
+  [Branch lifecycle](#branch-lifecycle)). The branch name is the same in every repo, as the workspace's branch rule
+  needs.
+- **Keep the plan inside the theme.** The split envelope's `touches` names the code the theme owns. A plan that
+  must change code outside it would conflict with another theme: stop and re-distil instead.
+- **Re-distil the parent, then split again.** Never edit a split backlog's rows by hand. A re-split keeps every row
+  the loop has built or set aside, and the ticket, branch, commit and pull requests it wrote on the rest. A theme
+  split off early is the exception: see below.
+
+### Splitting a theme off early
+
+When one theme is ready while the rest of the backlog is still being ruled on, split just that theme off and build
+it on a second machine. Run a dry run, then the same with `--write`, in the parent workarea:
+
+```bash
+tim backlog split <workarea> --theme <theme id> --json
+tim backlog split <workarea> --theme <theme id> --write --json
+```
+
+The theme's backlog lands at `<workarea>/themes/<theme id>/backlog.json`, as the full split writes it, and its rows
+leave the parent `backlog.json` altogether. The parent keeps a pointer in `splitOff`, so re-distils do not draft
+them again. The command lists each dependency it rewired: a parent row that waited on a moved row now waits on it in
+the split backlog, a moved row that waited on a parent row waits on it in the parent, and a theme split off before
+that waited on a row this split moved now waits on it in its new workarea. When `tim backlog check` on the parent
+says a theme split off early waits on a row the parent no longer has, run
+`tim backlog split <workarea> --relink --write --json`, then commit and push the split backlogs it changed.
+
+- **Build it like any split theme.** Commit and push the workspace changes, pull them on the second machine, and
+  launch the loop with `workarea` set to `<workarea>/themes/<theme id>` and `repos` from that backlog's envelope. To
+  build onto one branch, use the split backlog's `branch`, as above.
+- **Its backlog is the only copy.** A re-distil of the parent never rewrites it, and a later full split skips it.
+- **Later rulings reach it through the report.** The report's "For the split branches" section names the branch and
+  every requirement it must pick up, every one that changed and every one no longer to build. Add or rewrite rows
+  in the split backlog for them, then update the parent's pointer as
+  [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
+
 ## Branch lifecycle
 
 `lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already exists in every backlog
@@ -652,7 +737,9 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
   build: give it a withheld status, or do it by hand.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
-  in progress and stashes the rest.
+  in progress and stashes the rest. A local commit a stage made against the rules (overview and review inc-107 left
+  one in the tests repo) is saved as `<id>-preserve-<repoKey>.commits.patch`, moved back off the branch with
+  `reset --soft`, and stashed with the rest, so the next run's baseline does not build on it.
 
 It runs on either executor. The Codex briefs take the configured repos, whatever their keys, and a Codex stage is
 told about a merge in progress, a row that changes no backlog repo and a row whose `gatePhases` leave out unit,
@@ -678,7 +765,7 @@ three.
 A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
 reviewers read them against HEAD, and the result lists them in `leftUncommitted`. **Commit them yourself after the
-run**, then push the workspace. Give such a row `gatePhases: []`, because nothing in the backlog repos changes.
+run**, then push the workspace. `openspec/` edits are not in that list: the land stage has already committed them. Give such a row `gatePhases: []`, because nothing in the backlog repos changes.
 
 ### Building the args
 

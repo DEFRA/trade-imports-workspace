@@ -5,8 +5,13 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   DEMO_WORKAREA,
-  makeDistilWorkspace
+  makeDistilWorkspace,
+  splitExtractIntoParts
 } from '../../test-support/distil-workspace.js'
+import {
+  reconciledFor,
+  writeDemoAreas
+} from '../../test-support/distil-areas.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const cliPath = join(here, '..', '..', 'cli.js')
@@ -145,7 +150,55 @@ describe('tim distil check', () => {
 
     expect(run.exitCode).toBe(2)
     expect(envelopeOf(run).errors[0].message).toBe(
-      '--stage must be one of: extract, verify, all.'
+      '--stage must be one of: partition, extract, verify, all.'
+    )
+  })
+
+  test('checks a partition and clears the old extract parts', async () => {
+    workspace = makeDistilWorkspace()
+    const { partPath } = splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      [
+        'check',
+        DEMO_WORKAREA,
+        '--source',
+        'repo:tests',
+        '--stage',
+        'partition',
+        '--clear-parts'
+      ],
+      { json: false }
+    )
+
+    expect(run.stdout.trim().split('\n')).toEqual([
+      'repo:tests: 2 parts. In shape.',
+      '  part 1, Suite layout and config: repo-tests-p1-001 on',
+      '  part 2, Fixtures: repo-tests-p2-001 on',
+      `Removed 2 part files: ${partPath(1)}, ${partPath(2)}`
+    ])
+  })
+
+  test('checks one extract part', async () => {
+    workspace = makeDistilWorkspace()
+    splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      [
+        'check',
+        DEMO_WORKAREA,
+        '--source',
+        'repo:tests',
+        '--stage',
+        'extract',
+        '--part',
+        '2'
+      ],
+      { json: false }
+    )
+
+    expect(run.stdout.trim()).toBe(
+      'repo:tests: part 2 in shape.\n  part 2, Fixtures: 1 claim, tests-010 to tests-010'
     )
   })
 
@@ -157,6 +210,239 @@ describe('tim distil check', () => {
     expect(envelopeOf(run).errors[0].message).toBe(
       '--chunk must be a whole number above 0.'
     )
+  })
+
+  test('refuses a part that is not a whole number above 0', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['check', DEMO_WORKAREA, '--part', 'two'])
+
+    expect(envelopeOf(run).errors[0].message).toBe(
+      '--part must be a whole number above 0.'
+    )
+  })
+})
+
+describe('tim distil merge-extract', () => {
+  test('merges the parts and prints each part', async () => {
+    workspace = makeDistilWorkspace()
+    const { extractPath } = splitExtractIntoParts(workspace)
+
+    const run = await runTim(
+      ['merge-extract', DEMO_WORKAREA, '--source', 'repo:tests'],
+      { json: false }
+    )
+
+    expect(run.stdout.trim().split('\n')).toEqual([
+      `Merged 2 parts into ${extractPath}: 4 claims, stamped with scope hash ${workspace.readJson(extractPath).scopeHash}.`,
+      '  part 1, Suite layout and config: 3 claims, tests-001 to tests-005',
+      '  part 2, Fixtures: 1 claim, tests-010 to tests-010',
+      'Kept the partition and the part files.'
+    ])
+  })
+
+  test('exits 1 with LINT when a part is missing', async () => {
+    workspace = makeDistilWorkspace()
+    const { partPath } = splitExtractIntoParts(workspace)
+    rmSync(partPath(1))
+
+    const run = await runTim([
+      'merge-extract',
+      DEMO_WORKAREA,
+      '--source',
+      'repo:tests'
+    ])
+
+    expect(run.exitCode).toBe(1)
+    expect(envelopeOf(run).errors[0].code).toBe('LINT')
+  })
+})
+
+describe('tim distil reset', () => {
+  test('moves the named sources aside and prints where', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'reset',
+      DEMO_WORKAREA,
+      '--source',
+      'repo:tests',
+      '--source',
+      'ruling:sam-2026-09-29c'
+    ])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      superseded: expect.stringMatching(
+        /\/distil\/superseded\/\d{4}-\d\d-\d\dT\d\d-\d\d-\d\d-\d{3}Z$/
+      ),
+      moved: 4,
+      sources: [{ id: 'ruling:sam-2026-09-29c' }, { id: 'repo:tests' }]
+    })
+  })
+
+  test('leaves the reset sources pending for the next launch', async () => {
+    workspace = makeDistilWorkspace()
+    await runTim(['reset', DEMO_WORKAREA, '--all'])
+
+    const run = await runTim(['status', DEMO_WORKAREA])
+
+    expect(envelopeOf(run).result.counts.pending).toBe(3)
+  })
+
+  test('refuses with exit 2 when given neither sources nor --all', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['reset', DEMO_WORKAREA])
+
+    expect(run.exitCode).toBe(2)
+    expect(envelopeOf(run).errors[0].message).toBe(
+      'Name the sources to reset with --source, once for each, or reset every source with --all. Not both.'
+    )
+  })
+
+  test('resets the reconcile stage, keeping every verified extract', async () => {
+    workspace = makeDistilWorkspace()
+    await runTim(['reset', DEMO_WORKAREA, '--stage', 'reconcile'])
+
+    const run = await runTim(['status', DEMO_WORKAREA])
+
+    expect({
+      verified: envelopeOf(run).result.counts.verified,
+      requirements: existsSync(workspace.layout.requirements),
+      backlog: existsSync(workspace.layout.backlog)
+    }).toEqual({ verified: 3, requirements: false, backlog: false })
+  })
+
+  test('refuses a reconcile reset that names sources, with exit 2', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'reset',
+      DEMO_WORKAREA,
+      '--stage',
+      'reconcile',
+      '--all'
+    ])
+
+    expect({
+      exitCode: run.exitCode,
+      message: envelopeOf(run).errors[0].message
+    }).toEqual({
+      exitCode: 2,
+      message:
+        '--stage reconcile resets the later stages for the whole workarea, so it takes no --source and no --all.'
+    })
+  })
+})
+
+describe('tim distil areas', () => {
+  test('writes every area working set with --write and prints the counts', async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+
+    const run = await runTim(['areas', DEMO_WORKAREA, '--write'])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      total: 13,
+      areas: [
+        { id: 'suite', claims: 6 },
+        { id: 'tiers', claims: 7 }
+      ]
+    })
+  })
+
+  test('refuses --write with --area, with exit 2', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim([
+      'areas',
+      DEMO_WORKAREA,
+      '--write',
+      '--area',
+      'suite'
+    ])
+
+    expect(run.exitCode).toBe(2)
+  })
+})
+
+describe('tim distil merge-reconcile', () => {
+  test("checks one area's file and writes nothing", async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+    await runTim(['areas', DEMO_WORKAREA, '--write'])
+    workspace.writeJson(
+      join(workspace.layout.areasDir, 'suite', 'reconciled.json'),
+      reconciledFor(workspace, 'suite')
+    )
+
+    const run = await runTim([
+      'merge-reconcile',
+      DEMO_WORKAREA,
+      '--area',
+      'suite'
+    ])
+
+    expect(envelopeOf(run).result).toEqual({
+      areas: [
+        {
+          id: 'suite',
+          requirements: 2,
+          newRequirements: 0,
+          conflicts: 1,
+          newConflicts: 0
+        }
+      ]
+    })
+  })
+
+  test('exits 1 with LINT when an area has not been reconciled', async () => {
+    workspace = makeDistilWorkspace()
+    writeDemoAreas(workspace)
+    await runTim(['areas', DEMO_WORKAREA, '--write'])
+
+    const run = await runTim(['merge-reconcile', DEMO_WORKAREA])
+
+    expect({
+      exitCode: run.exitCode,
+      code: envelopeOf(run).errors[0].code
+    }).toEqual({ exitCode: 1, code: 'LINT' })
+  })
+})
+
+describe('tim distil challenge', () => {
+  test('lists the question conflicts to challenge', async () => {
+    workspace = makeDistilWorkspace()
+
+    const run = await runTim(['challenge', DEMO_WORKAREA])
+
+    expect(
+      envelopeOf(run).result.questions.map((question) => question.id)
+    ).toEqual(['c-002'])
+  })
+
+  test('checks one verdict', async () => {
+    workspace = makeDistilWorkspace()
+    workspace.writeJson(join(workspace.layout.challengeDir, 'c-002.json'), {
+      conflict: 'c-002',
+      verdict: 'question',
+      rule: 'No ruling says how often the tiers run.',
+      claims: ['dr5-060'],
+      outcome: 'Tier 1 on every pull request.',
+      why: 'The schedule is a cost the owner weighs.'
+    })
+
+    const run = await runTim([
+      'challenge',
+      DEMO_WORKAREA,
+      '--conflict',
+      'c-002'
+    ])
+
+    expect(envelopeOf(run).result).toMatchObject({
+      conflict: 'c-002',
+      verdict: 'question'
+    })
   })
 })
 
@@ -220,8 +506,39 @@ describe('tim distil coverage', () => {
     expect(envelopeOf(run).result.backlog).toEqual({
       path: workspace.layout.backlog,
       increments: 2,
-      covered: 4
+      covered: 4,
+      coveredBySplitOff: 0,
+      splitOff: []
     })
+  })
+
+  test('says which requirements a theme split off early covers, and what its branch has to pick up', async () => {
+    workspace = makeDistilWorkspace()
+    workspace.editJson(workspace.layout.backlog, (backlog) => ({
+      ...backlog,
+      splitOff: [
+        {
+          theme: 'smoke-gate',
+          title: 'The smoke run gates pull requests',
+          touches: ['tests:k6/smoke'],
+          dependsOn: [],
+          branch: 'feat/NO_JIRA-demo-smoke-gate',
+          workarea: `${DEMO_WORKAREA}/themes/smoke-gate`,
+          backlog: 'themes/smoke-gate/backlog.json',
+          increments: ['inc-002'],
+          requirements: ['req-002'],
+          pickUp: ['req-006'],
+          at: '2026-10-09T12:00:00.000Z'
+        }
+      ],
+      increments: [{ ...backlog.increments[0], requirements: ['req-001'] }]
+    }))
+
+    const run = await runTim(['coverage', DEMO_WORKAREA], { json: false })
+
+    expect(run.stdout).toContain(
+      '1 increments cover 1 requirements.\n2 more requirements are covered by 1 theme split off early, each built on its own branch:\n  smoke-gate on feat/NO_JIRA-demo-smoke-gate. For that branch: to pick up, adopted since the split: req-006'
+    )
   })
 })
 
@@ -326,7 +643,8 @@ describe('tim distil backlog-snapshot', () => {
     expect(envelopeOf(run).result.compared).toEqual({
       tag: 'before',
       removed: ['inc-002'],
-      changed: []
+      changed: [],
+      splitOffChanged: []
     })
   })
 
@@ -388,7 +706,7 @@ describe('tim distil trace', () => {
     )
 
     expect(envelopeOf(run).errors[0].message).toMatch(
-      /^playwright trace snapshot 1 -- eval document\.title failed with exit 1: /
+      /^playwright trace snapshot 1 -- eval document\.title failed with exit 1, using Playwright [0-9.]+ \(tim\): /
     )
   })
 })

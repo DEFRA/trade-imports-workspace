@@ -4,7 +4,7 @@ Proof of concept for the idea in [`ideation.md`](ideation.md), ticket EUDPA-698.
 
 ## Branches
 
-The proof of concept lives on `feat/EUDPA-698-page-maturity-banner` in each of these repos, cut from `main`. Nothing is merged and no pull request is open.
+The work lives on `feat/EUDPA-698-page-maturity-banner` in each of these repos, cut from `main`. Pull requests (13 October 2026): DEFRA/trade-imports-animals-frontend#409, DEFRA/trade-imports-plants-frontend#103, DEFRA/trade-imports-ins-frontend#54 and DEFRA/trade-imports-ins-tests#30.
 
 | Repo | Branch | What is on it |
 |---|---|---|
@@ -14,7 +14,7 @@ The proof of concept lives on `feat/EUDPA-698-page-maturity-banner` in each of t
 | `trade-imports-ins-tests` | `feat/EUDPA-698-page-maturity-banner` | the regenerated animals origin of import visual baselines (macOS and Linux) |
 | `trade-imports-workspace` | `feat/EUDPA-698-page-maturity-banner` | these docs and the screenshots |
 
-- **The levels on `main` are examples.** `page-levels.js` lists only routes that exist on `main`. Each frontend keeps at least one example page per level (Exploring, Detailing, Agreed, Ready for live) so every state can be seen and tested. The real build decides the real assignments. The tables below that name pages from the Design Release 2.1 branch (the templates section, the type question, the template-mode type question) describe the first version on the combined branch; those pages are not in the `main` lists.
+- **The levels are now real (Sam, 13 October 2026).** The proof of concept's example levels are gone. See section 7 for the levels and section 10 for the other decisions. The screenshots in `screens/` still show the proof of concept's example levels; they show what each level looks like, not which page has it.
 - **The INS lint commit is not part of it.** `ad0d83e`, which splits the dashboard fit spec for the function-length lint rule, is a Design Release fix. It stays on the combined branch and is not on any `feat/EUDPA-698-page-maturity-banner` branch.
 - **The commit shas quoted in the sections below** (for example `526361c8`) are from the combined branch and no longer match. Read the five maturity-banner commits on each branch instead.
 - **Tests repo.** On `main` the INS notification type spec and its page object do not exist, so the `.first()` locator scoping described below does not apply and is not on the branch. The animals origin baselines are named `origin-of-import-chromium-darwin.png` and `...-linux.png` on `main`, and both were regenerated (diff checked: the coloured level row only).
@@ -244,18 +244,34 @@ Existing unit and fit tests checked against this design. None needs to change:
 
 Run each repo's full `npm test` and its fit suite. Any controller test that counts tags across the whole page would now see one more on a listed page. A grep found none, but only a full run proves it.
 
-## 7. Route-to-level map (verified in source)
+## 7. Route-to-level map
 
-**These assignments are examples, not judgements.** The first draft used only Exploring and Detailing, taken from ideation.md section 9. So that every state can be seen and tested in each frontend, a few pages were moved up (13 October 2026): animals and plants Declaration is Agreed and the submitted page is Ready for live; INS Add address is Agreed and the template-mode type question is Ready for live. They say nothing about how settled those pages are. Change them freely in `page-levels.js`.
+**Decided by Sam, 13 October 2026.** These are the real levels. They replace the proof of concept's examples, which put at least one page at every level.
 
-Where each level is shown today:
+| Frontend | Rule | Level |
+|---|---|---|
+| Animals | Notification list, `/live-animals` (exact page) | Exploring |
+| Animals | Every page in the notification journey: section `/live-animals/notifications`. Covers the overview, every question page, the review (and the submitted view and amend review it serves), the declaration and the confirmation | Detailing |
+| Plants | Every page: section `/` | Exploring |
+| INS | Every page: section `/`. Covers the dashboard, What are you importing? and the address book pages | Exploring |
 
-| Level | Animals | Plants | INS |
-|---|---|---|---|
-| Exploring | Origin of the import (and 18 more pages) | What are you importing? | INS home |
-| Detailing | Transit countries | Origin | Address book |
-| Agreed | Declaration | Declaration | Add address |
-| Ready for live | Import notification submitted | Submitted page | What are you importing? (template mode) |
+How a level is found (`pageLevelFor` in `page-maturity.js`, the same file in all three frontends):
+
+- An exact entry in `PAGE_LEVELS` wins.
+- Otherwise the first entry in `SECTION_LEVELS` that holds the route applies. A section holds its own path and every path beneath it (`section + '/'`). The section `/` holds every route.
+- A route in no section, and not listed, has no level and shows only the Alpha banner. Today that is only animals routes outside `/live-animals` (sign-in and sign-out, for example).
+
+Why sections, not a list of pages: a new page in a journey picks up its level without anyone remembering to add it. Moving one page up means adding it to `PAGE_LEVELS`, which wins over its section.
+
+`page-levels.test.js` checks every `PAGE_LEVELS` key is a registered GET route, and every section holds at least one registered GET route. So a typo or a renamed slug fails the build.
+
+Animals template mode (`/live-animals/templates/...`) is not on `main`. When Design Release 2.1 brings it, it sits outside `/live-animals/notifications` and so has no level until a rule is added for it.
+
+Who sets a level: levels live in code (`page-levels.js`) and change through a reviewed pull request. ideation.md section 4 says who decides each move and on what evidence. The pull request records the decision.
+
+### The proof of concept's example map (superseded)
+
+Kept for the route verification it records. The levels in these tables are the old examples, not the real ones above.
 
 How the paths were verified:
 
@@ -358,7 +374,7 @@ Searched for `phase-banner`, `phaseBanner`, `Alpha`, `Alffa`, `toHaveScreenshot`
 
 | File | What changes | Action |
 |---|---|---|
-| `tests/animals/e2e/visual/origin-of-import.visual.spec.ts` | Origin is Exploring, so the full-page screenshot gains the banner's second line | Regenerate `tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-animals-darwin.png` and `...-linux.png` with `--update-snapshots`. Commit them on a branch with the same name in the tests repo. **Done** on 13 October 2026, with the coloured row, in both formats (darwin from the host, linux from the container script); the diff is the banner row only. The full suite then passed against a `-d` stack built from the three branches (502 passed, 1 known flake that passed on retry, 0 failed, 7 skipped) |
+| `tests/animals/e2e/visual/origin-of-import.visual.spec.ts` | Origin is Detailing (it is in the animals notification journey), so the full-page screenshot gains the purple level row | Regenerated `origin-of-import-chromium-darwin.png` (host) and `origin-of-import-chromium-linux.png` (`bin/update-visual-baselines-linux.sh`) on 13 October 2026 against a stack started with `--branch feat/EUDPA-698-page-maturity-banner`. The diff is the level row only. DEFRA/trade-imports-ins-tests#30 |
 
 ### Checked and unchanged
 
@@ -389,11 +405,11 @@ Do this in each of the three frontends.
 3. `src/config/nunjucks/context/context.js`: delete the `pageMaturityContext` import (in INS, also the blank line above it) and the `...pageMaturityContext(request)` line, then drop the trailing comma it added to the entry before it (`getAssetPath` in animals and plants, `crumb` in INS).
 4. `src/server/app/shared/layout.njk`: delete the `{% include "page-maturity/banner.njk" %}` line, which sits on its own line straight after the `govukPhaseBanner` call and before the back link.
 4a. `src/client/stylesheets/components/_index.scss`: delete the `@use "../../../server/app/page-maturity/banner";` line, the last line of the file. Until it is deleted the stylesheet build fails, because the file it points at is gone (so do this together with step 1). In INS the file is then just its first comment line again.
-5. In `trade-imports-ins-tests`, revert the two `origin-of-import-animals-*.png` baselines (darwin and linux). They were regenerated for the banner in commit `1a7eb3f` (and an earlier, un-coloured banner needed none). Revert that commit.
+5. In `trade-imports-ins-tests`, regenerate the two `origin-of-import-chromium-*.png` baselines (darwin and linux) against a stack without the banner. They were regenerated for the banner in `fceb462` (DEFRA/trade-imports-ins-tests#30); reverting that commit only works if nothing else has changed them since.
 6. If `PAGE_MATURITY_BANNER_ENABLED` was set in `cdp-app-config` or the workspace stack, remove it. That is Sam's change.
 7. Check that nothing else refers to it: `git grep -n -i "page-maturity\|pageMaturity\|PAGE_MATURITY"` returns nothing.
 
-Simplest route: `git revert` the maturity-banner commits in each repo (animals `526361c8` and `6c5337cd`, plants `c6371aa` and `796daff`, INS `eb4f095` and `00dde49`, plus any later `maturity-banner` commits, including the 13 October colour and every-level commits (animals `96f213ae` and `00c34b9b`, plants `4ce2ecb` and `1d9f515`, INS `5730542` and `e7fa297`)). Do not revert INS `ad0d83e`: it splits the dashboard fit spec for the function-length lint rule and is not part of the idea.
+Simplest route: `git revert` the merge (or squash) commit of each EUDPA-698 pull request listed under Branches.
 
 Every file the proof of concept touches, per frontend:
 
@@ -405,11 +421,22 @@ Every file the proof of concept touches, per frontend:
 
 In the tests repo, only the two Origin baseline PNGs change, once regenerated.
 
-## 10. Open points (calls made, flag after)
+## 10. Decisions (Sam, 13 October 2026)
+
+The open questions in EUDPA-698, settled:
+
+| Question | Decision |
+|---|---|
+| Copy per level | Keep the proof of concept's copy (section 5) |
+| Welsh | Keep the Welsh copy as it is, with the repos' usual MACHINE-DRAFT marker. No further work in this ticket |
+| Code or config, and who sets a level | Code: `page-levels.js` in each frontend, changed through a reviewed pull request (section 7) |
+| Production or non-production only | On everywhere, including prod: `default: true`. `PAGE_MATURITY_BANNER_ENABLED=false` turns it off in any environment. CDP sets `NODE_ENV=production` in every environment, so `!isProduction` would turn it off in dev and test too. If this changes, gate on CDP's `ENVIRONMENT` instead |
+| Page levels | Section 7 |
+
+Calls made earlier that still stand:
 
 | Point | Call made | To change it |
 |---|---|---|
-| Default on, in every environment, including prod | On, as Sam asked. ideation.md says never show it in prod. Turn it off with `PAGE_MATURITY_BANNER_ENABLED=false` in `cdp-app-config` for prod | Set `default: !isProduction` in `config.js` |
 | Show the level beside the service phase, or instead of it | Beside it, on a second line in the same banner | Pass `pageMaturity.tag` as the banner's `tag` instead. The Alpha assertions above would then fail |
 | Tag colours | Orange, purple, teal, green (light blue does not exist in govuk-frontend 6; turquoise is deprecated) | One line each in `levels.js` |
 | The Templates navigation item on every page | Not counted. It follows ideation.md: counting it would make every page Exploring | Add sections to `page-levels.js` |

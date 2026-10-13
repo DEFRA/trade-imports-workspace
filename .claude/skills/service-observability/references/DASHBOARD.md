@@ -1,9 +1,9 @@
 Build the service's custom Grafana dashboard in the CDP dev playground.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
-Everything here is from the CDP monitoring docs and the EUDPA-632
-plan. `[UNPROVEN]` No dashboard has been built from it yet. Correct this
-file from the first real run.
+No dashboard has been built from this file yet. Each fact that comes
+only from the CDP monitoring docs is marked `[UNPROVEN]`; the panel
+table is a proposal to adjust as it is built.
 
 The developer does this by hand in Grafana. Claude supplies the names
 and queries below, filled in for the service.
@@ -23,8 +23,8 @@ after a deploy, or once per cache lifetime.
 | Folder | `Playground/<service>-monitoring` |
 | Name | `<service> (custom)` |
 
-The name may only use letters, numbers, spaces, hyphens and brackets.
-CDP will not promote a dashboard whose name has other characters, such
+`[UNPROVEN]` The name may only use letters, numbers, spaces, hyphens and
+brackets. CDP will not promote a dashboard whose name has other characters, such
 as `! @ # $ % & _`. The text in brackets is free.
 
 ## Panels
@@ -50,7 +50,7 @@ One panel reads logs, not metrics:
 |---|---|---|
 | Slowest dependency calls | OpenSearch | `event.category:"external-call"`, sorted by `event.duration` |
 
-Grafana queries OpenSearch with Lucene, not DQL. Build the query in
+`[UNPROVEN]` Grafana queries OpenSearch with Lucene, not DQL. Build the query in
 OpenSearch Dashboards with DQL switched off, then copy it across. This
 panel depends on the open question in `LOGGING.md` about whether
 `event.duration` arrives as a number.

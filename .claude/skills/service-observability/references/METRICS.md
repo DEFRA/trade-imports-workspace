@@ -39,15 +39,16 @@ Rules that held:
 - **One dimension set per metric.** Publish each metric with exactly the
   dimensions in the table, so the dashboard query does not have to guess
   which combination holds the data.
-- **Check the dependency list against the code.** See Step 1.
 
 Record the agreed table on the ticket.
 
 ## Publish (Java, Spring Boot)
 
 The reference implementation is in `trade-imports-reference-data`,
-package `uk.gov.defra.trade.imports.metrics`. Read these before writing
-anything; copy the shape, not the names of the business metrics.
+package `uk.gov.defra.trade.imports.metrics`, with its tests alongside.
+Until EUDPA-632 merges, most of it is only on that repo's
+`feat/EUDPA-632-observability` branch, not `main`. Read these before
+writing anything; copy the shape, not the names of the business metrics.
 
 | Class | What it does |
 |---|---|
@@ -92,8 +93,6 @@ the outcome of the calls it already makes.
 Whichever is used, pair the availability alert with one on
 `ExternalCallFailure`, which fires on the first failed calls.
 
-Do not report on a dependency the service does not use.
-
 ### Tests
 
 | Test | Proves |
@@ -103,4 +102,8 @@ Do not report on a dependency the service does not use.
 | Integration test with the dependency stubbed to fail | The failure is recorded against the right dependency, and the others are not marked failed |
 | The existing health check test | `/health` is still `UP` with no components |
 
-Run the repo's full build before pushing: `mvn -f <repo>/pom.xml verify`.
+Run the repo's full build before pushing:
+
+```bash
+mvn -f ~/git/defra/trade-imports-workspace/repos/<service>/pom.xml verify
+```

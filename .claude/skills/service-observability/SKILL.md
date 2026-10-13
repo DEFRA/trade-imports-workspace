@@ -1,6 +1,6 @@
 ---
 name: service-observability
-description: 'Add custom metrics, dependency call logging, a Grafana dashboard and alerts to one CDP service, then promote them and prove the alerts fire. Use when a ticket asks for observability on a single trade-imports service (triggers: "add observability to", "add metrics and alerts to", "add a dashboard and alerts to", "service-observability", "observability for EUDPA-"). NOT for planning or implementing a ticket in general — use the ticket skill, which follows this recipe for the observability steps. NOT for reviewing code already written — use review or code-style.'
+description: 'Add custom metrics, dependency call logging, a Grafana dashboard and alerts to one CDP service, then promote them and prove the alerts fire. Use when a ticket asks for observability on a single trade-imports service (triggers: "add observability to", "add metrics and alerts to", "add a dashboard and alerts to", "service-observability", "observability for EUDPA-"). NOT for planning or implementing a ticket in general — use the ticket skill and point its plan at these steps. NOT for reviewing code already written — use review or code-style.'
 ---
 
 The recipe for giving one CDP service the observability the platform
@@ -32,22 +32,23 @@ table: [`docs/agent-skills.md`](../../../docs/agent-skills.md)
 |---------|----------------|
 | "add observability to `<service>`", "observability for EUDPA-X" | Steps 1 to 6 in order |
 | "add metrics and alerts to `<service>`" | Steps 1 to 6 in order |
-| "add a dashboard and alerts to `<service>`" | Steps 4 to 6, if the metrics are already deployed to dev |
+| "add a dashboard and alerts to `<service>`" | Step 1's Grafana checks, then Steps 4 to 6, if the metrics are already deployed to dev |
 
-NOT for planning or implementing a ticket in general — use the
-`ticket` skill, and point its plan at these steps. NOT for reviewing
-the result — use `review`.
+When the work is one ticket among others, plan it with the `ticket`
+skill and point its plan at these steps.
 
 ## What is proven
 
 | Part | State |
 |---|---|
-| Metrics and log line, Java service | Proven by tests on `trade-imports-reference-data` (`feat/EUDPA-632-observability`) |
-| Metrics and log line, Node service | Not written. The Node services already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
-| Dashboard, alerts, Slack routing, promotion, alert testing | **Taken from the CDP docs, not yet done on a real service.** Each unproven fact is marked `[UNPROVEN]` in its reference |
+| Metrics and log line, Java service | Proven by tests on `trade-imports-reference-data`, branch `feat/EUDPA-632-observability` until it merges |
+| Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
+| Dashboard, alerts, Slack routing, promotion, alert testing | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
 
 When a run settles an `[UNPROVEN]` fact, edit the reference: replace
 the marker with what happened. Do the same when a step turns out wrong.
+Commit the edit in this workspace repo, on a branch with the same name
+as the service's branch (CLAUDE.md rule 2).
 
 ## Who does what
 
@@ -55,6 +56,15 @@ Claude can read and change the service's code and run its tests. Claude
 cannot reach Grafana, OpenSearch, the CDP Portal or Slack. For Steps 4
 to 6 Claude gives the developer the exact names, queries and messages
 to use, and records what they report back.
+
+A run takes days and several sessions. Its progress lives in the
+ticket's plan,
+`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/plan.md`:
+add the completion block below to it at the end of each session, and
+read it first in the next one.
+
+Where a step says "record it on the ticket", Claude drafts the text and
+the developer posts it.
 
 ## Step 1: Check what CDP already gives the service
 
@@ -66,24 +76,27 @@ No code. The developer checks in the dev Grafana
   time, HTTP errors, dead-letter queues). `[UNPROVEN]` The CDP docs say
   default alerts are deployed on request, so they may be missing. If
   they are, ask #cdp-support for them;
-- the folder `Playground/<service>-monitoring` exists, with an alert
-  evaluation group `<service>-advanced-alerts` holding one alert named
-  `platform_managed_do_not_delete`.
+- `[UNPROVEN]` the folder `Playground/<service>-monitoring` exists, with
+  an alert evaluation group `<service>-advanced-alerts` holding one
+  alert named `platform_managed_do_not_delete`.
 
 Then list the service's real dependencies from its code, not from the
-ticket. On reference-data the ticket listed MongoDB; the service has no
-database, and the ping written for it had to be removed.
+ticket (on reference-data the ticket listed a database the service does
+not have). Do not measure, show or alert on anything else.
 
 ## Step 2: Agree the metric list
 
 Follow `references/METRICS.md` → "Work out the list". Agree the list
 with the team before writing code, and record it on the ticket.
 
+Ask at the same time: Slack only, or email as well? Email is a
+#cdp-support request, made in Step 5.
+
 ## Step 3: Publish the metrics and log each dependency call
 
 Follow `references/METRICS.md` → "Publish" and `references/LOGGING.md`.
-Raise the PR and deploy to dev. Steps 4 to 6 need the metrics to be
-arriving in dev.
+Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
+Steps 4 to 6 need the metrics to be arriving in dev.
 
 `/health` must not change. CDP uses it to decide whether a task is
 alive, so a dependency check there restarts every task when a

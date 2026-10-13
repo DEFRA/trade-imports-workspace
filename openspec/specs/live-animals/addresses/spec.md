@@ -133,7 +133,7 @@ Once a notification is SUBMITTED, the system MUST show the address details copie
 
 ### Requirement: The review page blocks submission while a copied address breaks the address book's rules
 **ID**: REQ-ADDR-005
-The system MUST refuse to continue past the review page, and refuse the submit, while any copied address on the notification breaks the address book's field rules, and MUST guide the user to edit that address on a draft; while the notification is being amended the refusal holds without naming the role (`live-animals/journey-pages/check-your-answers` REQ-CYA-012).
+The system MUST refuse to continue past the review page, and refuse the submit, while any copied address on the notification breaks the address book's field rules, and MUST guide the user to edit that address on a draft; while the notification is being amended the review opens without naming the role and names it once Continue is refused (`live-animals/journey-pages/check-your-answers` REQ-CYA-012).
 
 #### Scenario: An address that breaks the rules is named on the review page and blocks submission until corrected
 **ID**: SCN-ADDR-005-A

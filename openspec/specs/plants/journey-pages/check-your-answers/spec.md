@@ -169,7 +169,7 @@ The system MUST offer, on a draft's consignor-or-exporter, place-of-destination 
 
 ### Requirement: An unfinished draft names every outstanding task
 **ID**: REQ-PLANTS-CYA-013
-The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to that task's page, and MUST keep the user on the page when they continue while any task is outstanding.
+The system MUST show check-your-answers for a draft that is not yet complete, with an error summary naming each task still to complete and linking to the first page of that task still to be answered, and MUST keep the user on the page when they continue while any task is outstanding.
 
 #### Scenario: Viewing an unfinished notification names each outstanding task
 **ID**: SCN-PLANTS-CYA-013-A
@@ -178,6 +178,12 @@ The system MUST show check-your-answers for a draft that is not yet complete, wi
 - **THEN** an error summary titled "There is a problem" names each task not yet complete
 - **AND** each entry links to that task's page, which returns to check-your-answers once saved
 
+#### Scenario: A half-done task links to the page still missing, not its answered first page
+**ID**: SCN-PLANTS-CYA-013-C
+- **GIVEN** a plants-for-planting draft whose arrival status is answered and whose arrival date is not
+- **WHEN** the user views check-your-answers
+- **THEN** the arrival details entry in the error summary links to the arrival details page, not the arrival status page
+
 #### Scenario: Continuing from an unfinished notification is refused, keeping the user on the page
 **ID**: SCN-PLANTS-CYA-013-B
 - **GIVEN** a draft notification with a task still to complete is open on check-your-answers
@@ -185,20 +191,20 @@ The system MUST show check-your-answers for a draft that is not yet complete, wi
 - **THEN** they stay on check-your-answers, the error summary is shown and focus moves to it
 - **AND** the declaration is not opened
 
-### Requirement: An amendment that is not yet ready holds Continue without an error
+### Requirement: An amendment that is not yet ready opens without an error and refuses Continue with one
 **ID**: REQ-PLANTS-CYA-014
-While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message against any card or role, and MUST keep the user on check-your-answers, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+While a notification is being amended, the system MUST show check-your-answers with no error summary and no error message when it is opened, and MUST refuse Continue while any answer is incomplete or breaks its rules, keeping the user on check-your-answers, still amending and without opening the declaration, under an error summary titled "There is a problem" that names each reason and takes focus, as a draft's refused Continue does.
 
-#### Scenario: An incomplete amendment's review shows no error
+#### Scenario: An incomplete amendment's review opens with no error
 **ID**: SCN-PLANTS-CYA-014-A
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user opens check-your-answers
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment stays on check-your-answers without an error
+#### Scenario: Continuing from an incomplete amendment stays on check-your-answers, naming what is missing
 **ID**: SCN-PLANTS-CYA-014-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on check-your-answers with no error summary or error message
+- **THEN** they stay on check-your-answers, under an error summary titled "There is a problem" that names the arrival details task and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened

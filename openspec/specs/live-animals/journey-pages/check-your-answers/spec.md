@@ -166,28 +166,28 @@ The system MUST refuse to continue from the review to the declaration if the not
 - **THEN** the review is shown again with the changed answer, under a message that the notification has been updated since they opened it
 - **AND** the declaration is not shown
 
-### Requirement: An amendment that is not yet ready holds Continue without an error
+### Requirement: An amendment that is not yet ready opens without an error and refuses Continue with one
 **ID**: REQ-CYA-012
-While a notification is being amended, the system MUST show the review with no error summary and no error message against any card or role, and MUST keep the user on the review, still amending and without opening the declaration, when they continue while any answer is incomplete or breaks its rules.
+While a notification is being amended, the system MUST show the review with no error summary and no error message when it is opened, and MUST refuse Continue while any answer is incomplete or breaks its rules, keeping the user on the review, still amending and without opening the declaration, under an error summary titled "There is a problem" that names each reason and takes focus, as a draft's refused Continue does.
 
-#### Scenario: An incomplete amendment's review shows no error
+#### Scenario: An incomplete amendment's review opens with no error
 **ID**: SCN-CYA-012-A
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user opens the review
 - **THEN** no error summary and no error message is shown
 
-#### Scenario: Continuing from an incomplete amendment stays on the review without an error
+#### Scenario: Continuing from an incomplete amendment stays on the review, naming what is missing
 **ID**: SCN-CYA-012-B
 - **GIVEN** a notification being amended whose arrival date has been cleared and saved
 - **WHEN** the user continues
-- **THEN** they stay on the review with no error summary or error message
+- **THEN** they stay on the review, under an error summary titled "There is a problem" that names the arrival details and takes focus
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-#### Scenario: Continuing from an amendment whose arrival date breaks its rule stays on the review without an error
+#### Scenario: Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it
 **ID**: SCN-CYA-012-C
 - **GIVEN** a notification being amended whose arrival date at port has been changed to more than 6 months ahead
 - **WHEN** the user continues on the review
-- **THEN** they stay on the review with no error summary or error message
+- **THEN** they stay on the review, under an error summary that names the arrival details
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened

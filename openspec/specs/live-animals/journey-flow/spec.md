@@ -138,7 +138,7 @@ The system MUST offer a page only when every strictly-earlier answer it depends 
 
 ### Requirement: Check your answers is open whatever the notification owes; the declaration and confirmation wait until every task row is ready
 **ID**: REQ-FLOW-006
-The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft and naming nothing while it is being amended (`live-animals/journey-pages/check-your-answers` REQ-CYA-012), and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
+The system MUST show check your answers whatever the notification still owes, naming what is outstanding on a draft, and while it is being amended naming nothing until Continue is refused (`live-animals/journey-pages/check-your-answers` REQ-CYA-012), and MUST withhold the declaration and the confirmation, and the Check and submit row on Overview (no link, "Cannot start yet"), until every task row on Overview is ready, counting a row as ready when it is fulfilled, not applicable, or optional.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-FLOW-006-A
@@ -276,13 +276,13 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The CPH number page, the role address pickers and the contact address page MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
 
 #### Scenario: A page opened from Overview while amending ends with the three amend controls
 **ID**: SCN-FLOW-013-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Arrival details from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview"
+- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons
 - **AND** no "Cancel and return to overview" is offered
 - **AND** its Back link goes to Overview
 

@@ -97,7 +97,7 @@ The system MUST accept a chosen place of destination, saving it without error, M
 
 ### Requirement: Saving with nothing chosen is refused while no destination is held
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-005
-The system MUST refuse to save the page when nothing has been chosen and the notification holds no place of destination yet, showing an error that names the missing place of destination, MUST focus the first row when results are shown, and MUST focus the search box when nothing matched. A place of destination already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
+The system MUST refuse save-and-continue when nothing has been chosen and the notification holds no place of destination yet, showing an error that names the missing place of destination, MUST focus the first row when results are shown, and MUST focus the search box when nothing matched. Save-and-return-to-overview with nothing chosen MUST NOT be refused: it returns to Overview, saving nothing. A place of destination already held MUST be kept when the page is saved with nothing chosen, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen focuses the first row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-A
@@ -114,6 +114,12 @@ The system MUST refuse to save the page when nothing has been chosen and the not
 - **THEN** an error summary is shown
 - **WHEN** they follow the error
 - **THEN** the search box is focused
+
+#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-C
+- **GIVEN** the user is on the place of destination page with nothing chosen and no destination held yet
+- **WHEN** they select save and return to overview
+- **THEN** Overview is shown, with no error and no destination saved
 
 ### Requirement: Deleting the chosen address from the address book leaves the destination on the notification
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-006

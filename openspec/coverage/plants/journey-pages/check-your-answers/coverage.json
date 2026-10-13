@@ -258,8 +258,16 @@
           "name": "Viewing an unfinished notification names each outstanding task",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every outstanding task on an incomplete notification, linking to its page with the change context", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every outstanding task on an incomplete notification, linking to its first unanswered page with the change context", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "asserts the missing contact is named; does not follow its link" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-013-C",
+          "name": "A half-done task links to the page still missing, not its answered first page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should link a half-done row to the page still missing, not its answered first page", "strength": "full", "notes": "plants-for-planting, arrival status answered, date missing: links to arrival-details?change=1" }
           ]
         },
         {
@@ -275,25 +283,26 @@
     },
     {
       "id": "REQ-PLANTS-CYA-014",
-      "name": "An amendment that is not yet ready holds Continue without an error",
+      "name": "An amendment that is not yet ready opens without an error and refuses Continue with one",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-014-A",
-          "name": "An incomplete amendment's review shows no error",
+          "name": "An incomplete amendment's review opens with no error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on an incomplete amend review", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on opening an incomplete amend review", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-PLANTS-CYA-014-B",
-          "name": "Continuing from an incomplete amendment stays on check-your-answers without an error",
+          "name": "Continuing from an incomplete amendment stays on check-your-answers, naming what is missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review with no error summary or error message", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep an incomplete amend on the review without an error", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the outstanding task", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete amend with the error summary, naming what is outstanding", "strength": "full", "notes": "400, focus on the summary, still amending" }
           ]
         }
       ]

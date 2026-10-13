@@ -235,13 +235,13 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers, and the commodities list (reached from the commodity type page), MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
 
 #### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
 **ID**: SCN-PLANTS-FLOW-014-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Identification numbers from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview", and no "Cancel and return to overview"
+- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons, and no "Cancel and return to overview"
 - **WHEN** they change the producer number and select "Save and return"
 - **THEN** the review is shown with the new producer number
 
@@ -259,3 +259,11 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **WHEN** the user opens the consignor or exporter, place of destination or consignment contact picker
 - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
 - **AND** "Save and return" on the consignor or exporter picker returns to the review
+
+#### Scenario: The commodities list offers two controls while amending
+**ID**: SCN-PLANTS-FLOW-014-D
+- **GIVEN** a notification being amended
+- **WHEN** the user opens the commodities list
+- **THEN** it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
+- **AND** "Save and return" returns to the review
+- **AND** "Save and continue" goes to Overview

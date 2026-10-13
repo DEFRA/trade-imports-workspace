@@ -271,34 +271,36 @@
     },
     {
       "id": "REQ-CYA-012",
-      "name": "An amendment that is not yet ready holds Continue without an error",
+      "name": "An amendment that is not yet ready opens without an error and refuses Continue with one",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-012-A",
-          "name": "An incomplete amendment's review shows no error",
+          "name": "An incomplete amendment's review opens with no error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review with no error summary or error message", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CYA-012-B",
-          "name": "Continuing from an incomplete amendment stays on the review without an error",
+          "name": "Continuing from an incomplete amendment stays on the review, naming what is missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review with no error summary or error message", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep an incomplete amend on the review without an error", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the unfinished card", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an incomplete amend back to the review as refused", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name what is outstanding on a refused amend review, with focus on the summary", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CYA-012-C",
-          "name": "Continuing from an amendment whose arrival date breaks its rule stays on the review without an error",
+          "name": "Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep an amend whose arrival date is more than 6 months ahead on the review without an error", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error when the arrival date is more than 6 months ahead", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an amend whose arrival date is more than 6 months ahead, naming it on the review", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error when the arrival date is more than 6 months ahead", "strength": "partial", "notes": "the review opened without a refusal names nothing" }
           ]
         }
       ]

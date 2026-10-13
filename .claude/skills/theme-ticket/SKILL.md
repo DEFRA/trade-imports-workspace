@@ -187,6 +187,10 @@ tim jira create --from <workareaDir>/tickets/<theme>-stub/ticket.json
 
 Re-run with `--confirm <planId>`, then `tim jira transition <KEY> "Ready for Dev"`.
 
+Record it in `<workareaDir>/tickets/tickets.json` under the pseudo-domain
+`"stub"` (Step 5), so anything reading the programme's tickets can tell a
+placeholder from a filled-in one.
+
 Report the key so the branch can be named `feat/<KEY>-<programme>-<theme>`.
 
 ---
@@ -293,9 +297,36 @@ tim jira transition <KEY> "In Dev"
 
 ## Step 5: Record
 
-Add each ticket to `<workareaDir>/tickets/README.md` — folder, Jira key, domain,
-rows, scenarios, spec files — and state the arithmetic that the per-domain totals
-sum to the theme's. That table is how a reader checks the split is whole.
+Two files, and both matter.
+
+**`<workareaDir>/tickets/tickets.json`** maps theme → domain → Jira key. This is
+the only machine-readable record of which ticket covers what: a ticket folder's
+name does not carry its theme (`animals-journey` gives no hint it is journey
+foundation), and a `ticket.created.json` holds a key but no domain. Add or update
+an entry for every ticket this run created or filled in:
+
+```json
+{
+  "themes": {
+    "<theme>": { "animals": "EUDPA-N", "plants": "EUDPA-N", "ins": "EUDPA-N" }
+  }
+}
+```
+
+A theme whose only ticket is the STUB flow's records it under the pseudo-domain
+`"stub"`, so a reader can tell a placeholder from a filled-in ticket. Replace that
+entry with the real domains when the WRITE flow fills the theme in — leaving
+`stub` beside them would claim a ticket the theme no longer has.
+
+**Anything reading the programme's tickets reads this file**, so a missed entry is
+a ticket that exists in Jira and nowhere else. The build-order page is the first
+such reader: it draws a row per ticket on each theme's card, and a domain it has
+no badge for stops its build rather than drawing a ticket nobody can place.
+
+**`<workareaDir>/tickets/README.md`** is the human index: folder, Jira key,
+domain, rows, scenarios, spec files per theme, and the arithmetic that the
+per-domain totals sum to the theme's. That table is how a reader checks the split
+is whole.
 
 ---
 

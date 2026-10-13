@@ -10,8 +10,11 @@ Read each image with the Read tool, **one file at a time**. For a folder, list i
 
 ## Characterise the images
 
-Write into `structure`: every file, in order, and what each shows (a page design, a flow diagram, a sticky-note
-board). Say which ones the `scope` covers and which you left out.
+The characterise step writes into the partition's `structure` every file, in order, and what each shows (a page
+design, a flow diagram, a sticky-note board), says which ones the `scope` covers and which it left out, and cuts them
+into parts of consecutive images.
+
+An extract part reads every image its `read` names, and claims everything legible on each.
 
 ## What a claim says
 

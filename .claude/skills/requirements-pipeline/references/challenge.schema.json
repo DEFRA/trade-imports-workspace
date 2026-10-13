@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One question challenged",
+  "description": "workareas/<workarea>/distil/challenge/<conflict id>.json: one challenger's verdict on one question conflict, after it tried to settle it from precedence and every ruling. Questions are minimal by default: a question survives only when neither precedence nor any ruling settles it. `tim distil challenge --conflict <id>` checks the file against this schema, and also checks what a schema cannot: the file is named for its conflict, the conflict is in conflicts.json, every claim it cites is in the working set and held, and everything it overrules is one of the conflict's position claims. Once the verdicts are applied, `tim distil coverage` checks each one was: a `precedence` or `blocked` verdict's conflict is settled by precedence, and no requirement citing a `blocked` one is still a question.",
+  "type": "object",
+  "required": ["conflict", "verdict", "rule", "claims", "outcome"],
+  "additionalProperties": false,
+  "properties": {
+    "conflict": {
+      "description": "The question conflict's id.",
+      "type": "string",
+      "pattern": "^c-[0-9]{3,}$"
+    },
+    "verdict": {
+      "description": "precedence: precedence or a ruling settles it, so it becomes a precedence conflict. blocked: it waits on somebody acting outside the programme (a platform change, access, a ticket), never on a design choice, so it becomes precedence and its requirements are adopted with `blockedBy`, to build in a blocked increment. question: neither precedence nor any ruling settles it, and it is truly a choice for a person.",
+      "enum": ["precedence", "blocked", "question"]
+    },
+    "rule": {
+      "description": "The rule applied, in one sentence: the ruling claim and what it says (such as \"ruling:sam-2026-10-07 claim 6: a DR1 judgement on the same difference overrides the prototype\"), or the precedence ranking that settles it. For a question, the rules tried and why none settles it.",
+      "$ref": "#/$defs/text"
+    },
+    "claims": {
+      "description": "The claim ids the verdict rests on: the ruling claims applied and the winning position's claim. Each is in the working set and held.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "outcome": {
+      "description": "precedence and blocked: what is adopted and why, as the conflict's `outcome` will say it. question: the default that will be built if nobody answers.",
+      "$ref": "#/$defs/text"
+    },
+    "overruled": {
+      "description": "precedence and blocked only: the position claims the outcome sets aside, as the conflict's `overruled` will list them.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/text" }
+    },
+    "blocker": {
+      "description": "blocked only: who must do what before it can be built, in one sentence, such as \"CDP raises the ingress request-body cap in front of the animals frontend to at least 50MB (EUDPA-518).\" It becomes each requirement's `blockedBy` and the blocked increment's open question.",
+      "$ref": "#/$defs/text"
+    },
+    "why": {
+      "description": "question only: why it is truly exceptional: what the person must weigh that no source, ruling or precedence settles.",
+      "$ref": "#/$defs/text"
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "Text that is not empty or only whitespace.",
+      "type": "string",
+      "pattern": "\\S"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "verdict": { "const": "blocked" } } },
+      "then": { "required": ["blocker"] }
+    },
+    {
+      "if": { "properties": { "verdict": { "const": "question" } } },
+      "then": {
+        "required": ["why"],
+        "not": {
+          "anyOf": [{ "required": ["overruled"] }, { "required": ["blocker"] }]
+        }
+      }
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 # Suite table
 
 One domain at a time. `catch-up` / `cover` / `catch-up and cover`
-with no domain name runs all four, one at a time, each following the table
-below.
+with no domain name runs every row in the table, one at a time, each
+following the table below.
 
 | Domain | Spec prefix | Local test suite | E2E suites path |
 |---|---|---|---|
 | `animals` | `live-animals` | `trade-imports-animals-frontend`: `npm run test:fit` | `tests/animals/` |
+| `germinal` | `germinal-products` | `trade-imports-animals-frontend`: `npm run test:fit` | `tests/animals/` (provisional) |
 | `plants` | `plants` | `trade-imports-plants-frontend`: `npm run test:fit` | `tests/plants/` |
 | `ins` | `ins` | `trade-imports-ins-frontend`: `npm run test:fit` | `tests/ins/` |
 | `animals-admin` | `admin` | `trade-imports-animals-admin`: `npm test` (vitest — there is no fit suite) | `tests/animals-admin/` |
@@ -15,7 +16,27 @@ A **domain** is a top-level directory under `tests/` in
 `trade-imports-ins-tests`. A **spec prefix** is a Behaviour Spec path under
 `openspec/specs/`, not a domain — the two only sometimes share a name
 (`live-animals` is the `animals` domain's prefix, `admin` is
-`animals-admin`'s).
+`animals-admin`'s). `germinal` is the one row that is not yet a domain:
+see below.
+
+Germinal products is a sibling set of live animals in the same frontend
+repo (`sets/germinal-products`), built by the Design Release 2.1
+programme. Until that build writes its first capability under
+`openspec/specs/germinal-products/`, there is nothing to catch up or
+cover, and `tim spec lint|gaps --capability germinal-products` exits 2
+with `Can't find capability` — skip the set and say so. Germinal fit
+specs appear in the `test:fit` report only once the repo's
+`playwright.config.js` has a project covering `sets/germinal-products`
+(today the `features` project covers `sets/live-animals` only). Until
+then, skip the local-suite half for germinal and record that you did,
+rather than judging against a report that cannot contain germinal specs
+— an absent germinal spec there is not evidence that no test exists.
+Once the project exists, judge only the germinal specs in the report.
+`trade-imports-ins-tests` has no `tests/germinal/` domain yet; its E2E
+specs are assumed to land under `tests/animals/`, beside the repo's other
+animals specs, so filter that report to the germinal specs. When the tests
+repo gives the set its own domain directory, replace `tests/animals/
+(provisional)` with that path.
 
 `<prefix>` in every command below is the **Spec prefix** column exactly
 as written — no trailing slash (`tim spec gaps --capability live-animals/`

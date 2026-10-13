@@ -11,15 +11,20 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 |---|---|---|
 | 0. Intake: write `sources.json`, fetch Confluence pages, write up rulings | The main session | This file |
 | 1. Status: which sources need work | The workflow | `tim distil status` |
-| 2. Extract, one agent per source | The workflow | [`../workflow/distil/briefs/extract.md`](../workflow/distil/briefs/extract.md) and the brief for the source's kind |
-| 3. Verify, one or more agents per extract | The workflow | [`../workflow/distil/briefs/verify.md`](../workflow/distil/briefs/verify.md) |
-| 4. Reconcile into requirements and conflicts | The workflow | [`../workflow/distil/briefs/reconcile.md`](../workflow/distil/briefs/reconcile.md) |
-| 5. Consolidate into `backlog.json` | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) |
-| 6. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
-| 7. Save the report | The main session | [Section 5](#5-save-the-report) |
-| 8. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
+| 2. Characterise: cut each source into parts one agent can read in full | The workflow | [`../workflow/distil/briefs/characterise.md`](../workflow/distil/briefs/characterise.md) and [`partition.schema.json`](partition.schema.json) |
+| 3. Extract, one agent per part, merged by tim | The workflow | [`../workflow/distil/briefs/extract.md`](../workflow/distil/briefs/extract.md) and the brief for the source's kind |
+| 4. Verify, one agent per range of claims | The workflow | [`../workflow/distil/briefs/verify.md`](../workflow/distil/briefs/verify.md) |
+| 5. Plan the reconcile areas from every source's partition | The workflow | [`../workflow/distil/briefs/area-plan.md`](../workflow/distil/briefs/area-plan.md) and [`areas.schema.json`](areas.schema.json) |
+| 6. Reconcile each area, one agent an area, merged by tim, then one cross-area pass | The workflow | [`../workflow/distil/briefs/reconcile.md`](../workflow/distil/briefs/reconcile.md) and [`reconcile-part.schema.json`](reconcile-part.schema.json) |
+| 7. Challenge every question against precedence and the rulings, and apply the verdicts | The workflow | [`../workflow/distil/briefs/question-challenge.md`](../workflow/distil/briefs/question-challenge.md) and [`challenge.schema.json`](challenge.schema.json) |
+| 8. Draft rows per area, then combine them into `backlog.json` | The workflow | [`../workflow/distil/briefs/consolidate.md`](../workflow/distil/briefs/consolidate.md) |
+| 9. Draft the report | The workflow | [`REPORT.md`](REPORT.md) |
+| 10. Save the report | The main session | [Section 5](#5-save-the-report) |
+| 11. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
+| 12. Split a themed backlog, one backlog per theme, once the questions are answered and the re-distil has landed | The main session | [Section 7](#7-split-into-themes) |
+| Any time: split one ready theme off early, so a second machine builds it while the rest is still ruled on | The main session | [Section 8](#8-splitting-a-theme-off-early) |
 
-Steps 1 to 6 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
+Steps 1 to 9 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
 does every count, check and merge.
 
@@ -81,6 +86,10 @@ defined in [`sources.schema.json`](sources.schema.json):
   somebody walked, so it is a lower bound on the service. The suite that drove it names the pages and
   fields no recorded run happened to reach. Add it as a `repo` source scoped to those specs, and the
   reconcile step raises the floor. Where the suite is gone, tell the user: the lower bound stands.
+- **Write `themes` only when the user asks for themes**, such as building on several machines at once. It is the
+  rule for drawing theme boundaries, in the user's words or as "Group increments by the code each touches, so themes
+  build in parallel without conflicting pull requests." The consolidator then gives every row a theme. Leave it out
+  otherwise: a backlog without themes builds as one.
 - `scope` narrows a large source. Distil a slice of a big source well rather than all of it thinly.
 - **Fetch each Confluence page** with
   `tim confluence page <id> --json > workareas/<workarea>/sources/<page-id>.json`, and make that file the
@@ -111,6 +120,40 @@ and verify all of them again. Adopt the ones that are still good first:
 Never adopt a source an agent has just extracted again. Its old verification judged the earlier extract, so it
 must be verified again.
 
+### Extracting a source again with an unchanged scope
+
+A launch skips every source already verified with an unchanged scope hash. When the extract method has changed, so
+an old extract is no longer good enough although its source is the same, reset the sources first:
+
+```bash
+tim distil reset <workarea> --source repo:frontend --source trace:recorded-run --json   # the named sources
+tim distil reset <workarea> --all --json                                                # every source
+```
+
+It moves each source's extract, partition, extract parts, verification and verify parts to
+`workareas/<workarea>/distil/superseded/<time>/extract/` and `.../verify/`, so nothing is lost, and the source reads
+`pending`. Its working folder (`distil/extract/<slug>.work/`) stays. Then launch as usual. The fresh extract has new
+claim ids, so the next reconcile re-cites any requirement that cited an old claim, keeping every requirement,
+conflict and row id.
+
+### Reconciling again from nothing
+
+A normal re-distil keeps every requirement, conflict and row id, and needs no reset. When the **reconcile or
+consolidate method** has changed, such as the move to reconciling by area, a re-distil would carry the old method's
+requirements forward. Start the later stages again instead, keeping every verified extract:
+
+```bash
+tim distil reset <workarea> --stage reconcile --json
+```
+
+It moves `requirements.json`, `conflicts.json`, the working sets, `areas.json` and every area's files, the challenge
+verdicts, the backlog snapshots, `backlog.json` and `report.md` to `distil/superseded/<time>/reconcile/`. Every
+source stays `verified`, so the next launch goes straight to the area plan, and every id starts again from `001`. It
+refuses while any backlog row has build work on it (`done`, `deferred`, a commit, a branch or a pull request): a
+fresh backlog would lose those ids, so re-distil without a reset instead. It also refuses while the backlog has a
+theme split off ([section 8](#8-splitting-a-theme-off-early)): a fresh backlog would lose the pointer, and the next
+run would draft that theme's rows again on the main branch.
+
 ## 1. Launch the workflow
 
 Launch it from the main session, by `scriptPath`, never by `name` (a name runs a stale snapshot). A subagent
@@ -128,10 +171,14 @@ Every key of `args` is required, and a missing one stops the run before any agen
   workarea: 'shared/hrp-origin-and-commodity',      // the workarea: under workareas/, never starting with it
   only: null,                                       // or a list of source ids to work this launch
   tim: 'tim',                                       // how agents run tim; a clone passes its own
-  models: {},                                       // defaults: think opus, code sonnet, light haiku
-  verifyChunk: 150                                  // the most claims one verify agent takes
+  models: {},                                       // defaults: think opus, code opus, light haiku
+  verifyChunk: 60                                   // the most claims one verify agent takes
 }
 ```
+
+`models: {}` is the deep run, and the one to use: characterise, every extract part, every verifier, the area plan,
+every area reconciler, the cross-area pass, every challenger, every row drafter and the combiner run on Opus.
+`verifyChunk: 60` keeps each verifier's range small enough to re-check every claim against the source.
 
 What each key does, and every stage, are in [`../workflow/README.md`](../workflow/README.md#distiljs).
 
@@ -140,45 +187,105 @@ What each key does, and every stage, are in [`../workflow/README.md`](../workflo
 1. **Status.** `tim distil status` gives the work list: each source's state (pending, extracted, verified, stale
    or invalid) and what it needs next. A source already verified, with an unchanged scope hash and an unchanged
    extract, is skipped.
-2. **Extract and verify, as a pipeline.** Each source moves on as soon as its own step checks out. Its extractor
-   writes `distil/extract/<slug>.json` and stamps it with the scope hash. `tim distil check --stage extract
-   --clear-parts` checks it and clears old verify part files: one retry with the problems, then the source fails.
-   `check` also splits the claims into ranges of at most `verifyChunk`. One verifier per range writes
-   `distil/verify/<slug>.part<N>.json`. `tim distil merge-verify` joins the parts and records the extract's hash,
-   and `check --stage verify` checks them: one retry of the failed parts, then the source fails.
+2. **Characterise, extract and verify, as a pipeline.** Each source moves on as soon as its own step checks out.
+   - **Characterise.** One Opus agent surveys the whole source and writes `distil/extract/<slug>.partition.json`:
+     its structure, and its parts, each small enough for one agent to read in full and claim exhaustively (a group
+     of pages or a feature folder of a repo, the traces of one spec file, a run of sections of a document). Each
+     part names what to read in full, what it must cover, and its claim id prefix, `<slug>-p<N>`. A small source is
+     one part. `tim distil check --stage partition --clear-parts` checks it and clears old extract part files: one
+     retry with the problems, then the source fails at `characterise`.
+   - **Extract.** One Opus agent per part, side by side, reads its slice word for word and writes
+     `distil/extract/<slug>.part<N>.json`, checking it with `check --stage extract --part <N>`. `tim distil
+     merge-extract` joins the parts in order into `distil/extract/<slug>.json` and stamps the scope hash. Then
+     `check --stage extract --clear-parts` checks the extract, every part and that the extract is its parts merged,
+     and clears old verify part files. The workflow cuts the claims into ranges of at most `verifyChunk` itself, from
+     the claim count, and checks the count of ranges the relay copied against it. A failed merge re-runs the parts
+     it names, once, then the source fails.
+   - **Verify.** One Opus verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts
+     its range came from so it re-reads that slice in full. `tim distil merge-verify` joins the parts and records
+     the extract's hash, and `check --stage verify` checks them: one retry of the failed parts, then the source
+     fails. The relayed verdict count must equal the claim count.
 3. **A failed source stops the run before reconcile.** It is reported with its problems, never dropped. So is a
    source `only` left for later.
-4. **Reconcile.** `tim distil working-set --write` gives the reconciler every claim that held plus every missed
-   claim. It writes `distil/requirements.json` and `distil/conflicts.json`, keeping every existing id.
-   `tim distil coverage` checks them: up to 2 send-backs with the problems.
-5. **Consolidate.** The consolidator writes `backlog.json`, keeping every existing row id. It rewrites `todo` and
+4. **Areas.** `tim distil working-set --write` gives every claim that held plus every missed claim. One Opus agent
+   plans the areas from every source's partition (each part's title, scope and covers), writing
+   `distil/areas.json`: areas such as a journey page or page group, the dashboard, the address book, templates,
+   transporters, amend, copy and delete, and a cross-cutting area. Each area takes every source's claims about it,
+   by extract part or claim range, today's sources included. `tim distil areas` refuses a claim in no area, and on
+   a re-distil an existing id in no area or two. `tim distil areas --write` writes each area's working set to
+   `distil/areas/<area id>/working-set.json`, and clears what an earlier reconcile left: one retry of the plan, then
+   the run stops.
+5. **Reconcile.** One Opus reconciler per area, six at a time, weighs every claim in its working set and writes
+   `distil/areas/<area id>/reconciled.json`, checking it with `tim distil merge-reconcile --area <id>`.
+   `tim distil merge-reconcile` joins the areas into `requirements.json` and `conflicts.json`, numbering new ids on
+   from the highest and writing `distil/areas/id-map.json`: the areas a failed merge names are reconciled again,
+   once. One Opus cross-area pass then merges duplicates and settles conflicts that span areas, and
+   `tim distil coverage` checks the files, refusing any source that backs no requirement or conflict: up to 2
+   send-backs.
+6. **Challenge.** One Opus challenger per question conflict, six at a time, tries to settle it from precedence and
+   every ruling, and writes `distil/challenge/<conflict id>.json`, checked by `tim distil challenge --conflict`.
+   Its verdict is `precedence`, `blocked` (it waits on somebody outside the programme, so its requirements are
+   adopted with `blockedBy`) or `question`. One apply step rewrites every settled conflict and its requirements,
+   and `tim distil coverage` checks each verdict was applied: up to 2 send-backs. Only the survivors stay questions.
+7. **Consolidate.** One Opus drafter per area, six at a time, drafts its area's rows and the code each touches in
+   `distil/areas/<area id>/rows.json`. One Opus combiner joins them into `backlog.json`, merging rows that repeat
+   the same set-up, ordering them and drawing the themes, keeping every existing row id. It rewrites `todo` and
    `blocked` rows to the requirements as they stand, and never changes a row built or set aside (`done`,
    `deferred`, `dropped`, `rejected`, `merged-into`). `tim backlog check` and `tim distil coverage` must both pass.
    `tim distil backlog-snapshot` saves the rows before and names every row removed or changed after: up to 2
-   send-backs. A requirement whose criterion one environment cannot observe goes in the consolidator's
-   `reconcileProblems`. The workflow then runs reconcile and consolidate once more, with those requirements sent
-   back. Any still open go to the report as a step before building.
-6. **Report.** The report agent drafts the report to [`REPORT.md`](REPORT.md) and returns it as text. One retry.
+   send-backs. A requirement whose criterion one environment cannot observe goes in the combiner's
+   `reconcileProblems`. The workflow then runs the cross-area pass, the challenge and the combiner once more, with
+   those requirements sent back. Any still open go to the report as a step before building.
+8. **Report.** The report agent drafts the report to [`REPORT.md`](REPORT.md) and returns it as text. One retry.
    Anything wrong with its inputs comes back in `reportIssues`, never in the report.
 
-The run returns the state of every source, the failed sources, the requirement and conflict counts, every open
-question with its default, the backlog counts, `goalConflicts` (rulings that contradict the goal),
-`reconcileProblems` (requirements still sent back after the second round), the report text and `reportIssues`.
+The run returns the state of every source, the failed sources, the areas, the requirement and conflict counts, every
+open question with its default, the blocked requirements, the challenge's counts, each source's cited claims, the
+backlog counts, `goalConflicts` (rulings that contradict the goal), `reconcileProblems` (requirements still sent back
+after the second round), the report text and `reportIssues`.
+
+**A resumed run replays every agent that finished.** The fan-outs run in fixed batches of six in plan order, and no
+prompt carries a time, so a run stopped at a session limit resumes with `resumeFromRunId` and the same args: every
+agent that finished returns its cached answer, and the run carries on from the first that did not.
 
 ## 3. The rules the workflow keeps
 
 These hold whoever runs a step. The briefs carry each one to the agent that applies it.
 
-- **Characterise first, extract second.** Every extract writes `structure` before its first claim.
+- **Every source is extracted in depth.** Characterise, cut into parts, one agent per part reading its slice in
+  full, merge: that is the only extract path, for every source on every run, and its agents run on Opus by default.
+  A small source is simply one part. There is no lighter path because a thin extract caps everything downstream: a
+  page, field or rule nobody claimed never reaches a requirement, and no later step can put it back.
+- **Exhaustive within a part.** A page or field seen in a part's slice and not claimed is a defect.
+- **Characterise first, extract second.** The partition writes the source's `structure` before any part is
+  extracted, and every part writes its own before its first claim.
 - **One claim per observable fact**, with provenance (`ref`) and the source's own words (`quote`). `gap` is a
   confidence, never a kind.
 - **Verify by trying to refute.** A different agent from the extractor, defaulting to refuted. A refuted claim
   leaves the working set; a missed claim joins it, its id `<claim id>-m<N>`.
 - **A verification belongs to one extract.** Change a claim, even under the same id, and the source is verified
   again.
+- **Depth at every stage.** No agent weighs more than it can read in full. Reconcile is cut into areas, one Opus
+  reconciler an area; questions are challenged one agent a question; rows are drafted one agent an area. One agent
+  over a whole programme skims, and its gaps never come back.
+- **Every claim from a today source is weighed.** The target repos, traces of the real services and the tests repo
+  say what exists now, and each delta cites the claims that show it. Copy, option, hint and error differences stay
+  at their real granularity, never summarised. `tim distil coverage` refuses a verified source that backs no
+  requirement or conflict: its held claims are facts nobody weighed, which is a defect, never a judgement. The
+  report names any source whose cited share is low.
+- **Questions are minimal by default.** Precedence and the rulings settle every difference they can. A difference
+  that waits on somebody outside the programme (a platform change, access, a ticket) is never a design question: its
+  requirement is adopted with `blockedBy` and built in a `blocked` row whose open question names the blocker. The
+  challenge step enforces this: every question the reconcilers raise is challenged by its own agent, and only the
+  ones neither precedence nor a ruling settles reach the owner.
 - **Precedence settles a disagreement; it never blocks.** Every disagreement is a conflict. Only one precedence
   cannot settle, or a gap that matters, becomes a question, and every question carries a default so building can
   start. One question per decision.
+- **No relayed list is trusted.** A light agent that relays tim's output is checked against another count: the
+  partition's parts against characterise, the verify ranges against the claim count, the verdicts against the
+  claims, the working set against the status, the areas against the plan, the questions against coverage's own
+  count. A relay that disagrees is asked again once, and twice wrong fails the step. The verify ranges themselves
+  are worked out by the workflow from the claim count, never retyped.
 - **A doubt is a question, never a plain reading.** Where a source or ruling cannot be met as written in some part
   of the target (an environment, a repo, a journey or a stage), or two readings of it would build different things,
   the reconciler makes it a question whose default says what each part gets.
@@ -199,6 +306,9 @@ These hold whoever runs a step. The briefs carry each one to the agent that appl
   `tim distil coverage` checks this once `backlog.json` exists.
 - **Rows are thin full-stack slices, combined** where building them apart would repeat the same set-up (see
   [`SHAPE.md`](SHAPE.md)).
+- **Themes build in parallel.** Boundaries are drawn at feature-folder granularity from what each row touches.
+  Shared files (a journey's flow, the layout, shared copy) go in a foundation theme in an early wave. A theme holding
+  most of the rows is a smell.
 - **Re-distilling keeps every id**: requirements, conflicts and rows. A `todo` or `blocked` row is rewritten to the
   latest rulings, and a blocked row whose blocker a ruling removed becomes `todo`. A row built or set aside never
   changes. Nobody resets a status by hand.
@@ -212,9 +322,11 @@ launch reads them as a re-distil.
 |---|---|---|
 | `status-failed` | `tim distil status` refused `sources.json` | Fix every problem it names in `sources.json`, then launch again |
 | `unknown-source` | `only` names a source `sources.json` does not have | Correct `only`, then launch again |
-| `sources-unverified` | A source failed its extract or verify checks twice, or `only` left one for later | Read the failed source's `problems`. Fix the source or its `scope`. For a large source that failed at verify, lower `verifyChunk` or narrow `scope`. Then launch again: verified sources are skipped |
-| `working-set-failed` | `tim distil working-set` failed | Run `tim distil status <workarea> --json` and fix what it names, then launch again |
-| `reconcile-failed` | `requirements.json` or `conflicts.json` still had problems after 2 send-backs | Read `detail`. Launch again: the reconciler starts from the files on disk. If the same problem returns, fix the named file or the source behind it |
+| `sources-unverified` | A source failed its characterise, extract or verify checks twice (`failedAt` says which), or `only` left one for later | Read the failed source's `problems`. Fix the source or its `scope`. For a large source that failed at verify, lower `verifyChunk` or narrow `scope`. Then launch again: verified sources are skipped |
+| `working-set-failed` | `tim distil working-set` failed, or its output was relayed wrong twice | Run `tim distil status <workarea> --json` and fix what it names, then launch again |
+| `areas-failed` | `distil/areas.json` still had problems after one retry of the plan | Read `detail` and run `tim distil areas <workarea> --json`. Launch again: the planner starts from the file on disk |
+| `reconcile-failed` | An area's file would not merge after one retry of the areas it names, or `requirements.json` or `conflicts.json` still had problems after 2 send-backs of the cross-area pass | Read `detail`. Launch again: the area reconcilers start from the merged files on disk. If the same problem returns, fix the named file or the source behind it |
+| `challenge-failed` | The challenge verdicts were still not applied after 2 send-backs | Read `detail` and run `tim distil coverage <workarea> --json`. Launch again: every question is challenged afresh |
 | `snapshot-failed` | `tim distil backlog-snapshot` could not save the backlog's rows | Run `tim backlog check <workarea> --json` and make `backlog.json` parse, then launch again |
 | `consolidate-failed` | `backlog.json` still had problems after 2 send-backs | Read `detail`. Launch again: the consolidator starts from the file on disk. If a changed row is named, restore it from `distil/backlog-snapshot.before.json` first |
 | `report-failed` | The report agent returned nothing, twice | Launch again. It runs reconcile and consolidate again over the files on disk, keeping every id and every row built or set aside, then drafts the report |
@@ -270,12 +382,115 @@ interrupt a run.
 On the next launch only the new or changed sources are extracted and verified. Reconcile and consolidate run over
 everything, keeping every existing id, so the backlog grows rather than starting again.
 
+## 7. Split into themes
+
+Only when `sources.json` has `themes`. Split last, never straight after the first launch. The answers to the report's
+questions move rows between themes, unblock rows and add new ones, so a split made before them is thrown away. Wait
+until every question has a ruling (even "keep the default"), the re-distil with those rulings has landed, and
+`tim backlog check` and `tim distil coverage` pass. Then split the backlog:
+
+```bash
+tim backlog split <workarea> --json            # a dry run: what each theme's backlog would hold
+tim backlog split <workarea> --write --json    # write them
+```
+
+It writes one backlog per theme at `workareas/<workarea>/themes/<theme id>/backlog.json`, and
+`workareas/<workarea>/themes/themes.json` with each theme's workarea, branch, rows and landing wave. It checks every
+split backlog first and writes none if one fails. Each theme's branch is `feat/NO_JIRA-<programme>-<theme id>`;
+`--branch-prefix feat/EUDPA-123-plants` gives `feat/EUDPA-123-plants-<theme id>` instead.
+
+Split again after every re-distil. It is safe to run any number of times:
+
+- a theme's file is written only when it changes;
+- a row the build loop has built or set aside (any status but `todo` or `blocked`) is kept exactly as its split copy
+  has it;
+- a `todo` or `blocked` row is refreshed from the parent, keeping the ticket, branch, commit, pull requests, notes
+  and open questions the loop wrote on it;
+- it refuses, writing nothing, when the parent puts a built row in another theme, or in none.
+
+Never edit a split backlog's rows by hand: re-distil the parent and split again.
+
+A theme already split off early (section 8) is left out: its backlog lives on its own branch. The full split keeps
+its entry in `themes.json` and its place in the landing order, and never touches its backlog.
+
+## 8. Splitting a theme off early
+
+**When.** One theme is ready while the rest of the backlog is still being ruled on and re-distilled, and a second
+machine is free to build it. Ready means its rows are settled: no open question touches them, and `tim backlog
+check` and `tim distil coverage` pass. Repeat for each theme as it becomes ready.
+
+**The command.** A dry run first, then the same with `--write`:
+
+```bash
+tim backlog split <workarea> --theme <theme id> --json           # what moves, what waits on what
+tim backlog split <workarea> --theme <theme id> --write --json   # move it
+```
+
+`--theme` can be given more than once. `--branch-prefix` works as for the full split. Without `--theme` the command
+does the full split, as in section 7.
+
+**What moves.** The theme's backlog is written to `workareas/<workarea>/themes/<theme id>/backlog.json`, exactly as
+the full split would write it, and its entry is merged into `themes/themes.json`, keeping every other entry. Then
+the theme and every one of its rows leave the main `backlog.json` altogether. There is no lock: the split backlog is
+the only copy.
+
+**What stays.** One pointer per theme in the main backlog's `splitOff`: its id, title, touches and theme
+dependencies, its branch, workarea and backlog path, the ids of the rows that moved, the requirements they covered
+with each one's fingerprint, and when it was split off. `tim backlog check` holds the main backlog to it: no theme
+left may touch its code, no row may be in it or reuse a moved row's id. The command lists the dependencies it
+rewired, in plain words:
+
+- a row left in the main backlog that depended on a moved row now has an `externalDependsOn` on the split backlog;
+- a moved row that depended on a row still in the main backlog has an `externalDependsOn` on the main backlog.
+  `tim backlog next` follows it to that row's own theme split once that theme is split too;
+- a theme split off before that waits on a row this split moves is pointed at the row's new workarea (`relinked`),
+  because the main backlog no longer has the row.
+
+A theme split off by a version of tim without that last step can still wait on the main backlog for a row a later
+split moved. `tim backlog check` on the main backlog names each such wait. Point them at the right workarea with:
+
+```bash
+tim backlog split <workarea> --relink --json           # which waits would move
+tim backlog split <workarea> --relink --write --json   # move them
+```
+
+It refuses, writing nothing, a theme already split off, a theme the backlog does not have, or a result that fails
+`tim backlog check`.
+
+**Building it.** The second machine pulls the workspace repo and runs the build loop on the split backlog, exactly as
+for any split theme ([`BUILD.md`](BUILD.md#building-one-theme)): `workarea` is `<workarea>/themes/<theme id>`,
+`repos` is that backlog's `repos`, and the branch is its `branch`.
+
+**Later rulings.** Re-distil the main workarea as usual. `tim distil coverage` counts every requirement a pointer
+holds as covered by the split backlog. `tim distil areas` leaves them out of every drafter's work, and the combiner
+carries `splitOff` over unchanged: the workflow compares every pointer before and after it. A new requirement whose
+code falls in the theme's touches gets no row in the main backlog; the combiner adds it to the pointer's `pickUp`.
+`tim distil coverage` names every requirement the theme holds that is still to build and has changed since the split,
+by fingerprint, and every one no longer to build. It names one now already in place, usually because the branch built
+and merged it, as `nowInPlace`; the report lists that with every other `exists` requirement, not as work for the
+branch. The report lists the other three under "For the split branches", naming the branch. Whoever
+builds that branch adds or rewrites rows in its own backlog for them. Never split the theme off again.
+
+The report lists a change at every re-distil until the pointer takes it in. Once the branch has its rows, edit the
+main backlog's pointer between runs: move each picked-up id from `pickUp` to `requirements`, and copy each id's
+fingerprint from `fingerprintsNow` in `tim distil coverage <workarea> --json` (under `result.backlog.splitOff`) into
+the pointer's `fingerprints`. Once the branch has dropped or rewritten the row for a requirement no longer to build,
+take that id out of the pointer's `requirements` and `fingerprints`; do the same for an id now in place, whenever you
+like. Change nothing else in it. Never reset reconcile while the backlog has a pointer
+([Reconciling again from nothing](#reconciling-again-from-nothing)): `tim distil reset` refuses, because a fresh backlog
+would lose the pointer and draft the theme's rows again.
+
 ## Done means
 
 - `tim backlog check` and `tim distil coverage` both pass.
 - `report.md` follows the structure in [`REPORT.md`](REPORT.md): the summary first, then any step before building,
   then the repos and precedence, then the questions.
 - The backlog envelope carries `repos`.
+- When `sources.json` has `themes`: the backlog carries `themes`. After the questions are answered and the
+  re-distil has landed, `tim backlog split <workarea> --write` has written every theme's backlog and
+  `themes/themes.json`. A theme split off early keeps its pointer in `splitOff`, and the report's "For the split
+  branches" section names what its branch must pick up.
 - Tell the user: the counts, the questions and their defaults, and how to build it:
-  `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a dry run of one increment's
-  plan, run the build loop with `planOnly: true`.
+  `tim backlog next <workarea>`, then the BUILD phase ([`BUILD.md`](BUILD.md)). For a themed backlog, give the
+  landing order and each theme's workarea and branch: each theme builds from its own workarea. For a dry run of one
+  increment's plan, run the build loop with `planOnly: true`.

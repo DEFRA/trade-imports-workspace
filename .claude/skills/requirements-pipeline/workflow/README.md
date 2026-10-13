@@ -24,14 +24,38 @@ report's questions with the user and saving the report. See
 source or a ruling: edit `sources.json` and launch again.
 
 The method each agent follows lives in brief files beside the script, in
-[`distil/briefs/`](distil/briefs/): `extract.md` for every source, one
-`extract-<kind>.md` per source kind (repo, confluence, web, document, trace, ruling, image),
-`verify.md`, `reconcile.md` and `consolidate.md`. The report agent follows
+[`distil/briefs/`](distil/briefs/): `characterise.md` for cutting a source into parts,
+`extract.md` for every part of every source, one `extract-<kind>.md` per source kind (repo,
+confluence, web, document, trace, ruling, image), `verify.md`, `area-plan.md` for cutting reconcile
+into areas, `reconcile.md` for each area's reconciler and the cross-area pass, `question-challenge.md` for
+challenging and applying the questions, and `consolidate.md` for each area's row drafter and the combiner. The report
+agent follows
 [`../references/REPORT.md`](../references/REPORT.md). Every count, check, merge, file
 clean-up and backlog comparison is a `tim distil` command, so no agent ever writes `jq` to
-check another's file, runs `rm`, or copies a hash. A trace source's extractor and verifiers
-run the trace CLI through `tim distil trace`, which works in the source's own folder, so no
-prompt carries a `cd`.
+check another's file, runs `rm`, or copies a hash. A trace source's agents run the trace CLI
+through `tim distil trace`, which works in the source's own folder, or in a sub-folder of it
+for each part agent and verifier (`--folder part<N>`, `verify<N>`), so agents side by side
+never open over each other's trace and no prompt carries a `cd`.
+
+**Every source is extracted in depth, the same way.** One think-tier agent characterises the
+source and cuts it into parts, each small enough for one agent to read in full; one agent per
+part then reads its slice word for word and claims everything in it; tim merges the parts. A
+small source is one part. There is no lighter path, because a thin extract caps everything
+downstream: a page, field or rule nobody claimed never reaches a requirement.
+
+**Every later stage is as deep as extract.** Reconcile is cut into areas by an area plan, one
+think-tier reconciler an area; every question is challenged by its own agent; every area's rows are
+drafted by their own agent before one combiner joins them. No agent weighs more than it can read in
+full.
+
+**To extract a source again with an unchanged scope**, because the method changed, run
+`tim distil reset <workarea> --source <id>` (or `--all`) before the launch. It moves the
+source's extract, partition, parts and verify files to `distil/superseded/<time>/`, and the
+source reads `pending`. **To reconcile again from nothing**, because the reconcile or consolidate
+method changed, run `tim distil reset <workarea> --stage reconcile`: it moves every file from the
+working set on (requirements, conflicts, areas, challenge verdicts, backlog, report) to
+`distil/superseded/<time>/reconcile/`, keeps every verified extract, and refuses while a backlog row
+has build work on it. A normal re-distil needs neither: it keeps every id.
 
 **A workarea distilled by hand before this workflow** reads as stale on every source, because
 its files carry no hashes. Adopt the sources that are still good with `tim distil adopt`
@@ -47,8 +71,8 @@ and the first log line is the resolved configuration.
 | `workarea` | The programme's folder as a path under `workareas/`, holding `sources.json`, such as `shared/ins-performance-testing`. Never starts with `workareas/` |
 | `only` | `null` to work every source that needs it. Or a list of source ids: only those are extracted and verified this launch. A listed source already verified is skipped, and the run stops before reconcile while any other source still needs work |
 | `tim` | The command agents run tim with, normally `tim`. A clone passes its own, such as `npm --prefix ~/<clone>/tim run --silent tim --` |
-| `models` | `{}` for the default on every tier. `think` (default opus): reconcile, consolidate, report. `code` (default sonnet): extract, verify. `light` (default haiku): status, the checks, merge, working set, coverage. `"inherit"` uses the session model |
-| `verifyChunk` | The most claims one verify agent takes, such as 150. A 330-claim extract at 150 is verified by 3 agents in parallel, each writing its own part file |
+| `models` | `{}` for the default on every tier, which is the deep run. `think` (default opus): characterise, the area plan, every area reconciler, the cross-area pass, every challenger and the apply step, every row drafter, the combiner, report. `code` (default opus): every extract part and every verifier. `light` (default haiku): status, the checks, the merges, the working sets, coverage; every count a light agent relays is checked against another, and a relay that disagrees is asked again once. `"inherit"` uses the session model |
+| `verifyChunk` | The most claims one verify agent takes. Use 60: few enough that a verifier can re-check every claim against the source and read the slice for what was missed. A 330-claim extract at 60 is verified by 6 agents in parallel, each writing its own part file |
 
 The worked example for the INS performance testing programme:
 
@@ -59,7 +83,7 @@ The worked example for the INS performance testing programme:
   only: null,
   tim: 'tim',
   models: {},
-  verifyChunk: 150
+  verifyChunk: 60
 }
 ```
 
@@ -68,14 +92,26 @@ The worked example for the INS performance testing programme:
 | Stage | Agents | What it does |
 |---|---|---|
 | Status | 1 light | Resolves the workspace root's absolute form and runs `tim distil status`: the work list. A source verified with an unchanged scope hash and an unchanged extract is skipped |
-| Extract | 1 code, then 1 light check, per source | Only for a source whose next step is extract. The extractor follows `extract.md` and its kind's brief, writes `distil/extract/<slug>.json`, and stamps it with `tim distil stamp`. The check runs `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which gives the verify ranges and removes old part files. A failed check sends the extractor back once with the problems, then the source fails |
-| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails |
-| Reconcile | 1 light, then 1 think and 1 light, up to 3 times | `tim distil working-set --write`, then the reconciler writes `requirements.json` and `conflicts.json`, and `tim distil coverage` checks them. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the consolidator. Up to 2 send-backs |
-| Consolidate | 1 think and 1 light, up to 3 times | The consolidator writes `backlog.json`. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
+| Characterise | 1 think, then 1 light check, per source | Only for a source whose next step is extract. The characterise agent follows `characterise.md` and its kind's brief, and writes `distil/extract/<slug>.partition.json`: the source's structure and its parts, each with what to read in full, what it must cover and its claim id prefix, `<slug>-p<N>`. On a re-extract it shares the old claim ids out among the parts as `keeps`. The check runs `tim distil check --stage partition --clear-parts`, which removes old extract part files. A failed check, or a part without the prefix the workflow named, sends the agent back once with the problems, then the source fails at `characterise` |
+| Extract | 1 code per part, then 1 light merge, per source | One agent per part, side by side, follows `extract.md` and its kind's brief, reads its slice in full and writes `distil/extract/<slug>.part<N>.json`, checking it with `tim distil check --stage extract --part <N>`. The merge runs `tim distil merge-extract`, which joins the parts in order and stamps the scope hash, then `tim distil check --stage extract --chunk <verifyChunk> --clear-parts`, which checks the extract and removes old verify part files. The relay copies the claim count, the count of verify ranges and each part's range; the workflow works out the ranges itself from the claim count, and asks the check again once (`<id> check extract again`) when the relayed counts disagree, then the source fails. A failed merge re-runs the parts that failed or that a problem names, once, then the source fails. A source whose next step is verify only has its extract checked; if that check fails it is characterised and extracted again |
+| Verify | 1 code per range, then 1 light merge, per source | One verifier per range writes `distil/verify/<slug>.part<N>.json`, told which extract parts its range came from so it re-reads that slice in full. The merge runs `tim distil merge-verify`, which records the extract's hash, then `tim distil check --stage verify`. A failed merge re-runs the parts that failed or that a problem names (every part, if the check failed after the merge), once, then the source fails. A relayed verdict count that is not the claim count asks the check again once |
+| Areas | 1 light, then 1 think and 1 light, up to twice | `tim distil working-set --write` (relayed counts checked against the status). The area-plan agent follows `area-plan.md` and writes `distil/areas.json` from every source's partition, checking it with `tim distil areas`. `tim distil areas --write` writes each area's working set and clears the earlier reconcile's area files, id map and challenge verdicts; the relayed areas must be the plan's. One retry of the plan, then the run stops with `areas-failed` |
+| Reconcile | 1 think per area, six at a time, then 1 light merge; then 1 think and 1 light, up to 3 times | Each area's reconciler weighs every claim in its working set and writes `distil/areas/<id>/reconciled.json`, checking it with `tim distil merge-reconcile --area <id>`. `tim distil merge-reconcile` joins them, numbering new ids and writing `distil/areas/id-map.json`; the areas a failed merge names run again, once. Then the cross-area pass merges duplicates and settles cross-area conflicts, and `tim distil coverage` checks the files, refusing a source that backs nothing. Coverage scopes each problem `reconcile` or `backlog`; backlog problems are left for the combiner. Up to 2 send-backs |
+| Challenge | 1 think per question, six at a time; then 1 think and 1 light, up to 3 times | Each challenger follows `question-challenge.md`, tries to settle its question from precedence and every ruling, and writes `distil/challenge/<conflict id>.json`, checking it with `tim distil challenge --conflict`. A challenger that does not finish runs again once. When any verdict settles its question, or a challenger did not finish, the apply step rewrites the conflicts and requirements, and `tim distil coverage` checks every verdict was applied. Up to 2 send-backs, then `challenge-failed` |
+| Consolidate | 1 think per area, six at a time; then 1 think and 1 light, up to 3 times | Each area's drafter writes `distil/areas/<id>/rows.json`: its rows and the code each touches. The combiner joins them into `backlog.json`, with `themes` drawn at feature-folder granularity when `sources.json` has a `themes` rule. The check runs `tim backlog check` and `tim distil coverage`, and on a re-distil `tim distil backlog-snapshot --compare-to before`. Up to 2 send-backs |
 | Report | 1 think, twice at most | Drafts the report to `REPORT.md` and returns it as text for the main session to save. An empty answer is retried once |
 
-Extract and verify run as one `pipeline()` over the work list: a source moves on to verify as
-soon as its own extract checks out, and never waits for the others.
+**The fan-outs stay narrow and resumable.** The area reconcilers, challengers and row drafters each run
+in fixed batches of six (`THINK_FAN_OUT`), in plan order: well inside the workflow's concurrency cap,
+and narrow enough that a deep run does not hit the account's session limit under a wide Opus fan-out.
+Fixed batches and prompts with no time in them make the order of agent calls the same on every run, so a
+run stopped at a session limit resumes with `resumeFromRunId` and the same args, replaying every agent
+that finished.
+
+Characterise, extract and verify run as one `pipeline()` over the work list: a source moves on
+to verify as soon as its own extract checks out, and never waits for the others. Within a
+source, the part agents and the verifiers each run in parallel, within the workflow's
+concurrency limit.
 
 **A failed source stops the run before reconcile**, and so does one that `only` left for
 later. Reconcile reads every source, so reconciling without one would leave its claims out
@@ -89,16 +125,43 @@ retries it, and skips every source already verified.
 `--compare-to before`, which names every row removed and every such row changed. Each is sent
 back to the consolidator as a problem.
 
+### Splitting a theme off early
+
+`tim backlog split <workarea> --theme <id>` (a dry run, then the same with `--write`) moves one ready theme out of
+`backlog.json` while the rest is still being ruled on: its backlog goes to `themes/<id>/backlog.json` and its rows
+leave the main backlog, which keeps one pointer per theme in `splitOff`. The second machine builds it with the
+increment build loop on `<workarea>/themes/<id>`, like any split theme. Detail:
+[`../references/DISTIL.md`](../references/DISTIL.md#8-splitting-a-theme-off-early).
+
+A re-distil respects the pointers, all through tim:
+
+- `tim distil areas --area` leaves every requirement a pointer holds out of `toBuild`, and lists it under the
+  area's `splitOff`, so no drafter drafts a row for it.
+- The snapshot saved before consolidate keeps each pointer (`result.splitOff`), and the workflow tells every drafter
+  and the combiner about them. A new requirement whose code falls in a split-off theme's touches gets no row: the
+  drafter lists it in its draft's `splitOff`, and the combiner adds it to that pointer's `pickUp`.
+- The compare after consolidate names every pointer gone or changed in a field other than `pickUp`
+  (`result.compared.splitOffChanged`), and the workflow sends it back to the combiner.
+- `tim distil coverage` counts every requirement a pointer holds as covered by the split backlog, refuses a row that
+  covers one, and names, per theme, what it picks up, what changed since the split and what is no longer to build.
+  The report lists them under "For the split branches", naming the branch, and the result carries them as
+  `splitOff`.
+
 ### What it returns
 
 ```js
 {
   workarea, stopped,     // stopped: null, or { reason, detail }
-  sources,               // every source: outcome (verified, unchanged, failed, not-run) and its counts
+  sources,               // every source: outcome (verified, unchanged, failed, not-run), its counts, extractParts, and failedAt (characterise, extract or verify) when it failed
   failed,                // the ids of the sources that failed
-  requirements, conflicts, questions,   // from tim distil coverage; each question with its default
-  backlog,               // { path, total, byStatus, covered }
-  decisions,             // the reconciler's and consolidator's
+  requirements, conflicts, questions,   // from tim distil coverage; each question that survived the challenge, with its default
+  blocked,               // every requirement with blockedBy: { id, blockedBy }
+  challenge,             // { challenged, settled, blocked, survived }: conflict ids
+  areas,                 // the area plan: { id, title, claims }
+  sourceUsage,           // per source: { id, claims, cited }
+  backlog,               // { path, total, byStatus, covered, coveredBySplitOff, themes }
+  splitOff,              // per theme split off early: { theme, branch, workarea, backlog, requirements, pickUp, changed, noLongerToBuild, nowInPlace, fingerprintsNow }
+  decisions,             // the area plan's, every reconciler's and the challenge's, and every drafter's and the combiner's
   goalConflicts,         // rulings that contradict sources.json's goal: the main session corrects the goal
   report, reportPath,    // the report text, and where the main session saves it
   reportIssues           // what the report step found wrong with its inputs, kept out of the report
@@ -106,8 +169,8 @@ back to the consolidator as a problem.
 ```
 
 `stopped.reason` is one of `status-failed`, `unknown-source`, `sources-unverified`,
-`working-set-failed`, `reconcile-failed`, `snapshot-failed`, `consolidate-failed` or
-`report-failed`. Each carries whatever the run had worked out by then. What the main session
+`working-set-failed`, `areas-failed`, `reconcile-failed`, `challenge-failed`, `snapshot-failed`,
+`consolidate-failed` or `report-failed`. Each carries whatever the run had worked out by then. What the main session
 does for each is in [`../references/DISTIL.md`](../references/DISTIL.md#4-when-the-run-stops-early).
 
 The script keeps the args contract every workflow keeps, and
@@ -207,7 +270,12 @@ stage raised them in is an accident:
 
 `frontend-change` is routed by what a repo is, not by its key: the planner and implementor are
 sent to it only for a configured repo at `repos/trade-imports-animals-frontend` or
-`repos/trade-imports-plants-frontend`, and a programme with neither never hears of it.
+`repos/trade-imports-plants-frontend`, and a programme with neither never hears of it. Each
+repo's sets are listed with the spec namespace each writes — `sets/live-animals` → `live-animals/`
+and `sets/germinal-products` → `germinal-products/` in the animals repo, `sets/high-risk-plants`
+→ `plants/` in the plants repo — and the planner names the set from the path the change lives
+under, because two sets share the animals repo. Nothing else in the loop keys on a set or a
+prefix.
 
 ### What drains the backlog, and what stops it
 
@@ -220,15 +288,21 @@ run outlives the session that started it. Resuming is launching it again with th
 args: `backlog.json` carries the status, ticket, branch and PRs, and the start stage
 resumes an increment part-way through its lifecycle.
 
-The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. It stops:
+The run returns `{increments, specChecks, stopped}`, where `specChecks` holds one entry per
+theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)) and `stopped` is
+`{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 39 agents on Claude and 45 on
-  Codex, so a run fits roughly 25 or 22 of them. Nothing is wrong: launch again;
-- at **`gate`**, when an increment carries a designed HALT-FOR-REVIEW gate. It lands first;
+  `Workflow` tool's cap of 1000 agents. An increment is up to 41 agents on Claude and 47 on
+  Codex, so a run fits roughly 24 or 21 of them. Nothing is wrong: launch again;
+- at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
+  gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
+- at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
+  `tim spec gaps --none` is red under a prefix the theme touched. The row has landed; the
+  detail names the findings and the `catch-up and cover <set>` to run;
 - at **`stack-held`**, when somebody else holds the workspace stack: before any increment,
   when the run cannot take its lease, or part-way through one, when a stage finds the stack
   is no longer the run's (see [The workspace stack lease](#the-workspace-stack-lease)). A
@@ -242,7 +316,8 @@ The run returns `{increments, stopped}`, where `stopped` is `{reason, detail}`. 
   `main-red` and the rest, each named in `../references/BUILD.md`.
 
 **A failure stops the whole run.** The loop never moves on to another increment after one
-goes wrong: `tim backlog next` selects on status and `dependsOn` alone, so a failed attempt
+goes wrong: `tim backlog next` selects on status, `dependsOn` and `externalDependsOn` alone
+(the last a row in another workarea's backlog, such as another theme's), so a failed attempt
 is still the next buildable increment, and carrying on would rebuild it or build on top of
 it. The `not-landed` stop is the backstop for that — an id that comes back twice ends the
 run.
@@ -369,14 +444,15 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Stage | Agents | What it does |
 |---|---|---|
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
-| Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
-| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope. Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
-| Implement | 1 | Executes the plan, across every repo the slice needs. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
-| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
+| Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. Every gate call also writes its result to `--result`, so a gate the Bash tool moves to the background after 600s is waited on with `tim build gate-wait` in slices, never called red (the ladder and the builders' own checks do the same). A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
+| Plan | 1–2 | Reads the row, the live tree, the nearest exemplar and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, moves, edits, new files, tests with the integration proof, checks per acceptance criterion, the increment-specific checks beyond the gate, out of scope, and the spec sync (section 8). Lifted from `frontend-alignment.js`. See [Plan checks](#plan-checks) |
+| Implement | 1 | Executes the plan, across every repo the slice needs, and keeps the Behaviour Spec current (see [The Behaviour Spec](#the-behaviour-spec)). Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
+| Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change, which also judges the spec write and any `Spec sync: none` reason. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts |
 | Verify findings | 1 per group with findings | Adversarial refutation, grouped the same way — each finding must survive an agent actively trying to kill it |
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human** |
 | Fix | 1 | Applies only what the judge ruled fix-now. Checks itself with the gate's unit and FIT phases, like the implementor |
-| Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Theme spec check | 1–2 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched. See [The Behaviour Spec](#the-behaviour-spec) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
@@ -387,6 +463,55 @@ agent picks those scripts. The ladder
 compares every red rung with the baseline rung of the same repo and name: every one was green
 at baseline, so a red one is this increment's to repair or diagnose. After a repair it re-runs
 the red phase, and the unit phase too, then the plan's checks.
+
+### The Behaviour Spec
+
+**Every row keeps `openspec/` current, whatever its repos.** Before this, only a row routed through
+`frontend-change` (an animals or plants frontend field, page, section, collection, obligation or flow change)
+reached its Step 5, so a backend, INS, address-book or reference-data row, and a wording or layout row, left the
+spec behind.
+
+| Stage | What it does with the spec |
+|---|---|
+| Plan | Section 8 names the prefix by repo and set (`live-animals`, `germinal-products`, `plants`, `ins`, `admin`), each capability, requirement and scenario to change, any new AREA row and the coverage links — or `none — <reason>`. Returns `specPrefixes` |
+| Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tools/frontend-change/openspec-validate.sh --root <workspace>` and `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
+| Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
+| Fix | A fix that changes behaviour updates the spec too, and reports its own line |
+| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
+| Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
+
+The prompts say what the spec records, from `openspec/config.yaml`: observable behaviour only. A wording change is
+spec'd where a title, Purpose, requirement or scenario states that wording; a content change when it changes what a
+page shows or asks; a layout change when it changes page order, what a page offers or groups, or a caption. Pure
+styling is not.
+
+**A row owns every capability it writes, whole.** `openspec validate --strict` and `tim spec lint` judge the whole
+capability, not the lines a row changed, and the baseline runs neither. So a failure already in a capability the row
+writes, such as an over-long requirement left by an earlier catch-up, would otherwise be nobody's: each stage calls it
+pre-existing and the ladder stops on it. The implement, fix and ladder prompts all say it is the row's to fix in
+place, by `openspec/config.yaml`'s rules, keeping the behaviour the requirement states and never deleting or
+weakening one to pass.
+
+**Once a theme's last row lands, the run checks the spec.** After the gate check, a light agent reads the landed
+row's theme (or a split backlog's own) as one short jq summary: how many rows are `todo`, which ones this run built,
+and the repos of the rest. A line it cannot read is read once more; unread twice, the run stops at `spec-check-red`
+with `theme unread`, since it cannot tell whether that was the theme's last row. When none is `todo`, a second light
+agent runs, for every prefix the theme touched, `tim spec lint --capability <prefix>` and
+`tim spec gaps --none --capability <prefix>`, each to a log under `logs/spec-check-<theme>-<prefix>-*.json`. The
+script reads the counts. A lint finding, a scenario no test proves, or a prefix a row reported writing that does not
+exist stops the run at `spec-check-red`, naming the `catch-up and cover <set>` to run. Partly proven scenarios are
+recorded, not red: there are pre-existing ones. Every check lands in the result's `specChecks`, with `sources`
+saying where each prefix came from. A row this run built gives only the prefixes its plan named (`planned`) and its
+`Spec sync:` lines wrote (`written`). A theme row it did not build is known only by its repos, so it gives every
+prefix those repos could reach (`repo reach`): `trade-imports-animals-frontend` reaches both `live-animals` and
+`germinal-products`.
+
+**Why not spec-catchup and spec-cover themselves.** Neither can run headless inside the loop as written. Both start
+the workspace stack with `tim docker up`, which the run already holds under lease. Catch-up runs a FIT suite behind a
+`PORT=` prefix the deny list refuses, and fans out to Task subagents. Both stop to ask a person to start Docker. Cover
+commits in service repos on a branch named after the workspace's, with no pull request, outside the increment's own
+branch and PR. So the loop runs the two deterministic checks those skills start from, and a red one hands the skills
+to a person. Every row of the theme is built by then, so nothing re-runs the check: the stop is the record.
 
 ### Plan checks
 
@@ -404,6 +529,9 @@ increment at `ladder-red` with nothing broken. ins-performance-testing inc-023
   guard rails list as denied (the script's `DENIED_PROGRAMS`)
 - a check that must read a live endpoint names the npm script or test that makes
   that read, or the plan adds a small one to its own work
+- a FIT check runs `test:fit:ci -- <spec file>`, never `test:fit`: the leased stack
+  already holds each frontend's default port, so `test:fit` cannot start its web
+  server (design-release-2-1 arrival-and-transit inc-027)
 
 The planner returns every check command in `checks[]`. The script sends a plan
 that names a denied form back to the planner once, with the commands named, and
@@ -472,6 +600,13 @@ so a resumed run keeps it.
    `tim docker lease release --holder "<run id>"`, which takes the stack down and clears the
    lease. If that fails, the run's `stopped.detail` says so and gives the command.
 
+The lease taker and the releaser get their own stack rule in their guard rails: it names
+their lease command as the one stack command they run. Every other stage's guard rails forbid
+`tim docker lease acquire` and `release`. Given that general rule, a Haiku lease taker twice
+returned without running anything and said Bash was not loaded (journey-foundation, 9 October
+2026). So every agent prompt also says Bash is loaded, and never to report a command it has
+not run.
+
 `acquire` starts a stack that is down and records its container ids in the lease. It reuses a
 stack the same holder leases only when that start finished and the containers are still the
 ones it recorded; a start of its own that died part-way is taken down and started again. It
@@ -491,6 +626,18 @@ The script rules on anybody else holding the stack:
   finds the lease gone or someone else's, returns `stackHeld` and runs nothing more that
   needs the stack. The run stops at `stack-held`, naming the holder, for a human ruling. A
   stop after implement goes through the preserve step like any other.
+
+**When Docker Desktop quits under a run**, the run brings it back. Every tim command that
+reads the stack (`tim docker lease acquire|release|status`, and the gate through them) starts
+Docker Desktop with `open -a Docker` when the daemon does not answer. It waits up to five
+minutes for `docker info` (`TIM_DOCKER_START_WAIT_MS`), logs that it did so on stderr, then
+carries on. Starting the stack (`run-stack.sh`) does the same first. A stage whose check
+cannot reach the stack, and whose lease check finds the lease still the run's but the stack
+down, returns `stackDown`. The script then takes the run's lease again, which starts the
+stack under it, and runs that stage once more, once only. A Homebrew autoupdate is why: its
+`brew upgrade --cask` quits Docker Desktop, then fails at `sudo` with no terminal and never
+reopens it (overview and review, 11 October 2026). Sam's ruling: bring it back when it
+happens.
 
 **A run that dies leaves its lease behind.** The release runs on every way out of the
 script, but not when the `Workflow` run itself is killed, the session ends or the machine
@@ -581,7 +728,8 @@ is clean for the next run, and nothing half-resolved ever reaches a reviewer.
 
 A row with `repos: []` changes no backlog repo: its whole output is in the workspace repo, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop leaves those edits unstaged and uncommitted, reviews
-them against HEAD, and lists them in the result's `leftUncommitted` for the orchestrator to commit. Such a row
+them against HEAD, and lists them in the result's `leftUncommitted` for the orchestrator to commit. Edits under
+`openspec/` are not listed: the land stage commits those itself. Such a row
 normally also sets `gatePhases: []`.
 
 The worked example for the frontend alignment sync:
@@ -622,7 +770,9 @@ The worked example for the frontend alignment sync:
   commodity model) are. The judge absorbs routine review triage; it does not absorb these.
   The loop lands the increment, then stops. This is a row's own field, honoured regardless of
   `requireApproval` — a checkpoint somebody set deliberately on that increment, not a setting
-  on the run.
+  on the run. Under the branch lifecycle the run is unattended and merges nothing, so the gate
+  does not stop it: the loop logs it, returns it in `reviewChecks` (`{ id, check }`) and
+  carries on, for the reviewer of the finished branch.
 - **A red ladder.** Preserved as a pushed wip commit (recoverable — never `reset --hard`),
   the failure recorded in the increment's `notes`, and the run stops.
 - **`requireApproval: true`, if a programme opted into it.** Off by default — the multi-agent

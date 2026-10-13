@@ -14,7 +14,7 @@ Below, `openspec` is shorthand for that `npx` line. Package: [@fission-ai/opensp
 
 The spec is maintained **per increment, by `frontend-change`** — no change proposals. It finishes its verification ladder, then writes the `openspec/specs/` and `openspec/coverage/` entries the increment touched, validates the spec write with `openspec validate <path> --strict`, and self-checks both writes against the diff it just verified. `journey-builder` inherits this: it invokes `frontend-change` once per increment.
 
-**That is the whole of the automated, per-increment coverage.** `frontend-change` targets frontend repos, and only the two the build loop names (`live-animals`, `high-risk-plants`). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you in the moment. The periodic sweep that catches the rest is `spec-catchup` (drift: the code says something the spec doesn't) and `spec-cover` (gaps: the spec says something no test proves) — see CLAUDE.md's skill table, or "Periodic sweep" below.
+**That is the whole of the automated, per-increment coverage.** `frontend-change` targets frontend repos, and only the sets it lists (`live-animals`, `high-risk-plants`, and `germinal-products` once the Design Release 2.1 programme creates that set in `trade-imports-animals-frontend`; it writes to the `live-animals/`, `plants/` and `germinal-products/` namespaces). A change landed any other way — the `ticket` skill's IMPLEMENT phase, a backend or tests-repo change, a hand edit — still needs a manual spec update, and nothing will remind you in the moment. The periodic sweep that catches the rest is `spec-catchup` (drift: the code says something the spec doesn't) and `spec-cover` (gaps: the spec says something no test proves) — see CLAUDE.md's skill table, or "Periodic sweep" below.
 
 This is the hybrid approach — direct write plus CLI validation. `openspec/changes/` stays empty and the propose → apply → sync → archive lifecycle is not used; the increment already has a planning record (the ticket's AC, or `journey-builder`'s `journey-spec.json`), and a second one would cost agent turns on every increment of a backlog. The rationale, the rejected alternatives and the deferred full re-implementation are recorded in [`.claude/skills/frontend-change/decisions.md`](../../.claude/skills/frontend-change/decisions.md) §9; the merge technique and the recipe-to-capability lookup are in [`.claude/skills/frontend-change/references/SPEC_SYNC.md`](../../.claude/skills/frontend-change/references/SPEC_SYNC.md).
 
@@ -62,12 +62,16 @@ drive. No other `tim spec` subcommand exists — anything else here (the
 `jq` snippets below) is a hand query, not a maintained surface.
 
 ```bash
-tim spec lint --specs --coverage --binding [--capability live-animals|plants|ins|admin]
-tim spec gaps [--none|--partial] [--capability live-animals|plants|ins|admin]
+tim spec lint --specs --coverage --binding [--capability live-animals|plants|germinal-products|ins|admin]
+tim spec gaps [--none|--partial] [--capability live-animals|plants|germinal-products|ins|admin]
 ```
 
 No args means the whole corpus. `--capability` scopes to that prefix and
-its descendants.
+its descendants. `germinal-products` has no capabilities until the Design
+Release 2.1 build writes the first one, so until then `--capability
+germinal-products` exits 2 with `Can't find capability
+"germinal-products"` — that means "nothing written yet", not a broken
+spec.
 
 | Command | Group/flag | Contract |
 |---|---|---|

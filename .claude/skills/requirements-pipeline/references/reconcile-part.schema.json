@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "One area's reconciled requirements and conflicts",
+  "description": "workareas/<workarea>/distil/areas/<area id>/reconciled.json: what one area's reconciler made of its working set. Each requirement is in the shape requirements.schema.json gives `requirement`, and each conflict in the shape conflicts.schema.json gives `conflict`, except for ids: an existing id the area owns stays as it is (req-NNN, c-NNN), and a new one is req-<area id>-NNN or c-<area id>-NNN. `tim distil merge-reconcile --area <id>` checks one area's file against this file and those two, and also checks what a schema cannot: `area` names this file's area, every id is unique, every existing id is one areas.json gives this area and none of them is left out, every cited claim is in the area's working set, and every cited conflict is in this file or already in conflicts.json. `tim distil merge-reconcile` then joins every area's file into requirements.json and conflicts.json, giving each new id the next free number.",
+  "type": "object",
+  "required": ["area", "requirements", "conflicts"],
+  "additionalProperties": false,
+  "properties": {
+    "area": {
+      "description": "The area id from areas.json.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "requirements": {
+      "description": "Every requirement the area's claims back, each a `requirement` from requirements.schema.json, ids aside.",
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "conflicts": {
+      "description": "Every conflict among the area's claims, each a `conflict` from conflicts.schema.json, ids aside.",
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  }
+}

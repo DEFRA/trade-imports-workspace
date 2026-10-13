@@ -48,15 +48,18 @@ const DOMAIN_TITLE = {
  * reference-data, the stub, the address book — is a shared component, and its
  * changes belong in every domain's ticket.
  *
- * Two exceptions the bare name rule gets wrong, both checked first:
- *   - a test suite (`...-tests`) is cross-domain however it is named, and
- *     `trade-imports-ins-tests` holds the suites for every domain;
+ * Two names the bare rule gets wrong, both checked first:
+ *   - a test suite (`...-tests`) is ignored. These tickets describe application
+ *     behaviour a business reader can go and check; that the behaviour is tested
+ *     is already proved by the openspec coverage links, so the test repository
+ *     adds nothing here. `trade-imports-ins-tests` would otherwise be read as
+ *     the front door's, which it is not — it holds every domain's suites.
  *   - `animals-admin` is its own domain, not part of animals, so the longer
  *     word has to win.
  */
 function domainOfRepo(repoName) {
   const name = path.basename(repoName)
-  if (name.endsWith('-tests')) return 'shared'
+  if (name.endsWith('-tests')) return 'ignore'
   if (name.includes('animals-admin')) return 'admin'
   if (name.includes('animals')) return 'animals'
   if (name.includes('plants')) return 'plants'
@@ -126,10 +129,21 @@ const rows = rowSource.map((row) => {
     status: row.status,
     gate: row.gate || null,
     repos: perRepo,
-    domains: [...new Set(perRepo.map((r) => r.domain).filter((d) => d !== 'shared'))].sort(),
-    sharedRepos: perRepo.filter((r) => r.domain === 'shared').map((r) => r.repo)
+    domains: [...new Set(perRepo.map((r) => r.domain).filter((d) => d !== 'shared' && d !== 'ignore'))].sort(),
+    sharedRepos: perRepo.filter((r) => r.domain === 'shared').map((r) => r.repo),
+    testRepos: perRepo.filter((r) => r.domain === 'ignore').map((r) => r.repo),
+    attributedBy: null,
+    commit: null
   }
 })
+
+// A row that changed nothing but test suites describes no application behaviour
+// a business reader can check, so it is left out of every ticket.
+for (const row of rows) {
+  const touchesApp = row.domains.length > 0 || row.sharedRepos.length > 0
+  row.testOnly = !touchesApp
+  if (row.domains.length) row.attributedBy = 'repos'
+}
 
 /* ---------------------------------------------------------- the commits --- */
 
@@ -226,6 +240,7 @@ const fileCounts = new Map()
 for (const commit of commits) {
   // The row a commit belongs to, by matching its subject against the row titles.
   const row = rows.find((r) => commit.subject.includes(r.title.slice(0, 40)))
+  if (row) row.commit = commit.sha
 
   for (const [relPath, headings] of addedHeadings(commit.sha)) {
     const area = relPath.split('/')[0]
@@ -289,15 +304,30 @@ for (const bucket of Object.values(domains)) {
   bucket.fileCount = bucket.files.length
 }
 
-// A shared component's changes belong in every domain's ticket.
+/**
+ * Which domains' tickets a row belongs in.
+ *
+ * A row's own services decide it: the domains of the repositories it changed
+ * that carry a domain word. A shared component coming along for the ride does
+ * not widen a row that already belongs somewhere — a row changing the animals
+ * frontend and the test suite is an animals row, not a plants one.
+ *
+ * A row that changed only shared components is genuinely cross-cutting, so it
+ * goes in every domain's ticket. A row that changed only test suites goes in
+ * none.
+ */
+const allDomains = Object.keys(domains).sort()
 for (const row of rows) {
-  if (!row.sharedRepos.length) continue
-  for (const bucket of Object.values(domains)) {
-    if (!bucket.rows.includes(row.id)) bucket.rows.push(row.id)
-  }
+  if (row.testOnly || row.domains.length) continue
+  row.domains = [...allDomains]
+  row.attributedBy = 'shared-component'
 }
+
 for (const bucket of Object.values(domains)) {
-  bucket.rows.sort()
+  bucket.rows = rows
+    .filter((row) => !row.testOnly && row.domains.includes(bucket.domain))
+    .map((row) => row.id)
+    .sort()
 }
 
 /* --------------------------------------------------------------- checks --- */

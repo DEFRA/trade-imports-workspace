@@ -66,11 +66,17 @@ echo "MODE: $MODE"
 
 # Existing ticket folders and the Jira key each one produced, so the skill knows
 # which domains already have a ticket and which need creating.
-EXISTING="$(
-    find "$TICKETS_DIR" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null |
-        xargs -0 -I{} sh -c 'd="{}"; k=""; [ -f "$d/ticket.created.json" ] && k=$(jq -r ".key // empty" "$d/ticket.created.json"); printf "{\"folder\":\"%s\",\"key\":\"%s\"}\n" "$(basename "$d")" "$k"' |
-        jq -s '.'
-)"
+EXISTING_LINES=""
+for DIR in "$TICKETS_DIR"/*/; do
+    [[ -d "$DIR" ]] || continue
+    FOLDER_NAME="$(basename "$DIR")"
+    FOLDER_KEY=""
+    if [[ -f "$DIR/ticket.created.json" ]]; then
+        FOLDER_KEY="$(jq -r '.key // empty' "$DIR/ticket.created.json")"
+    fi
+    EXISTING_LINES+="$(jq -n --arg folder "$FOLDER_NAME" --arg key "$FOLDER_KEY" '{folder: $folder, key: $key}')"$'\n'
+done
+EXISTING="$(printf '%s' "$EXISTING_LINES" | jq -s '.')"
 
 jq -n \
     --arg mode "$MODE" \

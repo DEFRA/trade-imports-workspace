@@ -91,17 +91,30 @@ carries a domain word belongs to that domain. One that carries none —
 `trade-imports-address-book` — is a shared component, and its changes belong in
 every domain's ticket.
 
-Two exceptions the bare name rule gets wrong, both checked first:
+Two names the bare rule gets wrong, both checked first:
 
-- **A test suite is shared however it is named.** `trade-imports-ins-tests`
-  carries "ins" but holds the suites for every domain, so any repo ending
-  `-tests` is shared.
+- **A test suite is ignored.** These tickets describe application behaviour a
+  business reader can go and check; that the behaviour is tested is already
+  proved by the openspec coverage links, so the test repository adds nothing
+  here. Any repo ending `-tests` is skipped — which also avoids reading
+  `trade-imports-ins-tests` as the front door's, when it holds every domain's
+  suites.
 - **`animals-admin` is its own domain**, not part of animals, so the longer word
   wins.
 
+That gives three outcomes for a row:
+
+| The services it changed | Where the row appears |
+|---|---|
+| One or more carrying a domain word | Those domains' tickets |
+| Only shared components | Every domain's ticket |
+| Only test suites | No ticket — it changed no application behaviour |
+
 A row therefore appears in more than one ticket when it changed more than one
 service. That is the programme's design, not duplication, and the ticket's row
-table should say so.
+table should say so. A test-only row is dropped silently from the tables but is
+still counted in the theme's row total, so the two will differ — say so rather
+than letting a reader think a row went missing.
 
 ## Step 0: Start
 

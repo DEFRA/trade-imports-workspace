@@ -32,21 +32,28 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
 
-### Requirement: The country field offers the origin countries the service accepts, and submits a country code
+### Requirement: The country field offers the origin countries and territories the service accepts, and submits a code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder and the thirty-one origin countries the service accepts, and MUST submit the chosen country's code rather than the text the user typed.
+The system MUST offer a placeholder, the thirty-one origin countries the service accepts and the nine territories of those countries it also accepts (for example the Canary Islands), and MUST submit the chosen country's or territory's code rather than the text the user typed.
 
-#### Scenario: The country list holds a placeholder and the accepted origin countries
+#### Scenario: The country list holds a placeholder, the accepted origin countries and their territories
 **ID**: SCN-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
-- **THEN** its first entry invites the user to select a country, and it holds thirty-one origin countries besides
+- **THEN** its first entry invites the user to select a country, and it holds thirty-one origin countries and nine territories besides
 
 #### Scenario: Choosing a country submits and keeps its code
 **ID**: SCN-ORIGIN-003-B
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** they choose a country and save the page
 - **THEN** the country's code is what the notification keeps, not the text typed into the search field
+
+#### Scenario: Choosing a territory submits and keeps its code and shows its name on return
+**ID**: SCN-ORIGIN-003-C
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** they choose the Canary Islands and save the page
+- **THEN** the territory's code is what the notification keeps
+- **AND** returning to the page shows "Canary Islands" in the country field
 
 ### Requirement: The country field offers its whole list on focus, before anything is typed
 **ID**: REQ-ORIGIN-004

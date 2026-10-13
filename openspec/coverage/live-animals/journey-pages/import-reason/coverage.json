@@ -22,16 +22,16 @@
     },
     {
       "id": "REQ-IMPORT-REASON-002",
-      "name": "A chosen reason is accepted",
+      "name": "A chosen reason that asks nothing further is accepted",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-002-A",
-          "name": "Choosing a reason saves without error",
+          "name": "Choosing a reason that opens no follow-up saves without error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason", "strength": "full", "notes": "Internal market without purpose — purpose is enforced at submit, so the page accepts the reason alone" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "full", "notes": "saves Internal market with a purpose and asserts persistence" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason", "strength": "full", "notes": "Re-entry opens no reveal, so nothing else is owed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "partial", "notes": "saves Internal market with a purpose and asserts persistence — proves the save/persist, not the no-follow-up reason the scenario names" }
           ]
         }
       ]
@@ -49,6 +49,15 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "reveals the import purpose under the internal market reason and accepts it", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks the internal-market purpose under its own radio", "strength": "full", "notes": "asserts every purpose option and that none are pre-chosen beyond the reveal opening" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "full", "notes": "accepts reason + purpose together" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-003-B",
+          "name": "Internal market without a purpose is rejected, keeping the reveal open",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "refuses an unanswered internal-market purpose, links to the first radio and keeps the reveal open", "strength": "full", "notes": "asserts the error link, the error inside the open reveal, focus on the first purpose radio and Internal market still checked" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "refuses an unanswered purpose under the internal market reason", "strength": "partial", "notes": "asserts the error summary, the purpose link and that the page stays — not focus or the open reveal" }
           ]
         }
       ]
@@ -91,7 +100,7 @@
         },
         {
           "id": "SCN-IMPORT-REASON-005-C",
-          "name": "Temporary admission of horses reveals the exit date and then the port of exit",
+          "name": "Temporary admission horses reveals the exit date and then the port of exit",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "asks temporary admission for the exit date and then the port of exit", "strength": "full", "notes": "" }

@@ -30,4 +30,4 @@ The system MUST discard stored transited countries when the means of transport c
 **ID**: SCN-OB-ARRIVAL-002-A
 - **GIVEN** the user has chosen an overland means of transport and saved transited countries
 - **WHEN** they change the means to one that is not overland, and later change it back
-- **THEN** the transited countries page shows no countries selected, and its task row shows the section incomplete until answered again
+- **THEN** the transited countries page shows no countries selected, and its task row reads Optional rather than Complete until countries are added again

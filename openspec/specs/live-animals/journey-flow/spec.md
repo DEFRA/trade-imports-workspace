@@ -142,12 +142,12 @@ The system MUST count only an answer the user gave when deciding whether a journ
 
 ### Requirement: A collection page reached by changing an answer stays in that context until its own finishing action
 **ID**: REQ-FLOW-010
-The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — reached by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
+The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — reached in change mode, such as by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
 
-#### Scenario: Adding and removing identification records while changing stays on that page until finishing
+#### Scenario: Removing and replacing an identification record while changing stays on that page until finishing
 **ID**: SCN-FLOW-010-A
-- **GIVEN** the user has followed a Change link from check your answers to a commodity's identification records
-- **WHEN** they remove a record and add a replacement, saving each in turn
+- **GIVEN** the user has opened a commodity's identification details page in change mode, as when sent back to it from the consignment details count error
+- **WHEN** they remove a record and enter a replacement
 - **THEN** they remain on the identification details page throughout
 - **WHEN** they choose the page's finishing action
 - **THEN** they return to check your answers, now showing the replacement record

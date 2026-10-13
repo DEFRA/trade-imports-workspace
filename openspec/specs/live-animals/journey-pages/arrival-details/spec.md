@@ -77,15 +77,16 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page empty is rejected
+### Requirement: Saving the page empty keeps a draft and moves on
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse to save the arrival details page when nothing has been answered, showing an error summary.
+The system MUST NOT refuse to save the arrival details page when nothing has been answered: it MUST save the blank draft, show no error summary, and carry the user on to the next page. Whether the arrival details are complete is checked later, when the user continues from check your answers.
 
-#### Scenario: Saving with nothing answered shows an error summary
+#### Scenario: Saving with nothing answered keeps a draft and moves on
 **ID**: SCN-ARRIVAL-006-A
 - **GIVEN** the user is on the arrival details page with nothing answered
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown
+- **THEN** no error summary is shown
+- **AND** the user is taken on to the next page in the journey
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
@@ -155,11 +156,11 @@ The system MUST reject a port of entry or means of transport that is not one of 
 - **THEN** an error is shown, the port field is focused and empty
 - **AND** the page's other answers are still held
 
-#### Scenario: An invalid means of transport clears the whole group, keeping the rest of the page
+#### Scenario: An invalid means of transport clears the dropdown, keeping the rest of the page
 **ID**: SCN-ARRIVAL-009-B
 - **GIVEN** the user has answered every arrival question
 - **WHEN** the submitted means of transport is not one of the offered options
-- **THEN** an error is shown, the means-of-transport group is focused with nothing checked
+- **THEN** an error is shown, the means-of-transport dropdown is focused with nothing chosen
 - **AND** the page's other answers, including the chosen port, are still held
 
 ### Requirement: The back link returns to Overview

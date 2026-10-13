@@ -20,7 +20,7 @@ The system MUST group the page under the same six numbered section headings the 
 **ID**: SCN-CYA-001-B
 - **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
-- **THEN** consignment details, commodity details and species appear as sub-headings inside a numbered section, not as numbered sections in their own right
+- **THEN** the sub-headings "Where is this consignment coming from?", "Commodity details" and "Additional details" appear inside numbered sections, with each species' card beneath "Commodity details", and none of them is a numbered section in its own right
 
 #### Scenario: The Documents section stands even when nothing has been uploaded
 **ID**: SCN-CYA-001-E

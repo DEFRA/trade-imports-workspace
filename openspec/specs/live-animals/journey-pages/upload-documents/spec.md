@@ -16,6 +16,12 @@ The system MUST tell the user, before they add anything, which file types are ac
 - **WHEN** the page loads
 - **THEN** it states the accepted file types and the maximum file size, and shows a message that no documents have been added
 
+#### Scenario: The limit stays stated once documents have been added
+**ID**: SCN-DOCS-001-B
+- **GIVEN** the user has added a document
+- **WHEN** the page shows the saved document
+- **THEN** the page still states the maximum number of files, as it did before anything was added
+
 ### Requirement: The page offers a route back to Overview
 **ID**: REQ-DOCS-002
 The system MUST offer a back link from the upload documents page that returns the user to Overview.
@@ -247,3 +253,52 @@ The system MUST offer a drop zone carrying the service's own choose-file button 
 - **GIVEN** the user tries to add a document without choosing a file
 - **WHEN** the error is shown
 - **THEN** the drop zone itself carries the error state, not a separate control
+
+### Requirement: The page tells the user what to attach, above the upload form
+**ID**: REQ-DOCS-015
+The system MUST show guidance above the upload form saying that an ITAHC must be attached if the consignment requires one, that it can be added later, that documents should be uploaded before the consignment arrives at the UK port, and that documents must be in English with all pages uploaded, followed by the other documents the user may need. The system MUST keep a table of additional documents by type of consignment behind a closed expander, with a link to the GOV.UK guidance that opens in a new tab.
+
+#### Scenario: The guidance sits above the form
+**ID**: SCN-DOCS-015-A
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page loads
+- **THEN** the guidance on attaching an ITAHC and the other documents they may need is shown outside the form and before it
+
+#### Scenario: The additional documents table is behind a closed expander
+**ID**: SCN-DOCS-015-B
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page loads
+- **THEN** the additional documents table is hidden behind an expander headed "Check which additional documents you must upload"
+- **WHEN** the user opens the expander
+- **THEN** a table lists, for each type of consignment, the documents needed
+
+#### Scenario: The guidance links out to GOV.UK in a new tab
+**ID**: SCN-DOCS-015-C
+- **GIVEN** the user has opened the additional documents expander
+- **WHEN** they look at its link to the GOV.UK guidance
+- **THEN** it opens in a new tab
+
+### Requirement: Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
+**ID**: REQ-DOCS-016
+The system MUST, when the user continues with the add-a-document fields filled in, save that document rather than dropping the file, and let them continue once it has been scanned. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer and keep them on the page. It MUST let them continue past an untouched form, since uploading documents is optional.
+
+#### Scenario: Continuing with a filled-in form saves the document
+**ID**: SCN-DOCS-016-A
+- **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
+- **WHEN** they continue
+- **THEN** the document is added, its row shows the type chosen and "Check completed" once scanned
+- **WHEN** they continue again
+- **THEN** Overview is shown
+
+#### Scenario: Continuing with only the document type says what is missing
+**ID**: SCN-DOCS-016-B
+- **GIVEN** the user has chosen a document type and filled in nothing else
+- **WHEN** they continue
+- **THEN** errors say the reference, the date of issue and the file are required
+- **AND** the user stays on the upload documents page
+
+#### Scenario: Continuing with an untouched form leaves the page
+**ID**: SCN-DOCS-016-C
+- **GIVEN** the user has added nothing and filled in nothing
+- **WHEN** they continue
+- **THEN** Overview is shown

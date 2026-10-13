@@ -220,5 +220,5 @@ The volatile catalogues live as topic files under [`docs/reference/`](docs/refer
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.
 - [`docs/reference/workareas.md`](docs/reference/workareas.md) — the `workareas/` runtime-cache map.
 - [`docs/reference/openspec.md`](docs/reference/openspec.md) — OpenSpec CLI, coverage gap queries, and how to read coverage rows for the Behaviour Spec under `openspec/` (authoring conventions: [`openspec/config.yaml`](openspec/config.yaml)).
-- [`docs/reference/test-scope-gh-actions.md`](docs/reference/test-scope-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
-- [`docs/reference/test-scope-cdp.md`](docs/reference/test-scope-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.
+- [`docs/reference/e2e-tests-gh-actions.md`](docs/reference/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
+- [`docs/reference/e2e-tests-cdp.md`](docs/reference/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.

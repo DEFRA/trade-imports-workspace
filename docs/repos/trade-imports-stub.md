@@ -9,12 +9,12 @@ Stub service that mocks responses from third-party integrations for the Trade Im
 ## Responsibilities
 
 **Owns**
-- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`).
+- Canned MDM responses, held as static JSON fixtures in `src/main/resources/responses/` (`countriesResponse.json`, `portsOfEntryResponse.json`). They are MDM's own responses, regenerated from `workareas/shared/design-release-2-1/mdm/captures/raw/` by `workareas/shared/design-release-2-1/mdm/regenerate/*.jq`, with every value MDM masks left out rather than guessed.
 - A fake OAuth2 token endpoint that always succeeds.
 
 **Does not own**
 - No real reference data, no business logic and no persistence. Mongo is configured (`MongoConfig`) but no repository or Mongo template is used in `src/main`; its runtime role is unclear from code.
-- No filtering: `system` and `blocks` query parameters are accepted and ignored, and the `Ocp-Apim-Subscription-Key` header is required but its value is not checked. The real filtering (removing `GB`, applying `blocks`) happens in `trade-imports-reference-data`, not here.
+- Little filtering: the countries call keeps the records that carry the `blocks` block, whatever `includeCountry` says, which is what one capture of MDM showed. That capture holds the `GBNAG_SPS_EX` membership only, so any other block answers an empty list. `system` is accepted and ignored, and the `Ocp-Apim-Subscription-Key` header is required but its value is not checked. Removing `GB` happens in `trade-imports-reference-data`, not here.
 - No stub of Defra ID sign-in (see `trade-imports-defra-id-stub`).
 
 **Upstreams imitated**
@@ -22,8 +22,8 @@ Stub service that mocks responses from third-party integrations for the Trade Im
 | Endpoint | Imitates | Fidelity |
 |----------|----------|----------|
 | `POST /tenant/oauth2/v2.0/token` | Trade platform (Azure AD style) client-credentials token endpoint | Low. Ignores the form body and returns a `Token` with `expiresOn` (epoch millis, now plus 3600s) and the value `stub-token`. |
-| `GET /mdm/geo/countries` | MDM geo countries API | Shape only. Returns the fixed country list, including per-country `blocks`, plus an `x-ms-middleware-request-id: stub-trace-id` header. |
-| `GET /mdm/trade/bcp/poes` | MDM trade BCP/ports-of-entry API | Shape only. Returns a fixed `MdmPortsResponse`, plus the same trace header. |
+| `GET /mdm/geo/countries` | MDM geo countries API | One capture. Returns the records captured once from MDM, whole (all 250 countries unfiltered, 32 for `GBNAG_SPS_EX`, the only block captured), plus an `x-ms-middleware-request-id: stub-trace-id` header. Not checked against MDM since the capture. |
+| `GET /mdm/trade/bcp/poes` | MDM trade BCP/ports-of-entry API | One capture. Returns the 78 port records captured once from MDM, whole, each with its `traffic`, address and status, plus the same trace header. Not checked against MDM since the capture. |
 
 ## Integrations
 

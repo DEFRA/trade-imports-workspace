@@ -137,11 +137,15 @@ const rows = rowSource.map((row) => {
   }
 })
 
-// A row that changed nothing but test suites describes no application behaviour
-// a business reader can check, so it is left out of every ticket.
+// Two kinds of row are left out of every ticket: one that changed nothing but
+// test suites, which describes no application behaviour a business reader can
+// check, and one that was dropped, which describes work deliberately not done.
+// A deferred row stays in, with its state shown, because work being held is
+// something the business may want to see.
 for (const row of rows) {
   const touchesApp = row.domains.length > 0 || row.sharedRepos.length > 0
   row.testOnly = !touchesApp
+  row.excluded = row.testOnly ? 'test-only' : row.status === 'dropped' ? 'dropped' : null
   if (row.domains.length) row.attributedBy = 'repos'
 }
 
@@ -318,16 +322,19 @@ for (const bucket of Object.values(domains)) {
  */
 const allDomains = Object.keys(domains).sort()
 for (const row of rows) {
-  if (row.testOnly || row.domains.length) continue
+  if (row.excluded || row.domains.length) continue
   row.domains = [...allDomains]
   row.attributedBy = 'shared-component'
 }
 
 for (const bucket of Object.values(domains)) {
   bucket.rows = rows
-    .filter((row) => !row.testOnly && row.domains.includes(bucket.domain))
+    .filter((row) => !row.excluded && row.domains.includes(bucket.domain))
     .map((row) => row.id)
     .sort()
+  bucket.excludedRows = rows
+    .filter((row) => row.excluded && row.domains.includes(bucket.domain))
+    .map((row) => ({ id: row.id, title: row.title, why: row.excluded }))
 }
 
 /* --------------------------------------------------------------- checks --- */

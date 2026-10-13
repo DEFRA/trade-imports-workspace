@@ -143,6 +143,13 @@ That gives three outcomes for a row:
 | Only shared components | Every domain's ticket |
 | Only test suites | No ticket — it changed no application behaviour |
 
+Two row states are also left out of the tables: a **test-only** row as above, and
+a **dropped** row, which describes work deliberately not done. A **deferred** row
+stays in with its state shown, because work being held is something the business
+may want to see. `derived.json` lists what was left out per domain as
+`excludedRows`, so the ticket can say a row was dropped rather than leave a
+reader wondering where it went.
+
 A row therefore appears in more than one ticket when it changed more than one
 service. That is the programme's design, not duplication, and the ticket's row
 table should say so. A test-only row is dropped silently from the tables but is

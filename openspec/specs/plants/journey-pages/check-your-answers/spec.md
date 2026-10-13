@@ -48,21 +48,15 @@ The system MUST show the selected consignment contact's name, address, telephone
 - **WHEN** the user views check-your-answers
 - **THEN** the Contact card shows that party's name, address lines, telephone number and email address
 
-### Requirement: Anything not yet answered, or whose address no longer resolves, is shown as "Not provided"
+### Requirement: Anything not yet answered is shown as "Not provided"
 **ID**: REQ-PLANTS-CYA-004
-The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST show "Not provided" for a previously selected party whose address no longer resolves. An unanswered role MUST NOT be shown as an error — an error is reserved for a role whose linked address no longer resolves, as governed by `plants/journey-obligations/review`.
+The system MUST show "Not provided" against any field or party role that has not yet been answered, and MUST NOT show an unanswered role as an error. A party's card shows the address copied onto the notification, which a later change to the address book does not reach, as governed by `plants/addresses`.
 
 #### Scenario: An unanswered destination reads Not provided, with no error shown
 **ID**: SCN-PLANTS-CYA-004-A
 - **GIVEN** a notification whose place of destination has never been answered
 - **WHEN** the user views check-your-answers
 - **THEN** the destination card's rows each read "Not provided", and no error is shown against it
-
-#### Scenario: A deleted destination reads Not provided on every row
-**ID**: SCN-PLANTS-CYA-004-B
-- **GIVEN** a complete draft notification is open on check-your-answers
-- **WHEN** the place-of-destination address is removed from the address book and the page is reloaded
-- **THEN** the Place of destination card's rows each read "Not provided", and the removed party's name is not shown
 
 ### Requirement: A Change link returns to check-your-answers
 **ID**: REQ-PLANTS-CYA-005
@@ -99,14 +93,14 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A submitted notification is read-only and offers delete
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only — with no Change links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.
+The system MUST show a submitted notification read-only — with no Change or Edit details links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.
 
 #### Scenario: The submitted view is read-only and offers delete
 **ID**: SCN-PLANTS-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
 - **THEN** the status shown is "Submitted"
-- **AND** no Change links and no continue action are offered
+- **AND** no Change or Edit details links and no continue action are offered
 - **AND** a delete action is offered, and no cancel-amendment action is shown
 
 #### Scenario: A submitted notification can be deleted from check-your-answers
@@ -161,3 +155,14 @@ The system MUST warn on a draft check-your-answers when submitting today would b
 - **WHEN** the user views the read-only check-your-answers
 - **THEN** a banner explains the notification was made outside the required timing
 - **AND** an on-time submission shows no such banner
+
+### Requirement: Each party card offers Change and, once an address is held, Edit details
+**ID**: REQ-PLANTS-CYA-012
+The system MUST offer, on a draft's consignor-or-exporter, place-of-destination and contact cards, a Change action that reopens the role's picker to choose a different address and, once the role holds an address, an Edit details action that opens that address's edit page and returns to check-your-answers. A card whose role is not yet answered MUST offer only Change. What editing an address changes is governed by `plants/addresses`.
+
+#### Scenario: An answered party card offers Change and Edit details; an unanswered one only Change
+**ID**: SCN-PLANTS-CYA-012-A
+- **GIVEN** a draft notification whose contact address is held and whose place of destination is not yet answered
+- **WHEN** the user views check-your-answers
+- **THEN** the Contact card offers Change and Edit details as two separate actions, Edit details opening the contact address's edit page
+- **AND** the Place of destination card offers only Change

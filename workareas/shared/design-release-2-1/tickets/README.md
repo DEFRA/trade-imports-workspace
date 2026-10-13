@@ -30,58 +30,31 @@ several services. That is the programme's design, not duplication: *"Where a row
 changes a page or behaviour plants also has, the same increment changes plants.
 Plants keeps its own questions and data."*
 
-## Rules
+## Rules and method
 
-- **Acceptance criteria come from `openspec/specs/`, never from the backlog.**
-  The backlog records intent; openspec records what shipped. Where they disagree,
-  openspec wins. On this theme they did disagree — the backlog said Continue on an
-  incomplete amend review is held with no error, and the shipped behaviour shows
-  an error summary naming what is missing.
-- **A ticket carries only its own domain's scenarios and spec files.** The
-  per-domain counts must sum to the theme's total, which is how a missed file gets
-  caught.
-- **Status tracks the situation:** `Ready for Dev` when the ticket is created,
-  `In Dev` while the theme is being built, `Deskcheck` once it is merged to
-  `main`. On this board the status `In Dev` is reached by a transition named
-  `In Progress` — do not assume transition name equals status name.
-- **Spec links point at the branch while the work is unmerged**, and are
-  regenerated to `main` on merge. Leaving them on a deleted branch 404s every
-  link.
-- **Formatting is Jira wiki markup, not Markdown.** A single newline is a line
-  break in Jira, so every paragraph must be one unwrapped line — hard wrapping at
-  80 columns renders as ragged mid-sentence breaks. Scenario names are `h5.`
-  headings rather than bold lines, because a line starting with `*` is one space
-  away from being parsed as a list bullet. `[label|url]` links work inside table
-  cells.
-- **No collapsible sections.** `tools/jira/update-ticket.sh` posts wiki markup to
-  `rest/api/2`, which Jira Cloud converts to its own document format. Headings,
-  tables, lists, bold and links convert; macros do not. `{expand}` was tried and
-  rendered as the literal string. A real collapsible section needs an Atlassian
-  Document Format body posted to `rest/api/3`, which neither `update-ticket.sh`
-  nor `tim` can do today.
+These tickets are owned by the **`theme-ticket`** skill, which holds the rules
+and the derivation steps as its single source of truth — see
+[`.claude/skills/theme-ticket/SKILL.md`](../../../../.claude/skills/theme-ticket/SKILL.md).
+The two that most often catch someone out:
 
-## How these were built
+- acceptance criteria come from `openspec/specs/`, never from the backlog — on
+  this theme the two disagreed about whether an incomplete amend review shows an
+  error;
+- the per-domain scenario counts must sum to the theme's total, which is what
+  caught 19 spec files here rather than 20.
 
-1. Find the theme's row commits: `git log --grep='<theme>' -- openspec/` in the
-   workspace repo gives one commit per row.
-2. From each commit's diff, collect the added `SCN-*` ids and the files holding
-   them. The diff selects which scenarios changed; it does not supply their text,
-   because an unchanged `GIVEN` line does not appear in it.
-3. Read each scenario's complete block from the **current** `spec.md`.
-4. Split both the scenarios and the spec files by domain on their path prefix —
-   `live-animals/`, `plants/`, `ins/`.
-5. Count added scenarios per file per domain. The domain totals must sum to the
-   theme total.
-6. Take the row list per domain from each row's `repos` field in the theme
-   backlog: `frontend` is animals, `plantsfrontend` plants, `insfrontend` the
-   front door.
-
-## Updating one
+## Working on these
 
 ```bash
-tools/jira/update-ticket.sh EUDPA-691 -d - < animals-journey/description.txt
+# derive a theme, split by domain
+tools/theme-ticket/derive-scenarios.sh --workarea shared/design-release-2-1 --theme journey-foundation
+
+# push one folder's description and summary together
+tools/theme-ticket/push-description.sh workareas/shared/design-release-2-1/tickets/animals-journey
+
+# which tickets has openspec moved on from?
+tools/theme-ticket/check-stale.sh --workarea shared/design-release-2-1
 ```
 
-Add `-s "<summary>"` to change the summary too. Creation goes through
-`tim jira create --from <folder>/ticket.json`, which is a dry run until you pass
-`--confirm <planId>`.
+Creation goes through `tim jira create --from <folder>/ticket.json`, a dry run
+until you pass `--confirm <planId>`.

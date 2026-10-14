@@ -221,14 +221,44 @@ This does the mechanical work, and it is the only place that should: the
 extraction is all `git`, `grep` and file parsing, which Bash call hygiene keeps
 out of LLM-typed commands.
 
-It finds the theme's row commits, takes the scenario headings each one added to
-each spec file, then reads those scenarios **in full from the current spec** —
-a diff hides a `GIVEN` it did not change, so a scenario read from the diff comes
-out truncated. It then splits scenarios and files by domain, maps rows to domains
-by the rule above, and checks the counts sum.
+It finds the theme's commits, takes the scenario headings each one added to each
+spec file, then reads those scenarios **in full from the current spec** — a diff
+hides a `GIVEN` it did not change, so a scenario read from the diff comes out
+truncated. It then splits scenarios and files by domain, maps rows to domains by
+the rule above, and checks the counts sum.
 
 Read `derived.json`. Note its `warnings` — a scenario added and later renamed is
 counted but has no text, and needs looking up by hand.
+
+### Which commits count as the theme's
+
+A row commits scoped by the theme — `feat(<programme>-<theme>):`. But a spec
+change made **while the theme was reviewed** commits scoped by the Jira key
+instead — `docs(EUDPA-691): spec the button layout`. Both are the theme's
+behaviour, so the scope may name the theme or any key `tickets.json` records for
+it. Reading only the theme slug misses the review entirely: on Design Release
+2.1's first two themes that was 26 scenarios, including a reworded amend review
+and a new button layout.
+
+Matching the key alone goes too far the other way. A `spec-catchup` run under
+the same key sweeps in behaviour the theme never touched — reference lists'
+review commit carried two timezone scenarios on the confirmation page and the
+dashboard. So the theme's **row** commits define its footprint, the spec files it
+may speak for, and a review commit contributes only inside it.
+
+Anything a review commit wrote outside the footprint is reported as
+`outsideFootprint`, never silently dropped. **Read that list every time**: some
+of it will be the theme's behaviour reaching a page its rows did not touch, and
+some will be a sweep that belongs to nobody. Where you judge an entry to belong,
+record it in `<workareaDir>/tickets/footprint-overrides.json` under the theme and
+file, with the reasoning dated beside it, and re-derive:
+
+```json
+{ "include": { "<theme>": { "<spec path>": ["<scenario heading>"] } } }
+```
+
+Anything not listed stays out, so the default is conservative and every inclusion
+is a decision someone can read back.
 
 ## Step 2: Write one description per domain
 

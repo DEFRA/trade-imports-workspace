@@ -1,6 +1,6 @@
 # OpenSpec commands
 
-Workspace-useful commands for the Behaviour Spec under [`openspec/`](../../openspec/). Conventions (MUST not SHALL, Purpose rules, stable IDs, coverage) live in [`openspec/config.yaml`](../../openspec/config.yaml). Area codes: [`openspec/coverage/AREAS.md`](../../openspec/coverage/AREAS.md).
+Workspace-useful commands for the Behaviour Spec under [`openspec/`](../../openspec/). Conventions (MUST not SHALL, Purpose rules, stable IDs, coverage) live in [`openspec/config.yaml`](../../openspec/config.yaml). Area codes: [`openspec/coverage/AREAS.md`](../../openspec/coverage/AREAS.md). The spec prefixes (`live-animals`, `admin`, `ins`, `plants`) and the test domains they match: [Test and spec terms](test-and-spec-terms.md).
 
 Run from the workspace root. Prefer `npx` so everyone hits the same package without a global install:
 

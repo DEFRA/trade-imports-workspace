@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       suites:
-        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one — or all. Clear it to run only the tagged tests.'
+        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or one test type within it, e.g. tests/animals/e2e/) — space- or comma-separated for more than one — or all. Clear it to run only the tagged tests.'
         required: false
         type: string
         default: 'all'
@@ -27,7 +27,7 @@ on:
         value: ${{ jobs.deploy-report.outputs.report-url }}
 
 jobs:
-  # Single suite, sharded three ways for wall-clock. Each shard stands up its
+  # One run, sharded three ways for wall-clock. Each shard stands up its
   # own stack, then emits a blob report; merge-reports stitches the blobs back
   # into one HTML report.
   e2e:

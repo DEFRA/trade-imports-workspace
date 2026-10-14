@@ -65,7 +65,7 @@ Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-refe
 |--------|------------|------|-------|
 | `repos/trade-imports-animals-frontend` | DEFRA/trade-imports-animals-frontend | User-facing web application | Node.js |
 | `repos/trade-imports-animals-backend` | DEFRA/trade-imports-animals-backend | API / business logic service | Java / Spring Boot |
-| `repos/trade-imports-ins-tests` | DEFRA/trade-imports-ins-tests | End-to-end, accessibility and security test suite — one directory of test suites per domain (`animals`, `animals-admin`, `ins`, `plants`), run by a single `chromium` Playwright project | Node.js |
+| `repos/trade-imports-ins-tests` | DEFRA/trade-imports-ins-tests | End-to-end, accessibility and security test suite — one directory per domain (`animals`, `animals-admin`, `ins`, `plants`), each with `e2e`, `a11y` and `security` test types, run by a single `chromium` Playwright project | Node.js |
 | `repos/trade-imports-performance-tests` | DEFRA/trade-imports-performance-tests | k6 performance-test suite for INS (a CDP performance-test suite) — runs against the stack rather than in it (`dockerStack: null` in `repos.json`) | k6 / Node.js tooling |
 | `repos/trade-imports-animals-admin` | DEFRA/trade-imports-animals-admin | Internal admin interface | Node.js |
 | `repos/trade-imports-stub` | DEFRA/trade-imports-stub | Stub of upstream trade-imports services | Java / Spring Boot |
@@ -222,5 +222,6 @@ The volatile catalogues live as topic files under [`docs/reference/`](docs/refer
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.
 - [`docs/reference/workareas.md`](docs/reference/workareas.md) — the `workareas/` runtime-cache map.
 - [`docs/reference/openspec.md`](docs/reference/openspec.md) — OpenSpec CLI, coverage gap queries, and how to read coverage rows for the Behaviour Spec under `openspec/` (authoring conventions: [`openspec/config.yaml`](openspec/config.yaml)).
+- [`docs/reference/test-and-spec-terms.md`](docs/reference/test-and-spec-terms.md) — what domain, test type, suite, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
 - [`docs/reference/e2e-tests-gh-actions.md`](docs/reference/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
 - [`docs/reference/e2e-tests-cdp.md`](docs/reference/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.

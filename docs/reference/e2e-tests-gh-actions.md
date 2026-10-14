@@ -1,71 +1,62 @@
 # E2E tests: GitHub Actions
 
-This page sets out the tests GitHub Actions runs for each repo, and the scheduled runs in `trade-imports-ins-tests`.
+This page describes how GitHub Actions picks the e2e tests for a pull request, and the scheduled runs in `trade-imports-ins-tests`. What each repo runs is in [`scripts/ci/e2e-tests-pr-scope.json`](../../scripts/ci/e2e-tests-pr-scope.json), not here.
 
-For the runs the CDP Portal triggers, see [E2E tests: CDP](e2e-tests-cdp.md).
-
-> **Suggestion 1:** tag specs by the services they exercise (for example `@svc:ins-backend`, on the `describe` or the test) and have the workflow select by `--grep` on the PR's repo, instead of a hand-kept repo-to-domain file. Coupling then lives next to the test, new specs are picked up automatically, and the **Future consideration** tags (`@gateway`, `@auth` and so on) become one scheme. It needs a tagging pass and a convention, and tags can still drift; a lint rule requiring at least one service tag would help.
->
-> **Suggestion 2:** a lighter variant of 1. Run a repo's own domain by path, then add only the specs from other domains tagged with that service. Tags then cover just the cross-domain links, and a missed tag only loses extra coverage, never the repo's own domain. Playwright ANDs a path with `--grep`, so resolve the tagged spec files first and pass them with the domain path.
->
-> **Preferred: suggestion 2.** A missed tag only loses extra coverage, and far fewer tags are needed.
+For the runs the CDP Portal triggers, see [E2E tests: CDP](e2e-tests-cdp.md). For what domain, suite and service tag mean, see [Test and spec terms](test-and-spec-terms.md).
 
 ## Pull requests
 
-[`.github/workflows/e2e-tests.yml`](../../.github/workflows/e2e-tests.yml) reads [`scripts/ci/e2e-tests-pr-scope.json`](../../scripts/ci/e2e-tests-pr-scope.json) and runs the domains for the calling repo. That file is what selects the tests. A list names the domains, each run as `tests/<name>/`.
+Only a repo that calls [`.github/workflows/e2e-tests.yml`](../../.github/workflows/e2e-tests.yml) gets ins-tests e2e tests on its pull requests. [Repos that do not call it](#repos-that-do-not-call-the-workflow) run none.
 
-A repo's pull request runs these tests only when its own workflow calls `.github/workflows/e2e-tests.yml`. A repo that does not call it has no entry in the scope file, on purpose, and shows `none` below.
+For a repo that does, the workflow takes its entry from the scope file and runs it. An entry has two lists:
 
-A repo missing from `scripts/ci/e2e-tests-pr-scope.json` fails the run. So does a domain that does not exist. `"all"`, or an empty domain value, runs every domain.
+- `suites`: paths under `tests/` to run, in one command. A suite is a domain's directory (`tests/animals/`) or a test type within it (`tests/animals/e2e/`).
+- `tags`: service tags. Tests from any domain carrying one of these run in a second command, after the suites.
 
-### INS repos
+Both commands are sharded three ways, and each shard runs both.
 
-| Repo | Domains | Links |
+```json
+"trade-imports-animals-backend": {
+  "suites": ["tests/animals/", "tests/animals-admin/"],
+  "tags": ["@animals-backend"]
+}
+```
+
+This runs the animals and animals-admin suites, then any other spec tagged `@animals-backend`.
+
+### What an entry can do
+
+- **Several suites**: list as many paths as needed.
+- **Nested suites**: a path can go below a domain, such as `tests/animals/e2e/`.
+- **Several tags**: list them, and one command runs every spec carrying any of them.
+- **Everything**: `"suites": ["all"]`. It stands alone and cannot be combined with tags, since it already runs every test.
+- **Tags only**: set `tags` and leave `suites` out or empty (`"suites": []`). Only the tagged tests run, and a shard with none passes.
+- **No entry**: a repo missing from the file uses `default`, which runs everything. An entry with neither list fails the run.
+
+A service runs its own suite plus the specs carrying its tag. A missing tag loses extra coverage, never the service's own suite. `npm run lint` in `trade-imports-ins-tests` fails a spec that carries the tag of the domain it sits in, because that domain already runs by path.
+
+### Repos that run everything
+
+These repos use the `default` entry, which runs every suite. If pull-request run time grows too long, a tag could narrow them instead.
+
+| Repo | Why | Future consideration |
 |---|---|---|
-| address-book | ins, animals, plants | **ins** — ins frontend uses the address book.<br>**animals** — animals frontend uses the address book.<br>**plants** — plants frontend uses the address book. |
-| ins-backend | ins | **ins** — this repo's domain.<br>**Not run: animals, plants** — ins already drives the animals journey; plants publishes no events yet. |
-| ins-frontend | ins, animals, plants | **ins** — this repo's domain.<br>**animals** — animals journey hands off to add-address.<br>**plants** — plants journey will hand off to add-address (not yet built). |
+| dynamics-gateway | Forwards notification events from the stack to Azure Service Bus; only animals publishes today, but any journey may use it. | `@gateway` (to add) — event routing and admin outbox/replay specs. |
+| defra-id-stub | OIDC sign-in stub; all four UIs depend on it. | `@auth` — sign-in specs in each domain. |
+| reference-data | Shared countries and ports; multiple frontends read it. | `@reference-data` (to add) — specs that load countries or ports of entry. |
+| stub | Stub for upstream trade-platform and MDM; stack-wide. | `@trade-platform` (to add) — specs that call this repo's trade-platform or MDM endpoints. |
+| workspace | Holds the shared e2e workflow and Docker Compose stack. | `@smoke` — a cheap "stack + front doors" signal (Compose up, minimal journey per domain); not the full e2e suite. |
+| ins-tests | Playwright e2e testing suite; holds every domain's specs. | Narrow by changed paths under `tests/` (shared code still runs everything). |
 
-### Animals repos
+### Repos that do not call the workflow
 
-| Repo | Domains | Links |
-|---|---|---|
-| animals-admin | animals, animals-admin | **animals** — specs create notifications through animals-frontend.<br>**animals-admin** — this repo's domain.<br>**Not run: ins** — replay only republishes events; ins-backend's handling of them is covered on ins-backend. |
-| animals-backend | ins, animals, animals-admin | **ins** — events from this backend feed the ins aggregate.<br>**animals** — this repo's domain.<br>**animals-admin** — admin reads animals notification data. |
-| animals-frontend | animals, animals-admin | **animals** — this repo's domain.<br>**animals-admin** — admin specs seed notifications through this frontend.<br>**Not run: ins** — aggregate is fed by animals-backend; add-address handoff is covered on ins-frontend. |
+These repos do not call the workflow, so their pull requests run no ins-tests e2e tests. Having no entry means "run everything" only for a repo that does call it. They still run their own checks, such as unit tests, lint and the SonarCloud scan, where they have them.
 
-### Plants repos
-
-| Repo | Domains | Links |
-|---|---|---|
-| plants-backend | ins, plants | **ins** — will mirror animals-backend once its outbox ships.<br>**plants** — this repo's domain. |
-| plants-frontend | plants | **plants** — this repo's domain.<br>**Not run: ins** — aggregate will be fed by plants-backend. |
-
-### Shared stack repos
-
-Shared across journey services. `"all"` in `scripts/ci/e2e-tests-pr-scope.json` runs every Playwright domain on a pull request; if that becomes too slow, see **Future consideration** in each row's **Notes** for tag-based scope instead. `none` means the repo runs no ins-tests domain (shared contract or tooling only).
-
-| Repo | Domains | Notes |
-|---|---|---|
-| dynamics-gateway | all | Forwards notification events from the stack to Azure Service Bus; only animals publishes today, but any journey may use it.<br>**Future consideration:** `@gateway` (to add) — event routing and admin outbox/replay specs. |
-| defra-id-stub | all | OIDC sign-in stub; all four UIs depend on it.<br>**Future consideration:** `@auth` — sign-in specs in each domain. |
-| reference-data | all | Shared countries and ports; multiple frontends read it.<br>**Future consideration:** `@reference-data` (to add) — specs that load countries or ports of entry. |
-| schemas | none | Shared JSON Schema and JSON-LD contracts; consumed by multiple services (e.g. animals-backend, dynamics-gateway). |
-| stub | all | Stub for upstream trade-platform and MDM; stack-wide.<br>**Future consideration:** `@trade-platform` (to add) — specs that call this repo's trade-platform or MDM endpoints. |
-| workspace | all | Workspace for the service repos (holds the shared e2e workflow and Docker Compose stack).<br>**Future consideration:** `@smoke` — a cheap "stack + front doors" signal (Compose up, minimal journey per domain); not the full e2e suite. |
-
-### Test repos
-
-| Repo | Domains | Notes |
-|---|---|---|
-| ins-tests | all | Playwright e2e testing suite; holds every domain's specs.<br>**Future consideration:** if pull-request run time grows too long, narrow by changed paths under `tests/` (shared code still runs `all`). |
-| performance-tests | none | Performance testing suite; separate from ins-tests Playwright e2e. |
-
-### Prototype repos
-
-| Repo | Domains | Notes |
-|---|---|---|
-| plants-prototype | none | Designer prototype; outside the Docker stack. |
+| Repo | Why |
+|---|---|
+| schemas | Shared JSON Schema and JSON-LD contracts, consumed by several services (such as animals-backend and dynamics-gateway). |
+| performance-tests | Performance testing suite, separate from the ins-tests Playwright e2e. |
+| plants-prototype | Designer prototype, outside the Docker stack. |
 
 ## Scheduled runs
 
@@ -79,6 +70,21 @@ Shared across journey services. `"all"` in `scripts/ci/e2e-tests-pr-scope.json` 
 
 Times are in the zone the schedule is set in: UTC here, Europe/London on CDP. In summer, 01:00 UTC is 02:00 in London.
 
+## Follow-up: service tags to add
+
+Only `@animals-backend` is tagged so far, on two `ins` specs. These notes say which specs in other domains each service's pull request should also run, so the tags can be added. A `service-tag` skill could do this per service: read its links, find the specs in other domains that exercise it, add its tag to each, and run `npm run lint` to check the tag fits where the spec lives.
+
+| Repo | Links |
+|---|---|
+| address-book | **ins** — ins frontend uses the address book.<br>**animals** — animals frontend uses the address book.<br>**plants** — plants frontend uses the address book. |
+| ins-backend | **ins** — this repo's domain.<br>**Not run: animals, plants** — ins already drives the animals journey; plants publishes no events yet. |
+| ins-frontend | **ins** — this repo's domain.<br>**animals** — animals journey hands off to add-address.<br>**plants** — plants journey will hand off to add-address (not yet built). |
+| animals-admin | **animals** — specs create notifications through animals-frontend.<br>**animals-admin** — this repo's domain.<br>**Not run: ins** — replay only republishes events; ins-backend's handling of them is covered on ins-backend. |
+| animals-backend | **ins** — events from this backend feed the ins aggregate.<br>**animals** — this repo's domain.<br>**animals-admin** — admin reads animals notification data. |
+| animals-frontend | **animals** — this repo's domain.<br>**animals-admin** — admin specs seed notifications through this frontend.<br>**Not run: ins** — aggregate is fed by animals-backend; add-address handoff is covered on ins-frontend. |
+| plants-backend | **ins** — will mirror animals-backend once its outbox ships.<br>**plants** — this repo's domain. |
+| plants-frontend | **plants** — this repo's domain.<br>**Not run: ins** — aggregate will be fed by plants-backend. |
+
 ## Keeping this up to date
 
-Change `scripts/ci/e2e-tests-pr-scope.json` and the matching table rows when scope or couplings change (**Links** for domain repos, **Notes** for shared stack and test repos). When narrowing ships, update **Domains**, rewrite **Notes**, and drop or replace **Future consideration:**. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.
+Change `scripts/ci/e2e-tests-pr-scope.json` when scope changes. This page describes the approach, so it needs updating only when the approach changes, or when a link above is tagged and can be removed. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.

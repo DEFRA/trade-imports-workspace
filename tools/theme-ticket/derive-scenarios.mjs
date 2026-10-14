@@ -151,24 +151,46 @@ for (const row of rows) {
 
 /* ---------------------------------------------------------- the commits --- */
 
-const commits = git(
-  'log',
-  '-E',
-  '--grep=^(feat|fix|test)\\(.*' + theme + '\\):',
-  '--format=%H%x09%s',
-  branch,
-  '--',
-  'openspec/'
-)
-  .trim()
-  .split('\n')
-  .filter(Boolean)
-  .map((line) => {
-    const [sha, subject] = line.split('\t')
-    return { sha, subject }
-  })
+/**
+ * Every commit that wrote this theme's openspec, by the scopes it uses.
+ *
+ * A row's own commit is scoped by the theme — `feat(<programme>-<theme>):`. But
+ * a spec change made while the theme was reviewed is scoped by its Jira key
+ * instead — `docs(EUDPA-691): spec the button layout`. Matching only the theme
+ * slug misses those, and they are real behaviour: journey foundation gained six
+ * scenarios and reference lists eleven during review, none of which would have
+ * reached the ticket.
+ *
+ * So the scope may name the theme or any Jira key `tickets.json` records for it,
+ * and the type may be any conventional one. A commit that matches but wrote no
+ * spec simply yields no scenarios — the `-- openspec/` limit already handles it.
+ */
+const ticketsFile = path.join(workareaDir, 'tickets', 'tickets.json')
+const themeKeys = fs.existsSync(ticketsFile)
+  ? Object.values(readJson(ticketsFile).themes?.[theme] || {})
+  : []
+
+const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const scopePattern = [theme, ...themeKeys].map(escape).join('|')
+
+const commitsMatching = (pattern) =>
+  git('log', '-E', '--grep=' + pattern, '--format=%H%x09%s', branch, '--', 'openspec/')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [sha, subject] = line.split('\t')
+      return { sha, subject }
+    })
+
+// A row's commit is scoped by the theme. These define the theme's footprint:
+// the spec files it is entitled to speak for.
+const rowCommits = commitsMatching('^[a-z]+\\(.*' + escape(theme) + '\\):')
+
+const commits = commitsMatching('^[a-z]+\\(.*(' + scopePattern + ')\\):')
 
 if (!commits.length) fail('no commits on ' + branch + ' whose subject scopes "' + theme + '" and which touch openspec/')
+if (!rowCommits.length) fail('no commits on ' + branch + ' scoped by the theme slug "' + theme + '" — without them there is no footprint to judge review commits against')
 
 /**
  * The scenario headings each commit added, per spec file.
@@ -241,12 +263,55 @@ let totalAdded = 0
 const unknownAreas = new Set()
 const fileCounts = new Map()
 
+/**
+ * The spec files the theme's own row commits wrote — the files it is entitled to
+ * speak for.
+ *
+ * A review commit is scoped by the Jira key, and a spec-catchup run under that
+ * key can sweep in behaviour that has nothing to do with the theme. Reference
+ * lists' review commit carried two timezone scenarios on the confirmation page
+ * and the dashboard alongside one real territory-naming change. Counting all
+ * three would have had the ticket claim work the theme never did.
+ *
+ * So a review commit contributes only inside this footprint. Anything it wrote
+ * elsewhere is reported, never silently dropped.
+ */
+const footprint = new Set()
+for (const commit of rowCommits) {
+  for (const relPath of addedHeadings(commit.sha).keys()) footprint.add(relPath)
+}
+
+const rowShas = new Set(rowCommits.map((c) => c.sha))
+const outsideFootprint = []
+
+// Scenarios a human judged to be the theme's after all, despite falling outside
+// its footprint. Anything not listed stays excluded, so the default is
+// conservative and every inclusion is a recorded decision.
+const overridesFile = path.join(workareaDir, 'tickets', 'footprint-overrides.json')
+const included = fs.existsSync(overridesFile) ? readJson(overridesFile).include?.[theme] || {} : {}
+const isIncluded = (relPath, heading) => (included[relPath] || []).includes(heading)
+
 for (const commit of commits) {
   // The row a commit belongs to, by matching its subject against the row titles.
   const row = rows.find((r) => commit.subject.includes(r.title.slice(0, 40)))
   if (row) row.commit = commit.sha
 
-  for (const [relPath, headings] of addedHeadings(commit.sha)) {
+  for (let [relPath, headings] of addedHeadings(commit.sha)) {
+    if (!rowShas.has(commit.sha) && !footprint.has(relPath)) {
+      const kept = headings.filter((heading) => isIncluded(relPath, heading))
+      const dropped = headings.filter((heading) => !isIncluded(relPath, heading))
+      if (dropped.length) {
+        outsideFootprint.push({
+          commit: commit.sha.slice(0, 8),
+          subject: commit.subject,
+          file: relPath,
+          scenarios: dropped
+        })
+      }
+      if (!kept.length) continue
+      headings = kept
+    }
+
     const area = relPath.split('/')[0]
     const domain = SPEC_AREA_DOMAIN[area]
     if (!domain) {
@@ -361,10 +426,14 @@ const output = {
   domains,
   rows,
   warnings,
+  // Scenarios a review commit wrote outside the theme's footprint. Reported so
+  // a sweep that touched other behaviour is visible rather than lost.
+  outsideFootprint,
   checks: {
     scenarioSum: 'ok',
     perDomainSum,
-    unknownAreas: []
+    unknownAreas: [],
+    footprintFiles: footprint.size
   }
 }
 

@@ -4,7 +4,7 @@ Design Release 2.1 changes how a live animals notification moves through its jou
 
 This is the foundation the rest of Design Release 2.1 sits on. Nine other themes change pages that follow these rules, so the rules changed first and everything else is built on top of them.
 
-This ticket covers the *live animals journey only*. The same increments changed the high-risk plants journey and the Import notification service front door, each of which has its own ticket under the same epic. The work is not yet merged.
+This ticket covers the *live animals journey only*. The same increments changed the high-risk plants journey and the Import notification service front door, each of which has its own ticket under the same epic. *This work is merged to {{main}}.*
 
 h3. What changes for the user
 
@@ -22,11 +22,11 @@ h4. A page can be left unfinished
 
 h4. Amending a submitted notification has its own page endings
 
-While amending, pages end with "Save and return", "Save and continue" and "Save and return to overview". A status bar across the journey shows "Amend" and offers "Cancel amend". Opening the review of an incomplete amendment shows no error, but continuing from it is refused and the error summary names what is missing.
+While amending, pages end with "Save and return", "Save and continue" and "Save and return to overview". A status bar across the journey shows "Amend" and offers "Cancel amend". Opening the review of an incomplete amendment shows no error, but continuing from it keeps the trader there under an error summary naming what is missing. Where the two save buttons sit side by side, the third control sits on its own line below them.
 
 h3. Acceptance criteria
 
-Copied from the service's behaviour specification. These 18 scenarios carry the change's core behaviour. The live animals specification gained *35 scenarios across 7 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+Copied from the service's behaviour specification. These 23 scenarios carry the change's core behaviour. The live animals specification gained *40 scenarios across 7 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
 
 h4. The order of the opening run
 
@@ -153,19 +153,43 @@ h5. Save and continue while amending goes on, not back to the review
 * *WHEN* the user selects "Save and continue"
 * *THEN* Overview is shown, not the review
 
-h5. An incomplete amendment's review shows no error when it is opened
+h5. An incomplete amendment's review opens with no error
 
 * *GIVEN* a notification being amended whose arrival date has been cleared and saved
 * *WHEN* the user opens the review
 * *THEN* no error summary and no error message is shown
 
-h5. Continuing from an incomplete amendment is refused, naming what is missing
+h5. Continuing from an incomplete amendment stays on the review, naming what is missing
 
 * *GIVEN* a notification being amended whose arrival date has been cleared and saved
 * *WHEN* the user continues
-* *THEN* they stay on the review and the error summary names "Complete arrival details"
+* *THEN* they stay on the review, under an error summary titled "There is a problem" that names the arrival details and takes focus
 * *AND* the notification is still being amended
 * *AND* the declaration is not opened
+
+h5. Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it
+
+* *GIVEN* a notification being amended whose arrival date at port has been changed to more than 6 months ahead
+* *WHEN* the user continues on the review
+* *THEN* they stay on the review, under an error summary that names the arrival details
+* *AND* the notification is still being amended
+* *AND* the declaration is not opened
+
+h4. Where the buttons sit
+
+h5. Cancel and return to overview sits on its own line below the two buttons
+
+* *GIVEN* a notification that is not being amended
+* *WHEN* the user opens Commodity details from Overview
+* *THEN* "Save and continue" and "Save and return to overview" sit side by side
+* *AND* "Cancel and return to overview" sits on its own line below them
+
+h5. While amending, Save and return to overview sits on its own line below the two save buttons
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Arrival details from Overview
+* *THEN* "Save and return" and "Save and continue" sit side by side
+* *AND* "Save and return to overview" sits on its own line below them
 
 h4. The amend status bar
 
@@ -195,16 +219,16 @@ All five are built. A sixth row in this theme changed only the test suite — an
 
 h3. Where this is specified
 
-The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 35 scenarios across these 7 files. Each link opens the file as it stands on the branch this work is on.
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 40 scenarios across these 7 files. Each link opens the file as it stands on {{main}}.
 
 ||Specification||New scenarios||
-|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-flow/spec.md]|21|
-|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/notification-lifecycle/spec.md]|4|
-|[CPH number|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/cph-number/spec.md]|3|
-|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|3|
-|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|2|
-|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|1|
-|[Commodity selection|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]|1|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]|23|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-lifecycle/spec.md]|4|
+|[CPH number|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/cph-number/spec.md]|3|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|6|
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|2|
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|1|
+|[Commodity selection|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]|1|
 
 Three further live animals files were reworded without gaining scenarios: addresses, notification dashboard, and notification status and reference.
 

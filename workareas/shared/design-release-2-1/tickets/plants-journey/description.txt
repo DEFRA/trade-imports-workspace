@@ -4,7 +4,7 @@ Design Release 2.1 changes how a high-risk plants notification moves through its
 
 *The plants question order does not change.* Plants keeps its own steps, its own questions and its own data. What changes is where the opening run ends, where a saved page returns to, and what saving an unfinished page does — the rules the live animals journey is adopting at the same time, applied to plants' own pages.
 
-This ticket covers the *high-risk plants journey only*. The same increments changed the live animals journey and the Import notification service front door, each of which has its own ticket under the same epic. The work is not yet merged.
+This ticket covers the *high-risk plants journey only*. The same increments changed the live animals journey and the Import notification service front door, each of which has its own ticket under the same epic. *This work is merged to {{main}}.*
 
 h3. What changes for the user
 
@@ -30,7 +30,7 @@ Page name, service name, GOV.UK, separated by hyphens — not pipes. A page show
 
 h3. Acceptance criteria
 
-Copied from the service's behaviour specification. These 16 scenarios carry the change's core behaviour. The plants specification gained *34 scenarios across 11 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+Copied from the service's behaviour specification. These 22 scenarios carry the change's core behaviour. The plants specification gained *44 scenarios across 12 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
 
 h4. Where the opening run ends
 
@@ -40,12 +40,20 @@ h5. The opening sequence ends on check your answers even when tasks are outstand
 * *WHEN* they save the last step
 * *THEN* check your answers shows the unfinished notification and names every outstanding task
 
-h5. Viewing an unfinished notification names each outstanding task
+h5. Viewing an unfinished notification names each unfinished card and links to it
 
-* *GIVEN* a draft notification with one or more tasks not yet complete
+* *GIVEN* a draft notification with one or more cards still holding outstanding answers
 * *WHEN* the user views check-your-answers
-* *THEN* an error summary titled "There is a problem" names each task not yet complete
-* *AND* each entry links to that task's page, which returns to check-your-answers once saved
+* *THEN* an error summary titled "There is a problem" names each unfinished card in page order, such as "Complete arrival details" and "Complete contact"
+* *AND* each entry links to the card it names, which is itself marked with the same words
+* *AND* "Complete commodity details" links to the "About the consignment" heading
+
+h5. A half-done card is named once and links to the card, not to a page
+
+* *GIVEN* a plants-for-planting draft whose arrival status is answered and whose arrival date is not
+* *WHEN* the user views check-your-answers
+* *THEN* the error summary names "Complete arrival details" once
+* *AND* that entry links to the Arrival details card on the page
 
 h5. Continuing from an unfinished notification is refused, keeping the user on the page
 
@@ -104,7 +112,7 @@ h5. A time not on the 24-hour clock is refused on save and return
 * *THEN* they stay on the page, which shows "Enter a real time, like 14:30"
 * *AND* nothing is saved
 
-The same "save and return to overview" behaviour is specified page by page for arrival status, commodity type, identification numbers and origin.
+The same "save and return to overview" behaviour is specified page by page for arrival status, commodity type, identification numbers, origin, the consignor and the place of destination — in each case nothing chosen reaches Overview with no error and nothing saved.
 
 h4. Page endings while amending
 
@@ -124,19 +132,43 @@ h5. Save and continue while amending goes to the next page of the task
 * *WHEN* they select "Save and return to overview" on Arrival details
 * *THEN* Overview is shown
 
-h5. An incomplete amendment's review shows no error
+h5. An incomplete amendment's review opens with no error
 
 * *GIVEN* a notification being amended whose arrival date has been cleared and saved
 * *WHEN* the user opens check-your-answers
 * *THEN* no error summary and no error message is shown
 
-h5. Continuing from an incomplete amendment is refused, naming what is missing
+h5. Continuing from an incomplete amendment stays on check-your-answers, naming what is missing
 
 * *GIVEN* a notification being amended whose arrival date has been cleared and saved
 * *WHEN* the user continues
-* *THEN* they stay on check-your-answers and the error summary names "Complete arrival details"
+* *THEN* they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
 * *AND* the notification is still being amended
 * *AND* the declaration is not opened
+
+h5. The commodities list offers two controls while amending
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens the commodities list
+* *THEN* it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
+* *AND* "Save and return" returns to the review
+* *AND* "Save and continue" goes to Overview
+
+h4. Where the buttons sit
+
+h5. Cancel and return to overview sits on its own line below the two buttons
+
+* *GIVEN* a notification that is not being amended
+* *WHEN* the user opens a page the hub links to directly
+* *THEN* its primary action and "Save and return to overview" sit side by side
+* *AND* "Cancel and return to overview" sits on its own line below them
+
+h5. While amending, Save and return to overview sits on its own line below the two save buttons
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens a page the hub links to directly
+* *THEN* "Save and return" and "Save and continue" sit side by side
+* *AND* "Save and return to overview" sits on its own line below them
 
 h4. The amend status bar
 
@@ -181,20 +213,21 @@ All six are built.
 
 h3. Where this is specified
 
-The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 34 scenarios across these 11 files. Each link opens the file as it stands on the branch this work is on.
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 44 scenarios across these 12 files. Each link opens the file as it stands on {{main}}.
 
 ||Specification||New scenarios||
-|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-flow/spec.md]|12|
-|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|5|
-|[Page titles|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/page-titles/spec.md]|4|
-|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/notification-lifecycle/spec.md]|4|
-|[Consignor select|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/consignor-select/spec.md]|2|
-|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-details/spec.md]|2|
-|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/origin/spec.md]|1|
-|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|1|
-|[Commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/commodity-type/spec.md]|1|
-|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-status/spec.md]|1|
-|[Review|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-obligations/review/spec.md]|1|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-flow/spec.md]|15|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|10|
+|[Page titles|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/page-titles/spec.md]|4|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/notification-lifecycle/spec.md]|4|
+|[Consignor select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignor-select/spec.md]|3|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-details/spec.md]|2|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/origin/spec.md]|1|
+|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|1|
+|[Commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-type/spec.md]|1|
+|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-status/spec.md]|1|
+|[Review|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-obligations/review/spec.md]|1|
+|[Place of destination|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/place-of-destination/spec.md]|1|
 
 One further plants file was reworded without gaining scenarios: the notification dashboard.
 

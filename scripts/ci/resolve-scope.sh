@@ -11,8 +11,8 @@
 #
 # A repo with no entry uses `default`. Suites and tags may be space- or
 # comma-separated. Neither empty is an error: `all` is the only way to run
-# every suite, and it stands alone. It prints empty suites and tags, which the
-# test step reads as "everything". Tags alone run only the tagged tests.
+# every suite, and it stands alone. Suites print as `all`, a list, or empty
+# when only tags run.
 
 set -euo pipefail
 
@@ -49,8 +49,7 @@ fi
 if [[ " $scope_suites " == *" all "* ]]; then
   [ "$scope_suites" = "all" ] || fail "\"all\" must be the only suite in $where."
   [ -z "$scope_tags" ] || fail "$where has tags as well as \"all\", which already runs every test."
-  scope_suites=""
 fi
 
-echo "Test scope from $where: suites=${scope_suites:-all} tags=${scope_tags:-none}" >&2
+echo "Test scope from $where: suites=${scope_suites:-none} tags=${scope_tags:-none}" >&2
 printf 'suites=%s\ntags=%s\n' "$scope_suites" "$scope_tags"

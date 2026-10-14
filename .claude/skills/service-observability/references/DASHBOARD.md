@@ -20,7 +20,7 @@ after a deploy, or once per cache lifetime.
 | Thing | Value |
 |---|---|
 | Grafana | `https://metrics.dev.cdp-int.defra.cloud/` |
-| Folder | `Playground/<service>-monitoring` |
+| Folder | `[UNPROVEN]` `Playground/<service>-monitoring` (checked in `SKILL.md` Step 1) |
 | Name | `<service> (custom)` |
 
 `[UNPROVEN]` The name may only use letters, numbers, spaces, hyphens and
@@ -29,7 +29,7 @@ as `! @ # $ % & _`. The text in brackets is free.
 
 ## Panels
 
-CloudWatch data source, namespace `<service>`.
+`[UNPROVEN]` CloudWatch data source, namespace `<service>`.
 
 | Panel | Metric | Statistic | Split by |
 |---|---|---|---|

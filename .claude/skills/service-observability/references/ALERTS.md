@@ -74,8 +74,8 @@ for every service that follows.
 `[UNPROVEN]` Where alerts from perf-test and ext-test go. Assumed
 non-prod.
 
-If the team asked for email as well (Step 2), make that request to
-#cdp-support at the same time.
+`[UNPROVEN]` If the team asked for email as well (Step 2), make that
+request to #cdp-support at the same time.
 
 ## Promote
 

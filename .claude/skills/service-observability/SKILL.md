@@ -32,7 +32,7 @@ table: [`docs/agent-skills.md`](../../../docs/agent-skills.md)
 |---------|----------------|
 | "add observability to `<service>`", "observability for EUDPA-X" | Steps 1 to 6 in order |
 | "add metrics and alerts to `<service>`" | Steps 1 to 6 in order |
-| "add a dashboard and alerts to `<service>`" | Step 1's Grafana checks, then Steps 4 to 6, if the metrics are already deployed to dev |
+| "add a dashboard and alerts to `<service>`" | Step 1's Grafana checks and Step 2's email question, then Steps 4 to 6, if the metrics are already deployed to dev |
 
 When the work is one ticket among others, plan it with the `ticket`
 skill and point its plan at these steps.
@@ -45,8 +45,8 @@ skill and point its plan at these steps.
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
 | Dashboard, alerts, Slack routing, promotion, alert testing | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
 
-When a run settles an `[UNPROVEN]` fact, edit the reference: replace
-the marker with what happened. Do the same when a step turns out wrong.
+When a run settles an `[UNPROVEN]` fact, edit the file that states it
+(this SKILL.md or the reference): replace the marker with what happened. Do the same when a step turns out wrong.
 Commit the edit in this workspace repo, on a branch with the same name
 as the service's branch (CLAUDE.md rule 2).
 
@@ -61,7 +61,11 @@ A run takes days and several sessions. Its progress lives in the
 ticket's plan,
 `~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/plan.md`:
 add the completion block below to it at the end of each session, and
-read it first in the next one.
+read it first in the next one. If the run did not start from the
+`ticket` skill there is no plan yet, so create the file (and its
+directory) with the first completion block. `workareas/` is local and
+not committed, so also record each completion block on the ticket: that
+is the copy another developer, or another machine, picks up from.
 
 Where a step says "record it on the ticket", Claude drafts the text and
 the developer posts it.
@@ -95,8 +99,8 @@ show or alert on a dependency that is not on that list.
 Follow `references/METRICS.md` → "Work out the list". Agree the list
 with the team before writing code, and record it on the ticket.
 
-Ask at the same time: Slack only, or email as well? Email is a
-#cdp-support request, made in Step 5.
+Ask at the same time: Slack only, or email as well? `[UNPROVEN]` Email
+is a #cdp-support request, made in Step 5.
 
 ## Step 3: Publish the metrics and log each dependency call
 
@@ -133,7 +137,7 @@ Waiting on a person:
 - <Grafana, Portal, Slack or #cdp-support steps still open>
 
 Settled this run:
-- <each [UNPROVEN] fact confirmed or corrected, and the reference edited>
+- <each [UNPROVEN] fact confirmed or corrected, and the file that states it (this SKILL.md or the reference) edited>
 
 Next: <the single next action and who takes it>
 ```

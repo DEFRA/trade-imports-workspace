@@ -4,10 +4,10 @@
 #
 #   TAGS   space- and/or comma-separated tags, e.g. "@ins-backend @gateway".
 #
-# The pattern matches a whole tag, so @ins-backend does not also select
-# @ins-backend-extra. Empty input prints nothing, so the caller runs no tag
-# selection. An entry that is not an @ followed by letters, digits, '_' or '-'
-# fails the run: the value reaches `docker run` and is read as a regex.
+# The pattern is the tags joined by `|`, as --grep-invert does for the excluded
+# tags. Empty input prints nothing, so the caller runs no tag selection. An
+# entry that is not an @ followed by letters, digits, '_' or '-' fails the run:
+# the value reaches `docker run` and is read as a regex.
 
 set -euo pipefail
 
@@ -26,6 +26,5 @@ for entry in ${TAGS//,/ }; do
 done
 
 if [ -n "$alternatives" ]; then
-  # shellcheck disable=SC2016 # the literal \s and $ belong to the regex
-  printf '(^|\\s)(%s)(\\s|$)\n' "$alternatives"
+  printf '%s\n' "$alternatives"
 fi

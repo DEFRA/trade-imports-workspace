@@ -959,6 +959,153 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-ADDR-018",
+      "name": "A missing name, postcode, country or phone number is named in the words the form uses for it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-018-A",
+          "name": "Leaving name, postcode, country and phone blank on add names each in the form's words",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "saving the add form with name, postcode, country and phone left blank shows each message at the top and against its field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Name or organisation name links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Postcode or Zip code links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Country links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "empty Phone number links to and focuses the preserved field",
+              "strength": "partial",
+              "notes": "summary link only, one field at a time"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with invalid data re-renders form with errors",
+              "strength": "partial",
+              "notes": "summary links for all four; the field messages are not asserted individually"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-B",
+          "name": "Clearing name, postcode, country and phone on edit shows the same messages, and nothing is saved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "saving the edit form with name, postcode, country and phone cleared shows the same messages, and nothing is saved",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "POST with invalid data re-renders form with errors",
+              "strength": "partial",
+              "notes": "summary links for all four"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/edit.fit.spec.js",
+              "test": "a rejected save keeps the edits rather than the stored address",
+              "strength": "partial",
+              "notes": "name only"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-C",
+          "name": "A country that is not offered is refused as if none were chosen",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with a country the reference data does not list shows the select-a-country error",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fields.test.js",
+              "test": "refuses a country the reference data does not list as if blank",
+              "strength": "partial",
+              "notes": "the rule, not the rendered page"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-018-D",
+          "name": "The address book refuses a missing name, postcode, country or phone with the same messages",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
+              "test": "the address book API refuses a blank name, postcode, country and phone with the same messages, keyed by field",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400WithTheFieldMessages_whenNamePostcodeCountryAndPhoneAreBlank",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
+              "test": "invalidFields",
+              "strength": "partial",
+              "notes": "the message per blank field"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

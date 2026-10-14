@@ -292,3 +292,33 @@ The system MUST let a service give an address an address type (one of three) and
 - **GIVEN** an address is stored with an address type and uses
 - **WHEN** a service updates it without giving a type or uses
 - **THEN** reading it back shows no type and no uses
+
+### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
+**ID**: REQ-INS-ADDR-018
+The system MUST tell the user 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+
+#### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
+**ID**: SCN-INS-ADDR-018-A
+- **GIVEN** the user is adding an address
+- **WHEN** they leave the name, postcode, country and phone number blank and save
+- **THEN** the summary and each field show 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
+
+#### Scenario: Clearing name, postcode, country and phone on edit shows the same messages, and nothing is saved
+**ID**: SCN-INS-ADDR-018-B
+- **GIVEN** the user is editing an address
+- **WHEN** they clear the name, postcode, country and phone number and save
+- **THEN** the summary and each field show the same four messages
+- **AND** the stored address is unchanged
+
+#### Scenario: A country that is not offered is refused as if none were chosen
+**ID**: SCN-INS-ADDR-018-C
+- **GIVEN** the user is adding an address
+- **WHEN** the form is saved with a country that is not one the list offers
+- **THEN** the save is blocked and 'Select a country' is shown
+
+#### Scenario: The address book refuses a missing name, postcode, country or phone with the same messages
+**ID**: SCN-INS-ADDR-018-D
+- **GIVEN** a service creates an address with the name, postcode, country and phone number blank
+- **WHEN** the request is made
+- **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
+- **AND** no address is created

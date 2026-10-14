@@ -34,7 +34,8 @@ after start-up, and values go quiet while a cache is warm. "No data →
 Alerting" would alert the team after every deploy. Use Normal, or Keep
 Last State.
 
-Only alert on a dependency the service really uses.
+Only alert on a dependency the service really uses. A configured
+database counts (`METRICS.md` → "A database").
 
 ## Route to Slack
 

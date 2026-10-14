@@ -81,8 +81,14 @@ No code. The developer checks in the dev Grafana
   alert named `platform_managed_do_not_delete`.
 
 Then list the service's real dependencies from its code, not from the
-ticket (on reference-data the ticket listed a database the service does
-not have). Do not measure, show or alert on anything else.
+ticket: every system it calls, and any database it has configured. A
+configured database is a dependency like any other: give it the
+metrics, dashboard panels and alerts in `references/METRICS.md` → "A
+database". The one exception is a database that is configured but that
+nothing reads or writes through: leave it out, say why on the ticket,
+and raise a ticket to remove the configuration. (On reference-data,
+MongoDB is configured but unused, so it is left out.) Do not measure,
+show or alert on a dependency that is not on that list.
 
 ## Step 2: Agree the metric list
 

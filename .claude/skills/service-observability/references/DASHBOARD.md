@@ -58,7 +58,9 @@ panel depends on the open question in `LOGGING.md` about whether
 The dimension values for the service come from its code. For
 reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is
 `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `LookupType` is `countries` or
-`ports-of-entry`.
+`ports-of-entry`. A service with a database also has its ping
+(`METRICS.md` → "A database"), for example `Dependency` `mongodb` with
+`Operation` `ping`.
 
 ## Promote
 

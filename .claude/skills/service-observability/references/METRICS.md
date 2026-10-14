@@ -93,6 +93,31 @@ the outcome of the calls it already makes.
 Whichever is used, pair the availability alert with one on
 `ExternalCallFailure`, which fires on the first failed calls.
 
+### A database
+
+A database the service has configured is a dependency (`SKILL.md` Step
+1), and gets the same metrics as any other. Not yet done on a real
+service: settle the details on the first run and edit this section.
+
+- **Measure it actively.** A database ping is cheap and harmless, so
+  send one every minute (for MongoDB, the `ping` command on the existing
+  client), with a short timeout, on a scheduled thread off the request
+  path. Never in `/health`.
+- **Record the ping as an external call**, through `ExternalCallMetrics`
+  with `Dependency` set to the database (`mongodb`) and `Operation` set
+  to `ping`. It then publishes `ExternalCallDuration` and
+  `ExternalCallFailure` like any other call, and
+  `DependencyAvailable{Dependency=mongodb}` follows from it with no new
+  code.
+- **The dashboard and alerts need no new rows.** The panels and alerts
+  in `DASHBOARD.md` and `ALERTS.md` are per `Dependency` and
+  `Operation`, so they pick up `mongodb`/`ping`. Add it to the
+  dimension values listed for the service, and check each alert has a
+  query for it.
+- **Test it like the other publishers**: a unit test that a failed ping
+  is recorded as a failure, and an integration test with the database
+  stopped or unreachable.
+
 ### Tests
 
 | Test | Proves |

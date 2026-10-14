@@ -250,3 +250,45 @@ The system MUST refuse the add-address page when the request carries a journey h
 - **GIVEN** the user opens the add-address page with a handshake naming a journey type the service does not know
 - **WHEN** the page is shown
 - **THEN** they see a page-not-found response, not the add form
+
+### Requirement: An address can carry its address type and the uses it can be put to
+**ID**: REQ-INS-ADDR-017
+The system MUST let a service give an address an address type (one of three) and any of six uses, and MUST return them when read back. An update MUST replace the stored uses. The system MUST refuse a create or update carrying any other use, naming the uses and saving nothing, and MUST refuse an unknown address type the same way, naming the address type. Both are optional: an address, or an update, without them MUST leave the address with none.
+
+#### Scenario: An address's type and uses are stored and read back
+**ID**: SCN-INS-ADDR-017-A
+- **GIVEN** a service creates an address with an address type (origin or consignor; destination, consignee or importer; or branch) and one or more of the six uses (place of origin, consignor, place of destination, consignee, importer, branch address)
+- **WHEN** it reads the address back by its id
+- **THEN** the address has the same type and the same uses
+
+#### Scenario: An update replaces an address's uses
+**ID**: SCN-INS-ADDR-017-B
+- **GIVEN** an address is stored with some uses
+- **WHEN** a service updates it with a different set of uses
+- **THEN** reading it back shows only the new set
+
+#### Scenario: A use outside the six is refused and nothing is saved
+**ID**: SCN-INS-ADDR-017-C
+- **GIVEN** a service creates or updates an address with a use that is not one of the six
+- **WHEN** the request is made
+- **THEN** it is refused with a validation error naming the uses
+- **AND** no address is created, and an updated address keeps the uses it had
+
+#### Scenario: An address with no type or uses reads back with none
+**ID**: SCN-INS-ADDR-017-D
+- **GIVEN** an address was created without a type or uses, or was saved before addresses could carry them
+- **WHEN** a service reads it back by its id
+- **THEN** it has no type and no uses
+
+#### Scenario: An address type outside the three is refused
+**ID**: SCN-INS-ADDR-017-E
+- **GIVEN** a service creates an address with an address type that is not one of the three
+- **WHEN** the request is made
+- **THEN** it is refused with a validation error naming the address type
+- **AND** no address is created
+
+#### Scenario: An update without a type or uses leaves the address with none
+**ID**: SCN-INS-ADDR-017-F
+- **GIVEN** an address is stored with an address type and uses
+- **WHEN** a service updates it without giving a type or uses
+- **THEN** reading it back shows no type and no uses

@@ -806,6 +806,159 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-ADDR-017",
+      "name": "An address can carry its address type and the uses it can be put to",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-017-A",
+          "name": "An address's type and uses are stored and read back",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "an address created with its type and uses reads back with the same type and uses",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "every one of the six uses is stored and read back",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldStoreTypeAndUses_andGetReturnsThem",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-017-B",
+          "name": "An update replaces an address's uses",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "an update with a different set of uses replaces the stored uses",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldReplaceUsesWithTheNewSet",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-017-C",
+          "name": "A use outside the six is refused and nothing is saved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "a create carrying a use outside the six is refused naming the uses, and nothing is saved",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "an update carrying a use outside the six is refused and the stored uses are unchanged",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400NamingUses_whenAUseIsUnknown",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldReturn400NamingUsesAndLeaveRowUntouched_whenAUseIsUnknown",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-017-D",
+          "name": "An address with no type or uses reads back with none",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-typed-record.spec.ts",
+              "test": "an address created without a type or uses reads back with none",
+              "strength": "partial",
+              "notes": "created without the fields through the API; a document from before the change is proved by the IT"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "get_shouldReadAnUntypedRecordWithNoTypeAndNoUses",
+              "strength": "full",
+              "notes": "saves a document with neither field, the shape of every pre-change record"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-017-E",
+          "name": "An address type outside the three is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400NamingAddressType_whenTheTypeIsUnknown",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-017-F",
+          "name": "An update without a type or uses leaves the address with none",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+              "test": "put_shouldClearTypeAndUses_whenOmitted",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -32,13 +32,17 @@ Rules that held:
 - **Do not add a count metric.** A call count is the `SampleCount` of
   `ExternalCallDuration`. An error count is the `Sum` of
   `ExternalCallFailure`. A token refresh is one call to the token
-  endpoint, so it is the same two metrics filtered by `Dependency`.
+  endpoint, so it is the same two metrics filtered by `Dependency` and
+  `Operation` (the token endpoint's one operation).
 - **Keep dimension values few and fixed.** Never a URL, a trace id, an
   organisation or a user as a dimension: each distinct value is a
   separate CloudWatch metric.
 - **One dimension set per metric.** Publish each metric with exactly the
   dimensions in the table, so the dashboard query does not have to guess
-  which combination holds the data.
+  which combination holds the data. Every query, panel and alert then
+  uses that full set: CloudWatch does not add up across a published
+  dimension, so `ExternalCallFailure` queried by `Dependency` alone
+  finds nothing.
 
 Record the agreed table on the ticket.
 
@@ -90,8 +94,11 @@ the outcome of the calls it already makes.
   where a probe is free and harmless. Do not probe a dependency whose
   calls are rate-limited or cost a real token request.
 
-Whichever is used, pair the availability alert with one on
-`ExternalCallFailure`, which fires on the first failed calls.
+Whichever is used, alert on `ExternalCallFailure` over a time window,
+per `Dependency` and `Operation` (`ALERTS.md`), not on
+`DependencyAvailable`. A passive reading lags by up to the cache
+lifetime and holds a single failure until the next success; an active
+probe is itself a call, so it records `ExternalCallFailure` too.
 
 ### A database
 

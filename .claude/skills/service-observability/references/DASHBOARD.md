@@ -36,13 +36,17 @@ CloudWatch data source, namespace `<service>`.
 | Dependency status, one value per dependency | `DependencyAvailable` | `Minimum` | `Dependency` |
 | Calls per dependency | `ExternalCallDuration` | `SampleCount` | `Dependency`, `Operation` |
 | Failed calls | `ExternalCallFailure` | `Sum` | `Dependency`, `Operation` |
-| Failure rate | `ExternalCallFailure` | `Average`, times 100 | `Dependency` |
+| Failure rate | `ExternalCallFailure` | `Average`, times 100 | `Dependency`, `Operation` |
 | Call time: average, 95th percentile, slowest | `ExternalCallDuration` | `Average`, `p95`, `Maximum` | `Dependency`, `Operation` |
 | Cache hits and misses | `CacheHit`, `CacheMiss` | `Sum` | `Cache` |
 | Business events | the service's own metric | `Sum` | its dimension |
 
 Use `Minimum` for `DependencyAvailable`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
+
+Split each panel by every dimension its metric is published with, as in
+the table. CloudWatch does not add up across a published dimension, so
+a panel on `ExternalCallFailure` split by `Dependency` alone is empty.
 
 One panel reads logs, not metrics:
 

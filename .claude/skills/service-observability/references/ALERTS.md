@@ -24,15 +24,30 @@ agree, not tested values.
 
 | Alert | Fires when | If there is no data |
 |---|---|---|
-| Dependency unavailable | `DependencyAvailable`, `Minimum`, below 1 over 5 minutes, per `Dependency` | Normal |
-| Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` | Normal |
+| Dependency unavailable | `ExternalCallFailure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `Dependency` and `Operation` | Normal |
+| Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` and `Operation` | Normal |
 | Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
 
-**Never set "no data" to Alerting on these.** Where availability is
-passive (see `METRICS.md`), nothing is published until the first call
-after start-up, and values go quiet while a cache is warm. "No data →
-Alerting" would alert the team after every deploy. Use Normal, or Keep
-Last State.
+**Query every alert by `Dependency` and `Operation`.** Both external
+call metrics are published with that one dimension set (`METRICS.md` →
+"One dimension set per metric"), and CloudWatch does not add up across
+a dimension a metric was published with, so a query on `Dependency`
+alone finds no data. With "no data" set to Normal, that alert would
+never fire and nobody would know. Each alert has one series per
+dependency and operation, and the thresholds above apply to each series.
+
+**Do not alert on `DependencyAvailable`.** It reports the outcome of
+the last call, however old. Behind a cache it can read 1 for up to the
+cache lifetime after the dependency goes down, and one failed call holds
+it at 0 until the next call succeeds. It is for the dashboard. The
+"Dependency unavailable" alert uses `ExternalCallFailure` instead, which
+only reports calls that happened in the window.
+
+**Never set "no data" to Alerting on these.** Calls only happen when a
+request needs the dependency, so nothing is published until the first
+call after start-up, and the metrics go quiet while a cache is warm.
+"No data → Alerting" would alert the team after every deploy. Use
+Normal, or Keep Last State.
 
 Only alert on a dependency the service really uses. A configured
 database counts (`METRICS.md` → "A database").

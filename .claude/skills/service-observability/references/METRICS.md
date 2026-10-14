@@ -79,6 +79,12 @@ What to carry over:
   alone; fixing it changes every metric a service already publishes.
 - **Caches need `.recordStats()`** on the Caffeine builder, or hits and
   misses read as zero.
+- **The application class needs `@EnableScheduling`** for the
+  `@Scheduled` publishers (`DependencyAvailabilityMetrics`,
+  `CacheMetrics`). reference-data already had it. Without it the tests
+  still pass, because they call `publish()` directly, but nothing is
+  published in dev. Pin each publisher's schedule with an annotation
+  test, as reference-data does.
 
 ### Availability: passive or active
 

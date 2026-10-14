@@ -1,4 +1,4 @@
-# Test scope: CDP
+# E2E tests: CDP
 
 **Runs after a deployment and on a schedule, from the CDP Portal. Configured in the portal, not in any repo.**
 
@@ -8,7 +8,7 @@ Which test suites, and which domain(s) of each, the CDP Portal runs, and the
 `dynamics` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
 [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#running-tests-via-cdp-portal).
-For the runs that happen on every PR instead, see [Test scope: GitHub Actions](test-scope-gh-actions.md).
+For the runs that happen on every PR instead, see [E2E tests: GitHub Actions](e2e-tests-gh-actions.md).
 
 ## After a deployment
 
@@ -22,42 +22,64 @@ Each tick is one `<domain>:e2e` run, for example `ins:e2e` and `animals:e2e`
 for address-book. Adding a domain means adding its run in the portal for each
 service that should have it.
 
-`✓` means the domain runs after deployment today. `TODO` means built, but not
-yet run after deployment: add it now. `PLANNED` means not built yet: add it once
-it is. Neither `TODO` nor `PLANNED` is set up in the portal yet, so neither runs
-today. `✓ (PLANNED)` is the exception: it already runs, ahead of a link that
-isn't built yet.
+`✓` means the domain runs after deployment today.
 
-A row with no note has the same ticks as the
-[GitHub Actions table](test-scope-gh-actions.md#specific-domains), where the
-reasons are given. A note marks where CDP differs. Every tick covers fewer
-specs here than in GitHub Actions, because specs that need the compose stack
-don't run on CDP (see [What does not run on CDP](#what-does-not-run-on-cdp)).
+A service's deployment runs its whole family. Every tick covers fewer specs here
+than in [GitHub Actions](e2e-tests-gh-actions.md#pull-requests), because
+specs that need the compose stack don't run on CDP (see
+[What does not run on CDP](#what-does-not-run-on-cdp)).
 
-| Repo | animals | animals-admin | ins | plants | Notes |
+#### INS services
+
+These run ins, animals and plants.
+
+| Repo | ins | animals | animals-admin | plants | Notes |
 |---|:-:|:-:|:-:|:-:|---|
-| address-book | ✓ | | ✓ | TODO | |
-| animals-admin | ✓ | ✓ | | | |
-| animals-backend | ✓ | ✓ | ✓ | | |
-| animals-frontend | ✓ | ✓ | | | |
-| ins-backend | | | ✓ | | |
-| ins-frontend | | | ✓ | | Differs from GitHub Actions: the specs that cross ins-frontend and the animals frontend are compose-only, and a plants handoff spec probably will be too, so there's no animals or plants marker here. |
-| plants-backend | | | ✓ (PLANNED) | ✓ | |
-| plants-frontend | | | | ✓ | |
+| address-book | ✓ | ✓ | | ✓ | plants: its frontend uses it, and its specs aren't compose-only<br>**Skips:** animals-admin: no link |
+| ins-backend | ✓ | ✓ | | ✓ | animals, plants: journeys publish the events it stores<br>**Skips:** animals-admin: none read from it (see Details) |
+| ins-frontend | ✓ | ✓ | | ✓ | animals, plants: journey handoff<br>**Skips:** animals-admin: no link |
+
+#### Animals services
+
+These run ins, animals and animals-admin.
+
+| Repo | ins | animals | animals-admin | plants | Notes |
+|---|:-:|:-:|:-:|:-:|---|
+| animals-admin | ✓ | ✓ | ✓ | | ins: replay only (see Details)<br>**Skips:** plants: separate journey |
+| animals-backend | ✓ | ✓ | ✓ | | ins: the aggregate is fed through SNS<br>**Skips:** plants: separate journey |
+| animals-frontend | ✓ | ✓ | ✓ | | ins: animals services<br>**Skips:** plants: separate journey |
+
+#### Plants services
+
+These run ins and plants.
+
+| Repo | ins | animals | animals-admin | plants | Notes |
+|---|:-:|:-:|:-:|:-:|---|
+| plants-backend | ✓ | | | ✓ | ins: aggregate (see Details)<br>**Skips:** animals, animals-admin: separate journey |
+| plants-frontend | ✓ | | | ✓ | ins: plants services<br>**Skips:** animals, animals-admin: separate journey |
+
+**Details**
+
+- **animals-admin:** its only route into INS is replaying a notification's
+  events. ins-backend ignores events it already has, so `ins` is a family check,
+  not a close coupling.
+- **ins-backend:** admin only reaches it by replaying events that it already
+  handles.
+- **plants-backend:** its outbox feeds the ins aggregate.
 
 ### Every domain
 
 These run the bare `default` (e2e) profile, so they cover every domain, including any
 domain added later.
 
-| Repo | animals | animals-admin | ins | plants |
-|---|:-:|:-:|:-:|:-:|
-| dynamics-gateway | ✓ | ✓ | ✓ | ✓ |
-| defra-id-stub | ✓ | ✓ | ✓ | ✓ |
-| reference-data | ✓ | ✓ | ✓ | ✓ |
-| stub | ✓ | ✓ | ✓ | ✓ |
+| Repo | ins | animals | animals-admin | plants | Notes |
+|---|:-:|:-:|:-:|:-:|---|
+| dynamics-gateway | ✓ | ✓ | ✓ | ✓ | Shared event router to Azure Service Bus. Only animals publishes events today, but any journey may use it. |
+| defra-id-stub | ✓ | ✓ | ✓ | ✓ | Sign-in for all four UIs. |
+| reference-data | ✓ | ✓ | ✓ | ✓ | Countries and ports of entry for the animals, plants and ins frontends. |
+| stub | ✓ | ✓ | ✓ | ✓ | Fake trade-platform token and MDM data that other services depend on. |
 
-These match the [GitHub Actions table](test-scope-gh-actions.md#every-domain),
+These match the [GitHub Actions table](e2e-tests-gh-actions.md#shared-stack-repos),
 less the compose-only specs.
 
 ### Dynamics checks, in `test` only
@@ -84,7 +106,7 @@ add coverage for it.
 
 The `security:active` profile is not supported on CDP, so no run uses it. It
 runs on a schedule in GitHub Actions instead (see
-[Test scope: GitHub Actions](test-scope-gh-actions.md#scheduled-runs)).
+[E2E tests: GitHub Actions](e2e-tests-gh-actions.md#scheduled-runs)).
 
 ## Scheduled runs
 
@@ -134,14 +156,13 @@ these profiles don't exist yet and would need adding to
 
 | Family | PROFILE (all three suites) | One suite only | Domains |
 |---|---|---|---|
-| Animals | `animals-family` | `animals-family:e2e`, `:a11y`, `:security`, `:dynamics` | animals, animals-admin, ins |
-| Plants | `plants-family` | `plants-family:e2e`, `:a11y`, `:security`, `:dynamics` | plants, ins. `plants-admin` too, once that domain exists. |
-| INS | `ins-family` | `default`, `a11y`, `security` | every domain |
+| Animals | `animals-family` | `animals-family:e2e`, `:a11y`, `:security`, `:dynamics` | ins, animals, animals-admin |
+| Plants | `plants-family` | `plants-family:e2e`, `:a11y`, `:security`, `:dynamics` | ins, plants. `plants-admin` too, once that domain exists. |
+| INS | `ins-family` | `ins-family:e2e`, `:a11y`, `:security` | ins, animals, plants |
 
 `animals-family` runs all three suites for the family: e2e, a11y and security. To
 run one suite only, add it after a colon, for example `animals-family:e2e`.
-`plants-family` works the same way. The INS family covers every domain, so its
-one-suite runs are the existing bare profiles.
+`plants-family` and `ins-family` work the same way.
 
 ## Keeping this up to date
 
@@ -153,5 +174,5 @@ nothing keeps it in sync. Update it when:
 - the `trade-imports-ins-tests` test suite's schedule changes.
 
 The runs that happen on every PR are configured separately and recorded in
-[Test scope: GitHub Actions](test-scope-gh-actions.md). Nothing keeps the two
+[E2E tests: GitHub Actions](e2e-tests-gh-actions.md). Nothing keeps the two
 docs in sync with each other automatically.

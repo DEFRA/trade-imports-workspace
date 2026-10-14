@@ -389,7 +389,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/notification-view-states.spec.ts", "test": "Continue moves on to the declaration", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should redirect to the declaration once the notification is complete", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration once the notification is complete", "strength": "full", "notes": "drives the review's Continue as it posts to the declaration" }
           ]
         },
         {
@@ -429,11 +429,11 @@
           "name": "Continuing from an unfinished review is refused, keeping the user on the page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue and keeps the trader on the review page", "strength": "full", "notes": "asserts the URL is unchanged and the summary is shown" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue and keeps the trader on the review page", "strength": "full", "notes": "asserts the trader lands back on the review URL and the summary is shown" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue while the notification is unfinished", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue on a brand-new draft, naming what is outstanding", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should move focus to the summary when Continue is refused", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should re-render the page with the summary when Continue is refused", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the summary when Continue is refused", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review keeps the user on it with the summary focused" }
           ]
         },
@@ -472,12 +472,12 @@
       ]
     },
     {
-      "id": "REQ-CYA-012",
+      "id": "REQ-CYA-021",
       "name": "The review of a draft names each species of a multi-species consignment that is still short of its animals",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-CYA-012-A",
+          "id": "SCN-CYA-021-A",
           "name": "A species with no count is named by its number of animals",
           "coverage": "full",
           "tests": [
@@ -487,7 +487,7 @@
           ]
         },
         {
-          "id": "SCN-CYA-012-B",
+          "id": "SCN-CYA-021-B",
           "name": "A counted species with no identifier is named by its identifiers",
           "coverage": "full",
           "tests": [
@@ -500,7 +500,7 @@
           ]
         },
         {
-          "id": "SCN-CYA-012-C",
+          "id": "SCN-CYA-021-C",
           "name": "A single species asking for identifiers is not named",
           "coverage": "full",
           "tests": [
@@ -582,46 +582,127 @@
     },
     {
       "id": "REQ-CYA-010",
-      "name": "An amendment's review opens without errors and refuses an incomplete resubmission, saying why",
+      "name": "The review marks the uploaded-documents card while a document is still being scanned or was found infected, and refuses to continue while it is",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-010-A",
-          "name": "An incomplete amendment's review shows no error",
+          "name": "Continuing while a document is still being scanned is refused, marking the uploaded-documents card on the review",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing is refused, names what is missing and stays amending", "strength": "full", "notes": "asserts no summary on open" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error when the arrival date is more than 6 months ahead", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name the uploaded-documents card as still scanning when Continue is refused with a pending document", "strength": "full", "notes": "drives Continue through the declaration, asserts the refused redirect, then the review card's still-scanning error" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should refuse a notification whose stored document is still being scanned", "strength": "partial", "notes": "the refusal verdict only, not what the review shows" }
           ]
         },
         {
           "id": "SCN-CYA-010-B",
-          "name": "Continuing from an incomplete amendment is refused, naming what is missing",
+          "name": "An infected document marks the uploaded-documents card in preference to one still scanning",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing is refused, names what is missing and stays amending", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an incomplete amend with the summary naming the arrival details", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue on an incomplete amendment and names what is missing", "strength": "full", "notes": "" }
-          ]
-        },
-        {
-          "id": "SCN-CYA-010-C",
-          "name": "Continuing from an amendment whose arrival date breaks its rule is refused",
-          "coverage": "full",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an amend whose arrival date is more than 6 months ahead with the summary", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name the rejected document ahead of one still scanning when Continue is refused with both", "strength": "full", "notes": "seeds a pending then a rejected document, drives the refused Continue, asserts the card's infected message; fails with the precedence in refusal.js swapped" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should keep the rejected message on the uploaded-documents card when Continue is refused with a rejected document", "strength": "partial", "notes": "a rejected document alone, so it does not show precedence over one still scanning" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should name a REJECTED scan ahead of one still scanning", "strength": "partial", "notes": "the card error's precedence with both documents present, at helper level" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CYA-011",
+      "name": "Continuing is refused if the notification has changed since the review was shown",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-011-A",
+          "name": "A change made in another tab after the review was shown sends the user back to the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses Continue and shows the current notification when it changed after the review rendered", "strength": "full", "notes": "edits the internal reference in a second page, then asserts the review URL with the banner and the changed value; fails with the token check disabled" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review with the changed banner when the notification changed after the review", "strength": "partial", "notes": "asserts the redirect, not the rendered review" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-012",
+      "name": "An amendment that is not yet ready opens without an error and refuses Continue with one",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-012-A",
+          "name": "An incomplete amendment's review opens with no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error on an incomplete amend review", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing is refused, names what is missing and stays amending", "strength": "full", "notes": "the overview-and-review theme's version of the same test; asserts no summary on open" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-012-B",
+          "name": "Continuing from an incomplete amendment stays on the review, naming what is missing",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the unfinished card", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an incomplete amend back to the review as refused", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name what is outstanding on a refused amend review, with focus on the summary", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Continue on an amend review with an answer missing is refused, names what is missing and stays amending", "strength": "full", "notes": "the overview-and-review theme's version of the same test" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an incomplete amend with the summary naming the arrival details", "strength": "full", "notes": "the overview-and-review theme's test" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses Continue on an incomplete amendment and names what is missing", "strength": "full", "notes": "the overview-and-review theme's test" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-012-C",
+          "name": "Continuing from an amendment whose arrival date breaks its rule stays on the review, naming it",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an amend whose arrival date is more than 6 months ahead, naming it on the review", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no error summary or card error when the arrival date is more than 6 months ahead", "strength": "partial", "notes": "the review opened without a refusal names nothing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse an amend whose arrival date is more than 6 months ahead with the summary", "strength": "full", "notes": "the overview-and-review theme's test" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-013",
+      "name": "Ports and destination countries read back exactly as they were offered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-013-A",
+          "name": "The port of exit row reads the option the user chose",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should read the port of exit back exactly as the option the trader picked", "strength": "full", "notes": "row text equals portOptions()' text for GB DVR" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the destination country and port of exit for a transit, labelling both codes", "strength": "full", "notes": "pins 'Port of Dover - GB DVR'" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the destination country and port of exit a transit collected, with the one Change link in the card heading", "strength": "full", "notes": "rendered row reads 'Port of Dover - GB DVR'" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-013-B",
+          "name": "The port of entry row reads the port's name, a dash and its code",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "Port of entry row equals the fixture's 'Aberdeen Harbour - GB ABD'" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-013-C",
+          "name": "A territory destination country is named with its country",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a subdivision destination country with its parent country", "strength": "full", "notes": "FR-MQ reads 'Martinique (France)'" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-020",
       "name": "A transited territory is named with its country on the review",
       "coverage": "partial",
       "scenarios": [
         {
-          "id": "SCN-CYA-011-A",
+          "id": "SCN-CYA-020-A",
           "name": "A transited territory reads with its country",
           "coverage": "partial",
           "tests": [
@@ -631,12 +712,12 @@
       ]
     },
     {
-      "id": "REQ-CYA-013",
+      "id": "REQ-CYA-022",
       "name": "An amendment's review ends with Continue, Cancel amend and Delete",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-CYA-013-A",
+          "id": "SCN-CYA-022-A",
           "name": "The amendment review ends with three controls and no status bar Cancel amend",
           "coverage": "full",
           "tests": [
@@ -646,7 +727,7 @@
           ]
         },
         {
-          "id": "SCN-CYA-013-B",
+          "id": "SCN-CYA-022-B",
           "name": "Cancel amend opens the cancel-amendment confirmation",
           "coverage": "full",
           "tests": [
@@ -654,7 +735,7 @@
           ]
         },
         {
-          "id": "SCN-CYA-013-C",
+          "id": "SCN-CYA-022-C",
           "name": "Delete opens the delete confirmation",
           "coverage": "full",
           "tests": [

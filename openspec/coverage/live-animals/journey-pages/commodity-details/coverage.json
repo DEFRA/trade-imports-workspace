@@ -39,12 +39,12 @@
     },
     {
       "id": "REQ-COMMODITY-DETAILS-003",
-      "name": "A collection table lists every chosen species, each removable on its own",
+      "name": "A collection table lists the chosen commodities and species, each row removable on its own",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-DETAILS-003-A",
-          "name": "The table lists each commodity and species with its code",
+          "name": "The table lists each commodity with its code",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "full", "notes": "asserts Cow/0102 and Cat/01061900 in the table" }
@@ -60,7 +60,7 @@
           ]
         },
         {
-          "id": "SCN-COMMODITY-DETAILS-003-C",
+          "id": "SCN-COMMODITY-DETAILS-003-D",
           "name": "Each row's Species cell lists the Latin names chosen under it",
           "coverage": "full",
           "tests": [
@@ -68,6 +68,15 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "lists both species' Latin names in the commodity's Species cell", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "renders grouped species quantities and collection table", "strength": "partial", "notes": "asserts the column headings and the Cow and Cat Species cells; proves the Species column with one species per commodity, not two Latin names under one commodity" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/view-model/selected-rows.test.js", "test": "Should list the Latin names of every species chosen under a commodity in its Species cell", "strength": "partial", "notes": "pins the row data, not the rendered cell" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-003-C",
+          "name": "A commodity under code 01061900 lists each species as its own removable row",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "lists a commodity on code 01061900 as a species row whose remove drops that species alone", "strength": "full", "notes": "Cow row carries remove:0 (commodity-level), Cat row remove-species:1" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "removes one species row without changing another quantity", "strength": "full", "notes": "removes the Cat species row, Cow count 25 kept" }
           ]
         }
       ]

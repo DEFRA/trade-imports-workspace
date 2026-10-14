@@ -32,11 +32,11 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
 
-### Requirement: The country field offers the origin countries the service accepts, and submits a country code
+### Requirement: The country field offers the origin countries and territories the service accepts, and submits a code
 **ID**: REQ-ORIGIN-003
-The system MUST offer a placeholder and the origin countries and territories the service accepts, and MUST submit the chosen country's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.
+The system MUST offer a placeholder and the origin countries and territories the service accepts (for example the Canary Islands), MUST submit the chosen country's or territory's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.
 
-#### Scenario: The country list holds a placeholder and the accepted origin countries
+#### Scenario: The country list holds a placeholder, the accepted origin countries and their territories
 **ID**: SCN-ORIGIN-003-A
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
@@ -48,8 +48,15 @@ The system MUST offer a placeholder and the origin countries and territories the
 - **WHEN** they choose a country and save the page
 - **THEN** the country's code is what the notification keeps, not the text typed into the search field
 
-#### Scenario: The country list holds the reference data service's origin countries and their territories, by name
+#### Scenario: Choosing a territory submits and keeps its code and shows its name on return
 **ID**: SCN-ORIGIN-003-C
+- **GIVEN** the user is on the origin of the import page
+- **WHEN** they choose the Canary Islands and save the page
+- **THEN** the territory's code is what the notification keeps
+- **AND** returning to the page shows "Canary Islands" in the country field
+
+#### Scenario: The country list holds the reference data service's origin countries and their territories, by name
+**ID**: SCN-ORIGIN-003-D
 - **GIVEN** the user is on the origin of the import page
 - **WHEN** the country list is read in full
 - **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as "<territory> (<country>)", in alphabetical order of the name shown

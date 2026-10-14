@@ -19,7 +19,7 @@ The system MUST ask the notification for one transporter, chosen from a single l
 
 ### Requirement: Adding a transporter not on the list asks its type first, to decide which form to show
 **ID**: REQ-OB-TRANSPORTER-002
-The system MUST ask for the type of a transporter being added from the list — Commercial or Private — before showing the form for it, MUST show the commercial form only when Commercial is chosen and the private form only when Private is chosen, and MUST return the user to Overview once the add is complete. A record entered this way MUST join the transporter list as a New transporter and MUST stand as the notification's chosen transporter, so the list shows it checked.
+The system MUST ask for the type of a transporter being added from the list — Commercial or Private — before showing the form for it, MUST show the commercial form only when Commercial is chosen and the private form only when Private is chosen, and MUST return the user to Overview once the add is complete. A record entered this way MUST be kept for the organisation, so it joins the transporter list, marked as new, and is the notification's checked pick; it MUST also be offered on the list of the organisation's later notifications.
 
 #### Scenario: Adding a commercial transporter asks its type, then the commercial form
 **ID**: SCN-OB-TRANSPORTER-002-A
@@ -33,14 +33,23 @@ The system MUST ask for the type of a transporter being added from the list — 
 - **WHEN** they choose "Private"
 - **THEN** the private transporter details form is shown, not the commercial one
 
-#### Scenario: Completing an add returns to Overview, and the record joins the list as the chosen transporter
+#### Scenario: Completing an add returns to Overview, and the record joins the list as the notification's pick
 **ID**: SCN-OB-TRANSPORTER-002-C
 - **GIVEN** the user has filled in and saved a transporter added this way
 - **WHEN** the save completes
 - **THEN** they arrive at Overview, not the transporter list
 - **WHEN** they later reopen the transporter list
-- **THEN** the added record is listed there with its radio checked
-- **AND** saving the list again keeps it as the notification's transporter, with its details unchanged
+- **THEN** the added transporter is listed and is the checked pick
+- **WHEN** they save the list again without changing the pick
+- **THEN** they return to Overview, and the record they added is unchanged
+
+#### Scenario: A transporter added on one notification is offered on the next
+**ID**: SCN-OB-TRANSPORTER-002-E
+- **GIVEN** the user has added a transporter on one notification
+- **WHEN** they open the transporter list of another notification of the same organisation
+- **THEN** the added transporter is listed with the address and type it was added with, marked as new
+- **WHEN** they pick it and save
+- **THEN** they return to Overview, and the transporter's details are filled in on the notification
 
 #### Scenario: The type question returns to the list rather than forward
 **ID**: SCN-OB-TRANSPORTER-002-D

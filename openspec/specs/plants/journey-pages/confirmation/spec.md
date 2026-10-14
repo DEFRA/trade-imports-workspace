@@ -8,7 +8,7 @@ The page shown once a high-risk plants notification has been submitted, confirmi
 
 ### Requirement: The page confirms the submission and shows the notification's reference number
 **ID**: REQ-PLANTS-CONFIRMATION-001
-The system MUST confirm a completed submission on its own page, showing the reference number of the notification just submitted and the date of notification, and MUST NOT offer a back link from it.
+The system MUST confirm a completed submission on its own page, showing the reference number of the notification just submitted and the date of notification, the day it was submitted in UK time, and MUST NOT offer a back link from it.
 
 #### Scenario: Submitting a notification shows its reference number on confirmation
 **ID**: SCN-PLANTS-CONFIRMATION-001-A
@@ -17,6 +17,13 @@ The system MUST confirm a completed submission on its own page, showing the refe
 - **THEN** the confirmation page shows "Notification submitted", carrying that notification's own reference number
 - **AND** the date of notification is shown
 - **AND** no back link is offered
+
+#### Scenario: The date of notification is the UK day of submission
+**ID**: SCN-PLANTS-CONFIRMATION-001-B
+- **GIVEN** a notification was submitted at 23:30 UTC
+- **WHEN** the user reads the confirmation page
+- **THEN** in summer the date of notification is the next day, as it was already past midnight in the UK, for example "12 August 2026" for 23:30 UTC on 11 August 2026
+- **AND** in winter it is the same day, for example "11 January 2026" for 23:30 UTC on 11 January 2026
 
 ### Requirement: The confirmation page is not shown for a notification that is not currently submitted
 **ID**: REQ-PLANTS-CONFIRMATION-002

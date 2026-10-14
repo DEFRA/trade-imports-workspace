@@ -1,11 +1,11 @@
 ---
 name: spec-cover
-description: 'Cover Behaviour Spec scenarios that have no adequate test, for one journey set at a time — the direction where the spec says something no test proves. Uses tim spec gaps --none (or --partial if asked) as the work list, maps every Then to an assert, writes the test in the right service repo, proves it with an invert-red/restore-green mutation probe before claiming full, updates the coverage.json link, then commits in both this workspace repo and the service repo on the same branch name. Fans out per-gap judgement to Task subagents when several gaps do not share a test file; the parent writes, probes, lints and commits. Assumes the spec is already true — run spec-catchup first if it might not be. Use when the user asks to cover a journey set''s gaps (triggers: "cover", "cover animals", "cover germinal", "cover plants", "cover ins", "cover admin", "catch-up and cover"). NOT for drift between the spec and the code — use spec-catchup. NOT for rewriting a requirement to match a missing test — that hides the hole.'
+description: 'Cover Behaviour Spec scenarios that have no adequate test, for one domain at a time — the direction where the spec says something no test proves. Uses tim spec gaps --none (or --partial if asked) as the work list, maps every Then to an assert, writes the test in the right service repo, proves it with an invert-red/restore-green mutation probe before claiming full, updates the coverage.json link, then commits in both this workspace repo and the service repo on the same branch name. Fans out per-gap judgement to Task subagents when several gaps do not share a test file; the parent writes, probes, lints and commits. Assumes the spec is already true — run spec-catchup first if it might not be. Use when the user asks to cover a domain''s gaps (triggers: "cover", "cover animals", "cover germinal", "cover plants", "cover ins", "cover animals-admin", "catch-up and cover"). NOT for drift between the spec and the code — use spec-catchup. NOT for rewriting a requirement to match a missing test — that hides the hole.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Edit, Write, Task]
 ---
 
-Cover Behaviour Spec scenarios one journey set's coverage matrix already
+Cover Behaviour Spec scenarios one domain's coverage matrix already
 records as `none` or `partial` — no test, or only a weak one, proves the
 claim.
 
@@ -15,7 +15,7 @@ workspace repo. The opposite direction is `spec-catchup` (edits
 `spec.md`). This skill assumes the spec is already true; run
 `spec-catchup` first if it might not be.
 
-## Sets
+## Domains
 
 Trigger → prefix → suite/repo table:
 [`../spec-catchup/references/SUITES.md`](../spec-catchup/references/SUITES.md).
@@ -37,9 +37,9 @@ hygiene".
 
 | Trigger | What happens |
 |---|---|
-| `cover` | Every set in `../spec-catchup/references/SUITES.md`, one at a time, each following this skill |
-| `cover animals` / `germinal` / `plants` / `ins` / `admin` | One set |
-| `catch-up and cover` | Driven by `spec-catchup`, which follows this skill after finishing catch-up for the same set |
+| `cover` | Every domain in `../spec-catchup/references/SUITES.md`, one at a time, each following this skill |
+| `cover animals` / `germinal` / `plants` / `ins` / `animals-admin` | One domain |
+| `catch-up and cover` | Driven by `spec-catchup`, which follows this skill after finishing catch-up for the same domain |
 
 Prefer starting with `none` (unproven). Use `--partial` only when the
 user asks to strengthen weak witnesses. NOT for drift since the code
@@ -53,7 +53,7 @@ general-purpose`).
 
 | When | Spawn | Persona | Writes |
 |---|---|---|---|
-| Several gap rows, no shared test file | One Task per gap | [`references/GAP_JUDGE.md`](references/GAP_JUDGE.md) | `workareas/spec-cover/<date>-<set>/judge-<id>.json` |
+| Several gap rows, no shared test file | One Task per gap | [`references/GAP_JUDGE.md`](references/GAP_JUDGE.md) | `workareas/spec-cover/<date>-<domain>/judge-<id>.json` |
 | Gaps that share a test file | One Task for that batch, or judge it yourself | same | same |
 
 Never fan out the Docker check, `tim spec gaps`, writing the test,
@@ -72,7 +72,7 @@ tim spec gaps --none --capability <prefix> --json
 ```
 
 (or `--partial`, or both, when asked). If Docker/OrbStack is required —
-only when a proposed test for this set turns out to be E2E — and it's
+only when a proposed test for this domain turns out to be E2E — and it's
 down, stop and ask the human to start it; never start it yourself. If
 there are zero rows, stop — nothing to cover.
 
@@ -89,11 +89,11 @@ For each proposal, in the parent:
 
 1. Write the test into the named service repo file.
 2. Run it — it should pass. Use the repo's own script (`npm run
-   test:fit -- -g '<test name>'`, or the E2E project's own wrapper),
+   test:fit -- -g '<test name>'`, or the tests repo's own wrapper),
    never a raw `npx playwright test` — a workspace hook rejects that
    regardless of repo, and its suggested `test:docker-compose` wrapper
-   only exists in `trade-imports-ins-tests` (`--project=<domain>` scopes
-   it to the one set being covered). If this is a fit probe and the
+   only exists in `trade-imports-ins-tests` (pass the domain's `tests/<domain>/`
+   path as a positional argument to scope it to the one domain being covered). If this is a fit probe and the
    stack is already up, see SUITES.md's port-collision note.
 3. Invert the strongest Then's assertion (or, for unit/fit, the
    production line it depends on). Run again — **must go red**. If it
@@ -129,18 +129,18 @@ current branch.
    repo, also on `<branch>`.
 
 Push is manual, in both repos. If this run is the tail end of `catch-up
-and cover`, this is the last step for this set — move on to the next
-set's catch-up.
+and cover`, this is the last step for this domain — move on to the next
+domain's catch-up.
 
 ## Completion output
 
 ```
-Spec cover complete for <set> (<date>).
+Spec cover complete for <domain> (<date>).
 
 Gaps worked: <n> — write-test: <list or none> · strengthen: <list or none> · accept-gap: <list or none>
 Probes: all red→green
 
 Lint: clean
 Committed: <workspace sha> (openspec/) · <service repo> <sha> (tests) — branch <branch>
-Run: ~/git/defra/trade-imports-workspace/workareas/spec-cover/<date>-<set>/
+Run: ~/git/defra/trade-imports-workspace/workareas/spec-cover/<date>-<domain>/
 ```

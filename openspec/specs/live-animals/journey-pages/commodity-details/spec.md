@@ -28,24 +28,31 @@ The system MUST accept the commodity details once every species' number of anima
 - **WHEN** they enter a number of animals, and a number of packages where asked for, for every species, then save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: A collection table lists every chosen species, each removable on its own
+### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list every chosen commodity and species in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a single species without affecting another's saved counts — removing the last species under a commodity removes that commodity's row too.
+The system MUST list the chosen commodities in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row — one row per commodity, except under commodity code 01061900, where each chosen species has its own row named by the species — and MUST let the user remove a row on its own: removing a commodity row drops every species of that commodity, removing a species row drops that one species and leaves the rest of its commodity, and neither affects another row's saved counts. Removing the last species under a commodity removes that commodity's row too.
 
-#### Scenario: The table lists each commodity and species with its code
+#### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
-- **THEN** the table lists each commodity by name and code, and each of its chosen species
+- **THEN** the table lists each commodity by name and code, one row per commodity except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B
 - **GIVEN** the user has saved counts for two species under different commodities
-- **WHEN** they remove one species
+- **WHEN** they remove one
 - **THEN** it no longer appears in the table, and the other species' saved counts are unchanged
 
-#### Scenario: Each row's Species cell lists the Latin names chosen under it
+#### Scenario: A commodity under code 01061900 lists each species as its own removable row
 **ID**: SCN-COMMODITY-DETAILS-003-C
+- **GIVEN** the user has chosen a species under commodity code 01061900 (for example, cats) alongside one under another code
+- **WHEN** they view the commodity details page
+- **THEN** the 01061900 species has its own row, named by the species, with the commodity's code
+- **AND** removing that row drops only that species, while a row under any other code removes its whole commodity
+
+#### Scenario: Each row's Species cell lists the Latin names chosen under it
+**ID**: SCN-COMMODITY-DETAILS-003-D
 - **GIVEN** the user has chosen two species under the Cow commodity
 - **WHEN** they view the commodity details page
 - **THEN** the table has the columns "Commodity code", "Common name" and "Species"

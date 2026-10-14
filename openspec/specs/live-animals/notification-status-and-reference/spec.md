@@ -8,7 +8,7 @@ Which notification the user is working on and what state it is in, shown on ever
 
 ### Requirement: Every page of a notification shows what state it is in
 **ID**: REQ-STATUS-REF-001
-The system MUST show the notification's current state on every page of its journey except the declaration page (REQ-DECLARATION-005), and MUST distinguish the states by colour: blue for Draft, green for Submitted, orange for Submitted action required, yellow for Amend, and grey for Deleted. A draft's review and a submitted notification's view show the state as a tag beside the reference heading (REQ-CYA-015, REQ-CYA-019).
+The system MUST show the notification's current state on every page of its journey except the declaration page (REQ-DECLARATION-007), and MUST distinguish the states by colour: blue for Draft, green for Submitted, orange for Submitted action required, yellow for Amend, and grey for Deleted. A draft's review and a submitted notification's view show the state as a tag beside the reference heading (REQ-CYA-015, REQ-CYA-019).
 
 #### Scenario: Each state is shown, and distinguished by colour
 **ID**: SCN-STATUS-REF-001-A
@@ -18,7 +18,7 @@ The system MUST show the notification's current state on every page of its journ
 
 ### Requirement: Every page of a notification shows its reference number, from the moment it is created
 **ID**: REQ-STATUS-REF-002
-The system MUST show the notification's GBN-AG reference number on every page of its journey, from the first page onward, except the declaration page (`live-animals/journey-pages/declaration` REQ-DECLARATION-005). The reference is given to the notification when it is created, so it MUST be shown before the user has saved any answer.
+The system MUST show the notification's GBN-AG reference number on every page of its journey, from the first page onward, except the declaration page (`live-animals/journey-pages/declaration` REQ-DECLARATION-007). The reference is given to the notification when it is created, so it MUST be shown before the user has saved any answer.
 
 #### Scenario: The reference is shown on the entry page before anything is saved
 **ID**: SCN-STATUS-REF-002-A

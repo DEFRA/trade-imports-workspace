@@ -22,15 +22,25 @@
     },
     {
       "id": "REQ-IDENT-002",
-      "name": "The page asks for one animal's identifiers per card, and offers two ways to save",
+      "name": "The page asks for one animal's identifiers per card, and the card's save button says what is left on the line",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IDENT-002-A",
-          "name": "The page presents its identifier fields and both save routes",
+          "name": "A line of several animals offers add-another, then finish on the last",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "ear tag, passport, save and add another, save and finish" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "invites another record while more than one animal is outstanding, then finishes the line on the last", "strength": "full", "notes": "Save and add another on 2 of 2 outstanding, Save and finish on the last, add-another gone" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps records at the declared count, remove frees a slot, and a count drop is blocked with an error naming the species", "strength": "full", "notes": "saveAndAddAnother then saveAndFinish on the second record" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-002-B",
+          "name": "A line of one animal has no card button and saves on Save and continue",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "ear tag, passport, no save-and-add-another, Save and continue visible" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "offers no in-card button on a line of one animal and saves it on Save and continue", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -82,7 +92,7 @@
       "scenarios": [
         {
           "id": "SCN-IDENT-005-A",
-          "name": "Entering a valid identifier and finishing saves without error",
+          "name": "Entering a valid identifier and saving succeeds without error",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "accepts a valid ear tag", "strength": "full", "notes": "" },
@@ -324,6 +334,22 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IDENT-019",
+      "name": "A consignment with nothing to identify never shows the page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-IDENT-019-A",
+          "name": "A consignment of fish alone carries on past the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "carries a consignment with nothing to identify past the page", "strength": "full", "notes": "direct request returns Overview, identification heading absent" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a consignment where no commodity has an identifier type never reaches the identification page", "strength": "full", "notes": "" }
           ]
         }
       ]

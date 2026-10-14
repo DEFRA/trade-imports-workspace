@@ -8,11 +8,11 @@ End-to-end, accessibility and security (OWASP ZAP) test suite for the trade impo
 
 ## Responsibilities
 
-- Browser journeys for every deployable frontend, split into one Playwright project per domain so each service's checks run only its own specs.
+- Browser journeys for every deployable frontend, split into one directory of test suites per domain so each service's checks run only its own specs. One Playwright project, `chromium`, runs them all.
 - The ZAP scan plans the workspace security profile stages (`zap/`).
 - The CDP Portal test suite, where `PROFILE` picks the suite and, optionally, the domain.
 
-| Project         | Service                          | Folder                 |
+| Domain          | Service                          | Folder                 |
 | --------------- | -------------------------------- | ---------------------- |
 | `animals`       | `trade-imports-animals-frontend` | `tests/animals/`       |
 | `animals-admin` | `trade-imports-animals-admin`    | `tests/animals-admin/` |
@@ -27,7 +27,7 @@ Page objects, flows and domain data follow the same split, under `page-objects/`
 |---|---|---|---|
 | Outbound | animals-frontend, animals-admin, ins-frontend, plants-frontend | HTTP (browser) | The journeys under test |
 | Outbound | animals-backend, address-book | HTTP | Seeding and cleaning up test data |
-| Inbound | workspace `e2e-tests.yml` | Docker image `defradigital/trade-imports-ins-tests` | PR checks; each frontend passes its own `project` |
+| Inbound | workspace `e2e-tests.yml` | Docker image `defradigital/trade-imports-ins-tests` | PR checks; each frontend passes its own `suites` |
 | Inbound | workspace `security-active-scan.yml` | Docker image | ZAP active scan |
 
 ## Stack

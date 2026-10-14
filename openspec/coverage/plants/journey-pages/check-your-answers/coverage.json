@@ -92,7 +92,7 @@
     },
     {
       "id": "REQ-PLANTS-CYA-004",
-      "name": "Anything not yet answered, or whose address no longer resolves, is shown as \"Not provided\"",
+      "name": "Anything not yet answered is shown as \"Not provided\"",
       "coverage": "full",
       "scenarios": [
         {
@@ -100,16 +100,7 @@
           "name": "An unanswered destination reads Not provided, with no address error, and is named as outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render an unanswered destination without a party error", "strength": "full", "notes": "every destination row Not provided; no party error, and the summary names the destination as a task still to complete" }
-          ]
-        },
-        {
-          "id": "SCN-PLANTS-CYA-004-B",
-          "name": "A deleted destination reads Not provided on every row",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "full", "notes": "two Not provided rows (Name, Address); removed name absent — display half of the test" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render Not provided for a removed address-book reference", "strength": "full", "notes": "also asserts the party error is present — display clause is every row Not provided" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name an unanswered destination as an outstanding task, not a party error", "strength": "full", "notes": "every destination row Not provided; no party error, and the summary names Complete place of destination linking to #place-of-destination" }
           ]
         }
       ]
@@ -184,8 +175,8 @@
           "name": "The submitted view is read-only and offers delete",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "full", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; delete offer covered by sibling delete test and unit" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "declaration is required and submission produces a read-only notification and Submitted dashboard card", "strength": "partial", "notes": "assertReadOnly — Submitted, zero Change, zero Continue; Edit details absence not asserted; delete offer covered by sibling delete test and unit" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should render a submitted notification read-only and refuse a forged Continue", "strength": "full", "notes": "readOnly true; no card/row actions, so neither Change nor Edit details" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "full", "notes": "submitted deleteHref null (Delete is in the header); no cancelAmend in the strip" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a submitted notification's read-only view with its reference, a Submitted tag and the date submitted, with Back to the notification list", "strength": "full", "notes": "header actions" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a submitted notification's view offers Amend this notification and a red Delete notification in its header, and no Copy as new", "strength": "full", "notes": "" },
@@ -294,20 +285,45 @@
     },
     {
       "id": "REQ-PLANTS-CYA-012",
-      "name": "An unfinished draft names every outstanding task",
+      "name": "Each party card offers Change and, once an address is held, Edit details",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-012-A",
-          "name": "Viewing an unfinished notification names each outstanding task",
+          "name": "An answered party card offers Change and Edit details; an unanswered one only Change",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every outstanding task on an incomplete notification, linking to its page with the change context", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "asserts the missing contact is named; does not follow its link" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Change and Edit details on an answered address, and only Change on an unanswered one", "strength": "full", "notes": "contact card actions are Change then Edit details to the contact edit page returning to CYA; unanswered destination offers Change only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Edit details on CYA changes only this notification, not the address book record or another notification", "strength": "partial", "notes": "follows the destination card's Edit details to its edit page; unanswered-card branch not driven" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-013",
+      "name": "An unfinished draft names every unfinished card and links to it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-013-A",
+          "name": "Viewing an unfinished notification names each unfinished card and links to it",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name every unfinished card on an incomplete notification, in page order, linking to the card on this page", "strength": "full", "notes": "exact error list in page order: Complete commodity details to #about-the-consignment, then arrival details, place of destination, identification numbers and contact, each to its card" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should mark each unfinished card with its anchor and message, and leave finished cards unmarked", "strength": "partial", "notes": "the card marking: the unfinished contact card carries its anchor and the same message, the finished import details card none" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "partial", "notes": "Complete contact links to #contact; one card only, and the card marking is not asserted" }
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-012-B",
+          "id": "SCN-PLANTS-CYA-013-C",
+          "name": "A half-done card is named once and links to the card, not to a page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name a half-done card once, linking to the card rather than a page", "strength": "full", "notes": "plants-for-planting, arrival status answered, date missing: exactly one Complete arrival details entry, linking to #arrival-details" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-013-B",
           "name": "Continuing from an unfinished notification is refused, keeping the user on the page",
           "coverage": "full",
           "tests": [
@@ -318,38 +334,64 @@
       ]
     },
     {
-      "id": "REQ-PLANTS-CYA-013",
-      "name": "An amendment's check-your-answers opens without errors and refuses an incomplete resubmission, saying why",
+      "id": "REQ-PLANTS-CYA-014",
+      "name": "An amendment that is not yet ready opens without an error and refuses Continue with one",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-CYA-013-A",
-          "name": "An incomplete amendment's review shows no error",
+          "id": "SCN-PLANTS-CYA-014-A",
+          "name": "An incomplete amendment's review opens with no error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "asserts no summary on open" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on an incomplete amend review", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "asserts no error summary before Continue" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show no error summary on opening an incomplete amend review", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test; asserts no summary on open" }
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-013-B",
-          "name": "Continuing from an incomplete amendment is refused, naming what is missing",
+          "id": "SCN-PLANTS-CYA-014-B",
+          "name": "Continuing from an incomplete amendment stays on check-your-answers, naming what is missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse an incomplete amend and name what is missing", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment stays on the review and shows There is a problem, naming what is missing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment shows There is a problem, naming the outstanding task", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue on an incomplete amend with the error summary, naming what is outstanding", "strength": "full", "notes": "400, focus on the summary, still amending" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Continue on an incomplete amendment is refused and names what is missing", "strength": "full", "notes": "the overview-and-review theme's version of the same test" }
           ]
         }
       ]
     },
     {
-      "id": "REQ-PLANTS-CYA-014",
+      "id": "REQ-PLANTS-CYA-015",
+      "name": "The place of landing and a territory of origin read back as they were offered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-CYA-015-A",
+          "name": "The place of landing row reads the option the user chose",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should read the place of landing back exactly as the option the trader picked", "strength": "full", "notes": "row text equals portOptions()' text for the stored port" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-015-B",
+          "name": "A territory of origin is named with its country",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should name a territory of origin with its country", "strength": "full", "notes": "ES-CN reads 'Canary Islands (Spain)'" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-CYA-016",
       "name": "A submitted notification's read-only view and a draft's check answers are headed by the reference and status, and dated",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-CYA-014-A",
+          "id": "SCN-PLANTS-CYA-016-A",
           "name": "The submitted view is headed by its reference with a Submitted tag",
           "coverage": "full",
           "tests": [
@@ -359,7 +401,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-014-B",
+          "id": "SCN-PLANTS-CYA-016-B",
           "name": "The submitted view's browser title starts with its reference",
           "coverage": "full",
           "tests": [
@@ -369,7 +411,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-014-C",
+          "id": "SCN-PLANTS-CYA-016-C",
           "name": "The submitted view shows the date it was submitted",
           "coverage": "full",
           "tests": [
@@ -379,7 +421,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-014-D",
+          "id": "SCN-PLANTS-CYA-016-D",
           "name": "A draft's check answers is headed by its reference with a Draft tag",
           "coverage": "full",
           "tests": [
@@ -389,7 +431,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-014-E",
+          "id": "SCN-PLANTS-CYA-016-E",
           "name": "A draft's check answers shows the date it was created",
           "coverage": "full",
           "tests": [
@@ -398,7 +440,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-014-F",
+          "id": "SCN-PLANTS-CYA-016-F",
           "name": "An amendment's check answers keeps its heading and status bar",
           "coverage": "full",
           "tests": [
@@ -408,12 +450,12 @@
       ]
     },
     {
-      "id": "REQ-PLANTS-CYA-015",
+      "id": "REQ-PLANTS-CYA-017",
       "name": "Opening the view of a notification that does not exist goes to the notification list",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-CYA-015-A",
+          "id": "SCN-PLANTS-CYA-017-A",
           "name": "An unknown notification's view opens the notification list",
           "coverage": "full",
           "tests": [
@@ -426,12 +468,12 @@
       ]
     },
     {
-      "id": "REQ-PLANTS-CYA-016",
+      "id": "REQ-PLANTS-CYA-018",
       "name": "A submitted notification's read-only view and a draft's check answers show the notification reference as text to copy",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-CYA-016-A",
+          "id": "SCN-PLANTS-CYA-018-A",
           "name": "The submitted view shows its notification reference",
           "coverage": "full",
           "tests": [
@@ -440,7 +482,7 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-016-B",
+          "id": "SCN-PLANTS-CYA-018-B",
           "name": "Without JavaScript the reference reads as plain text, with no customs document code and no Copy button",
           "coverage": "full",
           "tests": [
@@ -448,37 +490,13 @@
           ]
         },
         {
-          "id": "SCN-PLANTS-CYA-016-C",
+          "id": "SCN-PLANTS-CYA-018-C",
           "name": "A draft's check answers shows its notification reference",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, offers Delete notification in its header and no Copy as new, and keeps Continue, Save and return and Cancel", "strength": "full", "notes": "asserts the warning, the Notification reference row, no Customs document code row and no Copy button" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft's check answers is headed by its reference with a Draft tag and the date created, titled by its reference, with no status bar and no Copy as new, keeping its Change links and Continue", "strength": "full", "notes": "asserts the warning, the Notification reference row, no Customs document code row and no Copy button" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should head a draft's check answers with its reference, a Draft tag and the date created, with no status bar, and Back to Overview", "strength": "full", "notes": "importReferences" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-PLANTS-CYA-017",
-      "name": "The error summary names each task still to complete as \"Complete <task>\", once, after any origin or address error",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-PLANTS-CYA-017-A",
-          "name": "An unfinished draft names the missing contact as a task to complete",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "review stays blocked until the final required row is complete", "strength": "full", "notes": "error summary contains 'Complete contact address for consignment' on viewing and after Continue" }
-          ]
-        },
-        {
-          "id": "SCN-PLANTS-CYA-017-B",
-          "name": "A removed destination is named once",
-          "coverage": "full",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should refuse Continue for a removed address-book reference", "strength": "full", "notes": "errorList toEqual exactly the place-of-destination party error, so no 'Complete place of destination' entry" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "a deleted destination renders Not provided on CYA and blocks submission", "strength": "partial", "notes": "asserts 'Select an address for the place of destination' after Continue; does not assert 'Complete place of destination' is absent" }
           ]
         }
       ]

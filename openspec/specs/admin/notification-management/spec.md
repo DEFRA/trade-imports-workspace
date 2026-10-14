@@ -6,9 +6,9 @@ An operator finding and deleting notifications, and the audit trail that records
 
 ## Requirements
 
-### Requirement: An operator can find and delete a notification by its exact reference number
+### Requirement: An operator can delete a notification by typing its exact reference number
 **ID**: REQ-ADMIN-NOTIF-001
-The system MUST let an operator locate a notification by its exact reference number and delete it, after confirming, and MUST show a success message and remove it from the list once deleted.
+The system MUST let an operator delete a notification by entering its exact reference number in the reference number field, after confirming, and MUST show a success message and remove it from the list once deleted.
 
 #### Scenario: Deleting a submitted notification by reference number
 **ID**: SCN-ADMIN-NOTIF-001-A
@@ -50,7 +50,7 @@ The system MUST record an audit entry for every notification-delete attempt, nam
 
 #### Scenario: A successful delete is audited
 **ID**: SCN-ADMIN-NOTIF-004-A
-- **GIVEN** an operator has successfully deleted one notification by reference number
+- **GIVEN** an operator has successfully deleted one notification
 - **WHEN** the audit trail is checked
 - **THEN** it holds one entry recording a successful notification-delete action, naming that operator and that reference number
 

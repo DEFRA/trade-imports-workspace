@@ -8,7 +8,7 @@ Asks which address-book record is the consignment's point of contact, from a sea
 
 ### Requirement: The page offers the address book as a paged table, none chosen in advance
 **ID**: REQ-PLANTS-CONTACT-SELECT-001
-The system MUST ask which contact address to use, offering the organisation's address book as a table under Name, Address and Country headings, each row with a control to select it and a route to its details, and a hint that selecting copies the contact's name and address into the notification. It MUST show one page of results at a time, reporting how many are shown against the total with links to the other pages, and MUST leave every address unchosen when first opened.
+The system MUST ask which contact address to use, offering the organisation's address book as a table of rows under Name, Address and Country headings, each row carrying a control to select it and a route to view its details, with a hint that selecting a contact copies their name and address into the notification. The system MUST show one page of results at a time, reporting how many are shown against the total and offering links to the other pages, and MUST leave every address unchosen when the page is first opened.
 
 #### Scenario: The page shows the first page of the address book, none preselected
 **ID**: SCN-PLANTS-CONTACT-SELECT-001-A
@@ -82,13 +82,13 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 - **THEN** check your answers is shown, headed by the notification's reference
 - **AND** its error summary names the outstanding arrival answer
 
-### Requirement: Saving with nothing chosen is allowed and leaves the task incomplete
+### Requirement: Saving with nothing chosen is allowed, keeping any contact already held
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen, on either save-and-continue or save-and-return-to-overview, without an error, and MUST leave the contact task not yet started. Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return the user to Overview. Within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).
+The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return to Overview; within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).
 
 #### Scenario: A blank save returns to Overview with the task not yet started
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
-- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen
+- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen and no contact address held yet
 - **WHEN** they save and continue or save and return to overview
 - **THEN** they reach Overview with no error summary
 - **AND** the contact task shows not yet started

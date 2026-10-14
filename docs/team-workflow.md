@@ -7,7 +7,7 @@ frontend, its backend and the matching test suite — for the animals service th
 
 - `repos/trade-imports-animals-frontend` — user-facing web application
 - `repos/trade-imports-animals-backend` — API / business logic service
-- `repos/trade-imports-ins-tests` — end-to-end, accessibility and security test suite (its `animals` project)
+- `repos/trade-imports-ins-tests` — end-to-end, accessibility and security test suite (its `animals` domain)
 
 Other services in the workspace follow the same shape. A single ticket may span all three;
 coordinate cross-repo changes through the tests and workspace repos.

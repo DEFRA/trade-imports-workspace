@@ -178,7 +178,7 @@ absolute form of the same path. One command per Bash call. Never `cd`.
   `run test:fit:ci` (it pins its own port and needs the stack up). For the
   plants backend: `mvn -f <repo>/pom.xml clean verify`. For the tests repo:
   `run lint`, `run typecheck`, `run format:check`, then
-  `run test:docker-compose -- --project=plants` with the stack up. A
+  `run test:docker-compose -- tests/plants/` with the stack up. A
   CI-workflow-only change still runs the unit, format and lint rungs — the
   real proof is the PR's own checks, which the loop watches.
 - **`openQuestions`** — what the spec leaves open and the implementor would

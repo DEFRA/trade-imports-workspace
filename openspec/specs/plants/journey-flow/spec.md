@@ -169,7 +169,7 @@ The system MUST walk a newly created notification through an opening sequence of
 
 ### Requirement: A journey opened out of context is sent to its entry page
 **ID**: REQ-PLANTS-FLOW-008
-The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds an answer the user entered. Exempt MUST be: the commodity-type page and those beneath it, so the redirect cannot loop; the dashboard's actions on a notification (amend, cancel an amendment, copy, delete); and a notification that does not exist, which the page asked for answers (for the view, REQ-PLANTS-CYA-015).
+The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds an answer the user entered. Exempt MUST be: the commodity-type page and those beneath it, so the redirect cannot loop; the dashboard's actions on a notification (amend, cancel an amendment, copy, delete); and a notification that does not exist, which the page asked for answers (for the view, REQ-PLANTS-CYA-017).
 
 #### Scenario: A deep link to an unknown journey lands on the entry page
 **ID**: SCN-PLANTS-FLOW-008-A
@@ -236,13 +236,13 @@ The system MUST treat the opening sequence's order as its own and MUST NOT assum
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as it does outside an amendment, and a link-styled "Save and return to overview", with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers MUST end with the first two only. A page MUST keep its usual Back link and never link back to the review.
+While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor or exporter, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
 
 #### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
 **ID**: SCN-PLANTS-FLOW-014-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Identification numbers from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview", and no "Cancel and return to overview"
+- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons, and no "Cancel and return to overview"
 - **WHEN** they change the producer number and select "Save and return"
 - **THEN** the review is shown with the new producer number
 
@@ -261,12 +261,38 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
 - **AND** "Save and return" on the consignor or exporter picker returns to the review
 
-### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+#### Scenario: The commodities list offers two controls while amending
+**ID**: SCN-PLANTS-FLOW-014-D
+- **GIVEN** a notification being amended
+- **WHEN** the user opens the commodities list
+- **THEN** it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
+- **AND** "Save and return" returns to the review
+- **AND** "Save and continue" goes to Overview
+
+### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-PLANTS-FLOW-015
+Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+
+#### Scenario: Cancel and return to overview sits on its own line below the two buttons
+**ID**: SCN-PLANTS-FLOW-015-A
+- **GIVEN** a notification that is not being amended
+- **WHEN** the user opens a page the hub links to directly
+- **THEN** its primary action and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
+
+#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+**ID**: SCN-PLANTS-FLOW-015-B
+- **GIVEN** a notification being amended
+- **WHEN** the user opens a page the hub links to directly
+- **THEN** "Save and return" and "Save and continue" sit side by side
+- **AND** "Save and return to overview" sits on its own line below them
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-PLANTS-FLOW-016
 The system MUST, when a user chooses Plants for planting, Potatoes (seed and ware) or Wood products on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
 
 #### Scenario: Choosing a plants type opens a new draft at the entry question
-**ID**: SCN-PLANTS-FLOW-015-A
+**ID**: SCN-PLANTS-FLOW-016-A
 - **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
 - **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
 - **THEN** a new high-risk plants draft is created and its "What are you importing?" entry page is shown

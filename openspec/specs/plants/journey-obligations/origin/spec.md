@@ -58,3 +58,19 @@ The system MUST re-check a notification's saved country of origin against its co
 - **WHEN** the user adds a further commodity line whose scope is stricter and the country falls outside it
 - **AND** they save the origin page again without changing the country
 - **THEN** the save is refused, naming the stricter scope's allowed countries
+
+### Requirement: A territory of origin is held to its country's scope
+**ID**: REQ-PLANTS-OB-ORIGIN-005
+The system MUST treat a territory chosen as the country of origin as the country it belongs to when applying a commodity line's origin scope: the territory MUST be accepted wherever its country is allowed and refused wherever its country is not.
+
+#### Scenario: A territory is accepted where its country is allowed
+**ID**: SCN-PLANTS-OB-ORIGIN-005-A
+- **GIVEN** a notification carries a ware-potato commodity line
+- **WHEN** the user chooses the Canary Islands, a territory of Spain
+- **THEN** the country is accepted and saved
+
+#### Scenario: A territory is refused where its country is not allowed
+**ID**: SCN-PLANTS-OB-ORIGIN-005-B
+- **GIVEN** a notification carries a ware-potato commodity line
+- **WHEN** the user chooses Martinique, a territory of France
+- **THEN** the country is rejected, naming the four ware-potato countries as the ones that need notifying

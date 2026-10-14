@@ -140,16 +140,21 @@ jobs:
           SUITES: ${{ steps.scope.outputs.suites }}
           TAGS: ${{ steps.scope.outputs.tags }}
         run: |
-          # normalise-suites.sh validates the suites and gives each directory
-          # the trailing slash that stops tests/animals also matching
+          # SUITES is "all" (no path, so every test), a list, or empty when only
+          # tags run. normalise-suites.sh validates a list and gives each
+          # directory the trailing slash that stops tests/animals also matching
           # tests/animals-admin.
-          normalised="$(bash ./scripts/ci/normalise-suites.sh)"
+          run_suites=false
           suite_args=()
-          if [ -n "$normalised" ]; then
-            mapfile -t suite_args <<< "$normalised"
+          if [ -n "$SUITES" ]; then
+            run_suites=true
+            if [ "$SUITES" != "all" ]; then
+              normalised="$(bash ./scripts/ci/normalise-suites.sh)"
+              mapfile -t suite_args <<< "$normalised"
+            fi
           fi
           tag_pattern="$(bash ./scripts/ci/normalise-tags.sh)"
-          echo "Test suites: ${suite_args[*]:-all}"
+          echo "Test suites: ${suite_args[*]:-${SUITES:-none}}"
           echo "Test tags: ${TAGS:-none}"
 
           # A path and --grep combine as AND, so the tagged tests run as a
@@ -172,7 +177,7 @@ jobs:
           }
 
           status=0
-          if [ "${#suite_args[@]}" -gt 0 ] || [ -z "$tag_pattern" ]; then
+          if [ "$run_suites" = true ]; then
             docker_env=()
             run_tests "${suite_args[@]}" || status=1
           fi

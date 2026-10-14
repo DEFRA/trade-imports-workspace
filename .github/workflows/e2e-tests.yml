@@ -6,7 +6,12 @@ on:
   workflow_dispatch:
     inputs:
       suites:
-        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one. Empty runs every test suite.'
+        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one — or all. Clear it to run only the tagged tests.'
+        required: false
+        type: string
+        default: 'all'
+      tags:
+        description: 'Tag(s) whose tests to run from any suite, e.g. @ins-backend — space- or comma-separated for more than one. Run after the suites. Cannot be combined with all.'
         required: false
         type: string
         default: ''
@@ -17,7 +22,7 @@ on:
         required: true
         type: string
       suites:
-        description: 'Test suite(s) to run, as paths under tests/ (a domain, e.g. tests/animals/, or a suite within one, e.g. tests/animals/e2e/) — space- or comma-separated for more than one. Empty runs every test suite.'
+        description: 'Deprecated and ignored: the scope comes from e2e-tests-pr-scope.json. Remove it from the caller.'
         required: false
         type: string
         default: ''
@@ -65,6 +70,17 @@ jobs:
         with:
           repository: DEFRA/trade-imports-workspace
           ref: ${{ steps.workspace-ref.outputs.ref }}
+
+      # A run through a caller takes its scope from e2e-tests-pr-scope.json;
+      # only a direct manual run of this workflow uses its inputs.
+      - name: Resolve test scope
+        id: scope
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SUITES: ${{ inputs.suites }}
+          TAGS: ${{ inputs.tags }}
+          MANUAL: ${{ github.repository == 'DEFRA/trade-imports-workspace' && github.event_name == 'workflow_dispatch' }}
+        run: bash ./scripts/ci/resolve-scope.sh >> "$GITHUB_OUTPUT"
 
       - name: Resolve branch tag
         id: branch-tag
@@ -127,30 +143,53 @@ jobs:
 
       - name: Run E2E tests (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         env:
-          SUITES: ${{ inputs.suites }}
+          SUITES: ${{ steps.scope.outputs.suites }}
+          TAGS: ${{ steps.scope.outputs.tags }}
         run: |
-          # Test suites are selected by path, not --project (a project is
-          # browser config). normalise-suites.sh validates the input and gives
-          # each directory the trailing slash that stops tests/animals also
-          # matching tests/animals-admin.
+          # normalise-suites.sh validates the suites and gives each directory
+          # the trailing slash that stops tests/animals also matching
+          # tests/animals-admin.
           normalised="$(bash ./scripts/ci/normalise-suites.sh)"
           suite_args=()
           if [ -n "$normalised" ]; then
             mapfile -t suite_args <<< "$normalised"
           fi
+          tag_pattern="$(bash ./scripts/ci/normalise-tags.sh)"
           echo "Test suites: ${suite_args[*]:-all}"
+          echo "Test tags: ${TAGS:-none}"
 
-          docker run --rm \
-            --network host \
-            --user root \
-            -v ${{ github.workspace }}/artifacts/blob-report:/app/blob-report \
-            -v ${{ github.workspace }}/artifacts/test-results:/app/test-results \
-            -v ${{ github.workspace }}/artifacts/allure-results:/app/allure-results \
-            --entrypoint npm \
-            defradigital/trade-imports-ins-tests:${{ steps.branch-tag.outputs.tests-tag }} \
-            run test:docker-compose:ci -- \
-              "${suite_args[@]}" \
-              --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+          # A path and --grep combine as AND, so the tagged tests run as a
+          # second command. It writes its blob report and results to their own
+          # subdirectories: a blob reporter clears its output directory when it
+          # finishes, which would delete the first run's report.
+          run_tests() {
+            docker run --rm \
+              --network host \
+              --user root \
+              "${docker_env[@]}" \
+              -v ${{ github.workspace }}/artifacts/blob-report:/app/blob-report \
+              -v ${{ github.workspace }}/artifacts/test-results:/app/test-results \
+              -v ${{ github.workspace }}/artifacts/allure-results:/app/allure-results \
+              --entrypoint npm \
+              defradigital/trade-imports-ins-tests:${{ steps.branch-tag.outputs.tests-tag }} \
+              run test:docker-compose:ci -- \
+                "$@" \
+                --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+          }
+
+          status=0
+          if [ "${#suite_args[@]}" -gt 0 ] || [ -z "$tag_pattern" ]; then
+            docker_env=()
+            run_tests "${suite_args[@]}" || status=1
+          fi
+          if [ -n "$tag_pattern" ]; then
+            docker_env=(
+              -e PLAYWRIGHT_BLOB_OUTPUT_DIR=/app/blob-report/tags
+              -e PLAYWRIGHT_BLOB_OUTPUT_NAME=report-tags-${{ matrix.shardIndex }}.zip
+            )
+            run_tests --grep "$tag_pattern" --pass-with-no-tests --output=/app/test-results/tags || status=1
+          fi
+          exit "$status"
 
       - name: Upload shard artifacts
         if: always()
@@ -208,7 +247,7 @@ jobs:
         run: |
           npm install -D @playwright/test
           mkdir -p all-blob-reports
-          find all-shards -path '*/blob-report/*' -exec cp {} all-blob-reports/ \;
+          find all-shards -path '*/blob-report/*' -type f -exec cp {} all-blob-reports/ \;
           npx playwright merge-reports --reporter=html ./all-blob-reports
 
       - name: Combine allure and test results

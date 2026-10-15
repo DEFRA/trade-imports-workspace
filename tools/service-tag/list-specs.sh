@@ -34,7 +34,9 @@ done
 tests="$HOME/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests"
 [[ -d "$tests" ]] || { echo "No ins-tests clone at $tests" >&2; exit 1; }
 
-npm --prefix "$tests" exec --no -- playwright test --list --reporter=json --config="$tests/playwright.docker-compose.config.ts" \
+# Run from inside the repo with a relative config, as `npm run lint` does, so
+# `file` comes back relative to tests/ (domain first).
+(cd "$tests" && npx --no-install playwright test --list --reporter=json --config=playwright.docker-compose.config.ts) \
     | jq --arg domain "$DOMAIN" --arg type "$TYPE" --arg tag "$TAG" '
         [ .. | objects | select(has("specs")) | .specs[]
           | {file, line, title, tags: [ .tags[]? | ltrimstr("@") | "@" + . ]}

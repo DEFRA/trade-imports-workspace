@@ -40,9 +40,7 @@ can't fail the deployment.
 The INS services serve every journey, so their family has every journey's domain.
 It leaves out animals-admin, which only the animals services link to.
 
-The [core services](#core-services) (dynamics-gateway, defra-id-stub, reference-data,
-stub) have no family. They serve every journey, so nothing is left out: they run every
-domain through the bare `default` profile, which also covers any domain added later.
+The [core services](#core-services), below, have no family.
 
 #### INS family
 
@@ -68,6 +66,10 @@ domain through the bare `default` profile, which also covers any domain added la
 | plants-frontend | `ins:e2e`, `plants:e2e` | as dev, plus `plants:a11y (TODO)`, `plants:dynamics (TODO)` | | |
 
 #### Core services
+
+Core services have no family. They serve every journey, so nothing is left out: they
+run every domain through the bare `default` profile, which also covers any domain added
+later.
 
 | Repo | dev | test | perf-test | pre |
 |---|---|---|---|---|

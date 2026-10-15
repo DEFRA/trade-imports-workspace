@@ -183,7 +183,7 @@ The system MUST list each address's name, full postal address and country, MUST 
 - **GIVEN** the user has addresses in their address book
 - **WHEN** they view the address book
 - **THEN** each address is listed with its name, full postal address and country
-- **AND** an action to add a new address is offered
+- **AND** an action to add a new address is offered, which opens 'Choose an address type'
 
 #### Scenario: Selecting an address from the list opens its own details page
 **ID**: SCN-INS-ADDR-012-B
@@ -322,3 +322,57 @@ The system MUST tell the user 'Enter a name or organisation name', 'Enter a post
 - **WHEN** the request is made
 - **THEN** it is refused with a validation error giving 'Enter a name or organisation name', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number' against those fields
 - **AND** no address is created
+
+### Requirement: Adding an address from the address book starts by choosing its type
+**ID**: REQ-INS-ADDR-019
+The system MUST open adding an address from the address book on 'Choose an address type', offering 'Origin or Consignor', 'Destination, Consignee or Importer' and 'Branch', in that order and with no Transporter. The system MUST refuse to continue without a choice, then open the address form with a 'Back' link to the type step, and MUST remember the choice only while that add is in progress.
+
+#### Scenario: The type page shows its caption, question, options and hints in order, with no Transporter
+**ID**: SCN-INS-ADDR-019-A
+- **GIVEN** the user is on the address book
+- **WHEN** they choose to add a new address
+- **THEN** the page is captioned 'Add a new address' and headed 'Choose an address type', and asks the same question in a hidden legend
+- **AND** it offers 'Origin or Consignor' (hint 'Place of origin, Consignor'), 'Destination, Consignee or Importer' (hint 'Place of destination, Consignee, Importer') and 'Branch' (hint 'Branch address'), in that order, and no Transporter
+- **AND** it offers a 'Continue' button and a 'Back' link to the address book
+
+#### Scenario: Continuing with no type chosen names the problem
+**ID**: SCN-INS-ADDR-019-B
+- **GIVEN** the user is on 'Choose an address type' and has chosen nothing
+- **WHEN** they continue
+- **THEN** 'Select an address type' is shown against the options and in a 'There is a problem' summary
+- **AND** following the summary's link goes to the first option
+
+#### Scenario: Choosing a type opens the address form
+**ID**: SCN-INS-ADDR-019-C
+- **GIVEN** the user is on 'Choose an address type'
+- **WHEN** they choose 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and continue
+- **THEN** the address form opens, captioned 'Add new address' and headed 'Add address and contact details', with no notification status banner
+- **AND** it offers a 'Back' link to 'Choose an address type'
+
+#### Scenario: Opening the address form with no type chosen goes to the type step
+**ID**: SCN-INS-ADDR-019-D
+- **GIVEN** the user is not in a notification journey and has chosen no address type
+- **WHEN** they open the address form
+- **THEN** 'Choose an address type' opens instead
+
+#### Scenario: The chosen type is kept only while the add is in progress
+**ID**: SCN-INS-ADDR-019-E
+- **GIVEN** the user has chosen a type and opened the address form
+- **WHEN** they go back from the form
+- **THEN** 'Choose an address type' shows the chosen type selected
+- **WHEN** they later choose 'Add a new address' on the address book
+- **THEN** no type is selected and the form's fields are empty
+- **WHEN** they save an address
+- **THEN** the next add starts with no type selected
+
+### Requirement: A notification journey's handshake opens the address form directly
+**ID**: REQ-INS-ADDR-020
+The system MUST open the address form, without 'Choose an address type', when a notification journey hands over to it, and MUST still hand the new address id back to the journey on save.
+
+#### Scenario: A journey handshake opens the form directly and returns the new address
+**ID**: SCN-INS-ADDR-020-A
+- **GIVEN** a notification journey hands the user over to add an address
+- **WHEN** the address form opens
+- **THEN** it opens directly, without 'Choose an address type'
+- **WHEN** the user saves the address
+- **THEN** they return to the journey with the new address id

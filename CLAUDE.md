@@ -183,6 +183,11 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   (gds/, java/, node/, playwright/, k6/, rest-api/, doc-comments/,
   docker-compose.md). Cited by SKILL.md files via
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
+- `docs/testing/` — how this project tests, and the general theory behind it:
+  - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
+  - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
+  - [`docs/testing/e2e-tests-cdp.md`](docs/testing/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.
+  - [`docs/testing/theory/`](docs/testing/theory/) — general testing theory (pyramid, classification, doubles, flaky tests and so on), not specific to this project.
 - `docs/analysis/` — point-in-time, cross-repo investigation write-ups (not
   volatile catalogues — snapshot findings, re-run the investigation if the
   codebases have moved on). See
@@ -222,6 +227,3 @@ The volatile catalogues live as topic files under [`docs/reference/`](docs/refer
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.
 - [`docs/reference/workareas.md`](docs/reference/workareas.md) — the `workareas/` runtime-cache map.
 - [`docs/reference/openspec.md`](docs/reference/openspec.md) — OpenSpec CLI, coverage gap queries, and how to read coverage rows for the Behaviour Spec under `openspec/` (authoring conventions: [`openspec/config.yaml`](openspec/config.yaml)).
-- [`docs/reference/test-and-spec-terms.md`](docs/reference/test-and-spec-terms.md) — what domain, test type, suite, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
-- [`docs/reference/e2e-tests-gh-actions.md`](docs/reference/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
-- [`docs/reference/e2e-tests-cdp.md`](docs/reference/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.

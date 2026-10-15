@@ -1,8 +1,8 @@
 # E2E tests: GitHub Actions
 
-This page describes how GitHub Actions picks the e2e tests for a pull request, and the scheduled runs in `trade-imports-ins-tests`. What each repo runs is in [`scripts/ci/e2e-tests-pr-scope.json`](../../scripts/ci/e2e-tests-pr-scope.json), not here.
+This page describes how GitHub Actions picks the e2e tests for a pull request, and the scheduled runs in `trade-imports-ins-tests`. What each repo runs is in [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json), not here.
 
-For the runs the CDP Portal triggers, see [E2E tests: CDP](e2e-tests-cdp.md). For what domain, suite and service tag mean, see [Test and spec terms](test-and-spec-terms.md).
+For the runs the CDP Portal triggers, see [E2E tests: CDP](e2e-tests-cdp.md). For what domain, suite and service tag mean, see [Test and spec vocabulary](test-and-spec-vocabulary.md).
 
 ## Pull requests
 
@@ -31,9 +31,10 @@ This runs the animals and animals-admin suites, then any other spec tagged `@ani
 - **Several tags**: list them, and one command runs every spec carrying any of them.
 - **Everything**: `"suites": ["all"]`. It stands alone and cannot be combined with tags, since it already runs every test.
 - **Tags only**: set `tags` and leave `suites` out or empty (`"suites": []`). Only the tagged tests run, and a shard with none passes.
-- **No entry**: a repo missing from the file uses `default`, which runs everything. An entry with neither list fails the run.
+- **No entry**: a repo missing from the file uses `default`, which runs everything. An entry whose suites and tags are both empty or missing fails the run, such as `{ "suites": [], "tags": [] }` or `{}`.
+- **Manual runs**: a manual run of the workflow in the workspace repo takes its suites and tags from the run inputs instead of the scope file, under the same rules.
 
-A service runs its own suite plus the specs carrying its tag. A missing tag loses extra coverage, never the service's own suite. `npm run lint` in `trade-imports-ins-tests` fails a spec that carries the tag of the domain it sits in, because that domain already runs by path.
+A service runs its own suite plus the specs carrying its tag. A missing tag loses extra coverage, never the service's own suite. `npm run lint` in `trade-imports-ins-tests` fails a spec that carries a service's tag when it sits in a domain that service already runs by path.
 
 ### Repos that run everything
 
@@ -42,10 +43,10 @@ These repos use the `default` entry, which runs every suite. If pull-request run
 | Repo | Why | Future consideration |
 |---|---|---|
 | dynamics-gateway | Forwards notification events from the stack to Azure Service Bus; only animals publishes today, but any journey may use it. | `@gateway` (to add) — event routing and admin outbox/replay specs. |
-| defra-id-stub | OIDC sign-in stub; all four UIs depend on it. | `@auth` — sign-in specs in each domain. |
+| defra-id-stub | OIDC sign-in stub; all four UIs depend on it. | `@auth` (exists) — sign-in specs in each domain. |
 | reference-data | Shared countries and ports; multiple frontends read it. | `@reference-data` (to add) — specs that load countries or ports of entry. |
 | stub | Stub for upstream trade-platform and MDM; stack-wide. | `@trade-platform` (to add) — specs that call this repo's trade-platform or MDM endpoints. |
-| workspace | Holds the shared e2e workflow and Docker Compose stack. | `@smoke` — a cheap "stack + front doors" signal (Compose up, minimal journey per domain); not the full e2e suite. |
+| workspace | Holds the shared e2e workflow and Docker Compose stack. | `@smoke` (exists) — a cheap "stack + front doors" signal (Compose up, minimal journey per domain); not the full e2e suite. |
 | ins-tests | Playwright e2e testing suite; holds every domain's specs. | Narrow by changed paths under `tests/` (shared code still runs everything). |
 
 ### Repos that do not call the workflow
@@ -87,4 +88,4 @@ Only `@animals-backend` is tagged so far, on two `ins` specs. These notes say wh
 
 ## Keeping this up to date
 
-Change `scripts/ci/e2e-tests-pr-scope.json` when scope changes. This page describes the approach, so it needs updating only when the approach changes, or when a link above is tagged and can be removed. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.
+Change `config/e2e-tests-pr-scope.json` when scope changes. This page describes the approach, so it needs updating only when the approach changes, or when a link above is tagged and can be removed. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.

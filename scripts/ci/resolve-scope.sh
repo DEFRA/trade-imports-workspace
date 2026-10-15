@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Works out which suites and tags a pull request's e2e run covers, from
-# e2e-tests-pr-scope.json, and prints them as `suites=` and `tags=` lines for
+# config/e2e-tests-pr-scope.json, and prints them as `suites=` and `tags=` lines for
 # $GITHUB_OUTPUT.
 #
 #   REPOSITORY   owner/name of the calling repo (github.repository)
@@ -18,6 +18,7 @@ set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="${REPOSITORY#*/}"
+scope_path="config/e2e-tests-pr-scope.json"
 
 fail() {
   echo "::error::$1" >&2
@@ -36,11 +37,11 @@ if [ "${MANUAL:-false}" = "true" ]; then
   scope_suites="$(words "$SUITES")"
   scope_tags="$(words "$TAGS")"
 else
-  scope_file="$here/e2e-tests-pr-scope.json"
+  scope_file="$here/../../$scope_path"
   key="$(jq -r --arg repo "$repo" 'if has($repo) then $repo else "default" end' "$scope_file")"
-  where="the $key entry in e2e-tests-pr-scope.json"
+  where="the $key entry in $scope_path"
   entry="$(jq -c --arg key "$key" '.[$key] // empty' "$scope_file")"
-  [ -n "$entry" ] || fail "No scope for $repo in e2e-tests-pr-scope.json, and no default entry."
+  [ -n "$entry" ] || fail "No scope for $repo in $scope_path, and no default entry."
   scope_suites="$(words "$(jq -r '(.suites // []) | join(" ")' <<< "$entry")")"
   scope_tags="$(words "$(jq -r '(.tags // []) | join(" ")' <<< "$entry")")"
 fi

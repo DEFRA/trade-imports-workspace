@@ -1,4 +1,4 @@
-# Test and spec terms
+# Test and spec vocabulary
 
 What the words mean across the test repo (`trade-imports-ins-tests`), the Behaviour Spec (`openspec/`) and the PR scope in GitHub Actions.
 
@@ -36,4 +36,4 @@ The spec prefixes are not renamed: the area codes in [`openspec/coverage/AREAS.m
 
 - Which suites and service tags a pull request runs: [E2E tests: GitHub Actions](e2e-tests-gh-actions.md).
 - How the test repo is laid out: the [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#domains-test-suites-and-projects).
-- Reading and writing specs: [OpenSpec](openspec.md).
+- Reading and writing specs: [OpenSpec](../reference/openspec.md).

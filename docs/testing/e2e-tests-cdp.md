@@ -79,7 +79,7 @@ domain added later.
 | reference-data | ✓ | ✓ | ✓ | ✓ | Countries and ports of entry for the animals, plants and ins frontends. |
 | stub | ✓ | ✓ | ✓ | ✓ | Fake trade-platform token and MDM data that other services depend on. |
 
-These match the [GitHub Actions table](e2e-tests-gh-actions.md#shared-stack-repos),
+These match the [GitHub Actions table](e2e-tests-gh-actions.md#repos-that-run-everything),
 less the compose-only specs.
 
 ### Dynamics checks, in `test` only

@@ -2,8 +2,8 @@
 
 **Runs after a deployment and on a schedule, from the CDP Portal. Configured in the portal, not in any repo.**
 
-Which test suites, and which domain(s) of each, the CDP Portal runs, and the
-[scheduled runs](#scheduled-runs). Each run is one `PROFILE` of the
+This page records the runs the CDP Portal triggers after each deployment and on a
+[schedule](#scheduled-runs). Each run is one `PROFILE` of the
 `trade-imports-ins-tests` test suite: `default` (the e2e suite), `a11y`,
 `dynamics` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
@@ -12,91 +12,80 @@ For the runs that happen on every PR instead, see [E2E tests: GitHub Actions](e2
 
 ## After a deployment
 
-Every run below happens in both `dev` and `test`, unless a section says
-otherwise. No service runs `a11y` or `security` on deployment; those run on a
-schedule.
+### Runs by service
 
-### Specific domains
+Each entry is one `PROFILE` run, for example `ins:e2e`. The columns are Portal
+environments. `dev` and `test` run the same e2e runs, and `test` adds a11y for each
+frontend and the Dynamics checks; "as dev" means the same runs as `dev`. `perf-test`
+and `pre` have none recorded yet.
 
-Each tick is one `<domain>:e2e` run, for example `ins:e2e` and `animals:e2e`
-for address-book. Adding a domain means adding its run in the portal for each
-service that should have it.
+Security runs only on a [schedule](#scheduled-runs), not after a deployment. Adding a
+domain means adding its run in the portal for each service that should have it. A repo
+that appears in none of these tables has no recorded deployment run.
 
-`✓` means the domain runs after deployment today.
+#### Families
 
-A service's deployment runs its whole family. Every tick covers fewer specs here
-than in [GitHub Actions](e2e-tests-gh-actions.md#pull-requests), because
-specs that need the compose stack don't run on CDP (see
-[What does not run on CDP](#what-does-not-run-on-cdp)).
+A service's deployment runs the domains of the journey it serves (the
+[frontends that use it](test-and-spec-vocabulary.md#why-tests-are-grouped-by-domain),
+and the admin app where there is one), plus `ins`, which every journey feeds. Together
+these are its family. Domains outside the family don't run, so an unrelated journey
+can't fail the deployment.
 
-#### INS services
+| Family | Domains | Services |
+|---|---|---|
+| Animals | ins, animals, animals-admin | animals-admin, animals-backend, animals-frontend |
+| Plants | ins, plants | plants-backend, plants-frontend |
+| INS | ins, animals, plants | address-book, ins-backend, ins-frontend |
 
-These run ins, animals and plants.
+The INS services serve every journey, so their family has every journey's domain.
+It leaves out animals-admin, which only the animals services link to.
 
-| Repo | ins | animals | animals-admin | plants | Notes |
-|---|:-:|:-:|:-:|:-:|---|
-| address-book | ✓ | ✓ | | ✓ | plants: its frontend uses it, and its specs aren't compose-only<br>**Skips:** animals-admin: no link |
-| ins-backend | ✓ | ✓ | | ✓ | animals, plants: journeys publish the events it stores<br>**Skips:** animals-admin: none read from it (see Details) |
-| ins-frontend | ✓ | ✓ | | ✓ | animals, plants: journey handoff<br>**Skips:** animals-admin: no link |
+The [core services](#core-services) (dynamics-gateway, defra-id-stub, reference-data,
+stub) have no family. They serve every journey, so nothing is left out: they run every
+domain through the bare `default` profile, which also covers any domain added later.
 
-#### Animals services
+#### INS family
 
-These run ins, animals and animals-admin.
+| Repo | dev | test | perf-test | pre |
+|---|---|---|---|---|
+| address-book | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev | | |
+| ins-backend | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev | | |
+| ins-frontend | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev, plus `ins:a11y (TODO)` | | |
 
-| Repo | ins | animals | animals-admin | plants | Notes |
-|---|:-:|:-:|:-:|:-:|---|
-| animals-admin | ✓ | ✓ | ✓ | | ins: replay only (see Details)<br>**Skips:** plants: separate journey |
-| animals-backend | ✓ | ✓ | ✓ | | ins: the aggregate is fed through SNS<br>**Skips:** plants: separate journey |
-| animals-frontend | ✓ | ✓ | ✓ | | ins: animals services<br>**Skips:** plants: separate journey |
+#### Animals family
 
-#### Plants services
+| Repo | dev | test | perf-test | pre |
+|---|---|---|---|---|
+| animals-admin | `ins:e2e`, `animals:e2e`, `animals-admin:e2e` | as dev, plus `animals-admin:a11y` | | |
+| animals-backend | `ins:e2e`, `animals:e2e`, `animals-admin:e2e` | as dev, plus `animals:dynamics` | | |
+| animals-frontend | `ins:e2e`, `animals:e2e`, `animals-admin:e2e` | as dev, plus `animals:a11y`, `animals:dynamics` | | |
 
-These run ins and plants.
+#### Plants family
 
-| Repo | ins | animals | animals-admin | plants | Notes |
-|---|:-:|:-:|:-:|:-:|---|
-| plants-backend | ✓ | | | ✓ | ins: aggregate (see Details)<br>**Skips:** animals, animals-admin: separate journey |
-| plants-frontend | ✓ | | | ✓ | ins: plants services<br>**Skips:** animals, animals-admin: separate journey |
+| Repo | dev | test | perf-test | pre |
+|---|---|---|---|---|
+| plants-backend | `ins:e2e`, `plants:e2e` | as dev, plus `plants:dynamics (TODO)` | | |
+| plants-frontend | `ins:e2e`, `plants:e2e` | as dev, plus `plants:a11y (TODO)`, `plants:dynamics (TODO)` | | |
 
-**Details**
+#### Core services
 
-- **animals-admin:** its only route into INS is replaying a notification's
-  events. ins-backend ignores events it already has, so `ins` is a family check,
-  not a close coupling.
-- **ins-backend:** admin only reaches it by replaying events that it already
-  handles.
-- **plants-backend:** its outbox feeds the ins aggregate.
+| Repo | dev | test | perf-test | pre |
+|---|---|---|---|---|
+| dynamics-gateway | `default` | as dev, plus `dynamics` | | |
+| defra-id-stub | `default` | as dev | | |
+| reference-data | `default` | as dev | | |
+| stub | `default` | as dev | | |
 
-### Every domain
-
-These run the bare `default` (e2e) profile, so they cover every domain, including any
-domain added later.
-
-| Repo | ins | animals | animals-admin | plants | Notes |
-|---|:-:|:-:|:-:|:-:|---|
-| dynamics-gateway | ✓ | ✓ | ✓ | ✓ | Shared event router to Azure Service Bus. Only animals publishes events today, but any journey may use it. |
-| defra-id-stub | ✓ | ✓ | ✓ | ✓ | Sign-in for all four UIs. |
-| reference-data | ✓ | ✓ | ✓ | ✓ | Countries and ports of entry for the animals, plants and ins frontends. |
-| stub | ✓ | ✓ | ✓ | ✓ | Fake trade-platform token and MDM data that other services depend on. |
-
-These match the [GitHub Actions table](e2e-tests-gh-actions.md#repos-that-run-everything),
-less the compose-only specs.
-
-### Dynamics checks, in `test` only
-
-These run `<domain>:dynamics`, in addition to the e2e runs above.
-
-| Repo | animals |
-|---|:-:|
-| animals-backend | ✓ |
-| animals-frontend | ✓ |
-
-A repo that appears in none of these tables has no recorded deployment run.
+[GitHub Actions](e2e-tests-gh-actions.md#repos-that-run-everything) runs the e2e tests
+for these four on every PR too, plus the workspace and ins-tests repos, with the
+compose-only specs included. The `dynamics` run doesn't run on PRs.
 
 ### What does not run on CDP
 
-Specs tagged `@compose`, and the `@mongodb` specs that skip themselves outside
-the compose stack, do not run on CDP. That includes most of the `animals-admin`
+Every e2e run covers fewer specs here than in
+[GitHub Actions](e2e-tests-gh-actions.md#pull-requests), because specs tagged
+`@compose`, and the `@mongodb` specs that skip themselves outside the compose stack,
+do not run on CDP. That includes most of the `animals-admin`
 specs (the `outbox-event-*` specs, DLQ events, the seed specs), the aggregated-notification
 and cross-service-sessions specs under `ins`, the animals add-address handshake
 and address-book navigation, and the promoted and persistence specs under
@@ -128,41 +117,26 @@ specs through a passive ZAP scan. The `@active` specs under each domain's
 Times are in the zone the schedule is set in: Europe/London here, UTC in
 GitHub Actions. In summer, 01:00 UTC is 02:00 in London.
 
-## Before a production release
+## Family profiles `PROPOSED`
 
-Before a production release, check that the latest `default` run on `test`
-passed against the release candidate. It runs every domain, so it verifies the
-release candidate across all the services. If that run predates the release
-candidate's deployment to `test`, start one by hand.
+A family profile runs every suite for a
+[family](#families) in one run: e2e, a11y, dynamics and security. A service would need
+one run, such as `animals-family`, instead of a run per domain and suite (`ins:e2e`,
+`animals:e2e`, `animals-admin:e2e`, `animals:a11y` and so on). These profiles don't
+exist yet and would need adding to `trade-imports-ins-tests`.
 
-This is done by hand, not as part of every deployment, so the broad check
-happens at the moment that matters without every `dev` and `test` deployment
-running several domains and failing more often. The deployment runs above stay
-limited to each service's own related domains.
+| | Separate runs (today) | One family profile |
+|---|---|---|
+| Runs per service | one per domain and suite | one |
+| Resources | each run has its own 4 vCPU and 8 GB (8 vCPU and 16 GB on Large) | the whole family shares one |
+| Speed | the domains run in parallel, so feedback is faster | the domains share one run, so it takes longer |
+| Result to check | one per domain and suite | one for the family |
 
-`default` runs every domain in one run, so it covers any service's related
-domains. The compose-only specs still don't run on CDP (see
-[What does not run on CDP](#what-does-not-run-on-cdp)).
-
-A follow-up idea is to run only the release candidate's own family of services
-(see [Family runs](#family-runs) below).
-
-### Family runs
-
-`TO DISCUSS`: a proposal, not agreed. A family run would keep an unrelated domain
-from blocking the release. Today a `PROFILE` takes one domain or all of them, so
-these profiles don't exist yet and would need adding to
-`trade-imports-ins-tests`.
-
-| Family | PROFILE (all three suites) | One suite only | Domains |
-|---|---|---|---|
-| Animals | `animals-family` | `animals-family:e2e`, `:a11y`, `:security`, `:dynamics` | ins, animals, animals-admin |
-| Plants | `plants-family` | `plants-family:e2e`, `:a11y`, `:security`, `:dynamics` | ins, plants. `plants-admin` too, once that domain exists. |
-| INS | `ins-family` | `ins-family:e2e`, `:a11y`, `:security` | ins, animals, plants |
-
-`animals-family` runs all three suites for the family: e2e, a11y and security. To
-run one suite only, add it after a colon, for example `animals-family:e2e`.
-`plants-family` and `ins-family` work the same way.
+Separate runs suit deployments, where fast feedback matters. A family profile suits
+a manual or release check, where one result for the family matters more than speed,
+and an unrelated domain can't block it. The profiles would be `animals-family`,
+`plants-family` and `ins-family`. They would run only on `test`, because the Dynamics
+checks need the Dynamics environment.
 
 ## Keeping this up to date
 

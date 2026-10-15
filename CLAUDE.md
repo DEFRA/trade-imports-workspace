@@ -185,7 +185,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
   docker-compose.md). Cited by SKILL.md files via
   `~/git/defra/trade-imports-workspace/docs/best-practices/<topic>/<file>`.
 - `docs/testing/` — how this project tests, and the general theory behind it:
-  - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
+  - [`docs/testing/test-and-spec-vocabulary.md`](docs/testing/test-and-spec-vocabulary.md) — what domain, test type, suite, profile, capability and service tag mean across the test repo and the Behaviour Spec, and how a test domain maps to a spec prefix.
   - [`docs/testing/e2e-tests-gh-actions.md`](docs/testing/e2e-tests-gh-actions.md) — which Playwright domain(s) each repo's PR-triggered GitHub Actions e2e run covers, plus the scheduled runs, and why.
   - [`docs/testing/e2e-tests-cdp.md`](docs/testing/e2e-tests-cdp.md) — which `PROFILE` suites (and domains) each service's CDP Portal deployment runs, per environment.
   - [`docs/testing/theory/`](docs/testing/theory/) — general testing theory (pyramid, classification, doubles, flaky tests and so on), not specific to this project.

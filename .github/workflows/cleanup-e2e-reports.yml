@@ -1,6 +1,10 @@
 name: Cleanup E2E Reports
 
 on:
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -29,7 +33,7 @@ jobs:
 
       - name: Prune subdirs not matching an active preview
         env:
-          HEAD_REF: ${{ inputs.head-ref }}
+          HEAD_REF: ${{ inputs.head-ref || github.head_ref }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |

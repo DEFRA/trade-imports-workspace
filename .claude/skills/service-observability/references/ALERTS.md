@@ -35,9 +35,11 @@ change to both.
 | Folder | `Playground/<service>-monitoring` (seen on reference-data; see `DASHBOARD.md`) |
 | Evaluation group | `<service>-advanced-alerts` |
 
-`[UNPROVEN]` The alerts must be in that evaluation group; it evaluates
-every 5 minutes. Leave the alert named `platform_managed_do_not_delete`
-alone. No labels are needed: promotion adds them.
+The folder and evaluation group already exist, holding one alert named
+`platform_managed_do_not_delete` (seen 2026-10-15 for reference-data and
+animals-backend). Leave that alert alone. `[UNPROVEN]` The alerts must
+be in that evaluation group; it evaluates every 5 minutes. No labels are
+needed: promotion adds them.
 
 Starting alerts. The thresholds are a first guess for the team to
 agree, not tested values.

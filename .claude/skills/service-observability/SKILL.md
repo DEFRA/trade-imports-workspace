@@ -87,10 +87,12 @@ No code. The developer checks in the dev Grafana
   time, HTTP errors, dead-letter queues). `[UNPROVEN]` The CDP docs say
   default alerts are deployed on request, so they may be missing. If
   they are, ask #cdp-support for them;
-- the folder `Playground/<service>-monitoring` exists (it does for
-  reference-data). `[UNPROVEN]` it holds an alert evaluation group
-  `<service>-advanced-alerts` with one alert named
-  `platform_managed_do_not_delete`.
+- the folder `Playground/<service>-monitoring` exists, with an alert
+  evaluation group `<service>-advanced-alerts` holding one alert named
+  `platform_managed_do_not_delete`. (Seen 2026-10-15 for reference-data
+  and animals-backend.) Anyone can list the dev alert rules without
+  signing in:
+  `curl -s 'https://metrics.dev.cdp-int.defra.cloud/api/prometheus/grafana/api/v1/rules' | jq -r '.data.groups[] | "\(.file) | \(.name) | \([.rules[].name] | join(", "))"'`.
 
 Then list the service's real dependencies from its code, not from the
 ticket: every system it calls, and any database it has configured. A

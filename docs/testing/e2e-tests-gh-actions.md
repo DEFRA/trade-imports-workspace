@@ -71,21 +71,12 @@ These repos do not call the workflow, so their pull requests run no ins-tests e2
 
 Times are in the zone the schedule is set in: UTC here, Europe/London on CDP. In summer, 01:00 UTC is 02:00 in London.
 
-## Follow-up: service tags to add
+## Tagging specs for a service
 
-Only `@animals-backend` is tagged so far, on two `ins` specs. These notes say which specs in other domains each service's pull request should also run, so the tags can be added. A `service-tag` skill could do this per service: read its links, find the specs in other domains that exercise it, add its tag to each, and run `npm run lint` to check the tag fits where the spec lives.
+The `service-tag` skill tags the specs in other domains that a service's pull request should also run, and keeps each entry's `tags` in `config/e2e-tests-pr-scope.json` in step. Ask for "tag specs for `<service>`", or `service-tag` for every entry except `default`.
 
-| Repo | Links |
-|---|---|
-| address-book | **ins** — ins frontend uses the address book.<br>**animals** — animals frontend uses the address book.<br>**plants** — plants frontend uses the address book. |
-| ins-backend | **ins** — this repo's domain.<br>**Not run: animals, plants** — ins already drives the animals journey; plants publishes no events yet. |
-| ins-frontend | **ins** — this repo's domain.<br>**animals** — animals journey hands off to add-address.<br>**plants** — plants journey will hand off to add-address (not yet built). |
-| animals-admin | **animals** — specs create notifications through animals-frontend.<br>**animals-admin** — this repo's domain.<br>**Not run: ins** — replay only republishes events; ins-backend's handling of them is covered on ins-backend. |
-| animals-backend | **ins** — events from this backend feed the ins aggregate.<br>**animals** — this repo's domain.<br>**animals-admin** — admin reads animals notification data. |
-| animals-frontend | **animals** — this repo's domain.<br>**animals-admin** — admin specs seed notifications through this frontend.<br>**Not run: ins** — aggregate is fed by animals-backend; add-address handoff is covered on ins-frontend. |
-| plants-backend | **ins** — will mirror animals-backend once its outbox ships.<br>**plants** — this repo's domain. |
-| plants-frontend | **plants** — this repo's domain.<br>**Not run: ins** — aggregate will be fed by plants-backend. |
+It reads which services call the service directly from the stack's compose wiring, searches those callers' domains (minus the ones the service already runs by path) for specs that use the service's fixtures, and tags only the ones that exercise it. It skips specs carrying `@a11y`, `@active` or `@dynamics`, which the PR run filters out. How a spec reaches each service, the links the wiring can't show, and the specs ruled out are in [`service-decisions.md`](../../.claude/skills/service-tag/references/service-decisions.md). At the start it asks whether to leave changes unstaged, commit, or branch first, and it never pushes.
 
 ## Keeping this up to date
 
-Change `config/e2e-tests-pr-scope.json` when scope changes. This page describes the approach, so it needs updating only when the approach changes, or when a link above is tagged and can be removed. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.
+Change `config/e2e-tests-pr-scope.json` when scope changes, and the skill's `service-decisions.md` when a service's fixtures or decisions change. This page describes the approach, so it needs updating only when the approach changes. The CDP Portal is configured separately, in [E2E tests: CDP](e2e-tests-cdp.md). Nothing keeps the two docs in sync.

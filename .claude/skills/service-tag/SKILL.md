@@ -101,11 +101,32 @@ For each service (scope-file order), find its fixtures row in
 [`references/service-decisions.md`](references/service-decisions.md). No row: stop and
 ask the user for its fixtures.
 
-**The domains to search** are the domains of the service's `dependents` from Step 0 (the
-services that call it directly), plus any "Also exercised from" rows for it in the
-decisions file, **minus** the domains it already runs by path (`domains_run_by_path`).
-Only direct callers count — a caller of a caller is not related. No domains left: nothing
-to tag, so say so in one line and go on to the next service.
+**First, the existing tags.** List every spec that already carries the service's tag, in
+any domain:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/service-tag/list-specs.sh --tag <@tag>
+```
+
+Read each one and re-judge it now by the rules below; do not rely on an earlier run or on
+the tag being there. One that no longer fits, or that sits in a domain with no caller and
+no "Also exercised from" row for this service, is **stale**. A stale tag is never removed
+silently. Skip one listed under "Kept on purpose" in the decisions file whose **Revisit if**
+condition is still false. Ask about each of the others **one at a time** (AskUserQuestion),
+naming the spec, the tag and why it no longer fits:
+
+- **Remove the tag** — apply it straight away (see "How to remove a tag").
+- **Keep it** — add a row under "Kept on purpose" with the reason and a **Revisit if**
+  condition, so the next run does not raise it again.
+
+**Then, the domains to search.** They are the domains of the service's `dependents` from
+Step 0 (the services that call it directly), plus any "Also exercised from" rows for it
+in the decisions file, **minus** the domains it already runs by path
+(`domains_run_by_path`). Only direct callers count — a caller of a caller is not related.
+**State the list before searching, naming each domain and why** (for example
+"animals-frontend: ins — caller ins-frontend; animals-admin — also exercised from"), and
+search every one on it; none may be skipped. No domains left: nothing to search, so say so
+in one line and go on to the next service.
 
 For each domain, in its own Bash call, find the specs that use the service's fixtures
 (use the indirect signal too where the row has one). Search `e2e/` only, because `a11y/`
@@ -159,10 +180,12 @@ test('shows the address picker', { tag: '@address-book' }, async ({ page }) => {
 test.describe('Address book', { tag: ['@compose', '@address-book'] }, () => { ... });
 ```
 
-### Existing tags
+### How to remove a tag
 
-Re-judge specs that already carry the service's tag with the same rules. A tag that no
-longer fits is **reported, never removed** — list it for the user to decide.
+Take only the service's tag out. If the tag option held several tags, drop that one from
+the array (and turn a one-element array back into a string). If it held only that tag,
+remove the whole `{ tag }` argument so the call goes back to its original shape. Step 4
+then reformats the file.
 
 ## Step 3: Scope entry
 
@@ -174,8 +197,8 @@ After tagging a service, list its tag across the suite:
 
 - Specs carry the tag and the entry has no `tags`: add `"tags": ["<@tag>"]`.
 - **No spec carries the tag** and the entry has `tags`: remove the `tags` key. The entry
-  keeps its `suites`, so it stays valid. If a stale tag was reported in Step 2 and left
-  in place, keep the `tags`.
+  keeps its `suites`, so it stays valid. A stale carrier the user chose to keep still
+  carries the tag, so keep the `tags` in that case.
 - Leave `SERVICE_TAG_DOMAINS` alone — it says which domains a tag belongs to, whether
   or not a spec uses it yet.
 - Keep each entry on one line, as the file does. Then check the JSON still parses:
@@ -211,7 +234,8 @@ trusts, so keep it true. Propose an edit for each of these, **one at a time**
 (AskUserQuestion, saying what changes and why), and apply it only on a yes. If there are
 none, say nothing.
 
-- A **Ruled out** row whose **Revisit if** condition is now true: remove the row.
+- A **Ruled out** or **Kept on purpose** row whose **Revisit if** condition is now true:
+  remove the row (a kept tag is then judged like any other).
 - Specs whose hits were all unrelated: add a **Ruled out** row with the reason and a
   **Revisit if** condition, so the next run does not raise them again.
 - A link you found that the wiring does not show (an event, or a test that drives
@@ -240,7 +264,7 @@ Aligned: <n> consistency question(s) answered — <list, or "none found">
   tagged:   <spec — domain>, ...
   skipped:  <ruled out / near-miss>, ...
   scope:    tags added | kept | removed
-  stale:    <specs carrying the tag that no longer fit, or none>
+  stale:    <specs whose tag no longer fit, each removed or kept, or none>
 Decisions file: <rows changed, or "no changes proposed">
 Lint: clean
 

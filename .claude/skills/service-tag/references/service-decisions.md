@@ -53,6 +53,21 @@ spec. A condition that is now true is proposed for removal; it is never applied 
 | Services | Spec | Reason and revisit |
 |---|---|---|
 | animals-frontend, ins-frontend, plants-frontend | `ins/e2e/features/cross-service-sessions.spec.ts` | Uses each frontend's pages only to check that a sign-in session survives. **Revisit if:** the spec asserts anything beyond the sessions. |
+| animals-backend, animals-frontend | `ins/e2e/features/address-book/address-book-auth.spec.ts` | Matches only because it signs in through `animalsJourney`. **Revisit if:** it asserts anything beyond sign-in. |
+| animals-backend | `ins/e2e/features/address-book/address-book-persistence.spec.ts` | Matches only because it uses `MongoDbClient`, on the address-book database. **Revisit if:** it reads an animals-backend collection. |
+| animals-frontend | `animals-admin/e2e/features/outbox-event-*.spec.ts` | Drive the animals UI only to trigger events, and assert solely on backend outbox documents. **Revisit if:** one asserts on an animals frontend page. |
+| animals-frontend | `animals-admin/e2e/features/admin-auth.spec.ts`, `admin-notifications.spec.ts`, `admin-outbox-events.spec.ts` | Use the animals journey only to sign in or seed data, and assert on the admin app. **Revisit if:** one asserts on an animals frontend page. |
+| animals-frontend | `ins/e2e/features/aggregated-notification.spec.ts` | Drives a submission through the animals frontend, then asserts only on the ins aggregate. Stays tagged for animals-backend. **Revisit if:** it asserts on an animals frontend page. |
+
+## Kept on purpose
+
+Specs that carry a service's tag although the skill judged they no longer fit, and the
+user chose to keep. Each carries a **Revisit if** condition, re-checked on every run. A
+condition that is now true is proposed for removal; it is never applied silently.
+
+| Service | Spec | Reason and revisit |
+|---|---|---|
+| | | None yet. |
 
 ## Settled
 

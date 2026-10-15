@@ -6,8 +6,10 @@ description: 'Add custom metrics, dependency call logging, a Grafana dashboard a
 The recipe for giving one CDP service the observability the platform
 defaults do not: custom metrics, a searchable log line per dependency
 call, a custom Grafana dashboard, and alerts that reach the team in
-Slack. One service per run. The code lands in the service's repo; the
-dashboard and alerts are built by hand in the CDP dev Grafana.
+Slack. One service per run. The code lands in the service's repo.
+Claude generates the dashboard JSON and an alert build sheet from the
+templates in `assets/`; the developer imports and builds them in the
+CDP dev Grafana, because nothing else can write to it.
 
 It was written from EUDPA-632, the spike on
 `trade-imports-reference-data`. Read "What is proven" below before
@@ -20,7 +22,7 @@ Cross-workspace paths use the literal home-relative form —
 `~/git/defra/trade-imports-workspace/docs/best-practices/`,
 `~/git/defra/trade-imports-workspace/workareas/`. Bash
 expands `~` automatically. Skill-internal references stay
-relative (`references/<NAME>.md`).
+relative (`references/<NAME>.md`, `assets/<name>`).
 
 **Bash call hygiene** — one command per Bash call. Full rule
 table: [`docs/agent-skills.md`](../../../docs/agent-skills.md)
@@ -43,6 +45,7 @@ skill and point its plan at these steps.
 |---|---|
 | Metrics and log line, Java service | Proven by tests on `trade-imports-reference-data`, branch `feat/EUDPA-632-observability` until it merges |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
+| Dashboard and alert templates | Written from the reference-data code and the CDP docs; not yet imported into Grafana |
 | Dashboard, alerts, Slack routing, promotion, alert testing | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
 
 When a run settles an `[UNPROVEN]` fact, edit the file that states it
@@ -53,9 +56,13 @@ as the service's branch (CLAUDE.md rule 2).
 ## Who does what
 
 Claude can read and change the service's code and run its tests. Claude
-cannot reach Grafana, OpenSearch, the CDP Portal or Slack. For Steps 4
-to 6 Claude gives the developer the exact names, queries and messages
-to use, and records what they report back.
+cannot write to Grafana, OpenSearch, the CDP Portal or Slack: the dev
+Grafana needs a signed-in Editor to write, and CDP issues no
+service-account tokens. For Steps 4 and 5 Claude writes the dashboard
+JSON and the alert build sheet to
+`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/`;
+for Step 6 it gives the exact messages. The developer does the Grafana,
+Portal and Slack parts, and Claude records what they report back.
 
 A run takes days and several sessions. Its progress lives in the
 ticket's plan,
@@ -80,9 +87,10 @@ No code. The developer checks in the dev Grafana
   time, HTTP errors, dead-letter queues). `[UNPROVEN]` The CDP docs say
   default alerts are deployed on request, so they may be missing. If
   they are, ask #cdp-support for them;
-- `[UNPROVEN]` the folder `Playground/<service>-monitoring` exists, with
-  an alert evaluation group `<service>-advanced-alerts` holding one
-  alert named `platform_managed_do_not_delete`.
+- the folder `Playground/<service>-monitoring` exists (it does for
+  reference-data). `[UNPROVEN]` it holds an alert evaluation group
+  `<service>-advanced-alerts` with one alert named
+  `platform_managed_do_not_delete`.
 
 Then list the service's real dependencies from its code, not from the
 ticket: every system it calls, and any database it has configured. A
@@ -114,11 +122,14 @@ dependency goes down. Availability is a metric, never a health check.
 
 ## Step 4: Build the dashboard
 
-Follow `references/DASHBOARD.md`.
+Follow `references/DASHBOARD.md` → "Generate" (Claude, from
+`assets/dashboard.template.json`), then "Import" (the developer).
 
 ## Step 5: Build the alerts and route them to Slack
 
-Follow `references/ALERTS.md` → "Build" and "Route to Slack".
+Follow `references/ALERTS.md` → "Build" (Claude writes the build sheet
+from `assets/alerts.template.md`; the developer builds each rule) and
+"Route to Slack".
 
 ## Step 6: Promote, then prove each alert fires
 

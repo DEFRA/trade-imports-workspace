@@ -5,14 +5,34 @@ prove they fire. Parent-loaded: path and Bash rules come from
 No alert has been built, routed or fired from this file yet. Each fact
 that comes only from the CDP monitoring docs is marked `[UNPROVEN]`.
 
-The developer does this by hand in Grafana and Slack. Claude supplies
-the names, conditions and messages below, filled in for the service.
+The developer builds the alerts by hand in Grafana, from a build sheet
+Claude writes. Nothing can push them for us: writing to the dev Grafana
+needs a signed-in Editor and CDP issues no service-account tokens (see
+`DASHBOARD.md`). `[UNPROVEN]` Grafana's UI has no import for
+Grafana-managed alert rules; if a run finds one, add an importable
+template beside the build sheet and record it here.
+
+Claude writes the sheet to
+`~/git/defra/trade-imports-workspace/workareas/ticket-planning/<ticket>/grafana/alerts.md`
+by copying `assets/alerts.template.md` and filling in:
+
+- `<service>`;
+- `<read-timeout-ms>` and `<slow-threshold-ms>` (two thirds of it) for
+  each dependency, from the read timeout its client actually applies.
+  Read the client code, not just the config: on reference-data the YAML
+  sets `readTimeout: 3000`, but the Feign clients have no
+  `Request.Options`, so Feign's 60 second default applies. If
+  dependencies differ, split "dependency slow" into one rule per
+  dependency, as the sheet says.
+
+The build sheet and the table below must agree; a change to one is a
+change to both.
 
 ## Build
 
 | Thing | Value |
 |---|---|
-| Folder | `Playground/<service>-monitoring` |
+| Folder | `Playground/<service>-monitoring` (seen on reference-data; see `DASHBOARD.md`) |
 | Evaluation group | `<service>-advanced-alerts` |
 
 `[UNPROVEN]` The alerts must be in that evaluation group; it evaluates

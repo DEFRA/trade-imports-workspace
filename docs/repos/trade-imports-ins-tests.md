@@ -27,7 +27,7 @@ Page objects, flows and domain data follow the same split, under `page-objects/`
 |---|---|---|---|
 | Outbound | animals-frontend, animals-admin, ins-frontend, plants-frontend | HTTP (browser) | The journeys under test |
 | Outbound | animals-backend, address-book | HTTP | Seeding and cleaning up test data |
-| Inbound | workspace `e2e-tests.yml` | Docker image `defradigital/trade-imports-ins-tests` | PR checks; the suites and tags each repo runs come from `e2e-tests-pr-scope.json` |
+| Inbound | workspace `e2e-tests.yml` | Docker image `defradigital/trade-imports-ins-tests` | PR checks; the suites and tags each repo runs come from `config/e2e-tests-pr-scope.json` |
 | Inbound | workspace `security-active-scan.yml` | Docker image | ZAP active scan |
 
 ## Stack

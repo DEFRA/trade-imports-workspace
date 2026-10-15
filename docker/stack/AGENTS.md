@@ -192,7 +192,7 @@ cd repos/trade-imports-ins-tests
 npm run test:docker-compose             # every domain
 npm run test:docker-compose:plants      # one domain: animals, animals-admin, ins or plants
 ```
-Which domain(s) a service's own PR runs in GitHub Actions: [`docs/reference/e2e-tests-gh-actions.md`](../../docs/reference/e2e-tests-gh-actions.md).
+Which domain(s) a service's own PR runs in GitHub Actions: [`docs/testing/e2e-tests-gh-actions.md`](../../docs/testing/e2e-tests-gh-actions.md).
 
 ## Lifecycle scripts live in `scripts/stack/`
 

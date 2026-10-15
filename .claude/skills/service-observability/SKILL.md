@@ -83,10 +83,16 @@ No code. The developer checks in the dev Grafana
 (`https://metrics.dev.cdp-int.defra.cloud/`):
 
 - the service has its default dashboard;
-- the service has default alerts (running tasks, CPU, memory, response
-  time, HTTP errors, dead-letter queues). `[UNPROVEN]` The CDP docs say
-  default alerts are deployed on request, so they may be missing. If
-  they are, ask #cdp-support for them;
+- the service has default alerts. They are deployed per service on
+  request, so they may be missing: on 2026-10-15 animals-backend had
+  them and reference-data had none. They live in the `CDP_Tenants`
+  folder in two groups, `<service>` (desired running tasks, CPU, memory,
+  storage, average response time, HTTP status code, log ingestion
+  errors) and `<service> advanced http alerts` (4xx and 5xx percentage
+  and spike detection, p95 response time, slow requests percentage).
+  Check with the rules listing below, filtered on the service name. If
+  either group is missing, ask #cdp-support to deploy it in every
+  environment, naming a service that has it;
 - the folder `Playground/<service>-monitoring` exists, with an alert
   evaluation group `<service>-advanced-alerts` holding one alert named
   `platform_managed_do_not_delete`. (Seen 2026-10-15 for reference-data

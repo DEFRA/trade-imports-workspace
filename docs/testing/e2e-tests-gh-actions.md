@@ -46,7 +46,7 @@ These repos use the `default` entry, which runs every suite. If pull-request run
 
 | Repo | Why | Future consideration |
 |---|---|---|
-| dynamics-gateway | Forwards notification events from the stack to Azure Service Bus; only animals publishes today, but any journey may use it. | `@gateway` (to add) — event routing and admin outbox/replay specs. |
+| dynamics-gateway | Forwards notification events from the stack to Azure Service Bus; only animals publishes today, but any journey may use it. | `@dynamics-gateway` (to add) — event routing and admin outbox/replay specs. |
 | defra-id-stub | OIDC sign-in stub; all four UIs depend on it. | `@auth` (exists) — sign-in specs in each domain. |
 | reference-data | Shared countries and ports; multiple frontends read it. | `@reference-data` (to add) — specs that load countries or ports of entry. |
 | stub | Stub for upstream trade-platform and MDM; stack-wide. | `@trade-platform` (to add) — specs that call this repo's trade-platform or MDM endpoints. |

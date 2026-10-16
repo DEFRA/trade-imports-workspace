@@ -28,14 +28,6 @@ The system MUST title every page with the page's own name, then the service name
 - **WHEN** they open the home
 - **THEN** the title reads `Dashboard - Import notification service - GOV.UK`
 
-#### Scenario: Choose an address type, the address form and the edit page follow the pattern
-**ID**: SCN-INS-PAGE-TITLE-001-D
-- **GIVEN** a signed-in trader adding and then editing an address
-- **WHEN** they read the title of each page
-- **THEN** 'Choose an address type' reads `Choose an address type - Import notification service - GOV.UK`
-- **AND** the address form reads `Add address and contact details - Import notification service - GOV.UK`
-- **AND** the edit page reads `Edit address details - Import notification service - GOV.UK`
-
 ### Requirement: A page showing errors opens its whole title with an error prefix
 **ID**: REQ-INS-PAGE-TITLE-002
 The system MUST open the title of a page showing errors with an error prefix, ahead of the page's own name, so the whole title — not only the page name — is marked as being in error.
@@ -44,7 +36,7 @@ The system MUST open the title of a page showing errors with an error prefix, ah
 **ID**: SCN-INS-PAGE-TITLE-002-A
 - **GIVEN** the trader has submitted a page that answers back with an error summary, such as the add address page with nothing filled in
 - **WHEN** the page's title is read
-- **THEN** it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before, such as `Error: Add address and contact details - Import notification service - GOV.UK`
+- **THEN** it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before, such as `Error: Add address details - Import notification service - GOV.UK`
 
 ### Requirement: An error page's title follows the same pattern
 **ID**: REQ-INS-PAGE-TITLE-003

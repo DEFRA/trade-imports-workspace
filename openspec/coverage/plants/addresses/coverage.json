@@ -31,6 +31,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the edit form opens from the picker with every field, including County", "strength": "full", "notes": "after picking the contact, the edit form shows every copied field: name, both lines, town, county, postcode, country, phone, email" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-copied.spec.ts", "test": "picking a record for a role with no address shows every field of that record on the review page", "strength": "full", "notes": "one record with every field distinct, picked for the destination and contact: both review cards show name, both lines, town, county, postcode, country, phone and email; the consignor is not driven" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignor-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "stored answer equals the picked-party copy of the record — mechanism" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/place-of-destination/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the place of destination" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/consignment-contact-select/controller.test.js", "test": "Should commit a copy of the chosen record", "strength": "partial", "notes": "same, for the contact address" }
@@ -284,7 +285,7 @@
     {
       "id": "REQ-PLANTS-ADDR-011",
       "name": "A submitted notification keeps its copied addresses, through amendment",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ADDR-011-A",
@@ -297,9 +298,11 @@
         {
           "id": "SCN-PLANTS-ADDR-011-B",
           "name": "A submitted notification's address is unaffected by a later change to the record",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the copy held on the notification without reading the address book", "strength": "partial", "notes": "draft only; the read-only and amend views share the read path, but no test edits or deletes the record behind a submitted or amending notification" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "renaming the book after submit changes neither the submitted view nor the amendment, and cancelling the amendment keeps the copy", "strength": "full", "notes": "submit, rename the record: read-only view, amendment and the view after cancelling the amendment all keep the original name and town, not the renamed ones" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-submit-freeze.spec.ts", "test": "deleting the book record after submit changes neither the submitted view nor the amendment, and shows no error", "strength": "full", "notes": "submit, delete the record: read-only view and amendment keep the copy and show no error summary" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show the copy held on the notification without reading the address book", "strength": "partial", "notes": "draft only; the mechanism behind the isolation" }
           ]
         }
       ]
@@ -307,7 +310,7 @@
     {
       "id": "REQ-PLANTS-ADDR-012",
       "name": "Reopening the picker names the record the address was chosen from, and keeps the address on a blank save",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ADDR-012-A",
@@ -344,9 +347,10 @@
         {
           "id": "SCN-PLANTS-ADDR-012-D",
           "name": "Reopening the picker names nothing once the address is edited on the notification",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "the edit save drops the source record; no test reopens the picker after an edit and asserts nothing is named" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/address-book/addresses-picker.spec.ts", "test": "reopening the picker names the record the address was chosen from, and names nothing once the address is edited on the notification", "strength": "full", "notes": "picks a record, reopens the destination picker and sees it named; edits the details, then the picker shows the edited copy and no selected-address inset, also after a fresh open" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/party-edit.controller.test.js", "test": "Should forget which record the copy was picked from, so the picker no longer pre-selects it", "strength": "partial", "notes": "the edit save drops the source record; the mechanism behind the picker naming nothing" }
           ]
         }
       ]

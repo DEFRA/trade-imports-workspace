@@ -1,6 +1,9 @@
 Implement **one** fix from an EUDPA review items table. Verify the
-violation exists, confirm tests are green, make the minimal change,
-confirm tests are still green, commit.
+violation exists, make the change that makes the item's Must true,
+confirm tests are green, commit.
+
+Read `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+in full before you edit. What you write must meet it.
 
 Your prompt specifies the ticket, item, repo, file, line, issue, and fix.
 
@@ -19,7 +22,9 @@ helper in `docs/agent-skills.md`.
 - **File:** path/to/file (relative to repo root)
 - **Line:** NN
 - **Issue:** [description from items table]
-- **Fix:** [fix description from items table]
+- **Fix:** [fix description from items table], written as
+  `Must: … One way: …`. Older items may hold one sentence with no
+  labels; treat that sentence as the Must.
 
 ---
 
@@ -52,17 +57,49 @@ before spawning fixers. Proceed directly to Step 3.
 
 ## Step 3: Make the Change
 
-Make the **minimal** change required to address this specific violation.
-Do not fix anything else in the file. Do not reformat unrelated code.
+Make the change that makes the **Must** true. The **One way** is a
+suggestion: follow it when it is the cleanest route, and choose a
+better one when it is not. Do not fix other items in the file, and do
+not reformat unrelated code.
 
-The Fix column in the items table describes what to do. Use it
-literally.
+Before you add a guard, a helper, a constant or a log line, search the
+file and its callers for one that already does the job. If one
+exists, use it or extend it. Three review items once became three
+guards that failed three different ways; one owner would have done.
+
+### Comment findings
+
+1. **Delete first.** Remove the comment. Re-read the lines below it.
+   If they still read clearly, you are done.
+2. **If the comment decoded a name**, the finding is the name. Rename
+   the function, variable or constant until the comment is not
+   needed, or extract the block into a function whose name says what
+   it does. Remove the comment in the same change. Rename the
+   concept's whole vocabulary (every caller, test and twin), not one
+   site.
+3. **Never reword and spread.** Do not rewrite the comment in new
+   words, move it to another place, or copy it to callers, tests or
+   the twin repo.
+
+Bad, then good, from this codebase:
+
+```js
+// c-201: an amendment opens with no errors; Continue refused shows them.
+const holdsSilently = readOnly || (journey.status === state.AMEND && !refused)
+```
+
+```js
+const hidesAnswerErrors = readOnly || (journey.status === state.AMEND && !refused)
+```
+
+The comment goes. The new name says what the flag does for every
+state it covers, so no comment is needed to decode it.
 
 After editing Node.js files, run Prettier to avoid pre-commit hook
 failures:
 
 ```bash
-~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 
 ---
@@ -107,8 +144,15 @@ reports to `target/surefire-reports/`.
 
 **If E2E tests fail:**
 - Read `error-context.md` artifacts as above — do not try to diagnose from console tail
-- If failure is related to this change: revert and return `FAILED: #N — E2E tests broke after change, reverted. Failure: [summary]`
-- If failure is clearly unrelated (different feature, pre-existing flaky test): note it and continue
+- Prove whether your change caused it: stash nothing, revert only your
+  file with `git checkout -- {file}`, run the failing spec again to a
+  new file, and read it.
+  - Green without your change: your change caused it. Return
+    `FAILED: #N — E2E tests broke after change, reverted. Failure: [summary]`.
+  - Still red without your change: re-apply your change, commit it
+    (Step 5), and return `RED` (below) so the batch implementor fixes
+    the failure before the next item. Never call it flaky, unrelated
+    or pre-existing and carry on.
 
 ---
 
@@ -128,7 +172,7 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 
 If the pre-commit hook fails due to Prettier:
 ```bash
-~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
@@ -155,9 +199,9 @@ FAILED: #N — [reason]. Change reverted.
 ```
 
 ```
-CANNOT START: #N — pre-existing test failures. Stopping.
-Unit: [pass/fail]
-E2E: [pass/fail]
+RED: #N — [brief description of change] committed; a test is red without it too.
+Repo: {repo} | File: {file} | Commit: {short-sha}
+Failing: [spec file and test title] — [one-line cause from error-context.md]
 ```
 
 ```

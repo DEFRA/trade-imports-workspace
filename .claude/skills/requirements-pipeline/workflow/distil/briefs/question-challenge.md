@@ -32,6 +32,9 @@ Common cases:
   default: `precedence`, following the judgement, citing the ruling claim and the judgement's claim.
 - A difference where the ruling's default winner (such as the prototype) is clear and no override applies:
   `precedence`, the default winner.
+- A difference in architecture, sets, URL paths, data model or where code lives, where one position is a design
+  prototype's: `precedence`, the target's own architecture. A prototype decides look and feel only (content,
+  wording, layout, components, question order), so it never wins on structure.
 - A size, rate or quota the platform caps, with a ticket to raise it: `blocked`, the design's value adopted, the
   blocker naming the platform change and its ticket.
 - Two readings of the target that build different things for different environments, with nothing that ranks them:

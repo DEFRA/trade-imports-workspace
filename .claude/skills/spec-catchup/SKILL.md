@@ -96,6 +96,11 @@ verdict as it resolves:
 - `add-spec` — add the requirement/scenario to `spec.md` and its
   `coverage.json` row
 - `update-link` — fix the moved/renamed `file`/`test` in `coverage.json`
+
+A link this step adds or changes may say `full` only if you have seen its
+test fail with the covered line inverted, then pass again with it restored
+(the red probe in `spec-cover`). Without the probe, write `partial` and
+leave the probe to `spec-cover`, which finds it with `tim spec gaps --partial`.
 - `remove-dead-link` — strip the dead test entry from `coverage.json`
   and leave `spec.md` alone (hands the hole to `spec-cover`)
 - `delete-spec` — delete `spec.md` and `coverage.json` together

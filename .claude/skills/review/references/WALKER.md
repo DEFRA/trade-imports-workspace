@@ -44,11 +44,11 @@ the bottom:
 ```markdown
 **Walking review EUDPA-XXXXX** — N pending items
 
-| # | Severity | File:Line | Category | Issue | Fix | Cite |
-|---|---|---|---|---|---|---|
-| 1 | 🔴 Critical | `backend/Service.java:42` | security | Logger emits raw error object | Use structured `logger.error({err}, '...')` | node/pino-logging.md |
-| 2 | 🟡 Major | `backend/Mapper.java:15` | correctness | Null check missing on `notification.consignor` | Add `Objects.requireNonNull` | — |
-| 3 | 🔵 Minor | `frontend/helper.js:8` | style | Variable name `x` too short | Rename to `notification` | — |
+| # | Severity | File:Line | Category | Issue | Must | One way | Cite |
+|---|---|---|---|---|---|---|---|
+| 1 | 🔴 Critical | `frontend/notification-client.js:42` | logging | Save failure logs `err.message` only | The failure log carries the error and the reference | `logger.error({ err, referenceNumber }, '...')` | node/pino-logging.md |
+| 2 | 🟡 Major | `backend/Mapper.java:15` | correctness | Null check missing on `notification.consignor` | A missing consignor fails at the boundary | `Objects.requireNonNull` in the record | — |
+| 3 | 🟡 Major | `frontend/check-answers/controller.js:148` | naming | `holdsSilently` needs its comment to be read | The name says what the flag does in every state | Rename to `hidesAnswerErrors`; delete the comment | — |
 ...
 
 **Triage:** type one character per item, in order.
@@ -65,6 +65,10 @@ Severity badges:
 - 🔴 **Critical**
 - 🟡 **Major**
 - 🔵 **Minor**
+
+Must and One way columns: split the item's `fix` text on its `Must:`
+and `One way:` labels. A `fix` with no labels goes in Must, with `—`
+under One way. `F` agrees the Must; the One way stays a suggestion.
 
 Cite column: show the `best_practice` field if present; `—` otherwise.
 

@@ -383,14 +383,14 @@ the stack scripts, docs — and the loop builds it like any other repo: ticket, 
 gate, PR, CI and merge. Its `repos` entry is
 
 ```js
-workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval: true }
+workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
 ```
 
 `workspace` is the only key allowed at `.`, and `.` the only path allowed for it. gates.json
 knows the repo as `trade-imports-workspace`: its rungs run tim's format check, lint and unit
 tests, and both E2E suites list it, because the workspace owns the stack they run against.
 
-**`requireApproval` on a repo.** A repo whose entry sets `requireApproval: true` needs an
+**`requireApproval` on a repo.** The skill never sets it on any entry, the workspace included (`references/BUILD.md`, "The workspace repo"). The loop still honours one it finds: a repo whose entry sets `requireApproval: true` needs an
 approving review on its PR before the merge stage merges **any** PR of the increment. The merge
 stage lists those PRs under NEEDS APPROVAL and runs the same whole-increment approval sweep as
 the run-level gate, on them alone: still unapproved after `approvalWaitMinutes`, it stops at

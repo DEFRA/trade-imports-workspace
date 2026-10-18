@@ -85,7 +85,17 @@ question.
 | Type (Bug/Story/Task)? | Template |
 | One-line summary? | Summary field |
 | Context - why needed? | Description |
+| What do you recommend? | Recommendation |
 | Acceptance criteria? | AC section |
+
+Acceptance criteria hold only what is still to do or find out. If the
+user gives an item that is already answered, put it in the description
+or tech notes instead. See "Acceptance criteria hold open items only"
+in `ticket-conventions.md`.
+
+If the work is an architecture, re-architecture or investigation
+ticket, ask for the questions to answer, not the moves to make. Use
+the investigation template in Step 3.
 
 ### Parent epic — always asked
 
@@ -176,8 +186,16 @@ camelCase canonical form (e.g. `technicalImprovement`, not
 
 ## Step 3: Write Description
 
-Jira wiki syntax: `*bold*`, `+*underlined bold*+`, `{{monospace}}`,
-`* bullet`, `# numbered`.
+Write the body in Jira wiki markup, never Markdown. Follow the "Jira
+wiki markup" section of `ticket-conventions.md`, including its escape
+rules: `\[` and `\]` for literal brackets, `\|` for a pipe inside a
+table cell, and no `{{…}}` that starts with a hyphen.
+
+Shape the body as "What a ticket says" in `ticket-conventions.md`: the
+need, short background, a recommendation, scope and acceptance
+criteria. No history, timelines, commit hashes or audit dumps; link
+the evidence instead. Do not repeat Jira fields (type, priority,
+parent, labels, assignee) in the body.
 
 Pick the template that matches the chosen Type and read its body from
 `assets/templates/<type>.md`:
@@ -187,6 +205,7 @@ Pick the template that matches the chosen Type and read its body from
 | Bug | `assets/templates/bug.md` |
 | Story | `assets/templates/story.md` |
 | Task | `assets/templates/task.md` |
+| Task that is an architecture or investigation ticket | `assets/templates/investigation.md` |
 
 Substitute the bracketed placeholders with the answers from Step 1. Keep
 the section ordering as the template defines it — convention across the
@@ -235,6 +254,8 @@ long"), rewrite `draft.md` in place against the GDS rules in
 | Cut | Keep                                          |
 |-----|-----------------------------------------------|
 | Repeated context, restated background | Acceptance criteria — unless they're repeated |
+| How the problem arose, timelines, commit hashes, "checked, not a mismatch" lists | The recommendation |
+| Answered items in the AC (move them to tech notes) | Links to the evidence |
 | Rationale the parent epic already carries | Steps to reproduce, expected vs actual        |
 | Hedging ("it would be good if") | Ticket keys, links, service and field names   |
 | Passive voice, long noun phrases | Environment, feature flag, mockup links       |
@@ -348,6 +369,21 @@ Read the created key and link from `ticket.created.json` (or from the
 fallback script's own output). Append them to the bottom of `draft.md` and
 update **Status** to `CREATED: EUDPA-XXXXX`.
 
+Check the description rendered:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-XXXXX full > ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/rendered.txt
+```
+
+Search `rendered.txt` for `class="error"`. A match is an unescaped
+bracket: fix `description.jira.txt` and update the ticket with
+`tools/jira/update-ticket.sh EUDPA-XXXXX -d -`, reading the file on
+stdin.
+
+To assign the ticket to someone else, or to link it as blocking or
+blocked by another, follow "Workflow facts" in
+`ticket-conventions.md`. `tim jira link` creates only Relates links.
+
 ```
 Ticket created: EUDPA-XXXXX
 Link: ${JIRA_BASE_URL}/browse/EUDPA-XXXXX
@@ -359,5 +395,7 @@ Draft retained at: ~/git/defra/trade-imports-workspace/workareas/ticket-creation
 - AC style and examples — see
   `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`
   (free-form bullets; no Gherkin mandate).
-- Named conventions (Tech Debt Board bundle etc.) — same doc, "Named
-  conventions" section.
+- Ticket body shape, open-items-only AC, investigation tickets, wiki
+  markup and escaping, and Jira workflow facts (no sprints, no "Won't
+  Do" transition, assigning, Blocks link direction) — same doc.
+- Tech-debt defaults — same doc, "Field-default modifiers".

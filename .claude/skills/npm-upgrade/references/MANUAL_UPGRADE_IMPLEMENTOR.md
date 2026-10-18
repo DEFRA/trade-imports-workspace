@@ -65,8 +65,12 @@ For every other repo:
 ~/git/defra/trade-imports-workspace/tools/npm/npm-in-repo.sh --repo {repo} test > /tmp/baseline-{repo}-{package-normalized}.log 2>&1
 ```
 
-If baseline fails: stop. Mark status=failed with reason "baseline
-broken; not an upgrade issue". Return `CANNOT START: baseline broken`.
+If baseline fails: stop before installing anything. Leave the package's
+status as it is and return `BASELINE RED: {repo} — {failing test names}, log
+/tmp/baseline-{repo}-{package-normalized}.log`. A red baseline is not a
+reason to skip the package. The session fixes the failing tests on the
+branch in their own commit, re-runs them to green, then starts this package
+again.
 
 ---
 
@@ -105,10 +109,10 @@ After editing Node.js files, run Prettier to avoid pre-commit hook
 failures:
 
 ```bash
-~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write {edited-file}
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 
-(One Bash call per file.)
+It formats the whole repo. Stage only the files you edited.
 
 ---
 
@@ -284,7 +288,11 @@ CASCADE: {package} — rollback failed, manual intervention required.
 ```
 
 ```
-CANNOT START: {package} — {pre-flight failure}.
+CANNOT START: {package} — uncommitted changes.
+```
+
+```
+BASELINE RED: {repo} — {failing test names}, log {path}.
 ```
 
 ```

@@ -49,7 +49,7 @@ classification, write `classification: manual`.
      CHANGES file). Don't give up after one try.
    - `migration_guide` → search the changelog body and the project
      docs for migration / upgrade guides for the target version.
-   - `usages` → use the **Grep tool** (not Bash) over
+   - `usages` → one Bash `grep -rn` call (never the Grep tool, which is not allowlisted) over
      `~/git/defra/trade-imports-workspace/repos/{repo}/src` for
      `from ['"]{package}` and `require\(['"]{package}` patterns.
 3. **Read the per-repo best-practices bundle** if the package is

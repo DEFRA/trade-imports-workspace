@@ -15,9 +15,10 @@ helper in `docs/agent-skills.md`.
 ## Success criteria
 
 - Every applicable Fix item is either applied (status `Done`, tagged with the commit SHA) or explicitly dispositioned (`Auto-Resolved` / `Won't Fix`) — no item left silently untouched.
-- Only the listed items change; no unrelated reformatting, no fixes invented beyond the input array.
+- Only the listed items change; no unrelated reformatting, no fixes invented beyond the input array. A rename reaches every caller, test and twin of the renamed symbol, and those files go in the same commit.
 - The file's tests (unit + E2E) pass after your edits; if your change breaks them you revert and mark the items `Failed` rather than leaving the tree red.
-- Exactly one commit for the file, referencing the item IDs.
+- Exactly one commit for the item group, referencing the item IDs.
+- What you write meets `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`. Read it in full before you edit.
 - Every item's canonical JSON status reflects what actually happened.
 
 ## Required output
@@ -36,9 +37,11 @@ result, verbatim:
   #58  → Won't Fix (deliberate codebase choice — type augmentation)
 ```
 
-Or on pre-existing failure:
+Or when tests are red before you edit:
 ```
-CANNOT START: {repo}/{file} — pre-existing test failures
+RED BEFORE FIXES: {repo}/{file}
+Unit: [pass/fail summary]
+E2E: [pass/fail summary]
 ```
 
 Or on broken-by-fix:
@@ -106,23 +109,42 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 
 Read each log file once.
 
-**If any tests fail:** do NOT proceed. Return:
+**If any tests fail:** do not edit the file. Read
+`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md`
+for E2E failures, and the unit log for unit failures, then return:
 ```
-CANNOT START: {repo}/{file} — pre-existing test failures
-Unit: [pass/fail]
-E2E: [pass/fail]
+RED BEFORE FIXES: {repo}/{file}
+Unit: [pass/fail summary]
+E2E: [pass/fail summary]
+Failing: [test file and title] — [one-line cause]
 ```
 
-For E2E failures, also read
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md`
-to confirm the failure isn't related to the file you're about to touch.
+The parent fixes the red tests first, then spawns you again for the
+same file. Never label a red test pre-existing, flaky or unrelated.
 
 ---
 
 ## Step 3: Apply All Fixes in One Pass
 
-Make the **minimal** change for each item in `applicable_items`. Don't
-fix anything not in the input list. Don't reformat unrelated code.
+Make the change that resolves each item in `applicable_items`. Don't
+fix anything not in the input list. Don't reformat unrelated code. The
+item's `fix` text is a suggestion: when a better change meets the
+same rule, make that one.
+
+**Comment items (rule 15 and `code-quality`):**
+
+1. **Delete first.** Remove the comment, then re-read the lines below
+   it. If they read clearly, the item is done.
+2. **If the comment decoded a name,** the item is about the name.
+   Rename the symbol, or extract the block into a function whose name
+   says what it does, and remove the comment in the same change. A
+   rename covers the concept's whole vocabulary: every caller, test
+   and twin repo.
+3. **Never reword and spread.** Do not rewrite the comment in new
+   words, move it, or copy it to callers, tests or the twin repo.
+
+The cheat-sheet has the rule-15 pattern with an example from this
+codebase.
 
 The common per-rule fix patterns and the ordering rule (shape-changing
 fixes before renames) live in the sibling cheat-sheet:
@@ -138,7 +160,7 @@ only — never run a `.java` file through Prettier.** For a
 `.js`/`.mjs`/`.cjs`/`.jsx`/`.njk`/spec file:
 
 ```bash
-~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 
 For a `.java` file, skip Prettier — the repo's own build/format step
@@ -172,16 +194,26 @@ npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests r
 
 **If E2E tests fail:**
 
-- Read `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md` to determine if the failure is related to your change.
-- If related: revert as above and mark all `applicable_items` Failed.
-- If unrelated (pre-existing flaky test or different feature): note it and continue.
+- Read `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests/test-results/*/error-context.md`.
+- Prove whether your change caused it: revert your file with
+  `git -C ~/git/defra/trade-imports-workspace/repos/{repo} checkout -- {file}`,
+  run the failing spec again to a new log file, and read it.
+  - Green without your change: your change caused it. Leave it
+    reverted and mark all `applicable_items` Failed.
+  - Still red without your change: re-apply your edits, commit
+    (Step 5), mark the items (Step 6), and add a `Failing:` line to
+    your return naming the spec, the test and the cause. The parent
+    fixes it before the next group. Never call it flaky or unrelated
+    and carry on silently.
 
 ---
 
 ## Step 5: Commit
 
 One commit per file. Use the Item IDs in the message. Each git op
-is a separate Bash call — no `cd && git`.
+is a separate Bash call — no `cd && git`. When a rename reached
+callers, tests or a twin in the same repo, `git add` each of those
+files too; a twin repo gets its own commit on the same branch name.
 
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}
@@ -198,7 +230,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 If the pre-commit hook fails due to Prettier (JS/`.njk` only — a `.java`
 file is never Prettier-formatted):
 ```bash
-~/git/defra/trade-imports-workspace/repos/{repo}/node_modules/.bin/prettier --write ~/git/defra/trade-imports-workspace/repos/{repo}/{file}
+npm --prefix ~/git/defra/trade-imports-workspace/repos/{repo} run format > /tmp/{repo}-format.log 2>&1
 ```
 ```bash
 git -C ~/git/defra/trade-imports-workspace/repos/{repo} add {file}

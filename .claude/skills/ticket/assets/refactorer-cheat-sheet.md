@@ -42,14 +42,43 @@ Swap `pre` for `post` when re-running after a change.
 ### Naming Smells
 - [ ] Single-letter variables
 - [ ] Generic names (data, info, manager)
-- [ ] Non-revealing names
+- [ ] A name that does not predict what the code returns and changes
+      (`report()` that also clears state)
+- [ ] Metaphors (`lightenRemote` for "exclude gh-pages from the fetch")
+- [ ] One concept with several names (`User-Id`, `userId`, `ownerId`
+      for one person)
 - [ ] Inconsistent conventions
+
+### Comment Smells (fix: delete first)
+- [ ] Describes callers, other modules, the backend, a library, the UI
+      or a test
+- [ ] Counts things ("the one row", "the only caller")
+- [ ] Narrates history ("used to", "renamed from", "before the change")
+- [ ] Carries a ticket key, backlog or AC id, or release name
+      (`// c-201: …`, `EUDPA-565`)
+- [ ] Explains what a name means — rename or extract instead
+- [ ] Names a file, literal or behaviour that no longer exists
 
 ### Structure Smells
 - [ ] Duplicated code
+- [ ] A second mechanism beside an existing owner
+- [ ] One rule written in several places
+- [ ] Logic in the wrong layer
 - [ ] Long classes (>200 lines)
 - [ ] God classes
 - [ ] Train wrecks (a.getB().getC().getD())
+
+### Logging Smells
+- [ ] A branch that changes an outcome with no log line
+- [ ] A log line without the ids support searches by
+- [ ] `getMessage()` logged instead of the throwable or `{ err }`
+- [ ] A request or response body at INFO
+
+### Test Smells
+- [ ] A title that claims more than its assertions prove
+- [ ] Set-up pasted into several files instead of a shared helper
+- [ ] History in tests: `REMOVED_*` constants, `…BeforeTheChange` names
+- [ ] An absence asserted where an exact positive assertion would do
 
 ## Refactoring techniques
 
@@ -80,6 +109,35 @@ public void process(Notification n) {
 ```java
 // Before: getNotification(id) // might return null
 // After: findNotification(id) // returns Optional<Notification>
+```
+
+### Replace a Comment with a Name
+```javascript
+// Bad: the comment decodes the name, and carries a backlog id
+// c-201: an amendment opens with no errors; Continue refused shows them.
+const holdsSilently = readOnly || (journey.status === state.AMEND && !refused)
+
+// Good: the name says what the value decides; no comment
+const hidesAnswerErrors = readOnly || (journey.status === state.AMEND && !refused)
+```
+
+### Replace a History Constant with a Positive Assertion
+```javascript
+// Bad
+const REMOVED_INTERNAL_REFERENCE_LIMIT = 'It can be up to 58 characters.'
+expect(hint).not.toContain(REMOVED_INTERNAL_REFERENCE_LIMIT)
+
+// Good
+expect(hint).toBe('<the hint text the page shows now>')
+```
+
+### Log the Throwable
+```java
+// Bad
+log.warn("Lookup failed: {}", e.getMessage());
+
+// Good
+log.warn("Address lookup failed for notification {}", notificationId, e);
 ```
 
 ### Compose Functions (Functional)

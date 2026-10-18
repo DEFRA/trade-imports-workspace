@@ -20,7 +20,7 @@ You will **not** write markdown. You will call three commands:
     --line <line> --severity <Critical|Major|Minor> \
     --category <short-tag> \
     --issue "<one-line description>" \
-    --fix "<one-line fix>" \
+    --fix "Must: <what must become true>. One way: <a suggested change>" \
     [--best-practice <relative/path.md>]
 
 # Exactly once, at the end:
@@ -37,22 +37,36 @@ reviewed for the coverage gate.
 If you have **no findings**, skip the add-item calls and go straight to
 `set-verdict --verdict SAFE --reason "..."`.
 
+### The `--fix` text has two parts
+
+- **Must:** what must be true when the item is done. Required. State
+  the end state, not an edit: "One function owns the port label
+  format; every page calls it", not "Add a guard in `ports/index.js`".
+- **One way:** a change that would get there. Optional, and only a
+  suggestion. The fixer may choose a better way that meets the Must.
+
 ## Scope discipline
 
 Two scopes — don't conflate them:
 
-- **Findings scope = the diff.** Only flag issues introduced or
-  touched by this PR. A pre-existing nit in untouched code is not a
-  finding. Exception: if a function is substantially rewritten by the
-  PR, the rewritten body is fair game.
+- **Findings scope = the diff, widened for code quality.** Flag issues
+  introduced or touched by this PR. For functional findings (bugs,
+  security, error paths, performance), a pre-existing problem in
+  untouched code is not a finding, unless the PR substantially
+  rewrites the function. For code-quality findings (see step 5), these
+  are also in scope, wherever they sit in the file:
+  - every comment and every name in the file, and every test title in
+    a test file
+  - any comment, JSDoc or doc line the diff makes untrue
+  - the class, helper or path the change copies or sits beside
 - **Context scope = broader.** Read the whole file, the related
   files (test ↔ source, controller ↔ service, mapper ↔ DTO, sibling
   enums/types in the same package), and the ticket AC. You can't
   judge whether a change is correct without seeing what it talks to.
 
 A reviewer who reads only the hunk produces shallow findings. A
-reviewer who flags pre-existing violations produces noise. Aim for
-neither.
+reviewer who flags functional problems in untouched code produces
+noise. Aim for neither.
 
 ## Workflow
 
@@ -81,11 +95,14 @@ In every mode:
    `file-review-add-item.sh --best-practice <path>`, use the relative
    path shown in the bundle's `## Source: docs/best-practices/...`
    headings (e.g. `node/pino-logging.md`).
-2. **Ticket.** Read `ticket.md` for AC and intent.
+2. **House rules.** Read
+   `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
+   in full. Its rules apply to every file, whatever the language.
+3. **Ticket.** Read `ticket.md` for AC and intent.
 
 In REFRESH / MERGE_RESOLVED only, additionally:
 
-3. **Prior consolidated items for this file** — this is the most
+4. **Prior consolidated items for this file** — this is the most
    important context:
    ```bash
    ~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --repo {repo} --file {file-path}
@@ -121,7 +138,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
    before you run, so any todos in your `.review.json` at the end are
    genuinely new.
 
-4. **Prior per-file review snapshot** — optional reading for context:
+5. **Prior per-file review snapshot** — optional reading for context:
    `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/file-reviews/{repo}/{path_with_underscores}.review.json`.
    This is what *you* (or a prior reviewer) wrote last time. The
    consolidated items table above is the canonical source of truth.
@@ -174,18 +191,152 @@ move on. Use `Grep` to find callers/usages when it's not obvious.
 
 ### 5. Apply review criteria
 
-Only the changed lines are in scope for findings. Weigh them against:
+Findings follow the scope rules above. Weigh the file against:
 
 - The applicable best-practices files loaded in step 2 (cite them via
   `--best-practice`).
+- The house rules in `.claude/rules/code-quality.md`.
 - Correctness vs the AC in `ticket.md`.
 - Bugs, null safety, error paths, security, performance.
 - Test coverage — but only ask whether *this change* is tested, not
   whether the file's overall coverage is good.
+- The four code-quality dimensions below. Work through each one for
+  every file. A file with no finding in a dimension is fine; a
+  dimension you skipped is not.
+
+Engineering review means checking the change against the patterns the
+codebase already sets: the feature-folder shape, the journey platform,
+controllers, view models and obligations, the `frontend-change`
+recipes, `docs/best-practices/`, how sibling features do the same
+thing, and tests in the house style. Where GOV.UK guidance and the
+page disagree, GOV.UK wins: raise it as a finding with the GOV.UK
+end state as the Must, not as a question.
+
+#### Naming: predict, then compare
+
+For every function, method, variable, constant, flag and test helper
+the diff adds or renames, and every name a changed line calls:
+
+1. Read the name alone. Write down what you predict it returns and
+   what it changes (state, session, database, redirect, log).
+2. Read the body. Compare.
+3. A mismatch is a finding. So is a name that needs its comment to be
+   understood.
+
+Examples from this codebase:
+
+- `holdsSilently` in `check-answers/controller.js` sits under
+  `// c-201: an amendment opens with no errors; Continue refused shows
+  them.` The flag hides answer errors, and it is also true for a
+  submitted notification. The comment decodes the name. Finding: the
+  name. Must: a name that says what the flag does in every state it
+  covers, with the comment removed.
+- `report()` cleared state as well as reporting. Finding: the name
+  hides a side effect.
+- `save-actions.njk` took two overlapping booleans and six positional
+  parameters. Finding: positional boolean flags.
+- `User-Id`, `userId`, `ownerId` and "actor id" named one person in
+  `NotificationTemplate.java`. Finding: one concept, several names.
+
+Also flag: metaphors (`lightenRemote` for "exclude gh-pages from the
+fetch"), a rename that stops part-way through the concept's
+vocabulary (`telephone*` keys left beside `phone`), and a new name for
+a value the repo already names (`HEADER_USER_ID` declared twice).
+
+#### Structure: one home for each rule
+
+- **Two homes for one rule.** The same rule, format or guard written
+  in more than one place. Example: three port-label formats in
+  `services/ports/index.js`. Must: one owner; the other places call it.
+- **Wrong layer.** Logic sitting where the reader would not look for
+  it. Example: retry, proxy and FormData re-encoding inside
+  `call-counts/backend-fetch.js`, a folder for counting calls. Set
+  codes or set names inside `engine/` or `services/persistence/`.
+- **A second mechanism beside an existing one.** A new class, path or
+  helper that mirrors one already there, instead of extending or
+  extracting from it. Example: `EmfMetricWriter` copying
+  `ExternalCallMetrics`; a second fetch path beside `setup-proxy.js`.
+  Before you raise it, open the existing owner and quote its line.
+- **Test set-up copied between tests.** Set-up used by two tests
+  belongs in the shared helper (`engine/test-support.js`,
+  `fit/<set>-journey.js`, `flows/<domain>/journey.ts`, the Java IT
+  bases). A promoted helper whose local copies remain is a finding.
+- **A pattern extended and its recipe left behind.** The change does
+  what an `add-a-*` recipe describes, but the recipe still says the
+  old way. Example: the `allowMissing` opt-in missing from
+  `add-a-page.md`.
+
+Feature folders: production controllers under
+`sets/*/journeys/*/features/*` are independent by design. Near-identical
+`get`, `post` and `render` bodies across feature controllers are not a
+duplication finding, and the fix is never a shared controller. That
+ruling covers production controllers only. It never covers test
+support, and importing a sibling feature's helper is fine.
+
+#### Logging: every decision leaves a trace
+
+- **Silent decision.** A branch that changes the outcome (refusal,
+  redirect, retry, fallback, state switch) and logs nothing. Example:
+  the silent retry in `backend-fetch.js`.
+- **Missing ids.** A log line support cannot search by: no
+  notification reference, user, port code, dataset or status.
+  Example: `ExternalCallMetrics` logging "failure in 5 ms" with no
+  cause.
+- **Lost cause.** `getMessage()` or `err.message` logged in place of
+  the throwable or `{ err }`.
+- **Bodies at INFO.** A request or response body logged at INFO.
+
+"Support cannot tell X during an incident" is an accepted failure
+scenario for a logging finding.
+
+#### Test truth: the title is a claim
+
+- **Title vs assertion.** Read the title, then the assertions. The
+  title must state what the assertions prove, no more. Example:
+  `store-contract.test.js` titled "flip status to submitted" asserts
+  `SUBMITTED_ACTION_REQUIRED`.
+- **Cannot fail.** Ask which production line, if removed, turns this
+  test red. If none does, the test is a finding. This includes an
+  assertion on a value the set-up itself wrote, and an absence check
+  (`REMOVED_*` constants) where an exact positive assertion is
+  possible.
+- **Absorbed behaviour change.** A test whose expected value changed
+  while its set-up did not. That is a behaviour change, made silently.
+  Example: deleting `shouldOpenRun` moved the post-origin redirect
+  from the commodities page to the hub, and `opening-run.test.js` was
+  re-baselined from `pagePath(journeyId, 'commodities')` to
+  `hubPath(journeyId)` on the same set-up. Critical unless the ticket
+  asks for that change.
+
+#### Build config ships with the feature
+
+When the PR set adds client-side JavaScript for a feature, check that
+the same PR set registers its bundle: the `webpack.config.js` entry,
+any new SCSS partial in `_index.scss`, and any devDependency a test
+environment needs (`jsdom` for `@vitest-environment jsdom`). A missing
+entry is Critical: unit tests import the source directly and pass,
+the page renders, and the script 404s in the browser.
+
+#### Code-quality findings are real by default
+
+Naming, comments, structure, duplication, logging, test readability
+and history in code are code-quality findings. Raise them. These are
+never reasons to drop one:
+
+- it is a matter of taste
+- it was there before this PR
+- it is out of the ticket's scope
+- a comparable file does it the same way
+
+The only reason to drop one is that it is factually wrong: the copies
+differ, the name does predict what the code returns and changes, or
+the comment is accurate and describes only its own lines. Quote the
+code that shows it.
 
 In MERGE_RESOLVED mode, additionally:
 
-- For every prior `Fix + Done` item on this file (from step 2.4):
+- For every prior `Fix + Done` item on this file (from step 2.4, the
+  prior consolidated items):
   verify the fix is still in the resolved code. If undone by the
   merge, file as a regression (`--severity Critical`,
   `--category regression`).
@@ -250,16 +401,18 @@ PR" is not a reason to skip the check.
 
 **A good finding is:**
 - Specific — names the function/line/pattern.
-- Diff-attributable — introduced or touched by this PR.
-- Cites a rule, a best-practice, or a concrete failure mode.
-- Has a fix in mind (not just "consider improving").
+- In scope — see "Scope discipline".
+- Cites a rule, a best-practice, a house rule, or a concrete failure
+  mode.
+- Has a Must (not just "consider improving").
 
 **Don't add an item for:**
-- Pre-existing patterns in untouched code.
-- "Could be more SOLID/DRY/clean" without a concrete fix.
-- Stylistic preferences not in a best-practices file.
+- A functional problem in code this PR does not touch.
+- "Could be more SOLID/DRY/clean" without a concrete Must.
+- Formatting preferences no rule states.
 - Missing test coverage for code not in this PR.
-- The same finding restated multiple times across different lines.
+- The same finding restated across different lines. One rule broken in
+  several places is one finding with every line listed in `--issue`.
 
 ### 7. Write findings + verdict
 
@@ -280,9 +433,13 @@ Then run `file-review-set-verdict.sh` once:
 
 | Severity | What |
 |---|---|
-| Critical | Bug, security issue, broken AC, or a behaviour-spec update that misrepresents the AC or claims unverified coverage |
-| Major | Quality / maintainability / missing test for new behaviour |
-| Minor | Nitpick — only worth flagging if a best-practice explicitly bans it |
+| Critical | Bug, security issue, broken AC, a behaviour-spec update that misrepresents the AC or claims unverified coverage, an absorbed behaviour change, or a missing bundle entry |
+| Major | Quality / maintainability / missing test for new behaviour. Every naming, structure, logging and test-truth finding is at least Major. |
+| Minor | A best-practice breach with no effect on how a reader understands the code |
+
+Use these `--category` tags for the four dimensions: `naming`,
+`structure`, `logging`, `test-truth`. Use `comments` for a comment
+finding and `history` for history carried in code.
 
 ## File type guidance
 
@@ -291,8 +448,8 @@ Behaviour-spec files match their own rows, not the generic Config row —
 
 | Type | Specific scope |
 |---|---|
-| Source (`.java`, `.js`, `.ts`) | New/changed behaviour + tests for it |
-| Test (`*Test.java`, `*.test.js`) | New tests assert behaviour not implementation; isolation; meaningful assertions |
+| Source (`.java`, `.js`, `.ts`) | New/changed behaviour + tests for it; naming, structure and logging dimensions; every comment in the file |
+| Test (`*Test.java`, `*.test.js`, `*.spec.ts`) | New tests assert behaviour not implementation; isolation; test-truth dimension on every title in the file; set-up in the shared helper |
 | Template (`.njk`) | govuk-frontend usage, accessibility, content style |
 | Behaviour spec (`openspec/specs/**/spec.md`) | Added/changed scenarios describe the same behaviour as the ticket AC; conventions in `openspec/config.yaml` (MUST not SHALL, observable-only scenarios, no test names, stable IDs) |
 | Coverage (`openspec/coverage/**/coverage.json`) | Links on touched scenarios pass the two-way rule under "Behaviour-spec files" — in a PR-set diff, or present in the named repo and actually asserting the scenario; derived `coverage` values match the `tests[]` array |

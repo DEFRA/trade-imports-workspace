@@ -75,8 +75,8 @@ repos         the backlog envelope's `repos` map, whatever its keys, copied
               increment ends up built in the animals frontend. The loop's
               preflight stops the run when the args and the envelope differ.
               Under the full lifecycle the key workspace is the workspace
-              repo itself, at path ".", and a repo may set
-              requireApproval: true — see "The workspace repo" below
+              repo itself, at path "." — see "The workspace repo" below.
+              No entry carries requireApproval, the workspace's included
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
               opus) plans and judges: plan, judge, the consistency reviewer.
@@ -107,10 +107,10 @@ review, verification and judgement IS the review.** A GitHub approving
 review on top of it is a second, *human* gate, and a run that has to stop
 and wait for one cannot run 24/7 — which is the whole point of this loop.
 
-Set `requireApproval: true` when a programme genuinely wants that second,
-human gate in front of every merge — a run built for a colleague to review
-before anything lands, say, or a programme still earning trust in the loop.
-With it on, every PR of an increment needs an approving review on GitHub
+Set `requireApproval: true` only when the user asks, in as many words, for a
+human approval gate in front of every merge. Never set it because a programme
+or a repo seems to need one, and never write "waits for approval" into a row,
+a note or a handover. With it on, every PR of an increment needs an approving review on GitHub
 before the merge stage may merge any of them, and the loop's whole-increment
 approval sweep, `awaiting-approval` and `changes-requested` stops (below)
 apply exactly as they always have. Because GitHub refuses to let an author
@@ -135,15 +135,17 @@ docs — builds the workspace repo like any other, under the full lifecycle. Its
 entry in the envelope's `repos`, and so in the args, is
 
 ```js
-workspace: { path: '.', github: 'DEFRA/trade-imports-workspace', requireApproval: true }
+workspace: { path: '.', github: 'DEFRA/trade-imports-workspace' }
 ```
 
-- **Approval on one repo.** `requireApproval: true` on a repo's entry means
-  its PR needs an approving review before the merge stage merges **any** PR of
-  the increment. The same whole-increment sweep runs on those PRs alone, and
-  stops at `awaiting-approval` with every PR open. The other repos need no
-  approval. The run-level `requireApproval` keeps its meaning: every PR. Keep
-  it on the workspace: its changes steer every later run.
+- **No approval gate, here or on any repo.** The workspace PR merges on green
+  like every other. Its changes steer every later run, and the reviewers,
+  the adversarial verifier and the judge are what guard them. Never add
+  `requireApproval` to a repo's entry. The loop still honours one it finds:
+  that repo's PR then needs an approving review before **any** PR of the
+  increment merges, and the run stops at `awaiting-approval`. A backlog
+  written with one on its workspace entry predates this rule: take it out of
+  the envelope, run `tim backlog check`, and leave it out of the args.
 - **What never rides in a workspace commit.** The files the workspace carried
   in when the increment started and anything under `workareas/` the row does
   not name — the loop's own `backlog.json` writes, plans and logs above all.
@@ -299,7 +301,9 @@ with commits of its own is left as it is. A failure names its step and its exact
    rungs for.
 5. **Read `<workarea>/PROGRAMME-NOTES.md` if it exists.** It carries standing
    rulings, a do-not-build list and any ordering the programme imposes. Re-read
-   it if the run is long; do not carry a stale copy in your head.
+   it if the run is long; do not carry a stale copy in your head. Read
+   `<workarea>/deferred.md` too, if it exists: the register of work the
+   programme has pushed out of its backlog ([step 3b](#3b-catch-anything-the-increments-deferred)).
 
 ## THE RUN
 
@@ -512,8 +516,31 @@ jq -r '.increments[] | select(.status != "done") | .id + "  " + (.title // .key 
   and a `notes` line saying which increment and stage it came from. Never a file list or
   commands — the loop plans those. Then run `tim backlog check <workarea>`.
 
+- **Outside the programme** — a follow-up Jira ticket, a chore in a repo the backlog
+  does not build, an action only a person can take → no row. Record it in the register
+  below instead.
+
 Work that exists only in a stage's prose is work that will be lost. This step is what
 stops that, and it costs one query.
+
+**Keep a register of what the programme pushes out.** `workareas/<workarea>/deferred.md`,
+beside `backlog.json`, lists everything the programme defers out of its backlog: tickets
+raised, tickets still to raise, a person's actions, and every row parked at a platform or
+access stop ([step 3d](#3d-platform-or-access-stop-park-the-row-and-relaunch)). Write the
+entry when the item is deferred, not at the end of the run. Create the file the first
+time:
+
+```markdown
+# <programme>: deferred work
+
+| What | Why | Where it lives | State |
+|---|---|---|---|
+| Give the plants backend repo a SONAR_TOKEN secret | inc-005's SonarCloud scan cannot run without it | Not raised. Owed by the repo admin | Open: inc-005 parked |
+| Update the GBN-AG schema for germinal products | Needs the other team's schema repo | EUDPA-686 | Raised |
+```
+
+Commit it with `backlog.json`, and name it in the handover. A re-distil or a theme split
+never carries this list, so without the file these items vanish.
 
 ### 3c. Archive the run and report what it cost
 
@@ -539,6 +566,13 @@ expensive and five slowest stages. Put those two top-five lists in your report t
 the user, one line each. `--json` gives the same for mining; `report --all`
 compares every archived build-loop run stage by stage.
 
+**Look for savings in the overhead, never in the plan stage.** The plan stage is the
+most expensive stage by design: planning against the live tree is where the quality
+comes from. Never slim it, move it to a cheaper model or investigate its cost. When the
+report is used to find time or token wins, look at the work around the real work:
+start-up stages, light agents retelling output, preserve and land overhead, gate runs
+repeated for no change, and stack restarts.
+
 If the run was relaunched after a stop, archive the earlier run ids too —
 `tim build runs archive --all` sweeps every run Claude Code still holds and
 copies only what changed.
@@ -546,6 +580,75 @@ copies only what changed.
 **Not yet in the loop.** The loop does not archive itself; the session does it
 after the run stops. What the loop should change to make this data richer is
 listed under "Run telemetry" in `../workflow/README.md`.
+
+### 3d. Platform or access stop: park the row and relaunch
+
+Some stops are not a code defect but a person's fix that nothing else in the backlog
+needs. One such row must not hold up the rest of the run. Park it and keep building.
+
+**It is a platform or access stop when** the run stopped at `ci-red`, `ladder-red` or a
+stage failure, and the failure it quotes is one of:
+
+- a platform setting: an empty or missing repo secret (`SONAR_TOKEN`), an organisation
+  setting, a CDP role, GitHub Pages not enabled
+- access only a person can grant: CDP credentials, a `DEVELOPER_API_KEY`, a login needed
+  to reach CDP from this machine
+
+Read the quoted failure, not your guess. A red test, a lint finding or a Sonar issue in
+the code is a code defect: that stop is reported and waits, as below.
+
+**Then, for that row:**
+
+1. Set it aside with the access or fix it needs:
+
+   ```bash
+   tim backlog set <workarea> <id> --status deferred --note "Parked at <reason>: needs <the fix> from <who>" --json
+   ```
+
+   Its ticket, branch and PRs stay recorded, so a later run resumes it.
+2. Re-chain its dependants in `backlog.json`. A row that needs the parked row's output
+   keeps it in `dependsOn`, so it waits too. A row that names it only for ordering, which
+   is most of them, gets the parked row's own `dependsOn` in its place, so it becomes
+   buildable. Under a full theme split, make the same edit in the parent backlog, or the
+   next re-split puts the old order back.
+3. Run `tim backlog check <workarea> --json` until it passes.
+4. Add the row to `deferred.md` ([step 3b](#3b-catch-anything-the-increments-deferred)).
+5. Commit `backlog.json` and `deferred.md`, then relaunch with the same args
+   ([step 3e](#3e-relaunch-before-you-report)).
+
+The PR stays open and the ticket stays In Dev. Do not repair the platform yourself.
+
+**Stop the run only when** the next buildable row needs the parked one's output: the same
+file or the same feature. `tim backlog next` then prints NONE, and the run ends at
+`no-buildable` with the parked row named in the handover.
+
+**To resume a parked row** once the fix is in place, set it back to `todo`
+(`tim backlog set <workarea> <id> --status todo --json`), restore any `dependsOn` you
+moved, mark its `deferred.md` entry done, and launch. The start stage finds its PRs and
+puts it back at CI.
+
+Every other stop still gets the normal ending: archive, report, handover, wait.
+
+### 3e. Relaunch before you report
+
+A run that can carry on is relaunched **before** you write any summary, in the same
+turn. Ending a turn with nothing running is dead time: in an unattended run nobody
+reads the messages as they arrive, and the backlog and logs on disk are the report.
+
+Relaunch with the same args, straight after archiving, when the run stopped at:
+
+- `agent-budget`
+- a platform or access stop you have parked (step 3d)
+- `gate`, under either lifecycle ([STOP CONDITIONS](#stop-conditions))
+
+Then report what the stopped run did while the new one builds.
+
+**Never stop or hand over because of a count or a guess.** Do not budget increments,
+pick a smaller `stopAfter` than the user asked for, or wrap up because the session
+feels long. Keep `backlog.json`, `deferred.md` and `PROGRAMME-NOTES.md` current after
+every run, so a handover, if one is ever needed, costs nothing. The only reasons to end
+idle are: nothing buildable is left, everything left is truly blocked, or the user must
+decide something no default can stand in for.
 
 ### 4. Report one line per increment
 
@@ -600,8 +703,14 @@ skips to the next id after one goes wrong: `tim backlog next` selects on status
 and `dependsOn` alone, so a failed attempt is still the next buildable
 increment, and carrying on would either rebuild it or build on top of a failure.
 
+The loop stops; what you do next depends on the reason. A platform or access
+stop you park and relaunch ([step 3d](#3d-platform-or-access-stop-park-the-row-and-relaunch)).
+`agent-budget` and `gate` you relaunch ([step 3e](#3e-relaunch-before-you-report)).
+Every other stop you report, with the handover, and wait.
+
 `ci-red` and `main-red` are not yours to repair. Report the URL and what was
-failing.
+failing. A `ci-red` caused by a platform setting is still not yours to repair:
+park the row instead of stopping.
 
 **`gate` is honoured regardless of `requireApproval`.** A row's own `gate`
 field is a checkpoint somebody set deliberately on that specific increment —
@@ -610,7 +719,14 @@ whether the human approval gate is on or off. **Under the branch lifecycle a
 gate never stops the run**: the run is unattended and merges nothing, so the
 whole theme branch already waits for a person. The loop logs the gate's text
 and returns it in `reviewChecks` (`{ id, check }`), and carries on; put those
-checks in front of the reviewer when the theme finishes. `awaiting-approval` and
+checks in front of the reviewer when the theme finishes.
+
+**A run is unattended end to end: no gate waits for a person mid-run.** Under the
+full lifecycle the loop lands a gated row and stops. Add the gate's check to the
+handover's review checks, then relaunch with the same args. The only hold on a
+person is the finished work: under the branch lifecycle, the theme branch waiting
+to be merged. Never launch a run that expects somebody to look part-way through.
+`awaiting-approval` and
 `changes-requested`, by contrast, fire only when `requireApproval: true`, or
 when a repo of the increment sets it on its own entry.
 
@@ -816,9 +932,11 @@ stopAfter    <a number, or all>
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).
 <N> todo remain, <M> blocked, <K> dropped.
-Owed to a human: <none, or the one thing>
+Parked: <none, or each id and the fix or access it needs>
+Owed to a human: <none, or each thing and who owes it>
+Review checks for the end of the theme: <none, or each gate's check>
 
-Read workareas/<workarea>/PROGRAMME-NOTES.md before the first increment.
+Read workareas/<workarea>/PROGRAMME-NOTES.md and deferred.md before the first increment.
 Raise Dynamic workflow size in /config first.
 ````
 
@@ -864,6 +982,16 @@ leaves the tree clean and stops the run with its own reason above.
 - **You orchestrate. You do not implement.** Do not edit repo source, do not fix
   a failing test, do not apply a review finding. If an increment needs work you
   are tempted to do by hand, that is a stop condition, not an invitation.
+- **Fix the factory; never work around it.** When the loop cannot build a kind
+  of row (workspace-only changes, say), change the loop and tim so it can, as a
+  factory change on its own branch with a PR, tests and docs. Once that has
+  merged, add the row and let the loop build it. Never build a row outside the
+  loop and never mark one "built by the orchestrator".
+- **Never merge a PR yourself.** The loop merges its own green increments. A PR
+  you raised by hand, a factory change or a straggler from `pr-left-open` merges
+  only on the user's explicit go in this conversation, whatever a brief says.
+- **Never end a turn idle while the run can carry on.** Relaunch first, then
+  report ([step 3e](#3e-relaunch-before-you-report)).
 - **Do not read diffs, test logs or review argument.** They ran below a death
   boundary for a reason. Reading one to "just check something" is what fills the
   session and ends the run early.

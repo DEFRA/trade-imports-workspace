@@ -30,8 +30,8 @@ file in a ticket review. Replaces the legacy `.review.md` template.
       "line": 42,
       "severity": "Critical",          // Critical | Major | Minor
       "category": "security",          // freeform short tag
-      "issue": "Logger emits raw error object",
-      "fix": "Use structured logger.error({ err }, '...')",
+      "issue": "Logger emits err.message only, with no reference number",
+      "fix": "Must: the failure log carries the error and the notification reference. One way: logger.error({ err, referenceNumber }, 'Failed to save notification')",
       "best_practice": "node/pino-logging.md"  // optional, relative path
     }
   ]
@@ -39,6 +39,10 @@ file in a ticket review. Replaces the legacy `.review.md` template.
 ```
 
 Severity counts derive from `todos` — not stored.
+
+`fix` holds a required **Must** (what must become true) and an
+optional **One way** (a suggestion). See `items-table.md` → "The fix
+field".
 
 ## Lifecycle
 
@@ -75,7 +79,9 @@ the aggregator.
 ## Severity values
 
 `Critical` (bug, security, broken AC) > `Major` (quality, missing
-test for new behaviour) > `Minor` (nitpicks against a best-practice).
+test for new behaviour, and every naming, structure, logging and
+test-truth finding) > `Minor` (a best-practice breach with no effect on
+how a reader understands the code).
 
 ## Mode values
 

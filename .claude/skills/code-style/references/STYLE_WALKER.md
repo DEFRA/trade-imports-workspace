@@ -65,7 +65,9 @@ Severity badges:
 - 🛑 **FAIL**
 - ⚠️ **WARN**
 
-`Rule` column: the 16-rule guide number (1-16).
+`Rule` column: the 16-rule guide number (1-16), another bundle's rule
+id, or `code-quality` for a house-rule finding from
+`.claude/rules/code-quality.md`.
 
 Cite column: show the `best_practice` field if present; `—` otherwise.
 

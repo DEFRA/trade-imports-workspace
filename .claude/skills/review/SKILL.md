@@ -52,6 +52,40 @@ schema and allowed Disposition/Status values.
 NOT for JavaScript lint/format/style findings — use the `code-style`
 skill.
 
+## What a review checks
+
+Engineering review checks how the code follows, or breaks, the
+patterns the codebase already sets: the feature-folder shape, the
+journey platform, controllers, view models and obligations, the
+`frontend-change` recipes, `docs/best-practices/`, how sibling features
+do the same thing, and tests in the house style. It is not a design
+review.
+
+Each file is reviewed for correctness, security, error handling,
+performance, best practice and test coverage, and for four
+code-quality dimensions defined in `references/FILE_REVIEWER.md`:
+
+| Dimension | What it catches |
+|---|---|
+| Naming | A name that does not predict what the code returns and changes (predict, then compare) |
+| Structure | One rule with two homes, logic in the wrong layer, a second mechanism beside an existing one |
+| Logging | An outcome-changing branch that logs nothing, or a log line without the ids support searches by |
+| Test truth | A title that claims more than its assertions prove, or a test that cannot fail |
+
+The house rules in `.claude/rules/code-quality.md` apply to every file.
+
+**Code-quality findings are real by default.** Naming, comments,
+structure, duplication, logging, test readability and history in code
+are never dropped as taste, as pre-existing, as out of scope, or
+because a comparable file does the same. Drop one only when the code
+shows it is factually wrong.
+
+**Fix, then report.** When the review runs with `fix: true`, or the
+walker hands it on, findings are fixed by default and reported after.
+Only a genuine engineering trade-off becomes `Discuss`. Where GOV.UK
+guidance and the page disagree, follow GOV.UK. Content wording goes to
+the business analysts' review, not to the reviewer.
+
 ## Local mode (no ticket, no PR)
 
 Triggered by "review this branch", "review `REPO:BRANCH`", or another
@@ -139,6 +173,25 @@ First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
   Step 2.
 - `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
   Refresh Review, Step R3.5.
+
+**Pin the head you review.** For each PR in `.review-meta.json`, read
+its current head:
+
+```bash
+gh pr view {pr} --repo DEFRA/{repo} --json headRefOid --jq .headRefOid
+```
+
+Then read the review clone's head:
+
+```bash
+git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} rev-parse HEAD
+```
+
+If they differ, the clone is stale: run Step 0 again (it refetches)
+before any reviewer starts. Record the SHA you reviewed for each repo;
+Step 7 and the Completion Output state it. Local mode has no PR: record
+`git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse HEAD`
+instead.
 
 **On Claude Code auto-backgrounding:** for fresh reviews the setup
 clones repos in parallel but can still take 30–90s. If the Bash tool
@@ -239,6 +292,48 @@ per-file JSONs and the diff.
 ~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo}
 ```
 
+**Then reconcile the items before you render them** (Step 5a below),
+and run `render-items.sh` again afterwards.
+
+### Step 5a: Reconcile findings
+
+**1. Carry in the consistency findings.** For every row under "Naming
+and Reuse" and "Statements Made Untrue" in each repo's
+`_consistency-check.md`, add an item:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|stale-statement} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
+```
+
+**2. Merge findings that share one root.** Read
+`review-items.sh EUDPA-XXXXX --repo {repo} --json` across every repo.
+Group items whose Musts would each add or change the same rule, guard,
+format or name in a different place. Signs of one root:
+
+- several items each add a guard against the same bad input
+- several items each fix one copy of the same format or label
+- a naming item and a comment item on the same symbol
+- the same concept named differently in several files or repos
+
+Example: four items on PR #396 each asked for a guard against the same
+refusal. Applied one by one, they became three guards that failed
+three different ways (`5cafe2dd`, `9af27387`, `eee3cfc2`).
+
+For each group of two or more, add one "decide the owner" item:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category owner --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
+```
+
+Then close each member with a pointer to it:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Auto-Resolved" --note "merged into #{owner item id}"
+```
+
+Run each call as its own Bash call. A finding with no partner stays as
+it is.
+
 After Step 5, the canonical state is `items.{repo}.json`. Walker /
 batch implementor / refresh tools mutate it via `review-*.sh`. The
 `## Items` markdown view in `review.{repo}.md` is regenerated by
@@ -250,7 +345,7 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 # Repository Review: {repo-name}
 
 **PR:** #{pr-number}
-**Commit:** {sha}
+**Commit reviewed:** {sha pinned in Step 0}
 **Files Changed:** {count}
 
 ## Summary
@@ -277,7 +372,8 @@ batch implementor / refresh tools mutate it via `review-*.sh`. The
 **Status:** SAFE / NEEDS ATTENTION / RISKY
 ```
 
-Skip this step if only one repository is involved.
+Skip the `review.{repo}.md` summary if only one repository is
+involved. Never skip `--write-items`, Step 5a or `render-items.sh`.
 
 ## Step 6: Write Index
 
@@ -354,6 +450,19 @@ Then, for each PR in `.review-meta.json`, look up its author:
 ~/git/defra/trade-imports-workspace/tools/github/pr-author.sh {repo} {pr}
 ```
 
+**Before every post, check the head again.** Run the `gh pr view …
+--json headRefOid` call from Step 0 for that PR, immediately before its
+`share-review.sh` call. If the head has moved since the SHA you pinned:
+
+- run a refresh review (Step 0 again) and post that instead, or
+- post with a first line that names the SHA reviewed and says newer
+  commits are not covered.
+
+Never post "not addressed", "not in the diff" or "still present"
+against a head that has moved. An author can push several commits
+during one long review. Every posted comment names the commit it
+reviewed.
+
 **PRs authored by you** — post the review as a comment. No prompt, no
 handoff branch: the review state is already in your workspace.
 
@@ -413,6 +522,9 @@ Summary:
 Index: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md
 Repo reviews: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review.{repo}.md (one per repo)
 
+Commits reviewed:
+  - {repo}#{pr} @ {sha}
+
 PR comments posted (Step 7):
   - {repo}#{pr} → {comment url}
   ...
@@ -461,6 +573,14 @@ refresh.
 
 If all four lists are empty across all repos: report the branch is
 unchanged since the last refresh and stop.
+
+List C is never filtered by ticket. A file hand-resolved in a merge
+from `main` or a sibling branch is this PR's code, even when the
+commits on each side belong to other tickets: the resolution exists in
+neither parent, so neither parent's review covers it.
+
+Pin the head as in Step 0 before spawning reviewers, and record the
+SHA for the refresh summary.
 
 ## Step R3.5: Load Full Item Inventory
 
@@ -539,6 +659,11 @@ consolidated items file and re-render the markdown view:
 ~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo}
 ```
 
+Between the two calls, run Fresh Step 5a part 2 (merge findings that
+share one root) over the new items together with the open ones, so a
+new finding that shares a root with an open item joins its "decide
+the owner" item.
+
 The reconciler trusts the FILE_REVIEWER persona contract: each
 refresh reviewer's `.review.json` contains **only deltas** —
 regressions and net-new findings. Items that exist in items.json and
@@ -578,6 +703,7 @@ the reconciler's JSON output:
 ```markdown
 ## Refresh Summary ([date])
 
+**Commit reviewed:** [sha]
 **Files refreshed:** [N]
 **New items added:** [M]
 **Spot-check (Fix+Done items in refreshed files):** [K]

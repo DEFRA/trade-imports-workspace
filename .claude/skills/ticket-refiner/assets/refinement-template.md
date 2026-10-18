@@ -28,14 +28,19 @@
 
 ### Description Clarity
 - [ ] Context explained
+- [ ] Recommendation given
 - [ ] Scope defined
 - [ ] Specific details
+- [ ] No history or audit dump; evidence linked
+- [ ] Renders as wiki markup with no errors
 
 ### Acceptance Criteria
 - [ ] Criteria present
 - [ ] Each testable
 - [ ] Cover full scope
 - [ ] No ambiguity
+- [ ] Open items only (nothing marked DONE)
+- [ ] Each states the end state
 
 ### Technical Clarity
 - [ ] Repos identified
@@ -44,8 +49,8 @@
 - [ ] Risks called out
 
 ### Estimability
-- [ ] Sprint-sized
-- [ ] No major unknowns
+- [ ] Estimable as one piece of work
+- [ ] No major unknowns (plan-heavy, apply-light is not an unknown)
 - [ ] No spike required
 
 ## Questions for Refinement

@@ -88,7 +88,7 @@ Two groups, so the reader sees at once what can be built now and what cannot. Ne
 | Id | What it delivers | Criteria | Repos | Lands after | Theme |
 |---|---|---|---|---|---|
 
-Criteria is the count of acceptance criteria. Lands after lists the row ids in `dependsOn` and `externalDependsOn`, the only order there is: a row builds once those have landed. Mark **Review point** where the loop stops for the owner, and say in one line what a review point is.
+Criteria is the count of acceptance criteria. Lands after lists the row ids in `dependsOn` and `externalDependsOn`, the only order there is: a row builds once those have landed. Mark **Review point** on a row with a `gate`, and say in one line what a review point is: a check the owner makes once the theme is built. The build never waits for it mid-run.
 
 `### Blocked`: every `blocked` row, grouped under one `#### Waiting on <what>` heading per blocker, named in plain words: "Waiting on design", "Waiting on MDM commodities". Take the blocker from the `blockedBy` of the row's requirements. Order the groups by row count, largest first. Each group opens with one line: what must happen and who acts. Then a table:
 

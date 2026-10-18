@@ -29,7 +29,7 @@ helpers under `tools/review/`. Never hand-edit.
       "severity": "Critical",          // Critical | Major | Minor
       "category": "security",
       "issue": "...",
-      "fix": "...",
+      "fix": "Must: ... One way: ...", // see "The fix field" below
       "best_practice": "node/pino-logging.md",  // optional citation
       "disposition": null,             // see below
       "status": null,                  // see below
@@ -38,6 +38,25 @@ helpers under `tools/review/`. Never hand-edit.
   ]
 }
 ```
+
+## The fix field
+
+`fix` holds two labelled parts:
+
+- **Must:** what must be true when the item is done. Required. It is
+  the end state the fixer has to reach and the walker agrees to.
+- **One way:** a change that would get there. A suggestion only. The
+  fixer may choose a better route that meets the Must.
+
+Example: `Must: one function owns the port label format and every page
+calls it. One way: keep formatPortLabel in services/ports/index.js and
+delete the two inline copies.`
+
+A `fix` with no labels, from an older review, is read as the Must.
+
+A `category: owner` item merges findings that share one root (review
+`SKILL.md` Step 5a). Its members are `Auto-Resolved` with the note
+`merged into #N`.
 
 ## Disposition values
 

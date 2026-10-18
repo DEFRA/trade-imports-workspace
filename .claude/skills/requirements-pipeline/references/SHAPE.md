@@ -95,6 +95,12 @@ A row covers every repo the behaviour needs, and its acceptance can be observed 
 backend half of X" or "the tests for X". A row whose acceptance can only be observed once another row in a different
 repo lands is a layer split, and is wrong. `dependsOn` is a real ordering need, not a layer order.
 
+## A prototype sets look and feel, never structure
+
+A row may change page content, wording, layout, components and question order to match a design prototype. No row
+exists only to match a prototype's URL paths, set or journey split, data model or code layout: the target's own
+architecture decides those.
+
 ## An acceptance criterion may name
 
 - rendered copy, options and error text;
@@ -104,7 +110,30 @@ repo lands is a layer split, and is wrong. `dependsOn` is a real ordering need, 
 
 ## An acceptance criterion must not name
 
-Files, functions, classes, annotations, test file names, CSS classes or commands.
+- files, functions, classes, annotations, test file names, CSS classes or commands;
+- requirement, conflict, row or ruling ids (`req-014`, `c-201`, `inc-004`, `ruling:sam-2026-10-02`), outside the
+  provenance bracket;
+- release names or session words, such as "Design Release 2.1" or "the real service";
+- a source as the thing to match, such as "as the prototype does";
+- removed copy. A criterion never says "no '<old text>'". It states what is shown.
+
+The same holds for a row's `title` and `detail`. Ids stop at the plan: they live in `requirements`, `sources`,
+`notes` and the provenance bracket, and nothing built from the row carries them.
+
+## An acceptance criterion states the end state
+
+It says what is true once the row lands, in the words a user sees.
+
+| Bad | Good |
+|---|---|
+| There is no "It can be up to 58 characters." sentence under the internal reference field | The internal reference field shows the design's label and no hint |
+| Saving keeps the c-201 behaviour | Saving a submitted notification with no changes returns to the dashboard and leaves it submitted |
+
+- **A change to how a value is formatted lists every page that shows the value**, in one row, so one rule has one
+  owner.
+- **Page chrome belongs to the row that owns the layout**: the page title, header, banners, footer and back link. A
+  feature row that needs a chrome change depends on that row, in the foundation theme where there are themes.
+- **A `gate` is a check for the end of the theme**, never a wait for a person mid-run.
 
 ## Provenance
 

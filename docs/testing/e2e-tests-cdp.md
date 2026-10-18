@@ -140,6 +140,22 @@ and an unrelated domain can't block it. The profiles would be `animals-family`,
 `plants-family` and `ins-family`. They would run only on `test`, because the Dynamics
 checks need the Dynamics environment.
 
+## A new service shows "service not found"
+
+A new frontend's first deployment can start cleanly and still serve nginx's
+"service not found" page to every request, so every run against it fails. The
+signs: the app logs show it started, the load balancer logs show an upstream
+time of `0.000`, and the only requests reaching it are for
+`/nginx-error-assets/...`. The routing for a service is generated from its
+tenant config, not at deployment, so the first deployment can land before its
+route exists.
+
+Redeploy the service in the CDP Portal before you debug the app. To check
+whether a service is deployed to an environment at all, read
+`DEFRA/cdp-app-deployments/environments/<env>/{public,protected}/<service>.json`
+with `gh api`. No file means it was never deployed. Read only: never write to
+CDP platform repos (`CLAUDE.md` rule 3).
+
 ## Keeping this up to date
 
 This doc is read from the CDP Portal by hand, not from a file in a repo, so

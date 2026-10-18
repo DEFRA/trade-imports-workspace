@@ -617,13 +617,10 @@ class NotificationServiceIT extends IntegrationBase {
 
     @Test
     void save_shouldPersistAndReturnDto() {
-        // Given
         var request = new NotificationRequest("DRAFT.IMP.2026.1", origin);
 
-        // When
         var result = notificationService.save(request, new HttpHeaders());
 
-        // Then
         assertThat(result.referenceNumber()).isEqualTo("DRAFT.IMP.2026.1");
         var saved = notificationRepository.findByReferenceNumber("DRAFT.IMP.2026.1");
         assertThat(saved).isPresent();
@@ -678,7 +675,7 @@ private String id;  // Spring Data handles ObjectId ↔ String conversion
 MongoDB has one date type: a UTC instant (BSON `Date`). A zone-less Java date stored as one is
 therefore resolved against `ZoneId.systemDefault()` on the way in, so the stored value depends on
 the host timezone. Under `Europe/London` during BST, `LocalDate 2026-07-21` persists as
-`2026-07-20T23:00:00Z` — an hour and a calendar day early (EUDPA-282).
+`2026-07-20T23:00:00Z` — an hour and a calendar day early.
 
 Use `Instant` for timestamps:
 
@@ -708,7 +705,7 @@ private LocalDate dateOfIssue;
 
 **Register a `LocalDate` ↔ `String` converter pair.** Left alone, Spring Data's built-in JSR-310
 converter writes a `LocalDate` as a BSON `Date` at start-of-day in `ZoneId.systemDefault()` —
-the EUDPA-282 drift. A pair registered in `MongoCustomConversions` replaces it for every
+the timezone drift above. A pair registered in `MongoCustomConversions` replaces it for every
 `LocalDate` field on every document, so a field added later cannot bring the drift back:
 
 ```java

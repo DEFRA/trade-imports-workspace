@@ -45,6 +45,25 @@ public record NotificationRequest(String referenceNumber, @NotNull Origin origin
 }
 ```
 
+**When a record must guard against nulls.** A public record that crosses a service, persistence or audit boundary gets a compact constructor with `Objects.requireNonNull` on every component. This holds even when today's only caller is a controller that already validates with `@RequestHeader(required = true)` or `@Valid`. The type is public, so someone will construct it directly later, and a null that slips through is silent corruption (an audit row with no user, a null id written to Mongo) rather than a crash.
+
+```java
+/**
+ * @param traceId the CDP request id; must not be null
+ * @param userId  the signed-in user's id; must not be null
+ */
+public record AuditContext(String traceId, String userId) {
+  public AuditContext {
+    Objects.requireNonNull(traceId, "traceId");
+    Objects.requireNonNull(userId, "userId");
+  }
+}
+```
+
+- A component that may legitimately be absent is annotated `@Nullable` instead of guarded.
+- The record's Javadoc says `@param … must not be null` for each guarded component.
+- A private or package-private record used in one place needs no guards: trust the framework there.
+
 **Custom constructor** — coercion:
 
 ```java
@@ -576,17 +595,76 @@ The same rule applies to `Files.readString(path, StandardCharsets.UTF_8)`, `File
 
 ---
 
-## 18. Code style quick-reference
+## 18. Names and comments
+
+The canonical house rules are in `.claude/rules/code-quality.md`. This section applies them to Java.
+
+### A name predicts what the code returns and changes
+
+Verb-noun shape is not enough. `findByReferenceNumber` is a good name because it does exactly that and nothing else, not because it starts with a verb. To check a name: hide the body, read the name, and predict the return value and every side effect. Then read the body. If anything in it surprises you (a write, a log, a reset, a cache eviction), rename the method or split it.
+
+Bad, from `ExternalCallMetrics` in `trade-imports-reference-data`:
+
+```java
+public void recordCall(ExternalCall call, Duration elapsed, boolean failed) {
+    lastCallSucceededByDependency.put(call.dependency(), !failed);
+    logCall(call, elapsed, failed);
+    ...
+}
+```
+
+`recordCall` reads as "emit a metric". It also updates the health state that `lastCallSucceededByDependency()` reports and writes an INFO log line. A caller cannot predict either from the name.
+
+A method named `report()` that also clears the state it reports on has the same fault. Split it, so `report()` only reads and the clearing has its own name (`clearExpiredFaults()`).
+
+### No positional boolean flags
+
+A call site such as `recordCall(call, elapsed, true)` does not say what `true` means. Use two methods (`recordSuccess(call, elapsed)`, `recordFailure(call, elapsed)`) or an enum (`Outcome.FAILURE`). Two booleans side by side are worse: the reader has to know which combinations are allowed.
+
+### Names describe behaviour, not a metaphor or the wrong shape
+
+- A `Supplier<MetricsLogger>` named `metricsLoggers` reads as a collection. It makes a new logger per call: `newMetricsLogger`.
+- A name that needs a comment to decode it is wrong. Fix the name; do not keep the comment.
+
+### One concept, one name
+
+One value keeps one name from the HTTP header to the repository, across every layer and every twin repo.
+
+Bad: in `NotificationTemplate`, one person is the `User-Id` header, `userId`, `ownerId` and "actor id", with a second `HEADER_USER_ID` constant beside the controller's. Good: `userId` everywhere, read through the existing `NotificationController.HEADER_USER_ID`.
+
+Do not turn backlog wording ("the owner") into identifiers when the code already has a name for the value.
+
+A rename covers the concept's whole vocabulary: fields, parameters, accessors, Javadoc, log keys, test names, JSON properties you control, and the twin repo. List what stays and why before you start.
+
+### Comments
+
+- A comment describes only the lines below it, and only when a better name or an extracted method cannot.
+- Never describe callers, other modules, the frontend, another service, a library or a test. Those claims go stale without anyone touching this file.
+- No counts: "the only caller", "the one place".
+- No ticket keys, backlog, ruling or acceptance-criteria ids, release names or session vocabulary, in comments, code or test names.
+- No history: no "renamed from", "used to", "before the change", no `REMOVED_*` constants. Git holds the history; `docs/` holds the rationale.
+- When a comment is stale, delete it before you consider rewording it.
+- When you change code, re-read every comment within about ten lines of your change and the Javadoc of every method you changed.
+
+Bad, from `AddressLookupClient` in `trade-imports-ins-backend`: the Javadoc on `retryWithAFreshToken` explains how the API gateway answers a wrong audience and how many requests a minute the whole estate shares. Those are claims about another system. They go stale when the gateway changes and nothing here changes with them. Good: a name that says the whole behaviour (`retryOnceWithAFreshToken`), and the policy written once in the repo's docs.
+
+Javadoc goes only on an API contract (a springdoc-published controller method, or a class another module calls), and states only that contract: what it returns, what it throws, what must not be null. See [`doc-comments/javadoc.md`](../doc-comments/javadoc.md).
+
+---
+
+## 19. Code style quick-reference
 
 | Convention | Rule |
 |-----------|------|
 | Package structure | Feature-based (`notification/`, `audit/`, `config/`) |
 | DI style | Constructor via `@RequiredArgsConstructor` |
-| Logging | `@Slf4j` (Lombok), parameterised `{}` syntax |
+| Logging | `@Slf4j` (Lombok), parameterised `{}` syntax; what to log is in [`spring-boot.md` §15](spring-boot.md#what-to-log) |
 | DTOs | Records |
 | Mutable entities | `@Data` + `@Builder` (Lombok) |
 | Immutable value objects | Records or `@Value` (Lombok) |
 | Exception messages | Include the offending identifier |
-| Method names | camelCase, verb-noun (`findByReferenceNumber`, `deleteAll`) |
+| Method names | camelCase; the name predicts the return value and every side effect (§18) |
+| Boolean parameters | None positional; two methods or an enum (§18) |
+| Public boundary records | `requireNonNull` compact constructor (§2) |
 | Constants | `UPPER_SNAKE_CASE` |
-| Test method names | `subject_shouldDoWhat` or `subject_shouldDoWhat_whenContext` |
+| Test method names | `subject_shouldDoWhat` or `subject_shouldDoWhat_whenContext`; states what the assertions prove ([`testing/unit.md`](testing/unit.md#test-titles-and-layout)) |

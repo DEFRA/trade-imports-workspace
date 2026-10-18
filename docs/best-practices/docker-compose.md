@@ -1,10 +1,10 @@
 # Docker Compose — Best Practices
 
 All compose definitions live in the workspace stack — `docker/stack/` at the
-workspace root, driven by the `scripts/stack/` wrappers (`run-stack.sh`,
-`run-stack.sh -d`, `stop-stack.sh`, `bounce-backend.sh`) or the
-`make docker-compose-*` targets that delegate to them. No repo carries its own
-`compose.yml`.
+workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`) and
+the `scripts/stack/` wrappers it calls. No repo carries its own
+`compose.yml`. The rules for running it are in
+[`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#rules-for-agents).
 
 Init scripts are owned by the service that needs them and staged into the
 stack by `scripts/stack/lib/init-scripts.sh`: the backend owns the Floci
@@ -66,7 +66,7 @@ If the image doesn't ship `wget`/`curl`, fall back to a TCP check: `nc -z localh
 
 ## 3. Provisioning scripts must be idempotent
 
-Bucket creation, queue creation, and similar one-shot setup commands fail on second run if they're not idempotent. The whole compose stack then refuses to start cleanly after `make docker-compose-up` was already run once.
+Bucket creation, queue creation, and similar one-shot setup commands fail on second run if they're not idempotent. The whole compose stack then refuses to start cleanly after `tim docker up` was already run once.
 
 ```bash
 # Wrong — fails on second run because the bucket already exists
@@ -80,7 +80,7 @@ For SQS FIFO queues with attribute changes, `|| true` masks legitimate attribute
 
 ```bash
 # `|| true` because the FIFO queue may already exist from a previous run.
-# If you change attributes, run `make docker-compose-down` first to recreate.
+# If you change attributes, run `tim docker down` first to recreate.
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
     --queue-name scan-results.fifo \
     --attributes FifoQueue=true,ContentBasedDeduplication=true || true
@@ -141,7 +141,7 @@ Backend services in the same compose network can still reach Floci on `http://fl
 
 ## 6. Logs and graceful shutdown
 
-`make docker-logs` tails frontend + backend + admin logs together. Two compose patterns help keep that experience usable:
+Several services' logs are often read together. Two compose patterns keep that usable:
 
 - **Pin a single log driver across services** (`logging: driver: json-file`) so log rotation behaves predictably.
 - **Set `stop_grace_period: 30s`** on services that flush buffers on shutdown (Pino in Node, logback in Java) — `Ctrl-C` otherwise truncates the last few seconds of logs.
@@ -177,8 +177,7 @@ depends_on:
 The stack is split across overlay files under `docker/stack/` and the wrappers
 compose them (plus profile flags and the staged init scripts) in one place.
 A hand-built `docker compose -f docker/stack/compose.yml ...` chain silently
-drops overlays or staging. Always go through `scripts/stack/` (or the
-`make docker-compose-*` targets).
+drops overlays or staging. Always go through `tim docker` or `scripts/stack/`.
 
 **3. Using `latest` and `:1.2` versions side-by-side**
 A mix produces unpredictable startup ordering on first pull. Pick one strategy per stack tier (see §4).
@@ -193,4 +192,4 @@ AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
 ```
 
 **5. Mounting source as a volume without rebuilding when dependencies change**
-`make docker-compose-dev` mounts source for hot-reload, but adding an `npm install` dependency requires `--build`. Document this in the repo's CLAUDE.md so agents don't chase phantom errors.
+`tim docker dev` mounts `src/` for hot-reload, but a dependency change (`package.json`, `pom.xml`) needs a rebuild: `./scripts/stack/dev-service.sh rebuild <service>`, or `tim docker dev` again. See [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#--dev-caveats).

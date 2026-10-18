@@ -80,7 +80,7 @@ This checks Jira, Confluence, and GitHub authentication.
 
 ### 4. SonarCloud (Claude Code integration)
 
-The four main repos (`frontend`, `admin`, `backend`, `dynamics-gateway`) have a SonarCloud Claude Code integration committed to `.claude/`. It provides secrets-scanning hooks, an MCP server for querying SonarCloud, and an end-of-turn analysis hook that surfaces BLOCKER/CRITICAL findings automatically.
+Eight repos (`animals-frontend`, `animals-admin`, `animals-backend`, `dynamics-gateway`, `address-book`, `reference-data`, `ins-backend`, `ins-frontend`) have a SonarCloud Claude Code integration committed to `.claude/`. It provides secrets-scanning hooks, an MCP server for querying SonarCloud, and a pre-push quality gate. See the SonarCloud section of the workspace [`CLAUDE.md`](../CLAUDE.md).
 
 #### Install the `sonar` CLI
 
@@ -98,7 +98,7 @@ sonar auth login
 
 Sign in with your SonarCloud account when prompted. Authentication is stored in `~/.sonar/` — no env vars needed.
 
-Once done, the hooks activate automatically when you open Claude Code in any of the four repos.
+Once done, the hooks activate automatically when you open Claude Code in any of these repos.
 
 #### SonarCloud MCP tools (per repo only)
 
@@ -209,6 +209,34 @@ to take a few minutes per large clone; every later run skips the heal.
 Local branches, stashes and uncommitted files are untouched. The
 tooling also copes with `gh-pages` being absent on the remote (the
 truncate job deletes and re-creates it).
+
+### 6. The guard rails you will meet
+
+The workspace's `.claude/settings.json` carries a deny list and two
+`PreToolUse` hooks. Every session and every agent you spawn gets them.
+
+- `.claude/hooks/guard-bash.sh` denies, with a reason that names the
+  right command: a literal `/Users/<you>/` path (type `~/`), `&&`
+  chains, raw `npx playwright test`, a `cd` before `git push`, a test
+  run piped into `tail`, `head` or `grep`, `chmod`, an uncommitted
+  executable, `git commit --no-verify`, and `--amend` on a pushed
+  commit. Follow the reason; the agent can retry with the named form.
+- `.claude/hooks/guard-edits.sh` stops agents editing
+  `.claude/settings*.json` and `.claude/hooks/`. Change those files
+  yourself, in a reviewed commit.
+- The deny list blocks `node`, `python`, `curl`, `wget`, `chmod`,
+  recursive `rm` and global installs. Run node through an npm script,
+  delete trees with `git rm -r -f -q`, and set the execute bit as in
+  [`agent-skills.md`](agent-skills.md) → "Bash call hygiene".
+
+An agent must never work round a denial in another form. When one stops
+it, it should tell you what it wanted; you decide whether to run the
+command yourself with `! <command>`, change the allowlist, or choose
+another way.
+
+Agents cannot see permission prompts. If you are prompted while an agent
+runs, its prompt is missing a guard rail: see
+[`agent-skills.md`](agent-skills.md) → "Spawning agents".
 
 ## Designers
 

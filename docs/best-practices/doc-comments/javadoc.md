@@ -1,20 +1,26 @@
 # Javadoc Format
 
-Covers `.java` files. Read [`BEST_PRACTICES.md`](BEST_PRACTICES.md) first for the universal accuracy rules — this addendum covers format and tag conventions.
+Covers `.java` files. Read [`BEST_PRACTICES.md`](BEST_PRACTICES.md) first for the universal rules — this addendum covers when to write a block and its format.
 
 ---
 
 ## When to write a Javadoc comment
 
-Write Javadoc for:
-- Public methods on service classes, controllers, and repository interfaces
-- Public constructors with non-obvious parameters
-- Classes where the responsibility isn't obvious from the name
+Default to **no comment**. Write Javadoc only to state an API contract:
+
+- public methods on REST controllers whose descriptions springdoc publishes in the OpenAPI document
+- public interfaces and classes that another module, library or service calls as a contract, where a caller needs a parameter constraint, return meaning or thrown exception that the signature and names cannot show
 
 Do not write Javadoc for:
-- `private` and package-private methods unless the logic is genuinely surprising
-- Simple getters and setters
-- Override methods where the parent Javadoc is inherited and still accurate (use `{@inheritDoc}` instead)
+
+- `private` and package-private methods
+- internal service, mapper and configuration classes
+- simple getters, setters and record components
+- a class whose responsibility is unclear from its name — rename the class instead
+- a parameter that is unclear from its name — rename the parameter instead
+- rationale, history or design notes — these go in the repo's `docs/`
+- callers, other services, a library or a test (see "Claims about other code" in `BEST_PRACTICES.md`)
+- `@Override` methods where the parent Javadoc still holds (use `{@inheritDoc}` if a block is needed at all)
 
 ---
 
@@ -24,16 +30,14 @@ Do not write Javadoc for:
 /**
  * One-sentence summary ending with a full stop.
  *
- * Optional longer description if the summary is insufficient.
- *
- * @param paramName description of the parameter
- * @return description of the return value
+ * @param paramName the constraint a caller must meet
+ * @return what is returned, including when it is empty
  * @throws ExceptionType condition under which this is thrown
  */
 public ReturnType methodName(ParamType paramName) { ... }
 ```
 
-Place the comment immediately before the declaration with no blank line between them.
+Place the comment immediately before the declaration with no blank line between them. Keep it to the contract: no longer description of how the method works.
 
 ---
 
@@ -85,10 +89,11 @@ public User findById(String id) { ... }
 
 ## Accuracy checklist
 
-When reviewing a `/** */` block on a Java method, verify each claim against the current code:
+When reviewing a `/** */` block on a Java method, first check it belongs at all: if the method is not an API contract as defined above, the fix is to delete the block. Otherwise verify each claim against the current code:
 
 | Check | What to look for |
 |-------|-----------------|
+| Belongs | The method is an API contract and the block states only that contract |
 | Param names | Every `@param name` matches a parameter in the method signature |
 | No phantom params | No `@param` for parameters that no longer exist |
 | Param count | Count of `@param` tags matches number of parameters |
@@ -96,5 +101,5 @@ When reviewing a `/** */` block on a Java method, verify each claim against the 
 | Void check | No `@return` on `void` methods |
 | Throws types | `@throws ExceptionType` matches the exception actually thrown |
 | Throws presence | No `@throws` for exceptions the method no longer throws |
-| Summary | First sentence describes current responsibility, not a previous version |
+| Summary | First sentence describes current responsibility, with no rationale, history or claims about other code |
 | Inherited methods | `@Override` methods use `{@inheritDoc}` rather than a potentially-stale copy |

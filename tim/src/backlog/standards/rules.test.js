@@ -358,7 +358,7 @@ describe('#extractPointers', () => {
 })
 
 describe('the D7 wording fix, against the live rule files', () => {
-  test('P-9 node.md gives six Topic-dir files, then jsdoc.md, then BEST_PRACTICES.md', () => {
+  test('P-9 node.md gives code-quality.md, five Topic-dir files, pino-logging.md, then jsdoc.md, then BEST_PRACTICES.md', () => {
     const rule = loadRule({
       workspaceRoot: realWorkspaceRoot,
       ruleAbsPath: join(realWorkspaceRoot, '.claude', 'rules', 'node.md'),
@@ -366,18 +366,19 @@ describe('the D7 wording fix, against the live rule files', () => {
     })
 
     expect(rule.pointsTo).toEqual([
+      '.claude/rules/code-quality.md',
       'docs/best-practices/node/code-style.md',
       'docs/best-practices/node/hapi.md',
-      'docs/best-practices/node/pino-logging.md',
       'docs/best-practices/node/govuk-frontend.md',
       'docs/best-practices/node/nunjucks.md',
       'docs/best-practices/node/testing/frontend.md',
+      'docs/best-practices/node/pino-logging.md',
       'docs/best-practices/doc-comments/jsdoc.md',
       'docs/best-practices/doc-comments/BEST_PRACTICES.md'
     ])
   })
 
-  test('P-9 java.md gives its six Topic-dir files, then javadoc.md, then BEST_PRACTICES.md', () => {
+  test('P-9 java.md gives code-quality.md, its Topic-dir files, then javadoc.md, then BEST_PRACTICES.md', () => {
     const rule = loadRule({
       workspaceRoot: realWorkspaceRoot,
       ruleAbsPath: join(realWorkspaceRoot, '.claude', 'rules', 'java.md'),
@@ -385,6 +386,7 @@ describe('the D7 wording fix, against the live rule files', () => {
     })
 
     expect(rule.pointsTo).toEqual([
+      '.claude/rules/code-quality.md',
       'docs/best-practices/java/modern-java.md',
       'docs/best-practices/java/spring-boot.md',
       'docs/best-practices/java/spring-data-mongodb.md',

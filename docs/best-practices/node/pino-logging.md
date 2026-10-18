@@ -147,6 +147,87 @@ server.route({
 
 ---
 
+## 4a. What to log
+
+Logging fails here more often by silence than by noise. Support must be able to answer "what happened to this notification, and why?" from the logs alone.
+
+**Every branch that changes an outcome logs once.** An outcome-changing branch is a refusal, a redirect away from the page asked for, a retry, a fallback, or a state switch. Log it at the branch that decides, once. Do not log the same decision again further up.
+
+**Carry the ids support searches by.** At least one of these, whichever the code has:
+
+| Id | Key |
+|---|---|
+| Notification reference | `referenceNumber` |
+| Journey | `journeyId` |
+| User or organisation | `userId`, `organisationId` |
+| Request | `request.logger` binds it for you; outside a request, pass the trace id |
+| The thing decided about | for example `portCode`, `uploadId`, `dataset` |
+
+If the branch does not have the id in scope, pass it in. Do not log without it.
+
+**Log the error as `{ err }`.** Never `err.message` alone, and never a template string. The `err` serialiser keeps the type, the stack and the `cause` chain.
+
+**No bodies at INFO.** Never log a request or response body at `info`, `warn` or `error`. Log the status, the size or the field names instead. A body may hold personal data, and it buries the line support needs.
+
+**Pick the level by who must act.** `warn` for a handled fallback or retry. `error` for a failure someone must look at. `info` for an expected refusal, such as a validation error or a not-found.
+
+### Bad and good
+
+**A silent retry.** `backendFetch` (animals frontend, `19a76c54`) retries a backend connection that never opened, and says nothing. When the stack is slow, support cannot tell that every page is paying for a retry.
+
+```js
+// Bad
+} catch (error) {
+  if (!isConnectError(error)) {
+    throw error
+  }
+  return fetchOnce(url, init)
+}
+
+// Good
+} catch (error) {
+  if (!isConnectError(error)) {
+    throw error
+  }
+  logger.warn({ err: error, url: String(url), traceId: getTraceId() }, 'Backend connection did not open, retrying once')
+  return fetchOnce(url, init)
+}
+```
+
+**A failure with no cause.** The Java external-call metrics (`ExternalCallMetrics.java`, `dc4c74e`) log "failure in 5 ms" and drop the error. Support sees that a call failed, but not whether it was a timeout, a refusal or a 500. The same mistake in pino:
+
+```js
+// Bad
+logger.warn({ integration, durationMs }, 'External call failed')
+
+// Good
+logger.warn({ err, integration, status: err.status, durationMs }, 'External call failed')
+```
+
+**A warning without the thing it warns about.** A Java port-type fallback (`PortType`, `0da6de8`) warns inside the enum, where the port code is not in scope, so the line cannot say which port. Log where the code is in scope, or pass the code in. In pino:
+
+```js
+// Bad
+logger.warn('Unknown port type, using default')
+
+// Good
+logger.warn({ portCode, referenceNumber }, 'Unknown port type, using default')
+```
+
+**A message that hides the error.**
+
+```js
+// Bad
+request.logger.error(`Failed to save notification: ${err.message}`)
+
+// Good
+request.logger.error({ err, referenceNumber }, 'Failed to save notification')
+```
+
+When you add a `catch`, a retry or a fallback, answer two questions before you finish: which line logs it, and which ids does that line carry?
+
+---
+
 ## 5. Child loggers
 
 Child loggers **bind context** to every subsequent log call:

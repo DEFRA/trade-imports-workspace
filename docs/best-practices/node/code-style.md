@@ -2,6 +2,8 @@
 
 Project baseline: Node >= 24, ESM modules throughout. These conventions apply across all Node.js repos in this workspace.
 
+The house rules in `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md` apply on top of these 16 rules and win where they differ.
+
 ---
 
 ## 1. Do one thing
@@ -183,6 +185,85 @@ const isValid = (value) => value !== null && value !== undefined
 const hasPermission = (user, action) => user.roles.includes(action)
 ```
 
+### The naming test
+
+A name must predict what the code returns and what it changes. Read the body, then ask: did the name tell me both? If not, rename it or split the code until it does. A name that needs a comment to explain it fails this test.
+
+```js
+// bad — returns the kept lines and a count; "dropped by" names neither
+const linesDroppedBy = (lines, commodityType) => ...
+const { kept, removed } = linesDroppedBy(linesOf(current), value.commodityType)
+
+// good — the name says what comes back
+const keepLinesAllowedBy = (lines, commodityType) => ...
+```
+
+```js
+// bad — a comment decodes the name, and the name hides which states it covers
+// c-201: an amendment opens with no errors; Continue refused shows them.
+const holdsSilently = readOnly || (journey.status === state.AMEND && !refused)
+
+// good — the name carries the meaning, so the comment goes
+const hidesAnswerErrors = readOnly || (journey.status === state.AMEND && !refused)
+```
+
+```js
+// bad — "report" promises a read, but this also clears expired faults
+report () {
+  return { integrations: [...states.values()].map((state) => reportOf(state, now())) }
+}
+
+// good — the side effect has its own name; report() only reads
+clearExpiredFaults()
+report()
+```
+
+### No metaphors
+
+Name the behaviour, not its effect. A metaphor makes the reader open the file to find out what happens.
+
+```js
+// bad
+const lightenRemote = () => ...
+const slimRepo = () => ...
+
+// good
+const excludeGhPagesFromFetch = () => ...
+const pruneGhPagesObjects = () => ...
+```
+
+### No positional boolean flags
+
+A bare `true` or `false` at a call site says nothing. Pass a named option, or split the function.
+
+```js
+// bad
+saveActions(true, false, true)
+
+// good
+saveActions({ readOnly: true, showCancel: true })
+```
+
+The same applies to Nunjucks macros and Java methods.
+
+### One concept, one name
+
+One value keeps one name from the request header to the repository, and across twin repos. A rename covers the concept's whole vocabulary: keys, variables, copy keys and test titles. Search for the concept word, not only the old identifier.
+
+```js
+// bad — four names for the person who owns the notification
+headers['User-Id']
+const { userId } = request.auth
+notification.ownerId
+// "actor id" in a log line
+
+// good — one name everywhere
+headers['User-Id']
+const { userId } = request.auth
+notification.userId
+logger.info({ userId }, 'Notification saved')
+```
+
 ---
 
 ## 7. Destructuring and defaults
@@ -258,6 +339,8 @@ const groupByKey = (items) =>
 const result = groupByKey(data)
 ```
 
+A pipeline is not readable just because it is functional. When a `map`, `filter` or `flatMap` callback branches, returns early or derives a value in several steps, move each case into a named helper so the top function reads as a few named steps.
+
 ---
 
 ## 10. Module exports
@@ -272,14 +355,21 @@ export default function formatDate(date) { ... }
 export const formatDate = (date) => ...
 ```
 
-Group related utilities in a single module rather than scattering single-function files:
+Prefer more nesting to less. Group related modules in a folder, and split a crowded module into small modules inside that folder. A folder holding one small module is fine.
 
-```js
-// src/utils/date.js
-export const formatDate = (date) => ...
-export const parseDate = (str) => ...
-export const isExpired = (date) => ...
 ```
+// bad — one crowded module
+src/utils/date.js          formatDate, parseDate, isExpired, addWorkingDays, welshMonthName
+
+// good — a folder of small modules
+src/utils/date/format.js
+src/utils/date/parse.js
+src/utils/date/expiry.js
+src/utils/date/working-days.js
+src/utils/date/welsh-month-names.js
+```
+
+Push back on a deeper folder only when it breaks a layer rule (for example the repo's dependency-cruiser checks) or when its name misleads.
 
 ---
 
@@ -384,11 +474,11 @@ const fetchUser = (id) => fetch(`/users/${id}`).then((res) => res.json())
 
 ---
 
-## 15. Self-documenting code — prefer no comments
+## 15. Self-documenting code — no comments
 
-Write code that explains itself through naming and structure. Comments drift out of sync with code; names do not.
+Code is near-bare of comments. Names and structure carry the meaning. Comments drift out of step with the code; a name is read at every call site, so a wrong one gets noticed.
 
-When you feel the urge to write a comment, try renaming or extracting a function first:
+When you feel the urge to write a comment, rename or extract a function instead:
 
 ```js
 // bad — comment compensating for a poor name
@@ -406,13 +496,54 @@ const totalWithVat = subtotal * VAT_MULTIPLIER
 const activeUserIds = users.filter((user) => user.active).map((user) => user.id)
 ```
 
-Comments are appropriate for **why**, not **what** — when there is a non-obvious constraint, a known gotcha, or a deliberate workaround:
+A comment that describes other code is wrong as soon as that code changes, and nobody editing the other code sees it. Never describe callers, other modules, the backend, a library, the UI or a test. Put the guarantee in code where it is enforced:
 
 ```js
+// bad — describes the library and the route config, not the line below
 // Hapi validates the full payload before route handlers run,
 // so by the time we reach here the token is guaranteed present.
 const { token } = request.payload
+
+// good — the route's own validation states the guarantee; the handler needs no comment
+export const confirmRoute = {
+  method: 'POST',
+  path: '/confirm',
+  options: {
+    validate: { payload: Joi.object({ token: Joi.string().required() }) }
+  },
+  handler: (request, h) => confirmToken(request.payload.token, h)
+}
 ```
+
+Rationale (why a rule exists, a ruling, a known gotcha) goes in the repo's `docs/` or the behaviour spec, where it is found and kept up to date. If deleting a comment would lose a fact that is in neither, move that fact to `docs/`.
+
+No history in code. Git holds it.
+
+```js
+// bad
+// Renamed from telephone in the contact-details rework.
+// The country hint used to say "Start typing to search for a country."
+const REMOVED_INTERNAL_REFERENCE_LIMIT = 'It can be up to 58 characters.'
+
+// good — the code and its tests state how things are now
+await expect(field).toHaveAccessibleDescription(copy.internalReference.hint)
+```
+
+No ticket keys, backlog or ruling ids, release names or session words in comments or test titles:
+
+```js
+// bad
+// EUDPA-310: options come from reference data.
+// c-201: an amendment opens with no errors.
+test('shows the region hint, as in the real service', ...)
+
+// good — no comment; the test title says what it proves
+test('shows the region question with the health-certificate hint', ...)
+```
+
+When a comment is stale, delete it. Do not reword it. When a comment explains a name, the name is the defect: rename, then delete the comment in the same change.
+
+The only doc comments allowed state the contract of an exported public API. See `~/git/defra/trade-imports-workspace/docs/best-practices/doc-comments/jsdoc.md`.
 
 ---
 
@@ -442,3 +573,20 @@ const byStatus = Object.groupBy(orders, (order) => order.status)
 // build an object from entries
 const index = Object.fromEntries(users.map((user) => [user.id, user]))
 ```
+
+---
+
+## Running packages with `npx`
+
+Not a style rule, but it applies to every script, CI step and doc example. Unscoped package names on npm can be taken by anyone, so a bare binary name can run a stranger's code.
+
+```sh
+# bad — runs whatever package is called "lhci"
+npx lhci autorun
+
+# good — the scoped package, or a script that resolves through node_modules
+npx @lhci/cli autorun
+npm run lighthouse
+```
+
+If you are not sure what a name resolves to, check with `npm view <name>` first. In CI, install with `npm ci` and call an `npm run` script.

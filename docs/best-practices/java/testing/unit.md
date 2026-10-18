@@ -10,6 +10,8 @@ mvn test             # unit tests only
 mvn verify           # unit + integration tests
 ```
 
+`mvn test` runs no `*IT` class. Before calling a backend change done, run `mvn verify`, with Docker running for Testcontainers.
+
 ---
 
 ## File naming convention
@@ -75,6 +77,8 @@ class GlobalExceptionHandlerTest {
 ```
 
 ### Mocks
+
+Mock only at the edge of the service: a repository (the database), an HTTP or SDK client (the network), the clock. Never mock a class of your own that holds logic, such as a mapper, a validator or a rule class: construct the real one, so the test covers it too. A collaborator service that itself only fronts an edge, such as a document service over S3, may be mocked where its calls are the side effect under test.
 
 Declare mocks as fields with `@Mock`. Use inline `mock()` only for objects that are local to a single test (e.g. a `BindingResult` created by a test helper):
 
@@ -278,9 +282,29 @@ Do not use `testXxx()` naming — this is an older JUnit 3 convention found in s
 
 ---
 
-## Given / When / Then
+## Test titles and layout
 
-All tests use explicit `// Given`, `// When`, `// Then` comment blocks. For short tests `// When & Then` can be combined. Inline comments can supplement the blocks for non-obvious steps:
+### The title states what the assertions prove
+
+Read the assertions, then write the title from them. A title that claims more than the assertions check is a defect in that test, not a naming preference.
+
+Bad: titled `submit_shouldSetStatusToSubmitted`, while the only assertion is `isEqualTo(SUBMITTED_ACTION_REQUIRED)`. A reader trusts the title and believes a plain submit is covered.
+
+Good: `submit_shouldRequireActionWhenAHealthCertificateIsOutstanding`, with a fixture that has an outstanding health certificate.
+
+Do not copy an acceptance criterion into the title when the body tests a stand-in for it (a draft fixture standing in for a submitted one, say). Either test the real case or name the stand-in.
+
+### The test fails without the change it covers
+
+Before you call a test done, undo the production change it covers (or invert the condition it guards), run the test and see it fail. Restore the change and see it pass. A test that stays green against the old code proves nothing about the new code: fix the assertion, or delete the test and the code it was meant to cover.
+
+### Layout: no Given / When / Then comments
+
+Do not write `// Given`, `// When`, `// Then` or `// And` comments. Separate set-up, action and assertions with a blank line. When set-up is long enough to need a label, extract it into a named helper (`givenNotificationWithOutstandingCertificate()`) so the name does the labelling.
+
+One behaviour per test. If you need a second `// Then`, you have a second test.
+
+Bad: one test, two behaviours, and a title that names only the first:
 
 ```java
 @Test
@@ -303,6 +327,36 @@ void deleteByReferenceNumbers_shouldDeleteAll_whenAllFound() {
     assertThat(auditCaptor.getValue().getResult()).isEqualTo(Result.SUCCESS);
 }
 ```
+
+Good: two tests, a shared helper for the set-up, blank lines for structure:
+
+```java
+@Test
+void deleteByReferenceNumbers_shouldDeleteTheFoundNotifications() {
+    Notification notification = givenStoredNotification("DRAFT.IMP.2026.111");
+
+    notificationService.deleteByReferenceNumbers(List.of("DRAFT.IMP.2026.111"), headers);
+
+    verify(notificationRepository).deleteAll(List.of(notification));
+}
+
+@Test
+void deleteByReferenceNumbers_shouldAuditSuccess_whenAllFound() {
+    givenStoredNotification("DRAFT.IMP.2026.111");
+
+    notificationService.deleteByReferenceNumbers(List.of("DRAFT.IMP.2026.111"), headers);
+
+    ArgumentCaptor<Audit> auditCaptor = ArgumentCaptor.forClass(Audit.class);
+    verify(auditRepository).save(auditCaptor.capture());
+    assertThat(auditCaptor.getValue().getResult()).isEqualTo(Result.SUCCESS);
+}
+```
+
+A multi-step flow (create, then update, then delete) is one test per step, each setting up its own state through a helper. One long flow test fails at the first broken step and hides every later one.
+
+### Comments beside assertions
+
+When you change an assertion, re-read every comment near it. A comment that still names the old value is wrong the moment the assertion changes: delete it. Better still, do not write one; the assertion and the title already say it.
 
 ---
 
@@ -376,7 +430,53 @@ Use this whenever a service composes two or more collaborator calls whose orderi
 
 ---
 
+## Enum serialisation
+
+Each enum gets two serialisation tests, however many constants it has:
+
+- one round trip for one constant
+- one unknown value, which must throw `InvalidFormatException` (a different Jackson code path)
+
+Do not add a test per constant, and do not parameterise over `@EnumSource` to cover them all. Domain enums such as document types and scan statuses grow as values are confirmed; the test suite must not grow with them when the contract is the same. A reviewer must not raise a missing per-constant test as a gap. A missing unknown-value test is a gap.
+
+Bad: one test per constant, as `AccompanyingDocumentTest.ScanStatusJsonSerialisation` does today:
+
+```java
+@Test
+void scanStatus_pending_serialisesToUppercaseString() throws JsonProcessingException { ... }
+
+@Test
+void scanStatus_complete_serialisesToUppercaseString() throws JsonProcessingException { ... }
+
+@Test
+void scanStatus_rejected_serialisesToUppercaseString() throws JsonProcessingException { ... }
+```
+
+Good:
+
+```java
+@Test
+void scanStatus_shouldRoundTripThroughJson() throws JsonProcessingException {
+    String json = objectMapper.writeValueAsString(ScanStatus.PENDING);
+
+    assertThat(json).isEqualTo("\"PENDING\"");
+    assertThat(objectMapper.readValue(json, ScanStatus.class)).isEqualTo(ScanStatus.PENDING);
+}
+
+@Test
+void scanStatus_unknownValue_throwsInvalidFormatException() {
+    assertThatThrownBy(() -> objectMapper.readValue("\"UNKNOWN\"", ScanStatus.class))
+        .isInstanceOf(InvalidFormatException.class);
+}
+```
+
+Use one test per constant only when constants serialise differently, for example each has its own `@JsonProperty` or `@JsonValue`. A small closed enum (HTTP method, day of week) may use a parameterised round trip.
+
+---
+
 ## Helper methods
+
+Set-up used by two tests goes in a shared helper. When you promote a local helper to a shared one, delete every local copy in the same change.
 
 Extract repeated setup into private helpers — do not inline complex construction in every test:
 

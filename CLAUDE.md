@@ -10,12 +10,17 @@ The load-bearing rules that agents must always honour are kept **inline** below.
 
 Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agent-onboarding.md`](docs/agent-onboarding.md#1-canonical-clone-location). Scripts under `tools/` hardcode that path, so a checkout under any other name will not work. No env var to set, and no symlink to maintain: the canonical path is the checkout.
 
-### 2. Branch naming + cross-repo branch parity
+### 2. Branches: naming, cross-repo parity and where to work
 
 - Branch naming: `feat/EUDPA-XXXX[-slug]` or `chore/EUDPA-XXXX[-slug]` (also `fix/EUDPA-XXXX[-slug]`).
 - Cross-repo branches must share the **same name** across every affected repo — the workspace stack's `--branch` flag probes each repo for a matching branch-tagged image and falls back to `:latest` per service, so mismatched names break the linked-branch pickup.
 - PRs: raise against `main` in the relevant repo.
-- Cross-repo changes: coordinate via the tests repo.
+- Cross-repo changes: coordinate via the tests repo. A fix that needs two repos changes both, the tests repo included.
+- Splitting a branch: every part keeps the ticket key. `chore/EUDPA-35-frontend-test-rewrites`, not `chore/admin-notifications-tidy`.
+- A programme of several tasks in one repo: one branch, one PR, a commit per task, merged once at the end.
+- **Where to work:** on branches in this checkout and in `repos/`, switched in place (`git checkout` or `tim workspace branch <name>`). No git worktrees: the stack builds and mounts `repos/<repo>`, so work in a worktree is invisible to E2E and to `git status`. No side clones to keep out of another session's way. The one exception is the worktrees `journey-builder` creates for its own runs.
+- **Reading `main`:** a `repos/` checkout is often on a spike branch, so check `git -C <repo> branch --show-current` first. Read `main` with `git -C <repo> show origin/main:<path>`, or from a shallow clone in the scratchpad that you read and never write to.
+- **Stashing:** only when a branch switch forces it, with `git stash push -u`. Leave untracked `workareas/` files alone.
 - **Exempt: the plants prototype's own `design/<set>-<slug>` branches.** `trade-imports-plants-prototype` has no Docker stack service (`dockerStack: null`) and no branch-tagged image to probe for, so a design branch never needs a matching name anywhere else. A hand-off out of the prototype is different work, not a prototype branch: it lands as one real `feat/EUDPA-N-<slug>` (or `feat/NO_JIRA-<slug>` without a ticket yet) across every real repo it touches — `trade-imports-plants-frontend`, `trade-imports-plants-backend`, the tests repo, this workspace's `openspec/` — following the same-name rule above like any other cross-repo change.
 
 ### 3. Banned actions
@@ -23,6 +28,8 @@ Clone the workspace to `~/git/defra/trade-imports-workspace` — see [`docs/agen
 - **Never edit `docker/stack/.staged/`** — it is generated on every stack start; edits are silently overwritten.
 - **Never commit `workareas/`** — it is gitignored runtime cache. The sole exception is `workareas/shared/` (tracked via a `.gitignore` negation for review handoff).
 - **Never let cross-repo branches drift** — same branch name across every affected repo (see rule 2).
+- **Never merge a PR you raised by hand without the user's go in that conversation.** When it is green, post the PR link and the evidence, then stop. Delete the branch only after the merge. This holds even when a brief says "merge on green". A build loop merges its own green increments as its skill says (`requirements-pipeline` BUILD).
+- **Never write to CDP platform repos** (`DEFRA/cdp-app-config`, `cdp-tf-svc-infra`, `cdp-app-deployments`, `cdp-documentation`): no branch, commit, push, PR or `git add`. Edit the files in a local clone, show the user the diff and leave the rest to them. Reading is fine.
 - **Before pushing code changes:** a `PreToolUse` hook runs the real SonarCloud quality gate automatically on `git push` and blocks the push if it fails (see SonarCloud integration below). If `SONAR_TOKEN` isn't set locally, the hook skips gracefully — run the same check manually in that case.
 
 ### 4. Skill routing index
@@ -59,6 +66,30 @@ have ("the dashboard", "the address page") and no service or repo gets one
 plain question before any work: the prototype, or which service?
 
 Per-skill fan-out worker personas are catalogued in [`docs/reference/worker-references.md`](docs/reference/worker-references.md).
+
+### 5. Code quality
+
+The house rules on comments, names, structure, logging and tests live in [`.claude/rules/code-quality.md`](.claude/rules/code-quality.md). They apply to every session, skill, workflow and agent, and win over any guide under `docs/best-practices/`. An agent that does not load `.claude/rules/` (Codex, a workflow agent) gets that file's path in its brief.
+
+### 6. A red test on your branch is yours to fix
+
+Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
+
+### 7. Canary first
+
+To make one change across several repos, services or environments, apply it to one target that needs the whole change, check it, then do the rest. Check every target afterwards, not a sample.
+
+### 8. Extend the tools, don't work round them
+
+When `tim` or a `tools/` script lacks an option you need, add it (with its `--help` and tests) and commit it. Do not reach for a one-off `curl`, `jq` or raw API call.
+
+### 9. Workspace config is committed and portable
+
+Config at the workspace root (MCP servers, hooks, settings) goes in a committed file with no machine-specific paths, so every clone gets it. Not in local scope (`~/.claude.json`).
+
+### 10. Rules go in the repo, not memory
+
+A correction about code, tests, tooling or process is an edit to its committed home: `.claude/rules/`, `docs/best-practices/`, a skill, a repo's `docs/`, or lint. Make the edit and commit it. A programme's state goes in its workarea handover (`workareas/shared/<programme>/`).
 
 ## Repo map
 
@@ -206,7 +237,7 @@ knobs that must use `host.docker.internal`, and the running-E2E recipe.
 
 - **Secrets scanning** — `UserPromptSubmit` and `PreToolUse(Read)` hooks block prompts/reads containing API keys or tokens.
 - **MCP server** — query SonarCloud issues, quality gate status and rules via the repo's `sonar-*` MCP server (e.g. `mcp__sonar-gateway__search_sonar_issues_in_projects` for `trade-imports-dynamics-gateway`). Only loaded in a session opened **inside that repo**: the workspace root registers none, because each one is a ~0.5–0.8 GiB docker container started at session start whether used or not. From the workspace root, use the `sonar` CLI instead (`sonar list issues --project DEFRA_<repo>`). Nothing automated depends on these servers — the push gate below uses the CLI and scanners.
-- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running the canonical shared script at [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh) (one copy, referenced by every repo's `.claude/settings.json` via its `$HOME`-absolute path — not duplicated per repo). It runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
+- **Pre-push quality gate** — a `PreToolUse(Bash)` hook fires only when the command is an actual `git push`, running one shared check, [`tools/sonar/sonar-push-check.sh`](tools/sonar/sonar-push-check.sh), by one of two routes. A session opened at the workspace root runs [`scripts/sonar/sonar-push-gate.sh`](scripts/sonar/sonar-push-gate.sh) from this repo's `.claude/settings.json`; it works out which repo the push targets and runs the check there. A session opened inside a repo runs the check directly from that repo's `.claude/settings.json`. The check runs the *real* build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos) against the current branch's open PR when one exists, and **blocks the push** if the quality gate fails. Every other Bash command passes through untouched.
 
 **Why not the server-side "Agentic Analysis" (Vortex) feature** the `sonar` CLI also offers (`sonar analyze agentic`, or `sonar analyze --staged`'s quality-check half): this DEFRA SonarCloud organization does not have that feature licensed (`403 Vortex Analysis is not available for this organization`) — confirmed by direct testing, not a config problem. The secrets-scanning half of the `sonar` CLI integration above is unaffected and still works. Don't reach for `sonar analyze agentic`/`--staged` expecting a working quality check; use the pre-push hook or run its script manually instead.
 

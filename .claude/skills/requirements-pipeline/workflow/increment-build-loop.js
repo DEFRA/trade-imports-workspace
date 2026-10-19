@@ -1,7 +1,7 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists → implement the plan and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
@@ -223,22 +223,23 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 // The Workflow tool caps one run at 1000 agents over its whole lifetime. That
 // is the tool's limit, not a programme's choice, so it is a constant here and
-// not a config key. An increment is up to 55 agents on Claude and 63 on Codex,
+// not a config key. An increment is up to 56 agents on Claude and 64 on Codex,
 // its start stage, the plan lint reader after each plan, the replan of a plan whose checks the workspace denies or
-// that writes code text, the plan review, the revised plan it can send back and the second plan review, the style
+// that writes code text, the plan review, the revised plan it can send back, the second plan review and the agent
+// that records its open detail findings in the plan, the style
 // re-review of the fixer's hunks and the second fix it can send back, the style review of each of three CI fixes and
 // the style fix it can send back, the workspace commit reader, the one that
 // puts the workspace repo back on the base branch, the theme reader and its theme's spec check included, so a drain
 // of an open-ended backlog would hit the cap mid-increment and lose the attempt. Under the branch lifecycle the run
 // also keeps room for one theme's engineering review, THEME_REVIEW_AGENTS, and counts each one it runs. The run stops
-// before starting an increment that would not fit — roughly 18 increments on Claude, 15 on Codex — and
+// before starting an increment that would not fit — roughly 17 increments on Claude, 15 on Codex — and
 // resuming is launching the workflow again with the same args, because
 // backlog.json already carries the status, ticket, branch and PRs. The run's
 // own agents are the workspace and preflight checks, and the one that takes
 // the workspace stack's lease at the start and the one that gives it back at
 // the end.
 const AGENT_CAP = 1000
-const AGENTS_PER_INCREMENT = { claude: 55, codex: 63 }
+const AGENTS_PER_INCREMENT = { claude: 56, codex: 64 }
 const STARTUP_AGENTS = 4
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * AGENTS_PER_INCREMENT[EXECUTOR]
 
@@ -439,7 +440,8 @@ const FRONTEND_CHANGE_KEYS = REPO_KEYS.filter((key) => FRONTEND_CHANGE_PATHS.inc
 //                    calls that write, judge or repair code.
 //   light (haiku)  — every stage that only runs a command and reports what it
 //                    said: workspace resolve, preflight, derive next, start,
-//                    plan lint reader, branch, branch guard, merge start,
+//                    plan lint reader, plan review recorder, branch,
+//                    branch guard, merge start,
 //                    baseline, land, preserve, PR, CI watch, merge, done, and
 //                    the Codex shell and relay (they too only run a command
 //                    and report).
@@ -2396,10 +2398,18 @@ const PLAN_SCHEMA = {
       items: { type: 'string' },
       description:
         'Section 16: every rules, bestPractice and repoDocs path tim backlog standards listed for the files the plan changes, once each'
+    },
+    followUps: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        "Section 7's follow-ups: each wider clean-up outside the row's footprint, one line a backlog row could be written from. Empty when there is none"
     }
   },
   additionalProperties: false
 }
+
+const PLAN_FINDING_KINDS = ['structural', 'detail']
 
 const PLAN_REVIEW_SCHEMA = {
   type: 'object',
@@ -2410,8 +2420,14 @@ const PLAN_REVIEW_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['section', 'what', 'rule', 'mustBecomeTrue'],
+        required: ['kind', 'section', 'what', 'rule', 'mustBecomeTrue'],
         properties: {
+          kind: {
+            type: 'string',
+            enum: PLAN_FINDING_KINDS,
+            description:
+              'structural: a layer, owner, mechanism, unstated departure, scope or test strategy that is wrong. detail: a line-level gap the implementor can close without changing any decision, home or owner'
+          },
           section: { type: 'string', description: 'The plan section the finding is in, by number and name' },
           what: { type: 'string', description: 'What the plan does wrong, against the code as it is' },
           rule: {
@@ -2423,6 +2439,22 @@ const PLAN_REVIEW_SCHEMA = {
         additionalProperties: false
       }
     },
+    followUps: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        "Wider clean-up outside the row's footprint that section 7 does not list, one line a backlog row could be written from. Empty when there is none"
+    },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const PLAN_REVIEW_RECORD_SCHEMA = {
+  type: 'object',
+  required: ['written', 'summary'],
+  properties: {
+    written: { type: 'boolean', description: 'true only when the plan file ends with the section, word for word' },
     summary: { type: 'string' }
   },
   additionalProperties: false
@@ -2642,6 +2674,35 @@ the tree, do the smallest thing that meets the increment's acceptance criteria a
 const planListOrNone = (entries) =>
   (entries ?? []).length > 0 ? entries.map((entry) => `   - ${entry}`).join('\n') : '   (the plan returned none)'
 
+const planFindingKindOf = (finding) => (finding.kind === 'detail' ? 'detail' : 'structural')
+
+const planReviewFindingText = (finding, index) =>
+  `${index + 1}. [${planFindingKindOf(finding)}] ${finding.section}: ${finding.what} Rule: ${finding.rule} Must become true: ${finding.mustBecomeTrue}`
+
+const planReviewFindingLine = (finding, index) => `  ${planReviewFindingText(finding, index)}`
+
+const planReviewFindingLines = (findings) => findings.map(planReviewFindingLine).join('\n')
+
+const mustAddressOf = (plan) => plan?.planReviewMustAddress ?? []
+
+const mustAddressForImplementor = (plan) =>
+  mustAddressOf(plan).length > 0
+    ? `
+PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on the revised plan. Each is required work in
+this increment, as binding as the plan's decisions. Address every one, and say in notes how you addressed each, by its
+number:
+${planReviewFindingLines(mustAddressOf(plan))}`
+    : ''
+
+const mustAddressForReview = (plan) =>
+  mustAddressOf(plan).length > 0
+    ? `
+THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work:
+${planReviewFindingLines(mustAddressOf(plan))}
+Check each against the change. Each one the change does not address is a finding: give it the code-quality category
+that fits it, \`structure\` when none fits better, and name the plan review finding by its number.`
+    : ''
+
 const planDecisionReviewRule = (plan) => `THE PLAN IS NOT A DEFENCE. A plan decision is a finding when the code it produced cannot be
 explained from the code alone, or when it departs from a written repo rule. A name, comment, structure or test the house
 rules or the repo's docs would reject is a finding, whoever chose it. The plan lists these departures from written rules:
@@ -2649,7 +2710,7 @@ ${planListOrNone(plan?.departures)}
 A departure it does not list, or one with no rule quoted or no reason, is a finding. It lists these docs the change makes
 untrue, each with what must change:
 ${planListOrNone(plan?.docsMadeUntrue)}
-Each one the change still leaves untrue is a finding.`
+Each one the change still leaves untrue is a finding.${mustAddressForReview(plan)}`
 
 const implementorNotesForReview = (implementorNotes) => `THE IMPLEMENTOR'S NOTES — what it says it decided, changed from
 the plan, left alone or found wrong. Judge each claim against the code; a deviation from the plan with no sound reason, or
@@ -2919,20 +2980,26 @@ plan unless that change needs it.
 `
     : ''
 
-const planReviewFindingLine = (finding, index) =>
-  `  ${index + 1}. ${finding.section}: ${finding.what} Rule: ${finding.rule} Must become true: ${finding.mustBecomeTrue}`
-
 const planReviewNote = (id, findings) =>
   findings.length
     ? `THE PLAN REVIEW SENT YOUR PLAN BACK. Rewrite ${PLANS}/${id}.md so each of these is true, and keep the rest of the plan
-unless a finding needs it:
-${findings.map(planReviewFindingLine).join('\n')}
+unless a finding needs it. A structural finding still open on the revised plan stops the increment; a detail finding
+still open becomes required work for the implementor:
+${planReviewFindingLines(findings)}
 `
     : ''
 
 const IDS_TO_BEHAVIOUR = `IDS BECOME BEHAVIOUR. The row's requirements, notes and sources carry ids: c-NNN, inc-NNN, ruling ids, ticket
 keys. Turn each one into the behaviour it names. Never copy an id into the plan's code-facing content: sections 2, 3, 4,
 9, 10, 11 and 13. Decisions may cite one as provenance.`
+
+const BOUNDED_TIDY_UP = `BOUNDED TIDY-UP. A plan fixes every house-rule breach in the files it edits for the row's own behaviour, and in
+the lines and functions the change touches anywhere else. It never widens the row's footprint for clean-up alone: no
+new file, no new call site, no signature change across callers, and no file edited only to clean it. A structural
+decision the row genuinely needs, such as logging a rule at its one owner, may still change callers, and the plan says
+why under Decisions. A file touched only to follow such a decision, a caller passing a new argument say, gets the
+touched lines and function fixed and no more. Wider clean-up goes in section 7 as a follow-up for the backlog, never
+into this increment.`
 
 const PLAN_STANDARDS_STEP = `the standards for those files. Run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\`
      (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read
@@ -2953,6 +3020,7 @@ goes through, which one function owns each rule, and what each test must prove. 
 for new things, no comment or doc comment text, no test titles or bodies, no log wording, no code bodies. Names and
 code shape are the implementor's to get right. A plan review checks your plan before any code exists.
 ${IDS_TO_BEHAVIOUR}
+${BOUNDED_TIDY_UP}
 
 1. PIN THE TREE. For each of the increment's repos, record its branch and HEAD in the plan:
    \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` and \`git -C ${TILDE}/<repoPath> rev-parse --short HEAD\`.
@@ -2994,7 +3062,9 @@ ${IDS_TO_BEHAVIOUR}
       belongs in the tests repo's E2E suite, which the gate runs. A check that starts a
       Docker Compose project of its own (\`docker compose run\` starts its \`depends_on\` services) is followed by the
       repo's script that takes that project down, as a check of its own. "None" is an answer.
-   7. Out of scope — what the implementor must leave alone, including neighbouring open questions.
+   7. Out of scope — what the implementor must leave alone, including neighbouring open questions. Then
+      "Follow-ups:", each wider clean-up you noticed outside the row's footprint as one line a backlog row could be
+      written from. "None" is an answer.
 ${specSyncPlanSection()}
    9. Homes — every new constant, registry entry, argument, field or helper: the existing mechanism it goes
       through, as file:line. Where you depart from that code's stated design (a comment, a doc comment, a repo
@@ -3022,8 +3092,9 @@ ${specSyncPlanSection()}
    or "the backend half" for another increment.
 ${PLAN_CHECK_FORMS}
 Return ok, summary, repos (the repos the plan changes${IS_BRANCH ? '' : `, ${PLAN_MERGE_ORDER}`}), behaviourChanges, decisions, risks,
-specPrefixes (the prefixes section 8 writes under, [] for none), docsMadeUntrue (section 12), departures (section 14),
-standards (section 16) and checks: every command in sections 5 and 6, exactly as the plan writes it. The loop reads
+followUps (section 7's follow-ups, [] for none), specPrefixes (the prefixes section 8 writes under, [] for none),
+docsMadeUntrue (section 12), departures (section 14), standards (section 16) and checks: every command in sections 5
+and 6, exactly as the plan writes it. The loop reads
 checks[] and sends back a plan that names a denied form. It also reads the plan file for code text, and sends back a
 plan that writes some.
 Return the structured output only.`,
@@ -3155,10 +3226,24 @@ const earlierPlanReviewNote = (earlierFindings) =>
   earlierFindings.length
     ? `
 YOU SENT THIS PLAN BACK ONCE, with these findings:
-${earlierFindings.map(planReviewFindingLine).join('\n')}
-Check that each one is now true, then review the whole plan again. A finding still open, or a new one, sends it back
-again, and a second send-back stops the increment.`
+${planReviewFindingLines(earlierFindings)}
+Check that each one is now true, then review the whole plan again. There is no third plan. A structural finding still
+open, or a new one, stops the increment. A detail finding still open, or a new one, goes to the implementor as
+required work and to the consistency reviewer to check.`
     : ''
+
+const PLAN_FINDING_KIND_RULE = `GIVE EACH FINDING A KIND. Report every finding you find, whatever its kind: the kind decides what happens to
+   it, not whether it counts.
+   - structural: the plan is built wrong. A piece in the wrong layer or with the wrong owner; a second mechanism
+     beside one that exists; a decision that contradicts a written repo rule, house rule or guide with no departure
+     stated in section 14; scope that falls short of the row's acceptance criteria or goes beyond them; a test
+     strategy that cannot prove the criteria.
+   - detail: a line-level gap the implementor can close without changing any decision, home or owner. A specific
+     comment or doc comment to delete, a local copy of a shared helper at a file:line, a doc, recipe or reference to
+     update, a grep hit a section misses, an entry a section leaves out.
+   A structural finding still open on the revised plan stops the increment. A detail finding still open then is not
+   dropped: it is written into the plan under "Plan review: must address", goes to the implementor as required work,
+   and the consistency reviewer reports any the change does not address.`
 
 const reviewPlan = (id, { label, earlierFindings = [] }) =>
   agent(
@@ -3173,6 +3258,7 @@ WHAT A PLAN IS: decisions, homes and owners. It records where each piece of the 
 mechanism it goes through, which one function owns each rule, and what each test must prove. It never writes code
 text: names, comment or doc comment text, test titles or bodies, log wording or code bodies. The implementor writes
 those.
+${BOUNDED_TIDY_UP}
 
 1. READ, IN FULL, with the Read tool:
    - each changed repo's own docs: \`ls\` its \`docs/\` and \`src/server/app/docs/\` where they exist, and read the ones
@@ -3204,10 +3290,15 @@ those.
    - Code text: a name, comment or doc comment text, test title or body, log wording or code body; an id from the
      row (c-NNN, inc-NNN, a ruling id, a ticket key) in sections 2, 3, 4, 9, 10, 11 or 13;
    - Standards: a rules, bestPractice or repoDocs path tim lists for a changed file that section 16 leaves out;
+   - Scope: a footprint widened for clean-up alone, against BOUNDED TIDY-UP above, or callers changed for a
+     structural decision with no reason under Decisions;
+   - House rules in the footprint: a breach BOUNDED TIDY-UP says the plan fixes, left unfixed. A breach outside the
+     footprint is not a finding against this plan: put it in followUps, unless section 7 already lists it;
    - any decision that breaks a house rule, a best-practice guide or a repo doc.
-3. REPORT. approved: true only when you have no finding. Give each finding its section, what is wrong, the rule it
-   breaks (path, line and the words quoted) and what must become true. Say what must become true, never the wording:
-   the planner rewrites the plan.
+3. ${PLAN_FINDING_KIND_RULE}
+4. REPORT. approved: true only when you have no finding. Give each finding its kind, its section, what is wrong, the
+   rule it breaks (path, line and the words quoted) and what must become true. Say what must become true, never the
+   wording: the planner rewrites the plan.
 Your review narrows nothing later. Every reviewer after you judges the code in full, whatever you approved.
 Return the structured output only.`,
     think({ label, phase: 'Plan', schema: PLAN_REVIEW_SCHEMA })
@@ -3215,18 +3306,72 @@ Return the structured output only.`,
 
 const sendsPlanBack = (review) => !review.approved || (review.findings ?? []).length > 0
 
+const isStructural = (finding) => planFindingKindOf(finding) === 'structural'
+
 const noPlanReview = (plan) => ({
   ...plan,
   ok: false,
   summary: 'the plan reviewer returned no result, and an unreviewed plan is never built'
 })
 
+const withFollowUps = (plan, reviews) => ({
+  ...plan,
+  followUps: [...new Set([...(plan.followUps ?? []), ...reviews.flatMap((review) => review.followUps ?? [])])]
+})
+
+const planFindingSummary = (finding) => `${finding.section}: ${finding.what}`
+
+const refusedAfterSecondReview = (plan, second) => {
+  const structural = (second.findings ?? []).filter(isStructural)
+  return {
+    ...plan,
+    ok: false,
+    summary: structural.length
+      ? `the plan review sent the plan back twice with structural findings still open: ${structural.map(planFindingSummary).join(' | ')}`
+      : `the plan review sent the plan back twice. Still open: ${second.summary}`
+  }
+}
+
+const mustAddressSection = (findings) => `## Plan review: must address
+
+The plan review left these findings open on the revised plan. Each is required work for the implementor, and the
+consistency reviewer reports any the change does not address.
+
+${findings.map(planReviewFindingText).join('\n')}`
+
+const recordMustAddress = (id, findings) =>
+  agent(
+    `You are the PLAN REVIEW RECORDER for increment ${id}. You add one section to the end of the plan and change nothing
+else. That is your whole job.
+${BASE_GUARDRAILS}
+1. Read ${PLANS}/${id}.md in full with the Read tool.
+2. With the Edit tool, append the section below after the file's last line: old_string is the file's last few lines,
+   enough to be unique, and new_string is those same lines, one blank line, then the section, word for word.
+3. Read the file again.
+Report written: true only when the file now ends with the section, word for word, and everything above it is
+unchanged. Never reword, sort or shorten the section.
+
+${mustAddressSection(findings)}`,
+    light({ label: `${id} plan review record`, phase: 'Plan', schema: PLAN_REVIEW_RECORD_SCHEMA })
+  )
+
+const withMustAddress = async (id, plan, findings) => {
+  log(`${id}: the revised plan has ${findings.length} detail finding(s) still open. Building it, with each as required work.`)
+  const record = await recordMustAddress(id, findings)
+  if (!record?.written) {
+    log(
+      `${id}: the "Plan review: must address" section was not written to the plan — ${record?.summary ?? 'the recorder died'}. The implementor and the consistency reviewer still get each finding.`
+    )
+  }
+  return { ...plan, planReviewMustAddress: findings }
+}
+
 const reviewedPlan = async (id, branchedRepos = null) => {
   const plan = await planWithAllowedChecks(id, branchedRepos)
   if (!plan?.ok) return plan
   const review = await reviewPlan(id, { label: `${id} plan review` })
   if (!review) return noPlanReview(plan)
-  if (!sendsPlanBack(review)) return plan
+  if (!sendsPlanBack(review)) return withFollowUps(plan, [review])
   const findings = review.findings ?? []
   log(`${id}: the plan review sent the plan back with ${findings.length} finding(s). Sending the planner back once.`)
   const revised = await refusedUnlessClean(
@@ -3237,12 +3382,11 @@ const reviewedPlan = async (id, branchedRepos = null) => {
   if (!revised?.ok) return revised
   const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
   if (!second) return noPlanReview(revised)
-  if (!sendsPlanBack(second)) return revised
-  return {
-    ...revised,
-    ok: false,
-    summary: `the plan review sent the plan back twice. Still open: ${(second.findings ?? []).map((finding) => `${finding.section}: ${finding.what}`).join(' | ') || second.summary}`
-  }
+  const reviewed = withFollowUps(revised, [review, second])
+  if (!sendsPlanBack(second)) return reviewed
+  const stillOpen = second.findings ?? []
+  if (stillOpen.length === 0 || stillOpen.some(isStructural)) return refusedAfterSecondReview(reviewed, second)
+  return withMustAddress(id, reviewed, stillOpen)
 }
 
 const ENVELOPE_REPO_SCHEMA = {
@@ -4554,7 +4698,9 @@ while (stopped === null) {
       repos: plan?.repos,
       behaviourChanges: plan?.behaviourChanges,
       decisions: plan?.decisions,
-      risks: plan?.risks
+      risks: plan?.risks,
+      planReviewMustAddress: plan?.planReviewMustAddress,
+      followUps: plan?.followUps
     })
     log(`${id}: ${plan?.ok ? 'PLANNED' : 'PLAN REFUSED'} — ${plan?.summary ?? 'the planner died'}`)
     continue
@@ -4813,7 +4959,7 @@ ${baselineRungList(baseline)}`
         phaseName: 'Implement',
         schema: incrementSchema,
         instructions: `You are implementing increment ${id}. Build the change the plan at ${PLANS}/${id}.md decides.
-${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}
+${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
 ${HOUSE_RULES_TO_WRITE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}${FRONTEND_CHANGE_IMPLEMENT_LINE}${specSyncDuty()}${COMPLETION_LINES_DUTY}${workspaceRepoRule()}`,
         workingBranch: workBranch,
         bindings: { gateUnit: codexGateBinding(id, 'implement', builderPhases) }
@@ -4825,7 +4971,7 @@ ${guardrails()}
 ${HOUSE_RULES_TO_WRITE}
 ${readIncrement(id)}
 ${REPO_RULE}${IS_BRANCH ? implementMergeTask(mergesInProgress, mergesAlreadyIn) : ''}${IS_BRANCH && repos.length === 0 ? WORKSPACE_ONLY_TASK : ''}
-${readPlan(id)} ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}
+${readPlan(id)} ${PLAN_CONTRACT_FOR_IMPLEMENTOR}${planStandardsLine(plan)}${mustAddressForImplementor(plan)}
 Before you write to a file, read the rules, best-practice and repo docs the plan's section 16 lists for it. Where the
 plan lists none for a file you will touch, run \`tim backlog standards --files <repoKey>:<path> --workspace ${TILDE} --json\`
 (repeat --files for each file; the repo keys are ${standardsKeys}, and \`workspace\` for this repo) and read every
@@ -5615,7 +5761,8 @@ Return the structured output only.`,
         ci: ciOutcome(),
         leftUncommitted: workspaceEdits,
         findings,
-        judgement: judgementCalls
+        judgement: judgementCalls,
+        followUps: plan?.followUps
       })
       log(
         `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
@@ -6050,7 +6197,8 @@ Return the structured output only.`,
     commit: land?.commit,
     prs: prs.map((p) => p.url),
     findings,
-    judgement: judgementCalls
+    judgement: judgementCalls,
+    followUps: plan?.followUps
   })
 
   log(`${id}: LANDED ${ticket.key} merged to ${BASE_BRANCH}, ticket "${STATUS_DONE}" — ${rawFindings.length} findings, ${confirmed.length} confirmed, ${judgement.fixNow.length} fixed`)

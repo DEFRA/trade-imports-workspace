@@ -226,9 +226,9 @@ with commits of its own is left as it is. A failure names its step and its exact
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 55 agents on Claude and 63 on Codex, against a default guideline of 15. You cannot set
+   increment is up to 56 agents on Claude and 64 on Codex, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 18
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 17
    increments on Claude and 15 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.
 2. **Pull the workspace repo.** `backlog.json` is the state.
@@ -486,15 +486,23 @@ constant, entry, argument or helper (the existing mechanism it goes through, by 
 each twin, the shared test helper to extend, the docs the change makes untrue (or "None" with the grep run), a log
 for every branch that changes an outcome, its departures from written rules, what is reachable once the row lands,
 and the standards to read. Each test is stated as the behaviour it proves and the production line whose removal
-turns it red. Ids in the row become the behaviour they name. A light agent greps the plan for code text, and a
-flagged plan goes back once through the same replan as a denied check. Then a plan reviewer on the think tier
-checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling code. It can
-send the plan back once; a second send-back stops the run at `plan-refused`, before any code exists, with the open
-findings in the detail. Read the plan and the detail, then rule on the row: rewrite it if the requirement is wrong,
-or launch again. The review narrows nothing later. The implementor follows the plan's decisions, homes and owners,
-owns the names and code shape, and may extend a shared test helper. The consistency reviewer treats a plan
-decision as a finding when its code cannot be explained from the code alone or departs from a written repo rule.
-See [`../workflow/README.md`](../workflow/README.md#the-plan-contract).
+turns it red. Ids in the row become the behaviour they name. The tidy-up is bounded: a plan fixes house-rule
+breaches in the files it edits for the row and in the lines and functions it touches, never widens the row's
+footprint for clean-up alone, and lists wider clean-up in section 7 as follow-ups. A light agent greps the plan for
+code text, and a flagged plan goes back once through the same replan as a denied check. Then a plan reviewer on the
+think tier checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling
+code, and marks each finding structural (layer, owner, a second mechanism, an unstated departure, scope, test
+strategy) or detail (a line-level gap the implementor can close without changing a decision). It can send the plan
+back once. A structural finding still open on the revised plan stops the run at `plan-refused`, before any code
+exists, with those findings in the detail: read the plan and the detail, then rule on the row, rewriting it if the
+requirement is wrong, or launch again. Detail findings still open do not stop the run: a light agent writes them
+into the plan under "Plan review: must address", the implementor gets them as required work, and the consistency
+reviewer reports any left open as code-quality findings, fixed by default. The review narrows nothing later. The
+implementor follows the plan's decisions, homes and owners, owns the names and code shape, and may extend a shared
+test helper. The consistency reviewer treats a plan decision as a finding when its code cannot be explained from
+the code alone or departs from a written repo rule. Each increment's result carries `followUps`, from the plan and
+its reviewer: sweep them in step 3b like `DEFERRED:` lines. See
+[`../workflow/README.md`](../workflow/README.md#the-plan-contract).
 
 **The house rules and the probes and docs lines.** Every stage that plans, writes or judges code
 gets the house rules from `.claude/rules/code-quality.md` inline and is told to read the file in
@@ -571,8 +579,9 @@ finish their own work and to mark anything they genuinely left out as
 `DEFERRED: <what>` on its own line. **Sweep every increment in the returned list
 for those, and for a CI fixer's "out of scope" or "not done" wording** — a CI
 fixer works after every reviewer has finished, so what it defers is the
-least-seen work in the whole pipeline. This runs once, after the run stops,
-because the loop no longer hands you control between increments.
+least-seen work in the whole pipeline. Sweep each increment's `followUps` too: the
+wider clean-up its plan and plan reviewer kept out of the row's footprint. This runs once,
+after the run stops, because the loop no longer hands you control between increments.
 
 For each one, check it against `backlog.json`:
 
@@ -755,7 +764,7 @@ handover prompt.
 | `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
 | `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
-| `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan the plan review sent back twice, with the findings still open, or a plan reviewer that returned nothing. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
+| `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
 | `off-branch` | A repo left the run's branch and could not be moved back |
 | `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |

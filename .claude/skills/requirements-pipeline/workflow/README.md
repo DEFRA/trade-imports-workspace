@@ -238,7 +238,7 @@ missing key. The first log line is the resolved configuration.
 | `requireApproval` | Whether *every* PR of an increment needs an approving review on GitHub before the merge stage may merge *any* of them. `null` under the branch lifecycle. A single repo can need approval on its own instead — see [The workspace repo as one of the repos](#the-workspace-repo-as-one-of-the-repos) |
 | `approvalWaitMinutes` | How long the merge stage may wait for those approvals before it stops and leaves every PR open. `null` under the branch lifecycle |
 | `repos` | The backlog envelope's `repos` map, whatever its keys, under either lifecycle: a workspace-relative `path` and a GitHub `github` slug per key, each key a lower-case word, and an optional `requireApproval: true` for a repo whose PR a person must approve. Under the full lifecycle the key `workspace` at path `.` is the workspace repo itself; under the branch lifecycle `workspace` is refused. Give it in full, copied from the envelope. The preflight stops the run before the first increment when a key, path, slug or `requireApproval` differs from the envelope's |
-| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, and a theme's engineering reviewers and judge. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, and a theme's fixer and ladder. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
+| `models` | Required. Pass `{}` for the recommended default on every tier (it does not inherit the session model). Three tiers, each optional. `think` (default opus) plans and judges: plan, plan review, judge, the consistency reviewer, and a theme's engineering reviewers and judge. `code` (default sonnet) writes and repairs code: implement, the per-group style and code reviewers, the finding verifiers, fix, the style re-review of the fix, the ladder, CI fix, the style review of a CI fix and the style fix it sends back, and a theme's fixer and ladder. `light` (default haiku) runs a command and reports what it said: everything else (start, the plan lint reader, the plan review recorder, branch, branch guard, merge start, baseline, land, preserve, the run's stack lease take and give-back, PR, CI watch, merge, done, and the Codex shell and relay). A tier left out takes its default; set it to `'inherit'` to use the session model instead. `heavy` is a deprecated alias that sets both `think` and `code` together, unless the programme also gives one of those its own value |
 | `increments` | `null` to drain the backlog — the loop derives each id itself. Or a list of ids, built serially in the order given, as an explicit override |
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 
@@ -297,8 +297,8 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 55 agents on Claude and 63 on
-  Codex, so a run fits roughly 18 or 15 of them. Under the branch lifecycle the run also keeps
+  `Workflow` tool's cap of 1000 agents. An increment is up to 56 agents on Claude and 64 on
+  Codex, so a run fits roughly 17 or 15 of them. Under the branch lifecycle the run also keeps
   room for one theme's engineering review (twice the number of repos, plus 9) and counts each
   one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
@@ -453,7 +453,7 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Start | 1 light | Full lifecycle only. Runs `tim build start` once and copies the JSON line it prints, which the script reads: derive, ticket and branch in one deterministic call. See [The start stage](#the-start-stage) |
 | Baseline | 1 | Refuses a dirty tree, then runs `tim build gate --phase all` once — unit, FIT and E2E side by side — into `logs/<id>-baseline/` and reports each rung as tim printed it. Every gate call also writes its result to `--result`, so a gate the Bash tool moves to the background after 600s is waited on with `tim build gate-wait` in slices, never called red (the ladder and the builders' own checks do the same). A branch-lifecycle row that owes only some phases runs those one at a time and stops at the first red. Baseline green is gate green, so any later red is unambiguously ours |
 | Plan | 2–4 | Reads the row, the live tree, the mechanism each new piece goes through, the repo's docs and the standards `tim backlog standards` resolves for the files, and follows a repo's recipe (`frontend-change` for a frontend journey change). Writes `plans/<id>.md`: decisions, homes and owners, never code text. A light reader greps the plan for code text after each plan. See [The plan contract](#the-plan-contract) and [Plan checks](#plan-checks) |
-| Plan review | 1–4 | A think-tier reviewer checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling code, before any code exists. It can send the plan back once; the revised plan is linted and reviewed again, and a second send-back stops the increment at `plan-refused` |
+| Plan review | 1–5 | A think-tier reviewer checks the plan against the repo's docs and recipes, the layer rules, the house rules and the sibling code, before any code exists, and marks each finding structural or detail. It can send the plan back once; the revised plan is linted and reviewed again. A structural finding still open then stops the increment at `plan-refused`. Detail findings still open are written into the plan by a light agent and built as required work. See [The plan contract](#the-plan-contract) |
 | Implement | 1 | Builds the change the plan decides, across every repo the slice needs, and keeps the Behaviour Spec current (see [The Behaviour Spec](#the-behaviour-spec)). Owns names and code shape. Stages, never commits. Checks itself with `tim build gate --phase unit` and `--phase fit` (Codex: unit only); uses the workspace stack as the run's lease left it, and never starts or stops it |
 | Review | 2g+1 at most (Claude) | Codex runs `g + 1` reviews at the same granularity — see Executors. Under Claude: one style reviewer and one code reviewer **per (repo, language) group** of changed files — `g` groups, typically 2–6 — plus a consistency reviewer across the whole change, which also judges the spec write and any `Spec sync: none` reason. Docs (`.md`, `.json`, `.yaml`) get a code reviewer but no style reviewer. A group over 12 files splits into near-equal parts. See [What the reviewers look for](#what-the-reviewers-look-for) |
 | Verify findings | 1 per group with findings | Grouped the same way. Each finding is tested by the default its category sets: a functional finding must survive an agent trying to refute it, and a code-quality finding stands unless the agent quotes code that shows it is factually wrong. See [Findings by kind](#findings-by-kind) |
@@ -640,7 +640,7 @@ ids, ticket keys) into the behaviour it names, and keeps ids out of the sections
 | 3. New files | What each owns, why it is not part of an existing file, and the file whose structure to follow |
 | 4. Tests | The behaviour each test proves, and the production line whose removal turns it red. Never a title or a body. A removal is proved by an exact positive assertion |
 | 5, 6. Checks | One runnable check per acceptance criterion, then the checks beyond the gate. See [Plan checks](#plan-checks) |
-| 7. Out of scope | What the implementor leaves alone |
+| 7. Out of scope | What the implementor leaves alone, then the follow-ups: wider clean-up outside the row's footprint, one line each a backlog row could be written from |
 | 8. Spec sync | See [The Behaviour Spec](#the-behaviour-spec) |
 | 9. Homes | The existing mechanism each new constant, entry, argument, field or helper goes through, as file:line, quoting that code's stated design where the plan departs from it |
 | 10. Rule owners | The one function that owns each display or business rule, in each twin |
@@ -651,8 +651,16 @@ ids, ticket keys) into the behaviour it names, and keeps ids out of the sections
 | 15. Reachability | Only what is reachable once the row lands, or the row that reaches it |
 | 16. Standards | Every rules, bestPractice and repoDocs path `tim backlog standards` lists for the changed files |
 
-The planner returns sections 12, 14 and 16 as `docsMadeUntrue`, `departures` and `standards`. The loop hands
-`standards` to the implementor and the other two to the consistency reviewer.
+The planner returns sections 12, 14 and 16 as `docsMadeUntrue`, `departures` and `standards`, and section 7's
+follow-ups as `followUps`. The loop hands `standards` to the implementor and `docsMadeUntrue` and `departures` to
+the consistency reviewer. It reports `followUps`, with any the plan reviewer adds, on the increment's result.
+
+**The tidy-up is bounded.** A plan fixes every house-rule breach in the files it edits for the row's own behaviour,
+and in the lines and functions the change touches anywhere else. It never widens the row's footprint for clean-up
+alone: no new file, no new call site, no signature change across callers, no file edited only to clean it. A
+structural decision the row needs, such as logging a rule at its one owner, may still change callers, and the plan
+says why under Decisions. A caller touched only to follow that decision gets the touched lines and function fixed and
+no more. Wider clean-up goes in section 7 as a follow-up for the backlog.
 
 **The plan is linted for code text.** After each plan a light agent runs one `grep` over the plan file and copies
 what it printed. The loop flags a line that adds, keeps, copies or rewords a comment or doc comment, dictates its
@@ -663,18 +671,29 @@ with each line named; a replan that still writes code text, or a plan the reader
 
 **The plan is reviewed before any code exists.** The plan reviewer (think tier) reads each changed repo's `docs/`
 and `src/server/app/docs/`, the recipes, the layer rules, the standards and the code each home and owner names. It
-checks every section above, and that no decision breaks a house rule, a guide or a repo doc. It sends the plan back
-once with findings that say what must become true; the revised plan is linted and reviewed again. A second
-send-back, or a reviewer that returns nothing, stops the increment at `plan-refused`, before the implementor
-starts. Its approval narrows nothing later: every reviewer after it judges the code in full.
+checks every section above, the bounded tidy-up, and that no decision breaks a house rule, a guide or a repo doc. It
+reports every finding it finds and gives each a kind:
+
+| Kind | What it covers | Still open on the revised plan |
+|---|---|---|
+| structural | A piece in the wrong layer or with the wrong owner; a second mechanism beside one that exists; a decision that contradicts a written rule with no departure stated; scope that falls short of the row's acceptance criteria or goes beyond them; a test strategy that cannot prove the criteria | Stops the increment at `plan-refused`, before the implementor starts |
+| detail | A line-level gap the implementor can close without changing any decision, home or owner: a comment to delete, a local helper copy at a file:line, a doc or reference to update | Required work. A light agent writes it into the plan under "Plan review: must address", the implementor is given it to address, and the consistency reviewer reports any the change leaves open in a code-quality category, so it is fixed by default |
+
+It sends the plan back once with every finding, each saying what must become true; the revised plan is linted and
+reviewed again. A finding with no kind counts as structural. A reviewer that returns nothing also stops the
+increment at `plan-refused`. A house-rule breach outside the row's footprint is not a finding against the plan: the
+reviewer lists it in `followUps`. Its approval narrows nothing later: every reviewer after it judges the code in
+full.
 
 **The implementor follows decisions, not wording.** It follows the plan's decisions, homes and rule owners, owns
 names and code shape, copies an exemplar's structure but never its comments or names, and may extend a shared test
-helper. It never writes a local copy of a shared helper's body.
+helper. It never writes a local copy of a shared helper's body. It addresses every plan review finding under "Plan
+review: must address" and says in its notes how, by number.
 
 **The plan is not a defence.** The consistency reviewer, under either executor, treats a plan decision as a finding
 when the code it produced cannot be explained from the code alone, or when it departs from a written repo rule.
-A departure the plan does not list, and a doc the change still leaves untrue, are findings too.
+A departure the plan does not list, a doc the change still leaves untrue, and a plan review finding the change does
+not address are findings too.
 
 ### Plan checks
 

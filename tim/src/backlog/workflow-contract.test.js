@@ -227,16 +227,22 @@ const themeAnswer = (themeAnswers, label) => {
 }
 
 // Every plan is read by a lint reader and checked by a plan reviewer before
-// the implementor starts. Both are answered here — by default a clean lint
-// and an approval — so a test's answers list stays the stages it is about. A
-// test about the plan checks passes its own answers for them, keyed by label.
+// the implementor starts, and a light agent records any detail finding the
+// second review leaves open. All three are answered here — by default a clean
+// lint, an approval and a written record — so a test's answers list stays the
+// stages it is about. A test about the plan checks passes its own answers for
+// them, keyed by label.
 const PLAN_LINT_CLEAN = { exitCode: 1, stdout: '' }
 const PLAN_APPROVED = { approved: true, findings: [], summary: 'approved' }
+const PLAN_REVIEW_RECORDED = { written: true, summary: 'written' }
 const isPlanCheck = (label) =>
-  / (plan|replan|revise plan) lint$| plan review( 2)?$/.test(label ?? '')
+  / (plan|replan|revise plan) lint$| plan review( 2| record)?$/.test(
+    label ?? ''
+  )
 const planCheckAnswer = (planAnswers, label) => {
   if (label in planAnswers) return planAnswers[label]
-  return / lint$/.test(label) ? PLAN_LINT_CLEAN : PLAN_APPROVED
+  if (/ lint$/.test(label)) return PLAN_LINT_CLEAN
+  return / record$/.test(label) ? PLAN_REVIEW_RECORDED : PLAN_APPROVED
 }
 
 const answeringRunLease = (
@@ -784,7 +790,8 @@ describe('increment-build-loop', () => {
           detail: 'Planned across three repos.',
           repos: ['backend', 'tests', 'frontend'],
           behaviourChanges: ['The list shows only your own notifications.'],
-          decisions: ['Filter in the backend query, not the frontend.']
+          decisions: ['Filter in the backend query, not the frontend.'],
+          followUps: []
         }
       ],
       reviewChecks: [],
@@ -795,6 +802,40 @@ describe('increment-build-loop', () => {
         detail: 'the increments list is built out'
       }
     })
+  })
+
+  test('reports the follow-ups the plan and its review list, once each, when planOnly is true', async () => {
+    const run = await runLoop(scriptPath, {
+      args: { ...BASE_ARGS, planOnly: true },
+      answers: [
+        WORKSPACE_ANSWER,
+        { ok: true, summary: '1' },
+        {
+          ok: true,
+          summary: 'Planned in the frontend.',
+          repos: ['frontend'],
+          behaviourChanges: [],
+          decisions: [],
+          followUps: ['Delete the caller comments in origin/controller.js.']
+        }
+      ],
+      plans: {
+        'inc-900 plan review': {
+          approved: true,
+          findings: [],
+          followUps: [
+            'Delete the caller comments in origin/controller.js.',
+            'Rename linesDroppedBy in commodity-type/controller.js.'
+          ],
+          summary: 'approved'
+        }
+      }
+    })
+
+    expect(run.result.increments[0].followUps).toEqual([
+      'Delete the caller comments in origin/controller.js.',
+      'Rename linesDroppedBy in commodity-type/controller.js.'
+    ])
   })
 
   test('runs only the planner, its lint and its review when planOnly is true', async () => {
@@ -2340,17 +2381,46 @@ describe('increment-build-loop', () => {
           '50:   - The refusal branch logs once with `journeyId` and `portCode`.'
 
         const FINDING_ON_HOMES = {
+          kind: 'structural',
           section: '9. Homes',
           what: 'The new anchor argument names no mechanism it goes through.',
           rule: 'card.js:12 "anchors come from the page, never from an argument"',
           mustBecomeTrue:
             'The anchor reaches decorateCard through the page anchors pass.'
         }
+        const FINDING_ON_TEST_SUPPORT = {
+          kind: 'detail',
+          section: '11. Test support',
+          what: 'origin.test.js:40 keeps a local copy of the cookie-recording toolkit.',
+          rule: 'code-quality.md "Promoting a helper deletes the local copies."',
+          mustBecomeTrue: 'The test reads the cookies stubH records.'
+        }
         const SENT_BACK = {
           approved: false,
           findings: [FINDING_ON_HOMES],
           summary: 'one finding'
         }
+        const DETAIL_LEFT_OPEN = {
+          approved: false,
+          findings: [FINDING_ON_TEST_SUPPORT],
+          summary: 'one detail finding'
+        }
+        const DETAIL_LINE =
+          '1. [detail] 11. Test support: origin.test.js:40 keeps a local copy of the cookie-recording toolkit. Rule: code-quality.md "Promoting a helper deletes the local copies." Must become true: The test reads the cookies stubH records.'
+
+        const runWithDetailLeftOpen = (planAnswers = {}) =>
+          runPlannedWith(
+            {
+              'inc-900 plan review': SENT_BACK,
+              'inc-900 plan review 2': DETAIL_LEFT_OPEN,
+              ...planAnswers
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            PLAN_ANSWER,
+            implementAnswer(['frontend:src/a.js']),
+            ...FIX_STAGE_ANSWERS
+          )
 
         test('tells the planner it records decisions, homes and owners and never writes code text', async () => {
           const prompt = flat(
@@ -2576,7 +2646,7 @@ describe('increment-build-loop', () => {
             'THE PLAN REVIEW SENT YOUR PLAN BACK. Rewrite /ws/workareas/shared/args-fixture/plans/inc-900.md so each of these is true'
           )
           expect(revise).toContain(
-            '1. 9. Homes: The new anchor argument names no mechanism it goes through. Rule: card.js:12 "anchors come from the page, never from an argument" Must become true: The anchor reaches decorateCard through the page anchors pass.'
+            '1. [structural] 9. Homes: The new anchor argument names no mechanism it goes through. Rule: card.js:12 "anchors come from the page, never from an argument" Must become true: The anchor reaches decorateCard through the page anchors pass.'
           )
         })
 
@@ -2590,15 +2660,44 @@ describe('increment-build-loop', () => {
           )
 
           expect(flat(promptOf(run, 'inc-900 plan review 2'))).toContain(
-            'YOU SENT THIS PLAN BACK ONCE, with these findings: 1. 9. Homes: The new anchor argument names no mechanism it goes through.'
+            'YOU SENT THIS PLAN BACK ONCE, with these findings: 1. [structural] 9. Homes: The new anchor argument names no mechanism it goes through.'
           )
         })
 
-        test('stops with plan-refused, before any code, when the plan review sends the plan back twice', async () => {
+        test('tells the plan reviewer that only a structural finding stops the increment', async () => {
+          const prompt = flat(
+            promptOf(await runThroughFixToLadder(), 'inc-900 plan review')
+          )
+
+          expect(prompt).toContain(
+            'structural: the plan is built wrong. A piece in the wrong layer or with the wrong owner; a second mechanism beside one that exists;'
+          )
+          expect(prompt).toContain(
+            'detail: a line-level gap the implementor can close without changing any decision, home or owner.'
+          )
+          expect(prompt).toContain(
+            'A structural finding still open on the revised plan stops the increment. A detail finding still open then is not dropped'
+          )
+        })
+
+        test('tells the planner and the plan reviewer the tidy-up is bounded to the row’s footprint', async () => {
+          const run = await runThroughFixToLadder()
+          const bounded =
+            "It never widens the row's footprint for clean-up alone: no new file, no new call site, no signature change across callers, and no file edited only to clean it."
+
+          expect(flat(promptOf(run, 'inc-900 plan'))).toContain(bounded)
+          expect(flat(promptOf(run, 'inc-900 plan review'))).toContain(bounded)
+        })
+
+        test('stops with plan-refused, before any code, when a structural finding is still open after the revised plan', async () => {
           const run = await runPlannedWith(
             {
               'inc-900 plan review': SENT_BACK,
-              'inc-900 plan review 2': SENT_BACK
+              'inc-900 plan review 2': {
+                approved: false,
+                findings: [FINDING_ON_TEST_SUPPORT, FINDING_ON_HOMES],
+                summary: 'two findings'
+              }
             },
             BASELINE_ANSWER,
             PLAN_ANSWER,
@@ -2608,9 +2707,102 @@ describe('increment-build-loop', () => {
           expect(run.result.stopped).toEqual({
             reason: 'plan-refused',
             detail:
-              'inc-900: the plan review sent the plan back twice. Still open: 9. Homes: The new anchor argument names no mechanism it goes through.'
+              'inc-900: the plan review sent the plan back twice with structural findings still open: 9. Homes: The new anchor argument names no mechanism it goes through.'
           })
+          expect(stageLabels(run)).not.toContain('inc-900 plan review record')
           expect(stageLabels(run)).not.toContain('inc-900 implement')
+        })
+
+        test('treats a finding with no kind as structural', async () => {
+          const { section, what, rule, mustBecomeTrue } = FINDING_ON_HOMES
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan review': SENT_BACK,
+              'inc-900 plan review 2': {
+                approved: false,
+                findings: [{ section, what, rule, mustBecomeTrue }],
+                summary: 'one finding'
+              }
+            },
+            BASELINE_ANSWER,
+            PLAN_ANSWER,
+            PLAN_ANSWER
+          )
+
+          expect(run.result.stopped.reason).toBe('plan-refused')
+          expect(stageLabels(run)).not.toContain('inc-900 implement')
+        })
+
+        test('builds the revised plan when only detail findings are still open, recording them in the plan first', async () => {
+          const run = await runWithDetailLeftOpen()
+          const record = flat(promptOf(run, 'inc-900 plan review record'))
+
+          expect(
+            stageLabels(run).filter((label) =>
+              /^inc-900 (plan review 2|plan review record|implement)$/.test(
+                label
+              )
+            )
+          ).toEqual([
+            'inc-900 plan review 2',
+            'inc-900 plan review record',
+            'inc-900 implement'
+          ])
+          expect(modelOf(run, 'inc-900 plan review record')).toBe(
+            modelOf(run, 'inc-900 plan lint')
+          )
+          expect(record).toContain(
+            `## Plan review: must address The plan review left these findings open on the revised plan. Each is required work for the implementor, and the consistency reviewer reports any the change does not address. ${DETAIL_LINE}`
+          )
+        })
+
+        test('gives the implementor each detail finding still open as required work', async () => {
+          const prompt = flat(
+            promptOf(await runWithDetailLeftOpen(), 'inc-900 implement')
+          )
+
+          expect(prompt).toContain(
+            'PLAN REVIEW: MUST ADDRESS. The plan review left these findings open on the revised plan'
+          )
+          expect(prompt).toContain(
+            "Each is required work in this increment, as binding as the plan's decisions."
+          )
+          expect(prompt).toContain(DETAIL_LINE)
+        })
+
+        test('has the consistency reviewer report, in a code-quality category, each detail finding the change leaves open', async () => {
+          const prompt = flat(
+            promptOf(await runWithDetailLeftOpen(), 'inc-900 consistency')
+          )
+
+          expect(prompt).toContain(
+            `THE PLAN REVIEW LEFT THESE FINDINGS OPEN, and the implementor was given each as required work: ${DETAIL_LINE}`
+          )
+          expect(prompt).toContain(
+            'Each one the change does not address is a finding: give it the code-quality category that fits it, `structure` when none fits better'
+          )
+        })
+
+        test('still builds, with each finding in the prompts, when the recorder does not write the section', async () => {
+          const run = await runWithDetailLeftOpen({
+            'inc-900 plan review record': null
+          })
+
+          expect(flat(promptOf(run, 'inc-900 implement'))).toContain(
+            DETAIL_LINE
+          )
+          expect(flat(promptOf(run, 'inc-900 consistency'))).toContain(
+            DETAIL_LINE
+          )
+        })
+
+        test('gives the implementor no must-address list when the plan review approves', async () => {
+          const prompt = promptOf(
+            await runThroughFixToLadder(),
+            'inc-900 implement'
+          )
+
+          expect(prompt).not.toContain('PLAN REVIEW: MUST ADDRESS')
         })
 
         test('stops with plan-refused when the plan reviewer returns no result', async () => {
@@ -3382,9 +3574,9 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(18)
+          expect(run.result.increments.length).toBe(17)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('18 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('17 increment(s) landed')
         })
 
         describe('checking a theme’s spec once its last row lands', () => {
